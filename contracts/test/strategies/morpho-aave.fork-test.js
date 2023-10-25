@@ -7,11 +7,8 @@ const {
   advanceTime,
   isCI,
 } = require("../helpers");
-const {
-  createFixtureLoader,
-  morphoAaveFixture,
-  impersonateAndFundContract,
-} = require("../_fixture");
+const { createFixtureLoader, morphoAaveFixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("ForkTest: Morpho Aave Strategy", function () {
   this.timeout(0);
@@ -100,7 +97,7 @@ describe("ForkTest: Morpho Aave Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
       const usdcUnits = await units(amount, usdc);
@@ -200,7 +197,7 @@ async function withdrawTest(fixture, user, asset, amount = "25000") {
 
   const assetUnits = await units(amount, asset);
   const vaultAssetBalBefore = await asset.balanceOf(vault.address);
-  const vaultSigner = await impersonateAndFundContract(vault.address);
+  const vaultSigner = await impersonateAndFund(vault.address);
 
   await morphoAaveStrategy
     .connect(vaultSigner)

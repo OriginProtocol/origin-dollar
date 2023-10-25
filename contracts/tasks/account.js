@@ -42,7 +42,6 @@ async function accounts(taskArguments, hre, privateKeys) {
  * Funds test accounts on local or fork with DAI, USDT, USDC and TUSD.
  */
 async function fund(taskArguments, hre) {
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
   const addresses = require("../utils/addresses");
   const { isFork, isLocalhost } = require("../test/helpers");
 
@@ -97,22 +96,18 @@ async function fund(taskArguments, hre) {
     {
       name: "eth",
       token: null,
-      forkSigner: isFork ? await findBestMainnetTokenHolder(null, hre) : null,
     },
     {
       name: "dai",
       token: dai,
-      forkSigner: isFork ? await findBestMainnetTokenHolder(dai, hre) : null,
     },
     {
       name: "usdc",
       token: usdc,
-      forkSigner: isFork ? await findBestMainnetTokenHolder(usdc, hre) : null,
     },
     {
       name: "usdt",
       token: usdt,
-      forkSigner: isFork ? await findBestMainnetTokenHolder(usdt, hre) : null,
     },
   ];
 
@@ -121,10 +116,10 @@ async function fund(taskArguments, hre) {
     await Promise.all(
       contractDataList.map(async (contractData) => {
         const { token, name } = contractData;
-        const usedFundAmount = token !== null ? fundAmount : "100";
+        const usedFundAmount = token !== null ? fundAmount : "1000000";
 
         if (!token) {
-          await hardhatSetBalance(currentAccount, hre, usedFundAmount);
+          await hardhatSetBalance(currentAccount, "1000000");
         } else {
           await setERC20TokenBalance(
             currentAccount,

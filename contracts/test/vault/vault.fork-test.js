@@ -2,10 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
-const {
-  loadDefaultFixture,
-  impersonateAndFundContract,
-} = require("./../_fixture");
+const { loadDefaultFixture } = require("./../_fixture");
 const {
   ousdUnits,
   usdtUnits,
@@ -15,6 +12,7 @@ const {
   differenceInErc20TokenBalances,
   isCI,
 } = require("./../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -185,7 +183,7 @@ describe("ForkTest: Vault", function () {
       const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
-      const strategistSigner = await impersonateAndFundContract(
+      const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );
 
