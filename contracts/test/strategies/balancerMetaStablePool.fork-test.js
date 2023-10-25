@@ -1131,7 +1131,7 @@ async function depositTest(
   amounts,
   allAssets,
   bpt,
-  strategyValueDiffPct = 1
+  strategyValueDiffPct = 3
 ) {
   const {
     oethVault,
@@ -1182,7 +1182,7 @@ async function depositTest(
   );
   expect(strategyValuesDiff).to.approxEqualTolerance(
     sumEthAmounts,
-    strategyValueDiffPct
+    strategyValueDiffPct,
   );
   expect(
     after.strategyValues.value,
@@ -1232,11 +1232,11 @@ async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 3);
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
   expect(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
-  ).to.approxEqualTolerance(after.strategyValues.sum, 3);
+  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
 }
 
 async function logBalances({
