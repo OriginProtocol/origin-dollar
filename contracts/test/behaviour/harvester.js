@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
 
 const { usdtUnits } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 /**
  *
@@ -20,6 +21,21 @@ const { usdtUnits } = require("../helpers");
  */
 const shouldBehaveLikeHarvester = (context) => {
   describe("Harvester behaviour", () => {
+    it("Should allow rewards to be collect from the strategy by the harvester", async () => {
+      const { harvester, strategy } = context();
+
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+      await strategy.connect(harvesterSigner).collectRewardTokens();
+    });
+    it("Should NOT allow rewards to be collected by non-harvester", async () => {
+      const { anna, governor, strategist, strategy } = context();
+
+      for (const signer of [anna, governor, strategist]) {
+        await expect(
+          strategy.connect(signer).collectRewardTokens()
+        ).to.be.revertedWith("Caller is not the Harvester");
+      }
+    });
     it("Should allow the governor to call harvest for a specific strategy", async () => {
       const { harvester, governor, strategy } = context();
       // prettier-ignore
@@ -100,11 +116,11 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     describe("harvest using Uniswap considering liquidation limits", () => {
-      it("Should collect and swap using harvestAndSwap()", async () => {
+      it("Should collect and swap using harvestAndSwap() by governor", async () => {
         await harvestAndSwapTokens(true);
       });
 
-      it("Should collect and swap using harvestAndSwap(strategy_address)", async () => {
+      it("Should collect and swap using harvestAndSwap(strategy_address) by anyone", async () => {
         await harvestAndSwapTokens(false);
       });
     });
@@ -185,6 +201,10 @@ const shouldBehaveLikeHarvester = (context) => {
         await harvester
             .connect(governor)["harvestAndSwap()"]();
         await expect(vault).has.a.balanceOf(usdtInVaultExpected, usdt);
+
+        await expect(
+          harvester.connect(anna)["harvestAndSwap()"]()
+        ).to.be.revertedWith("Caller is not the Governor");
       } else {
         // prettier-ignore
         await harvester

@@ -319,7 +319,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Approve the spending of all assets by their corresponding pool tokens,
+     * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -435,7 +435,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @param _vaultAsset Address of the vault asset
      */
     function supportsAsset(address _vaultAsset)
-        external
+        public
         view
         override
         returns (bool result)

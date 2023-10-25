@@ -374,6 +374,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cusdt = await ethers.getContract("MockCUSDT");
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
+    bal = await ethers.getContract("MockBAL");
 
     crv = await ethers.getContract("MockCRV");
     cvx = await ethers.getContract("MockCVX");

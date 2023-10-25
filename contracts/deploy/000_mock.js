@@ -104,6 +104,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Mock BAL token
+  await deploy("MockBAL", {
+    from: deployerAddr,
+  });
+
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,

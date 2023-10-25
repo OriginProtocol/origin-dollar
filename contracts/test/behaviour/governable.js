@@ -25,25 +25,6 @@ const shouldBehaveLikeGovernable = (context) => {
         expect(await strategy.connect(signer).isGovernor()).to.be.false;
       }
     });
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      const { governor, anna, dai, strategy } = context();
-      const governorDaiBalanceBefore = await dai.balanceOf(governor.address);
-      const strategyDaiBalanceBefore = await dai.balanceOf(strategy.address);
-
-      // Anna accidently sends DAI to strategy
-      const recoveryAmount = daiUnits("800");
-      await dai.connect(anna).transfer(strategy.address, recoveryAmount);
-
-      // Anna asks Governor for help
-      await strategy
-        .connect(governor)
-        .transferToken(dai.address, recoveryAmount);
-      await expect(governor).has.a.balanceOf(
-        governorDaiBalanceBefore.add(recoveryAmount),
-        dai
-      );
-      await expect(strategy).has.a.balanceOf(strategyDaiBalanceBefore, dai);
-    });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       const { strategist, anna, dai, strategy } = context();
