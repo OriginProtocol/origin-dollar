@@ -1663,41 +1663,15 @@ async function convexFrxEthFixture(
     oethVault,
     josh,
     strategist,
+    crv,
     frxETH,
     weth,
   } = fixture;
 
   if (isFork) {
-    // Get some frxETH from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      frxETH.address,
-      [
-        "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
-        "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
-        "0x4d9f9D15101EEC665F77210cB999639f760F831E",
-        "0x47D5E1679Fe5f0D9f0A657c6715924e33Ce05093",
-        "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
-      ],
-      // Josh is loaded with frxETH
-      josh.getAddress()
-    );
-
-    // Load up josh with WETH
-    mintWETH(weth, josh, "1000000");
-
-    // Get some CRV from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      addresses.mainnet.CRV,
-      [
-        "0x0A2634885B47F15064fB2B33A86733C614c9950A",
-        "0x34ea4138580435B5A521E460035edb19Df1938c1",
-        "0x28C6c06298d514Db089934071355E5743bf21d60",
-        "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
-        "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
-      ],
-      // Josh is loaded with CRV
-      josh.getAddress()
-    );
+    await setERC20TokenBalance(josh.address, frxETH, "10000000", hre);
+    await setERC20TokenBalance(josh.address, weth, "10000000", hre);
+    await setERC20TokenBalance(josh.address, crv, "10000000", hre);
 
     // Convex pool that records the deposited balances
     fixture.cvxFrxEthWethRewardPool = await ethers.getContractAt(
@@ -1735,7 +1709,7 @@ async function convexFrxEthFixture(
     .setAssetDefaultStrategy(frxETH.address, addresses.zero);
 
   // Impersonate the OETH Vault
-  fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+  fixture.oethVaultSigner = await impersonateAndFund(oethVault.address);
 
   // mint some OETH using WETH is configured
   if (config?.wethMintAmount > 0) {
