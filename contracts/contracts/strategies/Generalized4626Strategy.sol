@@ -184,7 +184,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
-        external
+        public
         view
         virtual
         override

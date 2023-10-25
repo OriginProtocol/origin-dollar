@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { Wallet } = require("ethers");
 
-const { units, usdcUnits } = require("../helpers");
+const { units } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
 
@@ -329,32 +329,42 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
     });
-    it("Should allow transfer of arbitrary tokens by Governor", async () => {
-      const { strategy, usdc, weth, governor } = context();
+    it("Should allow transfer of arbitrary token by Governor", async () => {
+      const { governor, anna, crv, strategy, crvMinter } = context();
+      const governorDaiBalanceBefore = await crv.balanceOf(governor.address);
+      const strategyDaiBalanceBefore = await crv.balanceOf(strategy.address);
 
-      const strategySigner = await impersonateAndFund(strategy.address);
+      // Anna accidentally sends CRV to strategy
+      await crvMinter.connect(governor).mint(anna.address);
+      const recoveryAmount = parseUnits("2");
+      await crv.connect(anna).transfer(strategy.address, recoveryAmount);
 
-      // Add some USDC to the strategy
-      const usdcAmount = usdcUnits("987");
-      await usdc.connect(strategySigner).mint(usdcAmount);
-      // Governor can take the USDC from the strategy
-      const usdcTx = await strategy
+      // Anna asks Governor for help
+      const tx = await strategy
         .connect(governor)
-        .transferToken(usdc.address, usdcAmount);
-      await expect(usdcTx)
-        .to.emit(usdc, "Transfer")
-        .withArgs(strategy.address, governor.address, usdcAmount);
+        .transferToken(crv.address, recoveryAmount);
 
-      // Add some WETH to the strategy
-      const wethAmount = parseUnits("123");
-      await weth.connect(strategySigner).mint(wethAmount);
-      // Governor can take the WETH from the strategy
-      const wethTx = await strategy
-        .connect(governor)
-        .transferToken(weth.address, wethAmount);
-      await expect(wethTx)
-        .to.emit(weth, "Transfer")
-        .withArgs(strategy.address, governor.address, wethAmount);
+      await expect(tx)
+        .to.emit(crv, "Transfer")
+        .withArgs(strategy.address, governor.address, recoveryAmount);
+
+      await expect(governor).has.a.balanceOf(
+        governorDaiBalanceBefore.add(recoveryAmount),
+        crv
+      );
+      await expect(strategy).has.a.balanceOf(strategyDaiBalanceBefore, crv);
+    });
+    it("Should not transfer supported assets from strategy", async () => {
+      const { assets, governor, strategy } = context();
+
+      const recoveryAmount = parseUnits("2");
+      for (const asset of assets) {
+        await expect(
+          strategy
+            .connect(governor)
+            .transferToken(asset.address, recoveryAmount)
+        ).to.be.revertedWith("Cannot transfer supported asset");
+      }
     });
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       const { strategy, weth, strategist, matt, harvester, vault } = context();
@@ -367,6 +377,14 @@ const shouldBehaveLikeStrategy = (context) => {
           strategy.connect(signer).transferToken(weth.address, parseUnits("8"))
         ).to.be.revertedWith("Caller is not the Governor");
       }
+    });
+    it("Should not allow transfer of supported token", async () => {
+      const { strategy, governor, assets } = context();
+      await expect(
+        strategy
+          .connect(governor)
+          .transferToken(assets[0].address, parseUnits("8"))
+      ).to.be.revertedWith("Cannot transfer supported asset");
     });
     it("Should allow the harvester to be set by the governor", async () => {
       const { governor, harvester, strategy } = context();
@@ -390,6 +408,39 @@ const shouldBehaveLikeStrategy = (context) => {
       for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
         await expect(
           strategy.connect(signer).setHarvesterAddress(randomAddress)
+        ).to.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Should allow reward tokens to be set by the governor", async () => {
+      const { governor, strategy, comp, crv, bal } = context();
+
+      const newRewardTokens = [comp.address, crv.address, bal.address];
+      const oldRewardTokens = await strategy.getRewardTokenAddresses();
+
+      const tx = await strategy
+        .connect(governor)
+        .setRewardTokenAddresses(newRewardTokens);
+
+      await expect(tx)
+        .to.emit(strategy, "RewardTokenAddressesUpdated")
+        .withArgs(oldRewardTokens, newRewardTokens);
+
+      expect(await strategy.rewardTokenAddresses(0)).to.equal(comp.address);
+      expect(await strategy.rewardTokenAddresses(1)).to.equal(crv.address);
+      expect(await strategy.rewardTokenAddresses(2)).to.equal(bal.address);
+    });
+    it("Should not allow reward tokens to be set by non-governor", async () => {
+      const { comp, crv, bal, strategy, strategist, matt, harvester, vault } =
+        context();
+
+      const vaultSigner = await impersonateAndFund(vault.address);
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+
+      const newRewardTokens = [comp.address, crv.address, bal.address];
+
+      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+        await expect(
+          strategy.connect(signer).setRewardTokenAddresses(newRewardTokens)
         ).to.revertedWith("Caller is not the Governor");
       }
     });
