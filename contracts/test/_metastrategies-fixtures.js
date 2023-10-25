@@ -3,14 +3,11 @@ const { ethers } = hre;
 const { formatUnits } = require("ethers/lib/utils");
 
 const { ousdUnits } = require("./helpers");
-const {
-  convexMetaVaultFixture,
-  resetAllowance,
-  impersonateAndFundContract,
-  fundWith3Crv,
-} = require("./_fixture");
+const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
+const { impersonateAndFund } = require("../utils/signers");
+const { setERC20TokenBalance } = require("./_fund");
 
 const log = require("../utils/logger")("test:fixtures:strategies:meta");
 
@@ -84,7 +81,7 @@ async function balanceOUSDMetaPool(fixture) {
 }
 
 async function _balanceMetaPool(fixture, metapool) {
-  const { vault, domen } = fixture;
+  const { vault, domen, threepoolLP } = fixture;
 
   // Balance metapool
   const ousdBalance = await metapool.balances(0);
@@ -104,7 +101,7 @@ async function _balanceMetaPool(fixture, metapool) {
   );
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
-  const metapoolSigner = await impersonateAndFundContract(metapool.address);
+  const metapoolSigner = await impersonateAndFund(metapool.address);
   /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the
    * best assurance that the liquidity of both coins for balancing are going to be
    * available.
@@ -116,7 +113,12 @@ async function _balanceMetaPool(fixture, metapool) {
   if (coinOne3CrvValue.gt(coinTwo3CrvValue)) {
     // There is more OUSD than 3CRV
     const crvAmount = coinOne3CrvValue.sub(coinTwo3CrvValue);
-    await fundWith3Crv(domen.address, crvAmount);
+    await impersonateAndFund(domen.address, "1000000");
+    await setERC20TokenBalance(
+      domen.address,
+      threepoolLP,
+      crvAmount.div(ousdUnits("1"))
+    );
 
     log(`About to add ${formatUnits(crvAmount)} 3CRV to the OUSD Metapool`);
     // prettier-ignore
@@ -154,7 +156,7 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
 async function tiltTo3CRV_Metapool_automatic(fixture) {
   const { metapool, threePoolToken } = fixture;
 
-  const metapoolSigner = await impersonateAndFundContract(metapool.address);
+  const metapoolSigner = await impersonateAndFund(metapool.address);
   await resetAllowance(threePoolToken, metapoolSigner, metapool.address);
 
   // 90% of main coin pool liquidity
@@ -184,7 +186,7 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
 async function tiltToMainToken(fixture) {
   const { metapool, metapoolCoin } = fixture;
 
-  const metapoolSigner = await impersonateAndFundContract(metapool.address);
+  const metapoolSigner = await impersonateAndFund(metapool.address);
   await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
   // 90% of main coin pool liquidity
   const shareOfMainCoinBalance = (
@@ -219,7 +221,7 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
   // Tilt to 3CRV by a million
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   // make metapool make exchange on itself. It should always have enough OUSD/3crv to do this
-  const metapoolSigner = await impersonateAndFundContract(ousdMetaPool.address);
+  const metapoolSigner = await impersonateAndFund(ousdMetaPool.address);
 
   await metapool.connect(metapoolSigner)[exchangeSign](1, 0, amount.div(2), 0);
 
@@ -246,7 +248,7 @@ async function tiltToOUSD_OUSDMetapool(fixture, amount) {
   // Tilt to 3CRV by a million
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   // make metapool make exchange on itself. It should always have enough OUSD/3crv to do this
-  const metapoolSigner = await impersonateAndFundContract(ousdMetaPool.address);
+  const metapoolSigner = await impersonateAndFund(ousdMetaPool.address);
 
   await ousdMetaPool
     .connect(metapoolSigner)

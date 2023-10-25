@@ -49,6 +49,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
+const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -1117,23 +1118,6 @@ async function balancerWstEthFixture() {
   return fixture;
 }
 
-async function fundWith3Crv(address, maxAmount) {
-  // Get some 3CRV from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.ThreePoolToken,
-    [
-      "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
-      "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
-      "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
-      "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-      "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
-    ],
-    address,
-    30, // balanceToUse
-    maxAmount
-  );
-}
-
 /**
  * Configure a Vault with only the Meta strategy.
  */
@@ -1164,7 +1148,8 @@ async function convexMetaVaultFixture() {
     log(`Metapool balance 1: ${formatUnits(balances[1])}`);
 
     // Domen is loaded with 3CRV
-    await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
+    await hardhatSetBalance(domen.address, "1000000");
+    await setERC20TokenBalance(domen.address, threepoolLP, "1000000");
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
@@ -1233,7 +1218,7 @@ async function makerDsrFixture(
     const { dai, josh, makerDsrStrategy, strategist, vault } = fixture;
 
     // Impersonate the OUSD Vault
-    fixture.vaultSigner = await impersonateAndFundContract(vault.address);
+    fixture.vaultSigner = await impersonateAndFund(vault.address);
 
     // mint some OUSD using DAI if configured
     if (config?.daiMintAmount > 0) {
@@ -1448,19 +1433,8 @@ async function convexGeneralizedMetaForkedFixture(
     await resetAllowance(primaryCoin, user, metapoolAddress);
   }
 
-  // Get some 3CRV from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.ThreePoolToken,
-    [
-      "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
-      "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
-      "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
-      "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-      "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
-    ],
-    // Domen is loaded with 3CRV
-    domen.getAddress()
-  );
+  await impersonateAndFund(domen.address, "1000000");
+  await setERC20TokenBalance(domen.address, threepoolLP, "1000000");
 
   fixture.metapoolCoin = primaryCoin;
   fixture.metapool = metapool;
@@ -1496,13 +1470,6 @@ async function convexGeneralizedMetaForkedFixture(
   return fixture;
 }
 
-async function impersonateAccount(address) {
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
-}
-
 async function mineBlocks(blocksToMine) {
   const hexBlocks = "0x" + Number(blocksToMine).toString(16);
   await hre.network.provider.request({
@@ -1525,60 +1492,6 @@ async function nodeRevert(snapshotId) {
   });
 }
 
-async function impersonateAndFundContract(address, amount = "100000") {
-  await impersonateAccount(address);
-
-  if (parseFloat(amount) > 0) {
-    await hardhatSetBalance(address, amount);
-  }
-
-  const signer = await ethers.provider.getSigner(address);
-  signer.address = address;
-  return signer;
-}
-
-async function impersonateAndFundAddress(
-  tokenAddress,
-  contractAddresses,
-  toAddress,
-  balanceToUse = 30, // 30%
-  maxAmount = ethers.BigNumber.from(0)
-) {
-  if (!Array.isArray(contractAddresses)) {
-    contractAddresses = [contractAddresses];
-  }
-
-  let amountTransfered = ethers.BigNumber.from("0");
-  for (const contractAddress of contractAddresses) {
-    const impersonatedSigner = await impersonateAndFundContract(
-      contractAddress
-    );
-
-    const tokenContract = await ethers.getContractAt(daiAbi, tokenAddress);
-
-    const balance = await tokenContract
-      .connect(impersonatedSigner)
-      .balanceOf(contractAddress);
-
-    const amount = balance.mul(balanceToUse).div(100);
-    // consider max amount
-    if (maxAmount.gt(ethers.BigNumber.from("0"))) {
-      if (amountTransfered.add(amount).gt(maxAmount)) {
-        await tokenContract
-          .connect(impersonatedSigner)
-          .transfer(toAddress, maxAmount.sub(amountTransfered));
-
-        // max amount already transferred
-        return;
-      }
-
-      amountTransfered.add(amount);
-    }
-
-    await tokenContract.connect(impersonatedSigner).transfer(toAddress, amount);
-  }
-}
-
 async function resetAllowance(
   tokenContract,
   signer,
@@ -1597,7 +1510,7 @@ async function mintWETH(weth, recipient, amount = "100") {
 }
 
 async function withImpersonatedAccount(address, cb) {
-  const signer = await impersonateAndFundContract(address);
+  const signer = await impersonateAndFund(address);
 
   await cb(signer);
 
@@ -1663,34 +1576,12 @@ async function convexOETHMetaVaultFixture(
     strategist,
     timelock,
     weth,
+    crv,
   } = fixture;
 
-  await impersonateAndFundAddress(
-    weth.address,
-    [
-      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
-      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
-      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
-      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
-      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
-    ],
-    // Josh is loaded with weth
-    josh.getAddress()
-  );
-
-  // Get some CRV from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.CRV,
-    [
-      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
-      "0x34ea4138580435B5A521E460035edb19Df1938c1",
-      "0x28C6c06298d514Db089934071355E5743bf21d60",
-      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
-      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
-    ],
-    // Josh is loaded with CRV
-    josh.getAddress()
-  );
+  await impersonateAndFund(josh.address);
+  await setERC20TokenBalance(josh.address, weth, "10000000");
+  await setERC20TokenBalance(josh.address, crv, "10000000");
 
   // Update the strategy threshold to 500k ETH
   await oethVault
@@ -1698,9 +1589,9 @@ async function convexOETHMetaVaultFixture(
     .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
 
   // Impersonate the OETH Vault
-  fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+  fixture.oethVaultSigner = await impersonateAndFund(oethVault.address);
   // Impersonate the Curve gauge that holds all the LP tokens
-  fixture.oethGaugeSigner = await impersonateAndFundContract(
+  fixture.oethGaugeSigner = await impersonateAndFund(
     addresses.mainnet.CurveOETHGauge
   );
 
@@ -1756,7 +1647,7 @@ async function convexOETHMetaVaultFixture(
   }
 
   const { oethWhaleAddress } = addresses.mainnet;
-  fixture.oethWhale = await impersonateAndFundContract(oethWhaleAddress);
+  fixture.oethWhale = await impersonateAndFund(oethWhaleAddress);
 
   // Add OETH to the Metapool
   if (config?.poolAddOethAmount > 0) {
@@ -2099,7 +1990,6 @@ async function loadDefaultFixture() {
 module.exports = {
   createFixtureLoader,
   loadDefaultFixture,
-  fundWith3Crv,
   resetAllowance,
   defaultFixture,
   oethDefaultFixture,
@@ -2121,8 +2011,6 @@ module.exports = {
   hackedVaultFixture,
   rebornFixture,
   withImpersonatedAccount,
-  impersonateAndFundContract,
-  impersonateAccount,
   balancerREthFixture,
   balancerWstEthFixture,
   tiltBalancerMetaStableWETHPool,

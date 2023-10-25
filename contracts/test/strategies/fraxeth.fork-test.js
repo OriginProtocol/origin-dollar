@@ -6,8 +6,8 @@ const {
   createFixtureLoader,
   fraxETHStrategyFixture,
   mintWETH,
-  impersonateAndFundContract,
 } = require("./../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
@@ -38,9 +38,7 @@ describe("ForkTest: FraxETH Strategy", function () {
   describe("Deposit/Allocation", function () {
     it("Should accept and handle WETH allocation", async () => {
       const { oethVault, weth, sfrxETH, domen, fraxEthStrategy } = fixture;
-      const fakeVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       const amount = "12.345";
 
@@ -63,9 +61,7 @@ describe("ForkTest: FraxETH Strategy", function () {
   describe("Withdraw", function () {
     it("Should allow withdrawing frxETH", async () => {
       const { oethVault, fraxEthStrategy, frxETH, daniel, domen } = fixture;
-      const fakeVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       // Make sure the strategy has some frxETH
       await mintTest(fixture, daniel, frxETH, "13.432");
@@ -86,9 +82,7 @@ describe("ForkTest: FraxETH Strategy", function () {
 
     it("Should not allow withdrawing WETH", async () => {
       const { oethVault, fraxEthStrategy, weth } = fixture;
-      const fakeVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       await expect(
         fraxEthStrategy
@@ -99,9 +93,7 @@ describe("ForkTest: FraxETH Strategy", function () {
     // TODO: Reenable this after FraxETH strategy has been upgraded
     it.skip("Should allow withdrawAll twice", async () => {
       const { oethVault, fraxEthStrategy } = fixture;
-      const fakeVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       // Do a withdrawAll with impersonated Vault
       await fraxEthStrategy.connect(fakeVaultSigner).withdrawAll();
@@ -112,9 +104,7 @@ describe("ForkTest: FraxETH Strategy", function () {
 
     it("Should not allow withdrawing WETH", async () => {
       const { oethVault, fraxEthStrategy, weth } = fixture;
-      const fakeVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       await expect(
         fraxEthStrategy
@@ -144,7 +134,7 @@ describe("ForkTest: FraxETH Strategy", function () {
       expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);
 
       // Mint some WETH to strategy
-      const fakeStrategySigner = await impersonateAndFundContract(
+      const fakeStrategySigner = await impersonateAndFund(
         fraxEthStrategy.address
       );
       fakeStrategySigner.address = fraxEthStrategy.address;

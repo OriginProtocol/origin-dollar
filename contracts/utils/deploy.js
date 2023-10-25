@@ -4,7 +4,6 @@
 
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const {
   advanceTime,
@@ -32,7 +31,7 @@ const {
 } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
-const { hardhatSetBalance } = require("../test/_fund.js");
+const { impersonateAndFund } = require("./signers.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -144,20 +143,9 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  impersonateAccount(guardianAddr);
+  impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
-};
-
-const impersonateAccount = async (address) => {
-  if (!isFork) {
-    throw new Error("impersonateAccount only works on Fork");
-  }
-
-  await hardhatSetBalance(address, "1000000");
-  await hhHelpers.impersonateAccount(address);
-
-  log(`Impersonated Account at ${address}`);
 };
 
 /**
@@ -1249,7 +1237,6 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,

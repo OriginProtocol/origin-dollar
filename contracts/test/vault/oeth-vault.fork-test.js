@@ -2,12 +2,9 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const {
-  createFixtureLoader,
-  oethDefaultFixture,
-  impersonateAccount,
-} = require("../_fixture");
+const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
@@ -62,8 +59,7 @@ describe("ForkTest: OETH Vault", function () {
       beforeEach(async () => {
         fixture = await loadFixture();
 
-        await impersonateAccount(oethWhaleAddress);
-        oethWhaleSigner = await ethers.provider.getSigner(oethWhaleAddress);
+        oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
       });
 
       it("should mint using each asset", async () => {

@@ -8,6 +8,7 @@ const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
 const daiAbi = require("../test/abi/dai.json").abi;
 const { hardhatSetBalance } = require("../test/_fund");
+const { impersonateAndFund } = require("../utils/signers");
 
 const main = async (hre) => {
   console.log(`Running 999_fork_test_setup deployment...`);
@@ -20,25 +21,6 @@ const main = async (hre) => {
   ) {
     await tokenContract.connect(signer).approve(toAddress, "0");
     await tokenContract.connect(signer).approve(toAddress, allowance);
-  }
-
-  async function impersonateAccount(address) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [address],
-    });
-  }
-
-  async function impersonateAndFundContract(address, amount = "100000") {
-    await impersonateAccount(address);
-
-    if (parseFloat(amount) > 0) {
-      await hardhatSetBalance(address, amount);
-    }
-
-    const signer = await ethers.provider.getSigner(address);
-    signer.address = address;
-    return signer;
   }
 
   const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
@@ -77,11 +59,11 @@ const main = async (hre) => {
   for (const signer of signers.slice(0, 4)) {
     await hardhatSetBalance(signer.address);
   }
-  await impersonateAndFundContract(timelockAddr);
-  await impersonateAndFundContract(deployerAddr);
-  await impersonateAndFundContract(governorAddr);
-  await impersonateAndFundContract(strategistAddr);
-  await impersonateAndFundContract(addresses.mainnet.OldTimelock);
+  await impersonateAndFund(timelockAddr);
+  await impersonateAndFund(deployerAddr);
+  await impersonateAndFund(governorAddr);
+  await impersonateAndFund(strategistAddr);
+  await impersonateAndFund(addresses.mainnet.OldTimelock);
   console.log("Unlocked and funded named accounts with ETH");
 
   await fundAccounts();
