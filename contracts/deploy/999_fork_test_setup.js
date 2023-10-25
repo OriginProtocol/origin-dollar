@@ -4,8 +4,9 @@ const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
 const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
-const daiAbi = require("../test/abi/dai.json").abi;
 const { hardhatSetBalance } = require("../test/_fund");
+
+const daiAbi = require("../test/abi/dai.json").abi;
 
 const log = require("../utils/logger")("deploy:999_fork_test_setup");
 
