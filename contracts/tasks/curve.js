@@ -1,5 +1,5 @@
-const { BigNumber } = require("ethers");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { formatUnits, parseUnits } = require("ethers");
 
 const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
 const oethPoolAbi = require("../test/abi/oethMetapool.json");

@@ -7,9 +7,7 @@
 //
 //
 const { ethers } = require("hardhat");
-const { utils, BigNumber, Wallet } = require("ethers");
-const { getTxOpts } = require("../../utils/tx");
-const fs = require("fs");
+const { Wallet } = require("ethers");
 
 async function doTransfer(pk, fromAddress, toAddress, r, s, v) {
   const wallet = new Wallet(pk, ethers.provider);

@@ -1,4 +1,4 @@
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const { isFork } = require("../test/helpers");
 const {
   replaceContractAt,

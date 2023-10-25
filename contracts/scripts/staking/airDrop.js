@@ -16,7 +16,7 @@
 //
 //
 const { ethers } = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const { formatUnits } = utils;
 const fs = require("fs");
 

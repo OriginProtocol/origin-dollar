@@ -1,6 +1,6 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const { BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 module.exports = deploymentWithProposal(
   {

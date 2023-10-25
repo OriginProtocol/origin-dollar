@@ -1,4 +1,4 @@
-const BigNumber = require("ethers").BigNumber;
+const { BigNumber } = require("@ethersproject/bignumber");
 
 async function _governorArgs({ contract, signature, args = [] }) {
   const method = signature;

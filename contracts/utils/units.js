@@ -1,5 +1,5 @@
-const { BigNumber } = require("ethers");
-const { parseUnits } = require("ethers").utils;
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseUnits } = require("ethers");
 
 /**
  * Returns the number of decimal places used by the given token contract.

@@ -1,5 +1,5 @@
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
-const { BigNumber } = require("ethers");
+const { formatUnits, parseUnits } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const addresses = require("../utils/addresses");
 const { getSigner } = require("../utils/signers");

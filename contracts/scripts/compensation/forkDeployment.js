@@ -2,7 +2,7 @@
 const { sendProposal } = require("./utils/deploy");
 const { proposeArgs } = require("./utils/governor");
 const addresses = require("./utils/addresses");
-const { BigNumber } = ethers;
+const { BigNumber } = require("@ethersproject/bignumber");
 const { compensationSync } = require("./scripts/compensation/compensationSync");
 const reimbursementsLocation = "./scripts/staking/reimbursements.csv";
 const signers = await hre.ethers.getSigners();

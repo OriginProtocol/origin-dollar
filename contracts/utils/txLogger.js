@@ -1,4 +1,4 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers");
 
 const log = require("./logger")("utils:txLogger");
 

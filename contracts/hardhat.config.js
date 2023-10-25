@@ -4,20 +4,18 @@ const fetch = require("sync-fetch");
 
 require("@nomicfoundation/hardhat-toolbox");
 
-// require('@nomicfoundation/hardhat-chai-matchers');
-require('@nomicfoundation/hardhat-ethers');
+require("hardhat-deploy");
+require("@nomicfoundation/hardhat-ethers");
 // require('@typechain/hardhat');
 // require('hardhat-gas-reporter');
 // require('solidity-coverage');
 
-require("hardhat-deploy");
 // require("hardhat-tracer");
 require("hardhat-contract-sizer");
-require("hardhat-deploy-ethers");
+// require("hardhat-deploy-ethers");
 require("@openzeppelin/hardhat-upgrades");
 require("@nomicfoundation/hardhat-chai-matchers");
 require("@nomicfoundation/hardhat-network-helpers");
-
 
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
@@ -43,7 +41,9 @@ let privateKeys = [];
 
 let derivePath = "m/44'/60'/0'/0/";
 for (let i = 0; i <= 10; i++) {
-  const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
+  const wallet = ethers.Wallet.fromPhrase(mnemonic).derivePath(
+    `${derivePath}${i}`
+  );
   privateKeys.push(wallet.privateKey);
 }
 
@@ -176,30 +176,26 @@ module.exports = {
      * is not to be used. Should only be used in forked and mainnet environments.
      */
     governorFiveAddr: {
-      default: ethers.constants.AddressZero,
+      default: ethers.ZeroAddress,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
         process.env.FORK === "true"
           ? MAINNET_GOVERNOR_FIVE
-          : ethers.constants.AddressZero,
+          : ethers.ZeroAddress,
       hardhat:
         process.env.FORK === "true"
           ? MAINNET_GOVERNOR_FIVE
-          : ethers.constants.AddressZero,
+          : ethers.ZeroAddress,
       mainnet: MAINNET_GOVERNOR_FIVE,
     },
     // above governorFiveAddr comment applies to timelock as well
     timelockAddr: {
-      default: ethers.constants.AddressZero,
+      default: ethers.ZeroAddress,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
-        process.env.FORK === "true"
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+        process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.ZeroAddress,
       hardhat:
-        process.env.FORK === "true"
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+        process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.ZeroAddress,
       mainnet: MAINNET_TIMELOCK,
     },
     guardianAddr: {

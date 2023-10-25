@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const ethers = hre.ethers;
-const e = require("ethers");
+const e = require("ethers").ethers;
 
 let oracleAddresses;
 try {

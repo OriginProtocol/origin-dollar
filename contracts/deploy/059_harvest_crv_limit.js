@@ -1,4 +1,4 @@
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers");
 const { deploymentWithGovernanceProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(

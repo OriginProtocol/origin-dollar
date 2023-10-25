@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const { loadDefaultFixture } = require("../_fixture");
 

@@ -7,7 +7,7 @@ const {
   fraxETHStrategyFixture,
   impersonateAndFundContract,
 } = require("./../_fixture");
-const { BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 describe("FraxETH Strategy", function () {
   let fixture;

@@ -1,8 +1,8 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { BigNumber } = ethers;
+const { BigNumber } = require("@ethersproject/bignumber");
 const { expect } = require("chai");
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers");
 
 require("./_global-hooks");
 
@@ -45,7 +45,7 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
+const { defaultAbiCoder, parseUnits, parseEther } = require("ethers");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
 const log = require("../utils/logger")("test:fixtures");

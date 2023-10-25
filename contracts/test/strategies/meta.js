@@ -1,5 +1,6 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseUnits } = require("ethers");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
 const {
@@ -172,19 +173,19 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
+        parseUnits("2", 18)
       );
       await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
+        parseUnits("3", 18)
       );
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
+        parseUnits("0", 18)
       );
       await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
+        parseUnits("0", 18)
       );
 
       await harvester.connect(governor)[
@@ -193,10 +194,10 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       ](OUSDmetaStrategy.address);
 
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
+        parseUnits("2", 18)
       );
       await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
+        parseUnits("3", 18)
       );
     });
   });

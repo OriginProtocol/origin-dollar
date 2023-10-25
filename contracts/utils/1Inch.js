@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { defaultAbiCoder, formatUnits } = require("ethers/lib/utils");
+const { defaultAbiCoder, formatUnits } = require("ethers");
 
 const addresses = require("./addresses");
 const log = require("./logger")("utils:1inch");

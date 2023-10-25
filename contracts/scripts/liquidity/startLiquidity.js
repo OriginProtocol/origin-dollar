@@ -2,7 +2,7 @@
 // Note: not for Mainnet use since that requires multi-sig for interacting with the contract.
 
 const { ethers, getNamedAccounts } = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
 

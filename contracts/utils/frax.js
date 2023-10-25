@@ -1,4 +1,4 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers");
 
 const addresses = require("./addresses");
 const { impersonateAndFund } = require("./signers");

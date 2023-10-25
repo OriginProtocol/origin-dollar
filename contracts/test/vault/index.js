@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 
 const { loadDefaultFixture } = require("../_fixture");
 const {

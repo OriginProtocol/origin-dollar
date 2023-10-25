@@ -8,7 +8,7 @@ const {
   usdtUnits,
   isFork,
 } = require("../helpers");
-const { parseUnits } = require("ethers/lib/utils");
+const { parseUnits } = require("ethers");
 
 const loadFixture = createFixtureLoader(loadedFlipper);
 

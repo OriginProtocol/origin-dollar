@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 
 const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
 const { MAX_UINT256 } = require("../../utils/constants");

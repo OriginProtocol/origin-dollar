@@ -1,4 +1,4 @@
-const { BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"

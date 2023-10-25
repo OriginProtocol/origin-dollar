@@ -10,7 +10,10 @@ const {
 const addresses = require("../utils/addresses");
 const erc20Abi = require("../test/abi/erc20.json");
 
-let utils, BigNumber, usdt, dai, usdc, ousd, vault, signer, signer2;
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseUnits } = require("ethers");
+
+let usdt, dai, usdc, ousd, vault, signer, signer2;
 
 async function fundAccount4(hre) {
   await fund(
@@ -61,7 +64,7 @@ const assertExpectedStablecoins = (
   const adjustedUsdt = usdtBn.mul(BigNumber.from("1000000000000"));
   const adjustedUsdc = usdcBn.mul(BigNumber.from("1000000000000"));
   const allStablecoins = adjustedUsdt.add(adjustedUsdc).add(daiBn);
-  const stableCoinsExpected = utils.parseUnits(unitsExpected, 18);
+  const stableCoinsExpected = parseUnits(unitsExpected, 18);
 
   if (!isWithinTolerance(allStablecoins, stableCoinsExpected, 0.03)) {
     throw new Error(
@@ -75,8 +78,6 @@ const assertExpectedStablecoins = (
 };
 
 async function setup(hre) {
-  utils = hre.ethers.utils;
-  BigNumber = hre.ethers.BigNumber;
   ousd = await hre.ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
   usdt = await hre.ethers.getContractAt(erc20Abi, addresses.mainnet.USDT);
   dai = await hre.ethers.getContractAt(erc20Abi, addresses.mainnet.DAI);

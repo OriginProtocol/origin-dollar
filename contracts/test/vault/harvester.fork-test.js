@@ -1,10 +1,10 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 
 const { loadDefaultFixture } = require("./../_fixture");
 const { isCI } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
-const { parseUnits } = require("ethers").utils;
+const { parseUnits } = require("ethers");
 
 describe("ForkTest: Harvester", function () {
   this.timeout(0);

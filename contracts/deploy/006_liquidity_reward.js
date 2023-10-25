@@ -8,7 +8,7 @@ const {
   isMainnetOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const {
   log,
   deployWithConfirmation,

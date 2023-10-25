@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const {

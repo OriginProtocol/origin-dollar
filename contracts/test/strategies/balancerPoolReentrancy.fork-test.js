@@ -9,7 +9,7 @@ const {
   createFixtureLoader,
 } = require("../_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const { findBestMainnetTokenHolder } = require("../../utils/funding");
 const addresses = require("../../utils/addresses");
 

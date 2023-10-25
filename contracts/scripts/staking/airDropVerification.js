@@ -6,8 +6,8 @@
 //
 //
 const { ethers } = require("hardhat");
-const { utils, BigNumber } = require("ethers");
-const { formatUnits } = utils;
+const { formatUnits } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 const fs = require("fs");
 const { verifyMerkleSignature } = require("../../utils/stake");
 

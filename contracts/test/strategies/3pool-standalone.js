@@ -1,7 +1,7 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseUnits } = require("ethers");
 
-const { BigNumber } = require("ethers");
 const { createFixtureLoader, threepoolFixture } = require("../_fixture");
 const { units } = require("../helpers");
 
@@ -49,8 +49,8 @@ describe("3Pool Strategy Standalone", function () {
       .connect(governor)
       .transfer(threePoolStrategy.address, await units("300", usdc));
     await threePoolStrategy.depositAll();
-    await expect(await threePoolGauge.balanceOf(threePoolStrategy.address)).eq(
-      utils.parseUnits("600", 18)
+    expect(await threePoolGauge.balanceOf(threePoolStrategy.address)).eq(
+      parseUnits("600", 18)
     );
   });
 

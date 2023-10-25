@@ -1,5 +1,6 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseEther, getBytes, AbiCoder } = require("ethers");
 
 const { units, daiUnits, usdtUnits } = require("../helpers");
 const {
@@ -132,13 +133,13 @@ describe("1Inch Swapper", () => {
     it("Should allow to swap tokens", async () => {
       const { weth, reth, stETH, frxETH, oethVault, strategist } = fixture;
 
-      const fromAmount = utils.parseEther("20");
+      const fromAmount = parseEther("20");
 
       for (const fromAsset of [weth, reth, stETH, frxETH]) {
         for (const toAsset of [weth, reth, stETH, frxETH]) {
           if (fromAsset.address === toAsset.address) continue;
 
-          const toAmount = utils.parseEther("24");
+          const toAmount = parseEther("24");
           log(
             `swapping 20 ${await fromAsset.symbol()} to ${await toAsset.symbol()}`
           );
@@ -165,12 +166,10 @@ describe("1Inch Swapper", () => {
       const { weth, stETH, oethVault, strategist, mockSwapper } = fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper
-        .connect(strategist)
-        .setNextOutAmount(utils.parseEther("18"));
+      await mockSwapper.connect(strategist).setNextOutAmount(parseEther("18"));
 
-      const fromAmount = utils.parseEther("20");
-      const toAmount = utils.parseEther("20");
+      const fromAmount = parseEther("20");
+      const toAmount = parseEther("20");
 
       // Call swap method
       const tx = oethVault
@@ -183,8 +182,8 @@ describe("1Inch Swapper", () => {
     it("Should revert swap if received less tokens than Oracle slippage", async () => {
       const { weth, stETH, oethVault, strategist } = fixture;
 
-      const fromAmount = utils.parseEther("20");
-      const toAmount = utils.parseEther("16");
+      const fromAmount = parseEther("20");
+      const toAmount = parseEther("16");
 
       // Call swap method
       const tx = oethVault
@@ -206,15 +205,13 @@ describe("1Inch Swapper", () => {
       } = fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper
-        .connect(strategist)
-        .setNextOutAmount(utils.parseEther("180"));
+      await mockSwapper.connect(strategist).setNextOutAmount(parseEther("180"));
       // increase the allowed Oracle slippage per asset to 9.99%
       await oethVault.connect(governor).setOracleSlippage(weth.address, 999);
       await oethVault.connect(governor).setOracleSlippage(stETH.address, 999);
 
-      const fromAmount = utils.parseEther("200");
-      const toAmount = utils.parseEther("170");
+      const fromAmount = parseEther("200");
+      const toAmount = parseEther("170");
 
       log(`total supply: ${await oeth.totalSupply()}`);
       log(`total value : ${await oethVault.totalValue()}`);
@@ -241,15 +238,13 @@ describe("1Inch Swapper", () => {
       } = fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper
-        .connect(strategist)
-        .setNextOutAmount(utils.parseEther("19"));
+      await mockSwapper.connect(strategist).setNextOutAmount(parseEther("19"));
       // increase the allowed Oracle slippage per asset to 9.99%
       await oethVault.connect(governor).setOracleSlippage(weth.address, 999);
       await oethVault.connect(governor).setOracleSlippage(stETH.address, 999);
 
-      const fromAmount = utils.parseEther("20");
-      const toAmount = utils.parseEther("17");
+      const fromAmount = parseEther("20");
+      const toAmount = parseEther("17");
 
       log(`total supply: ${await oeth.totalSupply()}`);
       log(`total value : ${await oethVault.totalValue()}`);
@@ -267,8 +262,8 @@ describe("1Inch Swapper", () => {
 
     it("Should revert if fromAsset is not supported", async () => {
       const { weth, dai, oethVault, strategist } = fixture;
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       // Call swap method
       const tx = oethVault
@@ -280,8 +275,8 @@ describe("1Inch Swapper", () => {
 
     it("Should revert if toAsset is not supported", async () => {
       const { weth, dai, oethVault, strategist } = fixture;
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       // Call swap method
       const tx = oethVault
@@ -293,8 +288,8 @@ describe("1Inch Swapper", () => {
 
     it("Should swap if capital is paused", async () => {
       const { weth, stETH, oethVault, strategist } = fixture;
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       // Fund Vault with some assets
       const vaultSigner = await impersonateAndFundContract(oethVault.address);
@@ -312,8 +307,8 @@ describe("1Inch Swapper", () => {
 
     it("Should revert if not called by Governor or Strategist", async () => {
       const { weth, stETH, oethVault, josh } = fixture;
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       // Call swap method
       const tx = oethVault
@@ -495,9 +490,7 @@ describe("1Inch Swapper", () => {
         fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper
-        .connect(strategist)
-        .setNextOutAmount(utils.parseEther("180"));
+      await mockSwapper.connect(strategist).setNextOutAmount(parseEther("180"));
       // increase the allowed Oracle slippage per asset to 9.99%
       await vault.connect(governor).setOracleSlippage(dai.address, 999);
       await vault.connect(governor).setOracleSlippage(usdt.address, 999);
@@ -548,7 +541,7 @@ describe("1Inch Swapper", () => {
 
     it("Should revert if fromAsset is not supported", async () => {
       const { dai, weth, vault, strategist } = fixture;
-      const fromAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
       const toAmount = daiUnits("100");
 
       // Call swap method
@@ -562,7 +555,7 @@ describe("1Inch Swapper", () => {
     it("Should revert if toAsset is not supported", async () => {
       const { weth, dai, vault, strategist } = fixture;
       const fromAmount = daiUnits("100");
-      const toAmount = utils.parseEther("100");
+      const toAmount = parseEther("100");
 
       // Call swap method
       const tx = vault
@@ -620,13 +613,13 @@ describe("1Inch Swapper", () => {
 
       const deadAddr = "0x1111111111222222222233333333334444444444";
 
-      const data = utils.defaultAbiCoder.encode(
+      const data = AbiCoder.defaultAbiCoder().encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
+        [getBytes(SWAP_SELECTOR), deadAddr, getBytes("0xdead")]
       );
 
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       await weth
         .connect(strategist)
@@ -657,7 +650,7 @@ describe("1Inch Swapper", () => {
         // ).withArgs(
         //   deadAddr,
         //   ['0', 'x'],
-        //   utils.arrayify("0xdead")
+        //   getBytes("0xdead")
       );
 
       const r = await (await tx).wait();
@@ -670,16 +663,16 @@ describe("1Inch Swapper", () => {
       const { swapper1Inch, strategist, weth, frxETH, mock1InchSwapRouter } =
         fixture;
 
-      const data = utils.defaultAbiCoder.encode(
+      const data = AbiCoder.defaultAbiCoder().encode(
         ["bytes4", "uint256[]"],
         [
-          utils.arrayify(UNISWAP_SELECTOR),
+          getBytes(UNISWAP_SELECTOR),
           [BigNumber.from("123"), BigNumber.from("456")],
         ]
       );
 
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       await weth
         .connect(strategist)
@@ -704,16 +697,16 @@ describe("1Inch Swapper", () => {
       const { swapper1Inch, strategist, weth, frxETH, mock1InchSwapRouter } =
         fixture;
 
-      const data = utils.defaultAbiCoder.encode(
+      const data = AbiCoder.defaultAbiCoder().encode(
         ["bytes4", "uint256[]"],
         [
-          utils.arrayify(UNISWAPV3_SELECTOR),
+          getBytes(UNISWAPV3_SELECTOR),
           [BigNumber.from("123"), BigNumber.from("456")],
         ]
       );
 
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       await weth
         .connect(strategist)
@@ -739,13 +732,13 @@ describe("1Inch Swapper", () => {
 
       const deadAddr = "0x1111111111222222222233333333334444444444";
 
-      const data = utils.defaultAbiCoder.encode(
+      const data = AbiCoder.defaultAbiCoder().encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
+        [getBytes(SWAP_SELECTOR), deadAddr, getBytes("0xdead")]
       );
 
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       await frxETH
         .connect(strategist)
@@ -766,13 +759,13 @@ describe("1Inch Swapper", () => {
 
       const deadAddr = "0x1111111111222222222233333333334444444444";
 
-      const data = utils.defaultAbiCoder.encode(
+      const data = AbiCoder.defaultAbiCoder().encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
+        [getBytes(SWAP_SELECTOR), deadAddr, getBytes("0xdead")]
       );
 
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = parseEther("100");
+      const toAmount = parseEther("100");
 
       await weth
         .connect(strategist)

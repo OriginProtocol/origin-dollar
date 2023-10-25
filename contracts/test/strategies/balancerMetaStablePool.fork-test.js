@@ -1,6 +1,6 @@
 const { expect } = require("chai");
-const { formatUnits } = require("ethers").utils;
-const { BigNumber } = require("ethers");
+const { formatUnits } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");

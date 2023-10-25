@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const { isMainnet, isFork } = require("../test/helpers.js");
 const { proposeArgs } = require("../utils/governor");
 const {

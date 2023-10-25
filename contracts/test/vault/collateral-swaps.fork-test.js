@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { parseUnits, formatUnits } = require("ethers/lib/utils");
+const { parseUnits, formatUnits } = require("ethers");
 
 const {
   createFixtureLoader,

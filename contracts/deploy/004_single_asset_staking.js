@@ -8,7 +8,7 @@ const {
   isTest,
   isMainnetOrFork,
 } = require("../test/helpers.js");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const {
   log,
   deployWithConfirmation,

@@ -3,9 +3,9 @@
 */
 const process = require("process");
 const fs = require("fs");
-const { ethers, getNamedAccounts } = require("hardhat");
-const { BigNumber } = ethers;
-const { parseUnits } = ethers.utils;
+const { getNamedAccounts } = require("hardhat");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { parseUnits, formatUnits } = require("ethers");
 
 const { withConfirmation } = require("../../utils/deploy");
 const { hashFileContents } = require("../../utils/fileSystem");
@@ -66,16 +66,13 @@ async function verify(expectedAccounts, dataFileLocation) {
   const expectedTotal = total(expectedAccounts);
   const actualTotal = await getBlockchainTotal();
   console.log(
-    `Expected total (from csv file): ${await ethers.utils.formatUnits(
+    `Expected total (from csv file): ${await formatUnits(
       expectedTotal,
       18
     )} OUSD`
   );
   console.log(
-    `Actual total (contract state): ${await ethers.utils.formatUnits(
-      actualTotal,
-      18
-    )} OUSD`
+    `Actual total (contract state): ${await formatUnits(actualTotal, 18)} OUSD`
   );
 
   console.log(

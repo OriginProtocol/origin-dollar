@@ -3,7 +3,8 @@
 //
 
 const hre = require("hardhat");
-const { BigNumber, utils } = require("ethers");
+const { Interface, parseEther } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const {
   advanceTime,
@@ -91,9 +92,10 @@ const withConfirmation = async (
   logContractAbi = false
 ) => {
   const result = await deployOrTransactionPromise;
-  const receipt = await hre.ethers.provider.waitForTransaction(
+  (await hre.ethers.provider.getTransaction(result.receipt ? result.receipt.transactionHash : result.hash)).wait(NUM_CONFIRMATIONS)
+  const receipt = await hre.ethers.provider.getTransactionReceipt(
     result.receipt ? result.receipt.transactionHash : result.hash,
-    NUM_CONFIRMATIONS
+    // NUM_CONFIRMATIONS
   );
 
   // Transaction is initializing upgradeable proxy "initialize(address,address,bytes)"
@@ -103,7 +105,7 @@ const withConfirmation = async (
   }
 
   if (logContractAbi) {
-    let contractInterface = new ethers.utils.Interface(logContractAbi);
+    let contractInterface = new Interface(logContractAbi);
     receipt.parsedLogs = receipt.logs.map((log) =>
       contractInterface.parseLog(log)
     );
@@ -146,7 +148,7 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const bestSigner = await findBestMainnetTokenHolder(null, hre);
   await bestSigner.sendTransaction({
     to: guardianAddr,
-    value: utils.parseEther("100"),
+    value: parseEther("100"),
   });
 
   await hre.network.provider.request({
@@ -165,7 +167,7 @@ const impersonateAccount = async (address) => {
   const bestSigner = await findBestMainnetTokenHolder(null, hre);
   await bestSigner.sendTransaction({
     to: address,
-    value: utils.parseEther("100"),
+    value: parseEther("100"),
   });
 
   await hre.network.provider.request({
@@ -954,7 +956,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       const { deployerAddr } = await getNamedAccounts();
       await hre.network.provider.request({
         method: "hardhat_setBalance",
-        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+        params: [deployerAddr, parseEther("1000000").toHexString()],
       });
     }
     await runDeployment(hre);

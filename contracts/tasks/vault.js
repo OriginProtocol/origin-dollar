@@ -1,4 +1,4 @@
-const { parseUnits } = require("ethers/lib/utils");
+const { parseUnits } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");

@@ -1,7 +1,8 @@
 const { deploymentWithGuardianGovernor } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hre = require("hardhat");
-const { BigNumber, utils } = require("ethers");
+const { parseUnits } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 const { getAssetAddresses } = require("../test/helpers.js");
 
 // 5/8 multisig
@@ -106,17 +107,15 @@ const deployCore = async ({
   );
 
   await withConfirmation(
-    cVault
-      .connect(sDeployer)
-      .setAutoAllocateThreshold(utils.parseUnits("10", 18))
+    cVault.connect(sDeployer).setAutoAllocateThreshold(parseUnits("10", 18))
   );
 
   await withConfirmation(
-    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("1", 18))
+    cVault.connect(sDeployer).setRebaseThreshold(parseUnits("1", 18))
   );
 
   await withConfirmation(
-    cVault.connect(sDeployer).setMaxSupplyDiff(utils.parseUnits("3", 16))
+    cVault.connect(sDeployer).setMaxSupplyDiff(parseUnits("3", 16))
   );
 
   await withConfirmation(
@@ -202,7 +201,7 @@ const deployCore = async ({
         "Origin Ether",
         "OETH",
         cVaultProxy.address,
-        utils.parseUnits("1", 27).sub(BigNumber.from(1)),
+        parseUnits("1", 27).sub(BigNumber.from(1)),
       ],
     },
   ];

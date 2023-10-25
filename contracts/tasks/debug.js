@@ -1,5 +1,4 @@
-const { utils } = require("ethers");
-const { formatUnits } = utils;
+const { formatUnits } = require("ethers");
 
 const erc20Abi = require("../test/abi/erc20.json");
 const addresses = require("../utils/addresses");

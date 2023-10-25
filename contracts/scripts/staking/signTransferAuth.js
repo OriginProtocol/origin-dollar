@@ -7,7 +7,7 @@
 //
 //
 const { ethers } = require("hardhat");
-const { utils, BigNumber, Wallet } = require("ethers");
+const { utils, Wallet } = require("ethers").ethers;
 
 async function signForTransfer(pk, toAddress) {
   const wallet = new Wallet(pk);

@@ -4,7 +4,7 @@ const {
 } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hre = require("hardhat");
-const { utils, Contract } = require("ethers");
+const { utils, Contract } = require("ethers").ethers;
 const { getAssetAddresses, isMainnet } = require("../test/helpers.js");
 const { MAX_UINT256, oethPoolLpPID } = require("../utils/constants");
 const crvRewards = "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";

@@ -1,4 +1,5 @@
-const { utils, BigNumber } = require("ethers");
+const { solidityKeccak256, keccak256, concat } = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
 
 const extractOGNAmount = (payoutList) => {
   return {
@@ -26,7 +27,7 @@ const getTotals = (payoutList) => {
 };
 
 const hash = (index, type, contract, address, duration, rate, amount) => {
-  return utils.solidityKeccak256(
+  return solidityKeccak256(
     ["uint", "uint8", "address", "address", "uint", "uint", "uint"],
     [index, type, contract, address, duration, rate, amount]
   );
@@ -46,7 +47,7 @@ const reduceMerkleBranches = (leaves) => {
   while (leaves.length) {
     var left = leaves.shift();
     var right = leaves.length === 0 ? left : leaves.shift();
-    output.push(utils.keccak256(utils.concat([left, right])));
+    output.push(keccak256(concat([left, right])));
   }
 
   output.forEach(function (leaf) {
@@ -88,7 +89,7 @@ const verifyMerkleSignature = (
   }
 
   const nodeHash = (node1, node2) => {
-    return utils.solidityKeccak256(["bytes", "bytes"], [node1, node2]);
+    return solidityKeccak256(["bytes", "bytes"], [node1, node2]);
   };
 
   let node = hash(
@@ -104,9 +105,9 @@ const verifyMerkleSignature = (
   let path = index;
   for (let i = 0; i < merkleProof.length; i++) {
     if ((path & 0x01) == 1) {
-      node = utils.keccak256(utils.concat([merkleProof[i], node]));
+      node = keccak256(concat([merkleProof[i], node]));
     } else {
-      node = utils.keccak256(utils.concat([node, merkleProof[i]]));
+      node = keccak256(concat([node, merkleProof[i]]));
     }
     path /= 2;
   }

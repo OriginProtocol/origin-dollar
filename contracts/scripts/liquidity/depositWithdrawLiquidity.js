@@ -2,7 +2,7 @@
 // then exiting after waiting for N blocks.
 
 const { ethers, getNamedAccounts } = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
 const USDTAbiContainer = require("../../test/abi/usdt.json");

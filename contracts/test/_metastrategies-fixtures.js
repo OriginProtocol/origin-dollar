@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { formatUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { formatUnits } = require("ethers");
 
 const { ousdUnits } = require("./helpers");
 const {
@@ -164,7 +165,7 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  let acc = ethers.BigNumber.from("0");
+  let acc = BigNumber.from("0");
   /* self deploy 90% of threepool coin liquidity until pool has at least five times
    * the 3crvLP liquidity comparing to main coin.
    */
@@ -193,7 +194,7 @@ async function tiltToMainToken(fixture) {
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  let acc = ethers.BigNumber.from("0");
+  let acc = BigNumber.from("0");
 
   /* self deploy 90% of main coin liquidity until at least five times the main coin liquidity
    * comparing to 3crv is deployed to the pool.

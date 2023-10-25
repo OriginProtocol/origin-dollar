@@ -1,9 +1,32 @@
-const { parseUnits } = require("ethers").utils;
+const hre = require("hardhat")
+const { parseUnits } = require("ethers");
 const { isMainnetOrFork } = require("../test/helpers");
 const { threeCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/deploy");
 
 const addresses = require("../utils/addresses");
+
+const _gca = hre.ethers.getContractAt.bind(hre)
+
+async function _getContractAt(...args) {
+  const contract = await _gca(...args)
+  contract.address = contract.target
+  return contract
+}
+
+ethers.getContract = async (contractName) => {
+  const delpoyedContract = await hre.deployments.get(contractName)
+  const contract = await _getContractAt(
+    delpoyedContract.abi,
+    delpoyedContract.address
+  )
+
+  contract.address = contract.target
+
+  return contract
+};
+
+ethers.getContractAt = _getContractAt
 
 const {
   abi: FACTORY_ABI,

@@ -15,7 +15,7 @@
 //      }
 //
 //
-const ethers = require("ethers");
+const ethers = require("ethers").ethers;
 const fs = require("fs");
 const { utils } = ethers;
 

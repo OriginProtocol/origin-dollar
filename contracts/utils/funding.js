@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { utils } = require("ethers").ethers;
 
 const addresses = require("./addresses");
 const daiAbi = require("../test/abi/dai.json").abi;

@@ -1,5 +1,6 @@
 // Ethereum transaction related utilities
-const ethers = require("ethers");
+const { BigNumber } = require("@ethersproject/bignumber");
+const { JsonRpcProvider, formatUnits } = require("ethers");
 
 /**
  * Calculates an above average gas price.
@@ -9,31 +10,32 @@ const ethers = require("ethers");
  * @returns {Promise<BigNumber>}
  */
 async function premiumGasPrice(multiplier) {
-  const gasPriceMultiplier = ethers.BigNumber.from(
+  const gasPriceMultiplier = BigNumber.from(
     Math.floor(100 * Number(multiplier))
   );
-  const gasPriceDivider = ethers.BigNumber.from(100);
+  const gasPriceDivider = BigNumber.from(100);
 
   if (gasPriceMultiplier.lt(100) || gasPriceMultiplier.gt(200)) {
     throw new Error(`premiumGasPrice called with multiplier out of range`);
   }
 
   // Get current gas price from the network.
-  const provider = new ethers.providers.JsonRpcProvider(
+  const provider = new JsonRpcProvider(
     process.env.PROVIDER_URL
   );
-  const gasPrice = await provider.getGasPrice();
 
-  const premiumGasPrice = gasPrice.mul(gasPriceMultiplier).div(gasPriceDivider);
+  const { gasPrice } = await provider.getFeeData();
 
-  if (process.env.VERBOSE) {
-    console.log(
-      `Gas price (gwei): Regular=${ethers.utils.formatUnits(
-        gasPrice,
-        "gwei"
-      )} Premium=${ethers.utils.formatUnits(premiumGasPrice, "gwei")}`
-    );
-  }
+  const premiumGasPrice = BigNumber.from(gasPrice.toString()).mul(gasPriceMultiplier).div(gasPriceDivider);
+
+  // if (process.env.VERBOSE) {
+  //   console.log(
+  //     `Gas price (gwei): Regular=${formatUnits(
+  //       gasPrice,
+  //       "gwei"
+  //     )} Premium=${formatUnits(premiumGasPrice, "gwei")}`
+  //   );
+  // }
 
   return premiumGasPrice;
 }

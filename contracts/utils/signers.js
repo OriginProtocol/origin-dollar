@@ -1,4 +1,4 @@
-const { parseEther, Wallet } = require("ethers").utils;
+const { parseEther, Wallet } = require("ethers");
 const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");

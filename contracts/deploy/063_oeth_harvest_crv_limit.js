@@ -1,4 +1,4 @@
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers");
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 /* The 059 harvest change proposal has timed out. This just re-submits it.

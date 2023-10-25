@@ -13,7 +13,7 @@
 //
 
 const { ethers, getNamedAccounts } = require("hardhat");
-const { utils } = require("ethers");
+const { parseUnits, isAddress } = require("ethers");
 
 const { isMainnet } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
@@ -184,7 +184,7 @@ async function proposeSetMaxSupplyDiffArgs() {
     {
       contract: vaultAdmin,
       signature: "setMaxSupplyDiff(uint256)",
-      args: [utils.parseUnits("5", 16)], // 5%
+      args: [parseUnits("5", 16)], // 5%
     },
   ]);
   const description = "Set maxSupplyDiff";
@@ -510,17 +510,17 @@ async function proposeAddStrategiesArgs() {
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [curveUSDTStrategyProxy.address, utils.parseUnits("1", 18)],
+      args: [curveUSDTStrategyProxy.address, parseUnits("1", 18)],
     },
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [curveUSDCStrategyProxy.address, utils.parseUnits("1", 18)],
+      args: [curveUSDCStrategyProxy.address, parseUnits("1", 18)],
     },
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [compoundStrategyProxy.address, utils.parseUnits("5", 17)],
+      args: [compoundStrategyProxy.address, parseUnits("5", 17)],
     },
   ]);
   const description = "Add strategies";
@@ -547,7 +547,7 @@ async function proposeUpgradeCurveStrategiesArgs() {
     {
       contract: vaultAdmin,
       signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("999", 15)], // set buffer to 99.9% using precision 18
+      args: [parseUnits("999", 15)], // set buffer to 99.9% using precision 18
     },
     {
       contract: cCurveUSDCStrategyProxy,
@@ -585,7 +585,7 @@ async function proposeAddAaveStrategyAndUpgradeCurveUsdtArgs() {
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [aaveStrategyProxy.address, utils.parseUnits("5", 17)], // 50% in 18 digits precision.
+      args: [aaveStrategyProxy.address, parseUnits("5", 17)], // 50% in 18 digits precision.
     },
     {
       contract: cCurveUSDTStrategyProxy,
@@ -609,7 +609,7 @@ async function proposeSetVaultBufferArgs() {
     {
       contract: vaultAdmin,
       signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("1", 18)],
+      args: [parseUnits("1", 18)],
     },
   ]);
   const description = "Set vault buffer to 100%";
@@ -728,17 +728,17 @@ async function proposeProp17Args() {
     {
       contract: cCompoundStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+      args: [parseUnits("1", 18)], // 1 COMP with precision 18
     },
     {
       contract: cCurveUSDCStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+      args: [parseUnits("200", 18)], // 200 CRV with precision 18
     },
     {
       contract: cCurveUSDTStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+      args: [parseUnits("200", 18)], // 200 CRV with precision 18
     },
   ]);
   const description = "Prop 16";
@@ -758,7 +758,7 @@ async function proposeSetRewardLiquidationThresholdArgs() {
     {
       contract: cCompoundStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+      args: [parseUnits("1", 18)], // 1 COMP with precision 18
     },
   ]);
   const description = "Set rewardLiquidationThreshold to 1 COMP";
@@ -857,7 +857,7 @@ async function proposeSettingUpdatesArgs() {
     {
       contract: vaultAdmin,
       signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("5", 15)], // set buffer to 0.5% at precision 18
+      args: [parseUnits("5", 15)], // set buffer to 0.5% at precision 18
     },
     {
       contract: cCompoundStrategy,
@@ -1100,10 +1100,9 @@ async function main(config) {
       .propose(...propArgs, description, await getTxOpts());
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
+
+    (await hre.ethers.provider.getTransaction(transaction.hash)).wait(NUM_CONFIRMATIONS)
+
     console.log("Propose tx confirmed");
   } else {
     console.log("Would send a tx to call propose() on", governor.address);
@@ -1182,7 +1181,7 @@ const config = {
 
 // Validate arguments.
 if (config.address) {
-  if (!utils.isAddress(config.address)) {
+  if (!isAddress(config.address)) {
     throw new Error(`Invalid Ethereum address ${config.address}`);
   }
 }
