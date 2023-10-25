@@ -7,13 +7,13 @@ const {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   oeth1InchSwapperFixture,
-  impersonateAndFundContract,
 } = require("../fixture/_fixture");
 const {
   SWAP_SELECTOR,
   UNISWAP_SELECTOR,
   UNISWAPV3_SELECTOR,
 } = require("../../utils/1Inch");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:oeth:swapper");
 
@@ -297,7 +297,7 @@ describe("1Inch Swapper", () => {
       const toAmount = utils.parseEther("100");
 
       // Fund Vault with some assets
-      const vaultSigner = await impersonateAndFundContract(oethVault.address);
+      const vaultSigner = await impersonateAndFund(oethVault.address);
       await weth.connect(vaultSigner).mint(fromAmount);
 
       await oethVault.connect(strategist).pauseCapital();
@@ -578,7 +578,7 @@ describe("1Inch Swapper", () => {
       const toAmount = usdtUnits("100");
 
       // Fund Vault with some assets
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       await dai.connect(vaultSigner).mint(fromAmount);
 
       await vault.connect(strategist).pauseCapital();
@@ -783,7 +783,7 @@ describe("1Inch Swapper", () => {
 
       // Reset allowance
       await weth
-        .connect(await impersonateAndFundContract(swapper1Inch.address))
+        .connect(await impersonateAndFund(swapper1Inch.address))
         .approve(mock1InchSwapRouter.address, 0);
 
       const tx = swapper1Inch

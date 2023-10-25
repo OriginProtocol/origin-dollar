@@ -11,6 +11,7 @@ const {
   tiltToMainToken,
   tiltTo3CRV_Metapool_automatic,
 } = require("../fixture/_metastrategies-fixtures");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const metastrategies = [
   {
@@ -121,16 +122,7 @@ metastrategies.forEach((config) => {
 
           const { vault, usdt, anna } = fixture;
 
-          await hre.network.provider.request({
-            method: "hardhat_setBalance",
-            params: [vault.address, "0x1bc16d674ec80000"], // 2 Eth
-          });
-          await hre.network.provider.request({
-            method: "hardhat_impersonateAccount",
-            params: [vault.address],
-          });
-
-          const sVault = await ethers.provider.getSigner(vault.address);
+          const sVault = await impersonateAndFund(vault.address);
 
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
@@ -185,14 +177,7 @@ metastrategies.forEach((config) => {
 
           const { vault, usdt, anna } = fixture;
 
-          await hre.network.provider.request({
-            method: "hardhat_setBalance",
-            params: [vault.address, "0x1bc16d674ec80000"], // 2 Eth
-          });
-          await hre.network.provider.request({
-            method: "hardhat_impersonateAccount",
-            params: [vault.address],
-          });
+          await impersonateAndFund(vault.address);
 
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();

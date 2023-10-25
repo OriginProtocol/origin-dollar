@@ -1,15 +1,14 @@
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
 
 const { oethUnits, units } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
-
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-  impersonateAndFundContract,
 } = require("../fixture/_fixture");
-const { BigNumber } = require("ethers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("FraxETH Strategy", function () {
   let fixture;
@@ -177,7 +176,7 @@ describe("FraxETH Strategy", function () {
   describe("Deposit", function () {
     it("Should deposit frxETH from Vault", async () => {
       const { frxETH, sfrxETH, daniel, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -198,7 +197,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should deposit WETH from Vault", async () => {
       const { weth, sfrxETH, domen, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -220,7 +219,7 @@ describe("FraxETH Strategy", function () {
     it("Should allow to deposit all supported assets", async () => {
       const { frxETH, weth, matt, sfrxETH, fraxEthStrategy, oethVault } =
         fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -244,7 +243,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should revert when depositing nothing", async () => {
       const { frxETH, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
       const tx = fraxEthStrategy
@@ -255,7 +254,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should not deposit any unsupported asset", async () => {
       const { reth, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
       const tx = fraxEthStrategy

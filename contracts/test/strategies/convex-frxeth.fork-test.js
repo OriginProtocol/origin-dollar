@@ -1,19 +1,19 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const addresses = require("../../utils/addresses");
-const {
-  convex_frxETH_WETH_PID,
-  MAX_UINT256,
-} = require("../../utils/constants");
 const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
-  impersonateAndFundContract,
   loadDefaultFixture,
 } = require("../fixture/_fixture");
+const addresses = require("../../utils/addresses");
 const { resolveAsset } = require("../../utils/assets");
+const {
+  convex_frxETH_WETH_PID,
+  MAX_UINT256,
+} = require("../../utils/constants");
+const { impersonateAndFund } = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
@@ -535,7 +535,7 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         );
         log(`expected LP amount: ${formatUnits(expectedLpAmount)}`);
 
-        const curveGaugeSigner = await impersonateAndFundContract(
+        const curveGaugeSigner = await impersonateAndFund(
           addresses.mainnet.CurveFrxEthWethGauge
         );
         const amounts = [0, 0];

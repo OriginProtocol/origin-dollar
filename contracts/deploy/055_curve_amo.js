@@ -1,12 +1,12 @@
-const {
-  deploymentWithGuardianGovernor,
-  impersonateAccount,
-} = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hre = require("hardhat");
 const { utils, Contract } = require("ethers");
+
 const { getAssetAddresses, isMainnet } = require("../test/helpers.js");
 const { MAX_UINT256, convex_OETH_ETH_PID } = require("../utils/constants");
+const { deploymentWithGuardianGovernor } = require("../utils/deploy");
+const { impersonateAndFund } = require("../utils/signers");
+
 const crvRewards = "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 const poolAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
 const tokenAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
@@ -335,10 +335,7 @@ const deployCurve = async ({ withConfirmation, ethers }) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const gaugeControllerAdmin = "0x40907540d8a6C65c637785e8f8B742ae6b0b9968";
-  await impersonateAccount(gaugeControllerAdmin);
-  const sGaugeControllerAdmin = await ethers.provider.getSigner(
-    gaugeControllerAdmin
-  );
+  const sGaugeControllerAdmin = await impersonateAndFund(gaugeControllerAdmin);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cVault = await ethers.getContractAt(
     "OETHVaultCore",
@@ -409,9 +406,9 @@ const deployCurve = async ({ withConfirmation, ethers }) => {
   const weth_whale = "0x44cc771fbe10dea3836f37918cf89368589b6316";
   const reth_whale = "0x5313b39bf226ced2332C81eB97BB28c6fD50d1a3";
 
-  await impersonateAccount(weth_whale);
+  await impersonateAndFund(weth_whale);
   const sWethWhale = await ethers.provider.getSigner(weth_whale);
-  await impersonateAccount(reth_whale);
+  await impersonateAndFund(reth_whale);
   const sRethWhale = await ethers.provider.getSigner(reth_whale);
 
   await reth
