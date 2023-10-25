@@ -8,7 +8,7 @@ require("./_global-hooks");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
-const { setChainlinkOraclePrice } = require("../utils/oracle");
+//const { setChainlinkOraclePrice } = require("../utils/oracle");
 const {
   replaceContractAt,
   // deployWithConfirmation,
@@ -30,7 +30,7 @@ const {
   units,
   isFork,
 } = require("./helpers");
-const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
+const { hardhatSetBalance } = require("./_fund");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
