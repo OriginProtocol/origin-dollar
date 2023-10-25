@@ -771,6 +771,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
 
       attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
       sAttacker = await impersonateAndFund(attackerAddress);
+      sAttacker.address = attackerAddress
       await setERC20TokenBalance(attackerAddress, weth, "500000");
     });
 
