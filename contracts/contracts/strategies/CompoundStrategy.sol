@@ -217,7 +217,7 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @notice Approve the spending of all assets by their corresponding cToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external override {
+    function safeApproveAllTokens() external override onlyGovernor {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; ++i) {
             IERC20 asset = IERC20(assetsMapped[i]);
