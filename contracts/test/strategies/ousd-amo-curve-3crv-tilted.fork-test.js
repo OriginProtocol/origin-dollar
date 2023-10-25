@@ -1,21 +1,27 @@
 const { expect } = require("chai");
 
-const { forkOnlyDescribe, units, ousdUnits, isCI } = require("../helpers");
+const { units, ousdUnits, isCI } = require("../helpers");
 const { createFixtureLoader } = require("../fixture/_fixture");
-const { withCRV3TitledOUSDMetapool } = require("../fixture/_metastrategies-fixtures");
+const {
+  withCRV3TitledOUSDMetapool,
+} = require("../fixture/_metastrategies-fixtures");
 
-forkOnlyDescribe(
-  "ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to 3CRV",
-  function () {
-    this.timeout(0);
+describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to 3CRV", function () {
+  this.timeout(0);
 
-    // Retry up to 3 times on CI
-    this.retries(isCI ? 3 : 0);
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
-    let fixture;
-    const loadFixture = createFixtureLoader(withCRV3TitledOUSDMetapool);
-    beforeEach(async () => {
-      fixture = await loadFixture();
+  let fixture;
+  const loadFixture = createFixtureLoader(withCRV3TitledOUSDMetapool);
+  beforeEach(async () => {
+    fixture = await loadFixture();
+  });
+
+  describe("Mint", function () {
+    it("Should stake USDT in Curve gauge via metapool", async function () {
+      const { josh, usdt } = fixture;
+      await mintTest(fixture, josh, usdt, "200000");
     });
 
     describe("Mint", function () {
@@ -91,8 +97,8 @@ forkOnlyDescribe(
         expect(supplyDiff).to.be.gte(ousdUnits("29900"));
       });
     });
-  }
-);
+  });
+});
 
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, convexOusdAMOStrategy, cvxRewardPool } = fixture;

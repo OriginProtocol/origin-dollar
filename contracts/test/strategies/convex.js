@@ -55,7 +55,7 @@ describe("Convex Strategy", function () {
   describe("Setup", () => {
     it("Should have immutables set", async () => {
       const { dai, usdc, usdt, convexStrategy } = fixture;
-      expect(await convexStrategy.CURVE_BASE_ASSETS()).to.equal(3);
+      expect(await convexStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(3);
       expect(await convexStrategy.coin0()).to.equal(dai.address);
       expect(await convexStrategy.coin1()).to.equal(usdc.address);
       expect(await convexStrategy.coin2()).to.equal(usdt.address);

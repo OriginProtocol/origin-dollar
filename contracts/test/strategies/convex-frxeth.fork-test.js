@@ -2,8 +2,11 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { convex_frxETH_WETH_PID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const {
+  convex_frxETH_WETH_PID,
+  MAX_UINT256,
+} = require("../../utils/constants");
+const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
@@ -12,16 +15,16 @@ const {
 } = require("../fixture/_fixture");
 const { resolveAsset } = require("../../utils/assets");
 
-const log = require("../../utils/logger")("test:fork:convex:frxETH");
+const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
-forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
+describe("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
   let fixture;
 
-  const supportedAssets = ["frxETH", "WETH"];
+  const supportedAssets = ["WETH", "frxETH"];
 
   describe("with mainnet data", () => {
     beforeEach(async () => {
@@ -30,16 +33,44 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
     it("Should have constants and immutables set", async () => {
       const { convexFrxEthWethStrategy } = fixture;
 
+      // Constants
       expect(await convexFrxEthWethStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
-      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
+
+      // Immutables
+      expect(await convexFrxEthWethStrategy.platformAddress()).to.equal(
+        addresses.mainnet.CurveFrxEthWethPool
+      );
+      expect(await convexFrxEthWethStrategy.vaultAddress()).to.equal(
+        addresses.mainnet.OETHVaultProxy
+      );
+      expect(await convexFrxEthWethStrategy.harvesterAddress()).to.equal(
+        addresses.mainnet.OETHHarvesterProxy
+      );
+      // Coins
+      expect(await convexFrxEthWethStrategy.coin0()).to.equal(
+        addresses.mainnet.WETH
+      );
+      expect(await convexFrxEthWethStrategy.coin1()).to.equal(
+        addresses.mainnet.frxETH
+      );
+      expect(await convexFrxEthWethStrategy.coin2()).to.equal(addresses.zero);
+      // Decimals
+      expect(await convexFrxEthWethStrategy.decimals0()).to.equal(18);
+      expect(await convexFrxEthWethStrategy.decimals1()).to.equal(18);
+      expect(await convexFrxEthWethStrategy.decimals2()).to.equal(0);
+      // Curve pool
+      expect(await convexFrxEthWethStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(
+        2
+      );
       expect(await convexFrxEthWethStrategy.CURVE_POOL()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
       expect(await convexFrxEthWethStrategy.CURVE_LP_TOKEN()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
+      // Convex pool
       expect(await convexFrxEthWethStrategy.cvxDepositor()).to.equal(
         addresses.mainnet.CVXBooster
       );
@@ -49,6 +80,22 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.cvxDepositorPoolId()).to.equal(
         convex_frxETH_WETH_PID
       );
+
+      // Storage slots
+      // Rewards
+      expect(await convexFrxEthWethStrategy.rewardTokenAddresses(0)).to.equal(
+        addresses.mainnet.CRV
+      );
+      expect(await convexFrxEthWethStrategy.rewardTokenAddresses(1)).to.equal(
+        addresses.mainnet.CVX
+      );
+      // assets to platform address
+      expect(
+        await convexFrxEthWethStrategy.assetToPToken(addresses.mainnet.WETH)
+      ).to.equal(addresses.mainnet.CurveFrxEthWethPool);
+      expect(
+        await convexFrxEthWethStrategy.assetToPToken(addresses.mainnet.frxETH)
+      ).to.equal(addresses.mainnet.CurveFrxEthWethPool);
     });
     supportedAssets.forEach((symbol) => {
       it(`Should be able to check the ${symbol} balance`, async () => {
@@ -64,6 +111,37 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         expect(await convexFrxEthWethStrategy.supportsAsset(asset.address)).to
           .be.true;
       });
+    });
+    it("Should be able to re-approve tokens by Governor", async () => {
+      const { convexFrxEthWethStrategy, frxETH, weth, timelock } = fixture;
+      await convexFrxEthWethStrategy.connect(timelock).safeApproveAllTokens();
+      expect(
+        await frxETH.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CurveFrxEthWethPool
+        )
+      ).to.eq(MAX_UINT256);
+      expect(
+        await weth.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CurveFrxEthWethPool
+        )
+      ).to.eq(MAX_UINT256);
+
+      // Strategy approves the Convex Booster to stake Curve Pool LP tokens
+      const curvePoolLpToken = await ethers.getContractAt(
+        "IERC20",
+        addresses.mainnet.CurveFrxEthWethPool
+      );
+      expect(
+        await curvePoolLpToken.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CVXBooster
+        )
+      ).to.eq(MAX_UINT256);
+
+      // Run a second time
+      await convexFrxEthWethStrategy.connect(timelock).safeApproveAllTokens();
     });
   });
 

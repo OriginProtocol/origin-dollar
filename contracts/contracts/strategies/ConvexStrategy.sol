@@ -3,7 +3,18 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Convex Strategy
- * @notice Investment strategy for investing stablecoins via Curve 3Pool
+ * @notice Investment strategy for investing Curve Liquidity Provider (LP) tokens in Convex pools.
+ * @dev This strategy can NOT be set as the Vault's default strategy for an asset.
+ * This is because deposits and withdraws can be sandwich attacked if not protected
+ * by the `VaultValueChecker`. Only the trusted `Strategist` or `Governor` can call
+ * the Vault deposit and withdraw functions for a strategy. When they do, they must call
+ * `VaultValueChecker.takeSnapshot` before and `VaultValueChecker.checkDelta` afterwards.
+ *
+ * When implementing for a new Curve pool, read-only reentrancy needs to be checked.
+ * This is possible in some Curve pools when using native ETH or a token that has hooks
+ * that can hijack execution. For example, the Curve ETH/stETH pool is vulnerable to
+ * read-only reentry.
+ * https://x.com/danielvf/status/1657019677544001536
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -26,13 +37,13 @@ contract ConvexStrategy is BaseCurveStrategy {
     using SafeERC20 for IERC20;
 
     // slither-disable-next-line constable-states
-    address private _deprecatedCvxDepositorAddress;
+    address private _deprecated_CvxDepositorAddress;
     // slither-disable-next-line constable-states
-    address private _deprecatedCvxRewardStakerAddress;
+    address private _deprecated_CvxRewardStakerAddress;
     // slither-disable-next-line constable-states
     address private _deprecated_cvxRewardTokenAddress;
     // slither-disable-next-line constable-states
-    uint256 private _deprecatedCvxDepositorPTokenId;
+    uint256 private _deprecated_CvxDepositorPTokenId;
 
     /// @notice Convex deposit contract
     address public immutable cvxDepositor;
@@ -43,7 +54,6 @@ contract ConvexStrategy is BaseCurveStrategy {
 
     struct ConvexConfig {
         address cvxDepositor;
-        address cvxRewardStaker;
         uint256 cvxDepositorPoolId;
     }
 
@@ -56,8 +66,12 @@ contract ConvexStrategy is BaseCurveStrategy {
         BaseCurveStrategy(_curveConfig)
     {
         cvxDepositor = _convexConfig.cvxDepositor;
-        cvxRewardStaker = _convexConfig.cvxRewardStaker;
         cvxDepositorPoolId = _convexConfig.cvxDepositorPoolId;
+
+        // Get the Convex Rewards contract for the Convex pool
+        (, , , cvxRewardStaker, , ) = IConvexDeposits(
+            _convexConfig.cvxDepositor
+        ).poolInfo(_convexConfig.cvxDepositorPoolId);
     }
 
     /**
@@ -74,7 +88,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
         require(
-            _assets.length == CURVE_BASE_ASSETS,
+            _assets.length == CURVE_POOL_ASSETS_COUNT,
             "Incorrect number of assets"
         );
 
@@ -86,8 +100,14 @@ contract ConvexStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
+    /**
+     * @dev deposit the Curve LP tokens into the Convex pool and
+     * stake the Convex LP tokens.
+     *
+     * This will revert if the Convex pool has been shut down.
+     */
     function _lpDepositAll() internal override {
-        // Deposit the Curve LP tokens into the Convex pool and stake
+        // Deposit the Curve LP tokens into the Convex pool and stake.
         require(
             IConvexDeposits(cvxDepositor).deposit(
                 cvxDepositorPoolId,
@@ -98,7 +118,17 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
     }
 
+    /**
+     * @dev Unstake a required amount of Convex LP token and withdraw the Curve LP tokens from the Convex pool.
+     * This assumes 1 Convex LP token equals 1 Curve LP token.
+     * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
+     * Collecting token rewards now just adds extra gas as they will sit in the strategy until
+     * the Harvester collects more rewards and swaps them for a vault asset.
+     *
+     * This will NOT revert if the Convex pool has been shut down.
+     */
     function _lpWithdraw(uint256 requiredLpTokens) internal override {
+        // Get the actual amount of Convex LP tokens staked.
         uint256 actualLpTokens = IRewardStaking(cvxRewardStaker).balanceOf(
             address(this)
         );
@@ -109,32 +139,47 @@ contract ConvexStrategy is BaseCurveStrategy {
             "Insufficient Curve LP balance"
         );
 
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
+        // Unstake the Convex LP token and withdraw the Curve LP tokens from the Convex pool to this strategy contract.
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             requiredLpTokens,
-            true // stake
+            false // do not claim Convex token rewards
         );
-    }
-
-    function _lpWithdrawAll() internal override {
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
-        IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
-            IRewardStaking(cvxRewardStaker).balanceOf(address(this)),
-            true // stake
-        );
-    }
-
-    function _approveBase() internal override {
-        IERC20 curveLpToken = IERC20(CURVE_LP_TOKEN);
-        // Approve the Convex deposit contract to transfer the Curve pool's LP token
-        curveLpToken.safeApprove(cvxDepositor, 0);
-        curveLpToken.safeApprove(cvxDepositor, type(uint256).max);
     }
 
     /**
-     * @notice Get the asset's share of value held in the strategy. This is the total value
-     * of the stategy's Curve LP tokens divided by the number of Curve pool assets.
-     * @dev An invalid asset will fail in _getAssetDecimals with "Unsupported asset"
+     * @dev Unstake all the Convex LP tokens and withdraw all the Curve LP tokens from the Convex pool.
+     * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
+     * Collecting token rewards now just adds extra gas as they will sit in the strategy until
+     * the Harvester collects more rewards and swaps them for a vault asset.
+     *
+     * This will NOT revert if the Convex pool has been shut down.
+     */
+    function _lpWithdrawAll() internal override {
+        // Unstake all the Convex LP token and withdraw all the Curve LP tokens
+        // from the Convex pool to this strategy contract.
+        IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
+            IRewardStaking(cvxRewardStaker).balanceOf(address(this)),
+            false // do not claim Convex token rewards
+        );
+    }
+
+    /**
+     * @dev Approve the Convex Depositor contract to transfer Curve LP tokens
+     * from this strategy contract.
+     */
+    function _approveBase() internal override {
+        IERC20 curveLpToken = IERC20(CURVE_LP_TOKEN);
+        // Approve the Convex deposit contract to transfer the Curve pool's LP token
+        // slither-disable-next-line unused-return
+        curveLpToken.approve(cvxDepositor, type(uint256).max);
+    }
+
+    /**
+     * @notice Get the asset's share of Curve LP value controlled by this strategy. This is the total value
+     * of the Curve LP tokens staked in Convex and held in this strategy contract
+     * divided by the number of Curve pool assets.
+     * The average is taken prevent the asset balances being manipulated by tilting the Curve pool.
+     * @dev An invalid `_asset` will fail in `_getAssetDecimals` with "Unsupported asset"
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -159,14 +204,19 @@ contract ConvexStrategy is BaseCurveStrategy {
 
         if (totalLpToken > 0) {
             // get_virtual_price is gas intensive, so only call it if we have LP tokens.
-            // Calculate the value of the Curve LP tokens in USD or ETH
+            // Convert the Curve LP tokens controlled by this strategy to a value in USD or ETH
             uint256 value = (totalLpToken *
                 ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
 
             // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
+            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
+            // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
+            // No matter what the balance of the asset in the Curve pool is, the value of each asset will
+            // be the average of the Curve pool's total value.
+            // _getAssetDecimals will revert if _asset is an invalid asset.
             balance =
                 value.scaleBy(_getAssetDecimals(_asset), 18) /
-                CURVE_BASE_ASSETS;
+                CURVE_POOL_ASSETS_COUNT;
         }
     }
 

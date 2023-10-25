@@ -4,7 +4,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { convex_frxETH_OETH_PID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthAmoFixture,
@@ -13,7 +13,7 @@ const {
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve:frxETH");
 
-forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
+describe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);

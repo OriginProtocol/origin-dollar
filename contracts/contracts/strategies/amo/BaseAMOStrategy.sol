@@ -669,7 +669,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _vaultAsset Address of the vault asset
      */
     function supportsAsset(address _vaultAsset)
-        external
+        public
         view
         override
         returns (bool)

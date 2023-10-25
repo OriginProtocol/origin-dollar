@@ -7,7 +7,6 @@ const {
   impersonateAndFundContract,
 } = require("../fixture/_fixture");
 const {
-  forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
   usdcUnits,
@@ -33,7 +32,7 @@ const log = require("../../utils/logger")("test:fork:ousd:vault");
  * Still open to discussion.
  */
 
-forkOnlyDescribe("ForkTest: Vault", function () {
+describe("ForkTest: Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

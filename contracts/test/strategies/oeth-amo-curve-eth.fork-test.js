@@ -4,7 +4,7 @@ const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
 const { convex_OETH_ETH_PID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexOethEthAmoFixture,
@@ -12,7 +12,7 @@ const {
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve");
 
-forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
+describe("ForkTest: OETH AMO Curve Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);

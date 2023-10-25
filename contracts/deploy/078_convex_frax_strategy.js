@@ -56,11 +56,7 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.CurveFrxEthWethPool, // Curve pool
           addresses.mainnet.CurveFrxEthWethPool, // Curve LP token
         ],
-        [
-          addresses.mainnet.CVXBooster,
-          addresses.mainnet.ConvexFrxEthWethRewardsPool,
-          convex_frxETH_WETH_PID,
-        ],
+        [addresses.mainnet.CVXBooster, convex_frxETH_WETH_PID],
       ],
       null,
       true, // assertUpgradeIsSafe does not support libraries so need to skip it

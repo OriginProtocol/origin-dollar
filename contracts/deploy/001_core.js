@@ -194,12 +194,6 @@ const deployConvexStrategy = async () => {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   await mockBooster.setPool(convex_3CRV_PID, assetAddresses.ThreePoolToken);
-  // Get the convex rewards pool created in the previous setPool call
-  const poolInfo = await mockBooster.poolInfo(convex_3CRV_PID);
-  const mockRewardPool = await ethers.getContractAt(
-    "MockRewardPool",
-    poolInfo.crvRewards
-  );
 
   await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
@@ -220,7 +214,6 @@ const deployConvexStrategy = async () => {
       ],
       [
         mockBooster.address, // _cvxDepositorAddress,
-        mockRewardPool.address, // _cvxRewardStakerAddress,
         convex_3CRV_PID, // _cvxDepositorPTokenId
       ],
     ],
@@ -273,12 +266,6 @@ const deployConvexFrxEthWethStrategy = async () => {
     convex_frxETH_WETH_PID,
     assetAddresses.CurveFrxEthWethPool
   );
-  // Get the convex rewards pool created in the previous setPool call
-  const poolInfo = await mockBooster.poolInfo(convex_frxETH_WETH_PID);
-  const mockRewardPool = await ethers.getContractAt(
-    "MockRewardPool",
-    poolInfo.crvRewards
-  );
 
   await deployWithConfirmation("ConvexFrxEthWethStrategyProxy", [], null, true);
   const cConvexFrxEthWethStrategyProxy = await ethers.getContract(
@@ -303,7 +290,6 @@ const deployConvexFrxEthWethStrategy = async () => {
       ],
       [
         mockBooster.address, // _cvxDepositorAddress,
-        mockRewardPool.address, // _cvxRewardStakerAddress,
         convex_frxETH_WETH_PID, // _cvxDepositorPTokenId
       ],
     ],
