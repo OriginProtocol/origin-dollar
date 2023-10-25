@@ -42,31 +42,36 @@ const findBalancesSlot = async (tokenAddress) => {
   const token = await ethers.getContractAt(erc20Abi, tokenAddress);
 
   for (let i = 0; i < 100; i += 1) {
-    const probedSlot = keccak256(encode(["address", "uint"], [account, i]));
-    if (probedSlot.startsWith("0x0")) continue;
-    // remove padding for JSON RPC
-    // while (probedSlot.startsWith("0x0")) {
-    //     probedSlot = `0x${probedSlot.slice(3)}`
-    // }
-
-    const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
-
-    // make sure the probe will change the slot value
-    const probe = prev === probeA ? probeB : probeA;
-
-    await setStorageAt(tokenAddress, probedSlot, probe);
-
-    const balance = await token.balanceOf(account);
-
-    // reset to previous value
-    await setStorageAt(tokenAddress, probedSlot, prev);
-
-    if (balance.eq(ethrs.BigNumber.from(probe))) {
-      balancesContractSlotCache[tokenAddress] = i;
-      return i;
+    const slots = [
+      keccak256(encode(["address", "uint"], [account, i])),
+      keccak256(encode(["uint", "address"], [i, account])),
+    ]
+    for (const probedSlot of slots) {
+      if (probedSlot.startsWith("0x0")) continue;
+      // remove padding for JSON RPC
+      // while (probedSlot.startsWith("0x0")) {
+      //     probedSlot = `0x${probedSlot.slice(3)}`
+      // }
+  
+      const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
+  
+      // make sure the probe will change the slot value
+      const probe = prev === probeA ? probeB : probeA;
+  
+      await setStorageAt(tokenAddress, probedSlot, probe);
+  
+      const balance = await token.balanceOf(account);
+  
+      // reset to previous value
+      await setStorageAt(tokenAddress, probedSlot, prev);
+  
+      if (balance.eq(ethrs.BigNumber.from(probe))) {
+        balancesContractSlotCache[tokenAddress] = i;
+        return i;
+      }
     }
   }
-  throw new Error("Balances slot not found!");
+  throw new Error(`Balances slot not found for ${tokenAddress}`);
 };
 
 const toBytes32 = (bn) => hexlify(zeroPad(bn.toHexString(), 32));
@@ -170,8 +175,8 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
     account,
     token,
     amount,
-    config[token.address.toLowerCase()]
-      ? config[token.address.toLowerCase()][account]
+    config[token.address]
+      ? config[token.address][account]
       : undefined,
     hre
   );
