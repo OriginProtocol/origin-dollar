@@ -1944,13 +1944,16 @@ async function buybackFixture() {
       addresses.mainnet.uniswapUniversalRouter
     );
 
-    // Mint some OUSD & OETH and send it to buyback contracts
-    await weth.connect(josh).approve(oethVault.address, oethUnits("3"));
-    await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
-    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
-    await dai.connect(josh).approve(vault.address, oethUnits("1000"));
-    await vault.connect(josh).mint(dai.address, oethUnits("1000"), "0");
-    await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("800"));
+    await setERC20TokenBalance(
+      oethBuyback.address,
+      oeth,
+      oethUnits("999999999")
+    );
+    await setERC20TokenBalance(
+      ousdBuyback.address,
+      ousd,
+      ousdUnits("999999999999")
+    );
   } else {
     fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
@@ -1970,7 +1973,7 @@ async function buybackFixture() {
     await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
 
     // Mint some CVX and OGV for the Uniswap Rotuer
-    const routerSigner = await impersonateAndFundContract(
+    const routerSigner = await impersonateAndFund(
       fixture.uniswapRouter.address
     );
     await ogv.connect(routerSigner).mint(ousdUnits("10000000000"));
