@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 
 const {
   createFixtureLoader,
@@ -9,7 +9,7 @@ const {
   impersonateAndFundContract,
 } = require("./../_fixture");
 
-forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
+describe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

@@ -6,9 +6,9 @@ const {
   impersonateAndFundContract,
   createFixtureLoader,
 } = require("../_fixture");
-const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, ousdUnits, isCI } = require("../helpers");
 
-forkOnlyDescribe("Flux strategy", function () {
+describe("Flux strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
