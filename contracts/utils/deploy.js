@@ -4,6 +4,7 @@
 
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const {
   advanceTime,
@@ -31,6 +32,7 @@ const {
 } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
+const { hardhatSetBalance } = require("../test/_fund.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -136,23 +138,14 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
 
   // If an address is passed, use that otherwise default to
   // the guardian address from the default hardhat accounts.
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: guardianAddr,
-    value: utils.parseEther("100"),
-  });
+  impersonateAccount(guardianAddr);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [guardianAddr],
-  });
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
 
@@ -160,18 +153,10 @@ const impersonateAccount = async (address) => {
   if (!isFork) {
     throw new Error("impersonateAccount only works on Fork");
   }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
 
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: address,
-    value: utils.parseEther("100"),
-  });
+  await hardhatSetBalance(address, "1000000");
+  await hhHelpers.impersonateAccount(address);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
   log(`Impersonated Account at ${address}`);
 };
 
