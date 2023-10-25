@@ -411,6 +411,39 @@ const shouldBehaveLikeStrategy = (context) => {
         ).to.revertedWith("Caller is not the Governor");
       }
     });
+    it("Should allow reward tokens to be set by the governor", async () => {
+      const { governor, strategy, comp, crv, bal } = context();
+
+      const newRewardTokens = [comp.address, crv.address, bal.address];
+      const oldRewardTokens = await strategy.getRewardTokenAddresses();
+
+      const tx = await strategy
+        .connect(governor)
+        .setRewardTokenAddresses(newRewardTokens);
+
+      await expect(tx)
+        .to.emit(strategy, "RewardTokenAddressesUpdated")
+        .withArgs(oldRewardTokens, newRewardTokens);
+
+      expect(await strategy.rewardTokenAddresses(0)).to.equal(comp.address);
+      expect(await strategy.rewardTokenAddresses(1)).to.equal(crv.address);
+      expect(await strategy.rewardTokenAddresses(2)).to.equal(bal.address);
+    });
+    it("Should not allow reward tokens to be set by non-governor", async () => {
+      const { comp, crv, bal, strategy, strategist, matt, harvester, vault } =
+        context();
+
+      const vaultSigner = await impersonateAndFund(vault.address);
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+
+      const newRewardTokens = [comp.address, crv.address, bal.address];
+
+      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+        await expect(
+          strategy.connect(signer).setRewardTokenAddresses(newRewardTokens)
+        ).to.revertedWith("Caller is not the Governor");
+      }
+    });
   });
 };
 
