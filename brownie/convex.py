@@ -53,8 +53,7 @@ def build_cvx_buyback_tx(slippage=1):
             )
         )
 
-        print("Schedule the following transactions on Gnosis Safe")
-        for idx, item in enumerate(txs):
-            print("Transaction ", idx)
-            print("To: ", item.receiver)
-            print("Data (Hex encoded): ", item.input, "\n")
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(txs))
+        print("----")
