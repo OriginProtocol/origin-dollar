@@ -30,7 +30,7 @@ const {
   units,
   isFork,
 } = require("./helpers");
-const { hardhatSetBalance } = require("./_fund");
+const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -1045,18 +1045,7 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
   // completely peg the rETH price
   // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
 
-  // Get some rETH from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.rETH,
-    [
-      "0xCc9EE9483f662091a1de4795249E24aC0aC2630f",
-      "0xC6424e862f1462281B0a5FAc078e4b63006bDEBF",
-      "0x7d6149aD9A573A6E2Ca6eBf7D4897c1B766841B4",
-      "0x7C5aaA2a20b01df027aD032f7A768aC015E77b86",
-      "0x1BeE69b7dFFfA4E2d53C2a2Df135C388AD25dCD2",
-    ],
-    josh.getAddress()
-  );
+  await setERC20TokenBalance(await josh.getAddress(), reth, "1000000", hre);
 
   return fixture;
 }
