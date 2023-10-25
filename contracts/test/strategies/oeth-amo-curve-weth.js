@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
-const { convexOethEthAmoFixture, createFixtureLoader } = require("../fixture/_fixture");
+const {
+  convexOethEthAmoFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");

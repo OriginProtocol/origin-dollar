@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { createFixtureLoader, mockVaultFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  mockVaultFixture,
+} = require("../fixture/_fixture");
 
 describe("Vault mock with rebase", async () => {
   let mockVault, matt, ousd, josh, governor;

@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, hackedVaultFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  hackedVaultFixture,
+} = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
 
 describe("Reentry Attack Protection", function () {
