@@ -5,9 +5,9 @@ const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-  mintWETH,
 } = require("./../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
+const { setERC20TokenBalance } = require("../_fund");
 
 describe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
@@ -134,11 +134,7 @@ describe("ForkTest: FraxETH Strategy", function () {
       expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);
 
       // Mint some WETH to strategy
-      const fakeStrategySigner = await impersonateAndFund(
-        fraxEthStrategy.address
-      );
-      fakeStrategySigner.address = fraxEthStrategy.address;
-      await mintWETH(weth, fakeStrategySigner, "1.235");
+      await setERC20TokenBalance(fraxEthStrategy.address, weth, "1235");
 
       // Ensure still 0
       expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);

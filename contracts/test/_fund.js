@@ -15,6 +15,8 @@ const {
 const { units } = require("../utils/units");
 const erc20Abi = require("./abi/erc20.json");
 
+const log = require("../utils/logger")("test:_fund");
+
 const mappedFundingSlots = {};
 const balancesContractSlotCache = {};
 /**
@@ -112,7 +114,7 @@ const setTokenBalance = async (
     mappedFundingSlots[tokenContract.address][userAddress] = index;
   }
 
-  console.log(
+  log(
     `Setting balance of user ${userAddress} with token ${tokenContract.address}`
   );
   await setStorageAt(

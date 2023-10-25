@@ -10,13 +10,13 @@ const {
   balancerWstEthFixture,
   createFixtureLoader,
   mineBlocks,
-  mintWETH,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
 
 const temporaryFork = require("../../utils/temporaryFork");
 const { impersonateAndFund } = require("../../utils/signers");
+const { setERC20TokenBalance } = require("../_fund");
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
@@ -764,14 +764,14 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
 
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
-      const { oethVault, balancerREthStrategy, strategist } = fixture;
+      const { oethVault, balancerREthStrategy, strategist, weth } = fixture;
       await oethVault
         .connect(strategist)
         .withdrawAllFromStrategy(balancerREthStrategy.address);
 
       attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
       sAttacker = await impersonateAndFund(attackerAddress);
-      await mintWETH(fixture.weth, sAttacker, "500000");
+      await setERC20TokenBalance(attackerAddress, weth, "500000");
     });
 
     it("deposit should fail if pool is being manipulated", async function () {

@@ -38,10 +38,6 @@ mocha.before(function () {
     (s) => s.file.endsWith(".fork-test.js") == isForkTest
   );
 
-  if (isForkTest) {
-    root.suites.map((s) => s.timeout(0));
-  }
-
   if (!runTestsParallely) {
     // When running serially
     return;
@@ -56,6 +52,7 @@ mocha.before(function () {
       const nestedSuites = [...currSuite.suites].map((s) => {
         // Make sure the titles are clear for flattened suites
         s.title = s.fullTitle();
+        s.timeout(0); // Reset timeout
         return s;
       });
       currSuite.suites = [];

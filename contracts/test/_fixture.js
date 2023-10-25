@@ -631,7 +631,7 @@ async function oethDefaultFixture() {
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
       // Everyone gets free WETH
-      await mintWETH(weth, user);
+      await setERC20TokenBalance(user.address, weth, "1000000");
 
       // And vault can rug them all
       await resetAllowance(weth, user, oethVault.address);
@@ -1046,8 +1046,8 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
   // completely peg the rETH price
   // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
 
-  await setERC20TokenBalance(await josh.getAddress(), reth, "1000000", hre);
-  await hardhatSetBalance(await josh.getAddress(), "1000000");
+  await setERC20TokenBalance(josh.address, reth, "1000000", hre);
+  await hardhatSetBalance(josh.address, "1000000");
 
   return fixture;
 }
@@ -1502,24 +1502,6 @@ async function resetAllowance(
   await tokenContract.connect(signer).approve(toAddress, allowance);
 }
 
-async function mintWETH(weth, recipient, amount = "100") {
-  await hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
-  await weth.connect(recipient).deposit({
-    value: parseEther(amount),
-  });
-}
-
-async function withImpersonatedAccount(address, cb) {
-  const signer = await impersonateAndFund(address);
-
-  await cb(signer);
-
-  await hre.network.provider.request({
-    method: "hardhat_stopImpersonatingAccount",
-    params: [address],
-  });
-}
-
 /**
  * Configure a Vault with only the LUSD Generalized Meta strategy.
  */
@@ -1636,7 +1618,7 @@ async function convexOETHMetaVaultFixture(
   if (config?.poolAddEthAmount > 0) {
     // Fund Josh with ETH plus some extra for gas fees
     const fundAmount = config.poolAddEthAmount + 1;
-    await hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
+    await hardhatSetBalance(josh.address, fundAmount.toString());
 
     const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
     // prettier-ignore
@@ -2010,14 +1992,12 @@ module.exports = {
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
-  withImpersonatedAccount,
   balancerREthFixture,
   balancerWstEthFixture,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
-  mintWETH,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
