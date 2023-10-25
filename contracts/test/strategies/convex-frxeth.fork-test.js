@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { frxEthWethPoolLpPID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
@@ -14,7 +14,7 @@ const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH");
 
-forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
+describe("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
