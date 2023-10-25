@@ -3,6 +3,7 @@ const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
+const { hardhatSetBalance, setERC20TokenBalance } = require("../test/_fund");
 
 // By default we use 10 test accounts.
 const defaultNumAccounts = 10;
@@ -43,13 +44,7 @@ async function accounts(taskArguments, hre, privateKeys) {
 async function fund(taskArguments, hre) {
   const { findBestMainnetTokenHolder } = require("../utils/funding");
   const addresses = require("../utils/addresses");
-  const {
-    usdtUnits,
-    daiUnits,
-    usdcUnits,
-    isFork,
-    isLocalhost,
-  } = require("../test/helpers");
+  const { isFork, isLocalhost } = require("../test/helpers");
 
   if (!isFork && !isLocalhost) {
     throw new Error("Task can only be used on local or fork");
@@ -101,26 +96,22 @@ async function fund(taskArguments, hre) {
   const contractDataList = [
     {
       name: "eth",
-      contract: null,
-      unitsFn: ethers.utils.parseEther,
+      token: null,
       forkSigner: isFork ? await findBestMainnetTokenHolder(null, hre) : null,
     },
     {
       name: "dai",
-      contract: dai,
-      unitsFn: daiUnits,
+      token: dai,
       forkSigner: isFork ? await findBestMainnetTokenHolder(dai, hre) : null,
     },
     {
       name: "usdc",
-      contract: usdc,
-      unitsFn: usdcUnits,
+      token: usdc,
       forkSigner: isFork ? await findBestMainnetTokenHolder(usdc, hre) : null,
     },
     {
       name: "usdt",
-      contract: usdt,
-      unitsFn: usdtUnits,
+      token: usdt,
       forkSigner: isFork ? await findBestMainnetTokenHolder(usdt, hre) : null,
     },
   ];
@@ -129,33 +120,20 @@ async function fund(taskArguments, hre) {
     const currentAccount = accountsToFund[i];
     await Promise.all(
       contractDataList.map(async (contractData) => {
-        const { contract, unitsFn, forkSigner, name } = contractData;
-        const usedFundAmount = contract !== null ? fundAmount : "100";
-        if (isFork) {
-          // fund ether
-          if (!contract) {
-            await forkSigner.sendTransaction({
-              to: currentAccount,
-              from: forkSigner._address,
-              value: hre.ethers.utils.parseEther(usedFundAmount),
-            });
-          } else {
-            await contract
-              .connect(forkSigner)
-              .transfer(currentAccount, unitsFn(usedFundAmount));
-          }
+        const { token, name } = contractData;
+        const usedFundAmount = token !== null ? fundAmount : "100";
+
+        if (!token) {
+          await hardhatSetBalance(currentAccount, hre, usedFundAmount);
         } else {
-          if (!contract) {
-            const signerWithEth = (await hre.ethers.getSigners())[0];
-            await signerWithEth.sendTransaction({
-              to: currentAccount,
-              value: unitsFn(usedFundAmount),
-            });
-          }
-          await contract
-            .connect(signersToFund[i])
-            .mint(unitsFn(usedFundAmount));
+          await setERC20TokenBalance(
+            currentAccount,
+            token,
+            usedFundAmount,
+            hre
+          );
         }
+
         console.log(
           `Funded ${currentAccount} with ${usedFundAmount} ${name.toUpperCase()}`
         );

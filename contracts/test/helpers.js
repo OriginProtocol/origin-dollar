@@ -4,7 +4,7 @@ const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
-const { decimalsFor } = require("../utils/units");
+const { decimalsFor, units } = require("../utils/units");
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -150,15 +150,6 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
-
-/**
- * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.
- * @param {string} amount - The amount to convert, represented as a string in the base unit of the contract.
- * @param {Contract} contract - The token contract to get the decimal places for.
- */
-async function units(amount, contract) {
-  return parseUnits(amount, await decimalsFor(contract));
-}
 
 function ognUnits(amount) {
   return parseUnits(amount, 18);
