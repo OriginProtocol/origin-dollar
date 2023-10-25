@@ -22,7 +22,7 @@ const balancesContractSlotCache = {};
  * Based on https://blog.euler.finance/brute-force-storage-layout-discovery-in-erc20-contracts-with-hardhat-7ff9342143ed
  * @export
  * @param {string} tokenAddress
- * @return {*}  {Promise<number>}
+ * @return {*}  {Promise<[number, boolean]>}
  */
 const findBalancesSlot = async (tokenAddress) => {
   // need to check for undefined since a "0" is a valid value that defaults to false
@@ -45,29 +45,30 @@ const findBalancesSlot = async (tokenAddress) => {
     const slots = [
       keccak256(encode(["address", "uint"], [account, i])),
       keccak256(encode(["uint", "address"], [i, account])),
-    ]
+    ];
     for (const probedSlot of slots) {
       if (probedSlot.startsWith("0x0")) continue;
       // remove padding for JSON RPC
       // while (probedSlot.startsWith("0x0")) {
       //     probedSlot = `0x${probedSlot.slice(3)}`
       // }
-  
+
       const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
-  
+
       // make sure the probe will change the slot value
       const probe = prev === probeA ? probeB : probeA;
-  
+
       await setStorageAt(tokenAddress, probedSlot, probe);
-  
+
       const balance = await token.balanceOf(account);
-  
+
       // reset to previous value
       await setStorageAt(tokenAddress, probedSlot, prev);
-  
+
       if (balance.eq(ethrs.BigNumber.from(probe))) {
-        balancesContractSlotCache[tokenAddress] = i;
-        return i;
+        const isVyper = probedSlot == slots[1];
+        balancesContractSlotCache[tokenAddress] = [i, isVyper];
+        return [i, isVyper];
       }
     }
   }
@@ -91,14 +92,18 @@ const setTokenBalance = async (
   amount,
   slotIndex = undefined
 ) => {
-  const amountBn = await units(amount, tokenContract);
+  const amountBn = ethrs.BigNumber.isBigNumber(amount)
+    ? amount
+    : await units(amount, tokenContract);
   let index = slotIndex;
   if (slotIndex === undefined) {
-    const balanceSlot = await findBalancesSlot(tokenContract.address);
+    const [balanceSlot, isVyper] = await findBalancesSlot(
+      tokenContract.address
+    );
     // key, slot
     index = solidityKeccak256(
       ["uint256", "uint256"],
-      [userAddress, balanceSlot]
+      isVyper ? [balanceSlot, userAddress] : [userAddress, balanceSlot]
     );
 
     if (!mappedFundingSlots[tokenContract.address])
@@ -175,9 +180,7 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
     account,
     token,
     amount,
-    config[token.address]
-      ? config[token.address][account]
-      : undefined,
+    config[token.address] ? config[token.address][account] : undefined,
     hre
   );
 

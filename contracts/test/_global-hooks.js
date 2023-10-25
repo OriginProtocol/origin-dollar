@@ -38,6 +38,10 @@ mocha.before(function () {
     (s) => s.file.endsWith(".fork-test.js") == isForkTest
   );
 
+  if (isForkTest) {
+    root.suites.map((s) => s.timeout(0));
+  }
+
   if (!runTestsParallely) {
     // When running serially
     return;
