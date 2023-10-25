@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { Wallet } = require("ethers");
 
-const { units, usdcUnits } = require("../helpers");
+const { units } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
 
