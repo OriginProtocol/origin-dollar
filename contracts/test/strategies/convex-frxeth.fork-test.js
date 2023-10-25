@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { frxEthWethPoolLpPID, MAX_UINT256 } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
@@ -14,7 +14,7 @@ const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
-forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
+describe("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
@@ -58,7 +58,9 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.decimals1()).to.equal(18);
       expect(await convexFrxEthWethStrategy.decimals2()).to.equal(0);
       // Curve pool
-      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
+      expect(await convexFrxEthWethStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(
+        2
+      );
       expect(await convexFrxEthWethStrategy.CURVE_POOL()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
