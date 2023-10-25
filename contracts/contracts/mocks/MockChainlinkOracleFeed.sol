@@ -69,7 +69,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
         roundId = 0;
         answer = price;
         startedAt = 0;
-        updatedAt = 0;
+        updatedAt = block.timestamp;
         answeredInRound = 0;
     }
 }

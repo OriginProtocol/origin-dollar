@@ -2,9 +2,10 @@ const { isFork } = require("../test/helpers");
 const addresses = require("../utils/addresses");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { fundAccounts } = require("../utils/funding");
-const { hardhatSetBalance, replaceContractAt } = require("../utils/hardhat");
+const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
 const daiAbi = require("../test/abi/dai.json").abi;
+const { hardhatSetBalance } = require("../test/_fund");
 
 const log = require("../utils/logger")("deploy:999_fork_test_setup");
 
