@@ -1,4 +1,3 @@
-const { utils } = require("ethers");
 const { isFork, isForkWithLocalNode } = require("../test/helpers");
 const {
   replaceContractAt,
@@ -26,10 +25,7 @@ const main = async (hre) => {
   const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
     await getNamedAccounts();
 
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-  });
+  hardhatSetBalance(deployerAddr, "1000000");
 
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(

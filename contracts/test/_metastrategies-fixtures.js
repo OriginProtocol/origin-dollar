@@ -114,7 +114,7 @@ async function _balanceMetaPool(fixture, metapool) {
     // There is more OUSD than 3CRV
     const crvAmount = coinOne3CrvValue.sub(coinTwo3CrvValue);
     await impersonateAndFund(domen.address, "1000000");
-    await setERC20TokenBalance(domen.address, coinTwoContract, crvAmount);
+    await setERC20TokenBalance(domen.address, coinTwoContract, crvAmount, hre);
 
     log(`About to add ${formatUnits(crvAmount)} 3CRV to the OUSD Metapool`);
     // prettier-ignore

@@ -32,6 +32,7 @@ const {
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
+const { hardhatSetBalance } = require("../test/_fund.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -925,10 +926,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     }
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
-      await hre.network.provider.request({
-        method: "hardhat_setBalance",
-        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-      });
+      await hardhatSetBalance(deployerAddr, "1000000");
     }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);

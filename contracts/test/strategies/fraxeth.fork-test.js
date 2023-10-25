@@ -1,3 +1,4 @@
+const hre = require("hardhat");
 const { expect } = require("chai");
 
 const { units, oethUnits, isCI } = require("../helpers");
@@ -134,7 +135,7 @@ describe("ForkTest: FraxETH Strategy", function () {
       expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);
 
       // Mint some WETH to strategy
-      await setERC20TokenBalance(fraxEthStrategy.address, weth, "1235");
+      await setERC20TokenBalance(fraxEthStrategy.address, weth, "1235", hre);
 
       // Ensure still 0
       expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);

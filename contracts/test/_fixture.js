@@ -631,7 +631,7 @@ async function oethDefaultFixture() {
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
       // Everyone gets free WETH
-      await setERC20TokenBalance(user.address, weth, "1000000");
+      await setERC20TokenBalance(user.address, weth, "1000000", hre);
 
       // And vault can rug them all
       await resetAllowance(weth, user, oethVault.address);
@@ -649,7 +649,7 @@ async function oethDefaultFixture() {
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Fund WETH contract
-    hardhatSetBalance(weth.address, "999999999999999");
+    await hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
@@ -1149,7 +1149,7 @@ async function convexMetaVaultFixture() {
 
     // Domen is loaded with 3CRV
     await hardhatSetBalance(domen.address, "1000000");
-    await setERC20TokenBalance(domen.address, threepoolLP, "1000000");
+    await setERC20TokenBalance(domen.address, threepoolLP, "1000000", hre);
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
@@ -1434,7 +1434,7 @@ async function convexGeneralizedMetaForkedFixture(
   }
 
   await impersonateAndFund(domen.address, "1000000");
-  await setERC20TokenBalance(domen.address, threepoolLP, "1000000");
+  await setERC20TokenBalance(domen.address, threepoolLP, "1000000", hre);
 
   fixture.metapoolCoin = primaryCoin;
   fixture.metapool = metapool;
@@ -1562,8 +1562,8 @@ async function convexOETHMetaVaultFixture(
   } = fixture;
 
   await impersonateAndFund(josh.address);
-  await setERC20TokenBalance(josh.address, weth, "10000000");
-  await setERC20TokenBalance(josh.address, crv, "10000000");
+  await setERC20TokenBalance(josh.address, weth, "10000000", hre);
+  await setERC20TokenBalance(josh.address, crv, "10000000", hre);
 
   // Update the strategy threshold to 500k ETH
   await oethVault

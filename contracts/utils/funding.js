@@ -109,7 +109,12 @@ const fundAccounts = async () => {
       await hardhatSetBalance(signerAddress, "1000000");
 
       for (const tokenContract of allCoins) {
-        await setERC20TokenBalance(signerAddress, tokenContract, "1000000");
+        await setERC20TokenBalance(
+          signerAddress,
+          tokenContract,
+          "1000000",
+          hre
+        );
       }
     } else {
       await dai.connect(signer).mint(daiUnits("1000"));
