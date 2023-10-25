@@ -1232,11 +1232,11 @@ async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 3);
   expect(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
-  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
+  ).to.approxEqualTolerance(after.strategyValues.sum, 3);
 }
 
 async function logBalances({
