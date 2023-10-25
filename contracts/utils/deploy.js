@@ -31,6 +31,12 @@ const {
 } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
+const { impersonateAndFund } = require("./signers.js");
+const { hardhatSetBalance } = require("../test/_fund.js");
+const {
+  setStorageAt,
+  setCode,
+} = require("@nomicfoundation/hardhat-network-helpers");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -138,43 +144,15 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
 
   // If an address is passed, use that otherwise default to
   // the guardian address from the default hardhat accounts.
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: guardianAddr,
-    value: utils.parseEther("100"),
-  });
+  impersonateAndFund(guardianAddr);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [guardianAddr],
-  });
   log(`Impersonated Guardian at ${guardianAddr}`);
-};
-
-const impersonateAccount = async (address) => {
-  if (!isFork) {
-    throw new Error("impersonateAccount only works on Fork");
-  }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
-
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: address,
-    value: utils.parseEther("100"),
-  });
-
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
-  log(`Impersonated Account at ${address}`);
 };
 
 /**
@@ -221,34 +199,29 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   // only works on hardhat network that supports `hardhat_setStorageAt`
   if (opts.reduceQueueTime) {
     log(`Reducing required queue time to 60 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 seconds
-      ], // address, storageSlot, newValue
-    });
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+    );
   } else {
     log(`Setting queue time back to 172800 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 
   const txOpts = await getTxOpts();
@@ -519,41 +492,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // 0 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000000000" // 0 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x0000000000000000000000000000000000000000000000000000000000000005", // 5 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x0000000000000000000000000000000000000000000000000000000000000005" // 5 seconds
+    );
   } else {
     log(
       `Setting back original values of required voting delay to 1 block and ` +
@@ -562,41 +523,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x0000000000000000000000000000000000000000000000000000000000004380", // 17280 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x0000000000000000000000000000000000000000000000000000000000004380" // 17280 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000002d00", // 11520 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000002d00" // 11520 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 };
 
@@ -954,10 +903,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     }
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
-      await hre.network.provider.request({
-        method: "hardhat_setBalance",
-        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-      });
+      await hardhatSetBalance(deployerAddr, "1000000");
     }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
@@ -1256,7 +1202,6 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,
