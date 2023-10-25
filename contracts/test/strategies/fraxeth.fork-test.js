@@ -10,6 +10,8 @@ const {
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
 
+const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
+
 describe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
 
@@ -17,7 +19,6 @@ describe("ForkTest: FraxETH Strategy", function () {
   this.retries(isCI ? 3 : 0);
 
   let fixture;
-  const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
   beforeEach(async () => {
     fixture = await loadFixture();
   });

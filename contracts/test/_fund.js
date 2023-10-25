@@ -14,11 +14,20 @@ const {
 } = ethrs.utils;
 const { units } = require("../utils/units");
 const erc20Abi = require("./abi/erc20.json");
+const addresses = require("../utils/addresses");
 
 const log = require("../utils/logger")("test:_fund");
 
 const mappedFundingSlots = {};
-const balancesContractSlotCache = {};
+const balancesContractSlotCache = {
+  [addresses.mainnet.stETH.toLowerCase()]: [0, false],
+  [addresses.mainnet.frxETH.toLowerCase()]: [0, false],
+  [addresses.mainnet.WETH.toLowerCase()]: [3, false],
+  [addresses.mainnet.rETH.toLowerCase()]: [1, false],
+  [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
+  [addresses.mainnet.ThreePoolToken.toLowerCase()]: [0, true],
+};
+
 /**
  *
  * Based on https://blog.euler.finance/brute-force-storage-layout-discovery-in-erc20-contracts-with-hardhat-7ff9342143ed
@@ -27,9 +36,8 @@ const balancesContractSlotCache = {};
  * @return {*}  {Promise<[number, boolean]>}
  */
 const findBalancesSlot = async (tokenAddress) => {
-  // need to check for undefined since a "0" is a valid value that defaults to false
-  // in the if statement
-  if (balancesContractSlotCache[tokenAddress] !== undefined) {
+  tokenAddress = tokenAddress.toLowerCase();
+  if (balancesContractSlotCache[tokenAddress]) {
     return balancesContractSlotCache[tokenAddress];
   }
 
@@ -38,8 +46,14 @@ const findBalancesSlot = async (tokenAddress) => {
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
   const account = ethrs.constants.AddressZero;
-  const probeA = encode(["uint"], [1]);
-  const probeB = encode(["uint"], [2]);
+  const probeA = encode(
+    ["uint"],
+    [parseEther("99999999999999999999999999999999")]
+  );
+  const probeB = encode(
+    ["uint"],
+    [parseEther("77777777777777777777777777777777")]
+  );
 
   const token = await ethers.getContractAt(erc20Abi, tokenAddress);
 
@@ -67,7 +81,12 @@ const findBalancesSlot = async (tokenAddress) => {
       // reset to previous value
       await setStorageAt(tokenAddress, probedSlot, prev);
 
-      if (balance.eq(ethrs.BigNumber.from(probe))) {
+      // For certain tokens with computed balances (aka rebasing tokens),
+      // balance == probe won't be always true.
+      if (
+        balance.eq(ethrs.BigNumber.from(probe))
+        // || balance.gt(ethrs.BigNumber.from(prev))
+      ) {
         const isVyper = probedSlot == slots[1];
         balancesContractSlotCache[tokenAddress] = [i, isVyper];
         return [i, isVyper];
@@ -186,8 +205,8 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
     hre
   );
 
-  // Print out mapped slots and add them to config above
-  //console.log(mappedFundingSlots);
+  // // Print out mapped slots and add them to config above
+  // console.log(balancesContractSlotCache);
 };
 
 module.exports = {

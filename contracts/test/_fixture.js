@@ -630,11 +630,13 @@ async function oethDefaultFixture() {
 
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
-      // Everyone gets free WETH
-      await setERC20TokenBalance(user.address, weth, "1000000", hre);
+      // Everyone gets free tokens
+      for (const token of [weth, reth, stETH, frxETH, sfrxETH]) {
+        await setERC20TokenBalance(user.address, token, "1000000", hre);
 
-      // And vault can rug them all
-      await resetAllowance(weth, user, oethVault.address);
+        // And vault can rug them all
+        await resetAllowance(token, user, oethVault.address);
+      }
     }
   } else {
     // Replace frxETHMinter
