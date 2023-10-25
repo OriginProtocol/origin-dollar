@@ -14,20 +14,35 @@ const {
 } = ethrs.utils;
 const { units } = require("../utils/units");
 const erc20Abi = require("./abi/erc20.json");
+const addresses = require("../utils/addresses");
+
+const log = require("../utils/logger")("test:_fund");
 
 const mappedFundingSlots = {};
-const balancesContractSlotCache = {};
+const balancesContractSlotCache = {
+  [addresses.mainnet.stETH.toLowerCase()]: [0, false],
+  [addresses.mainnet.frxETH.toLowerCase()]: [0, false],
+  [addresses.mainnet.WETH.toLowerCase()]: [3, false],
+  [addresses.mainnet.rETH.toLowerCase()]: [1, false],
+  [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
+  [addresses.mainnet.ThreePoolToken.toLowerCase()]: [3, true],
+  [addresses.mainnet.DAI.toLowerCase()]: [2, false],
+  [addresses.mainnet.USDC.toLowerCase()]: [9, false],
+  [addresses.mainnet.USDT.toLowerCase()]: [2, false],
+  [addresses.mainnet.TUSD.toLowerCase()]: [14, false],
+  [addresses.mainnet.OGN.toLowerCase()]: [0, true],
+};
+
 /**
  *
  * Based on https://blog.euler.finance/brute-force-storage-layout-discovery-in-erc20-contracts-with-hardhat-7ff9342143ed
  * @export
  * @param {string} tokenAddress
- * @return {*}  {Promise<number>}
+ * @return {*}  {Promise<[number, boolean]>}
  */
 const findBalancesSlot = async (tokenAddress) => {
-  // need to check for undefined since a "0" is a valid value that defaults to false
-  // in the if statement
-  if (balancesContractSlotCache[tokenAddress] !== undefined) {
+  tokenAddress = tokenAddress.toLowerCase();
+  if (balancesContractSlotCache[tokenAddress]) {
     return balancesContractSlotCache[tokenAddress];
   }
 
@@ -36,37 +51,54 @@ const findBalancesSlot = async (tokenAddress) => {
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
   const account = ethrs.constants.AddressZero;
-  const probeA = encode(["uint"], [1]);
-  const probeB = encode(["uint"], [2]);
+  const probeA = encode(
+    ["uint"],
+    [parseEther("99999999999999999999999999999999")]
+  );
+  const probeB = encode(
+    ["uint"],
+    [parseEther("77777777777777777777777777777777")]
+  );
 
   const token = await ethers.getContractAt(erc20Abi, tokenAddress);
 
   for (let i = 0; i < 100; i += 1) {
-    const probedSlot = keccak256(encode(["address", "uint"], [account, i]));
-    if (probedSlot.startsWith("0x0")) continue;
-    // remove padding for JSON RPC
-    // while (probedSlot.startsWith("0x0")) {
-    //     probedSlot = `0x${probedSlot.slice(3)}`
-    // }
+    const slots = [
+      keccak256(encode(["address", "uint"], [account, i])),
+      keccak256(encode(["uint", "address"], [i, account])),
+    ];
+    for (const probedSlot of slots) {
+      if (probedSlot.startsWith("0x0")) continue;
+      // remove padding for JSON RPC
+      // while (probedSlot.startsWith("0x0")) {
+      //     probedSlot = `0x${probedSlot.slice(3)}`
+      // }
 
-    const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
+      const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
 
-    // make sure the probe will change the slot value
-    const probe = prev === probeA ? probeB : probeA;
+      // make sure the probe will change the slot value
+      const probe = prev === probeA ? probeB : probeA;
 
-    await setStorageAt(tokenAddress, probedSlot, probe);
+      await setStorageAt(tokenAddress, probedSlot, probe);
 
-    const balance = await token.balanceOf(account);
+      const balance = await token.balanceOf(account);
 
-    // reset to previous value
-    await setStorageAt(tokenAddress, probedSlot, prev);
+      // reset to previous value
+      await setStorageAt(tokenAddress, probedSlot, prev);
 
-    if (balance.eq(ethrs.BigNumber.from(probe))) {
-      balancesContractSlotCache[tokenAddress] = i;
-      return i;
+      // For certain tokens with computed balances (aka rebasing tokens),
+      // balance == probe won't be always true.
+      if (
+        balance.eq(ethrs.BigNumber.from(probe))
+        // || balance.gt(ethrs.BigNumber.from(prev))
+      ) {
+        const isVyper = probedSlot == slots[1];
+        balancesContractSlotCache[tokenAddress] = [i, isVyper];
+        return [i, isVyper];
+      }
     }
   }
-  throw new Error("Balances slot not found!");
+  throw new Error(`Balances slot not found for ${tokenAddress}`);
 };
 
 const toBytes32 = (bn) => hexlify(zeroPad(bn.toHexString(), 32));
@@ -86,14 +118,18 @@ const setTokenBalance = async (
   amount,
   slotIndex = undefined
 ) => {
-  const amountBn = await units(amount, tokenContract);
+  const amountBn = ethrs.BigNumber.isBigNumber(amount)
+    ? amount
+    : await units(amount, tokenContract);
   let index = slotIndex;
   if (slotIndex === undefined) {
-    const balanceSlot = await findBalancesSlot(tokenContract.address);
+    const [balanceSlot, isVyper] = await findBalancesSlot(
+      tokenContract.address
+    );
     // key, slot
     index = solidityKeccak256(
       ["uint256", "uint256"],
-      [userAddress, balanceSlot]
+      isVyper ? [balanceSlot, userAddress] : [userAddress, balanceSlot]
     );
 
     if (!mappedFundingSlots[tokenContract.address])
@@ -102,7 +138,7 @@ const setTokenBalance = async (
     mappedFundingSlots[tokenContract.address][userAddress] = index;
   }
 
-  console.log(
+  log(
     `Setting balance of user ${userAddress} with token ${tokenContract.address}`
   );
   await setStorageAt(
@@ -170,13 +206,12 @@ const setERC20TokenBalance = async (account, token, amount = "10000") => {
     account,
     token,
     amount,
-    config[token.address.toLowerCase()]
-      ? config[token.address][account]
-      : undefined
+    config[token.address] ? config[token.address][account] : undefined,
+    hre
   );
 
-  // Print out mapped slots and add them to config above
-  //console.log(mappedFundingSlots);
+  // // Print out mapped slots and add them to config above
+  // console.log(balancesContractSlotCache);
 };
 
 module.exports = {

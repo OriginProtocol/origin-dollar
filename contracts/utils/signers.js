@@ -1,6 +1,8 @@
 const { Wallet } = require("ethers").utils;
 const { ethereumAddress, privateKey } = require("./regex");
 const { hardhatSetBalance } = require("../test/_fund");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+
 const log = require("./logger")("utils:signers");
 
 /**
@@ -57,10 +59,7 @@ async function getSigner(address) {
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [account],
-  });
+  await hhHelpers.impersonateAccount(account);
 
   return await ethers.provider.getSigner(account);
 }

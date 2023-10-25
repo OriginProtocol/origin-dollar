@@ -1,7 +1,7 @@
-const { isFork } = require("../test/helpers");
-const addresses = require("../utils/addresses");
+const { isFork, isForkWithLocalNode } = require("../test/helpers");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { fundAccounts } = require("../utils/funding");
+const addresses = require("../utils/addresses");
 const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
 const daiAbi = require("../test/abi/dai.json").abi;
@@ -24,6 +24,8 @@ const main = async (hre) => {
 
   const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
     await getNamedAccounts();
+
+  hardhatSetBalance(deployerAddr, "1000000");
 
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(
@@ -99,6 +101,6 @@ const main = async (hre) => {
 };
 
 main.id = "999_no_stale_oracles";
-main.skip = () => !isFork;
+main.skip = () => isForkWithLocalNode || !isFork;
 
 module.exports = main;
