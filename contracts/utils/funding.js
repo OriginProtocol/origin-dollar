@@ -17,6 +17,7 @@ const {
   oethUnits,
   isFork,
 } = require("../test/helpers");
+const { hardhatSetBalance, setERC20TokenBalance } = require("../test/_fund");
 
 const log = require("./logger")("utils:funding");
 
@@ -73,20 +74,20 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   return whaleSigners[largestBalanceIndex];
 };
 
-const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
-  const signer = await findBestMainnetTokenHolder(contract, hre);
-  const address = await signer.getAddress();
+// const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
+//   const signer = await findBestMainnetTokenHolder(contract, hre);
+//   const address = await signer.getAddress();
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    utils.parseEther("1000000").toHexString(),
-  ]);
-  return signer;
-};
+//   await hre.network.provider.request({
+//     method: "hardhat_impersonateAccount",
+//     params: [address],
+//   });
+//   await hre.network.provider.send("hardhat_setBalance", [
+//     address,
+//     utils.parseEther("1000000").toHexString(),
+//   ]);
+//   return signer;
+// };
 
 const fundAccountsForOETHUnitTests = async () => {
   if (isFork) {
@@ -170,37 +171,17 @@ const fundAccounts = async () => {
   }
   const signers = await hre.ethers.getSigners();
 
-  const addressPromises = new Array(10)
-    .fill(0)
-    .map((_, i) => signers[i].getAddress());
-  const signerAddresses = await Promise.all(addressPromises);
-
-  for (const address of signerAddresses) {
+  for (const signer of signers) {
+    const signerAddress = await signer.getAddress();
     if (isFork) {
-      await hre.network.provider.send("hardhat_setBalance", [
-        address,
-        utils.parseEther("1000000").toHexString(),
-      ]);
+      // Give ETH to user
+      await hardhatSetBalance(signerAddress, "1000000");
 
       for (const tokenContract of allCoins) {
-        const signer = await findBestMainnetTokenHolderAndImpersonate(
-          tokenContract,
-          hre
-        );
-        // If the token is USD, transfer 1M, otherwise 1K
-        const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
-        await tokenContract
-          .connect(signer)
-          .transfer(
-            address,
-            utils.parseUnits(amount, await tokenContract.decimals())
-          );
-        log(
-          `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
-        );
+        await setERC20TokenBalance(signerAddress, tokenContract, "1000000");
       }
     } else {
-      const signer = await ethers.provider.getSigner(address);
+      // const signer = await ethers.provider.getSigner(address);
       await dai.connect(signer).mint(daiUnits("1000"));
       await usdc.connect(signer).mint(usdcUnits("1000"));
       await usdt.connect(signer).mint(usdtUnits("1000"));

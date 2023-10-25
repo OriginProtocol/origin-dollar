@@ -1,5 +1,5 @@
 const { utils } = require("ethers");
-const { isFork } = require("../test/helpers");
+const { isFork, isForkWithLocalNode } = require("../test/helpers");
 const {
   replaceContractAt,
   deployWithConfirmation,
@@ -33,7 +33,7 @@ const main = async (hre) => {
     await impersonateAccount(address);
 
     if (parseFloat(amount) > 0) {
-      await hardhatSetBalance(address, hre, amount);
+      await hardhatSetBalance(address, amount);
     }
 
     const signer = await ethers.provider.getSigner(address);
@@ -75,7 +75,7 @@ const main = async (hre) => {
   const signers = await hre.ethers.getSigners();
 
   for (const signer of signers.slice(0, 4)) {
-    await hardhatSetBalance(signer.address, hre);
+    await hardhatSetBalance(signer.address);
   }
   await impersonateAndFundContract(timelockAddr);
   await impersonateAndFundContract(deployerAddr);
@@ -125,6 +125,6 @@ const main = async (hre) => {
 };
 
 main.id = "999_no_stale_oracles";
-main.skip = () => !isFork;
+main.skip = () => isForkWithLocalNode || !isFork;
 
 module.exports = main;

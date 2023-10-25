@@ -118,7 +118,7 @@ const setTokenBalance = async (
  * @param {Account} account to set balance
  * @param {number} [amount=10000] Amount of ETH to set
  */
-async function hardhatSetBalance(address, hre, amount = "10000") {
+async function hardhatSetBalance(address, amount = "10000") {
   await setBalance(address, parseEther(amount));
 }
 
@@ -171,7 +171,7 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
     token,
     amount,
     config[token.address.toLowerCase()]
-      ? config[token.address][account]
+      ? config[token.address.toLowerCase()][account]
       : undefined,
     hre
   );

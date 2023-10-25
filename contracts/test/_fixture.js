@@ -648,7 +648,7 @@ async function oethDefaultFixture() {
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Fund WETH contract
-    hardhatSetBalance(weth.address, hre, "999999999999999");
+    hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
@@ -1046,6 +1046,7 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
   // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
 
   await setERC20TokenBalance(await josh.getAddress(), reth, "1000000", hre);
+  await hardhatSetBalance(await josh.getAddress(), "1000000");
 
   return fixture;
 }
@@ -1528,7 +1529,7 @@ async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
   if (parseFloat(amount) > 0) {
-    await hardhatSetBalance(address, hre, amount);
+    await hardhatSetBalance(address, amount);
   }
 
   const signer = await ethers.provider.getSigner(address);
@@ -1589,11 +1590,7 @@ async function resetAllowance(
 }
 
 async function mintWETH(weth, recipient, amount = "100") {
-  await hardhatSetBalance(
-    recipient.address,
-    hre,
-    (Number(amount) * 2).toString()
-  );
+  await hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
   await weth.connect(recipient).deposit({
     value: parseEther(amount),
   });
@@ -1748,11 +1745,7 @@ async function convexOETHMetaVaultFixture(
   if (config?.poolAddEthAmount > 0) {
     // Fund Josh with ETH plus some extra for gas fees
     const fundAmount = config.poolAddEthAmount + 1;
-    await hardhatSetBalance(
-      await josh.getAddress(),
-      hre,
-      fundAmount.toString()
-    );
+    await hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
 
     const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
     // prettier-ignore

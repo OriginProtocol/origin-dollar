@@ -75,7 +75,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await hardhatSetBalance(account, hre, amount);
+  await hardhatSetBalance(account, amount);
 
   return signer;
 }
