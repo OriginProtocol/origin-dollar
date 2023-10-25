@@ -1,5 +1,7 @@
-const { parseEther, Wallet } = require("ethers").utils;
+const { Wallet } = require("ethers").utils;
 const { ethereumAddress, privateKey } = require("./regex");
+const { hardhatSetBalance } = require("../test/_fund");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("./logger")("utils:signers");
 
@@ -57,25 +59,9 @@ async function getSigner(address) {
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [account],
-  });
+  await hhHelpers.impersonateAccount(account);
 
   return await ethers.provider.getSigner(account);
-}
-
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
 }
 
 /**
@@ -88,7 +74,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await _hardhatSetBalance(account, amount);
+  await hardhatSetBalance(account, amount);
 
   return signer;
 }
