@@ -8,6 +8,7 @@ require("./_global-hooks");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
+//const { setChainlinkOraclePrice } = require("../utils/oracle");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -16,7 +17,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { replaceContractAt, hardhatSetBalance } = require("../utils/hardhat");
+const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
   daiUnits,
@@ -26,6 +27,7 @@ const {
   units,
   isFork,
 } = require("./helpers");
+const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -627,6 +629,15 @@ async function oethDefaultFixture() {
       await resetAllowance(weth, user, oethVault.address);
     }
   } else {
+    // Replace frxETHMinter
+    await replaceContractAt(
+      addresses.mainnet.FraxETHMinter,
+      await ethers.getContract("MockFrxETHMinter")
+    );
+
+    // Fund WETH contract
+    hardhatSetBalance(weth.address, "999999999999999");
+
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
 
@@ -1019,18 +1030,10 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
     josh
   );
 
-  // Get some rETH from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.rETH,
-    [
-      "0xCc9EE9483f662091a1de4795249E24aC0aC2630f",
-      "0xC6424e862f1462281B0a5FAc078e4b63006bDEBF",
-      "0x7d6149aD9A573A6E2Ca6eBf7D4897c1B766841B4",
-      "0x7C5aaA2a20b01df027aD032f7A768aC015E77b86",
-      "0x1BeE69b7dFFfA4E2d53C2a2Df135C388AD25dCD2",
-    ],
-    josh.getAddress()
-  );
+  // completely peg the rETH price
+  // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
+
+  await setERC20TokenBalance(await josh.getAddress(), reth, "1000000", hre);
 
   return fixture;
 }
