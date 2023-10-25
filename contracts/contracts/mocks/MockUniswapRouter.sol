@@ -7,8 +7,6 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-// import "hardhat/console.sol";
-
 contract MockUniswapRouter is IUniswapV2Router {
     using StableMath for uint256;
 
@@ -119,6 +117,6 @@ contract MockUniswapRouter is IUniswapV2Router {
     }
 
     function WETH() external pure override returns (address) {
-        return address(0);
+        return 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     }
 }

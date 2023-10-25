@@ -26,6 +26,7 @@ describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
   shouldBehaveLikeHarvester(() => ({
     ...fixture,
     strategy: fixture.OUSDmetaStrategy,
+    dripAsset: fixture.usdt,
     rewards: [
       { asset: fixture.crv, expected: parseUnits("2") },
       { asset: fixture.cvx, expected: parseUnits("3") },

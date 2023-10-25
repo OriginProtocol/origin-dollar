@@ -38,6 +38,7 @@ describe("3Pool Strategy", function () {
   shouldBehaveLikeHarvester(() => ({
     ...fixture,
     strategy: fixture.threePoolStrategy,
+    dripAsset: fixture.usdt,
     rewards: [{ asset: fixture.crv, expected: parseUnits("2") }],
   }));
 
