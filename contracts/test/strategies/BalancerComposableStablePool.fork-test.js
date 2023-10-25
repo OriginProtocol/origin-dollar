@@ -110,7 +110,9 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
 
       const resetAllowance = async (asset, spender) => {
         // strategy needs some ETH so it can execute the transactions
-        const strategySigner = await impersonateAndFund(balancerSfrxWstRETHStrategy.address);
+        const strategySigner = await impersonateAndFund(
+          balancerSfrxWstRETHStrategy.address
+        );
         await asset.connect(strategySigner).approve(spender, ZERO);
       };
 

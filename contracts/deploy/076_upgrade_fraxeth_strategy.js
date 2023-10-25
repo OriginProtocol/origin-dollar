@@ -38,7 +38,7 @@ module.exports = deploymentWithGovernanceProposal(
       cFraxETHStrategyImpl.address
     );
 
-    console.log("WHAHTATH")
+    console.log("WHAHTATH");
     // Governance Actions
     // ----------------
     return {
