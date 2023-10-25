@@ -8,6 +8,7 @@ require("./_global-hooks");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
+const { setChainlinkOraclePrice } = require("../utils/oracle");
 const {
   replaceContractAt,
   // deployWithConfirmation,
@@ -29,7 +30,7 @@ const {
   units,
   isFork,
 } = require("./helpers");
-const { hardhatSetBalance } = require("./_fund");
+const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -1040,6 +1041,9 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
     addresses.mainnet.balancerVault,
     josh
   );
+
+  // completely peg the rETH price
+  // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
 
   // Get some rETH from most loaded contracts/wallets
   await impersonateAndFundAddress(
