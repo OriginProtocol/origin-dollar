@@ -3,10 +3,10 @@ const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const {
   fluxStrategyFixture,
-  impersonateAndFundContract,
   createFixtureLoader,
 } = require("../fixture/_fixture");
 const { units, ousdUnits, isCI } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("Flux strategy", function () {
   this.timeout(0);
@@ -89,7 +89,7 @@ describe("Flux strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, fluxStrategy } = fixture;
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
       const removeFundsFromVault = async () => {
@@ -202,7 +202,7 @@ async function withdrawTest(fixture, user, asset, amount = "25000") {
 
   const assetUnits = await units(amount, asset);
   const vaultAssetBalBefore = await asset.balanceOf(vault.address);
-  const vaultSigner = await impersonateAndFundContract(vault.address);
+  const vaultSigner = await impersonateAndFund(vault.address);
 
   await fluxStrategy
     .connect(vaultSigner)

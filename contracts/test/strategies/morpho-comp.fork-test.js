@@ -11,8 +11,8 @@ const {
 const {
   createFixtureLoader,
   morphoCompoundFixture,
-  impersonateAndFundContract,
 } = require("../fixture/_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
@@ -91,7 +91,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
 
       const usdcUnits = await units(amount, usdc);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
 
       await morphoCompoundStrategy
         .connect(vaultSigner)
@@ -104,7 +104,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
       const usdcUnits = await units(amount, usdc);

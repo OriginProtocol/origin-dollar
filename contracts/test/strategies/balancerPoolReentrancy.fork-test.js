@@ -4,14 +4,11 @@ const { expect } = require("chai");
 const { isCI } = require("../helpers");
 const {
   balancerREthFixture,
-  mintWETH,
-  impersonateAndFundContract,
   createFixtureLoader,
 } = require("../fixture/_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { utils } = require("ethers");
-const { findBestMainnetTokenHolder } = require("../../utils/funding");
 const addresses = require("../../utils/addresses");
+const { setERC20TokenBalance } = require("../_fund");
 
 describe("ForkTest: Balancer MetaStablePool - Read-only Reentrancy", function () {
   this.timeout(0);
@@ -50,19 +47,9 @@ describe("ForkTest: Balancer MetaStablePool - Read-only Reentrancy", function ()
     // Approve movement of tokens
     await cEvilContract.connect(daniel).approveAllTokens();
 
-    // Fund the attacking contract with WETH
-    await mintWETH(
-      weth,
-      await impersonateAndFundContract(cEvilContract.address),
-      "100000"
-    );
-
-    // ... and rETH
-    const rethHolder = await findBestMainnetTokenHolder(reth, hre);
-    await impersonateAndFundContract(await rethHolder.getAddress());
-    await reth
-      .connect(rethHolder)
-      .transfer(cEvilContract.address, utils.parseEther("1000"));
+    // Fund attacking contract with WETH and rETH
+    await setERC20TokenBalance(cEvilContract.address, weth, "1000000", hre);
+    await setERC20TokenBalance(cEvilContract.address, reth, "1000000", hre);
 
     // Do Evil Stuff
     await expect(cEvilContract.doEvilStuff()).to.be.reverted;

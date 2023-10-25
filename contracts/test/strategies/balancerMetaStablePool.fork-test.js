@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
+const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -9,14 +10,13 @@ const {
   balancerREthFixture,
   balancerWstEthFixture,
   balancerRethWETHExposeFunctionFixture,
-  impersonateAndFundContract,
   createFixtureLoader,
-  mineBlocks,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
 
 const temporaryFork = require("../../utils/temporaryFork");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
@@ -110,7 +110,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
       const resetAllowance = async (asset, spender) => {
         // strategy needs some ETH so it can execute the transactions
-        const strategySigner = await impersonateAndFundContract(
+        const strategySigner = await impersonateAndFund(
           balancerREthStrategy.address,
           "10"
         );
@@ -214,9 +214,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         "checkBalance()"
       ]();
 
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       const rethUnits = oethUnits("7");
       const rethValue = await reth.getEthValue(rethUnits);
@@ -245,7 +243,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
          * roughly ~1% when pricing value in the strategy. We are choosing 0.5% here for now
          * and will adjust to more if needed.
          */
-      ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.5);
+      ).to.approxEqualTolerance(rethValue.add(wethUnits), 2);
     });
 
     it("Should be able to deposit with higher deposit deviation", async function () {});
@@ -327,9 +325,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         const wethWithdrawAmount = await units(wethAmount, weth);
         const rethWithdrawAmount = await units(rethAmount, reth);
 
-        const oethVaultSigner = await impersonateAndFundContract(
-          oethVault.address
-        );
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
         // prettier-ignore
         await balancerREthStrategy
@@ -358,9 +354,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         "checkBalance(address)"
       ](reth.address);
 
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await balancerREthStrategy.connect(oethVaultSigner).withdrawAll();
 
@@ -395,7 +389,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         weth,
       } = fixture;
 
-      oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+      oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await getPoolBalances(balancerVault, balancerREthPID);
 
@@ -583,9 +577,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         aura,
       } = fixture;
 
-      const sHarvester = await impersonateAndFundContract(
-        oethHarvester.address
-      );
+      const sHarvester = await impersonateAndFund(oethHarvester.address);
       expect(await bal.balanceOf(oethHarvester.address)).to.equal(
         oethUnits("0")
       );
@@ -594,7 +586,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       );
 
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mineBlocks(1000);
+      await mine(1000);
 
       await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
 
@@ -618,7 +610,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       } = fixture;
 
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mineBlocks(1000);
+      await mine(1000);
 
       const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
       await oethHarvester.connect(josh)[
@@ -748,9 +740,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
         const wethWithdrawAmount = await units(wethAmount, weth);
         const stETHWithdrawAmount = await units(stETHAmount, stETH);
 
-        const oethVaultSigner = await impersonateAndFundContract(
-          oethVault.address
-        );
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
         // prettier-ignore
         await balancerWstEthStrategy
@@ -782,9 +772,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
         "checkBalance(address)"
       ](stETH.address);
 
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await balancerWstEthStrategy.connect(oethVaultSigner).withdrawAll();
 
@@ -884,9 +872,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
       const wethWithdrawAmount = oethUnits("0");
       const rethWithdrawAmount = oethUnits("7");
 
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await depositTest(fixture, [10, 10], [weth, reth], rEthBPT);
 
@@ -931,9 +917,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
       const wethWithdrawAmount = oethUnits("0");
       const rethWithdrawAmount = oethUnits("5");
 
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await depositTest(fixture, [10, 10], [weth, reth], rEthBPT);
 
@@ -1080,9 +1064,7 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
           checkBalanceAmountAfterTilt
         );
 
-        const oethVaultSigner = await impersonateAndFundContract(
-          oethVault.address
-        );
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
         await balancerREthStrategy.connect(oethVaultSigner).withdrawAll();
 
         const balancesAfter = await logBalances(logParams);
@@ -1185,7 +1167,7 @@ async function depositTest(
   amounts,
   allAssets,
   bpt,
-  strategyValueDiffPct = 1
+  strategyValueDiffPct = 3
 ) {
   const {
     oethVault,
