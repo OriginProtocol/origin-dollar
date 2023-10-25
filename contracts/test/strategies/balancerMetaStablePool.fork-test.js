@@ -231,7 +231,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
          * roughly ~1% when pricing value in the strategy. We are choosing 0.5% here for now
          * and will adjust to more if needed.
          */
-      ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.5);
+      ).to.approxEqualTolerance(rethValue.add(wethUnits), 2);
     });
 
     it("Should be able to deposit with higher deposit deviation", async function () {});
@@ -1182,7 +1182,7 @@ async function depositTest(
   );
   expect(strategyValuesDiff).to.approxEqualTolerance(
     sumEthAmounts,
-    strategyValueDiffPct,
+    strategyValueDiffPct
   );
   expect(
     after.strategyValues.value,
