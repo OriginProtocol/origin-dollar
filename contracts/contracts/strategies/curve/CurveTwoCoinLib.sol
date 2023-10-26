@@ -64,14 +64,13 @@ library CurveTwoCoinLib {
      * @param _burn_amount Quantity of LP tokens to burn in the withdrawal
      * @param _min_amounts Minimum amounts of underlying coins to receive
      * @param _receiver Address that receives the withdrawn coins
-     * @param wasTransfer true if the coins were transferred to the receiver, false if not
      */
     function remove_liquidity(
         address _pool,
         uint256 _burn_amount,
         uint256[] calldata _min_amounts,
         address _receiver
-    ) external returns (bool wasTransfer) {
+    ) external {
         require(
             _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of min amounts"
@@ -87,8 +86,6 @@ library CurveTwoCoinLib {
             min_amounts,
             _receiver
         );
-
-        wasTransfer = true;
     }
 
     /**
