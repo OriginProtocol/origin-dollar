@@ -66,7 +66,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    const initFunction = "initialize(address[],address[],address[])";
+    const initFunction = "initialize(address[])"; // [_rewardTokenAddresses]
     const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
       initFunction,
       [
