@@ -208,8 +208,6 @@ contract ConvexFrxETHAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 /**
  * @notice BalancerEthAMOStrategyProxy delegates calls to a BalancerEthAMOStrategy implementation
  */
-contract BalancerEthAMOStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
+contract BalancerEthAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

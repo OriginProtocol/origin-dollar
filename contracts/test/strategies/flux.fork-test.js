@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
-const { fluxStrategyFixture, createFixtureLoader } = require("../fixture/_fixture");
+const {
+  fluxStrategyFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const { units, ousdUnits, isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 

@@ -3,7 +3,10 @@ const { ethers } = hre;
 const { expect } = require("chai");
 
 const { isCI } = require("../helpers");
-const { balancerREthFixture, createFixtureLoader } = require("../fixture/_fixture");
+const {
+  balancerREthFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const addresses = require("../../utils/addresses");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { setERC20TokenBalance } = require("../_fund");

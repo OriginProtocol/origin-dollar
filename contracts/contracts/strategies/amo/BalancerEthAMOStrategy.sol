@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { BaseBalancerAMOStrategy } from "./BaseBalancerAMOStrategy.sol";
-import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
+import { VaultReentrancyLib } from "../balancer/VaultReentrancyLib.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -95,7 +95,7 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
      * @param _asset  Address of the Vault asset. eg WETH
      * @return balance  the amount of vault assets
      *
-     * IMPORTANT if this function is overridden it needs to do a call to: 
+     * IMPORTANT if this function is overridden it needs to do a call to:
      *  - VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
      * to prevent a read only re-entrancy vulnerability.
      *

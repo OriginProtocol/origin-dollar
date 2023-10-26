@@ -228,6 +228,11 @@ addresses.mainnet.oneInchRouterV5 =
 // Balancer
 addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
 addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+addresses.mainnet.balancerWeightedPoolFactoryV4 =
+  "0x897888115Ada5773E02aA29F775430BFB5F34c51";
+addresses.mainnet.AuraGaugeFactory =
+  "0xf1665E19bc105BE4EDD3739F88315cC699cc5b65";
+
 // wstETH/WETH
 addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";

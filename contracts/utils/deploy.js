@@ -789,12 +789,12 @@ async function getProposalState(proposalIdBn) {
    * issue is to retry 3 times.
    */
   let tries = 3;
-  while(tries > 0) {
+  while (tries > 0) {
     tries--;
     try {
-      state = await governorFive.state(proposalIdBn)
+      state = await governorFive.state(proposalIdBn);
       tries = 0;
-    } catch(e){}
+    } catch (e) {}
   }
 
   return [
