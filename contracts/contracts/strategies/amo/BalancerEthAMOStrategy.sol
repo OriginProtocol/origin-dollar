@@ -9,6 +9,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { BaseBalancerAMOStrategy } from "./BaseBalancerAMOStrategy.sol";
+import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -94,8 +95,9 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
      * @param _asset  Address of the Vault asset. eg WETH
      * @return balance  the amount of vault assets
      *
-     * IMPORTANT if this function is overridden it needs to have a whenNotInBalancerVaultContext
-     * modifier on it or it is susceptible to read-only re-entrancy attack
+     * IMPORTANT if this function is overridden it needs to do a call to: 
+     *  - VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
+     * to prevent a read only re-entrancy vulnerability.
      *
      * @dev it is important that this function is not affected by reporting inflated
      * values of assets in case of any pool manipulation. Such a manipulation could easily
@@ -112,6 +114,18 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
         override
         returns (uint256 balance)
     {
+        /**
+         * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
+         * balance operation. If we are already in a Vault transaction (e.g., a swap, join, or exit), the Vault's
+         * reentrancy protection will cause this function to revert.
+         *
+         * Use this modifier with any function that can cause a state change in a pool and is either public itself,
+         * or called by a public function *outside* a Vault operation (e.g., join, exit, or swap).
+         *
+         * This is to protect against Balancer's read-only re-entrancy vulnerability:
+         * https://www.notion.so/originprotocol/Balancer-read-only-reentrancy-c686e72c82414ef18fa34312bb02e11b
+         */
+        VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
         require(_asset == address(asset), "Unsupported asset");
 
         uint256 bptBalance = IERC4626(auraRewardPool).maxRedeem(address(this));
