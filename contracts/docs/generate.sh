@@ -91,8 +91,8 @@ sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquash
 sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
 
 # contracts/strategies/curve
-sol2uml .. -hi -b CurveTwoCoinFunctions -o CurveTwoCoinFunctions.svg
-sol2uml .. -hi -b CurveThreeCoinFunctions -o CurveThreeCoinFunctions.svg
+sol2uml .. -hl -b CurveTwoCoinFunctions -o CurveTwoCoinFunctions.svg
+sol2uml .. -hl -b CurveThreeCoinFunctions -o CurveThreeCoinFunctions.svg
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
