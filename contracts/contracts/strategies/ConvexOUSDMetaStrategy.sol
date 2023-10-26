@@ -32,6 +32,7 @@ contract ConvexOUSDMetaStrategy is
     )
         InitializableAbstractStrategy(_stratConfig)
         BaseCurveStrategy(_curveConfig)
+        CurveThreeCoinFunctions(_curveConfig.curvePool)
     {}
 
     function getCurveFunctions()

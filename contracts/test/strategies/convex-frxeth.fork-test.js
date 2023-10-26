@@ -527,7 +527,6 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         const withdrawAmountScaled = parseUnits(withdrawAmount);
         const expectedLpAmount =
           await convexFrxEthWethStrategy.calcWithdrawLpAmount(
-            curveFrxEthWethPool.address,
             coinIndex,
             withdrawAmountScaled
           );
@@ -560,7 +559,6 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         const tx = await convexFrxEthWethStrategy
           .connect(josh)
           .populateTransaction.calcWithdrawLpAmount(
-            curveFrxEthWethPool.address,
             coinIndex,
             withdrawAmountScaled
           );

@@ -14,6 +14,12 @@ contract CurveThreeCoinFunctions {
 
     uint256 public constant COIN_COUNT = 3;
 
+    address internal immutable _CURVE_POOL;
+
+    constructor(address _curvePool) {
+        _CURVE_POOL = _curvePool;
+    }
+
     function getCurveFunctions()
         internal
         pure
@@ -31,15 +37,12 @@ contract CurveThreeCoinFunctions {
 
     /**
      * @notice Deposit coins into a Curve pool
-     * @param _pool Address of the Curve pool
      * @param _amounts List of amounts of coins to deposit
      * @param _min_mint_amount Minimum amount of LP tokens to mint from the deposit
      */
-    function add_liquidity(
-        address _pool,
-        uint256[] memory _amounts,
-        uint256 _min_mint_amount
-    ) internal {
+    function add_liquidity(uint256[] memory _amounts, uint256 _min_mint_amount)
+        internal
+    {
         require(_amounts.length == COIN_COUNT, "Invalid number of amounts");
         uint256[COIN_COUNT] memory amounts = [
             _amounts[0],
@@ -47,18 +50,16 @@ contract CurveThreeCoinFunctions {
             _amounts[2]
         ];
 
-        ICurvePool(_pool).add_liquidity(amounts, _min_mint_amount);
+        ICurvePool(_CURVE_POOL).add_liquidity(amounts, _min_mint_amount);
     }
 
     /**
      * @notice Withdraw coins from the pool
      * @dev Withdrawal amounts are based on current deposit ratios
-     * @param _pool Address of the Curve pool
      * @param _burn_amount Quantity of LP tokens to burn in the withdrawal
      * @param _min_amounts Minimum amounts of underlying coins to receive
      */
     function remove_liquidity(
-        address _pool,
         uint256 _burn_amount,
         uint256[] memory _min_amounts
     ) internal {
@@ -72,12 +73,11 @@ contract CurveThreeCoinFunctions {
             _min_amounts[2]
         ];
 
-        ICurvePool(_pool).remove_liquidity(_burn_amount, min_amounts);
+        ICurvePool(_CURVE_POOL).remove_liquidity(_burn_amount, min_amounts);
     }
 
     /**
      * @notice Withdraw coins from the pool in an imbalanced amount
-     * @param _pool Address of the Curve pool
      * @param _amount The amount of underlying coin to withdraw
      * @param _coin_index Curve pool index of the coin to withdraw
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
@@ -85,7 +85,6 @@ contract CurveThreeCoinFunctions {
      * @param _receiver Address that receives the withdrawn coins
      */
     function remove_liquidity_imbalance(
-        address _pool,
         uint256 _amount,
         uint256 _coin_index,
         uint256 _max_burn_amount,
@@ -95,7 +94,10 @@ contract CurveThreeCoinFunctions {
         uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
         amounts[_coin_index] = _amount;
 
-        ICurvePool(_pool).remove_liquidity_imbalance(amounts, _max_burn_amount);
+        ICurvePool(_CURVE_POOL).remove_liquidity_imbalance(
+            amounts,
+            _max_burn_amount
+        );
 
         IERC20(_asset).safeTransfer(_receiver, _amount);
     }
@@ -120,21 +122,20 @@ contract CurveThreeCoinFunctions {
      *    so is amount of underlying assets returned.
      *  - the required amount of Curve LP tokens including fees is calculated by reducing the full fee LP amount
      *    by the ratio of required assets to assets received for full fee LP amount.
-     * @param _pool Address of the Curve pool
      * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
      * @param _assetAmount Amount of of the indexed coin to withdraw
      * @return lpAmount Curve LP tokens required to remove the coin amounts
      */
-    function calcWithdrawLpAmount(
-        address _pool,
-        uint256 _coinIndex,
-        uint256 _assetAmount
-    ) public view returns (uint256 lpAmount) {
+    function calcWithdrawLpAmount(uint256 _coinIndex, uint256 _assetAmount)
+        public
+        view
+        returns (uint256 lpAmount)
+    {
         uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
         amounts[_coinIndex] = _assetAmount;
 
         // LP required when removing required asset including slippage but ignoring fees
-        uint256 lpRequiredNoFees = ICurvePool(_pool).calc_token_amount(
+        uint256 lpRequiredNoFees = ICurvePool(_CURVE_POOL).calc_token_amount(
             amounts,
             false
         );
@@ -143,14 +144,14 @@ contract CurveThreeCoinFunctions {
          * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
          */
         uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + ICurvePool(_pool).fee(),
+            1e10 + ICurvePool(_CURVE_POOL).fee(),
             1e10
         );
 
         /* Asset received when withdrawing full fee applicable LP accounting for slippage and fees.
          * Unlike calc_token_amount which does not include fees, calc_withdraw_one_coin includes fees.
          */
-        uint256 assetReceivedForFullLPFees = ICurvePool(_pool)
+        uint256 assetReceivedForFullLPFees = ICurvePool(_CURVE_POOL)
             .calc_withdraw_one_coin(
                 lpRequiredFullFees,
                 int128(uint128(_coinIndex))

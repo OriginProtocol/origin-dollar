@@ -33,7 +33,11 @@ contract ThreePoolStrategy is BaseCurveStrategy, CurveThreeCoinFunctions {
     constructor(
         BaseStrategyConfig memory _stratConfig,
         CurveConfig memory _config
-    ) InitializableAbstractStrategy(_stratConfig) BaseCurveStrategy(_config) {}
+    )
+        InitializableAbstractStrategy(_stratConfig)
+        BaseCurveStrategy(_config)
+        CurveThreeCoinFunctions(_config.curvePool)
+    {}
 
     function getCurveFunctions()
         internal

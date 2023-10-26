@@ -25,19 +25,16 @@ import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
 struct CurveFunctions {
-    function(address, uint256[] memory, uint256) add_liquidity;
-    function(address, uint256, uint256[] memory) remove_liquidity;
+    function(uint256[] memory, uint256) add_liquidity;
+    function(uint256, uint256[] memory) remove_liquidity;
     function(
-        address,
         uint256,
         uint256,
         uint256,
         address,
         address
     ) remove_liquidity_imbalance;
-    function(address, uint256, uint256)
-        view
-        returns (uint256) calcWithdrawLpAmount;
+    function(uint256, uint256) view returns (uint256) calcWithdrawLpAmount;
 }
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
@@ -150,7 +147,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
         CurveFunctions memory curveFunctions = getCurveFunctions();
-        curveFunctions.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+        curveFunctions.add_liquidity(_amounts, minMintAmount);
 
         _lpDepositAll();
     }
@@ -197,7 +194,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
         CurveFunctions memory curveFunctions = getCurveFunctions();
-        curveFunctions.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+        curveFunctions.add_liquidity(_amounts, minMintAmount);
 
         /* In case of Curve Strategy all assets are mapped to the same Curve LP token, eg 3CRV.
          * Let descendants further handle the Curve LP token by either deploying to a Curve Metapool,
@@ -249,7 +246,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // in this strategy contract. This will be picked up on the next deposit or withdraw.
         CurveFunctions memory curveFunctions = getCurveFunctions();
         uint256 maxCurveLpTokens = curveFunctions.calcWithdrawLpAmount(
-            CURVE_POOL,
             coinIndex,
             _amount
         );
@@ -261,7 +257,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Withdraw asset from the Curve pool and transfer to the recipient
         curveFunctions.remove_liquidity_imbalance(
-            CURVE_POOL,
             _amount,
             coinIndex,
             maxCurveLpTokens,
@@ -287,7 +282,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Remove liquidity
         CurveFunctions memory curveFunctions = getCurveFunctions();
         curveFunctions.remove_liquidity(
-            CURVE_POOL,
             IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
             minWithdrawAmounts
         );

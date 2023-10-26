@@ -10,6 +10,12 @@ contract CurveTwoCoinFunctions {
 
     uint256 public constant COIN_COUNT = 2;
 
+    address internal immutable _CURVE_POOL;
+
+    constructor(address _curvePool) {
+        _CURVE_POOL = _curvePool;
+    }
+
     function getCurveFunctions()
         internal
         pure
@@ -27,31 +33,26 @@ contract CurveTwoCoinFunctions {
 
     /**
      * @notice Deposit coins into a Curve pool
-     * @param _pool Address of the Curve pool
      * @param _amounts List of amounts of coins to deposit
      * @param _min_mint_amount Minimum amount of LP tokens to mint from the deposit
      */
-    function add_liquidity(
-        address _pool,
-        uint256[] memory _amounts,
-        uint256 _min_mint_amount
-    ) internal {
+    function add_liquidity(uint256[] memory _amounts, uint256 _min_mint_amount)
+        internal
+    {
         require(_amounts.length == COIN_COUNT, "Invalid number of amounts");
         uint256[COIN_COUNT] memory amounts = [_amounts[0], _amounts[1]];
 
         // slither-disable-next-line unused-return
-        ICurveMetaPool(_pool).add_liquidity(amounts, _min_mint_amount);
+        ICurveMetaPool(_CURVE_POOL).add_liquidity(amounts, _min_mint_amount);
     }
 
     /**
      * @notice Withdraw coins from the pool
      * @dev Withdrawal amounts are based on current deposit ratios
-     * @param _pool Address of the Curve pool
      * @param _burn_amount Quantity of LP tokens to burn in the withdrawal
      * @param _min_amounts Minimum amounts of underlying coins to receive
      */
     function remove_liquidity(
-        address _pool,
         uint256 _burn_amount,
         uint256[] memory _min_amounts
     ) internal {
@@ -65,12 +66,11 @@ contract CurveTwoCoinFunctions {
         ];
 
         // slither-disable-next-line unused-return
-        ICurveMetaPool(_pool).remove_liquidity(_burn_amount, min_amounts);
+        ICurveMetaPool(_CURVE_POOL).remove_liquidity(_burn_amount, min_amounts);
     }
 
     /**
      * @notice Withdraw coins from the pool in an imbalanced amount
-     * @param _pool Address of the Curve pool
      * @param _amount The amount of underlying coin to withdraw
      * @param _coin_index Curve pool index of the coin to withdraw
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
@@ -78,7 +78,6 @@ contract CurveTwoCoinFunctions {
      * @param _receiver Address that receives the withdrawn coins
      */
     function remove_liquidity_imbalance(
-        address _pool,
         uint256 _amount,
         uint256 _coin_index,
         uint256 _max_burn_amount,
@@ -89,7 +88,7 @@ contract CurveTwoCoinFunctions {
         amounts[_coin_index] = _amount;
 
         // slither-disable-next-line unused-return
-        ICurveMetaPool(_pool).remove_liquidity_imbalance(
+        ICurveMetaPool(_CURVE_POOL).remove_liquidity_imbalance(
             amounts,
             _max_burn_amount,
             _receiver
@@ -103,21 +102,22 @@ contract CurveTwoCoinFunctions {
      * This implementation assumes a newer Curve pool is used which includes fees in the
      * calc_token_amount functinon.
      *
-     * @param _pool Address of the Curve pool
      * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
      * @param _assetAmount Amount of of the indexed coin to withdraw
      * @return lpAmount Curve LP tokens required to remove the coin amounts
      */
-    function calcWithdrawLpAmount(
-        address _pool,
-        uint256 _coinIndex,
-        uint256 _assetAmount
-    ) public view returns (uint256 lpAmount) {
+    function calcWithdrawLpAmount(uint256 _coinIndex, uint256 _assetAmount)
+        public
+        view
+        returns (uint256 lpAmount)
+    {
         uint256[COIN_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coinIndex] = _assetAmount;
 
         // LP required when removing required asset including slippage and fees.
         // Need to add 1 to account for rounding up in the remove_liquidity_imbalance implementation.
-        lpAmount = ICurveMetaPool(_pool).calc_token_amount(amounts, false) + 1;
+        lpAmount =
+            ICurveMetaPool(_CURVE_POOL).calc_token_amount(amounts, false) +
+            1;
     }
 }

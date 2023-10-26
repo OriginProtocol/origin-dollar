@@ -19,6 +19,7 @@ contract ConvexTwoPoolStrategy is CurveTwoCoinFunctions, ConvexStrategy {
         InitializableAbstractStrategy(_stratConfig)
         BaseCurveStrategy(_curveConfig)
         ConvexStrategy(_convexConfig)
+        CurveTwoCoinFunctions(_curveConfig.curvePool)
     {}
 
     function getCurveFunctions()

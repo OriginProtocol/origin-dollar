@@ -19,6 +19,7 @@ contract ConvexThreePoolStrategy is CurveThreeCoinFunctions, ConvexStrategy {
         InitializableAbstractStrategy(_stratConfig)
         BaseCurveStrategy(_curveConfig)
         ConvexStrategy(_convexConfig)
+        CurveThreeCoinFunctions(_curveConfig.curvePool)
     {}
 
     function getCurveFunctions()
