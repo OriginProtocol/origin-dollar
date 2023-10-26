@@ -6,12 +6,28 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../../utils/StableMath.sol";
 import { ICurvePool } from "./ICurvePool.sol";
+import { CurveFunctions } from "../BaseCurveStrategy.sol";
 
-library CurveThreeCoinLib {
+contract CurveThreeCoinFunctions {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    uint256 public constant CURVE_POOL_ASSETS_COUNT = 3;
+    uint256 public constant COIN_COUNT = 3;
+
+    function getCurveFunctions()
+        internal
+        pure
+        virtual
+        returns (CurveFunctions memory)
+    {
+        return
+            CurveFunctions({
+                add_liquidity: add_liquidity,
+                remove_liquidity: remove_liquidity,
+                remove_liquidity_imbalance: remove_liquidity_imbalance,
+                calcWithdrawLpAmount: calcWithdrawLpAmount
+            });
+    }
 
     /**
      * @notice Deposit coins into a Curve pool
@@ -21,14 +37,11 @@ library CurveThreeCoinLib {
      */
     function add_liquidity(
         address _pool,
-        uint256[] calldata _amounts,
+        uint256[] memory _amounts,
         uint256 _min_mint_amount
-    ) external {
-        require(
-            _amounts.length == CURVE_POOL_ASSETS_COUNT,
-            "Invalid number of amounts"
-        );
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
+    ) internal {
+        require(_amounts.length == COIN_COUNT, "Invalid number of amounts");
+        uint256[COIN_COUNT] memory amounts = [
             _amounts[0],
             _amounts[1],
             _amounts[2]
@@ -47,43 +60,19 @@ library CurveThreeCoinLib {
     function remove_liquidity(
         address _pool,
         uint256 _burn_amount,
-        uint256[] calldata _min_amounts
-    ) external {
+        uint256[] memory _min_amounts
+    ) internal {
         require(
-            _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
+            _min_amounts.length == COIN_COUNT,
             "Invalid number of min amounts"
         );
-        uint256[CURVE_POOL_ASSETS_COUNT] memory min_amounts = [
+        uint256[COIN_COUNT] memory min_amounts = [
             _min_amounts[0],
             _min_amounts[1],
             _min_amounts[2]
         ];
 
         ICurvePool(_pool).remove_liquidity(_burn_amount, min_amounts);
-    }
-
-    /**
-     * @notice Withdraw coins from the pool in an imbalanced amount
-     * @param _pool Address of the Curve pool
-     * @param _amounts List of amounts of underlying coins to withdraw
-     * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
-     */
-    function remove_liquidity_imbalance(
-        address _pool,
-        uint256[] calldata _amounts,
-        uint256 _max_burn_amount
-    ) external {
-        require(
-            _amounts.length == CURVE_POOL_ASSETS_COUNT,
-            "Invalid number of amounts"
-        );
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
-            _amounts[0],
-            _amounts[1],
-            _amounts[2]
-        ];
-
-        ICurvePool(_pool).remove_liquidity_imbalance(amounts, _max_burn_amount);
     }
 
     /**
@@ -102,40 +91,13 @@ library CurveThreeCoinLib {
         uint256 _max_burn_amount,
         address _asset,
         address _receiver
-    ) external {
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0, 0];
+    ) internal {
+        uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
         amounts[_coin_index] = _amount;
 
         ICurvePool(_pool).remove_liquidity_imbalance(amounts, _max_burn_amount);
 
         IERC20(_asset).safeTransfer(_receiver, _amount);
-    }
-
-    /**
-     * @notice Calculate addition or reduction in token supply from a deposit or withdrawal
-     * @dev This calculation accounts for slippage, but not fees.
-     * Needed to prevent front-running, not for precise calculations!
-     * @param _pool Address of the Curve pool
-     * @param _amounts Amount of each coin being deposited or withdrawn
-     * @param _is_deposit set True for deposits, False for withdrawals
-     * @return lpTokens Expected amount of LP tokens received
-     */
-    function calc_token_amount(
-        address _pool,
-        uint256[] calldata _amounts,
-        bool _is_deposit
-    ) external view returns (uint256 lpTokens) {
-        require(
-            _amounts.length == CURVE_POOL_ASSETS_COUNT,
-            "Invalid number of amounts"
-        );
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
-            _amounts[0],
-            _amounts[1],
-            _amounts[2]
-        ];
-
-        lpTokens = ICurvePool(_pool).calc_token_amount(amounts, _is_deposit);
     }
 
     /**
@@ -167,8 +129,8 @@ library CurveThreeCoinLib {
         address _pool,
         uint256 _coinIndex,
         uint256 _assetAmount
-    ) external view returns (uint256 lpAmount) {
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0, 0];
+    ) public view returns (uint256 lpAmount) {
+        uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
         amounts[_coinIndex] = _assetAmount;
 
         // LP required when removing required asset including slippage but ignoring fees

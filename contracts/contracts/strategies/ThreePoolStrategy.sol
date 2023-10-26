@@ -11,6 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ICurveGauge } from "./curve/ICurveGauge.sol";
 import { ICurvePool } from "./curve/ICurvePool.sol";
 import { ICRVMinter } from "./curve/ICRVMinter.sol";
+import { CurveFunctions, CurveThreeCoinFunctions } from "./curve/CurveThreeCoinFunctions.sol";
 import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
@@ -22,7 +23,7 @@ import { Helpers } from "../utils/Helpers.sol";
  *
  * Remove this notice if ThreePoolStrategy is re-deployed
  */
-contract ThreePoolStrategy is BaseCurveStrategy {
+contract ThreePoolStrategy is BaseCurveStrategy, CurveThreeCoinFunctions {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -33,6 +34,15 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         BaseStrategyConfig memory _stratConfig,
         CurveConfig memory _config
     ) InitializableAbstractStrategy(_stratConfig) BaseCurveStrategy(_config) {}
+
+    function getCurveFunctions()
+        internal
+        pure
+        override(BaseCurveStrategy, CurveThreeCoinFunctions)
+        returns (CurveFunctions memory)
+    {
+        return CurveThreeCoinFunctions.getCurveFunctions();
+    }
 
     /**
      * Initializer for setting up strategy internal state. This overrides the

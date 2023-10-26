@@ -12,11 +12,15 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { ICurvePool } from "./curve/ICurvePool.sol";
-import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { CurveThreeCoinFunctions } from "./curve/CurveThreeCoinFunctions.sol";
+import { CurveFunctions, IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { BaseConvexMetaStrategy, BaseCurveStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
+contract ConvexGeneralizedMetaStrategy is
+    CurveThreeCoinFunctions,
+    BaseConvexMetaStrategy
+{
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -27,6 +31,15 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         InitializableAbstractStrategy(_stratConfig)
         BaseCurveStrategy(_curveConfig)
     {}
+
+    function getCurveFunctions()
+        internal
+        pure
+        override(BaseCurveStrategy, CurveThreeCoinFunctions)
+        returns (CurveFunctions memory)
+    {
+        return CurveThreeCoinFunctions.getCurveFunctions();
+    }
 
     /* Take 3pool LP and deposit it to metapool. Take the LP from metapool
      * and deposit them to Convex.

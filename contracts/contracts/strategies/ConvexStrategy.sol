@@ -32,7 +32,7 @@ import { StableMath } from "../utils/StableMath.sol";
  *
  * Remove this notice if ConvexStrategy is re-deployed
  */
-contract ConvexStrategy is BaseCurveStrategy {
+abstract contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -57,14 +57,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         uint256 cvxDepositorPoolId;
     }
 
-    constructor(
-        BaseStrategyConfig memory _stratConfig,
-        CurveConfig memory _curveConfig,
-        ConvexConfig memory _convexConfig
-    )
-        InitializableAbstractStrategy(_stratConfig)
-        BaseCurveStrategy(_curveConfig)
-    {
+    constructor(ConvexConfig memory _convexConfig) {
         cvxDepositor = _convexConfig.cvxDepositor;
         cvxDepositorPoolId = _convexConfig.cvxDepositorPoolId;
 

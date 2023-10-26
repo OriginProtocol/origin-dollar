@@ -124,7 +124,7 @@ const defaultFixture = deployments.createFixture(async () => {
   );
   const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
   const convexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     convexStrategyProxy.address
   );
 
@@ -132,7 +132,7 @@ const defaultFixture = deployments.createFixture(async () => {
     "ConvexFrxEthWethStrategyProxy"
   );
   const convexFrxEthWethStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexTwoPoolStrategy",
     convexFrxEthWethStrategyProxy.address
   );
 
@@ -1683,7 +1683,6 @@ async function convexFrxEthFixture(
       oethMetapoolAbi,
       addresses.mainnet.CurveFrxEthWethPool
     );
-    fixture.curveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
   } else {
     // Approve strategy for unit tests
     await oethVault
@@ -1848,10 +1847,6 @@ async function threepoolFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
   await deploy("StandaloneThreePool", {
     from: governorAddr,
     contract: "ThreePoolStrategy",
@@ -1862,7 +1857,6 @@ async function threepoolFixture() {
       ],
       [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
     ],
-    libraries,
   });
 
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
