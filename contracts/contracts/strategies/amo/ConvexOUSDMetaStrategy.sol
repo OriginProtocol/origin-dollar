@@ -185,7 +185,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _vaultAssetAmount;
 
-        // 3Pool LP required when removing reuiqred vault assets ignoring fees
+        // 3Pool LP required when removing required vault assets ignoring fees
         uint256 lpRequiredNoFees = curve3Pool.calc_token_amount(
             _amounts,
             false

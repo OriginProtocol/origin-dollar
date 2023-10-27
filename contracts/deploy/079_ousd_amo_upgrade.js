@@ -47,6 +47,8 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.ThreePoolToken, // assetAddress (3CRV)
           0, // Curve pool index for OUSD
           1, // Curve pool index for 3CRV
+          `${0.5*1e18}`, // oToken weight
+          `${0.5*1e18}` // asset weight
         ],
         [
           addresses.mainnet.CVXBooster, // cvxDepositorAddress,

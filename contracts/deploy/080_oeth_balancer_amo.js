@@ -10,7 +10,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "080_oeth_balancer_amo",
     forceDeploy: false,
-    // forceSkip: true,
+    forceSkip: true,
     reduceQueueTime: false,
     deployerIsProposer: true,
     // proposalId: "",
@@ -66,11 +66,13 @@ module.exports = deploymentWithGovernanceProposal(
         // TODO change platformAddress to Balancer pool address
         [poolAddress, cVaultProxy.address], // BaseStrategyConfig[platformAddress, vaultAddress]
         [
-          // AMOConfig[oTokenAddress, assetAddress(other asset paired), oTokenCoinIndex, assetCoinIndex]
+          /// AMOConfig[oTokenAddress, assetAddress, oTokenCoinIndex, assetCoinIndex, oTokenWeight, assetWeight]
           addresses.mainnet.OETHProxy,
           addresses.mainnet.WETH,
           0, // TODO update
           1, // TODO update
+          `${0.5*1e18}`, // oToken weight
+          `${0.5*1e18}` // asset weight
         ],
         [
           // BalancerConfig[balancerVault, balancerPoolId, auraRewardPool]
