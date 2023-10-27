@@ -6,58 +6,6 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const balancerFactoryAbi = require("../test/abi/balancerWeightedPoolFactoryV4.json");
 const auraGaugeFactoryAbi = require("../test/abi/auraGaugeFactory.json");
 
-/* IMPORTANT!
- *
- * Deploy and fund the Balancer pool for the strategy to interact with.
- * DELETE when the pool exists on the mainnet.
- */
-const deployBalancerPool = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const balancerFactory = await ethers.getContractAt(
-    balancerFactoryAbi,
-    addresses.mainnet.balancerWeightedPoolFactoryV4
-  );
-  const auraGaugeFactory = await ethers.getContractAt(
-    auraGaugeFactoryAbi,
-    addresses.mainnet.AuraGaugeFactory
-  );
-
-  // Create balancer pool
-  const name = "OETH-WETH";
-  const tx = await balancerFactory.connect(sDeployer).create(
-    name, // name
-    name, // symbol
-    [addresses.mainnet.OETHProxy, addresses.mainnet.WETH], // pool tokens
-    [`${0.8 * 1e18}`, `${0.2 * 1e18}`], // normalized weights
-    [addresses.zero, addresses.zero], // rate provider
-    "400000000000000", // 0.04% swap fee
-    addresses.zero, // owner
-    // salt is used to create predictable addresses using create2 call
-    "0x029174bcd5f98166762506f0de32466ccacc44c3cd7302690e0307a0b45d7ac7" // salt
-  );
-  const res = await tx.wait();
-
-  const poolId = res.events[1].topics[1];
-  const poolAddress = res.events[1].topics[1].substring(0, 42);
-
-  // Create Aura Gauge
-  const tx1 = await auraGaugeFactory.create(
-    poolAddress,
-    "20000000000000000" // 2% capped gauge
-  );
-
-  const res1 = await tx1.wait();
-  const gaugeAddress = "0x" + res1.events[0].topics[1].substring(26);
-
-  return {
-    poolId,
-    poolAddress,
-    gaugeAddress,
-  };
-};
-
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "080_oeth_balancer_amo",
@@ -71,7 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    const { poolId, poolAddress, gaugeAddress } = await deployBalancerPool();
+    const { poolId, poolAddress, gaugeAddress } = await deployBalancerPoolAndGauge();
 
     // 1. Deploy new OETH Vault Core and Admin implementations
     // Need to override the storage safety check as we are changing the Strategy struct
@@ -218,3 +166,55 @@ module.exports = deploymentWithGovernanceProposal(
     };
   }
 );
+
+/* IMPORTANT!
+ *
+ * Deploy and fund the Balancer pool for the strategy to interact with.
+ * DELETE when the pool exists on the mainnet.
+ */
+const deployBalancerPoolAndGauge = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const balancerFactory = await ethers.getContractAt(
+    balancerFactoryAbi,
+    addresses.mainnet.balancerWeightedPoolFactoryV4
+  );
+  const auraGaugeFactory = await ethers.getContractAt(
+    auraGaugeFactoryAbi,
+    addresses.mainnet.AuraGaugeFactory
+  );
+
+  // Create balancer pool
+  const name = "OETH-WETH";
+  const tx = await balancerFactory.connect(sDeployer).create(
+    name, // name
+    name, // symbol
+    [addresses.mainnet.OETHProxy, addresses.mainnet.WETH], // pool tokens
+    [`${0.8 * 1e18}`, `${0.2 * 1e18}`], // normalized weights
+    [addresses.zero, addresses.zero], // rate provider
+    "400000000000000", // 0.04% swap fee
+    addresses.zero, // owner
+    // salt is used to create predictable addresses using create2 call
+    "0x029174bcd5f98166762506f0de32466ccacc44c3cd7302690e0307a0b45d7ac7" // salt
+  );
+  const res = await tx.wait();
+
+  const poolId = res.events[1].topics[1];
+  const poolAddress = res.events[1].topics[1].substring(0, 42);
+
+  // Create Aura Gauge
+  const tx1 = await auraGaugeFactory.create(
+    poolAddress,
+    "20000000000000000" // 2% capped gauge
+  );
+
+  const res1 = await tx1.wait();
+  const gaugeAddress = "0x" + res1.events[0].topics[1].substring(26);
+
+  return {
+    poolId,
+    poolAddress,
+    gaugeAddress,
+  };
+};

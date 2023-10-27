@@ -70,6 +70,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 address(this)
             );
         }
+
+        // TODO Make sure all assets are in the correct order
         _deposit(strategyAssets, strategyAmounts);
     }
 
@@ -89,6 +91,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Array length missmatch"
         );
 
+        // TODO move this to initialize, this doesn't change
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
@@ -126,6 +129,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < tokens.length; ++i) {
             // Convert IERC20 type to address
             poolAssets[i] = address(tokens[i]);
+
+            // TODO remove nested loop when assets in correct order
 
             // For each of the mapped assets
             for (uint256 j = 0; j < strategyAssetsToPoolAssets.length; ++j) {
