@@ -16,7 +16,7 @@ const log = require("./logger")("utils:signers");
  * @param {*} address optional address of the signer
  * @returns
  */
-async function getSigner(address) {
+async function getSigner(address = undefined) {
   if (address) {
     if (!address.match(ethereumAddress)) {
       throw Error(`Invalid format of address`);
@@ -72,7 +72,12 @@ const getDefenderSigner = async () => {
   };
   const client = new Defender(credentials);
   const provider = client.relaySigner.getProvider();
-  return client.relaySigner.getSigner(provider, { speed });
+
+  const signer = client.relaySigner.getSigner(provider, { speed });
+  log(
+    `Using Defender Relayer account ${await signer.getAddress()} from env vars DEFENDER_API_KEY and DEFENDER_API_SECRET`
+  );
+  return signer;
 };
 
 /**
