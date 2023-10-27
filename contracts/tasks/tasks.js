@@ -40,6 +40,7 @@ const {
   yieldTask,
 } = require("./vault");
 const { checkDelta, getDelta, takeSnapshot } = require("./valueChecker");
+const { cowQuoteTask } = require("./cow");
 const {
   curveAddTask,
   curveRemoveTask,
@@ -534,6 +535,25 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("cowQuote", "Get a CoW Swap quote")
+  .addParam(
+    "sell",
+    "Symbol of the asset to sell. eg OETH, WETH, USDT or ETH",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "buy",
+    "Symbol of the asset to buy. eg OETH, WETH, USDT or ETH",
+    undefined,
+    types.string
+  )
+  .addParam("amount", "Amount of assets to sell", 0, types.float)
+  .setAction(cowQuoteTask);
+task("cowQuote").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
