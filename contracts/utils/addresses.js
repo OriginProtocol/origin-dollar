@@ -222,4 +222,10 @@ addresses.mainnet.FrxEthFraxOracle =
 addresses.mainnet.FrxEthEthDualOracle =
   "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
 
+// CoW Protocol
+addresses.mainnet.GPv2Settlement = "0x9008d19f58aabd9ed0d60971565aa8510560ab41";
+addresses.mainnet.GPv2VaultRelayer = "0xc92e8bdf79f0507f65a392b0ab4667716bfe0110";
+addresses.mainnet.HooksTrampoline = "0x01DcB88678aedD0C4cC9552B20F4718550250574";
+
+
 module.exports = addresses;
