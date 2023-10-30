@@ -186,6 +186,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         );
 
         // Transfer OToken to UniversalRouter for swapping
+        // slither-disable-next-line unchecked-transfer
         IERC20(oToken).transfer(universalRouter, oTokenAmount);
 
         // Execute the swap
