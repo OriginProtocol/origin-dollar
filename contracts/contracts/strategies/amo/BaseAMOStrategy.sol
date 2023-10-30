@@ -64,6 +64,12 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         _;
     }
 
+    modifier improvePoolBalance() {
+        int256 diffBefore = improvePoolBalancePreCheck();
+        _;
+        improvePoolBalancePostCheck(diffBefore);
+    }
+
     /// @dev This is separate internal function to save on deployment size
     function callerNotStrategist() internal view {
         require(
@@ -598,15 +604,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
      */
-    function mintAndAddOTokens(uint256 _oTokens) onlyStrategist external nonReentrant {
-        // Verifies that the caller is the Strategist
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-
-        int256 diffBefore = improvePoolBalancePreCheck();
-
+    function mintAndAddOTokens(uint256 _oTokens) onlyStrategist improvePoolBalance external nonReentrant {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
         uint256[2] memory _amounts;
@@ -627,8 +625,6 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         _stakeCurveLp(lpDeposited);
 
         emit Deposit(address(oToken), address(lpToken), _oTokens);
-
-        improvePoolBalancePostCheck(diffBefore);
     }
 
     /**
@@ -639,15 +635,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of AMO pool LP tokens to be burned for OTokens.
      */
-    function removeAndBurnOTokens(uint256 _lpTokens) onlyStrategist external nonReentrant {
-        // Verifies that the caller is the Strategist
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-
-        int256 diffBefore = improvePoolBalancePreCheck();
-
+    function removeAndBurnOTokens(uint256 _lpTokens) improvePoolBalance onlyStrategist external nonReentrant {
         // Withdraw AMO pool LP tokens from the rewards pool and remove OTokens from the AMO pool
         uint256 oTokenToBurn = _withdrawAndRemoveFromPool(
             _lpTokens,
@@ -658,8 +646,6 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
-
-        improvePoolBalancePostCheck(diffBefore);
     }
 
     /**
@@ -679,22 +665,13 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of AMO pool LP tokens required off-chain.
      */
-    function removeOnlyAssets(uint256 _lpTokens) onlyStrategist external nonReentrant {
-        // Verifies that the caller is the Strategist
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-        int256 diffBefore = improvePoolBalancePreCheck();
-
+    function removeOnlyAssets(uint256 _lpTokens) onlyStrategist improvePoolBalance external nonReentrant {
         // Withdraw AMO pool LP tokens from rewards pool and remove asset from the AMO pool
         _withdrawAndRemoveFromPool(_lpTokens, address(asset));
 
         // Convert all the pool assets in this strategy to Vault assets
         // and transfer them to the vault
         _withdrawAllAsset(vaultAddress);
-
-        improvePoolBalancePostCheck(diffBefore);
     }
 
     /**

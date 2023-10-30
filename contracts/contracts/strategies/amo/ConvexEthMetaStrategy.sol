@@ -124,9 +124,9 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         public
         view
         override
+        onlyAsset(_asset)
         returns (uint256 balance)
     {
-        require(_isVaultAsset(_asset), "Unsupported asset");
         // Eth balance needed here for the balance check that happens from vault during depositing.
         balance = address(this).balance;
         uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));

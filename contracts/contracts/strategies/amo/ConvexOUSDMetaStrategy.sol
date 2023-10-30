@@ -345,9 +345,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         address[] memory _vaultAssets,
         uint256[] memory
     ) external override onlyAssets(_vaultAssets) onlyVault nonReentrant {
-        // The check ensures the correct number of assets are supported.
-        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
-
         // TODO add support for withdrawing multiple 3Pool assets
         revert("Not supported");
     }
@@ -423,11 +420,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         public
         view
         override
-        onlyAsset(_vaultAsset)
+        onlyAsset(_asset)
         returns (uint256 balance)
     {
-        // Ensures that the asset is supported.
-        require(_isVaultAsset(_asset), "Unsupported asset");
 
         // 3Pool LP tokens (3Crv) in this strategy contract.
         // This should generally be nothing as we should always stake
