@@ -53,7 +53,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     address public immutable cvxLocker;
 
     // Ref: https://docs.uniswap.org/contracts/universal-router/technical-reference#command-structure
-    bytes public constant swapCommand = hex"0000";
+    bytes private constant swapCommand = hex"0000";
 
     constructor(
         address _oToken,
@@ -151,14 +151,6 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         uint256 minOGV,
         uint256 minCVX
     ) external onlyGovernorOrStrategist nonReentrant {
-        _swap(oTokenAmount, minOGV, minCVX);
-    }
-
-    function _swap(
-        uint256 oTokenAmount,
-        uint256 minOGV,
-        uint256 minCVX
-    ) internal {
         require(oTokenAmount > 0, "Invalid Swap Amount");
         require(universalRouter != address(0), "Uniswap Router not set");
         require(rewardsSource != address(0), "RewardsSource contract not set");
@@ -168,13 +160,16 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         uint256 ogvBalanceBefore = IERC20(ogv).balanceOf(rewardsSource);
         uint256 cvxBalanceBefore = IERC20(cvx).balanceOf(address(this));
 
+        uint256 amountInForOGV = oTokenAmount / 2;
+        uint256 amountInForCVX = oTokenAmount - amountInForOGV;
+
         // Build swap input
         bytes[] memory inputs = new bytes[](2);
 
         inputs[0] = abi.encode(
             // Send swapped OGV directly to RewardsSource contract
             rewardsSource,
-            oTokenAmount / 2,
+            amountInForOGV,
             minOGV,
             _getSwapPath(ogv),
             false
@@ -184,14 +179,14 @@ abstract contract BaseBuyback is Initializable, Strategizable {
             // Buyback contract receives the CVX to lock it on
             // behalf of Strategist after the swap
             address(this),
-            oTokenAmount / 2,
+            amountInForCVX,
             minCVX,
             _getSwapPath(cvx),
             false
         );
 
         // Transfer OToken to UniversalRouter for swapping
-        IERC20(oToken).safeTransfer(universalRouter, oTokenAmount);
+        IERC20(oToken).transfer(universalRouter, oTokenAmount);
 
         // Execute the swap
         IUniswapUniversalRouter(universalRouter).execute(
@@ -205,13 +200,13 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         emit OTokenBuyback(
             oToken,
             ogv,
-            oTokenAmount / 2,
+            amountInForOGV,
             IERC20(ogv).balanceOf(rewardsSource) - ogvBalanceBefore
         );
         emit OTokenBuyback(
             oToken,
             cvx,
-            oTokenAmount / 2,
+            amountInForCVX,
             IERC20(cvx).balanceOf(address(this)) - cvxBalanceBefore
         );
 
@@ -219,6 +214,9 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         _lockAllCVX();
     }
 
+    /**
+     * @dev Locks all CVX held by the contract on behalf of the Treasury Manager
+     */
     function lockAllCVX() external onlyGovernorOrStrategist {
         _lockAllCVX();
     }
@@ -237,6 +235,9 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         );
     }
 
+    /**
+     * @dev Approve CVX Locker to move CVX held by this contract
+     */
     function safeApproveAllTokens() external onlyGovernorOrStrategist {
         IERC20(cvx).safeApprove(cvxLocker, type(uint256).max);
     }
