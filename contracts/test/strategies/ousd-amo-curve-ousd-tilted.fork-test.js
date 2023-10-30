@@ -49,7 +49,8 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
 
   describe("Redeem", function () {
     it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+      const { vault, ousd, usdt, usdc, dai, anna, convexOusdAMOStrategy } =
+        fixture;
 
       await vault.connect(anna).allocate();
 
@@ -68,7 +69,7 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
 
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
 
       // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
