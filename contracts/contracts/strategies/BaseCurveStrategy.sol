@@ -35,7 +35,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /// @notice Address of the Curve pool contract
     address public immutable CURVE_POOL;
     /// @notice Address of the Curve pool's liquidity provider (LP) token.
-    /// This can be different to the Curve pool. For exmaple, 3Pool's 3Crv LP token.
+    /// This can be different to the Curve pool. For example, 3Pool's 3Crv LP token.
     address public immutable CURVE_LP_TOKEN;
 
     // Only supporting up to 3 coins for now.
