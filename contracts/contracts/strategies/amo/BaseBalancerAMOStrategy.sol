@@ -78,7 +78,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         uint256 minMintAmount
     ) internal override returns (uint256 lpDeposited) {
         // TODO do we need to check if the tokens in the pool have changed?
-        // TODO move this to initialize this doesn't change
+        // TODO move this to initialize these values don't ever change
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );

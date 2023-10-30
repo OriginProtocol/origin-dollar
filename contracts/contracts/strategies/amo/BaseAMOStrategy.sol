@@ -70,7 +70,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalancePostCheck(diffBefore);
     }
 
-    /// @dev This is separate internal function to save on deployment size
+    /// @dev This is separate internal function to save on contract deployment size
     function callerNotStrategist() internal view {
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
@@ -80,7 +80,9 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Checks the AMO pool's balances have improved and the balances
-     * have not tipped to the other side.
+     * have not tipped to the other side. Also This is separate internal function
+     * to save on contract deployment size
+     * 
      */
     function improvePoolBalancePreCheck()
         internal
@@ -107,6 +109,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
             int256(totalBalanceBefore.mulTruncate(oTokenWeight));
     }
 
+    /// @dev This is separate internal function to save on contract deployment size
     function improvePoolBalancePostCheck(int256 diffBefore) internal view {
         // Get the asset and OToken balances in the AMO pool
         uint256[2] memory balancesAfter = _getBalances();
