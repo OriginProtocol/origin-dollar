@@ -2,7 +2,10 @@ const { parseUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const balancerFactoryAbi = require("../test/abi/balancerWeightedPoolFactoryV4.json");
+const auraGaugeControllerAbi = require("../test/abi/auraGaugeController.json");
 const auraGaugeFactoryAbi = require("../test/abi/auraGaugeFactory.json");
+const auraPoolManagerV4Abi = require("../test/abi/auraPoolManagerV4Abi.json");
+const { impersonateAndFund } = require("../utils/signers.js");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -17,7 +20,7 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    const { poolId, poolAddress, gaugeAddress } =
+    const { poolId, poolAddress, depositorAddress } =
       await deployBalancerPoolAndGauge();
 
     // 1. Deploy new OETH Vault Core and Admin implementations
@@ -77,7 +80,7 @@ module.exports = deploymentWithGovernanceProposal(
           // BalancerConfig[balancerVault, balancerPoolId, auraRewardPool]
           addresses.mainnet.balancerVault,
           poolId, // TODO change
-          gaugeAddress, // TODO change
+          depositorAddress, // TODO change
         ],
       ]
     );
@@ -186,8 +189,18 @@ const deployBalancerPoolAndGauge = async () => {
     addresses.mainnet.AuraGaugeFactory
   );
 
+  const auraPoolManager = await ethers.getContractAt(
+    auraPoolManagerV4Abi,
+    addresses.mainnet.AuraPoolManagerV4
+  );
+
+  const auraGaugeController = await ethers.getContractAt(
+    auraGaugeControllerAbi,
+    addresses.mainnet.AuraGaugeController
+  );
+
   // Create balancer pool
-  const name = "OETH-WETH";
+  const name = "80 OETH - 20 WETH";
   const tx = await balancerFactory.connect(sDeployer).create(
     name, // name
     name, // symbol
@@ -213,9 +226,32 @@ const deployBalancerPoolAndGauge = async () => {
   const res1 = await tx1.wait();
   const gaugeAddress = "0x" + res1.events[0].topics[1].substring(26);
 
+  const sGaugeControllerAdmin = await impersonateAndFund("0x8F42aDBbA1B16EaAE3BB5754915E0D06059aDd75");
+  await auraGaugeController
+    .connect(sGaugeControllerAdmin)["add_gauge(address,int128)"](gaugeAddress, 1); //gauge address, gauge type
+
+  await auraGaugeController
+    .connect(sGaugeControllerAdmin)
+    .change_gauge_weight(
+      gaugeAddress,
+      //`500000000000000000000000` // 500k (in 1e18)
+      `10000000`
+    );
+
+  const sAuraPoolOperator = await impersonateAndFund("0x5feA4413E3Cc5Cf3A29a49dB41ac0c24850417a0");
+  const tx2 = await auraPoolManager
+    .connect(sAuraPoolOperator)
+    .addPool(gaugeAddress);
+
+  const res2 = await tx2.wait();
+
+  const data = res2.events[2].data;
+  const depositorAddress = "0x" + data.substring(26, 66);
+  const auraPoolId = parseInt("0x" + data.substring(67,130));
+
   return {
     poolId,
     poolAddress,
-    gaugeAddress,
+    depositorAddress,
   };
 };
