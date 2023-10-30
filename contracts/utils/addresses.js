@@ -228,6 +228,13 @@ addresses.mainnet.oneInchRouterV5 =
 // Balancer
 addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
 addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+addresses.mainnet.balancerWeightedPoolFactoryV4 =
+  "0x897888115Ada5773E02aA29F775430BFB5F34c51";
+addresses.mainnet.AuraGaugeFactory =
+  "0xf1665E19bc105BE4EDD3739F88315cC699cc5b65";
+addresses.mainnet.AuraPoolManagerV4 = "0x8dd8cdb1f3d419ccdcbf4388bc05f4a7c8aebd64";
+addresses.mainnet.AuraGaugeController = "0xc128468b7ce63ea702c1f104d55a2566b13d3abd";
+
 // wstETH/WETH
 addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";
@@ -245,6 +252,7 @@ addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
+
 
 // Flux Strategy
 addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";

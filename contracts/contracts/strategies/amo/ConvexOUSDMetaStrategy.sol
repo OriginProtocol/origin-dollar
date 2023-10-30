@@ -185,7 +185,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _vaultAssetAmount;
 
-        // 3Pool LP required when removing reuiqred vault assets ignoring fees
+        // 3Pool LP required when removing required vault assets ignoring fees
         uint256 lpRequiredNoFees = curve3Pool.calc_token_amount(
             _amounts,
             false
@@ -344,7 +344,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         address,
         address[] memory _vaultAssets,
         uint256[] memory
-    ) external override onlyVault onlyAssets(_vaultAssets) nonReentrant {
+    ) external override onlyAssets(_vaultAssets) onlyVault nonReentrant {
         // TODO add support for withdrawing multiple 3Pool assets
         revert("Not supported");
     }
@@ -423,6 +423,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         onlyAsset(_asset)
         returns (uint256 balance)
     {
+
         // 3Pool LP tokens (3Crv) in this strategy contract.
         // This should generally be nothing as we should always stake
         // the full balance in the Gauge, but include for safety
