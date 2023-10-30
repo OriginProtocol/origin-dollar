@@ -7,7 +7,10 @@ const {
   advanceTime,
   isCI,
 } = require("../helpers");
-const { createFixtureLoader, morphoAaveFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  morphoAaveFixture,
+} = require("../fixture/_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("ForkTest: Morpho Aave Strategy", function () {

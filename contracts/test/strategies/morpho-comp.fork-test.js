@@ -8,7 +8,10 @@ const {
   advanceTime,
   isCI,
 } = require("../helpers");
-const { createFixtureLoader, morphoCompoundFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  morphoCompoundFixture,
+} = require("../fixture/_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("ForkTest: Morpho Compound Strategy", function () {
