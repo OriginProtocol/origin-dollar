@@ -30,11 +30,6 @@ describe("Vault with Compound strategy", function () {
     fixture = await loadFixture();
   });
 
-  it("Anyone can call safeApproveAllTokens", async () => {
-    const { matt, compoundStrategy } = fixture;
-    await compoundStrategy.connect(matt).safeApproveAllTokens();
-  });
-
   it("Governor can call removePToken", async () => {
     const { governor, compoundStrategy } = fixture;
 
