@@ -385,6 +385,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Get the number of decimals of the asset token.
      * This is reading from immutable variables to avoid costly storage reads.
      * Revert if the `_asset` is not supported by the Curve pool.
+     * @param _asset Address of the asset token.
      */
     function _getAssetDecimals(address _asset)
         internal
@@ -407,9 +408,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Get the token address for a given index value in a Curve pool.
-     * @param _coinIndex Index value of the coin in the Curve pool
      * This is reading from immutable variables to avoid costly storage reads.
      * Revert if the `_coinIndex` is not supported by the Curve pool.
+     * @param _coinIndex Index value of the coin in the Curve pool.
+     * Can be checked using Curve's `coins` getter method.
      */
     function _getAsset(uint256 _coinIndex)
         internal
