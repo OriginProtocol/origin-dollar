@@ -107,6 +107,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
             IERC20(oToken).approve(universalRouter, 0);
         }
 
+        // solhint-disable-next-line reentrancy
         universalRouter = _router;
 
         emit UniswapUniversalRouterUpdated(_router);
