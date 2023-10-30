@@ -2,11 +2,9 @@
 pragma solidity ^0.8.0;
 
 import { ICurveMetaPool } from "./ICurveMetaPool.sol";
-import { StableMath } from "../../utils/StableMath.sol";
 
 library CurveTwoCoinLib {
     uint256 public constant CURVE_POOL_ASSETS_COUNT = 2;
-    using StableMath for uint256;
 
     /**
      * @notice Deposit coins into a Curve pool
