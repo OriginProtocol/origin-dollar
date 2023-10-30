@@ -96,13 +96,14 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      *
      * @param _router Address of the Uniswap Universal router
      */
-    function setUniswapUniversalRouter(address _router) external onlyGovernor nonReentrant {
+    function setUniswapUniversalRouter(address _router) external onlyGovernor {
         _setUniswapUniversalRouter(_router);
     }
 
     function _setUniswapUniversalRouter(address _router) internal {
         if (universalRouter != address(0)) {
             // Remove previous router's allowance
+            // slither-disable-next-line unused-return
             IERC20(oToken).approve(universalRouter, 0);
         }
 
@@ -186,7 +187,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         );
 
         // Transfer OToken to UniversalRouter for swapping
-        // slither-disable-next-line unchecked-transfer
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(oToken).transfer(universalRouter, oTokenAmount);
 
         // Execute the swap
