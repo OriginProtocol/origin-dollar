@@ -101,12 +101,6 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     }
 
     function _setUniswapUniversalRouter(address _router) internal {
-        if (universalRouter != address(0)) {
-            // Remove previous router's allowance
-            // slither-disable-next-line unused-return
-            IERC20(oToken).approve(universalRouter, 0);
-        }
-
         universalRouter = _router;
 
         emit UniswapUniversalRouterUpdated(_router);
@@ -242,6 +236,9 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      */
     function safeApproveAllTokens() external onlyGovernorOrStrategist {
         IERC20(cvx).safeApprove(cvxLocker, type(uint256).max);
+        // Remove Router's allowance if any
+        // slither-disable-next-line unused-return
+        IERC20(oToken).approve(universalRouter, 0);
     }
 
     /**
