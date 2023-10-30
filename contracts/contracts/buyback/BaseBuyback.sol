@@ -96,18 +96,16 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      *
      * @param _router Address of the Uniswap Universal router
      */
-    function setUniswapUniversalRouter(address _router) external onlyGovernor {
+    function setUniswapUniversalRouter(address _router) external onlyGovernor nonReentrant {
         _setUniswapUniversalRouter(_router);
     }
 
     function _setUniswapUniversalRouter(address _router) internal {
         if (universalRouter != address(0)) {
             // Remove previous router's allowance
-            // solhint-disable-next-line reentrancy
             IERC20(oToken).approve(universalRouter, 0);
         }
 
-        // solhint-disable-next-line reentrancy
         universalRouter = _router;
 
         emit UniswapUniversalRouterUpdated(_router);
