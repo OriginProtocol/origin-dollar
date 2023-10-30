@@ -340,14 +340,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
                 Curve Withdrawals
     ****************************************/
 
-    /*
-     * @custom:origin-modifier onlyAssets(_vaultAssets) 
-     */
     function withdraw(
         address,
         address[] memory _vaultAssets,
         uint256[] memory
-    ) external override onlyVault nonReentrant {
+    ) external override onlyAssets(_vaultAssets) onlyVault nonReentrant {
         // The check ensures the correct number of assets are supported.
         require(_isVaultAssets(_vaultAssets), "Unsupported assets");
 
@@ -420,13 +417,13 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     /**
      * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
-     * @custom:origin-modifier onlyAsset(_vaultAsset) 
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
         public
         view
         override
+        onlyAsset(_vaultAsset)
         returns (uint256 balance)
     {
         // Ensures that the asset is supported.

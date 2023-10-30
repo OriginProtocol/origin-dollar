@@ -119,7 +119,7 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
          * balance operation. If we are already in a Vault transaction (e.g., a swap, join, or exit), the Vault's
          * reentrancy protection will cause this function to revert.
          *
-         * Use this modifier with any function that can cause a state change in a pool and is either public itself,
+         * Use this with any function that can cause a state change in a pool and is either public itself,
          * or called by a public function *outside* a Vault operation (e.g., join, exit, or swap).
          *
          * This is to protect against Balancer's read-only re-entrancy vulnerability:

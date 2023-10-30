@@ -45,6 +45,7 @@ const crvMinterAbi = require("../abi/crvMinter.json");
 const sdaiAbi = require("../abi/sDAI.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
+const balancerWeightedPoolAbi = require("../abi/balancerWeightedPoolAbi.json");
 const ousdMetapoolAbi = require("../abi/ousdMetapool.json");
 const curveOethEthPoolAbi = require("../abi/curveOethEthPool.json");
 const threepoolLPAbi = require("../abi/threepoolLP.json");
@@ -183,6 +184,15 @@ const defaultFixture = deployments.createFixture(async () => {
   const convexFrxETHAMOStrategy = await ethers.getContractAt(
     "ConvexFrxETHAMOStrategy",
     convexFrxETHAMOStrategyProxy.address
+  );
+
+  // AMO strategy for Balancer OETH/WETH pool
+  const balancerEthAMOStrategyProxy = await ethers.getContract(
+    "BalancerEthAMOStrategyProxy"
+  );
+  const balancerEthAMOStrategy = await ethers.getContract(
+    "BalancerEthAMOStrategy",
+    balancerEthAMOStrategyProxy.address
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
@@ -605,6 +615,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     fraxEthStrategy,
     balancerREthStrategy,
+    balancerEthAMOStrategy,
     oethMorphoAaveStrategy,
     woeth,
     convexEthMetaStrategy,
@@ -1958,6 +1969,37 @@ async function convexFrxEthFixture(
   }
 
   return fixture;
+}
+
+/**
+ * Configure the Balancer OETH/WETH AMO strategy
+ */
+
+async function balancerOethWethFixture() {
+  const fixture = await oethDefaultFixture();
+
+  const {
+    balancerEthAMOStrategy,
+    oethVault
+  } = fixture;
+
+  console.log("BALANCER ADDRESS", await balancerEthAMOStrategy.platformAddress());
+
+  const oethWethWeightedPool = await ethers.getContractAt(
+    balancerWeightedPoolAbi,
+    await balancerEthAMOStrategy.platformAddress()
+  )
+
+  if (isFork) {
+    await setERC20TokenBalance(josh.address, weth, "10000000", hre);
+    // get josh 1m OETH
+    await oethVault.connect(josh).mint(weth.address, parseEther("1000000"), "0");
+    
+
+  }
+
+  fixture.balancerEthAMOStrategy = balancerEthAMOStrategy;
+  fixture.oethWethWeightedPool = oethWethWeightedPool;
 }
 
 /**

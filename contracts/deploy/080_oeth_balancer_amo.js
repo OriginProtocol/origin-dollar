@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "080_oeth_balancer_amo",
     forceDeploy: false,
-    forceSkip: true,
+    //forceSkip: true,
     reduceQueueTime: false,
     deployerIsProposer: true,
     // proposalId: "",
@@ -70,8 +70,8 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.WETH,
           0, // TODO update
           1, // TODO update
-          `${0.5 * 1e18}`, // oToken weight
-          `${0.5 * 1e18}`, // asset weight
+          `${0.8 * 1e18}`, // oToken weight
+          `${0.2 * 1e18}`, // asset weight
         ],
         [
           // BalancerConfig[balancerVault, balancerPoolId, auraRewardPool]

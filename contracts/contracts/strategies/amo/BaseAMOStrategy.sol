@@ -46,11 +46,36 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     // for OETH/WETH Balancer = 20% (0.2 * 1e18)
     uint256 public immutable assetWeight;
 
+    /// @dev Verifies that the caller is the Strategist
+    modifier onlyStrategist() {
+        callerNotStrategist();
+        _;
+    }
+
+    /// @notice Validates the vault asset is supported by this strategy.
+    modifier onlyAsset(address _vaultAsset) {
+        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
+        _;
+    }
+
+    /// @notice Validates all the vault assets are supported by this strategy.
+    modifier onlyAssets(address[] memory _vaultAssets) {
+        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
+        _;
+    }
+
+    /// @dev This is separate internal function to save on deployment size
+    function callerNotStrategist() internal view {
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
+    }
+
     /**
      * @dev Checks the AMO pool's balances have improved and the balances
      * have not tipped to the other side.
      */
-
     function improvePoolBalancePreCheck()
         internal
         view
@@ -324,16 +349,13 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit multiple vault assets into the AMO strategy.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to deposit.
-     * @custom:origin-modifier onlyAsset(_vaultAsset)
      * @dev Only the OUSD Curve AMO supports depositing multiple assets in DAI, USDC and USDT.
      * The default implementation only supports a single asset and must be overriden for the OUSD AMO.
      */
     function deposit(
         address[] memory _vaultAssets,
         uint256[] memory _vaultAssetAmounts
-    ) external virtual onlyVault nonReentrant {
-        // The check ensures the correct number of assets are supported.
-        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
+    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
         // validate the number of assets matches the number of amounts
         // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
         require(
@@ -431,15 +453,13 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAsset Address of the vault asset token. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmount Amount of vault asset tokens to withdraw.
-     * @custom:origin-modifier onlyAsset(_vaultAsset)
      */
     function withdraw(
         address _recipient,
         address _vaultAsset,
         uint256 _vaultAssetAmount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyAsset(_vaultAsset) onlyVault nonReentrant {
         // Ensures that the asset is supported.
-        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
         _withdraw(_recipient, _vaultAsset, _vaultAssetAmount);
     }
 
@@ -451,15 +471,12 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to withdraw.
-     * @custom:origin-modifier onlyAssets(_vaultAssets)
      */
     function withdraw(
         address _recipient,
         address[] memory _vaultAssets,
         uint256[] memory _vaultAssetAmounts
-    ) external virtual onlyVault nonReentrant {
-        // The check ensures the correct number of assets are supported.
-        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
+    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
         // validate the number of assets matches the number of amounts
         // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
         require(
@@ -580,9 +597,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is increased.
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
-     * @custom:origin-modifier onlyStrategist
      */
-    function mintAndAddOTokens(uint256 _oTokens) external nonReentrant {
+    function mintAndAddOTokens(uint256 _oTokens) onlyStrategist external nonReentrant {
         // Verifies that the caller is the Strategist
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
@@ -622,9 +638,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of AMO pool LP tokens to be burned for OTokens.
-     * @custom:origin-modifier onlyStrategist
      */
-    function removeAndBurnOTokens(uint256 _lpTokens) external nonReentrant {
+    function removeAndBurnOTokens(uint256 _lpTokens) onlyStrategist external nonReentrant {
         // Verifies that the caller is the Strategist
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
@@ -663,9 +678,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * A 3rd party libary can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of AMO pool LP tokens required off-chain.
-     * @custom:origin-modifier onlyStrategist
      */
-    function removeOnlyAssets(uint256 _lpTokens) external nonReentrant {
+    function removeOnlyAssets(uint256 _lpTokens) onlyStrategist external nonReentrant {
         // Verifies that the caller is the Strategist
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
