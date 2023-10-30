@@ -341,7 +341,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     ****************************************/
 
     /*
-     * @modifier onlyAssets(_vaultAssets) 
+     * @custom:origin-modifier onlyAssets(_vaultAssets) 
      */
     function withdraw(
         address,
@@ -420,7 +420,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     /**
      * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
-     * @modifier onlyAsset(_vaultAsset) 
+     * @custom:origin-modifier onlyAsset(_vaultAsset) 
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)

@@ -324,7 +324,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit multiple vault assets into the AMO strategy.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to deposit.
-     * @modifier onlyAsset(_vaultAsset)
+     * @custom:origin-modifier onlyAsset(_vaultAsset)
      * @dev Only the OUSD Curve AMO supports depositing multiple assets in DAI, USDC and USDT.
      * The default implementation only supports a single asset and must be overriden for the OUSD AMO.
      */
@@ -431,7 +431,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAsset Address of the vault asset token. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmount Amount of vault asset tokens to withdraw.
-     * @modifier onlyAsset(_vaultAsset)
+     * @custom:origin-modifier onlyAsset(_vaultAsset)
      */
     function withdraw(
         address _recipient,
@@ -451,7 +451,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to withdraw.
-     * @modifier onlyAssets(_vaultAssets)
+     * @custom:origin-modifier onlyAssets(_vaultAssets)
      */
     function withdraw(
         address _recipient,
@@ -580,7 +580,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is increased.
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
-     * @modifier onlyStrategist
+     * @custom:origin-modifier onlyStrategist
      */
     function mintAndAddOTokens(uint256 _oTokens) external nonReentrant {
         // Verifies that the caller is the Strategist
@@ -622,7 +622,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of AMO pool LP tokens to be burned for OTokens.
-     * @modifier onlyStrategist
+     * @custom:origin-modifier onlyStrategist
      */
     function removeAndBurnOTokens(uint256 _lpTokens) external nonReentrant {
         // Verifies that the caller is the Strategist
@@ -663,7 +663,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * A 3rd party libary can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of AMO pool LP tokens required off-chain.
-     * @modifier onlyStrategist
+     * @custom:origin-modifier onlyStrategist
      */
     function removeOnlyAssets(uint256 _lpTokens) external nonReentrant {
         // Verifies that the caller is the Strategist
