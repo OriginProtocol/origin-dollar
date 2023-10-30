@@ -155,17 +155,17 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
     /// @dev Withdraw a specific amount of AMO pool LP tokens from the rewards pool
     /// eg Curve LP tokens from Convex or Balancer LP tokens from Aura
     function _unStakeLpTokens(uint256 _lpAmount) internal override {
-        // withdraw and unwrap with claim takes back the lpTokens
-        // and also collects the rewards for deposit
-        cvxRewardStaker.withdrawAndUnwrap(_lpAmount, true);
+        // withdraw and unwrap with claim takes back the lpTokens.
+        // Do not collect any reward tokens as that will be done via the harvester
+        cvxRewardStaker.withdrawAndUnwrap(_lpAmount, false);
     }
 
     /// @dev Withdraw all AMO pool LP tokens from the rewards pool
     function _unStakeAllLpTokens() internal override {
         uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
-        // withdraw and unwrap with claim takes back the lpTokens
-        // and also collects the rewards for deposit
-        cvxRewardStaker.withdrawAndUnwrap(gaugeTokens, true);
+        // withdraw and unwrap with claim takes back the lpTokens.
+        // Do not collect any reward tokens as that will be done via the harvester
+        cvxRewardStaker.withdrawAndUnwrap(gaugeTokens, false);
     }
 
     /**

@@ -507,8 +507,8 @@ const deployConvexOethEthAMOStrategy = async () => {
       [
         oeth.address, // oTokenAddress,
         assetAddresses.WETH, // assetAddress (WETH)
-        0, // Curve pool index for OToken OETH
-        1, // Curve pool index for asset ETH
+        1, // Curve pool index for OToken OETH
+        0, // Curve pool index for asset ETH
       ],
       [
         mockBooster.address, // cvxDepositorAddress,
@@ -1133,14 +1133,12 @@ const deployCurveLUSDMetapoolMocks = async () => {
 // deploy Curve OETH/ETH Pool mocks
 const deployCurveOethEthPoolMocks = async () => {
   const { deployerAddr } = await hre.getNamedAccounts();
-  const assetAddresses = await getAssetAddresses(deployments);
 
   const oeth = await ethers.getContract("OETHProxy");
 
   await hre.deployments.deploy("MockCurveOethEthPool", {
     from: deployerAddr,
-    // TODO WETH needs to be ETH
-    args: [[oeth.address, assetAddresses.WETH]],
+    args: [[addresses.ETH, oeth.address]],
   });
 
   const curveLpToken = await ethers.getContract("MockCurveOethEthPool");

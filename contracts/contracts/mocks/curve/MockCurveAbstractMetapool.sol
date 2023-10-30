@@ -10,6 +10,8 @@ import "../../utils/Helpers.sol";
 abstract contract MockCurveAbstractMetapool is MintableERC20 {
     using StableMath for uint256;
 
+    address constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     address[] public coins;
     uint256[2] public balances;
 
@@ -24,14 +26,18 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
     {
         for (uint256 i = 0; i < _amounts.length; i++) {
             if (_amounts[i] > 0) {
-                IERC20(coins[i]).transferFrom(
-                    msg.sender,
-                    address(this),
-                    _amounts[i]
-                );
-                uint256 assetDecimals = Helpers.getDecimals(coins[i]);
-                // Convert to 1e18 and add to sum
-                lpAmount += _amounts[i].scaleBy(18, assetDecimals);
+                if (coins[i] == ETH) {
+                    lpAmount += _amounts[i];
+                } else {
+                    IERC20(coins[i]).transferFrom(
+                        msg.sender,
+                        address(this),
+                        _amounts[i]
+                    );
+                    uint256 assetDecimals = Helpers.getDecimals(coins[i]);
+                    // Convert to 1e18 and add to sum
+                    lpAmount += _amounts[i].scaleBy(18, assetDecimals);
+                }
                 balances[i] = balances[i] + _amounts[i];
             }
         }
@@ -63,7 +69,11 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         amounts[uint128(_index)] = _lpAmount;
         amount = calc_withdraw_one_coin(_lpAmount, _index);
         balances[uint128(_index)] -= amount;
-        IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
+        if (coins[uint128(_index)] == ETH) {
+            payable(msg.sender).transfer(amount);
+        } else {
+            IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
+        }
     }
 
     function get_virtual_price() external pure returns (uint256) {
@@ -75,15 +85,22 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         public
         returns (uint256[2] memory amounts)
     {
-        _burn(msg.sender, _amount);
         uint256 totalSupply = totalSupply();
+        _burn(msg.sender, _amount);
         for (uint256 i = 0; i < 2; i++) {
-            amounts[i] = totalSupply > 0
-                ? (_amount * IERC20(coins[i]).balanceOf(address(this))) /
-                    totalSupply
-                : IERC20(coins[i]).balanceOf(address(this));
             balances[i] -= amounts[i];
-            IERC20(coins[i]).transfer(msg.sender, amounts[i]);
+            if (coins[i] == ETH) {
+                amounts[i] = totalSupply > 0
+                    ? (_amount * address(this).balance) / totalSupply
+                    : address(this).balance;
+                payable(msg.sender).transfer(amounts[i]);
+            } else {
+                amounts[i] = totalSupply > 0
+                    ? (_amount * IERC20(coins[i]).balanceOf(address(this))) /
+                        totalSupply
+                    : IERC20(coins[i]).balanceOf(address(this));
+                IERC20(coins[i]).transfer(msg.sender, amounts[i]);
+            }
         }
     }
 
@@ -122,7 +139,11 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         for (uint256 i = 0; i < _amounts.length; i++) {
             balances[i] -= _amounts[i];
             if (_amounts[i] > 0) {
-                IERC20(coins[i]).transfer(_reveiver, _amounts[i]);
+                if (coins[i] == ETH) {
+                    payable(msg.sender).transfer(_amounts[i]);
+                } else {
+                    IERC20(coins[i]).transfer(_reveiver, _amounts[i]);
+                }
             }
         }
     }
