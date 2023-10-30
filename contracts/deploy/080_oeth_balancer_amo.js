@@ -1,7 +1,5 @@
-const hre = require("hardhat");
 const { parseUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
-const { balancer_rETH_WETH_PID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const balancerFactoryAbi = require("../test/abi/balancerWeightedPoolFactoryV4.json");
 const auraGaugeFactoryAbi = require("../test/abi/auraGaugeFactory.json");
@@ -19,7 +17,8 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    const { poolId, poolAddress, gaugeAddress } = await deployBalancerPoolAndGauge();
+    const { poolId, poolAddress, gaugeAddress } =
+      await deployBalancerPoolAndGauge();
 
     // 1. Deploy new OETH Vault Core and Admin implementations
     // Need to override the storage safety check as we are changing the Strategy struct
@@ -71,8 +70,8 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.WETH,
           0, // TODO update
           1, // TODO update
-          `${0.5*1e18}`, // oToken weight
-          `${0.5*1e18}` // asset weight
+          `${0.5 * 1e18}`, // oToken weight
+          `${0.5 * 1e18}`, // asset weight
         ],
         [
           // BalancerConfig[balancerVault, balancerPoolId, auraRewardPool]

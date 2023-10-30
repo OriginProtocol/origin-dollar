@@ -340,11 +340,17 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
                 Curve Withdrawals
     ****************************************/
 
+    /*
+     * @modifier onlyAssets(_vaultAssets) 
+     */
     function withdraw(
         address,
         address[] memory _vaultAssets,
         uint256[] memory
-    ) external override onlyVault onlyAssets(_vaultAssets) nonReentrant {
+    ) external override onlyVault nonReentrant {
+        // The check ensures the correct number of assets are supported.
+        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
+
         // TODO add support for withdrawing multiple 3Pool assets
         revert("Not supported");
     }
@@ -414,15 +420,18 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     /**
      * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
+     * @modifier onlyAsset(_vaultAsset) 
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
         public
         view
         override
-        onlyAsset(_asset)
         returns (uint256 balance)
     {
+        // Ensures that the asset is supported.
+        require(_isVaultAsset(_asset), "Unsupported asset");
+
         // 3Pool LP tokens (3Crv) in this strategy contract.
         // This should generally be nothing as we should always stake
         // the full balance in the Gauge, but include for safety

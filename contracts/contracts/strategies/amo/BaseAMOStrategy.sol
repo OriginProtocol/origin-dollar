@@ -46,27 +46,6 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     // for OETH/WETH Balancer = 20% (0.2 * 1e18)
     uint256 public immutable assetWeight;
 
-    /// @notice Validates the vault asset is supported by this strategy.
-    modifier onlyAsset(address _vaultAsset) {
-        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
-        _;
-    }
-
-    /// @notice Validates all the vault assets are supported by this strategy.
-    modifier onlyAssets(address[] memory _vaultAssets) {
-        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
-        _;
-    }
-
-    /// @dev Verifies that the caller is the Strategist
-    modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-        _;
-    }
-
     /**
      * @dev Checks the AMO pool's balances have improved and the balances
      * have not tipped to the other side.
@@ -75,40 +54,46 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     function improvePoolBalancePreCheck()
         internal
         view
-        returns(int256 diffBefore) {
-
+        returns (int256 diffBefore)
+    {
         // Get the asset and OToken balances in the AMO pool
         uint256[2] memory balancesBefore = _getBalances();
         // get value of assets normalized to oTokens / units
-        uint256 assetUnitBalanceBefore = _toOTokens(balancesBefore[assetCoinIndex]);
+        uint256 assetUnitBalanceBefore = _toOTokens(
+            balancesBefore[assetCoinIndex]
+        );
         // oTokens are already normalized to units
-        uint256 totalBalanceBefore = assetUnitBalanceBefore + balancesBefore[oTokenCoinIndex];
+        uint256 totalBalanceBefore = assetUnitBalanceBefore +
+            balancesBefore[oTokenCoinIndex];
 
-        // int256 will throw an exception in case of overflow 
-        diffBefore = 
+        // int256 will throw an exception in case of overflow
+        diffBefore =
             // to get the diff add up the asset balance from the ideal pool asset balance...
-            int256(assetUnitBalanceBefore) - int256(totalBalanceBefore.mulTruncate(assetWeight)) + 
+            int256(assetUnitBalanceBefore) -
+            int256(totalBalanceBefore.mulTruncate(assetWeight)) +
             // ... and oToken balance from the ideal pool oToken balance
-            int256(balancesBefore[oTokenCoinIndex]) - int256(totalBalanceBefore.mulTruncate(oTokenWeight));
+            int256(balancesBefore[oTokenCoinIndex]) -
+            int256(totalBalanceBefore.mulTruncate(oTokenWeight));
     }
 
-    function improvePoolBalancePostCheck(int256 diffBefore)
-        internal
-        view {
-
+    function improvePoolBalancePostCheck(int256 diffBefore) internal view {
         // Get the asset and OToken balances in the AMO pool
         uint256[2] memory balancesAfter = _getBalances();
         // get value of assets normalized to oTokens / units
-        uint256 assetUnitBalanceAfter = _toOTokens(balancesAfter[assetCoinIndex]);
+        uint256 assetUnitBalanceAfter = _toOTokens(
+            balancesAfter[assetCoinIndex]
+        );
         // oTokens are already normalized to units
-        uint256 totalBalanceAfter = assetUnitBalanceAfter + balancesAfter[oTokenCoinIndex];
+        uint256 totalBalanceAfter = assetUnitBalanceAfter +
+            balancesAfter[oTokenCoinIndex];
 
-        // int256 will throw an exception in case of overflow 
-        int256 diffAfter = 
-            // to get the diff add up the asset balance from the ideal pool asset balance...
-            int256(totalBalanceAfter) - int256(totalBalanceAfter.mulTruncate(assetWeight)) + 
-            // ... and oToken balance from the ideal pool oToken balance
-            int256(balancesAfter[oTokenCoinIndex]) - int256(totalBalanceAfter.mulTruncate(oTokenWeight));
+        // int256 will throw an exception in case of overflow
+        int256 diffAfter = // to get the diff add up the asset balance from the ideal pool asset balance...
+            int256(totalBalanceAfter) -
+                int256(totalBalanceAfter.mulTruncate(assetWeight)) +
+                // ... and oToken balance from the ideal pool oToken balance
+                int256(balancesAfter[oTokenCoinIndex]) -
+                int256(totalBalanceAfter.mulTruncate(oTokenWeight));
 
         if (diffBefore <= 0) {
             // If the pool was originally imbalanced in favor of the OToken, then
@@ -325,9 +310,11 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
-        onlyAsset(_vaultAsset)
         nonReentrant
     {
+        // checks that it is a supported asset
+        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
+
         emit Deposit(_vaultAsset, address(lpToken), _vaultAssetAmount);
         uint256 poolAssetAmount = _toPoolAsset(_vaultAsset, _vaultAssetAmount);
         _deposit(poolAssetAmount);
@@ -337,15 +324,17 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit multiple vault assets into the AMO strategy.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to deposit.
+     * @modifier onlyAsset(_vaultAsset)
      * @dev Only the OUSD Curve AMO supports depositing multiple assets in DAI, USDC and USDT.
      * The default implementation only supports a single asset and must be overriden for the OUSD AMO.
      */
     function deposit(
         address[] memory _vaultAssets,
         uint256[] memory _vaultAssetAmounts
-    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
+    ) external virtual onlyVault nonReentrant {
+        // The check ensures the correct number of assets are supported.
+        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
         // validate the number of assets matches the number of amounts
-        // The onlyAssets modified ensures the correct number of assets are supported.
         // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
         require(
             _vaultAssets.length == _vaultAssetAmounts.length,
@@ -442,12 +431,15 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAsset Address of the vault asset token. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmount Amount of vault asset tokens to withdraw.
+     * @modifier onlyAsset(_vaultAsset)
      */
     function withdraw(
         address _recipient,
         address _vaultAsset,
         uint256 _vaultAssetAmount
-    ) external override onlyVault onlyAsset(_vaultAsset) nonReentrant {
+    ) external override onlyVault nonReentrant {
+        // Ensures that the asset is supported.
+        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
         _withdraw(_recipient, _vaultAsset, _vaultAssetAmount);
     }
 
@@ -459,14 +451,16 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
      * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmounts Amounts of vault asset tokens to withdraw.
+     * @modifier onlyAssets(_vaultAssets)
      */
     function withdraw(
         address _recipient,
         address[] memory _vaultAssets,
         uint256[] memory _vaultAssetAmounts
-    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
+    ) external virtual onlyVault nonReentrant {
+        // The check ensures the correct number of assets are supported.
+        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
         // validate the number of assets matches the number of amounts
-        // The onlyAssets modified ensures the correct number of assets are supported.
         // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
         require(
             _vaultAssets.length == _vaultAssetAmounts.length,
@@ -586,12 +580,15 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is increased.
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
+     * @modifier onlyStrategist
      */
-    function mintAndAddOTokens(uint256 _oTokens)
-        external
-        onlyStrategist
-        nonReentrant
-    {
+    function mintAndAddOTokens(uint256 _oTokens) external nonReentrant {
+        // Verifies that the caller is the Strategist
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
+
         int256 diffBefore = improvePoolBalancePreCheck();
 
         IVault(vaultAddress).mintForStrategy(_oTokens);
@@ -625,12 +622,15 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of AMO pool LP tokens to be burned for OTokens.
+     * @modifier onlyStrategist
      */
-    function removeAndBurnOTokens(uint256 _lpTokens)
-        external
-        onlyStrategist
-        nonReentrant
-    {
+    function removeAndBurnOTokens(uint256 _lpTokens) external nonReentrant {
+        // Verifies that the caller is the Strategist
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
+
         int256 diffBefore = improvePoolBalancePreCheck();
 
         // Withdraw AMO pool LP tokens from the rewards pool and remove OTokens from the AMO pool
@@ -663,12 +663,14 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * A 3rd party libary can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of AMO pool LP tokens required off-chain.
+     * @modifier onlyStrategist
      */
-    function removeOnlyAssets(uint256 _lpTokens)
-        external
-        onlyStrategist
-        nonReentrant
-    {
+    function removeOnlyAssets(uint256 _lpTokens) external nonReentrant {
+        // Verifies that the caller is the Strategist
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
         int256 diffBefore = improvePoolBalancePreCheck();
 
         // Withdraw AMO pool LP tokens from rewards pool and remove asset from the AMO pool

@@ -94,9 +94,10 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         public
         view
         override
-        onlyAsset(_asset)
         returns (uint256 balance)
     {
+        require(_isVaultAsset(_asset), "Unsupported asset");
+
         // Get the Curve LP tokens staked in the Convex pool
         uint256 curveLpTokens = cvxRewardStaker.balanceOf(address(this));
 

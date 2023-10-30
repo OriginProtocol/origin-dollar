@@ -59,8 +59,8 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.frxETH, // assetAddress (frxETH)
           1, // Curve pool index for OToken OETH
           0, // Curve pool index for asset frxETH
-          `${0.5*1e18}`, // oToken weight
-          `${0.5*1e18}` // asset weight
+          `${0.5 * 1e18}`, // oToken weight
+          `${0.5 * 1e18}`, // asset weight
         ],
         [
           addresses.mainnet.CVXBooster, // cvxDepositorAddress,

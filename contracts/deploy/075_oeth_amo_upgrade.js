@@ -27,7 +27,7 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.CVXETHRewardsPool,
           convex_OETH_ETH_PID,
           addresses.mainnet.OETHProxy,
-          addresses.mainnet.WETH
+          addresses.mainnet.WETH,
         ],
       ],
       null,
