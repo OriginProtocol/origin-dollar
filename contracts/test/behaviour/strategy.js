@@ -242,14 +242,18 @@ const shouldBehaveLikeStrategy = (context) => {
     describe("with assets in the strategy", () => {
       beforeEach(async () => {
         const { assets, strategy, vault } = await context();
-        const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
 
         // deposit some assets into the strategy so we can withdraw them
         for (const [i, asset] of assets.entries()) {
-          const depositAmount = await units("10000", asset);
-          // mint some test assets directly into the strategy contract
-          await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
+          const depositAmount = (await units("10000", asset)).mul(i + 1);
+          // mint some test assets to the vault
+          // can't mint directly to strategy as that requires ETH and with throw the OETH AMO tests
+          await asset.connect(vaultSigner).mint(depositAmount);
+          // transfer test assets to the strategy
+          await asset
+            .connect(vaultSigner)
+            .transfer(strategy.address, depositAmount);
         }
         await strategy.connect(vaultSigner).depositAll();
       });
