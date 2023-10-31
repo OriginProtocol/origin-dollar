@@ -6,6 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isFork,
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1038,52 +1039,121 @@ const deployBuyback = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
-  const cVault = await ethers.getContractAt(
+  const oeth = await ethers.getContract("OETHProxy");
+  const cOUSDVault = await ethers.getContractAt(
     "VaultAdmin",
     (
       await ethers.getContract("VaultProxy")
     ).address
   );
-
-  // Deploy proxy and implementation
-  const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
-  const dBuybackImpl = await deployWithConfirmation("Buyback");
-
-  const cBuybackProxy = await ethers.getContractAt(
-    "BuybackProxy",
-    dBuybackProxy.address
+  const cOETHVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (
+      await ethers.getContract("OETHVaultProxy")
+    ).address
   );
 
-  const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
+  // Deploy proxy and implementation
+  const dOUSDBuybackProxy = await deployWithConfirmation("BuybackProxy");
+  const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
+  const ousdContractName = isMainnetOrFork ? "OUSDBuyback" : "MockBuyback";
+  const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
+  const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
+    ousd.address,
+    assetAddresses.OGV,
+    assetAddresses.CVX,
+    assetAddresses.CVXLocker,
+  ]);
+  const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, [
+    oeth.address,
+    assetAddresses.OGV,
+    assetAddresses.CVX,
+    assetAddresses.CVXLocker,
+  ]);
 
-  const initData = cBuyback.interface.encodeFunctionData(
-    "initialize(address,address,address,address,address,address,address,address,uint256)",
-    [
-      assetAddresses.uniswapRouter,
-      strategistAddr,
-      strategistAddr, // Treasury manager
-      ousd.address,
-      assetAddresses.OGV,
-      assetAddresses.USDT,
-      assetAddresses.WETH,
-      assetAddresses.RewardsSource,
-      "5000", // 50%
-    ]
+  const cOUSDBuybackProxy = await ethers.getContractAt(
+    "BuybackProxy",
+    dOUSDBuybackProxy.address
+  );
+
+  const cOETHBuybackProxy = await ethers.getContractAt(
+    "OETHBuybackProxy",
+    dOETHBuybackProxy.address
   );
 
   // Init proxy to implementation
   await withConfirmation(
-    cBuybackProxy.connect(sDeployer)[
+    cOUSDBuybackProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address,address,bytes)"
-    ](dBuybackImpl.address, governorAddr, initData)
+    ](dOUSDBuybackImpl.address, deployerAddr, [])
+  );
+  await withConfirmation(
+    cOETHBuybackProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dOETHBuybackImpl.address, deployerAddr, [])
   );
 
+  const cOUSDBuyback = await ethers.getContractAt(
+    ousdContractName,
+    cOUSDBuybackProxy.address
+  );
+  const cOETHBuyback = await ethers.getContractAt(
+    oethContractName,
+    cOETHBuybackProxy.address
+  );
+
+  // Initialize implementation contract
+  const initFunction = "initialize(address,address,address,address)";
+  await withConfirmation(
+    cOUSDBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapUniversalRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      assetAddresses.RewardsSource
+    )
+  );
+  await withConfirmation(
+    cOETHBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapUniversalRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      assetAddresses.RewardsSource
+    )
+  );
+
+  // Init proxy to implementation
+  await withConfirmation(
+    cOUSDBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  await withConfirmation(
+    cOETHBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+
+  await cOUSDBuyback.connect(sDeployer).safeApproveAllTokens();
+  await cOETHBuyback.connect(sDeployer).safeApproveAllTokens();
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
   if (!isMainnet) {
-    await cVault.connect(sGovernor).setTrusteeAddress(cBuyback.address);
+    await withConfirmation(
+      cOUSDBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    await withConfirmation(
+      cOETHBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Buyback");
+
+    await cOUSDVault.connect(sGovernor).setTrusteeAddress(cOUSDBuyback.address);
+    await cOETHVault.connect(sGovernor).setTrusteeAddress(cOETHBuyback.address);
     log("Buyback set as Vault trustee");
   }
-  return cBuyback;
 };
 
 const deployVaultValueChecker = async () => {

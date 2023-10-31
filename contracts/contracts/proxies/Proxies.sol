@@ -189,6 +189,13 @@ contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
+/*
+ * @notice OETHBuybackProxy delegates calls to Buyback implementation
+ */
+contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
 /**
  * @notice ConvexFrxEthWethStrategyProxy delegates calls to a ConvexStrategy implementation
  */

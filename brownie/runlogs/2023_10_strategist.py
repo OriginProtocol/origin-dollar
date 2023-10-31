@@ -393,3 +393,57 @@ with TemporaryForkForReallocations() as txs:
   print("Profit", "{:.6f}".format(profit / 10**18), profit)
   print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
   print("-----")
+
+
+# ---------------------------------------------
+# Oct 25, 2023 - Buyback #1/3
+# ---------------------------------------------
+from buyback import * 
+from oneinch import get_1inch_swap_data
+
+def main():
+  txs = []
+  with TemporaryFork():
+    oeth_balance = oeth.balanceOf(STRATEGIST)
+
+    # Swap half of OUSD for OGV
+    txs.append(
+      build_buyback_tx(max_dollars=5300, max_slippage=1, with_fork=False)
+    )
+
+    # Swap half of OETH for OGV
+    txs.append(
+        oeth.approve(ROUTER_1INCH_V5, int(oeth_balance / 2), {'from': STRATEGIST})
+    )
+
+    txs.append(
+      get_1inch_swap_data(
+        OETH,
+        OGV,
+        int(oeth_balance / 2),
+        1,
+        from_address=STRATEGIST,
+        to_address=REWARDS_SOURCE
+      )
+    )
+
+    print("----")
+    print("Gnosis json:")
+    print(to_gnosis_json(txs))
+    print("----")
+
+# ---------------------------------------------
+# Oct 25, 2023 - Buyback #2/3
+# ---------------------------------------------
+from convex import *
+
+def main():
+  build_cvx_buyback_tx()
+
+# ---------------------------------------------
+# Oct 25, 2023 - Buyback #3/3
+# ---------------------------------------------
+from convex import *
+
+def main():
+  lock_cvx()
