@@ -152,7 +152,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         // Do the deposit to 3pool
         curve3Pool.add_liquidity(_amounts, minMintAmount);
 
-        poolAssets = asset.balanceOf(address(this));
+        poolAssets = poolAsset.balanceOf(address(this));
     }
 
     /**
@@ -260,7 +260,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         curve3Pool.add_liquidity(amounts, minMintAmount);
 
         // Get the Curve OUSD/3CRV Metapool LP token balance of this strategy contract
-        uint256 threePoolLpBalance = asset.balanceOf(address(this));
+        uint256 threePoolLpBalance = poolAsset.balanceOf(address(this));
 
         // AMO deposit to the Curve Metapool
         _deposit(threePoolLpBalance);
@@ -295,7 +295,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         curve3Pool.add_liquidity(amounts, minMintAmount);
 
         // Get the Curve OUSD/3CRV Metapool LP token balance of this strategy contract
-        uint256 threePoolLpBalance = asset.balanceOf(address(this));
+        uint256 threePoolLpBalance = poolAsset.balanceOf(address(this));
 
         // AMO deposit to the Curve Metapool
         _deposit(threePoolLpBalance);
@@ -365,7 +365,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         // using all the previously removed 3CRV assets from the AMO pool
         curve3Pool.remove_liquidity_imbalance(
             _amounts,
-            IERC20(asset).balanceOf(address(this))
+            IERC20(poolAsset).balanceOf(address(this))
         );
 
         // Transfer assets to the Vault
@@ -387,7 +387,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
 
         // Remove all liquidity from the 3Pool
         curve3Pool.remove_liquidity(
-            IERC20(asset).balanceOf(address(this)),
+            IERC20(poolAsset).balanceOf(address(this)),
             minWithdrawAmounts
         );
 
@@ -413,20 +413,20 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
 
     /**
      * @notice Get the total asset value held in the platform
-     * @param _asset      Address of the asset
+     * @param _vaultAsset Address of the vault asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset)
+    function checkBalance(address _vaultAsset)
         public
         view
         override
-        onlyAsset(_asset)
+        onlyAsset(_vaultAsset)
         returns (uint256 balance)
     {
         // 3Pool LP tokens (3Crv) in this strategy contract.
         // This should generally be nothing as we should always stake
         // the full balance in the Gauge, but include for safety
-        uint256 threePoolTokens = IERC20(asset).balanceOf(address(this));
+        uint256 threePoolTokens = IERC20(poolAsset).balanceOf(address(this));
         if (threePoolTokens > 0) {
             // Getting the virtual price is gas expensive so only do if we have Cuve LP tokens
             balance = threePoolTokens.mulTruncate(
@@ -450,7 +450,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         }
 
         // Scale down from 18 decimals used by 3Crv to asset decimals. eg 6 for USDC or USDT
-        (, uint256 assetDecimals) = _coinIndexDecimals(_asset);
+        (, uint256 assetDecimals) = _coinIndexDecimals(_vaultAsset);
         balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
@@ -477,7 +477,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         // slither-disable-next-line unused-return
         oToken.approve(address(curvePool), type(uint256).max);
         // slither-disable-next-line unused-return
-        asset.approve(address(curvePool), type(uint256).max);
+        poolAsset.approve(address(curvePool), type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Convex rewards pool

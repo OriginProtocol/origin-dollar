@@ -22,8 +22,10 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     IERC20 public immutable lpToken;
     /// @notice The OToken that is used in the AMO pool. eg OETH or OUSD
     IERC20 public immutable oToken;
-    /// @notice The asset token that is used in the AMO pool. eg WETH, frxETH or 3CRV
-    IERC20 public immutable asset;
+    /// @notice The vault asset of this strategy. eg WETH, frxETH or 3CRV
+    IERC20 public immutable vaultAsset;
+    /// @notice The token that is used in the AMO pool. eg ETH, frxETH or 3CRV
+    IERC20 public immutable poolAsset;
 
     // Index position of oToken in AMO pool. For example
     // for OETH/ETH, OETH = 1
@@ -93,7 +95,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     // Used to circumvent the stack too deep issue
     struct AMOConfig {
         address oTokenAddress; // Address of the OToken. eg OETH or OUSD
-        address assetAddress; // Address of the asset token. eg WETH, frxETH or 3CRV
+        address vaultAssetAddress; // Address of the asset token. eg WETH, frxETH or DAU/USDC/USDT
+        address poolAssetAddress; // Address of the asset token. eg ETH, frxETH or 3CRV
         uint128 oTokenCoinIndex;
         uint128 assetCoinIndex;
     }
@@ -105,7 +108,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         // This assumes the AMO pool and LP token have the same address
         lpToken = IERC20(_baseConfig.platformAddress);
         oToken = IERC20(_amoConfig.oTokenAddress);
-        asset = IERC20(_amoConfig.assetAddress);
+        vaultAsset = IERC20(_amoConfig.vaultAssetAddress);
+        poolAsset = IERC20(_amoConfig.poolAssetAddress);
         oTokenCoinIndex = _amoConfig.oTokenCoinIndex;
         assetCoinIndex = _amoConfig.assetCoinIndex;
     }
@@ -125,7 +129,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         virtual
         returns (bool supported)
     {
-        supported = _vaultAsset == address(asset);
+        supported = _vaultAsset == address(vaultAsset);
     }
 
     /// @dev Returns bool indicating whether all the assets are supported by this strategy.
@@ -175,7 +179,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     function _getCoinIndex(address _asset) internal view returns (uint128) {
         if (_asset == address(oToken)) {
             return oTokenCoinIndex;
-        } else if (_asset == address(asset)) {
+        } else if (_asset == address(poolAsset)) {
             return assetCoinIndex;
         } else {
             revert("Unsupported asset");
@@ -379,12 +383,12 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit the strategy's entire balance of assets into the AMO pool
      */
     function depositAll() external virtual override onlyVault nonReentrant {
-        uint256 vaultAssetBalance = asset.balanceOf(address(this));
+        uint256 vaultAssetBalance = vaultAsset.balanceOf(address(this));
 
-        emit Deposit(address(asset), address(lpToken), vaultAssetBalance);
+        emit Deposit(address(vaultAsset), address(lpToken), vaultAssetBalance);
 
         uint256 poolAssetAmount = _toPoolAsset(
-            address(asset),
+            address(vaultAsset),
             vaultAssetBalance
         );
         if (vaultAssetBalance > 0) {
@@ -492,7 +496,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        uint256 poolAssetBalance = _getBalance(address(asset));
+        uint256 poolAssetBalance = _getBalance(address(poolAsset));
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
@@ -625,7 +629,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalance
     {
         // Withdraw AMO pool LP tokens from rewards pool and remove asset from the AMO pool
-        _withdrawAndRemoveFromPool(_lpTokens, address(asset));
+        _withdrawAndRemoveFromPool(_lpTokens, address(poolAsset));
 
         // Convert all the pool assets in this strategy to Vault assets
         // and transfer them to the vault

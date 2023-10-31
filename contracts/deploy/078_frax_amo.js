@@ -56,7 +56,8 @@ module.exports = deploymentWithGovernanceProposal(
         ],
         [
           addresses.mainnet.OETHProxy, // oTokenAddress (OETH),
-          addresses.mainnet.frxETH, // assetAddress (frxETH)
+          addresses.mainnet.frxETH, // vaultAssetAddress (frxETH)
+          addresses.mainnet.frxETH, // poolAssetAddress (frxETH)
           1, // Curve pool index for OToken OETH
           0, // Curve pool index for asset frxETH
         ],

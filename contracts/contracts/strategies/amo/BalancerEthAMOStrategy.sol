@@ -70,18 +70,22 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
     ) internal override {
         // Transfer the WETH to the Vault
         require(
-            asset.transfer(_recipient, vaultAssetAmount),
+            vaultAsset.transfer(_recipient, vaultAssetAmount),
             "WETH transfer failed"
         );
 
-        emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
+        emit Withdrawal(
+            address(vaultAsset),
+            address(lpToken),
+            vaultAssetAmount
+        );
     }
 
-    /// @dev transfers the EETH balance of this strategy contract to the recipient
+    /// @dev transfers the WETH balance of this strategy contract to the recipient
     function _withdrawAllAsset(address _recipient) internal override {
-        uint256 vaultAssets = asset.balanceOf(address(this));
+        uint256 vaultAssets = vaultAsset.balanceOf(address(this));
 
-        _withdrawAsset(address(asset), vaultAssets, _recipient);
+        _withdrawAsset(address(vaultAsset), vaultAssets, _recipient);
     }
 
     /***************************************
@@ -112,7 +116,7 @@ contract BalancerEthAMOStrategy is BaseBalancerAMOStrategy {
         override
         returns (uint256 balance)
     {
-        require(_asset == address(asset), "Unsupported asset");
+        require(_asset == address(vaultAsset), "Unsupported asset");
 
         uint256 bptBalance = IERC4626(auraRewardPool).maxRedeem(address(this));
 

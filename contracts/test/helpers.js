@@ -493,7 +493,7 @@ const getAssetAddresses = async (deployments) => {
       /* This pool gets deployed in 001_core instead of 000_mocks as it contains OETH.
        * Just return without the Curve pool info if it is not yet available.
        */
-      addressMap.curveOethEthPool = (
+      addressMap.CurveOethEthPool = (
         await deployments.get("MockCurveOethEthPool")
       ).address;
     } catch (e) {
@@ -504,7 +504,7 @@ const getAssetAddresses = async (deployments) => {
       /* This pool gets deployed in 001_core instead of 000_mocks as it contains OETH.
        * Just return without the Curve pool info if it is not yet available.
        */
-      addressMap.curveFrxEthOethPool = (
+      addressMap.CurveFrxEthOethPool = (
         await deployments.get("MockCurveFrxEthOethPool")
       ).address;
     } catch (e) {

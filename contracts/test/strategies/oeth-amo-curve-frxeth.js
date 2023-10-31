@@ -1,14 +1,15 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const { shouldBehaveLikeAmo } = require("../behaviour/amo");
 const {
   convexFrxEthAmoFixture,
   createFixtureLoader,
 } = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
-const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
-const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Convex frxETH/OETH AMO Strategy", function () {
   if (isFork) {
@@ -46,6 +47,17 @@ describe("Convex frxETH/OETH AMO Strategy", function () {
     assets: [fixture.frxETH],
     harvester: fixture.oethHarvester,
     vault: fixture.oethVault,
+  }));
+
+  shouldBehaveLikeAmo(() => ({
+    ...fixture,
+    strategy: fixture.convexFrxETHAMOStrategy,
+    oToken: fixture.oeth,
+    vaultAsset: fixture.frxETH,
+    poolAssetAddress: fixture.frxETH.address,
+    pool: fixture.curveFrxEthOethPool,
+    vault: fixture.oethVault,
+    assetDivisor: 1,
   }));
 
   describe("Utilities", function () {

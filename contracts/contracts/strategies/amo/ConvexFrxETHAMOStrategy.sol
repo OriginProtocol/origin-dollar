@@ -65,19 +65,23 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
     ) internal override {
         // Transfer the frxETH to the Vault
         require(
-            asset.transfer(_recipient, vaultAssetAmount),
+            vaultAsset.transfer(_recipient, vaultAssetAmount),
             "frxETH transfer failed"
         );
 
-        emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
+        emit Withdrawal(
+            address(vaultAsset),
+            address(lpToken),
+            vaultAssetAmount
+        );
     }
 
     /// @dev transfers the frxETH balance of this strategy contract to the recipient
     function _withdrawAllAsset(address _recipient) internal override {
-        uint256 vaultAssets = asset.balanceOf(address(this));
+        uint256 vaultAssets = vaultAsset.balanceOf(address(this));
 
         if (vaultAssets > 0) {
-            _withdrawAsset(address(asset), vaultAssets, _recipient);
+            _withdrawAsset(address(vaultAsset), vaultAssets, _recipient);
         }
     }
 
@@ -136,7 +140,7 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         // slither-disable-next-line unused-return
         oToken.approve(platformAddress, type(uint256).max);
         // slither-disable-next-line unused-return
-        asset.approve(platformAddress, type(uint256).max);
+        poolAsset.approve(platformAddress, type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Convex rewards pool

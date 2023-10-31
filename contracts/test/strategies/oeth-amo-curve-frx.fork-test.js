@@ -48,7 +48,10 @@ describe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       expect(await convexFrxETHAMOStrategy.oToken()).to.equal(
         addresses.mainnet.OETHProxy
       );
-      expect(await convexFrxETHAMOStrategy.asset()).to.equal(
+      expect(await convexFrxETHAMOStrategy.vaultAsset()).to.equal(
+        addresses.mainnet.frxETH
+      );
+      expect(await convexFrxETHAMOStrategy.poolAsset()).to.equal(
         addresses.mainnet.frxETH
       );
     });

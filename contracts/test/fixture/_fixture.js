@@ -1199,6 +1199,16 @@ async function convexOusdAmoFixture() {
         fixture.usdc.address,
         fixture.convexOusdAMOStrategy.address
       );
+
+    const assetAddresses = await getAssetAddresses(deployments);
+    fixture.curveOusd3CrvMetapool = await ethers.getContractAt(
+      ousdMetapoolAbi,
+      assetAddresses.ThreePoolOUSDMetapool
+    );
+    fixture.threePoolToken = await ethers.getContractAt(
+      threepoolLPAbi,
+      assetAddresses.ThreePoolToken
+    );
   }
 
   return fixture;
@@ -1595,7 +1605,7 @@ async function convexOethEthAmoFixture(
     const assetAddresses = await getAssetAddresses(deployments);
     fixture.curveOethEthPool = await ethers.getContractAt(
       curveOethEthPoolAbi,
-      assetAddresses.curveOethEthPool
+      assetAddresses.CurveOethEthPool
     );
   }
 
@@ -1736,9 +1746,9 @@ async function convexFrxEthAmoFixture(
       .setSupportedStrategy(convexFrxETHAMOStrategy.address, true);
 
     const assetAddresses = await getAssetAddresses(deployments);
-    fixture.curveFrxEthWethPool = await ethers.getContractAt(
+    fixture.curveFrxEthOethPool = await ethers.getContractAt(
       curveOethEthPoolAbi,
-      assetAddresses.CurveFrxEthWethPool
+      assetAddresses.CurveFrxEthOethPool
     );
   }
 

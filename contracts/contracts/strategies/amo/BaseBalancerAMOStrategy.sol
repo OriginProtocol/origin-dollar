@@ -51,7 +51,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         initializer
     {
         address[] memory assets = new address[](1);
-        assets[0] = address(asset);
+        assets[0] = address(vaultAsset);
         // pTokens are not used by this strategy
         // it is only included for backward compatibility with the
         // parent InitializableAbstractStrategy contract
@@ -82,7 +82,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
             balancerPoolId
         );
         require(tokens[oTokenCoinIndex] == oToken, "Invalid Balancer oToken");
-        require(tokens[assetCoinIndex] == asset, "Invalid Balancer asset");
+        require(tokens[assetCoinIndex] == poolAsset, "Invalid Balancer asset");
 
         uint256[] memory amountsIn = new uint256[](tokens.length);
         amountsIn[oTokenCoinIndex] = poolAmounts[oTokenCoinIndex];
@@ -90,7 +90,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
 
         address[] memory poolAssets = new address[](tokens.length);
         poolAssets[oTokenCoinIndex] = address(oToken);
-        poolAssets[assetCoinIndex] = address(asset);
+        poolAssets[assetCoinIndex] = address(poolAsset);
 
         /* EXACT_TOKENS_IN_FOR_BPT_OUT:
          * User sends precise quantities of tokens, and receives an
@@ -166,11 +166,11 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
             balancerPoolId
         );
         require(tokens[oTokenCoinIndex] == oToken, "Invalid Balancer oToken");
-        require(tokens[assetCoinIndex] == asset, "Invalid Balancer asset");
+        require(tokens[assetCoinIndex] == poolAsset, "Invalid Balancer asset");
 
         address[] memory poolAssets = new address[](tokens.length);
         poolAssets[oTokenCoinIndex] = address(oToken);
-        poolAssets[assetCoinIndex] = address(asset);
+        poolAssets[assetCoinIndex] = address(poolAsset);
 
         /* Custom asset exit: BPT_IN_FOR_EXACT_TOKENS_OUT:
          * User sends an estimated but unknown (computed at run time) quantity of BPT,
@@ -220,7 +220,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         (IERC20[] memory tokens, uint256[] memory allBalances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
         require(tokens[oTokenCoinIndex] == oToken, "Invalid Balancer oToken");
-        require(tokens[assetCoinIndex] == asset, "Invalid Balancer asset");
+        require(tokens[assetCoinIndex] == poolAsset, "Invalid Balancer asset");
 
         balances[oTokenCoinIndex] = allBalances[oTokenCoinIndex];
         balances[assetCoinIndex] = allBalances[assetCoinIndex];
@@ -238,7 +238,10 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         // Get all the supported Balancer pool assets and balances
         (IERC20[] memory tokens, uint256[] memory allBalances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
-        require(tokens[coinIndex] == asset, "Invalid Balancer index");
+        require(
+            address(tokens[coinIndex]) == address(poolAsset),
+            "Invalid Balancer index"
+        );
 
         balance = allBalances[coinIndex];
     }
@@ -319,7 +322,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         // slither-disable-next-line unused-return
         oToken.approve(address(balancerVault), type(uint256).max);
         // slither-disable-next-line unused-return
-        asset.approve(address(balancerVault), type(uint256).max);
+        poolAsset.approve(address(balancerVault), type(uint256).max);
 
         // Approve Aura rewards pool to transfer Balancer pool tokens (BPT)
         // slither-disable-next-line unused-return

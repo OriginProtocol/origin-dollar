@@ -2,6 +2,10 @@ const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const { shouldBehaveLikeAmo } = require("../behaviour/amo");
 const {
   convexOusdAmoFixture,
   createFixtureLoader,
@@ -15,9 +19,6 @@ const {
   usdtUnits,
 } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
-const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
-const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Convex OUSD/3Pool AMO Strategy", function () {
   if (isFork) {
@@ -64,6 +65,17 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     assets: [fixture.dai, fixture.usdc, fixture.usdt],
     harvester: fixture.harvester,
     vault: fixture.vault,
+  }));
+
+  shouldBehaveLikeAmo(() => ({
+    ...fixture,
+    strategy: fixture.convexOusdAMOStrategy,
+    oToken: fixture.ousd,
+    vaultAsset: fixture.usdt,
+    poolAssetAddress: fixture.threePoolToken.address,
+    pool: fixture.curveOusd3CrvMetapool,
+    vault: fixture.vault,
+    assetDivisor: 3,
   }));
 
   describe("Mint", function () {

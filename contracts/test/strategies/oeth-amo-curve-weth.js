@@ -55,10 +55,10 @@ describe("Convex OETH/WETH AMO Strategy", function () {
     strategy: fixture.convexEthMetaStrategy,
     oToken: fixture.oeth,
     vaultAsset: fixture.weth,
-    curveAsset: addresses.ETH,
-    curvePool: fixture.curveOethEthPool,
-    curveLpToken: fixture.curveOethEthPool,
+    poolAssetAddress: addresses.ETH,
+    pool: fixture.curveOethEthPool,
     vault: fixture.oethVault,
+    assetDivisor: 1,
   }));
 
   describe("Utilities", function () {

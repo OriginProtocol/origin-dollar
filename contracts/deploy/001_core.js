@@ -432,7 +432,8 @@ const deployConvexOUSDMetaStrategy = async () => {
       [assetAddresses.ThreePoolOUSDMetapool, cVaultProxy.address],
       [
         ousd.address, // oTokenAddress,
-        assetAddresses.ThreePoolToken, // assetAddress (3CRV)
+        assetAddresses.USDT, // vaultAssetAddress (USDT)
+        assetAddresses.ThreePoolToken, // poolAssetAddress (3CRV)
         0, // Curve pool index for OUSD
         1, // Curve pool index for 3CRV
       ],
@@ -503,10 +504,11 @@ const deployConvexOethEthAMOStrategy = async () => {
   const dConvexEthMetaStrategy = await deployWithConfirmation(
     "ConvexEthMetaStrategy",
     [
-      [assetAddresses.curveOethEthPool, cVaultProxy.address],
+      [assetAddresses.CurveOethEthPool, cVaultProxy.address],
       [
         oeth.address, // oTokenAddress,
-        assetAddresses.WETH, // assetAddress (WETH)
+        assetAddresses.WETH, // vaultAssetAddress (WETH)
+        addresses.ETH, // poolAssetAddress (ETH)
         1, // Curve pool index for OToken OETH
         0, // Curve pool index for asset ETH
       ],
@@ -528,7 +530,7 @@ const deployConvexOethEthAMOStrategy = async () => {
     [
       [assetAddresses.CVX, assetAddresses.CRV],
       [assetAddresses.WETH],
-      [assetAddresses.curveOethEthPool],
+      [assetAddresses.CurveOethEthPool],
     ]
   );
 
@@ -567,10 +569,11 @@ const deployConvexFrxETHAMOStrategy = async () => {
   const dConvexFrxETHAMOStrategy = await deployWithConfirmation(
     "ConvexFrxETHAMOStrategy",
     [
-      [assetAddresses.curveFrxEthOethPool, cVaultProxy.address],
+      [assetAddresses.CurveFrxEthOethPool, cVaultProxy.address],
       [
         oeth.address, // oTokenAddress,
-        assetAddresses.frxETH, // assetAddress (frxETH)
+        assetAddresses.frxETH, // vaultAssetAddress (frxETH)
+        assetAddresses.frxETH, // poolAssetAddress (frxETH)
         1, // Curve pool index for OToken OETH
         0, // Curve pool index for asset frxETH
       ],
@@ -592,7 +595,7 @@ const deployConvexFrxETHAMOStrategy = async () => {
     [
       [assetAddresses.CVX, assetAddresses.CRV],
       [assetAddresses.frxETH],
-      [assetAddresses.curveFrxEthOethPool],
+      [assetAddresses.CurveFrxEthOethPool],
     ]
   );
 

@@ -44,7 +44,7 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         ConvexConfig memory _convexConfig
     ) BaseConvexAMOStrategy(_baseConfig, _amoConfig, _convexConfig) {
         oeth = _amoConfig.oTokenAddress;
-        weth = _amoConfig.assetAddress;
+        weth = _amoConfig.vaultAssetAddress;
     }
 
     /***************************************
@@ -57,7 +57,7 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         override
         returns (uint256 ethAmount)
     {
-        IWETH9(address(asset)).withdraw(wethAmount);
+        IWETH9(address(vaultAsset)).withdraw(wethAmount);
         ethAmount = wethAmount;
     }
 
@@ -107,15 +107,19 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         address recipient
     ) internal override {
         // Convert ETH to WETH
-        IWETH9(address(asset)).deposit{ value: vaultAssetAmount }();
+        IWETH9(address(vaultAsset)).deposit{ value: vaultAssetAmount }();
 
         // Transfer the WETH to the Vault
         require(
-            asset.transfer(recipient, vaultAssetAmount),
+            vaultAsset.transfer(recipient, vaultAssetAmount),
             "WETH transfer failed"
         );
 
-        emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
+        emit Withdrawal(
+            address(vaultAsset),
+            address(lpToken),
+            vaultAssetAmount
+        );
     }
 
     /// @dev Gets the ETH balance of this strategy contract
@@ -124,7 +128,7 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         // Get ETH balance of this strategy contract
         uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) {
-            _withdrawAsset(address(asset), ethBalance, recipient);
+            _withdrawAsset(address(vaultAsset), ethBalance, recipient);
         }
     }
 

@@ -44,7 +44,8 @@ module.exports = deploymentWithGovernanceProposal(
         [addresses.mainnet.CurveOUSDMetaPool, addresses.mainnet.VaultProxy],
         [
           addresses.mainnet.OUSDProxy, // oTokenAddress (OUSD),
-          addresses.mainnet.ThreePoolToken, // assetAddress (3CRV)
+          addresses.mainnet.USDT, // vaultAssetAddress (USDT)
+          addresses.mainnet.ThreePoolToken, // poolAssetAddress (3CRV)
           0, // Curve pool index for OUSD
           1, // Curve pool index for 3CRV
         ],
