@@ -1697,7 +1697,7 @@ async function convexFrxEthFixture(
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFund(oethVault.address);
 
-  // mint some OETH using WETH is configured
+  // mint some OETH using WETH if configured
   if (config?.wethMintAmount > 0) {
     const wethAmount = parseUnits(config.wethMintAmount.toString());
     await oethVault.connect(josh).rebase();
@@ -1722,7 +1722,7 @@ async function convexFrxEthFixture(
     }
   }
 
-  // mint some OETH using frxETH is configured
+  // mint some OETH using frxETH if configured
   if (config?.frxEthMintAmount > 0) {
     const frxEthAmount = parseUnits(config.frxEthMintAmount.toString());
     await oethVault.connect(josh).rebase();

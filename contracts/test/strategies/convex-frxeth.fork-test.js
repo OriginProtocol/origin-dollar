@@ -19,10 +19,9 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
-  let fixture;
-
   const supportedAssets = ["WETH", "frxETH"];
 
+  let fixture;
   describe("with mainnet data", () => {
     beforeEach(async () => {
       fixture = await loadDefaultFixture();
@@ -339,29 +338,164 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
       const tx = await convexFrxEthWethStrategy
         .connect(oethVaultSigner)
         .depositAll();
+
       await expect(tx)
         .to.emit(convexFrxEthWethStrategy, "Deposit")
-        .withNamedArgs({
-          _asset: weth.address,
-          _pToken: curveFrxEthWethPool.address,
-        });
+        .withArgs(weth.address, curveFrxEthWethPool.address, wethDepositAmount);
       await expect(tx)
         .to.emit(convexFrxEthWethStrategy, "Deposit")
-        .withNamedArgs({
-          _asset: frxETH.address,
-          _pToken: curveFrxEthWethPool.address,
-        });
+        .withArgs(
+          frxETH.address,
+          curveFrxEthWethPool.address,
+          frxEthDepositAmount
+        );
+    });
+    it("Only vault and governor can withdraw all", async function () {
+      const {
+        convexFrxEthWethStrategy,
+        strategist,
+        timelock,
+        josh,
+        oethVaultSigner,
+      } = fixture;
+
+      for (const signer of [strategist, josh]) {
+        const tx = convexFrxEthWethStrategy.connect(signer).withdrawAll();
+
+        await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
+      }
+
+      // Governor can withdraw all
+      await convexFrxEthWethStrategy.connect(timelock).withdrawAll();
+      // Vault can withdraw all event with no assets in the strategy
+      await convexFrxEthWethStrategy.connect(oethVaultSigner).withdrawAll();
     });
   });
 
-  describe("with WETH in the Curve pool", () => {
+  describe("with some WETH and frxETH deployed to the strategy", () => {
     const loadFixture = createFixtureLoader(convexFrxEthFixture, {
       wethMintAmount: 5000,
+      frxEthMintAmount: 4000,
       depositToStrategy: true,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
     });
+    it("Only vault can withdraw some WETH or frxETH from the strategy", async function () {
+      const {
+        convexFrxEthWethStrategy,
+        curveFrxEthWethPool,
+        oethVault,
+        oethVaultSigner,
+        strategist,
+        timelock,
+        josh,
+        frxETH,
+        weth,
+      } = fixture;
+
+      // Withdraw WETH from the strategy
+      const tx1 = await convexFrxEthWethStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, parseUnits("50"));
+
+      // strategy Withdrawal event for WETH
+      await expect(tx1).to.emit(convexFrxEthWethStrategy, "Withdrawal");
+      // WETH Transfer event from Curve pool to vault
+      await expect(tx1).to.emit(weth, "Transfer").withNamedArgs({
+        src: curveFrxEthWethPool.address,
+        dst: oethVault.address,
+      });
+
+      // Withdraw frxETH from the strategy
+      const tx2 = await convexFrxEthWethStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, frxETH.address, parseUnits("50"));
+
+      // strategy Withdrawal event for frxETH
+      await expect(tx2).to.emit(convexFrxEthWethStrategy, "Withdrawal");
+      // frxETH Transfer event from Curve pool to vault
+      await expect(tx2).to.emit(frxETH, "Transfer").withNamedArgs({
+        from: curveFrxEthWethPool.address,
+        to: oethVault.address,
+      });
+
+      // Negative tests
+      for (const signer of [strategist, timelock, josh]) {
+        const txFail = convexFrxEthWethStrategy
+          .connect(signer)
+          .withdraw(oethVault.address, weth.address, parseUnits("50"));
+
+        await expect(txFail).to.revertedWith("Caller is not the Vault");
+      }
+    });
+    it("Only vault and governor can withdraw all WETH and frxETH from the strategy", async function () {
+      const {
+        convexFrxEthWethStrategy,
+        curveFrxEthWethPool,
+        strategist,
+        timelock,
+        josh,
+        oethVault,
+        oethVaultSigner,
+        frxETH,
+        weth,
+      } = fixture;
+
+      for (const signer of [strategist, josh]) {
+        const tx = convexFrxEthWethStrategy.connect(signer).withdrawAll();
+
+        await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
+      }
+
+      // Governor can withdraw all
+      const tx1 = convexFrxEthWethStrategy.connect(timelock).withdrawAll();
+
+      // strategy Withdrawal event for WETH
+      await expect(tx1)
+        .to.emit(convexFrxEthWethStrategy, "Withdrawal")
+        .withNamedArgs({
+          _asset: weth.address,
+          _pToken: curveFrxEthWethPool.address,
+        });
+      // WETH Transfer event from Curve pool to strategy
+      await expect(tx1).to.emit(weth, "Transfer").withNamedArgs({
+        src: curveFrxEthWethPool.address,
+        dst: convexFrxEthWethStrategy.address,
+      });
+      // WETH Transfer event from strategy to vault
+      await expect(tx1).to.emit(weth, "Transfer").withNamedArgs({
+        src: convexFrxEthWethStrategy.address,
+        dst: oethVault.address,
+      });
+
+      // strategy Withdrawals event for frxETH
+      await expect(tx1)
+        .to.emit(convexFrxEthWethStrategy, "Withdrawal")
+        .withNamedArgs({
+          _asset: frxETH.address,
+          _pToken: curveFrxEthWethPool.address,
+        });
+      // frxETH Transfer event from Curve pool to strategy
+      await expect(tx1).to.emit(frxETH, "Transfer").withNamedArgs({
+        from: curveFrxEthWethPool.address,
+        to: convexFrxEthWethStrategy.address,
+      });
+      // frxETH Transfer event from strategy to vault
+      await expect(tx1).to.emit(frxETH, "Transfer").withNamedArgs({
+        from: convexFrxEthWethStrategy.address,
+        to: oethVault.address,
+      });
+
+      // Vault can withdraw all event with no assets in the strategy
+      const tx2 = await convexFrxEthWethStrategy
+        .connect(oethVaultSigner)
+        .withdrawAll();
+      await expect(tx2).to.not.emit(convexFrxEthWethStrategy, "Withdrawal");
+    });
+  });
+
+  const convexFrxWethBehaviours = () => {
     supportedAssets.forEach((symbol) => {
       // frxETH will have a balance even though only WETH was deposited
       it(`${symbol} should have a balance`, async () => {
@@ -488,37 +622,6 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         vaultWethBalanceBefore.add(wethWithdrawAmount)
       );
     });
-    it("Only vault can withdraw some WETH from the strategy", async function () {
-      const {
-        convexFrxEthWethStrategy,
-        oethVault,
-        strategist,
-        timelock,
-        josh,
-        weth,
-      } = fixture;
-
-      for (const signer of [strategist, timelock, josh]) {
-        const tx = convexFrxEthWethStrategy
-          .connect(signer)
-          .withdraw(oethVault.address, weth.address, parseUnits("50"));
-
-        await expect(tx).to.revertedWith("Caller is not the Vault");
-      }
-    });
-    it("Only vault and governor can withdraw all WETH from the strategy", async function () {
-      const { convexFrxEthWethStrategy, strategist, timelock, josh } = fixture;
-
-      for (const signer of [strategist, josh]) {
-        const tx = convexFrxEthWethStrategy.connect(signer).withdrawAll();
-
-        await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
-      }
-
-      // Governor can withdraw all
-      const tx = convexFrxEthWethStrategy.connect(timelock).withdrawAll();
-      await expect(tx).to.emit(convexFrxEthWethStrategy, "Withdrawal");
-    });
     [0, 1].forEach((coinIndex) => {
       it(`Should calculate Curve LP tokens for withdrawing coin index ${coinIndex}`, async () => {
         const { curveFrxEthWethPool, convexFrxEthWethStrategy, josh } = fixture;
@@ -565,35 +668,57 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         await josh.sendTransaction(tx);
       });
     });
+  };
+
+  // Calculate the WETH and frxETH amounts from a withdrawAll
+  async function calcWithdrawAllAmounts(fixture) {
+    const {
+      convexFrxEthWethStrategy,
+      cvxFrxEthWethRewardPool,
+      curveFrxEthWethPool,
+    } = fixture;
+
+    // Get the ETH and OETH balances in the Curve Metapool
+    const curveBalances = await curveFrxEthWethPool.get_balances();
+    const strategyLpAmount = await cvxFrxEthWethRewardPool.balanceOf(
+      convexFrxEthWethStrategy.address
+    );
+    const totalLpSupply = await curveFrxEthWethPool.totalSupply();
+
+    // WETH to withdraw = WETH pool balance * strategy LP amount / total pool LP amount
+    const wethWithdrawAmount = curveBalances[0]
+      .mul(strategyLpAmount)
+      .div(totalLpSupply);
+    // frxETH to burn = frxETH pool balance * strategy LP amount / total pool LP amount
+    const frxEthWithdrawAmount = curveBalances[1]
+      .mul(strategyLpAmount)
+      .div(totalLpSupply);
+
+    log(`WETH withdraw amount : ${formatUnits(wethWithdrawAmount)}`);
+    log(`ETH withdraw amount  : ${formatUnits(frxEthWithdrawAmount)}`);
+
+    return { wethWithdrawAmount, frxEthWithdrawAmount, curveBalances };
+  }
+
+  describe("with a lot more WETH in the Curve pool", () => {
+    const loadFixture = createFixtureLoader(convexFrxEthFixture, {
+      wethMintAmount: 100000,
+      depositToStrategy: true,
+    });
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    convexFrxWethBehaviours();
+  });
+
+  describe("with a lot more frxETH in the Curve pool", () => {
+    const loadFixture = createFixtureLoader(convexFrxEthFixture, {
+      frxEthMintAmount: 100000,
+      depositToStrategy: true,
+    });
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    convexFrxWethBehaviours();
   });
 });
-
-// Calculate the WETH and frxETH amounts from a withdrawAll
-async function calcWithdrawAllAmounts(fixture) {
-  const {
-    convexFrxEthWethStrategy,
-    cvxFrxEthWethRewardPool,
-    curveFrxEthWethPool,
-  } = fixture;
-
-  // Get the ETH and OETH balances in the Curve Metapool
-  const curveBalances = await curveFrxEthWethPool.get_balances();
-  const strategyLpAmount = await cvxFrxEthWethRewardPool.balanceOf(
-    convexFrxEthWethStrategy.address
-  );
-  const totalLpSupply = await curveFrxEthWethPool.totalSupply();
-
-  // WETH to withdraw = WETH pool balance * strategy LP amount / total pool LP amount
-  const wethWithdrawAmount = curveBalances[0]
-    .mul(strategyLpAmount)
-    .div(totalLpSupply);
-  // frxETH to burn = frxETH pool balance * strategy LP amount / total pool LP amount
-  const frxEthWithdrawAmount = curveBalances[1]
-    .mul(strategyLpAmount)
-    .div(totalLpSupply);
-
-  log(`WETH withdraw amount : ${formatUnits(wethWithdrawAmount)}`);
-  log(`ETH withdraw amount  : ${formatUnits(frxEthWithdrawAmount)}`);
-
-  return { wethWithdrawAmount, frxEthWithdrawAmount, curveBalances };
-}
