@@ -43,6 +43,9 @@ const balancesContractSlotCache = {
 const findBalancesSlot = async (tokenAddress) => {
   tokenAddress = tokenAddress.toLowerCase();
   if (balancesContractSlotCache[tokenAddress]) {
+    log(
+      `Found balance slot ${balancesContractSlotCache[tokenAddress][0]} for token ${tokenAddress} in cache`
+    );
     return balancesContractSlotCache[tokenAddress];
   }
 
@@ -94,6 +97,9 @@ const findBalancesSlot = async (tokenAddress) => {
       ) {
         const isVyper = probedSlot == slots[1];
         balancesContractSlotCache[tokenAddress] = [i, isVyper];
+        log(
+          `Found balance slot ${i} for ${tokenAddress}. is Vyper? ${isVyper} `
+        );
         return [i, isVyper];
       }
     }

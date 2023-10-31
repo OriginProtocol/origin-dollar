@@ -81,6 +81,23 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     }
 
     /***************************************
+            Curve Pool Deposits
+    ****************************************/
+
+    /// @dev Adds ETH and/or OETH to the Curve pool
+    /// @param poolAmounts The amount of Curve pool assets (ETH/OETH) to add to the pool
+    /// @param minLpAmount The minimum amount of Curve pool LP tokens that is acceptable to receive
+    function _addLiquidityToPool(
+        uint256[2] memory poolAmounts,
+        uint256 minLpAmount
+    ) internal override returns (uint256 lpDeposited) {
+        // ETH is passed into the Pool as value in the add_liquidity call
+        lpDeposited = curvePool.add_liquidity{
+            value: poolAmounts[assetCoinIndex]
+        }(poolAmounts, minLpAmount);
+    }
+
+    /***************************************
             Curve Pool Withdrawals
     ****************************************/
 

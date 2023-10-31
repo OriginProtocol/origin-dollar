@@ -1,14 +1,16 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const { shouldBehaveLikeAmo } = require("../behaviour/amo");
 const {
   convexOethEthAmoFixture,
   createFixtureLoader,
 } = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
-const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
-const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const addresses = require("../../utils/addresses");
 
 describe("Convex OETH/WETH AMO Strategy", function () {
   if (isFork) {
@@ -45,6 +47,17 @@ describe("Convex OETH/WETH AMO Strategy", function () {
     strategy: fixture.convexEthMetaStrategy,
     assets: [fixture.weth],
     harvester: fixture.oethHarvester,
+    vault: fixture.oethVault,
+  }));
+
+  shouldBehaveLikeAmo(() => ({
+    ...fixture,
+    strategy: fixture.convexEthMetaStrategy,
+    oToken: fixture.oeth,
+    vaultAsset: fixture.weth,
+    curveAsset: addresses.ETH,
+    curvePool: fixture.curveOethEthPool,
+    curveLpToken: fixture.curveOethEthPool,
     vault: fixture.oethVault,
   }));
 

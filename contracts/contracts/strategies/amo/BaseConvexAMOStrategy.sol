@@ -69,7 +69,7 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
     function _addLiquidityToPool(
         uint256[2] memory poolAmounts,
         uint256 minLpAmount
-    ) internal override returns (uint256 lpDeposited) {
+    ) internal virtual override returns (uint256 lpDeposited) {
         lpDeposited = curvePool.add_liquidity(poolAmounts, minLpAmount);
     }
 
