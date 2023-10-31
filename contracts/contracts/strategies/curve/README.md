@@ -1,9 +1,9 @@
 # Diagrams
 
-## Curve Two Coin Library
+## Curve Two Coin Functions
 
-![CurveTwoCoinLib](../../../docs/CurveTwoCoinLib.svg)
+![CurveTwoCoinFunctions](../../../docs/CurveTwoCoinFunctions.svg)
 
-## Curve Three Coin Library
+## Curve Three Coin Functions
 
-![CurveThreeCoinLib](../../../docs/CurveThreeCoinLib.svg)
+![CurveTwoCoinFunctions](../../../docs/CurveTwoCoinFunctions.svg)

@@ -113,14 +113,6 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- * Deploys a Curve wrapper library contracts used by the Curve strategies.
- */
-const deployCurveLibraries = async () => {
-  await deployWithConfirmation("CurveTwoCoinLib", [], null, true);
-  await deployWithConfirmation("CurveThreeCoinLib", [], null, true);
-};
-
-/**
  * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  */
@@ -136,21 +128,10 @@ const deployThreePoolStrategy = async () => {
     "ThreePoolStrategyProxy"
   );
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
-  const dThreePoolStrategy = await deployWithConfirmation(
-    "ThreePoolStrategy",
-    [
-      [assetAddresses.ThreePool, cVaultProxy.address],
-      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
-    ],
-    null,
-    true,
-    libraries
-  );
+  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
+    [assetAddresses.ThreePool, cVaultProxy.address],
+    [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+  ]);
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
@@ -197,13 +178,8 @@ const deployConvexStrategy = async () => {
   await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexStrategy = await deployWithConfirmation(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     [
       [assetAddresses.ThreePool, cVaultProxy.address],
       [
@@ -215,13 +191,10 @@ const deployConvexStrategy = async () => {
         mockBooster.address, // _cvxDepositorAddress,
         threeCRVPid, // _cvxDepositorPTokenId
       ],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     cConvexStrategyProxy.address
   );
 
@@ -271,15 +244,8 @@ const deployConvexFrxEthWethStrategy = async () => {
     "ConvexFrxEthWethStrategyProxy"
   );
 
-  const lCurveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
-  const libraries = {
-    // We are intentionally assigning the two coin lib to the three coin lib
-    // they have the same ABI
-    CurveThreeCoinLib: lCurveTwoCoinLib.address,
-  };
-
   const dConvexStrategy = await deployWithConfirmation(
-    "ConvexStrategy",
+    "ConvexTwoPoolStrategy",
     [
       [assetAddresses.CurveFrxEthWethPool, cVaultProxy.address],
       [
@@ -291,13 +257,10 @@ const deployConvexFrxEthWethStrategy = async () => {
         mockBooster.address, // _cvxDepositorAddress,
         frxEthWethPoolLpPID, // _cvxDepositorPTokenId
       ],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexTwoPoolStrategy",
     cConvexFrxEthWethStrategyProxy.address
   );
 
@@ -338,20 +301,12 @@ const deployConvexLUSDMetaStrategy = async () => {
     "ConvexLUSDMetaStrategyProxy"
   );
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexLUSDMetaStrategy = await deployWithConfirmation(
     "ConvexGeneralizedMetaStrategy",
     [
       [assetAddresses.ThreePool, cVaultProxy.address],
       [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
@@ -411,20 +366,12 @@ const deployConvexOUSDMetaStrategy = async () => {
     "ConvexOUSDMetaStrategyProxy"
   );
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
     "ConvexOUSDMetaStrategy",
     [
       [assetAddresses.ThreePool, cVaultProxy.address],
       [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
@@ -1259,7 +1206,6 @@ const main = async () => {
   await deployCurveLUSDMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
-  await deployCurveLibraries();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();

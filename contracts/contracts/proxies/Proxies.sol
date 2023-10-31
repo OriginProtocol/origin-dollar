@@ -197,7 +197,7 @@ contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ConvexFrxEthWethStrategyProxy delegates calls to a ConvexStrategy implementation
+ * @notice ConvexFrxEthWethStrategyProxy delegates calls to a ConvexTwoPoolStrategy implementation
  */
 contract ConvexFrxEthWethStrategyProxy is
     InitializeGovernedUpgradeabilityProxy

@@ -16,71 +16,71 @@
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-365.1" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 141 -->
+<!-- 144 -->
 <g id="node2" class="node">
-<title>141</title>
+<title>144</title>
 <polygon fill="#f2f2f2" stroke="black" points="86.43,-157.7 86.43,-216.1 380.43,-216.1 380.43,-157.7 86.43,-157.7"/>
 <text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">BaseCompoundStrategy</text>
 <text text-anchor="middle" x="233.43" y="-165.9" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseCompoundStrategy.sol</text>
 </g>
-<!-- 185 -->
+<!-- 188 -->
 <g id="node6" class="node">
-<title>185</title>
+<title>188</title>
 <polygon fill="#f2f2f2" stroke="black" points="88.38,-253.1 88.38,-311.5 378.48,-311.5 378.48,-253.1 88.38,-253.1"/>
 <text text-anchor="middle" x="233.43" y="-294.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-278.1" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="233.43" y="-261.3" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 141&#45;&gt;185 -->
+<!-- 144&#45;&gt;188 -->
 <g id="edge1" class="edge">
-<title>141&#45;&gt;185</title>
+<title>144&#45;&gt;188</title>
 <path fill="none" stroke="black" d="M233.43,-216.18C233.43,-218.26 233.43,-220.4 233.43,-222.58"/>
 <polygon fill="none" stroke="black" points="222.93,-222.8 233.43,-252.8 243.93,-222.8 222.93,-222.8"/>
 </g>
-<!-- 145 -->
+<!-- 150 -->
 <g id="node3" class="node">
-<title>145</title>
+<title>150</title>
 <polygon fill="#f2f2f2" stroke="black" points="100.03,-79.1 100.03,-120.7 366.82,-120.7 366.82,-79.1 100.03,-79.1"/>
 <text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">CompoundStrategy</text>
 <text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/CompoundStrategy.sol</text>
 </g>
-<!-- 145&#45;&gt;141 -->
+<!-- 150&#45;&gt;144 -->
 <g id="edge2" class="edge">
-<title>145&#45;&gt;141</title>
+<title>150&#45;&gt;144</title>
 <path fill="none" stroke="black" d="M233.43,-121.04C233.43,-123.09 233.43,-125.23 233.43,-127.43"/>
 <polygon fill="none" stroke="black" points="222.93,-127.54 233.43,-157.54 243.93,-127.54 222.93,-127.54"/>
 </g>
-<!-- 151 -->
+<!-- 159 -->
 <g id="node4" class="node">
-<title>151</title>
+<title>159</title>
 <polygon fill="#f2f2f2" stroke="black" points="118.31,-0.5 118.31,-42.1 348.55,-42.1 348.55,-0.5 118.31,-0.5"/>
 <text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">FluxStrategy</text>
 <text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/FluxStrategy.sol</text>
 </g>
-<!-- 151&#45;&gt;145 -->
+<!-- 159&#45;&gt;150 -->
 <g id="edge3" class="edge">
-<title>151&#45;&gt;145</title>
+<title>159&#45;&gt;150</title>
 <path fill="none" stroke="black" d="M233.43,-42.43C233.43,-44.45 233.43,-46.56 233.43,-48.73"/>
 <polygon fill="none" stroke="black" points="222.93,-48.91 233.43,-78.91 243.93,-48.91 222.93,-48.91"/>
 </g>
-<!-- 184 -->
+<!-- 187 -->
 <g id="node5" class="node">
-<title>184</title>
+<title>187</title>
 <polygon fill="#f2f2f2" stroke="black" points="252.42,-348.5 252.42,-406.9 448.44,-406.9 448.44,-348.5 252.42,-348.5"/>
 <text text-anchor="middle" x="350.43" y="-390.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="350.43" y="-373.5" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="350.43" y="-356.7" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 185&#45;&gt;18 -->
+<!-- 188&#45;&gt;18 -->
 <g id="edge5" class="edge">
-<title>185&#45;&gt;18</title>
+<title>188&#45;&gt;18</title>
 <path fill="none" stroke="black" d="M198.31,-311.58C188.11,-319.79 176.78,-328.91 165.91,-337.66"/>
 <polygon fill="none" stroke="black" points="158.91,-329.82 142.13,-356.81 172.08,-346.18 158.91,-329.82"/>
 </g>
-<!-- 185&#45;&gt;184 -->
+<!-- 188&#45;&gt;187 -->
 <g id="edge4" class="edge">
-<title>185&#45;&gt;184</title>
+<title>188&#45;&gt;187</title>
 <path fill="none" stroke="black" d="M268.85,-311.58C275.89,-317.19 283.46,-323.24 291.04,-329.29"/>
 <polygon fill="none" stroke="black" points="284.73,-337.69 314.72,-348.2 297.83,-321.27 284.73,-337.69"/>
 </g>
