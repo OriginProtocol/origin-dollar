@@ -1,0 +1,127 @@
+{
+  "solcVersion": "0.8.7",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:13"
+    },
+    {
+      "label": "universalRouter",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:30"
+    },
+    {
+      "label": "__deprecated_ousd",
+      "offset": 0,
+      "slot": "103",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:33"
+    },
+    {
+      "label": "__deprecated_ogv",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:35"
+    },
+    {
+      "label": "__deprecated_usdt",
+      "offset": 0,
+      "slot": "105",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:37"
+    },
+    {
+      "label": "__deprecated_weth9",
+      "offset": 0,
+      "slot": "106",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:39"
+    },
+    {
+      "label": "rewardsSource",
+      "offset": 0,
+      "slot": "107",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:42"
+    },
+    {
+      "label": "treasuryManager",
+      "offset": 0,
+      "slot": "108",
+      "type": "t_address",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:45"
+    },
+    {
+      "label": "__deprecated_treasuryBps",
+      "offset": 0,
+      "slot": "109",
+      "type": "t_uint256",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:48"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
