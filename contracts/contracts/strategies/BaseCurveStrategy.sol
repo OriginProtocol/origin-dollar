@@ -47,7 +47,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /// @notice Address of the Curve pool contract
     address public immutable CURVE_POOL;
     /// @notice Address of the Curve pool's liquidity provider (LP) token.
-    /// This can be different to the Curve pool. For exmaple, 3Pool's 3Crv LP token.
+    /// This can be different to the Curve pool. For example, 3Pool's 3Crv LP token.
     address public immutable CURVE_LP_TOKEN;
 
     // Only supporting up to 3 coins for now.
@@ -404,6 +404,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Get the number of decimals of the asset token.
      * This is reading from immutable variables to avoid costly storage reads.
      * Revert if the `_asset` is not supported by the Curve pool.
+     * @param _asset Address of the asset token.
      */
     function _getAssetDecimals(address _asset)
         internal
@@ -426,9 +427,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Get the token address for a given index value in a Curve pool.
-     * @param _coinIndex Index value of the coin in the Curve pool
      * This is reading from immutable variables to avoid costly storage reads.
      * Revert if the `_coinIndex` is not supported by the Curve pool.
+     * @param _coinIndex Index value of the coin in the Curve pool.
+     * Can be checked using Curve's `coins` getter method.
      */
     function _getAsset(uint256 _coinIndex)
         internal

@@ -58,6 +58,8 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
+addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
+
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
@@ -79,6 +81,11 @@ addresses.mainnet.uniswapV3Router =
   "0xe592427a0aece92de3edee1f18e0157c05861564";
 addresses.mainnet.sushiswapRouter =
   "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
+addresses.mainnet.uniswapV3Quoter =
+  "0x61fFE014bA17989E743c5F6cB21bF9697530B21e";
+addresses.mainnet.uniswapUniversalRouter =
+  "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B";
+
 // Chainlink feeds
 // Source https://docs.chain.link/docs/ethereum-addresses
 addresses.mainnet.chainlinkETH_USD =
