@@ -6,6 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isFork,
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -114,14 +115,6 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- * Deploys a Curve wrapper library contracts used by the Curve strategies.
- */
-const deployCurveLibraries = async () => {
-  await deployWithConfirmation("CurveTwoCoinLib", [], null, true);
-  await deployWithConfirmation("CurveThreeCoinLib", [], null, true);
-};
-
-/**
  * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  */
@@ -137,21 +130,10 @@ const deployThreePoolStrategy = async () => {
     "ThreePoolStrategyProxy"
   );
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
-  const dThreePoolStrategy = await deployWithConfirmation(
-    "ThreePoolStrategy",
-    [
-      [assetAddresses.ThreePool, cVaultProxy.address],
-      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
-    ],
-    null,
-    true,
-    libraries
-  );
+  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
+    [assetAddresses.ThreePool, cVaultProxy.address],
+    [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+  ]);
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
@@ -198,13 +180,8 @@ const deployConvexStrategy = async () => {
   await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexStrategy = await deployWithConfirmation(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     [
       [assetAddresses.ThreePool, cVaultProxy.address],
       [
@@ -216,13 +193,10 @@ const deployConvexStrategy = async () => {
         mockBooster.address, // _cvxDepositorAddress,
         convex_3CRV_PID, // _cvxDepositorPTokenId
       ],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     cConvexStrategyProxy.address
   );
 
@@ -272,15 +246,8 @@ const deployConvexFrxEthWethStrategy = async () => {
     "ConvexFrxEthWethStrategyProxy"
   );
 
-  const lCurveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
-  const libraries = {
-    // We are intentionally assigning the two coin lib to the three coin lib
-    // they have the same ABI
-    CurveThreeCoinLib: lCurveTwoCoinLib.address,
-  };
-
   const dConvexStrategy = await deployWithConfirmation(
-    "ConvexStrategy",
+    "ConvexTwoPoolStrategy",
     [
       [assetAddresses.CurveFrxEthWethPool, cVaultProxy.address],
       [
@@ -292,13 +259,10 @@ const deployConvexFrxEthWethStrategy = async () => {
         mockBooster.address, // _cvxDepositorAddress,
         convex_frxETH_WETH_PID, // _cvxDepositorPTokenId
       ],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexTwoPoolStrategy",
     cConvexFrxEthWethStrategyProxy.address
   );
 
@@ -339,20 +303,12 @@ const deployConvexLUSDMetaStrategy = async () => {
     "ConvexLUSDMetaStrategyProxy"
   );
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexLUSDMetaStrategy = await deployWithConfirmation(
     "ConvexGeneralizedMetaStrategy",
     [
       [assetAddresses.ThreePool, cVaultProxy.address],
       [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
   const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
@@ -421,11 +377,6 @@ const deployConvexOUSDMetaStrategy = async () => {
   );
   const ousd = await ethers.getContract("OUSDProxy");
 
-  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
-  const libraries = {
-    CurveThreeCoinLib: lCurveThreeCoinLib.address,
-  };
-
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
     "ConvexOUSDMetaStrategy",
     [
@@ -444,10 +395,7 @@ const deployConvexOUSDMetaStrategy = async () => {
       ],
       assetAddresses.ThreePool, // _curve3Pool
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // _curve3PoolAssets
-    ],
-    null,
-    true,
-    libraries
+    ]
   );
 
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
@@ -1213,52 +1161,121 @@ const deployBuyback = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
-  const cVault = await ethers.getContractAt(
+  const oeth = await ethers.getContract("OETHProxy");
+  const cOUSDVault = await ethers.getContractAt(
     "VaultAdmin",
     (
       await ethers.getContract("VaultProxy")
     ).address
   );
-
-  // Deploy proxy and implementation
-  const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
-  const dBuybackImpl = await deployWithConfirmation("Buyback");
-
-  const cBuybackProxy = await ethers.getContractAt(
-    "BuybackProxy",
-    dBuybackProxy.address
+  const cOETHVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (
+      await ethers.getContract("OETHVaultProxy")
+    ).address
   );
 
-  const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
+  // Deploy proxy and implementation
+  const dOUSDBuybackProxy = await deployWithConfirmation("BuybackProxy");
+  const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
+  const ousdContractName = isMainnetOrFork ? "OUSDBuyback" : "MockBuyback";
+  const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
+  const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
+    ousd.address,
+    assetAddresses.OGV,
+    assetAddresses.CVX,
+    assetAddresses.CVXLocker,
+  ]);
+  const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, [
+    oeth.address,
+    assetAddresses.OGV,
+    assetAddresses.CVX,
+    assetAddresses.CVXLocker,
+  ]);
 
-  const initData = cBuyback.interface.encodeFunctionData(
-    "initialize(address,address,address,address,address,address,address,address,uint256)",
-    [
-      assetAddresses.uniswapRouter,
-      strategistAddr,
-      strategistAddr, // Treasury manager
-      ousd.address,
-      assetAddresses.OGV,
-      assetAddresses.USDT,
-      assetAddresses.WETH,
-      assetAddresses.RewardsSource,
-      "5000", // 50%
-    ]
+  const cOUSDBuybackProxy = await ethers.getContractAt(
+    "BuybackProxy",
+    dOUSDBuybackProxy.address
+  );
+
+  const cOETHBuybackProxy = await ethers.getContractAt(
+    "OETHBuybackProxy",
+    dOETHBuybackProxy.address
   );
 
   // Init proxy to implementation
   await withConfirmation(
-    cBuybackProxy.connect(sDeployer)[
+    cOUSDBuybackProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address,address,bytes)"
-    ](dBuybackImpl.address, governorAddr, initData)
+    ](dOUSDBuybackImpl.address, deployerAddr, [])
+  );
+  await withConfirmation(
+    cOETHBuybackProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dOETHBuybackImpl.address, deployerAddr, [])
   );
 
+  const cOUSDBuyback = await ethers.getContractAt(
+    ousdContractName,
+    cOUSDBuybackProxy.address
+  );
+  const cOETHBuyback = await ethers.getContractAt(
+    oethContractName,
+    cOETHBuybackProxy.address
+  );
+
+  // Initialize implementation contract
+  const initFunction = "initialize(address,address,address,address)";
+  await withConfirmation(
+    cOUSDBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapUniversalRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      assetAddresses.RewardsSource
+    )
+  );
+  await withConfirmation(
+    cOETHBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapUniversalRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      assetAddresses.RewardsSource
+    )
+  );
+
+  // Init proxy to implementation
+  await withConfirmation(
+    cOUSDBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  await withConfirmation(
+    cOETHBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+
+  await cOUSDBuyback.connect(sDeployer).safeApproveAllTokens();
+  await cOETHBuyback.connect(sDeployer).safeApproveAllTokens();
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
   if (!isMainnet) {
-    await cVault.connect(sGovernor).setTrusteeAddress(cBuyback.address);
+    await withConfirmation(
+      cOUSDBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    await withConfirmation(
+      cOETHBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Buyback");
+
+    await cOUSDVault.connect(sGovernor).setTrusteeAddress(cOUSDBuyback.address);
+    await cOETHVault.connect(sGovernor).setTrusteeAddress(cOETHBuyback.address);
     log("Buyback set as Vault trustee");
   }
-  return cBuyback;
 };
 
 const deployVaultValueChecker = async () => {
@@ -1366,7 +1383,6 @@ const main = async () => {
   await deployCurvefrxEthOethPoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
-  await deployCurveLibraries();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();

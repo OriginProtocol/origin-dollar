@@ -85,8 +85,8 @@ contract MockCurvePool {
         uint256 totalSupply = IERC20(lpToken).totalSupply();
         for (uint256 i = 0; i < 3; i++) {
             uint256 coinAmount = totalSupply > 0
-                ? (_lpAmount / totalSupply) *
-                    IERC20(coins[i]).balanceOf(address(this))
+                ? (_lpAmount * IERC20(coins[i]).balanceOf(address(this))) /
+                    totalSupply
                 : IERC20(coins[i]).balanceOf(address(this));
             balances[i] -= coinAmount;
             IERC20(coins[i]).transfer(msg.sender, coinAmount);

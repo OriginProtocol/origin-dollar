@@ -31,6 +31,8 @@ const balancesContractSlotCache = {
   [addresses.mainnet.USDT.toLowerCase()]: [2, false],
   [addresses.mainnet.TUSD.toLowerCase()]: [14, false],
   [addresses.mainnet.OGN.toLowerCase()]: [0, true],
+  [addresses.mainnet.OETHProxy.toLowerCase()]: [157, false],
+  [addresses.mainnet.OUSDProxy.toLowerCase()]: [157, false],
 };
 
 /**

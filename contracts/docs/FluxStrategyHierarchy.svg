@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 411.4)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-411.4 452.44,-411.4 452.44,4 -4,4"/>
-<!-- 18 -->
+<!-- 20 -->
 <g id="node1" class="node">
-<title>18</title>
+<title>20</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-356.9 0,-398.5 234.86,-398.5 234.86,-356.9 0,-356.9"/>
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-365.1" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>

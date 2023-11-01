@@ -26,11 +26,11 @@ const { parseUnits } = require("ethers/lib/utils");
 const shouldBehaveLikeStrategy = (context) => {
   describe("Strategy behaviour", () => {
     it("Should have vault configured", async () => {
-      const { strategy, vault } = await context();
+      const { strategy, vault } = context();
       expect(await strategy.vaultAddress()).to.equal(vault.address);
     });
     it("Should be a supported asset", async () => {
-      const { assets, strategy } = await context();
+      const { assets, strategy } = context();
 
       for (const asset of assets) {
         expect(await strategy.supportsAsset(asset.address)).to.be.true;
@@ -49,7 +49,7 @@ const shouldBehaveLikeStrategy = (context) => {
         frxETH,
         crv,
         cvx,
-      } = await context();
+      } = context();
 
       const randomAssets = [
         usdt,
@@ -87,7 +87,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to deposit each asset", async () => {
-        const { assets, valueAssets, strategy, vault } = await context();
+        const { assets, valueAssets, strategy, vault } = context();
 
         const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
@@ -130,7 +130,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to deposit all asset together", async () => {
-        const { assets, strategy, vault } = await context();
+        const { assets, strategy, vault } = context();
 
         const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
@@ -152,7 +152,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should not be able to deposit zero asset amount", async () => {
-        const { assets, strategy, vault } = await context();
+        const { assets, strategy, vault } = context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         for (const asset of assets) {
@@ -174,7 +174,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should not be able to withdraw zero asset amount", async () => {
-        const { assets, strategy, vault } = await context();
+        const { assets, strategy, vault } = context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         for (const asset of assets) {
@@ -214,7 +214,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to call withdraw all by vault", async () => {
-        const { strategy, vault } = await context();
+        const { strategy, vault } = context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -222,7 +222,7 @@ const shouldBehaveLikeStrategy = (context) => {
         await expect(tx).to.not.emit(strategy, "Withdrawal");
       });
       it("Should be able to call withdraw all by governor", async () => {
-        const { strategy, governor } = await context();
+        const { strategy, governor } = context();
 
         const tx = await strategy.connect(governor).withdrawAll();
 
@@ -274,7 +274,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw each asset to the vault", async () => {
-        const { assets, valueAssets, strategy, vault } = await context();
+        const { assets, valueAssets, strategy, vault } = context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const withdrawAssets = valueAssets || assets;
@@ -307,7 +307,7 @@ const shouldBehaveLikeStrategy = (context) => {
           vault,
           fraxEthStrategy,
           sfrxETH,
-        } = await context();
+        } = context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();

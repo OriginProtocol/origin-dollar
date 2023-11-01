@@ -73,7 +73,7 @@ chai.Assertion.addMethod(
   "balanceOf",
   async function (expected, contract, message) {
     const user = this._obj;
-    const address = user.address || user.getAddress(); // supports contracts too
+    const address = user.address || user.getAddress() || user; // supports contracts too
     const actual = await contract.balanceOf(address);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(contract));
@@ -392,6 +392,7 @@ const getAssetAddresses = async (deployments) => {
       CurveFrxEthWethPool: addresses.mainnet.CurveFrxEthWethPool,
       CRV: addresses.mainnet.CRV,
       CVX: addresses.mainnet.CVX,
+      CVXLocker: addresses.mainnet.CVXLocker,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
       aDAI_v2: addresses.mainnet.aDAI_v2,
@@ -413,6 +414,7 @@ const getAssetAddresses = async (deployments) => {
       sfrxETH: addresses.mainnet.sfrxETH,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
+      uniswapUniversalRouter: addresses.mainnet.uniswapUniversalRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
@@ -434,6 +436,7 @@ const getAssetAddresses = async (deployments) => {
         .address,
       CRV: (await deployments.get("MockCRV")).address,
       CVX: (await deployments.get("MockCVX")).address,
+      CVXLocker: (await deployments.get("MockCVXLocker")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
       aDAI: (await deployments.get("MockADAI")).address,
       aUSDC: (await deployments.get("MockAUSDC")).address,
@@ -454,6 +457,8 @@ const getAssetAddresses = async (deployments) => {
       RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
+      uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
+        .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
 

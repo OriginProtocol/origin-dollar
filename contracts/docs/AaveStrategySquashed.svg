@@ -70,30 +70,30 @@
 <text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;withdraw(_recipient: address, _asset: address, _amount: uint256) &lt;&lt;onlyVault, nonReentrant&gt;&gt; &lt;&lt;AaveStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;withdrawAll() &lt;&lt;onlyVaultOrGovernor, nonReentrant&gt;&gt; &lt;&lt;AaveStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;checkBalance(_asset: address): (balance: uint256) &lt;&lt;AaveStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;supportsAsset(_asset: address): bool &lt;&lt;AaveStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize(_rewardTokenAddresses: address[], _assets: address[], _pTokens: address[], _incentivesAddress: address, _stkAaveAddress: address) &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;AaveStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00">Public:</text>
-<text text-anchor="start" x="8" y="-344.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PendingGovernorshipTransfer(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-327.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; GovernorshipTransferred(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-311.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PTokenAdded(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-294.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PTokenRemoved(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-277.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Deposit(_asset: address, _pToken: address, _amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-260.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Withdrawal(_asset: address, _pToken: address, _amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-243.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RewardTokenCollected(recipient: address, rewardToken: address, amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-227.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RewardTokenAddressesUpdated(_oldAddresses: address[], _newAddresses: address[]) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-210.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; HarvesterAddressesUpdated(_oldHarvesterAddress: address, _newHarvesterAddress: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-193.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; initializer() &lt;&lt;Initializable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-176.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyGovernor() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-159.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; nonReentrant() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-143.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVault() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-126.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyHarvester() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-109.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVaultOrGovernor() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-92.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVaultOrGovernorOrStrategist() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-75.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-42.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isGovernor(): bool &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_stratConfig: BaseStrategyConfig) &lt;&lt;AaveStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferToken(_asset: address, _amount: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize(_rewardTokenAddresses: address[], _assets: address[], _pTokens: address[], _incentivesAddress: address, _stkAaveAddress: address) &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;AaveStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00">Public:</text>
+<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PendingGovernorshipTransfer(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-344.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; GovernorshipTransferred(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-327.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PTokenAdded(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-311.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PTokenRemoved(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-294.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Deposit(_asset: address, _pToken: address, _amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-277.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Withdrawal(_asset: address, _pToken: address, _amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-260.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RewardTokenCollected(recipient: address, rewardToken: address, amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-243.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RewardTokenAddressesUpdated(_oldAddresses: address[], _newAddresses: address[]) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-227.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; HarvesterAddressesUpdated(_oldHarvesterAddress: address, _newHarvesterAddress: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-210.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; initializer() &lt;&lt;Initializable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-193.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyGovernor() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-176.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; nonReentrant() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-159.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVault() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-143.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyHarvester() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-126.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVaultOrGovernor() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-109.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyVaultOrGovernorOrStrategist() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-92.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-75.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isGovernor(): bool &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-42.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_stratConfig: BaseStrategyConfig) &lt;&lt;AaveStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferToken(_asset: address, _amount: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;supportsAsset(_asset: address): bool &lt;&lt;AaveStrategy&gt;&gt;</text>
 </g>
 </g>
 </svg>
