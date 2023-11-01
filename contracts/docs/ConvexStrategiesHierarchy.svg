@@ -9,118 +9,118 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 428.2)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-428.2 965.71,-428.2 965.71,4 -4,4"/>
-<!-- 18 -->
+<!-- 20 -->
 <g id="node1" class="node">
-<title>18</title>
+<title>20</title>
 <polygon fill="#f2f2f2" stroke="black" points="250.67,-373.7 250.67,-415.3 485.53,-415.3 485.53,-373.7 250.67,-373.7"/>
 <text text-anchor="middle" x="368.1" y="-398.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="368.1" y="-381.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 148 -->
+<!-- 155 -->
 <g id="node2" class="node">
-<title>148</title>
+<title>155</title>
 <polygon fill="#f2f2f2" stroke="black" points="351.1,-174.5 351.1,-232.9 617.09,-232.9 617.09,-174.5 351.1,-174.5"/>
 <text text-anchor="middle" x="484.1" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="484.1" y="-199.5" font-family="Times,serif" font-size="14.00">BaseCurveStrategy</text>
 <text text-anchor="middle" x="484.1" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseCurveStrategy.sol</text>
 </g>
-<!-- 188 -->
+<!-- 195 -->
 <g id="node9" class="node">
-<title>188</title>
+<title>195</title>
 <polygon fill="#f2f2f2" stroke="black" points="339.05,-269.9 339.05,-328.3 629.15,-328.3 629.15,-269.9 339.05,-269.9"/>
 <text text-anchor="middle" x="484.1" y="-311.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="484.1" y="-294.9" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="484.1" y="-278.1" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 148&#45;&gt;188 -->
+<!-- 155&#45;&gt;195 -->
 <g id="edge1" class="edge">
-<title>148&#45;&gt;188</title>
+<title>155&#45;&gt;195</title>
 <path fill="none" stroke="black" d="M484.1,-232.98C484.1,-235.06 484.1,-237.2 484.1,-239.38"/>
 <polygon fill="none" stroke="black" points="473.6,-239.6 484.1,-269.6 494.6,-239.6 473.6,-239.6"/>
 </g>
-<!-- 155 -->
+<!-- 162 -->
 <g id="node3" class="node">
-<title>155</title>
+<title>162</title>
 <polygon fill="#f2f2f2" stroke="black" points="360.04,-79.1 360.04,-137.5 608.16,-137.5 608.16,-79.1 360.04,-79.1"/>
 <text text-anchor="middle" x="484.1" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="484.1" y="-104.1" font-family="Times,serif" font-size="14.00">ConvexStrategy</text>
 <text text-anchor="middle" x="484.1" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexStrategy.sol</text>
 </g>
-<!-- 155&#45;&gt;148 -->
+<!-- 162&#45;&gt;155 -->
 <g id="edge2" class="edge">
-<title>155&#45;&gt;148</title>
+<title>162&#45;&gt;155</title>
 <path fill="none" stroke="black" d="M484.1,-137.58C484.1,-139.66 484.1,-141.8 484.1,-143.98"/>
 <polygon fill="none" stroke="black" points="473.6,-144.2 484.1,-174.2 494.6,-144.2 473.6,-144.2"/>
 </g>
-<!-- 157 -->
+<!-- 164 -->
 <g id="node4" class="node">
-<title>157</title>
+<title>164</title>
 <polygon fill="#f2f2f2" stroke="black" points="168.88,-0.5 168.88,-42.1 475.31,-42.1 475.31,-0.5 168.88,-0.5"/>
 <text text-anchor="middle" x="322.1" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexThreePoolStrategy</text>
 <text text-anchor="middle" x="322.1" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexThreePoolStrategy.sol</text>
 </g>
-<!-- 157&#45;&gt;155 -->
+<!-- 164&#45;&gt;162 -->
 <g id="edge4" class="edge">
-<title>157&#45;&gt;155</title>
+<title>164&#45;&gt;162</title>
 <path fill="none" stroke="black" d="M360.08,-42.23C373.11,-49.07 388.24,-57.01 403.36,-64.94"/>
 <polygon fill="none" stroke="black" points="398.66,-74.33 430.1,-78.97 408.41,-55.73 398.66,-74.33"/>
 </g>
-<!-- 253 -->
+<!-- 260 -->
 <g id="node6" class="node">
-<title>253</title>
+<title>260</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-87.5 0,-129.1 342.2,-129.1 342.2,-87.5 0,-87.5"/>
 <text text-anchor="middle" x="171.1" y="-112.5" font-family="Times,serif" font-size="14.00">CurveThreeCoinFunctions</text>
 <text text-anchor="middle" x="171.1" y="-95.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/curve/CurveThreeCoinFunctions.sol</text>
 </g>
-<!-- 157&#45;&gt;253 -->
+<!-- 164&#45;&gt;260 -->
 <g id="edge3" class="edge">
-<title>157&#45;&gt;253</title>
+<title>164&#45;&gt;260</title>
 <path fill="none" stroke="black" d="M286.7,-42.23C270.6,-51.29 251.09,-62.27 232.71,-72.62"/>
 <polygon fill="none" stroke="black" points="227.27,-63.63 206.28,-87.5 237.57,-81.93 227.27,-63.63"/>
 </g>
-<!-- 158 -->
+<!-- 165 -->
 <g id="node5" class="node">
-<title>158</title>
+<title>165</title>
 <polygon fill="#f2f2f2" stroke="black" points="568.37,-0.5 568.37,-42.1 867.82,-42.1 867.82,-0.5 568.37,-0.5"/>
 <text text-anchor="middle" x="718.1" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexTwoPoolStrategy</text>
 <text text-anchor="middle" x="718.1" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexTwoPoolStrategy.sol</text>
 </g>
-<!-- 158&#45;&gt;155 -->
+<!-- 165&#45;&gt;162 -->
 <g id="edge6" class="edge">
-<title>158&#45;&gt;155</title>
+<title>165&#45;&gt;162</title>
 <path fill="none" stroke="black" d="M663.53,-42.12C641.67,-50.06 615.7,-59.5 590.4,-68.69"/>
 <polygon fill="none" stroke="black" points="586.45,-58.95 561.83,-79.06 593.62,-78.69 586.45,-58.95"/>
 </g>
-<!-- 254 -->
+<!-- 261 -->
 <g id="node7" class="node">
-<title>254</title>
+<title>261</title>
 <polygon fill="#f2f2f2" stroke="black" points="626.49,-87.5 626.49,-129.1 961.71,-129.1 961.71,-87.5 626.49,-87.5"/>
 <text text-anchor="middle" x="794.1" y="-112.5" font-family="Times,serif" font-size="14.00">CurveTwoCoinFunctions</text>
 <text text-anchor="middle" x="794.1" y="-95.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/curve/CurveTwoCoinFunctions.sol</text>
 </g>
-<!-- 158&#45;&gt;254 -->
+<!-- 165&#45;&gt;261 -->
 <g id="edge5" class="edge">
-<title>158&#45;&gt;254</title>
+<title>165&#45;&gt;261</title>
 <path fill="none" stroke="black" d="M736.11,-42.44C742.17,-49.22 749.17,-57.05 756.17,-64.88"/>
 <polygon fill="none" stroke="black" points="748.39,-71.94 776.22,-87.3 764.05,-57.94 748.39,-71.94"/>
 </g>
-<!-- 187 -->
+<!-- 194 -->
 <g id="node8" class="node">
-<title>187</title>
+<title>194</title>
 <polygon fill="#f2f2f2" stroke="black" points="503.09,-365.3 503.09,-423.7 699.1,-423.7 699.1,-365.3 503.09,-365.3"/>
 <text text-anchor="middle" x="601.1" y="-407.1" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="601.1" y="-390.3" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="601.1" y="-373.5" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 188&#45;&gt;18 -->
+<!-- 195&#45;&gt;20 -->
 <g id="edge8" class="edge">
-<title>188&#45;&gt;18</title>
+<title>195&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M448.98,-328.38C438.78,-336.59 427.45,-345.71 416.58,-354.46"/>
 <polygon fill="none" stroke="black" points="409.58,-346.62 392.8,-373.61 422.75,-362.98 409.58,-346.62"/>
 </g>
-<!-- 188&#45;&gt;187 -->
+<!-- 195&#45;&gt;194 -->
 <g id="edge7" class="edge">
-<title>188&#45;&gt;187</title>
+<title>195&#45;&gt;194</title>
 <path fill="none" stroke="black" d="M519.52,-328.38C526.56,-333.99 534.12,-340.04 541.71,-346.09"/>
 <polygon fill="none" stroke="black" points="535.4,-354.49 565.39,-365 548.5,-338.07 535.4,-354.49"/>
 </g>

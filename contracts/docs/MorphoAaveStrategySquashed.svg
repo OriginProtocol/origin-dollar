@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1373)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-1373 847.1,-1373 847.1,4 -4,4"/>
-<!-- 169 -->
+<!-- 176 -->
 <g id="node1" class="node">
-<title>169</title>
+<title>176</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-1368.5 843.1,-1368.5 843.1,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="421.55" y="-1351.9" font-family="Times,serif" font-size="14.00">MorphoAaveStrategy</text>
 <text text-anchor="middle" x="421.55" y="-1335.1" font-family="Times,serif" font-size="14.00">../contracts/strategies/MorphoAaveStrategy.sol</text>
