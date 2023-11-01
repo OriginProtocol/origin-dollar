@@ -277,8 +277,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockCVX", {
     from: deployerAddr,
   });
-
   const mockCVX = await ethers.getContract("MockCVX");
+  await deploy("MockCVXLocker", {
+    from: deployerAddr,
+    args: [mockCVX.address],
+  });
 
   await deploy("MockBooster", {
     from: deployerAddr,
