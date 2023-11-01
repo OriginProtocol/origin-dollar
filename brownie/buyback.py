@@ -1,23 +1,10 @@
 from brownie import Contract
-from contextlib import redirect_stdout, contextmanager
 import io
 
 from world import *
 
 BUYBACK_CONTRACT = buyback
 OGV_CONTRACT = Contract.from_explorer(OGV)
-
-
-@contextmanager
-def silent_tx():
-    """
-    Hide std out transaction information printing.
-
-    ETH brownie does not currently have a way to silence transaction details.
-    """
-    f = io.StringIO()
-    with redirect_stdout(f):
-        yield
 
 def sim_buyback_ogv(amount):
     """
