@@ -1670,6 +1670,9 @@ async function convexFrxEthFixture(
       oethMetapoolAbi,
       addresses.mainnet.CurveFrxEthWethPool
     );
+
+    // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
+    await setFraxOraclePrice(parseUnits("0.999", 18));
   } else {
     // Approve strategy for unit tests
     await oethVault
@@ -1730,9 +1733,6 @@ async function convexFrxEthFixture(
 
     // Approve the Vault to transfer frxETH
     await frxETH.connect(josh).approve(oethVault.address, frxEthAmount);
-
-    // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
-    await setFraxOraclePrice(parseUnits("0.999", 18));
 
     // Mint OETH with frxETH. This will sit in the vault, not the strategy
     await oethVault.connect(josh).mint(frxETH.address, frxEthAmount, 0);
