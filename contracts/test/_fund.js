@@ -55,7 +55,7 @@ const findBalancesSlot = async (tokenAddress) => {
 
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
-  const account = ethrs.constants.AddressZero;
+  const account = addresses.ETH;
   const probeA = encode(
     ["uint"],
     [parseEther("99999999999999999999999999999999")]
