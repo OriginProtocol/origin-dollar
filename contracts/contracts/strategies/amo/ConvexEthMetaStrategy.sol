@@ -106,6 +106,8 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         uint256 vaultAssetAmount,
         address recipient
     ) internal override {
+        require(address(this).balance >= vaultAssetAmount, "Insufficient ETH");
+
         // Convert ETH to WETH
         IWETH9(address(vaultAsset)).deposit{ value: vaultAssetAmount }();
 

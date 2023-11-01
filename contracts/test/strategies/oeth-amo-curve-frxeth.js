@@ -55,7 +55,8 @@ describe("Convex frxETH/OETH AMO Strategy", function () {
     oToken: fixture.oeth,
     vaultAsset: fixture.frxETH,
     poolAssetAddress: fixture.frxETH.address,
-    pool: fixture.curveFrxEthOethPool,
+    assetIndex: 0,
+    curvePool: fixture.curveFrxEthOethPool,
     vault: fixture.oethVault,
     assetDivisor: 1,
   }));

@@ -73,7 +73,8 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     oToken: fixture.ousd,
     vaultAsset: fixture.usdt,
     poolAssetAddress: fixture.threePoolToken.address,
-    pool: fixture.curveOusd3CrvMetapool,
+    assetIndex: 1,
+    curvePool: fixture.curveOusd3CrvMetapool,
     vault: fixture.vault,
     assetDivisor: 3,
   }));

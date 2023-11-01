@@ -28,6 +28,7 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         for (uint256 i = 0; i < _amounts.length; i++) {
             if (_amounts[i] > 0) {
                 if (coins[i] == ETH) {
+                    require(msg.value == _amounts[i], "no ETH sent");
                     lpAmount += _amounts[i];
                 } else {
                     IERC20(coins[i]).transferFrom(
@@ -50,13 +51,12 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
     }
 
     // Dumb implementation that returns the same amount
-    function calc_withdraw_one_coin(uint256 _amount, int128 _index)
+    function calc_withdraw_one_coin(uint256 _amount, int128)
         public
-        view
+        pure
         returns (uint256 lpAmount)
     {
-        uint256 assetDecimals = Helpers.getDecimals(coins[uint128(_index)]);
-        lpAmount = _amount.scaleBy(assetDecimals, 18);
+        lpAmount = _amount;
     }
 
     function remove_liquidity_one_coin(
@@ -65,15 +65,31 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         // solhint-disable-next-line no-unused-vars
         uint256 _minAmount
     ) external returns (uint256 amount) {
+        amount = remove_liquidity_one_coin(
+            _lpAmount,
+            _index,
+            _minAmount,
+            msg.sender
+        );
+    }
+
+    function remove_liquidity_one_coin(
+        uint256 _lpAmount,
+        int128 _index,
+        // solhint-disable-next-line no-unused-vars
+        uint256 _minAmount,
+        address _receiver
+    ) public returns (uint256 amount) {
         _burn(msg.sender, _lpAmount);
         uint256[] memory amounts = new uint256[](coins.length);
         amounts[uint128(_index)] = _lpAmount;
         amount = calc_withdraw_one_coin(_lpAmount, _index);
         balances[uint128(_index)] -= amount;
         if (coins[uint128(_index)] == ETH) {
-            payable(msg.sender).transfer(amount);
+            require(address(this).balance >= amount, "not enough ETH");
+            payable(_receiver).transfer(amount);
         } else {
-            IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
+            IERC20(coins[uint128(_index)]).transfer(_receiver, amount);
         }
     }
 
@@ -87,19 +103,18 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         returns (uint256[2] memory amounts)
     {
         uint256 totalSupply = totalSupply();
+        if (totalSupply == 0) return amounts;
+
         _burn(msg.sender, _amount);
         for (uint256 i = 0; i < 2; i++) {
             balances[i] -= amounts[i];
             if (coins[i] == ETH) {
-                amounts[i] = totalSupply > 0
-                    ? (_amount * address(this).balance) / totalSupply
-                    : address(this).balance;
+                amounts[i] = (_amount * address(this).balance) / totalSupply;
                 payable(msg.sender).transfer(amounts[i]);
             } else {
-                amounts[i] = totalSupply > 0
-                    ? (_amount * IERC20(coins[i]).balanceOf(address(this))) /
-                        totalSupply
-                    : IERC20(coins[i]).balanceOf(address(this));
+                amounts[i] =
+                    (_amount * IERC20(coins[i]).balanceOf(address(this))) /
+                    totalSupply;
                 IERC20(coins[i]).transfer(msg.sender, amounts[i]);
             }
         }
