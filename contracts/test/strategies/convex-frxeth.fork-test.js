@@ -381,6 +381,16 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
+    it("Should not check balance of unsupported assets", async () => {
+      const { convexFrxEthWethStrategy, oeth, stETH, reth, dai, usdc } =
+        fixture;
+
+      for (const asset of [oeth, stETH, reth, dai, usdc]) {
+        await expect(
+          convexFrxEthWethStrategy.checkBalance(asset.address)
+        ).to.revertedWith("Unsupported asset");
+      }
+    });
     it("Only vault can withdraw some WETH or frxETH from the strategy", async function () {
       const {
         convexFrxEthWethStrategy,
