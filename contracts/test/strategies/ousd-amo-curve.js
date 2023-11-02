@@ -19,6 +19,7 @@ const {
   usdtUnits,
 } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
+const { convex_OUSD_3CRV_PID } = require("../../utils/constants");
 
 describe("Convex OUSD/3Pool AMO Strategy", function () {
   if (isFork) {
@@ -77,6 +78,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     curvePool: fixture.curveOusd3CrvMetapool,
     vault: fixture.vault,
     assetDivisor: 3,
+    convexPID: convex_OUSD_3CRV_PID,
   }));
 
   describe("Mint", function () {

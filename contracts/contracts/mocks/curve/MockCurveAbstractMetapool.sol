@@ -51,12 +51,12 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
     }
 
     // Dumb implementation that returns the same amount
-    function calc_withdraw_one_coin(uint256 _amount, int128)
+    function calc_withdraw_one_coin(uint256 _burn_amount, int128)
         public
         pure
-        returns (uint256 lpAmount)
+        returns (uint256 coinAmount)
     {
-        lpAmount = _amount;
+        coinAmount = _burn_amount;
     }
 
     function remove_liquidity_one_coin(

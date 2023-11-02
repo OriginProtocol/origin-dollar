@@ -11,6 +11,7 @@ const {
 } = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
 const addresses = require("../../utils/addresses");
+const { convex_OETH_ETH_PID } = require("../../utils/constants");
 
 describe("Convex OETH/WETH AMO Strategy", function () {
   if (isFork) {
@@ -60,6 +61,7 @@ describe("Convex OETH/WETH AMO Strategy", function () {
     curvePool: fixture.curveOethEthPool,
     vault: fixture.oethVault,
     assetDivisor: 1,
+    convexPID: convex_OETH_ETH_PID,
   }));
 
   describe("Utilities", function () {

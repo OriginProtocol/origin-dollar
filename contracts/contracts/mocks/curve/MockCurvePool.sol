@@ -80,9 +80,9 @@ contract MockCurvePool {
     function remove_liquidity(uint256 _lpAmount, uint256[3] memory _min_amounts)
         public
     {
+        uint256 totalSupply = IERC20(lpToken).totalSupply();
         // Burn the Curve LP tokens
         IBurnableERC20(lpToken).burnFrom(msg.sender, _lpAmount);
-        uint256 totalSupply = IERC20(lpToken).totalSupply();
         for (uint256 i = 0; i < 3; i++) {
             uint256 coinAmount = totalSupply > 0
                 ? (_lpAmount * IERC20(coins[i]).balanceOf(address(this))) /

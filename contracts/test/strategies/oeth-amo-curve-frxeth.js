@@ -10,6 +10,7 @@ const {
   createFixtureLoader,
 } = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
+const { convex_frxETH_OETH_PID } = require("../../utils/constants");
 
 describe("Convex frxETH/OETH AMO Strategy", function () {
   if (isFork) {
@@ -59,6 +60,7 @@ describe("Convex frxETH/OETH AMO Strategy", function () {
     curvePool: fixture.curveFrxEthOethPool,
     vault: fixture.oethVault,
     assetDivisor: 1,
+    convexPID: convex_frxETH_OETH_PID,
   }));
 
   describe("Utilities", function () {

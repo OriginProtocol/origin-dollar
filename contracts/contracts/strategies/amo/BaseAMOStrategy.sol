@@ -78,12 +78,14 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         int256 diffAfter = int256(balancesAfter[assetCoinIndex]) -
             int256(balancesAfter[oTokenCoinIndex]);
 
+        // started with balanced or more OTokens
         if (diffBefore <= 0) {
             // If the pool was originally imbalanced in favor of the OToken, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
         }
+        // Started with balanceed or more assets
         if (diffBefore >= 0) {
             // If the pool was originally imbalanced in favor of the asset, then
             // we want to check that the pool is now more balanced
