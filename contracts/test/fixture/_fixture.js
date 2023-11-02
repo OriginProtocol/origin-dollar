@@ -1980,26 +1980,43 @@ async function balancerOethWethFixture() {
 
   const {
     balancerEthAMOStrategy,
-    oethVault
+    oethVault,
+    josh,
+    weth,
+    strategist
   } = fixture;
-
-  console.log("BALANCER ADDRESS", await balancerEthAMOStrategy.platformAddress());
-
-  const oethWethWeightedPool = await ethers.getContractAt(
-    balancerWeightedPoolAbi,
-    await balancerEthAMOStrategy.platformAddress()
-  )
 
   if (isFork) {
     await setERC20TokenBalance(josh.address, weth, "10000000", hre);
     // get josh 1m OETH
     await oethVault.connect(josh).mint(weth.address, parseEther("1000000"), "0");
-    
 
+    // TODO once pool deployed change with the correct pool address
+    const oethWethWeightedPool = await ethers.getContractAt(
+      balancerWeightedPoolAbi,
+      await balancerEthAMOStrategy.platformAddress()
+    );
+
+    fixture.balancerEthAMOStrategy = balancerEthAMOStrategy;
+    fixture.oethWethWeightedPool = oethWethWeightedPool;
+
+    // TODO set the correct rewards pool address once it is present on mainnet
+    const auraRewardPool = await ethers.getContractAt(
+      "IERC4626",
+      await balancerEthAMOStrategy.auraRewardPool()
+    );
+    fixture.auraRewardPool = auraRewardPool;
+
+    // disable default strategy for WETH
+    await oethVault
+      .connect(strategist)
+      .setAssetDefaultStrategy(weth.address, addresses.zero);
+
+
+    // do initial pool deposit
+
+    return fixture
   }
-
-  fixture.balancerEthAMOStrategy = balancerEthAMOStrategy;
-  fixture.oethWethWeightedPool = oethWethWeightedPool;
 }
 
 /**
@@ -2329,6 +2346,7 @@ module.exports = {
   aaveVaultFixture,
   balancerREthFixture,
   balancerWstEthFixture,
+  balancerOethWethFixture,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
   compoundFixture,

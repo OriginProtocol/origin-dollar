@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { run } = require("hardhat");
 
-const { units, ousdUnits, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 const { createFixtureLoader, balancerOethWethFixture } = require("../fixture/_fixture");
 const log = require("../../utils/logger")("test:fork:oeth:amo:balancer");
 
@@ -21,17 +21,17 @@ describe.only("ForkTest: Balancer OETH/WETH AMO Strategy", function () {
     describe("Mint", function () {
       it("Should stake USDT in Curve gauge via metapool", async function () {
         const { josh, weth } = fixture;
-        await mintTest(fixture, josh, weth, "100000");
+        await depositToStrategy(fixture, josh, weth, "100000");
       });
 
 //       it("Should stake USDC in Curve gauge via metapool", async function () {
 //         const { matt, usdc } = fixture;
-//         await mintTest(fixture, matt, usdc, "120000");
+//         await depositToStrategy(fixture, matt, usdc, "120000");
 //       });
 // 
 //       it("Should stake DAI in Curve gauge via metapool", async function () {
 //         const { anna, dai } = fixture;
-//         await mintTest(fixture, anna, dai, "110000");
+//         await depositToStrategy(fixture, anna, dai, "110000");
 //       });
     });
 
@@ -72,17 +72,17 @@ describe.only("ForkTest: Balancer OETH/WETH AMO Strategy", function () {
 //         ).mul(3);
 // 
 //         // 3x 10k assets + 3x 10k OUSD = 60k
-//         await expect(strategyBalance).to.be.gte(ousdUnits("59990"));
+//         await expect(strategyBalance).to.be.gte(oethUnits("59990"));
 // 
 //         // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
 //         const currentSupply = await ousd.totalSupply();
 //         const supplyAdded = currentSupply.sub(supplyBeforeMint);
-//         expect(supplyAdded).to.be.gte(ousdUnits("49995"));
+//         expect(supplyAdded).to.be.gte(oethUnits("49995"));
 // 
 //         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 // 
 //         // Now try to redeem the amount
-//         const redeemAmount = ousdUnits("29990");
+//         const redeemAmount = oethUnits("29990");
 //         await vault.connect(anna).redeem(redeemAmount, 0);
 // 
 //         log("After redeem");
@@ -131,17 +131,17 @@ describe.only("ForkTest: Balancer OETH/WETH AMO Strategy", function () {
 //       ).mul(3);
 // 
 //       // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-//       await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+//       await expect(strategyBalance).to.be.gte(oethUnits("40000"));
 // 
 //       // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
 //       const currentSupply = await ousd.totalSupply();
 //       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-//       expect(supplyAdded).to.be.gte(ousdUnits("49995"));
+//       expect(supplyAdded).to.be.gte(oethUnits("49995"));
 // 
 //       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 // 
 //       // Now try to redeem the amount
-//       const redeemAmount = ousdUnits("22000");
+//       const redeemAmount = oethUnits("22000");
 //       await vault.connect(anna).redeem(redeemAmount, 0);
 // 
 //       // User balance should be down by 30k
@@ -159,34 +159,45 @@ describe.only("ForkTest: Balancer OETH/WETH AMO Strategy", function () {
 //   });
 });
 
-async function mintTest(fixture, user, asset, amount = "30000") {
-  const { oethVault, ousd, balancerEthAMOStrategy, cvxRewardPool } = fixture;
+async function depositToStrategy(fixture, user, asset, amount = "30000") {
+  const { oethVault, oeth, balancerEthAMOStrategy, josh, weth, strategist } = fixture;
 
   await oethVault.connect(user).allocate();
   await oethVault.connect(user).rebase();
 
-  const unitAmount = await units(amount, asset);
+  const unitAmount = await units(amount, weth);
 
-  const currentSupply = await ousd.totalSupply();
-  const currentBalance = await ousd.connect(user).balanceOf(user.address);
+  await weth.connect(josh).transfer(oethVault.address, unitAmount);
+  await oethVault
+    .connect(strategist)
+    .depositToStrategy(
+      balancerEthAMOStrategy.address,
+      [weth.address],
+      [unitAmount]
+    );
+
+  console.log("DEPOSITED!");
+  
+  const currentSupply = await ooethusd.totalSupply();
+  const currentBalance = await oeth.connect(user).balanceOf(user.address);
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
     .balanceOf(balancerEthAMOStrategy.address);
 
-  // Mint OUSD w/ asset
+  // Mint OETH w/ asset
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
 
   // Ensure user has correct balance (w/ 1% slippage tolerance)
-  const newBalance = await ousd.connect(user).balanceOf(user.address);
+  const newBalance = await oeth.connect(user).balanceOf(user.address);
   const balanceDiff = newBalance.sub(currentBalance);
-  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
+  expect(balanceDiff).to.approxEqualTolerance(oethUnits(amount), 2);
 
   // Supply checks
-  const newSupply = await ousd.totalSupply();
+  const newSupply = await oeth.totalSupply();
   const supplyDiff = newSupply.sub(currentSupply);
-  // Ensure 2x OUSD has been added to supply
-  expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 1);
+  // Ensure 2x OETH has been added to supply
+  expect(supplyDiff).to.approxEqualTolerance(oethUnits(amount).mul(2), 1);
 
   // Ensure some LP tokens got staked under balancerEthAMOStrategy address
   const newRewardPoolBalance = await cvxRewardPool
@@ -197,7 +208,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   );
   // Should have staked the LP tokens
   expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
-    ousdUnits(amount).mul(2),
+    oethUnits(amount).mul(2),
     5
   );
 }

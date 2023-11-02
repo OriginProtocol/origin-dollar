@@ -234,8 +234,7 @@ const deployBalancerPoolAndGauge = async () => {
     .connect(sGaugeControllerAdmin)
     .change_gauge_weight(
       gaugeAddress,
-      //`500000000000000000000000` // 500k (in 1e18)
-      `10000000`
+      `500000000000000000000000` // 500k (in 1e18)
     );
 
   const sAuraPoolOperator = await impersonateAndFund("0x5feA4413E3Cc5Cf3A29a49dB41ac0c24850417a0");
