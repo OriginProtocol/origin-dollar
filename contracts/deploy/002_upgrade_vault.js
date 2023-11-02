@@ -1,5 +1,3 @@
-const hre = require("hardhat");
-const { utils } = require("ethers");
 const { isMainnet, isFork } = require("../test/helpers.js");
 const { proposeArgs } = require("../utils/governor");
 const {
@@ -8,7 +6,7 @@ const {
   sleep,
 } = require("../utils/deploy");
 
-const addresses = require("../utils/addresses");
+const { impersonateAndFund } = require("../utils/signers.js");
 
 const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
   console.log("Running 002_vault_upgrade deployment...");
@@ -30,22 +28,7 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
       "Next step: submit a governance proposal on Mainnet to perform the upgrade."
     );
   } else if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    const binanceSigner = await ethers.provider.getSigner(
-      addresses.mainnet.Binance
-    );
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [governorAddr],
-    });
+    await impersonateAndFund(governorAddr, "1000000");
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultCoreProxy = await ethers.getContractAt(
       "VaultCore",

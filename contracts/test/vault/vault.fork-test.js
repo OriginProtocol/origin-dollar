@@ -2,12 +2,8 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
+const { loadDefaultFixture } = require("./../fixture/_fixture");
 const {
-  loadDefaultFixture,
-  impersonateAndFundContract,
-} = require("./../fixture/_fixture");
-const {
-  forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
   usdcUnits,
@@ -16,6 +12,7 @@ const {
   differenceInErc20TokenBalances,
   isCI,
 } = require("./../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -33,7 +30,7 @@ const log = require("../../utils/logger")("test:fork:ousd:vault");
  * Still open to discussion.
  */
 
-forkOnlyDescribe("ForkTest: Vault", function () {
+describe("ForkTest: Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -186,7 +183,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
-      const strategistSigner = await impersonateAndFundContract(
+      const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );
 

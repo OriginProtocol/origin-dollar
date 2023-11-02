@@ -5,15 +5,15 @@ const addresses = require("../../utils/addresses");
 const {
   createFixtureLoader,
   oethDefaultFixture,
-  impersonateAccount,
 } = require("../fixture/_fixture");
-const { forkOnlyDescribe, isCI } = require("../helpers");
+const { isCI } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const { oethWhaleAddress } = addresses.mainnet;
 
-forkOnlyDescribe("ForkTest: OETH Vault", function () {
+describe("ForkTest: OETH Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -62,8 +62,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       beforeEach(async () => {
         fixture = await loadFixture();
 
-        await impersonateAccount(oethWhaleAddress);
-        oethWhaleSigner = await ethers.provider.getSigner(oethWhaleAddress);
+        oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
       });
 
       it("should mint using each asset", async () => {

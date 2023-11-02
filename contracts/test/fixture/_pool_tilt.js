@@ -1,7 +1,8 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const { BigNumber } = ethers;
-const { impersonateAndFundContract, mintWETH } = require("./_fixture");
+const { setERC20TokenBalance } = require("../_fund");
+const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
 const { ousdUnits } = require("../helpers");
@@ -60,12 +61,12 @@ async function _fundAttackerOption({
   const sAttacker = await hre.ethers.provider.getSigner(attackerAddress);
 
   if (attackerEthBalance.lte(ousdUnits(`${ethToFund - 100}`))) {
-    await impersonateAndFundContract(attackerAddress, `${ethToFund}`); // 1m ETH
+    await impersonateAndFund(attackerAddress, `${ethToFund}`); // 1m ETH
   }
 
   if (assetBalance.lte(assetAmount)) {
     if (asset.address == fixture.weth.address) {
-      await mintWETH(fixture.weth, sAttacker, "500000");
+      await setERC20TokenBalance(attackerAddress, fixture.weth, "500000");
     } else if (asset.address == fixture.sfrxETH.address) {
       const abi = require("../abi/fraxEthMinter.json");
       const minter = await ethers.getContractAt(

@@ -2,9 +2,9 @@ const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { loadDefaultFixture } = require("../fixture/_fixture");
-const { forkOnlyDescribe, isCI } = require("../helpers");
+const { isCI } = require("../helpers");
 
-forkOnlyDescribe("ForkTest: Oracle Routers", function () {
+describe("ForkTest: Oracle Routers", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

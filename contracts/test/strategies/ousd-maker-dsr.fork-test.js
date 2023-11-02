@@ -2,13 +2,13 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { units, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, isCI } = require("../helpers");
 
 const { createFixtureLoader, makerDsrFixture } = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:ousd:makerDSR");
 
-forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
+describe("ForkTest: Maker DSR Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

@@ -3,7 +3,6 @@ const { expect } = require("chai");
 const {
   units,
   ousdUnits,
-  forkOnlyDescribe,
   differenceInErc20TokenBalance,
   advanceBlocks,
   advanceTime,
@@ -12,10 +11,10 @@ const {
 const {
   createFixtureLoader,
   morphoCompoundFixture,
-  impersonateAndFundContract,
 } = require("../fixture/_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
-forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
+describe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -92,7 +91,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const usdcUnits = await units(amount, usdc);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
 
       await morphoCompoundStrategy
         .connect(vaultSigner)
@@ -105,7 +104,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
       const usdcUnits = await units(amount, usdc);

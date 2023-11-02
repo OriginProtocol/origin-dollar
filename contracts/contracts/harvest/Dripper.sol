@@ -37,7 +37,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * purpose. If we did this, the amount of fundsAvailable() would make sharp increases
  * when funds were deposited.
  * - When the dripper recalculates the rate, it targets spending the balance over
- * the duration. This means that every time that collect is is called, if no
+ * the duration. This means that every time that collect is called, if no
  * new funds have been deposited the duration is being pushed back and the
  * rate decreases. This is expected, and ends up following a smoother but
  * longer curve the more collect() is called without incoming yield.
