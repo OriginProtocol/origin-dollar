@@ -301,43 +301,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Get the asset's share of value held in this strategy. This is the total value
-     * of the stategy's Curve LP tokens divided by the number of Curve pool assets.
-     * The average is taken prevent the asset balances being manipulated by tilting the Curve pool.
-     * @dev An invalid `_asset` will fail in `_getAssetDecimals` with "Unsupported asset"
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
-    function checkBalance(address _asset)
-        public
-        view
-        virtual
-        override
-        returns (uint256 balance)
-    {
-        // Curve LP tokens in this strategy contract.
-        // This should generally be nothing as the LP tokens will be staked
-        // in a Curve gauge, metapool or Convex pool, but include here for safety.
-        uint256 totalLpTokens = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
-
-        if (totalLpTokens > 0) {
-            // Convert the Curve LP tokens controlled by this strategy to a value in USD or ETH
-            uint256 value = (totalLpTokens *
-                ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
-
-            // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
-            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
-            // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
-            // No matter what the balance of the asset in the Curve pool is, the value of each asset will
-            // be the average of the Curve pool's total value.
-            // _getAssetDecimals will revert if _asset is an invalid asset.
-            balance =
-                value.scaleBy(_getAssetDecimals(_asset), 18) /
-                CURVE_POOL_ASSETS_COUNT;
-        }
-    }
-
-    /**
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
