@@ -7,6 +7,7 @@ const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
+  oethPoolLpPID,
 } = require("../utils/constants");
 const { ethers } = hre;
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
@@ -59,6 +60,17 @@ async function constructNewContract(fixture, implContractName, proxyContractName
         [addresses.mainnet.sfrxETH, addresses.mainnet.OETHVaultProxy],
         addresses.mainnet.frxETH,
       ];
+    } else if (implContractName === "ConvexEthMetaStrategy") {
+      return [
+        [addresses.mainnet.CurveOETHMetaPool, addresses.mainnet.OETHVaultProxy],
+        [
+          addresses.mainnet.CVXBooster,
+          addresses.mainnet.CVXETHRewardsPool,
+          oethPoolLpPID,
+          addresses.mainnet.OETHProxy,
+          addresses.mainnet.WETH,
+        ],
+      ];
     }
   };
 
@@ -109,6 +121,13 @@ async function hotDeployOption(fixture, fixtureName) {
         "fraxEthStrategy", // fixtureStrategyVarName
         "FraxETHStrategy", // implContractName
         "FraxETHStrategyProxy" // proxyContractName
+      );
+    } else if (fixtureName === "convexOETHMetaVaultFixture") {
+      await hotDeployFixture(
+        fixture,// fixture
+        "convexEthMetaStrategy", // fixtureStrategyVarName
+        "ConvexEthMetaStrategy", // implContractName
+        "ConvexEthMetaStrategyProxy" // proxyContractName
       );
     }
   }

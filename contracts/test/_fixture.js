@@ -1537,7 +1537,8 @@ async function convexOETHMetaVaultFixture(
   }
 ) {
   const fixture = await oethDefaultFixture();
-
+  await hotDeployOption(fixture, "convexOETHMetaVaultFixture");
+  
   const {
     convexEthMetaStrategy,
     oeth,
