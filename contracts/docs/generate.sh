@@ -58,11 +58,13 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b CompoundStrategy -o CompStrategyHierarc
 sol2uml .. -s -d 0 -b CompoundStrategy -o CompStrategySquashed.svg
 sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy -o ConvexStrategiesHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexTwoPoolStrategy,ConvexThreePoolStrategy,ConvexCryptoStrategy -o ConvexStrategiesHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexThreePoolStrategy -o ConvexThreePoolStrategySquashed.svg
 sol2uml storage .. -c ConvexThreePoolStrategy -o ConvexThreePoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 sol2uml .. -s -d 0 -b ConvexTwoPoolStrategy -o ConvexTwoPoolStrategySquashed.svg
 sol2uml storage .. -c ConvexTwoPoolStrategy -o ConvexTwoPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+sol2uml .. -s -d 0 -b ConvexCryptoStrategy -o ConvexCryptoStrategySquashed.svg
+sol2uml storage .. -c ConvexCryptoStrategy -o ConvexCryptoStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b FluxStrategy -o FluxStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
@@ -85,6 +87,8 @@ sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 # contracts/strategies/amo
+
+## AMO contracts
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy,ConvexFrxETHAMOStrategy,ConvexOUSDMetaStrategy,BalancerEthAMOStrategy -o AMOContractHierarchy.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
