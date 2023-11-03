@@ -56,6 +56,7 @@ module.exports = deploymentWithGovernanceProposal(
           2, // ComposablePoolExitKind.EXACT_BPT_IN_FOR_(ALL_)TOKENS_OUT
         ],
         addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+        0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
       ]);
     const cOETHBalancerComposablePoolStrategy = await ethers.getContractAt(
       "BalancerComposablePoolStrategy",

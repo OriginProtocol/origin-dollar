@@ -14,11 +14,15 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    // position of BPT token in the Balancer's pool
+    uint256 public immutable bptTokenPoolPosition;
+
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
         BaseMetaPoolConfig memory _metapoolConfig,
-        address _auraRewardPoolAddress
+        address _auraRewardPoolAddress,
+        uint256 _bptTokenPoolPosition
     )
         BalancerMetaPoolStrategy(
             _stratConfig,
@@ -26,7 +30,9 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             _metapoolConfig,
             _auraRewardPoolAddress
         )
-    {}
+    {
+        bptTokenPoolPosition = _bptTokenPoolPosition;
+    }
 
     function _assetConfigVerification(address[] calldata _assets)
         internal
@@ -40,7 +46,9 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(
-                _assets[i] == _fromPoolAsset(poolAssets[i + 1]),
+                _assets[i] == _fromPoolAsset(poolAssets[
+                    i >= bptTokenPoolPosition ? i + 1 : i
+                ]),
                 "Pool assets mismatch"
             );
         }
@@ -58,8 +66,9 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         // to the left
         amounts = new uint256[](_amounts.length - 1);
         for (uint256 i = 0; i < _amounts.length - 1; ++i) {
-            amounts[i] = _amounts[i + 1];
+            amounts[i] = _amounts[i >= bptTokenPoolPosition ? i + 1 : i];
         }
+        // TODO verify this works with various pools
     }
 
     function _getUserDataEncodedAssets(address[] memory _assets)
@@ -74,7 +83,8 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         // to the left
         assets = new address[](_assets.length - 1);
         for (uint256 i = 0; i < _assets.length - 1; ++i) {
-            assets[i] = _assets[i + 1];
+            assets[i] = _assets[i >= bptTokenPoolPosition ? i + 1 : i];
         }
+        // TODO verify this works with various pools
     }
 }

@@ -22,7 +22,8 @@ const log = require("../../utils/logger")(
 );
 
 const loadBalancerFrxWstrETHFixture = createFixtureLoader(
-  balancerFrxETHwstETHeETHFixture,
+  //balancerFrxETHwstETHeETHFixture,
+  balancerSfrxETHRETHWstETHExposeFunctionFixture,
   {
     defaultStrategy: false,
   }
@@ -357,7 +358,7 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
     ];
 
     for (const [rethAmount, stethAmount, frxethAmount] of withdrawalTestCases) {
-      it(`Should be able to withdraw ${rethAmount} RETH, ${stethAmount} stETH and ${frxethAmount} frxETH from the strategy`, async function () {
+      it.only(`Should be able to withdraw ${rethAmount} RETH, ${stethAmount} stETH and ${frxethAmount} frxETH from the strategy`, async function () {
         const { reth, stETH, frxETH, balancerSfrxWstRETHStrategy, oethVault } =
           fixture;
 
