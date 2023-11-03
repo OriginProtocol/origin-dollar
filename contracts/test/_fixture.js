@@ -1254,7 +1254,7 @@ async function makerDsrFixture(
 async function morphoCompoundFixture() {
   const fixture = await defaultFixture();
   await hotDeployOption(fixture, "morphoCompoundFixture");
-  
+
   const { timelock } = fixture;
 
   if (isFork) {
@@ -1351,6 +1351,7 @@ async function oethMorphoAaveFixture() {
  */
 async function fraxETHStrategyFixture() {
   const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "fraxETHStrategyFixture");
 
   if (isFork) {
     const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;

@@ -54,6 +54,11 @@ async function constructNewContract(fixture, implContractName, proxyContractName
           addresses.mainnet.VaultProxy,
         ]
       ];
+    } else if (implContractName === "FraxETHStrategy") {
+      return [
+        [addresses.mainnet.sfrxETH, addresses.mainnet.OETHVaultProxy],
+        addresses.mainnet.frxETH,
+      ];
     }
   };
 
@@ -97,6 +102,13 @@ async function hotDeployOption(fixture, fixtureName) {
         "morphoCompoundStrategy", // fixtureStrategyVarName
         "MorphoCompoundStrategy", // implContractName
         "MorphoCompoundStrategyProxy" // proxyContractName
+      );
+    } else if (fixtureName === "fraxETHStrategyFixture") {
+      await hotDeployFixture(
+        fixture,// fixture
+        "fraxEthStrategy", // fixtureStrategyVarName
+        "FraxETHStrategy", // implContractName
+        "FraxETHStrategyProxy" // proxyContractName
       );
     }
   }
