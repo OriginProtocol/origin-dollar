@@ -6,6 +6,7 @@ const { formatUnits } = require("ethers/lib/utils");
 
 require("./_global-hooks");
 
+const { hotDeployOption } = require("./_hot-deploy.js");
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
@@ -493,6 +494,7 @@ const defaultFixture = deployments.createFixture(async () => {
     }
   }
   return {
+    isOethFixture: false,
     // Accounts
     matt,
     josh,
@@ -611,6 +613,7 @@ const defaultFixture = deployments.createFixture(async () => {
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
+  fixture.isOethFixture = true;
 
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
   const { matt, josh, domen, daniel, franck, oethVault } = fixture;
@@ -1002,6 +1005,8 @@ async function untiltBalancerMetaStableWETHPool({
  */
 async function balancerREthFixture(config = { defaultStrategy: true }) {
   const fixture = await defaultFixture();
+  //await hotDeployOption(fixture, "balancerREthFixture");
+
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
 
