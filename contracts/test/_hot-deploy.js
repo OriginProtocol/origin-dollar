@@ -9,15 +9,20 @@ const {
   balancer_wstETH_sfrxETH_rETH_PID,
   oethPoolLpPID,
 } = require("../utils/constants");
+const { impersonateAndFund } = require("../utils/signers");
 const { ethers } = hre;
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
 // based on a contract name create new implementation
-async function constructNewContract(fixture, implContractName, proxyContractName) {
+async function constructNewContract(fixture, implContractName) {
   const { deploy } = deployments;
 
   const getConstructorArguments = () => {
-    if (["BalancerMetaPoolTestStrategy", "BalancerMetaPoolStrategy"].includes(implContractName)) {
+    if (
+      ["BalancerMetaPoolTestStrategy", "BalancerMetaPoolStrategy"].includes(
+        implContractName
+      )
+    ) {
       return [
         [addresses.mainnet.rETH_WETH_BPT, addresses.mainnet.OETHVaultProxy],
         [
@@ -53,7 +58,7 @@ async function constructNewContract(fixture, implContractName, proxyContractName
         [
           addresses.zero, // platformAddres not used by the strategy
           addresses.mainnet.VaultProxy,
-        ]
+        ],
       ];
     } else if (implContractName === "FraxETHStrategy") {
       return [
@@ -74,7 +79,7 @@ async function constructNewContract(fixture, implContractName, proxyContractName
     }
   };
 
-  log(`Deploying new "${implContractName}" contract implementation.`)
+  log(`Deploying new "${implContractName}" contract implementation.`);
 
   // deploy this contract that exposes internal function
   await deploy(implContractName, {
@@ -83,70 +88,134 @@ async function constructNewContract(fixture, implContractName, proxyContractName
     args: getConstructorArguments(),
   });
 
-  log(`Deployed`)
+  log(`Deployed`);
   return await ethers.getContract(implContractName);
 }
 
 /* Hot deploy a fixture if the environment vars demand so
  */
-async function hotDeployOption(fixture, fixtureName) {
-  const hotDeployOptions = (process.env.HOT_DEPLOY || "").split(",").map(item => item.trim());
-  const isOethFixture = fixture.isOethFixture;
+async function hotDeployOption(
+  fixture,
+  fixtureName,
+  config = { isOethFixture: false }
+) {
+  const hotDeployOptions = (process.env.HOT_DEPLOY || "")
+    .split(",")
+    .map((item) => item.trim());
+  const { isOethFixture } = config;
   const deployStrat = hotDeployOptions.includes("strategy");
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
 
+  console.log("isOethFixture", isOethFixture);
+
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
-    vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`)
+    vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
 
   if (deployStrat) {
-    if(fixtureName === "balancerREthFixture") {
+    if (fixtureName === "balancerREthFixture") {
       await hotDeployFixture(
         fixture, // fixture
         "balancerREthStrategy", // fixtureStrategyVarName
-        "BalancerMetaPoolStrategy", // implContractName
-        "OETHBalancerMetaPoolrEthStrategyProxy" // proxyContractName
+        "BalancerMetaPoolStrategy" // implContractName
       );
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
-        fixture,// fixture
+        fixture, // fixture
         "morphoCompoundStrategy", // fixtureStrategyVarName
-        "MorphoCompoundStrategy", // implContractName
-        "MorphoCompoundStrategyProxy" // proxyContractName
+        "MorphoCompoundStrategy" // implContractName
       );
     } else if (fixtureName === "fraxETHStrategyFixture") {
       await hotDeployFixture(
-        fixture,// fixture
+        fixture, // fixture
         "fraxEthStrategy", // fixtureStrategyVarName
-        "FraxETHStrategy", // implContractName
-        "FraxETHStrategyProxy" // proxyContractName
+        "FraxETHStrategy" // implContractName
       );
     } else if (fixtureName === "convexOETHMetaVaultFixture") {
       await hotDeployFixture(
-        fixture,// fixture
+        fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName
-        "ConvexEthMetaStrategy", // implContractName
-        "ConvexEthMetaStrategyProxy" // proxyContractName
+        "ConvexEthMetaStrategy" // implContractName
       );
     }
   }
 
-  if (deployVaultCore) {
-    // TODO: update vault core
-  }
-  if (deployVaultAdmin) {
-    // TODO: update vault admin
+  if (deployVaultCore || deployVaultAdmin) {
+    await hotDeployVaultAdmin(
+      fixture,
+      deployVaultAdmin,
+      deployVaultCore,
+      isOethFixture
+    );
   }
   if (deployHarvester) {
     // TODO: update harvester
   }
- }
+}
 
-/* Run the fixture and replace the main strategy contract(s) of the fixture 
+async function hotDeployVaultAdmin(
+  fixture,
+  deployVaultAdmin,
+  deployVaultCore,
+  isOeth
+) {
+  const { deploy } = deployments;
+  const vaultProxyName = `${isOeth ? "OETH" : ""}VaultProxy`;
+  const vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
+  const vaultAdminName = `${isOeth ? "OETH" : ""}VaultAdmin`;
+
+  const cVaultProxy = await ethers.getContract(vaultProxyName);
+
+  if (deployVaultAdmin) {
+    log(`Deploying new ${vaultAdminName} implementation`);
+
+    // deploy this contract that exposes internal function
+    await deploy(vaultAdminName, {
+      from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+      contract: vaultAdminName,
+    });
+
+    const implementation = await ethers.getContract(vaultAdminName);
+    const cVault = await ethers.getContractAt(
+      vaultCoreName,
+      cVaultProxy.address
+    );
+    // TODO: this might be faster by replacing bytecode of existing implementation contract
+    const signerTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
+    await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
+  }
+  if (deployVaultCore) {
+    log(`Deploying new ${vaultCoreName} implementation`);
+    // deploy this contract that exposes internal function
+    await deploy(vaultCoreName, {
+      from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+      contract: vaultCoreName,
+    });
+    const implementation = await ethers.getContract(vaultCoreName);
+
+    const cVault = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      cVaultProxy.address
+    );
+    const liveImplContractAddress = await cVault.implementation();
+
+    log(
+      `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
+    );
+
+    await replaceContractAt(liveImplContractAddress, implementation);
+  }
+}
+
+/* Run the fixture and replace the main strategy contract(s) of the fixture
  * with the freshly compiled implementation.
  */
-async function hotDeployFixture(fixture, fixtureStrategyVarName, implContractName, proxyContractName) {
+async function hotDeployFixture(
+  fixture,
+  fixtureStrategyVarName,
+  implContractName
+) {
   /* Because of the way hardhat fixture caching works it is vital that
    * the fixtures are loaded before the hot-deployment of contracts. If the
    * contracts are hot-deployed and fixture load happens afterwards the deployed
@@ -154,7 +223,10 @@ async function hotDeployFixture(fixture, fixtureStrategyVarName, implContractNam
    */
   const strategyProxy = fixture[fixtureStrategyVarName];
 
-  const newlyCompiledImplContract = await constructNewContract(fixture, implContractName, proxyContractName);
+  const newlyCompiledImplContract = await constructNewContract(
+    fixture,
+    implContractName
+  );
   log(`New contract deployed at ${newlyCompiledImplContract.address}`);
 
   // fetch the contract with proxy ABI
@@ -165,20 +237,17 @@ async function hotDeployFixture(fixture, fixtureStrategyVarName, implContractNam
 
   const liveImplContractAddress = await proxyContract.implementation();
 
-  log(`Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`);
-  // replace current implementation
-  await replaceContractAt(
-    liveImplContractAddress,
-    newlyCompiledImplContract
+  log(
+    `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
   );
+  // replace current implementation
+  await replaceContractAt(liveImplContractAddress, newlyCompiledImplContract);
 
   return fixture;
 }
 
-async function postDeploy() {
-
-}
+async function postDeploy() {}
 
 module.exports = {
-  hotDeployOption
+  hotDeployOption,
 };

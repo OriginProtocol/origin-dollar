@@ -494,7 +494,6 @@ const defaultFixture = deployments.createFixture(async () => {
     }
   }
   return {
-    isOethFixture: false,
     // Accounts
     matt,
     josh,
@@ -613,7 +612,6 @@ const defaultFixture = deployments.createFixture(async () => {
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
-  fixture.isOethFixture = true;
 
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
   const { matt, josh, domen, daniel, franck, oethVault } = fixture;
@@ -1005,7 +1003,9 @@ async function untiltBalancerMetaStableWETHPool({
  */
 async function balancerREthFixture(config = { defaultStrategy: true }) {
   const fixture = await defaultFixture();
-  await hotDeployOption(fixture, "balancerREthFixture");
+  await hotDeployOption(fixture, "balancerREthFixture", {
+    isOethFixture: true,
+  });
 
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
@@ -1351,7 +1351,9 @@ async function oethMorphoAaveFixture() {
  */
 async function fraxETHStrategyFixture() {
   const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "fraxETHStrategyFixture");
+  await hotDeployOption(fixture, "fraxETHStrategyFixture", {
+    isOethFixture: true,
+  });
 
   if (isFork) {
     const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
@@ -1537,8 +1539,10 @@ async function convexOETHMetaVaultFixture(
   }
 ) {
   const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "convexOETHMetaVaultFixture");
-  
+  await hotDeployOption(fixture, "convexOETHMetaVaultFixture", {
+    isOethFixture: true,
+  });
+
   const {
     convexEthMetaStrategy,
     oeth,

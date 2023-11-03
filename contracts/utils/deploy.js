@@ -810,7 +810,6 @@ async function getProposalState(proposalIdBn) {
   ][state];
 }
 
-
 async function getTimelock() {
   const { timelockAddr } = await getNamedAccounts();
 
