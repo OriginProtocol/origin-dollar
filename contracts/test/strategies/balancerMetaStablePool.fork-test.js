@@ -424,7 +424,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         )}%`
       );
     });
-    it.only(`withdraw close to ${depositAmount} of both assets using multi asset withdraw`, async () => {
+    it(`withdraw close to ${depositAmount} of both assets using multi asset withdraw`, async () => {
       const { auraPool, balancerREthStrategy, rEthBPT, oethVault, reth, weth } =
         fixture;
 

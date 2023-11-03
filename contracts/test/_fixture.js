@@ -1005,7 +1005,7 @@ async function untiltBalancerMetaStableWETHPool({
  */
 async function balancerREthFixture(config = { defaultStrategy: true }) {
   const fixture = await defaultFixture();
-  //await hotDeployOption(fixture, "balancerREthFixture");
+  await hotDeployOption(fixture, "balancerREthFixture");
 
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
@@ -1253,7 +1253,8 @@ async function makerDsrFixture(
  */
 async function morphoCompoundFixture() {
   const fixture = await defaultFixture();
-
+  await hotDeployOption(fixture, "morphoCompoundFixture");
+  
   const { timelock } = fixture;
 
   if (isFork) {

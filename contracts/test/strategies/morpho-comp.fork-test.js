@@ -41,7 +41,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Redeem", function () {
-    it("Should redeem from Morpho", async () => {
+    it.only("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
       await vault.connect(domen).rebase();

@@ -47,6 +47,13 @@ async function constructNewContract(fixture, implContractName, proxyContractName
         ],
         addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
       ];
+    } else if (implContractName === "MorphoCompoundStrategy") {
+      return [
+        [
+          addresses.zero, // platformAddres not used by the strategy
+          addresses.mainnet.VaultProxy,
+        ]
+      ];
     }
   };
 
@@ -59,6 +66,7 @@ async function constructNewContract(fixture, implContractName, proxyContractName
     args: getConstructorArguments(),
   });
 
+  log(`Deployed`)
   return await ethers.getContract(implContractName);
 }
 
@@ -78,10 +86,17 @@ async function hotDeployOption(fixture, fixtureName) {
   if (deployStrat) {
     if(fixtureName === "balancerREthFixture") {
       await hotDeployFixture(
-        fixture,
-        "balancerREthStrategy",
-        "BalancerMetaPoolStrategy",
-        "OETHBalancerMetaPoolrEthStrategyProxy"
+        fixture, // fixture
+        "balancerREthStrategy", // fixtureStrategyVarName
+        "BalancerMetaPoolStrategy", // implContractName
+        "OETHBalancerMetaPoolrEthStrategyProxy" // proxyContractName
+      );
+    } else if (fixtureName === "morphoCompoundFixture") {
+      await hotDeployFixture(
+        fixture,// fixture
+        "morphoCompoundStrategy", // fixtureStrategyVarName
+        "MorphoCompoundStrategy", // implContractName
+        "MorphoCompoundStrategyProxy" // proxyContractName
       );
     }
   }
