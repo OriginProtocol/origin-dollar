@@ -246,8 +246,6 @@ async function hotDeployFixture(
   return fixture;
 }
 
-async function postDeploy() {}
-
 module.exports = {
   hotDeployOption,
 };
