@@ -135,6 +135,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        virtual
         override
         onlyVault
         nonReentrant
@@ -179,7 +180,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * `deposit` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
      * calls `depositToStrategy` on the `Vault`.
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external virtual override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_POOL_ASSETS_COUNT);
         uint256 totalScaledAmount = 0;
 
@@ -375,6 +376,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _getCoinIndex(address _asset)
         internal
         view
+        virtual
         returns (uint256 coinIndex)
     {
         // This check is needed for Curve pools with only two assets as
