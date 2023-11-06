@@ -7,11 +7,12 @@ const addresses = require("../utils/addresses");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "080_upgrade_buyback",
-    forceDeploy: true,
+    forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: false,
-    deployerIsProposer: true,
-    // proposalId: "",
+    deployerIsProposer: false,
+    proposalId:
+      "106657143654146782218499766782185241541410736110675785019130125273133364011619",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts }) => {
     const { deployerAddr, strategistAddr } = await getNamedAccounts();
