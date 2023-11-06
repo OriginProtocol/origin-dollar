@@ -85,27 +85,24 @@ contract CurveCryptoFunctions {
      * @param _amount The amount of underlying coin to withdraw
      * @param _coin_index Curve pool index of the coin to withdraw
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
-     * @param _asset The token address of the coin being withdrawn
      * @param _receiver Address that receives the withdrawn coins
+     * @return poolAssetAmount Amount of pool assets removed from the Curve pool
      */
     function remove_liquidity_imbalance(
         uint256 _amount,
         uint256 _coin_index,
         uint256 _max_burn_amount,
-        address _asset,
+        address,
         address _receiver
-    ) internal {
+    ) internal returns (uint256 poolAssetAmount) {
         // This can transfer more assets than what's required to the strategy
-        ICurveCrypto(_CURVE_POOL).remove_liquidity_one_coin(
+        poolAssetAmount = ICurveCrypto(_CURVE_POOL).remove_liquidity_one_coin(
             _max_burn_amount,
             _coin_index,
             _amount,
             false,
-            address(this)
+            _receiver
         );
-
-        // this transfers leaves excess assets
-        IERC20(_asset).safeTransfer(_receiver, _amount);
     }
 
     /**

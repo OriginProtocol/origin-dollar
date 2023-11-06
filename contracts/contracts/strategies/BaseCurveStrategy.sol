@@ -27,13 +27,8 @@ import { Helpers } from "../utils/Helpers.sol";
 struct CurveFunctions {
     function(uint256[] memory, uint256) add_liquidity;
     function(uint256, uint256[] memory) remove_liquidity;
-    function(
-        uint256,
-        uint256,
-        uint256,
-        address,
-        address
-    ) remove_liquidity_imbalance;
+    function(uint256, uint256, uint256, address, address)
+        returns (uint256) remove_liquidity_imbalance;
     function(uint256, uint256) view returns (uint256) calcWithdrawLpAmount;
 }
 
@@ -121,6 +116,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         pure
         virtual
         returns (CurveFunctions memory);
+
+    /***************************************
+                    Deposits
+    ****************************************/
 
     /**
      * @notice Deposit a vault asset into the Curve pool.
@@ -250,7 +249,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external virtual override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
 
         emit Withdrawal(_asset, CURVE_POOL, _amount);
@@ -289,11 +288,18 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Remove all assets from the Curve pool and send them to Vault contract.
-     * @dev This must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
-     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      * This will include all assets in the Curve pool and this strategy contract.
+     *
+     * `withdrawAll` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by Curve pool
@@ -301,7 +307,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             CURVE_POOL_ASSETS_COUNT
         );
 
-        // Remove liquidity
+        // Remove all liquidity from the Curve pool
         CurveFunctions memory curveFunctions = getCurveFunctions();
         curveFunctions.remove_liquidity(
             IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
@@ -424,11 +430,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * Revert if the `_coinIndex` is not supported by the Curve pool.
      * @param _coinIndex Index value of the coin in the Curve pool.
      * Can be checked using Curve's `coins` getter method.
+     * @param poolAsset the addres of the coin in the Curve pool.
      */
     function _getAsset(uint256 _coinIndex)
         internal
         view
-        returns (address asset)
+        returns (address poolAsset)
     {
         if (_coinIndex == 0) {
             return coin0;

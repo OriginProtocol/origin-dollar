@@ -155,6 +155,10 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         }
     }
 
+    /***************************************
+                    Deposits
+    ****************************************/
+
     /**
      * @notice Deposit a vault asset into the Curve CryptoSwap pool and stake the Curve LP tokens in Convex.
      * This assumes the vault has already transferred the asset to this strategy contract.
@@ -165,7 +169,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
      *
      * @dev An invalid `_asset` will fail in `_getCoinIndex` with "Unsupported asset".
      *
-     * @param _vaultAsset Address of asset to deposit
+     * @param _vaultAsset Address of vault asset to deposit
      * @param _vaultAssetAmount Amount of vault assets to deposit
      */
     function deposit(address _vaultAsset, uint256 _vaultAssetAmount)
@@ -306,6 +310,123 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
     }
 
     /***************************************
+                    Withdraws
+    ****************************************/
+
+    /**
+     * @notice Withdraw a single asset from the Curve pool.
+     *
+     * `withdraw` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawFromStrategy` on the `Vault`.
+     *
+     * @dev An invalid `_asset` will fail in `_getCoinIndex` with "Unsupported asset".
+     * @param _recipient Address to receive withdrawn asset
+     * @param _vaultAsset Address of vault asset to withdraw
+     * @param _vaultAssetAmount Amount of asset to withdraw
+     */
+    function withdraw(
+        address _recipient,
+        address _vaultAsset,
+        uint256 _vaultAssetAmount
+    ) external override onlyVault nonReentrant {
+        require(_vaultAssetAmount > 0, "Must withdraw something");
+
+        emit Withdrawal(_vaultAsset, CURVE_POOL, _vaultAssetAmount);
+
+        uint256 curveLpTokensInStrategy = IERC20(CURVE_LP_TOKEN).balanceOf(
+            address(this)
+        );
+
+        // This also validates the asset is supported by the strategy
+        uint256 coinIndex = _getCoinIndex(_vaultAsset);
+
+        // Calculate the amount of Curve LP tokens required to withdraw the asset.
+        // Depending on the implementation, this may be a little more than
+        // what's required which will leave a small amount of Curve LP tokens
+        // in this strategy contract. This will be picked up on the next deposit or withdraw.
+        CurveFunctions memory curveFunctions = getCurveFunctions();
+        uint256 maxCurveLpTokens = curveFunctions.calcWithdrawLpAmount(
+            coinIndex,
+            _vaultAssetAmount
+        );
+
+        // We have enough LP tokens, make sure they are all on this contract
+        if (curveLpTokensInStrategy < maxCurveLpTokens) {
+            _lpWithdraw(maxCurveLpTokens - curveLpTokensInStrategy);
+        }
+
+        // Withdraw asset from the Curve pool and transfer to the recipient
+        uint256 poolAssetAmount = curveFunctions.remove_liquidity_imbalance(
+            _vaultAssetAmount,
+            coinIndex,
+            maxCurveLpTokens,
+            _vaultAsset,
+            address(this)
+        );
+
+        // Convert the wrapped, non-rebasing asset used on the Curve pool to
+        // the unwrapped, non-rebasing asset used in the vault.
+        _unwrapPoolAsset(_vaultAsset, poolAssetAmount);
+
+        // Transfer the specified amount of vault assets back to the recipient.
+        // This can leave a small amount of vault assets in this strategy contract.
+        // This will be picked up on the next deposit or withdrawAll.
+        IERC20(_vaultAsset).safeTransfer(_recipient, _vaultAssetAmount);
+    }
+
+    /**
+     * @notice Remove all assets from the Curve pool, unwrap them to vault assets and send them to Vault contract.
+     * This will include all assets in the Curve pool and this strategy contract.
+     *
+     * `withdrawAll` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
+     */
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
+        _lpWithdrawAll();
+
+        // Withdraws are proportional to assets held by Curve pool
+        uint256[] memory minWithdrawAmounts = new uint256[](
+            CURVE_POOL_ASSETS_COUNT
+        );
+
+        // Remove all liquidity from the Curve pool
+        CurveFunctions memory curveFunctions = getCurveFunctions();
+        curveFunctions.remove_liquidity(
+            IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
+            minWithdrawAmounts
+        );
+
+        // Transfer each asset out of the strategy to the Vault.
+        // Note that Curve will provide all of the assets in the pool even if
+        // we have not set PToken addresses for all of them in this strategy
+        for (uint256 i = 0; i < CURVE_POOL_ASSETS_COUNT; ++i) {
+            IERC20 poolAsset = IERC20(_getAsset(i));
+            uint256 poolAssetBalance = poolAsset.balanceOf(address(this));
+            if (poolAssetBalance > 0) {
+                address vaultAsset = _getVaultAsset(i);
+                // Convert the wrapped, non-rebasing asset used on the Curve pool to
+                // the unwrapped, rebasing asset used in the vault.
+                _unwrapPoolAsset(vaultAsset, poolAssetBalance);
+
+                // Get the balance so we pick up any vault assets left from previous withdraws.
+                uint256 vaultAssetBalance = poolAsset.balanceOf(address(this));
+                IERC20(vaultAsset).safeTransfer(
+                    vaultAddress,
+                    vaultAssetBalance
+                );
+
+                emit Withdrawal(vaultAsset, CURVE_POOL, vaultAssetBalance);
+            }
+        }
+    }
+
+    /***************************************
                 Curve pool helpers
     ****************************************/
 
@@ -335,6 +456,29 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
             return 2;
         }
         revert("Unsupported asset");
+    }
+
+    /**
+     * @dev Get the address of the vault asset for a given index value in a Curve pool.
+     * This is reading from immutable variables to avoid costly storage reads.
+     * Revert if the `_coinIndex` is not supported by the Curve pool.
+     * @param _coinIndex Index value of the coin in the Curve pool.
+     * Can be checked using Curve's `coins` getter method.
+     * @param vaultAsset the addres of the vault asset.
+     */
+    function _getVaultAsset(uint256 _coinIndex)
+        internal
+        view
+        returns (address vaultAsset)
+    {
+        if (_coinIndex == 0) {
+            return vaultAsset0;
+        } else if (_coinIndex == 1) {
+            return vaultAsset1;
+        } else if (_coinIndex == 2) {
+            return vaultAsset2;
+        }
+        revert("Invalid coin index");
     }
 
     /**
@@ -477,7 +621,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         address vaultAsset,
         uint256 vaultAssetAmount,
         uint256 priceVaultAsset0
-    ) internal returns (uint256 amountInAsset0) {
+    ) internal view returns (uint256 amountInAsset0) {
         // Calculate the minimum amount of Curve LP tokens by converting the deposit amount
         // to the Curve pool's LP token value and reducing by the max allowable slippage.
         // The first token in the Curve pool is the units of Curve pool's LP token.

@@ -83,6 +83,7 @@ contract CurveThreeCoinFunctions {
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
      * @param _asset The token address of the coin being withdrawn
      * @param _receiver Address that receives the withdrawn coins
+     * @return poolAssetAmount Amount of pool assets removed from the Curve pool
      */
     function remove_liquidity_imbalance(
         uint256 _amount,
@@ -90,7 +91,7 @@ contract CurveThreeCoinFunctions {
         uint256 _max_burn_amount,
         address _asset,
         address _receiver
-    ) internal {
+    ) internal returns (uint256 poolAssetAmount) {
         uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
         amounts[_coin_index] = _amount;
 
@@ -100,6 +101,8 @@ contract CurveThreeCoinFunctions {
         );
 
         IERC20(_asset).safeTransfer(_receiver, _amount);
+
+        poolAssetAmount = _amount;
     }
 
     /**
