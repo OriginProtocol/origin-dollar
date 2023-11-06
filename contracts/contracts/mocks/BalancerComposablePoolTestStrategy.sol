@@ -38,7 +38,7 @@ contract BalancerComposablePoolTestStrategy is BalancerComposablePoolStrategy {
     function assetConfigVerification(address[] calldata _assets)
         external
         view
-        returns (uint256)   
+        returns (uint256)
     {
         _assetConfigVerification(_assets);
     }

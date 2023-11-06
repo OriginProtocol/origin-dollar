@@ -11,6 +11,7 @@ const {
   balancerFrxETHwstETHeETHFixture,
   createFixtureLoader,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHMissConfiguredStrategy,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
@@ -22,8 +23,7 @@ const log = require("../../utils/logger")(
 );
 
 const loadBalancerFrxWstrETHFixture = createFixtureLoader(
-  //balancerFrxETHwstETHeETHFixture,
-  balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerFrxETHwstETHeETHFixture,
   {
     defaultStrategy: false,
   }
@@ -315,6 +315,16 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
     });
   });
 
+  describe("Incorrect deployment configuration", function () {
+    it.only("Should fail when _bptTokenPoolPosition is miss-configured", async function () {
+      const loadBalancerFrxWstrETHFixture = createFixtureLoader(
+        balancerSfrxETHRETHWstETHMissConfiguredStrategy
+      );
+
+      await expect(loadBalancerFrxWstrETHFixture()).to.be.reverted;
+    });
+  });
+
   describe("Withdraw", function () {
     beforeEach(async () => {
       fixture = await loadBalancerFrxWstrETHFixture();
@@ -358,7 +368,7 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
     ];
 
     for (const [rethAmount, stethAmount, frxethAmount] of withdrawalTestCases) {
-      it.only(`Should be able to withdraw ${rethAmount} RETH, ${stethAmount} stETH and ${frxethAmount} frxETH from the strategy`, async function () {
+      it(`Should be able to withdraw ${rethAmount} RETH, ${stethAmount} stETH and ${frxethAmount} frxETH from the strategy`, async function () {
         const { reth, stETH, frxETH, balancerSfrxWstRETHStrategy, oethVault } =
           fixture;
 

@@ -10,6 +10,9 @@ require("./_global-hooks");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 
 const {
+  deployBalancerFrxEethRethWstEThStrategyMissConfigured,
+} = require("./_custom-deploys");
+const {
   hotDeployBalancerRethWETHStrategy,
   hotDeployBalancerFrxEethRethWstEThStrategy,
 } = require("./_hot-deploy");
@@ -1051,6 +1054,13 @@ async function balancerRethWETHExposeFunctionFixture() {
 }
 
 /**
+ * Deploy the Balancer Composable Stable pool with incorrect configuration
+ */
+async function balancerSfrxETHRETHWstETHMissConfiguredStrategy() {
+  return await deployBalancerFrxEethRethWstEThStrategyMissConfigured();
+}
+
+/**
  * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
  * replace the byte code with the one that exposes internal functions
  */
@@ -2004,6 +2014,7 @@ module.exports = {
   ousdCollateralSwapFixture,
   balancerRethWETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHMissConfiguredStrategy,
   fluxStrategyFixture,
   nodeSnapshot,
   nodeRevert,

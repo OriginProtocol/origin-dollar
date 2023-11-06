@@ -14,7 +14,12 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    // position of BPT token in the Balancer's pool
+    /* @notice position of BPT token in the Balancer's pool
+     *
+     * @dev this could be a storage variable that gets set by reading Balancer's pool
+     * tokens and comparing it to platformAddress. Seems more convenient, but we rather
+     * go for gas savings of an immutable variable.
+     */
     uint256 public immutable bptTokenPoolPosition;
 
     constructor(
@@ -44,11 +49,19 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             poolAssets.length - 1 == _assets.length,
             "Pool assets length mismatch"
         );
+
+        require(
+            // BPT position should be correctly configured
+            poolAssets[bptTokenPoolPosition] == platformAddress,
+            "BPT token position incorrect"
+        );
+
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(
-                _assets[i] == _fromPoolAsset(poolAssets[
-                    i >= bptTokenPoolPosition ? i + 1 : i
-                ]),
+                _assets[i] ==
+                    _fromPoolAsset(
+                        poolAssets[i >= bptTokenPoolPosition ? i + 1 : i]
+                    ),
                 "Pool assets mismatch"
             );
         }
