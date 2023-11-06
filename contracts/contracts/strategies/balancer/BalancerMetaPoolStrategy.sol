@@ -158,6 +158,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                     strategyAmount
                 );
 
+                /* This check is triggered when the _deposit is unexpectedly
+                 * called with a duplicate asset in the _strategyAssets array
+                 */
                 require(
                     amountsIn[assetIndex] == 0,
                     "No duplicate deposit assets"
