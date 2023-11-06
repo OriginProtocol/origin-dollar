@@ -321,7 +321,9 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         balancerSfrxETHRETHWstETHMissConfiguredStrategy
       );
 
-      await expect(loadBalancerFrxWstrETHFixture()).to.be.reverted;
+      await expect(loadBalancerFrxWstrETHFixture()).to.be.revertedWith(
+        "BPT token position incorrect"
+      );
     });
   });
 

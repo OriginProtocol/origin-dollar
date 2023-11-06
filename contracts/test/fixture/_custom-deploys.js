@@ -5,12 +5,10 @@ const { ethers } = hre;
 const deployBalancerFrxEethRethWstEThStrategyMissConfigured = async () => {
   const { deploy } = deployments;
   const platformAddress = addresses.mainnet.wstETH_sfrxETH_rETH_BPT;
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sTimelock = await ethers.provider.getSigner(addresses.mainnet.Timelock);
 
-  // deploy this contract that exposes internal function
   await deploy("BalancerComposablePoolStrategy", {
-    from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+    from: addresses.mainnet.Timelock,
     contract: "BalancerComposablePoolStrategy",
     args: [
       [
@@ -38,7 +36,7 @@ const deployBalancerFrxEethRethWstEThStrategyMissConfigured = async () => {
   const strategy = await ethers.getContract("BalancerComposablePoolStrategy");
   // prettier-ignore
   await strategy
-    .connect(sDeployer)["initialize(address[],address[],address[])"](
+    .connect(sTimelock)["initialize(address[],address[],address[])"](
       [addresses.mainnet.BAL, addresses.mainnet.AURA],
       [
         addresses.mainnet.stETH,
