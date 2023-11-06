@@ -6,7 +6,8 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { OracleRouter, OETHOracleRouter } from "../oracle/OracleRouter.sol";
+import { OracleRouter } from "../oracle/OracleRouter.sol";
+import { OETHOracleRouter } from "../oracle/OETHOracleRouter.sol";
 
 // @notice Oracle Router used to bypass staleness
 contract MockOracleRouterNoStale is OracleRouter {
@@ -24,6 +25,8 @@ contract MockOracleRouterNoStale is OracleRouter {
 
 // @notice Oracle Router used to bypass staleness
 contract MockOETHOracleRouterNoStale is OETHOracleRouter {
+    constructor (address auraPriceFeed) OETHOracleRouter(auraPriceFeed) {}
+
     function feedMetadata(address asset)
         internal
         pure

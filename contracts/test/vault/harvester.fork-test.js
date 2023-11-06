@@ -25,7 +25,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.uniswapV2CompatibleAddr).to.equal(
+      expect(config.protocol).to.equal(
+        "0" // Uniswap V2 compatible
+      );
+      expect(config.swapRouterAddr).to.equal(
         "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -39,7 +42,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.uniswapV2CompatibleAddr).to.equal(
+      expect(config.protocol).to.equal(
+        "0" // Uniswap V2 compatible
+      );
+      expect(config.swapRouterAddr).to.equal(
         "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -53,7 +59,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.uniswapV2CompatibleAddr).to.equal(
+      expect(config.protocol).to.equal(
+        "0" // Uniswap V2 compatible
+      );
+      expect(config.swapRouterAddr).to.equal(
         "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -67,7 +76,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.uniswapV2CompatibleAddr).to.equal(
+      expect(config.protocol).to.equal(
+        "0" // Uniswap V2 compatible
+      );
+      expect(config.swapRouterAddr).to.equal(
         "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
       );
       expect(config.doSwapRewardToken).to.be.true;

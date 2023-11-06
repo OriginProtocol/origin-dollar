@@ -177,6 +177,7 @@ describe("3Pool Strategy", function () {
         crv.address, // reward token
         300, // max slippage bps
         100, // harvest reward bps
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true

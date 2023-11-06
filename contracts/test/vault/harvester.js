@@ -66,6 +66,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         utils.parseUnits("1.44", 18),
         true
@@ -76,7 +77,10 @@ describe("Harvester", function () {
     expect(compConfig.liquidationLimit).to.equal(utils.parseUnits("1.44", 18));
     expect(compConfig.allowedSlippageBps).to.equal(300);
     expect(compConfig.harvestRewardBps).to.equal(100);
-    expect(compConfig.uniswapV2CompatibleAddr).to.equal(
+    expect(compConfig.protocol).to.equal(
+      "0" // Uniswap V2
+    );
+    expect(compConfig.swapRouter).to.equal(
       mockUniswapRouter.address
     );
 
@@ -93,6 +97,7 @@ describe("Harvester", function () {
         comp.address,
         350,
         120,
+        0, // Uniswap V2 compatible
         addresses.mainnet.uniswapV3Router,
         utils.parseUnits("1.22", 18),
         true
@@ -146,6 +151,7 @@ describe("Harvester", function () {
           harvester.address,
           350,
           120,
+          0, // Uniswap V2 compatible
           addresses.mainnet.uniswapV3Router,
           utils.parseUnits("11", 18),
           true
@@ -165,6 +171,7 @@ describe("Harvester", function () {
           comp.address,
           350,
           120,
+          0, // Uniswap V2 compatible
           addresses.mainnet.uniswapV3Router,
           utils.parseUnits("11", 18),
           true
@@ -181,6 +188,7 @@ describe("Harvester", function () {
         comp.address,
         350,
         120,
+        0, // Uniswap V2 compatible
         addresses.mainnet.uniswapV3Router,
         utils.parseUnits("11", 18),
         true
@@ -238,6 +246,7 @@ describe("Harvester", function () {
         comp.address,
         400,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -282,6 +291,7 @@ describe("Harvester", function () {
         comp.address,
         400,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -320,6 +330,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -355,6 +366,7 @@ describe("Harvester", function () {
           comp.address,
           300,
           1100,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           MAX_UINT256,
           true
@@ -374,6 +386,7 @@ describe("Harvester", function () {
           comp.address,
           300,
           -100,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           MAX_UINT256,
           true
@@ -414,6 +427,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         900,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -496,6 +510,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -562,6 +577,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         900,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         0,
         true
@@ -620,6 +636,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         utils.parseUnits("3", 18),
         true
@@ -678,6 +695,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         utils.parseUnits("3", 18),
         true
@@ -728,6 +746,7 @@ describe("Harvester", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true

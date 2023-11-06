@@ -12,6 +12,7 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import { IUniswapV3Router } from "../interfaces/uniswap/IUniswapV3Router.sol";
 import "../utils/Helpers.sol";
 
 abstract contract BaseHarvester is Governable {
@@ -19,13 +20,19 @@ abstract contract BaseHarvester is Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
-    event UniswapUpdated(address _address);
+    enum SwapProtocol {
+        UniswapV2Compatible,
+        UniswapV3,
+        Balancer
+    }
+
     event SupportedStrategyUpdate(address _address, bool _isSupported);
     event RewardTokenConfigUpdated(
         address _tokenAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
-        address _uniswapV2CompatibleAddr,
+        SwapProtocol _protocol,
+        address _swapRouterAddr,
         uint256 _liquidationLimit,
         bool _doSwapRewardToken
     );
@@ -36,13 +43,14 @@ abstract contract BaseHarvester is Governable {
         uint16 allowedSlippageBps;
         // Reward when calling a harvest function denominated in basis points.
         uint16 harvestRewardBps;
-        /* Address of Uniswap V2 compatible exchange (Uniswap V2, SushiSwap).
-         */
-        address uniswapV2CompatibleAddr;
+        // Address of compatible exchange router (Uniswap V2, SushiSwap).
+        address swapRouterAddr;
         /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
          * a reward token this needs to be set to false.
          */
         bool doSwapRewardToken;
+        // Protocol to use for Swapping
+        SwapProtocol protocol;
         /* How much token can be sold per one harvest call. If the balance of rewards tokens
          * exceeds that limit multiple harvest calls are required to harvest all of the tokens.
          * Set it to MAX_INT to effectively disable the limit.
@@ -61,13 +69,15 @@ abstract contract BaseHarvester is Governable {
      */
     address public rewardProceedsAddress;
 
-    /**
-     * @dev Constructor to set up initial internal state
-     * @param _vaultAddress Address of the Vault
-     */
-    constructor(address _vaultAddress) {
-        require(address(_vaultAddress) != address(0));
+    // All tokens are swapped to this token. USDT for OUSD and WETH for OETH
+    address public immutable baseTokenAddress;
+
+    // "_usdtAddress" is set to Vault's address, but is really not used
+    constructor(address _vaultAddress, address _baseTokenAddress) {
+        require(_vaultAddress != address(0));
+        require(_baseTokenAddress != address(0));
         vaultAddress = _vaultAddress;
+        baseTokenAddress = _baseTokenAddress;
     }
 
     /***************************************
@@ -108,18 +118,20 @@ abstract contract BaseHarvester is Governable {
      *        Example: 300 == 3% slippage
      * @param _harvestRewardBps uint16 amount of reward tokens the caller of the function is rewarded.
      *        Example: 100 == 1%
-     * @param _uniswapV2CompatibleAddr Address Address of a UniswapV2 compatible contract to perform
+     * @param _swapRouterAddr Address Address of a UniswapV2 compatible contract to perform
      *        the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
      * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call.
      *        When value is 0 there is no limit.
      * @param _doSwapRewardToken bool When true the reward token is being swapped. In a need of (temporarily)
      *        disabling the swapping of a reward token this needs to be set to false.
+     * @param _protocol SwapProtocol Protocol to use for Swapping
      */
     function setRewardTokenConfig(
         address _tokenAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
-        address _uniswapV2CompatibleAddr,
+        SwapProtocol _protocol,
+        address _swapRouterAddr,
         uint256 _liquidationLimit,
         bool _doSwapRewardToken
     ) external onlyGovernor {
@@ -132,20 +144,21 @@ abstract contract BaseHarvester is Governable {
             "Harvest reward fee should not be over 10%"
         );
         require(
-            _uniswapV2CompatibleAddr != address(0),
+            _swapRouterAddr != address(0),
             "Uniswap compatible address should be non zero address"
         );
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
             allowedSlippageBps: _allowedSlippageBps,
             harvestRewardBps: _harvestRewardBps,
-            uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
+            swapRouterAddr: _swapRouterAddr,
             doSwapRewardToken: _doSwapRewardToken,
+            protocol: _protocol,
             liquidationLimit: _liquidationLimit
         });
 
-        address oldUniswapAddress = rewardTokenConfigs[_tokenAddress]
-            .uniswapV2CompatibleAddr;
+        address oldRouterAddress = rewardTokenConfigs[_tokenAddress]
+            .swapRouterAddr;
         rewardTokenConfigs[_tokenAddress] = tokenConfig;
 
         IERC20 token = IERC20(_tokenAddress);
@@ -158,26 +171,27 @@ abstract contract BaseHarvester is Governable {
 
         // if changing token swap provider cancel existing allowance
         if (
-            /* oldUniswapAddress == address(0) when there is no pre-existing
+            /* oldRouterAddress == address(0) when there is no pre-existing
              * configuration for said rewards token
              */
-            oldUniswapAddress != address(0) &&
-            oldUniswapAddress != _uniswapV2CompatibleAddr
+            oldRouterAddress != address(0) &&
+            oldRouterAddress != _swapRouterAddr
         ) {
-            token.safeApprove(oldUniswapAddress, 0);
+            token.safeApprove(oldRouterAddress, 0);
         }
 
         // Give Uniswap infinite approval when needed
-        if (oldUniswapAddress != _uniswapV2CompatibleAddr) {
-            token.safeApprove(_uniswapV2CompatibleAddr, 0);
-            token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
+        if (oldRouterAddress != _swapRouterAddr) {
+            token.safeApprove(_swapRouterAddr, 0);
+            token.safeApprove(_swapRouterAddr, type(uint256).max);
         }
 
         emit RewardTokenConfigUpdated(
             _tokenAddress,
             _allowedSlippageBps,
             _harvestRewardBps,
-            _uniswapV2CompatibleAddr,
+            _protocol,
+            _swapRouterAddr,
             _liquidationLimit,
             _doSwapRewardToken
         );
@@ -354,5 +368,101 @@ abstract contract BaseHarvester is Governable {
      * @param _swapToken Address of the token to swap.
      * @param _rewardTo Address where to send the share of harvest rewards to
      */
-    function _swap(address _swapToken, address _rewardTo) internal virtual;
+    function _swap(address _swapToken, address _rewardTo) internal virtual {
+        RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
+
+        if (tokenConfig.protocol == SwapProtocol.UniswapV2Compatible) {
+            _swap(_swapToken, _rewardTo, _swapWithUniswapV2);
+        } else if (tokenConfig.protocol == SwapProtocol.UniswapV3) {
+            _swap(_swapToken, _rewardTo, _swapWithUniswapV3);
+        } else if (tokenConfig.protocol == SwapProtocol.Balancer) {
+            _swap(_swapToken, _rewardTo, _swapWithBalancer);
+        }
+
+        revert("Unknown swap protocol");
+    }
+
+    function _swap(
+        address _swapToken,
+        address _rewardTo,
+        function(RewardTokenConfig memory, address, uint256, uint256) swapper
+    ) internal virtual {
+        RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
+
+        /* This will trigger a return when reward token configuration has not yet been set
+         * or we have temporarily disabled swapping of specific reward token via setting
+         * doSwapRewardToken to false.
+         */
+        if (!tokenConfig.doSwapRewardToken) {
+            return;
+        }
+
+        address priceProvider = IVault(vaultAddress).priceProvider();
+
+        IERC20 swapToken = IERC20(_swapToken);
+        uint256 balance = swapToken.balanceOf(address(this));
+
+        if (balance == 0) {
+            return;
+        }
+
+        uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
+
+        // This'll revert if there is no price feed
+        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
+
+        // Oracle price is 1e18
+        uint256 minExpected = (balanceToSwap *
+            (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
+            oraclePrice).scaleBy(Helpers.getDecimals(baseTokenAddress), Helpers.getDecimals(_swapToken)) /
+            1e4 / // fix the max slippage decimal position
+            1e18; // and oracle price decimals position
+        
+        // Do the swap
+        swapper(
+            tokenConfig,
+            baseTokenAddress,
+            balanceToSwap,
+            minExpected
+        );
+
+        IERC20 desiredToken = IERC20(baseTokenAddress);
+        uint256 desiredTokenBalance = desiredToken.balanceOf(address(this));
+
+        uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+        uint256 rewardsProceedsShare = (desiredTokenBalance * vaultBps) / 1e4;
+
+        require(
+            vaultBps > tokenConfig.harvestRewardBps,
+            "Address receiving harvest incentive is receiving more rewards than the rewards proceeds address"
+        );
+
+        desiredToken.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
+        desiredToken.safeTransfer(
+            _rewardTo,
+            desiredTokenBalance - rewardsProceedsShare // remaining share of the rewards
+        );
+    }
+
+    function _swapWithUniswapV2(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal {
+        IUniswapV2Router(tokenConfig.swapRouterAddr)
+            .swapExactTokensForTokens(
+                amountIn,
+                minAmountOut,
+                _getUniV2SwapPath(swapToken),
+                address(this),
+                block.timestamp
+            );
+    }
+    function _getUniV2SwapPath(address token) internal virtual returns (address[] memory);
+
+    function _swapWithUniswapV3(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal {
+        //
+    }
+    function _getUniV3SwapPath(address token) internal virtual returns (bytes memory);
+
+    function _swapWithBalancer(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal {
+        //
+    }
+    function _getBalancerPoolId(address token) internal virtual returns (bytes32);
 }

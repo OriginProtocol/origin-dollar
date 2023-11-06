@@ -692,6 +692,7 @@ describe("Vault with Compound strategy", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -756,6 +757,7 @@ describe("Vault with Compound strategy", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true
@@ -800,6 +802,7 @@ describe("Vault with Compound strategy", function () {
         comp.address,
         300,
         100,
+        0, // Uniswap V2 compatible
         mockUniswapRouter.address,
         MAX_UINT256,
         true

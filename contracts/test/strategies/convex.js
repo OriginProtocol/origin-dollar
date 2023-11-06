@@ -152,6 +152,7 @@ describe("Convex Strategy", function () {
             crv.address,
             300,
             100,
+            0, // Uniswap V2 compatible
             mockUniswapRouter.address,
             utils.parseUnits("1", 18),
             true
@@ -174,6 +175,7 @@ describe("Convex Strategy", function () {
             cvx.address,
             300,
             100,
+            0, // Uniswap V2 compatible
             mockUniswapRouter.address,
             utils.parseUnits("1.5", 18),
             true
@@ -227,6 +229,7 @@ describe("Convex Strategy", function () {
           crv.address,
           300,
           200,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           MAX_UINT256,
           true
@@ -238,6 +241,7 @@ describe("Convex Strategy", function () {
           cvx.address,
           300,
           200,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           MAX_UINT256,
           true
@@ -302,6 +306,7 @@ describe("Convex Strategy", function () {
           crv.address,
           300,
           100,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           utils.parseUnits("0.8", 18),
           true
@@ -313,6 +318,7 @@ describe("Convex Strategy", function () {
           cvx.address,
           300,
           100,
+          0, // Uniswap V2 compatible
           mockUniswapRouter.address,
           utils.parseUnits("1.5", 18),
           true

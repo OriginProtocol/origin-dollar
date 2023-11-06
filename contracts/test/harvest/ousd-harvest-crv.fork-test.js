@@ -58,7 +58,8 @@ describe("ForkTest: Harvest OUSD", function () {
           crv.address,
           oldCrvTokenConfig.allowedSlippageBps,
           oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
+          0, // Uniswap V2 compatible
+          oldCrvTokenConfig.swapRouterAddr,
           MAX_UINT256,
           oldCrvTokenConfig.doSwapRewardToken
         );
@@ -95,7 +96,8 @@ describe("ForkTest: Harvest OUSD", function () {
           crv.address,
           oldCrvTokenConfig.allowedSlippageBps,
           oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
+          0, // Uniswap V2 compatible
+          oldCrvTokenConfig.swapRouterAddr,
           parseUnits(crvLimit.toString(), 18),
           oldCrvTokenConfig.doSwapRewardToken
         );

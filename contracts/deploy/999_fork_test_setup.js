@@ -37,7 +37,8 @@ const main = async (hre) => {
     "MockOracleRouterNoStale"
   );
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-    "MockOETHOracleRouterNoStale"
+    "MockOETHOracleRouterNoStale",
+    ["0xc29562b045d80fd77c69bec09541f5c16fe20d9d"]
   );
   console.log(
     "Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale"
