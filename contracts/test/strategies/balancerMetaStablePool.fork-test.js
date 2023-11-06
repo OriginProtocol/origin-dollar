@@ -176,7 +176,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     });
   });
 
-  describe("Deposit", function () {
+  describe("Deposit", async function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
     });
@@ -205,6 +205,31 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       const { reth, rEthBPT, weth } = fixture;
       await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
     });
+
+    it("Should fail when depositing by duplicating an asset", async function () {
+      const fixture = await balancerRethWETHExposeFunctionFixture();
+      const { balancerREthStrategy, oethVault, weth, josh } =
+        fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      /* Calling deposit with multiple assets is currently disabled. In case we ever
+       * enable it we have a check in the contract that will revert when depositing
+       * with duplicate assets.
+       */
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [weth.address, weth.address],
+            [oethUnits("1"), oethUnits("1")]
+          )
+      ).to.be.revertedWith("No duplicate deposit assets");
+    });
+
     it("Should deposit all WETH and rETH in strategy to pool", async function () {
       const { balancerREthStrategy, oethVault, reth, weth } = fixture;
 
@@ -343,6 +368,23 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         ).to.approxEqualTolerance(rethWithdrawAmount, 0.01);
       });
     }
+
+    it(`Should fail when duplicating an asset in withdrawal call`, async function () {
+      const { balancerREthStrategy, oethVault, weth } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+      const wethWithdrawAmount = await units("1", weth);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [weth.address, weth.address],
+            [wethWithdrawAmount, wethWithdrawAmount]
+          )
+      ).to.be.revertedWith("No duplicate withdrawal assets");
+    });
 
     it("Should be able to withdraw all of pool liquidity", async function () {
       const { oethVault, weth, reth, balancerREthStrategy } = fixture;

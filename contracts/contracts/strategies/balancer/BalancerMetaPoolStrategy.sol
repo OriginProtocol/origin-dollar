@@ -83,6 +83,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function deposit(address[] calldata, uint256[] calldata)
         external
+        virtual
         onlyVault
         nonReentrant
     {
@@ -155,6 +156,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 (, strategyAssetAmountsToPoolAssetAmounts[i]) = _wrapPoolAsset(
                     strategyAsset,
                     strategyAmount
+                );
+
+                require(
+                    amountsIn[assetIndex] == 0,
+                    "No duplicate deposit assets"
                 );
 
                 amountsIn[assetIndex] = strategyAssetAmountsToPoolAssetAmounts[
@@ -299,6 +305,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
             if (poolAssetAmount > 0) {
                 strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
+
+                /* This check is triggered when the _withdrawal is unexpectedly
+                 * called with a duplicate asset in the _strategyAssets array
+                 */
+                require(
+                    poolAssetsAmountsOut[poolAssetIndex[poolAsset]] == 0,
+                    "No duplicate withdrawal assets"
+                );
 
                 /* Because of the potential Balancer rounding error mentioned below
                  * the contract might receive 1-2 WEI smaller amount than required
