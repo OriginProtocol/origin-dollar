@@ -41,7 +41,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    /// @notice Max allowed slippage of deposits and withdrawals to/from the Curve pool.
+    /// 1e16 = 1%, same as the Curve UI
+    uint256 public constant MAX_SLIPPAGE = 1e16;
     /// @notice number of assets in the Curve pool. eg 3 for the 3Pool
     uint256 public immutable CURVE_POOL_ASSETS_COUNT;
     /// @notice Address of the Curve pool contract
@@ -53,11 +55,19 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     // Only supporting up to 3 coins for now.
     // The new Stableswap pools support up to 8 coins, but
     // we'll add support for more than 3 pools later if needed.
+    /// @notice The address of the first asset in the Curve pool
     address public immutable coin0;
+    /// @notice The address of the second asset in the Curve pool
     address public immutable coin1;
+    /// @notice The address of the third asset in the Curve pool.
+    /// If only two assets in the Curve pool, this will be address(0).
     address public immutable coin2;
+    /// @notice The number of decimals of the first asset in the Curve pool
     uint256 public immutable decimals0;
+    /// @notice The number of decimals of the second asset in the Curve pool
     uint256 public immutable decimals1;
+    /// @notice The number of decimals of the third asset in the Curve pool
+    /// If only two assets in the Curve pool, this will be 0.
     uint256 public immutable decimals2;
 
     // slither-disable-next-line constable-states
@@ -135,8 +145,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Curve requires passing deposit amounts for all assets
         uint256[] memory _amounts = new uint256[](CURVE_POOL_ASSETS_COUNT);
         uint256 poolCoinIndex = _getCoinIndex(_asset);
-        // Set the amount on the asset we want to deposit
+
+        // Set the amount of the asset we want to deposit
         _amounts[poolCoinIndex] = _amount;
+
+        // Calculate the minimum amount of Curve LP tokens by converting the deposit amount
+        // to the Curve pool's LP token value and reducing by the max slippage.
         uint256 depositValue = _amount
             .scaleBy(18, _getAssetDecimals(_asset))
             .divPrecisely(ICurvePool(CURVE_POOL).get_virtual_price());
@@ -160,6 +174,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Deposit the entire balance of the Curve pool assets in this strategy contract.
+     * This assumes the vault has already transferred the assets to this strategy contract.
+     *
+     * `deposit` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `depositToStrategy` on the `Vault`.
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_POOL_ASSETS_COUNT);
@@ -172,7 +190,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             if (balance > 0) {
                 // Set the amount on the asset we want to deposit
                 _amounts[i] = balance;
-                // Scale the asset amount up to 18 decimals and add to the token deposit amount
+                // Scale the asset amount up to 18 decimals and add to the total deposit amount scaled to 18 decimals
                 totalScaledAmount += balance.scaleBy(
                     18,
                     _getAssetDecimals(assetAddress)
@@ -185,8 +203,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Get the Curve pool's virtual price
         uint256 curveVirtualPrice = ICurvePool(CURVE_POOL).get_virtual_price();
 
-        // Reduce the deposit amount by the max allowed slippage
-        // and convert the deposit amount to Curve LP tokens
+        // Reduce the total deposit amount scaled to 18 decimals by the max allowed slippage
         uint256 minMintAmount = totalScaledAmount
             .mulTruncate(uint256(1e18) - MAX_SLIPPAGE)
             .divPrecisely(curveVirtualPrice);
@@ -202,6 +219,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
          */
         _lpDepositAll();
     }
+
+    /***************************************
+                    Withdraws
+    ****************************************/
 
     /**
      * @dev Withdraw Curve LP tokens from a Curve metapool, gauge or Convex pool.
@@ -269,7 +290,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @notice Remove all assets from the Curve pool and send them to Vault contract.
      * @dev This must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
      * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
-     * This will include all assets in the Curve pool.
+     * This will include all assets in the Curve pool and this strategy contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
@@ -300,8 +321,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /***************************************
+                    Approvals
+    ****************************************/
+
     /**
-     * @dev Approve the spending of all assets by their corresponding pool tokens,
+     * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -352,7 +377,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 coinIndex)
     {
+        // This check is needed for Curve pools with only two assets as
+        // coin2, the third coin, will be address(0)
         require(_asset != address(0), "Invalid asset");
+
         if (_asset == coin0) {
             return 0;
         } else if (_asset == coin1) {
