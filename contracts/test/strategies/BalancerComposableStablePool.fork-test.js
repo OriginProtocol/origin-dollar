@@ -316,7 +316,7 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
   });
 
   describe("Incorrect deployment configuration", function () {
-    it.only("Should fail when _bptTokenPoolPosition is miss-configured", async function () {
+    it("Should fail when _bptTokenPoolPosition is miss-configured", async function () {
       const loadBalancerFrxWstrETHFixture = createFixtureLoader(
         balancerSfrxETHRETHWstETHMissConfiguredStrategy
       );

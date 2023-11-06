@@ -74,14 +74,12 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         override
         returns (uint256[] memory amounts)
     {
-        // first asset in the Composable stable pool is the BPT token.
-        // skip over that entry and shift all other assets for 1 position
-        // to the left
+        // remove the position in the array that represents the BPT
+        // token
         amounts = new uint256[](_amounts.length - 1);
         for (uint256 i = 0; i < _amounts.length - 1; ++i) {
             amounts[i] = _amounts[i >= bptTokenPoolPosition ? i + 1 : i];
         }
-        // TODO verify this works with various pools
     }
 
     function _getUserDataEncodedAssets(address[] memory _assets)
@@ -91,13 +89,11 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         override
         returns (address[] memory assets)
     {
-        // first asset in the Composable stable pool is the BPT token.
-        // skip over that entry and shift all other assets for 1 position
-        // to the left
+        // remove the position in the array that represents the BPT
+        // token
         assets = new address[](_assets.length - 1);
         for (uint256 i = 0; i < _assets.length - 1; ++i) {
             assets[i] = _assets[i >= bptTokenPoolPosition ? i + 1 : i];
         }
-        // TODO verify this works with various pools
     }
 }
