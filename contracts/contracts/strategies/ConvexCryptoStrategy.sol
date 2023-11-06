@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve CryptoSwap with Curve Gauge staking Strategy
- * @notice Investment strategy for investing Curve CryptoSwap, eg TryLSD, Liquidity Provider (LP) tokens in a Convex pool.
+ * @notice Investment into Curve CryptoSwap, eg TryLSD, and Liquidity Provider (LP) tokens in a Convex pool.
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -14,6 +14,8 @@ import { CurveFunctions, CurveCryptoFunctions } from "./curve/CurveCryptoFunctio
 import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { ConvexStrategy } from "./ConvexStrategy.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
     constructor(
@@ -46,9 +48,14 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
      * @param _asset      Address of the asset
      * @return balance    Virtual balance of the asset
      */
-    function checkBalance(
-        address _asset
-    ) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
+
         // Curve LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
@@ -63,20 +70,23 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         uint256 totalLpToken = contractLpTokens + convexLpTokens;
 
         if (totalLpToken > 0) {
-            // TODO need to source ETH price for each asset
-            uint256 value = (totalLpToken *
+            // get the Strategy's total LP token value priced in the first token in the Curve pool.
+            // eg wsthETH for TryLSD
+            uint256 totalInCoin0 = (totalLpToken *
                 ICurveCrypto(CURVE_POOL).get_virtual_price()) / 1e18;
 
-            // Weight the asset by the moving average price in the Curve CryptoSwap pool
-            //
+            address priceProvider = IVault(vaultAddress).priceProvider();
+            // The the exchange for the first token in the Curve pool to ETH
+            uint256 priceCoin0 = IOracle(priceProvider).price(coin0);
 
-            // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
-            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
+            // the Strategy's total LP token value priced in ETH
+            uint256 totalInEth = totalInCoin0 * priceCoin0;
+
+            // Divide by the number of assets in the Curve pool. eg 3 for the TryLSD pool.
             // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
             // No matter what the balance of the asset in the Curve pool is, the value of each asset will
             // be the average of the Curve pool's total value.
-            // _getAssetDecimals will revert if _asset is an invalid asset.
-            balance = value / CURVE_POOL_ASSETS_COUNT;
+            balance = totalInEth / CURVE_POOL_ASSETS_COUNT;
         }
     }
 }
