@@ -166,9 +166,9 @@ addresses.mainnet.CurveFrxEthWethGauge =
   "0x4e21418095d32d15c6e2b96a9910772613a50d50";
 addresses.mainnet.ConvexFrxEthWethRewardsPool =
   "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
-addresses.mainnet.FraxStakingWrapperConvexFrxEthWeth =
+addresses.mainnet.FraxStakedConvexWrapperFrxEthWeth =
   "0x08061fec3fc09aa2eb4b4b72ea618034cbfd22b0";
-addresses.mainnet.FraxStakingConvexFrxEthWeth =
+addresses.mainnet.LockedFraxStakedConvexFrxEthWeth =
   "0xB4fdD7444E1d86b2035c97124C46b1528802DA35";
 
 // Morpho

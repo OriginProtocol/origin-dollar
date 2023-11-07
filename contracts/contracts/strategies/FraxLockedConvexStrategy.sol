@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Convex Convex Frax Locking Strategy
- * @notice Investment strategy for investing Curve Liquidity Provider (LP) tokens in Convex pools.
+ * @title Locked Frax Staked Convex Strategy
+ * @notice Investment strategy for locking Frax Staked Convex Liquidity Provider tokens.
  * @dev This strategy can NOT be set as the Vault's default strategy for an asset.
  * This is because deposits and withdraws can be sandwich attacked if not protected
  * by the `VaultValueChecker`. Only the trusted `Strategist` or `Governor` can call
@@ -20,12 +20,13 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICurvePool } from "./curve/ICurvePool.sol";
+import { CurveTwoCoinFunctions } from "./curve/CurveTwoCoinFunctions.sol";
 import { IFraxConvexStaking } from "../interfaces/IFraxConvexStaking.sol";
 import { IFraxConvexStakingWrapper } from "../interfaces/IFraxConvexStakingWrapper.sol";
-import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20, BaseCurveStrategy, CurveFunctions, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-abstract contract ConvexFraxLockingStrategy is BaseCurveStrategy {
+contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -53,7 +54,15 @@ abstract contract ConvexFraxLockingStrategy is BaseCurveStrategy {
         address fraxStaking;
     }
 
-    constructor(ConvexConfig memory _convexConfig) {
+    constructor(
+        BaseStrategyConfig memory _stratConfig,
+        CurveConfig memory _curveConfig,
+        ConvexConfig memory _convexConfig
+    )
+        InitializableAbstractStrategy(_stratConfig)
+        BaseCurveStrategy(_curveConfig)
+        CurveTwoCoinFunctions(_curveConfig.curvePool)
+    {
         fraxStakingWrapper = _convexConfig.fraxStakingWrapper;
         fraxStaking = _convexConfig.fraxStaking;
     }
@@ -82,6 +91,15 @@ abstract contract ConvexFraxLockingStrategy is BaseCurveStrategy {
             _pTokens
         );
         _approveBase();
+    }
+
+    function getCurveFunctions()
+        internal
+        pure
+        override(BaseCurveStrategy, CurveTwoCoinFunctions)
+        returns (CurveFunctions memory)
+    {
+        return CurveTwoCoinFunctions.getCurveFunctions();
     }
 
     /**
@@ -279,9 +297,12 @@ abstract contract ConvexFraxLockingStrategy is BaseCurveStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(
-        address _asset
-    ) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_curveSupportedCoin(_asset), "Unsupported asset");
 
         // Curve LP tokens in this contract. This should generally be nothing as we
