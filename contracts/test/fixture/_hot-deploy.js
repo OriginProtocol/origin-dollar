@@ -35,7 +35,10 @@ async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
         addresses.mainnet.balancerVault, // Address of the Balancer vault
         balancer_rETH_WETH_PID, // Pool ID of the Balancer pool
       ],
-      [2, 1], //BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT
+      [
+        2, // MetaStablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
+        1, // MetaStablePoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
+      ],
       addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
     ],
   });

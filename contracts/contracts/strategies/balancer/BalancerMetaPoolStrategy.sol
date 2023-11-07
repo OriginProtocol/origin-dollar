@@ -19,7 +19,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * 
      * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
 
-     * For Composable stable pools using IBalancerVault.WeightedPoolExitKind is not
+     * For Composable stable pools using IBalancerVault.MetaStablePoolExitKind is not
      * ok since the enum values are in different order as they are in MetaStable pools.
      * Value should be "1". From the pool code:
      * 
@@ -179,7 +179,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
          */
         bytes memory userData = abi.encode(
-            IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
+            IBalancerVault.MetaStablePoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             _getUserDataEncodedAmounts(amountsIn),
             minBPTwDeviation
         );

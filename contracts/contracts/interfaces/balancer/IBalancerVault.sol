@@ -4,25 +4,22 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 interface IBalancerVault {
-    enum WeightedPoolJoinKind {
+    enum MetaStablePoolJoinKind {
         INIT,
         EXACT_TOKENS_IN_FOR_BPT_OUT,
-        TOKEN_IN_FOR_EXACT_BPT_OUT,
-        ALL_TOKENS_IN_FOR_EXACT_BPT_OUT,
-        ADD_TOKEN
+        TOKEN_IN_FOR_EXACT_BPT_OUT
     }
 
-    enum WeightedPoolExitKind {
+    enum MetaStablePoolExitKind {
         EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
         EXACT_BPT_IN_FOR_TOKENS_OUT,
-        BPT_IN_FOR_EXACT_TOKENS_OUT,
-        REMOVE_TOKEN
+        BPT_IN_FOR_EXACT_TOKENS_OUT
     }
 
     enum ComposablePoolExitKind {
         EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
         BPT_IN_FOR_EXACT_TOKENS_OUT,
-        EXACT_BPT_IN_FOR_TOKENS_OUT
+        EXACT_BPT_IN_FOR_ALL_TOKENS_OUT
     }
 
     /**

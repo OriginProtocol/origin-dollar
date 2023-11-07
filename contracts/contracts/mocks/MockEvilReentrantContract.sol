@@ -54,7 +54,7 @@ contract MockEvilReentrantContract {
         );
 
         bytes memory joinUserData = abi.encode(
-            IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
+            IBalancerVault.MetaStablePoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             amounts,
             minBPT
         );
@@ -73,7 +73,9 @@ contract MockEvilReentrantContract {
 
         // 2. Redeem as ETH
         bytes memory exitUserData = abi.encode(
-            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+            IBalancerVault
+                .MetaStablePoolExitKind
+                .EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
             bptTokenBalance,
             1
         );
