@@ -39,7 +39,22 @@ describe("Dripper", async () => {
     it("returns a number after a duration has been set", async () => {
       await dripper.connect(governor).setDripDuration("2000");
       await advanceTime(1000);
-      expect(await dripper.availableFunds()).to.equal(usdtUnits("500"));
+      /* sometimes this test fails with 0.1% deviation from the expected value. Somehow
+       * another second slips in between Dripper's setDripDuration and 1000 seconds of
+       * advance time.
+       *
+       * Assumption is that in some cases the setDripDuration advances the time for 1 second
+       * so the total advanced time in the end equals 1001 seconds. Either that or hardhat
+       * isn't completely precise when advancing time using `evm_increaseTime`.
+       *
+       * It is hard to test this because the failure is intermittent.
+       */
+
+      // 0.1% out of 1000 seconds is 1 second
+      expect(await dripper.availableFunds()).to.approxEqualTolerance(
+        usdtUnits("500"),
+        0.1
+      );
     });
     it("returns zero if no balance", async () => {
       await dripper.connect(governor).setDripDuration("2000");

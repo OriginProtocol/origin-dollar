@@ -2,7 +2,7 @@
 
 ## Prettier
 
-Both Solidity and JavaScript code is formatted using [Prettier](https://prettier.io/).
+Both Solidity and JavaScript code are formatted using [Prettier](https://prettier.io/).
 
 The configuration for Prettier is in [.prettierrc](./.prettierrc).
 This should already be configured in the VS Code settings file [.vscode/settings.json](../.vscode/settings.json). [.prettierignore](./.prettierignore) is used to ignore files from being formatted.
@@ -41,6 +41,12 @@ yarn lint
 ```
 
 ## Slither
+
+### Install slither
+
+If you use the slither documented "pip3 install slither-analyzer" there might be problems
+with package collisions. Just use pipx that installs any package and all dependencies in 
+sandbox to circumvent the issue: `pipx install slither-analyzer`
 
 [Slither](https://github.com/crytic/slither#slither-the-solidity-source-analyzer) is used to for Solidity static analysis.
 
@@ -98,6 +104,22 @@ yarn test:fork
 ```
 
 See [Fork Tests](./fork-test.md) for more information.
+
+### Hot Deploys
+
+You can enable the "hot deploy" mode when doing fork testing development. The mode enables updating the contract code much faster and more conveniently comparing to running deploy scripts. Each time a fork test suite is ran, the configured contracts are updated
+
+To enable Hot Deploys set the HOT_DEPLOY variable in the contracts/.env file. Enable various modes using comma separated flags to direct which contracts need source updated (in the node runtime): 
+- strategy -> strategy contract associated to fixture
+- vaultCore -> vaultCore or oethVaultCore depending on the nature of the fixture
+- vaultAdmin -> vaultAdmin or oethVaultAdmin depending on the nature of the fixture
+- harvester -> harvester or oethHarvester (not yet supported)
+
+example: HOT_DEPLOY=strategy,vaultCore,vaultAdmin,harvester
+
+#### Supporting new fixtures / contracts
+
+Each fixture from the `_fixture.js` file needs to have custom support added for hot deploys. Usually that consists of creating constructor arguments for the associated strategy contract and mapping the fixture to strategy contracts needing the update. See how things work in "contracts/test/_hot-deploy.js"
 
 ### Echidna tests
 

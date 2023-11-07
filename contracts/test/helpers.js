@@ -1,11 +1,10 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const mocha = require("mocha");
 const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
-const { decimalsFor } = require("../utils/units");
+const { decimalsFor, units } = require("../utils/units");
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -74,7 +73,7 @@ chai.Assertion.addMethod(
   "balanceOf",
   async function (expected, contract, message) {
     const user = this._obj;
-    const address = user.address || user.getAddress(); // supports contracts too
+    const address = user.address || user.getAddress() || user; // supports contracts too
     const actual = await contract.balanceOf(address);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(contract));
@@ -124,7 +123,7 @@ chai.Assertion.addMethod(
   async function (expected, asset, message) {
     const strategy = this._obj;
     const assetAddress = asset.address || asset.getAddress();
-    const actual = await strategy.checkBalance(assetAddress);
+    const actual = await strategy["checkBalance(address)"](assetAddress);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(asset));
     }
@@ -151,15 +150,6 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
-
-/**
- * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.
- * @param {string} amount - The amount to convert, represented as a string in the base unit of the contract.
- * @param {Contract} contract - The token contract to get the decimal places for.
- */
-async function units(amount, contract) {
-  return parseUnits(amount, await decimalsFor(contract));
-}
 
 function ognUnits(amount) {
   return parseUnits(amount, 18);
@@ -401,6 +391,7 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
       CRV: addresses.mainnet.CRV,
       CVX: addresses.mainnet.CVX,
+      CVXLocker: addresses.mainnet.CVXLocker,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
       aDAI_v2: addresses.mainnet.aDAI_v2,
@@ -421,6 +412,7 @@ const getAssetAddresses = async (deployments) => {
       sfrxETH: addresses.mainnet.sfrxETH,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
+      uniswapUniversalRouter: addresses.mainnet.uniswapUniversalRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
@@ -433,13 +425,14 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
-      WETH: (await deployments.get("MockWETH")).address,
+      WETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
       ThreePool: (await deployments.get("MockCurvePool")).address,
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
       CRV: (await deployments.get("MockCRV")).address,
       CVX: (await deployments.get("MockCVX")).address,
+      CVXLocker: (await deployments.get("MockCVXLocker")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
       aDAI: (await deployments.get("MockADAI")).address,
       aUSDC: (await deployments.get("MockAUSDC")).address,
@@ -459,6 +452,8 @@ const getAssetAddresses = async (deployments) => {
       RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
+      uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
+        .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
 
@@ -620,7 +615,7 @@ async function differenceInStrategyBalance(
   const returnVals = Array(arrayLength);
 
   for (let i = 0; i < arrayLength; i++) {
-    balancesBefore[i] = await strategyContracts[i].checkBalance(
+    balancesBefore[i] = await strategyContracts[i]["checkBalance(address)"](
       assetAddresses[i]
     );
   }
@@ -628,7 +623,7 @@ async function differenceInStrategyBalance(
 
   for (let i = 0; i < arrayLength; i++) {
     returnVals[i] = (
-      await strategyContracts[i].checkBalance(assetAddresses[i])
+      await strategyContracts[i]["checkBalance(address)"](assetAddresses[i])
     ).sub(balancesBefore[i]);
   }
 
@@ -680,11 +675,6 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkOnlyDescribe = (title, fn) =>
-  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
-
 module.exports = {
   decimalsFor,
   ousdUnits,
@@ -729,7 +719,6 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
-  forkOnlyDescribe,
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,

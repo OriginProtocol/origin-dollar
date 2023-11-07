@@ -10,7 +10,8 @@ import "./Debugger.sol";
  */
 contract EchidnaTestTransfer is EchidnaDebug {
     /**
-     * @notice The receiving account's balance after a transfer must not increase by less than the amount transferred
+     * @notice The receiving account's balance after a transfer must not increase by
+     * less than the amount transferred
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -46,7 +47,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice The receiving account's balance after a transfer must not increase by more than the amount transferred
+     * @notice The receiving account's balance after a transfer must not
+     * increase by more than the amount transferred
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -73,7 +75,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice The sending account's balance after a transfer must not decrease by less than the amount transferred
+     * @notice The sending account's balance after a transfer must not
+     * decrease by less than the amount transferred
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -109,7 +112,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice The sending account's balance after a transfer must not decrease by more than the amount transferred
+     * @notice The sending account's balance after a transfer must not
+     * decrease by more than the amount transferred
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -136,7 +140,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice The receiving account's balance after a transfer must not increase by less than the amount transferred (minus rounding error)
+     * @notice The receiving account's balance after a transfer must not
+     * increase by less than the amount transferred (minus rounding error)
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -173,7 +178,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice The sending account's balance after a transfer must not decrease by less than the amount transferred (minus rounding error)
+     * @notice The sending account's balance after a transfer must
+     * not decrease by less than the amount transferred (minus rounding error)
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -210,7 +216,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice An account should always be able to successfully transfer an amount within its balance.
+     * @notice An account should always be able to successfully transfer
+     * an amount within its balance.
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -239,6 +246,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
         Debugger.log("Total supply", ousd.totalSupply());
 
         hevm.prank(from);
+        // slither-disable-next-line unchecked-transfer
         try ousd.transfer(to, amount) {
             assert(true);
         } catch {
@@ -247,7 +255,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
     }
 
     /**
-     * @notice An account should never be able to successfully transfer an amount greater than their balance.
+     * @notice An account should never be able to successfully transfer
+     * an amount greater than their balance.
      * @param fromAcc Account to transfer from
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
@@ -263,6 +272,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
         amount = ousd.balanceOf(from) + 1 + amount;
 
         hevm.prank(from);
+        // slither-disable-next-line unchecked-transfer
         try ousd.transfer(to, amount) {
             assert(false);
         } catch {
@@ -294,6 +304,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
         address from = getAccount(fromAcc);
 
         hevm.prank(from);
+        // slither-disable-next-line unchecked-transfer
         try ousd.transfer(address(0), amount) {
             assert(false);
         } catch {

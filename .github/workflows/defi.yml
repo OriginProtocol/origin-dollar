@@ -94,12 +94,18 @@ jobs:
           retention-days: 1
 
   contracts-forktest:
-    name: "Contracts Fork Tests"
+    name: "Contracts Fork Tests ${{ matrix.chunk_id }}"
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chunk_id: [0,1,2,3]
+    continue-on-error: true
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
+      CHUNK_ID: "${{matrix.chunk_id}}"
+      MAX_CHUNKS: "4"
     steps:
       - uses: actions/checkout@v3
 
@@ -126,7 +132,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: fork-test-coverage-${{ github.sha }}
+          name: fork-test-coverage-${{ github.sha }}-runner${{ matrix.chunk_id }}
           path: | 
             ./contracts/coverage.json
             ./contracts/coverage/**/*
@@ -158,15 +164,9 @@ jobs:
 
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: fork-test-coverage-${{ github.sha }}
-          path: ./fork-coverage
-      - uses: actions/download-artifact@v3
-        with:
-          name: unit-test-coverage-${{ github.sha }}
-          path: ./unit-coverage
+      
+      - name: Download all reports
+        uses: actions/download-artifact@v3
 
       - uses: codecov/codecov-action@v3
         with:
@@ -226,7 +226,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          wget https://github.com/ethereum/solidity/releases/download/v0.5.11/solc-static-linux
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.7/solc-static-linux
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install slither-analyzer

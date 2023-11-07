@@ -32,6 +32,7 @@ Set [Etherscan](https://docs.etherscan.io/) and [Infura](https://docs.infura.io/
 ```
 export ETHERSCAN_TOKEN={TOKEN_VALUE}
 export WEB3_INFURA_PROJECT_ID={API_KEY}
+export ONEINCH_SUBDOMAIN={JUST_THE_SUBDOMAIN_PART_OF_THE_SWAP_API}
 ```
 
 Activate the virtual environment:

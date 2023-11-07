@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture, impersonateAccount } = require("../_fixture");
+const { loadDefaultFixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("Check vault value", () => {
   let vault, ousd, matt, dai, checker, vaultSigner;
@@ -13,7 +14,7 @@ describe("Check vault value", () => {
     dai = fixture.dai;
     checker = await ethers.getContract("VaultValueChecker");
     vaultSigner = await ethers.getSigner(vault.address);
-    await impersonateAccount(vaultSigner.address);
+    await impersonateAndFund(vaultSigner.address);
   });
 
   async function changeAndSnapshot(opts) {

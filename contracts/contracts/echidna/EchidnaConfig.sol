@@ -26,14 +26,14 @@ contract EchidnaConfig {
     //   True => skip tests that are known to fail
     //   False => run all tests
     //
-    bool internal TOGGLE_KNOWN_ISSUES = false;
+    bool internal constant TOGGLE_KNOWN_ISSUES = false;
 
     // Toggle known issues within limits
     //
     // Same as TOGGLE_KNOWN_ISSUES, but also skip tests that are known to fail
     // within limits set by the variables below.
     //
-    bool internal TOGGLE_KNOWN_ISSUES_WITHIN_LIMITS = true;
+    bool internal constant TOGGLE_KNOWN_ISSUES_WITHIN_LIMITS = true;
 
     // Starting balance
     //
@@ -43,8 +43,8 @@ contract EchidnaConfig {
     // The starting balance is given to outsider accounts that are not used as
     // accounts while fuzzing.
     //
-    bool internal TOGGLE_STARTING_BALANCE = true;
-    uint256 internal STARTING_BALANCE = 1_000_000e18;
+    bool internal constant TOGGLE_STARTING_BALANCE = true;
+    uint256 internal constant STARTING_BALANCE = 1_000_000e18;
 
     // Change supply
     //
@@ -54,8 +54,8 @@ contract EchidnaConfig {
     //  True => limit the amount of change to a percentage of total supply
     //  False => no limit
     //
-    bool internal TOGGLE_CHANGESUPPLY_LIMIT = true;
-    uint256 internal CHANGESUPPLY_DIVISOR = 10; // 10% of total supply
+    bool internal constant TOGGLE_CHANGESUPPLY_LIMIT = true;
+    uint256 internal constant CHANGESUPPLY_DIVISOR = 10; // 10% of total supply
 
     // Mint limit
     //
@@ -65,13 +65,13 @@ contract EchidnaConfig {
     //  True => limit the amount of minted tokens
     //  False => no limit
     //
-    bool internal TOGGLE_MINT_LIMIT = true;
-    uint256 internal MINT_MODULO = 1_000_000_000_000e18;
+    bool internal constant TOGGLE_MINT_LIMIT = true;
+    uint256 internal constant MINT_MODULO = 1_000_000_000_000e18;
 
     // Known rounding errors
-    uint256 internal TRANSFER_ROUNDING_ERROR = 1e18 - 1;
-    uint256 internal OPT_IN_ROUNDING_ERROR = 1e18 - 1;
-    uint256 internal MINT_ROUNDING_ERROR = 1e18 - 1;
+    uint256 internal constant TRANSFER_ROUNDING_ERROR = 1e18 - 1;
+    uint256 internal constant OPT_IN_ROUNDING_ERROR = 1e18 - 1;
+    uint256 internal constant MINT_ROUNDING_ERROR = 1e18 - 1;
 
     /**
      * @notice Modifier to skip tests that are known to fail

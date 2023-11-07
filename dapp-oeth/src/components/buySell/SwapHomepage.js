@@ -222,6 +222,7 @@ const SwapHomepage = ({
 
     event({
       event: 'swap_started',
+      swap_route: selectedSwap.name,
       swap_token: swapTokenUsed,
       swap_amount: swapTokenAmount,
     })
@@ -266,6 +267,7 @@ const SwapHomepage = ({
       event({
         event: 'swap_complete',
         swap_type: swapMode,
+        swap_route: selectedSwap.name,
         swap_token: swapTokenUsed,
         swap_amount: swapTokenAmount,
       })

@@ -148,7 +148,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
-        super._initialize(_rewardTokenAddresses, _assets, pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            pTokens
+        );
 
         _approveBase();
     }

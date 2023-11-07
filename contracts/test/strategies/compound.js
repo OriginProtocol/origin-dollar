@@ -142,6 +142,30 @@ describe("Compound strategy", function () {
     );
   });
 
+  it("Should block Governor from adding more reward token address with zero address", async () => {
+    const { cStandalone, governor } = fixture;
+
+    await expect(
+      cStandalone
+        .connect(governor)
+        .setRewardTokenAddresses([
+          cStandalone.address,
+          "0x0000000000000000000000000000000000000000",
+        ])
+    ).to.be.revertedWith("Can not set an empty address as a reward token");
+  });
+
+  it("Should allow Governor to remove reward token addresses", async () => {
+    const { cStandalone, governor, comp } = fixture;
+
+    // Add so we can remove
+    await cStandalone
+      .connect(governor)
+      .setRewardTokenAddresses([cStandalone.address, comp.address]);
+    // Remove all
+    await cStandalone.connect(governor).setRewardTokenAddresses([]);
+  });
+
   it("Should not allow non-Governor to set reward token address", async () => {
     const { cStandalone, anna } = fixture;
     await expect(

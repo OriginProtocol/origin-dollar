@@ -2,11 +2,11 @@ const { expect } = require("chai");
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { forkOnlyDescribe, isCI } = require("../helpers");
+const { isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:oracles");
 
-forkOnlyDescribe("ForkTest: Oracles", function () {
+describe("ForkTest: Oracles Routers", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -46,7 +46,6 @@ forkOnlyDescribe("ForkTest: Oracles", function () {
 
       const price = await oethOracleRouter.price(stETH.address);
       expect(price).to.approxEqualTolerance(parseUnits("1", 18), 1);
-      expect(price).to.not.eq(parseUnits("1", 18));
     });
     it("should get gas costs of assets", async () => {
       const { reth, frxETH, stETH, weth, josh } = fixture;

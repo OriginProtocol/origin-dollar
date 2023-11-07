@@ -1,5 +1,6 @@
 module.exports = {
   skipFiles: [
+    "echidna", // Testing
     "mocks", // Testing
     "crytic", // Testing
     "token/OUSDResolutionUpgrade.sol", // No longer used

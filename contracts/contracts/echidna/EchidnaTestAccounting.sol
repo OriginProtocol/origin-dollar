@@ -51,6 +51,7 @@ contract EchidnaTestAccounting is EchidnaTestSupply {
         int256 delta = int256(balanceAfter) - int256(balanceBefore);
         Debugger.log("delta", delta);
 
+        // slither-disable-next-line tautology
         assert(-1 * delta >= 0);
         assert(-1 * delta <= int256(OPT_IN_ROUNDING_ERROR));
     }
@@ -87,6 +88,7 @@ contract EchidnaTestAccounting is EchidnaTestSupply {
         address target = getAccount(targetAcc);
 
         uint256 balanceBefore = ousd.balanceOf(target);
+        // slither-disable-next-line unused-return
         ousd._isNonRebasingAccountEchidna(target);
         uint256 balanceAfter = ousd.balanceOf(target);
 
@@ -100,6 +102,7 @@ contract EchidnaTestAccounting is EchidnaTestSupply {
     function testBalanceOfShouldNotRevert(uint8 targetAcc) public {
         address target = getAccount(targetAcc);
 
+        // slither-disable-next-line unused-return
         try ousd.balanceOf(target) {
             assert(true);
         } catch {

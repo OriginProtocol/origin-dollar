@@ -5,7 +5,7 @@ const {
   withConfirmation,
 } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
-const addresses = require("../utils/addresses");
+const { impersonateAndFund } = require("../utils/signers.js");
 
 const deployName = "015_flipper";
 
@@ -37,26 +37,7 @@ const trustee = async (hre) => {
   } else {
     let signer;
     if (isFork) {
-      // On Fork we impersonate the Strategist to claim governance.
-      await hre.network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [strategistAddr],
-      });
-      signer = await ethers.provider.getSigner(strategistAddr);
-
-      // Send some Eth to the signer to pay for gas fees.
-      await hre.network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [addresses.mainnet.Binance],
-      });
-      const binanceSigner = await ethers.provider.getSigner(
-        addresses.mainnet.Binance
-      );
-      // Send some Ethereum to Governor
-      await binanceSigner.sendTransaction({
-        to: strategistAddr,
-        value: hre.ethers.utils.parseEther("100"),
-      });
+      signer = await impersonateAndFund(strategistAddr, "100000");
     } else {
       signer = await ethers.provider.getSigner(governorAddr);
     }
