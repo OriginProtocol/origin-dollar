@@ -214,7 +214,7 @@ abstract contract ConvexStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev Collect accumulated CRV and CVX and send to Vault.
+     * @dev Collect accumulated CRV and CVX rewards and send to the Harvester.
      */
     function collectRewardTokens()
         external
