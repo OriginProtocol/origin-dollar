@@ -123,6 +123,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             _strategyAssets.length == _strategyAmounts.length,
             "Array length missmatch"
         );
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory poolAssets = poolAssets;
 
         uint256[] memory amountsIn = new uint256[](poolAssets.length);
 
@@ -274,6 +276,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Invalid input arrays"
         );
 
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory poolAssets = poolAssets;
         // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Calculate the balancer pool assets and amounts to withdraw
@@ -421,8 +425,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * Is only executable by the OToken's Vault or the Governor.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory poolAssets = poolAssets;
 
+        // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
         _lpWithdrawAll();
         // Get the BPTs withdrawn from Aura plus any that were already in this strategy contract
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
