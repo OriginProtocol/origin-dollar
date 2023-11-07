@@ -160,14 +160,16 @@ addresses.mainnet.CVXETHRewardsPool =
 // Curve frxETH/WETH pool
 addresses.mainnet.ConvexFrxEthWethStrategy =
   "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3"; // TODO set after deployment
-addresses.mainnet.CurveTwoCoinLib =
-  "0x85094b52754591A3dE0002AD97F433584389aea0"; // TODO set after deployment
 addresses.mainnet.CurveFrxEthWethPool =
   "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc";
 addresses.mainnet.CurveFrxEthWethGauge =
   "0x4e21418095d32d15c6e2b96a9910772613a50d50";
 addresses.mainnet.ConvexFrxEthWethRewardsPool =
   "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
+addresses.mainnet.FraxStakingWrapperConvexFrxEthWeth =
+  "0x08061fec3fc09aa2eb4b4b72ea618034cbfd22b0";
+addresses.mainnet.FraxStakingConvexFrxEthWeth =
+  "0xB4fdD7444E1d86b2035c97124C46b1528802DA35";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
