@@ -27,8 +27,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         BaseAuraStrategy(_auraRewardPoolAddress)
     {}
 
-    /* enum Value that represents exit encoding where for BPT given
-     * request exactly specifies the minimum amount of underlying assets
+    /* enum Value that represents exit encoding where for max BPT given
+     * request exactly specifies the amount of underlying assets
      * to be returned.
      */
     function _btpInExactTokensOutIndex()

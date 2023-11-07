@@ -40,7 +40,7 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         return
             uint256(
                 IBalancerVault
-                    .MetaStablePoolExitKind
+                    .ComposablePoolExitKind
                     .BPT_IN_FOR_EXACT_TOKENS_OUT
             );
     }
