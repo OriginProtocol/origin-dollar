@@ -340,7 +340,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 4 - Withdraw the balancer pool assets from the pool
 
-        /* 
+        /*
          * User sends an estimated but unknown (computed at run time) quantity of BPT,
          * and receives precise quantities of specified tokens.
          *
