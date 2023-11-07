@@ -565,10 +565,13 @@ contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
-     * @notice The amount of ETH value for redeeming 1 OETH.
-     * This is the minimum price for OETH. The better price is
-     * is usually achieved by swapping OETH for ETH
-     * with the Curve OETH/ETH pool.
+     * @notice The value (USD or ETH) of the collateral assets received from
+     * redeeming 1 Origin Token (OUSD or OETH) from the Vault.
+     * This is the minimum price for the OToken. A better price is usually achieved by
+     * swapping the OToken on the Curve pool used for Automated Market Operations (AMO).
+     * For OETH, that's the Curve OETH/ETH pool.
+     * For OUSD, that's the Curve OUSD/3Crv pool.
+     * @param price the price to 18 decimals.
      */
     function floorPrice() external view returns (uint256 price) {
         // Get the assets for redeeming 1 OETH
@@ -577,11 +580,15 @@ contract VaultCore is VaultInitializer {
 
         // For each of the redeemed assets
         for (uint256 i = 0; i < redeemAssets.length; ++i) {
-            // Sum the value of the asset in ETH = asset amount * oracle price
+            // Sum the value of the vault asset = asset amount * oracle price
+            // For OUSD's USDC and USDT assets that are to 6 decimals, the oracle
+            // price is to 18 decimals, so we do not need to scale them up to 18 decimals
             price +=
                 redeemAssets[i] *
                 IOracle(priceProvider).price(allAssets[i]);
         }
+
+        // scale back down to 18 decimals as we multiplied two 18 decimals numbers to get the value.
         price = price / 1e18;
     }
 

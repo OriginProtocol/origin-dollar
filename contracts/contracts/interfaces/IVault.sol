@@ -122,8 +122,6 @@ interface IVault {
 
     function floorPrice() external view returns (uint256);
 
-    function floorPrice2() external view returns (uint256);
-
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
