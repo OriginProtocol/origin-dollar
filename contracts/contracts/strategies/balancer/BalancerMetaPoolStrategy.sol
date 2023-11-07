@@ -45,9 +45,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             );
     }
 
-    /* User encoding where BPT tokens are supplied for proportional exit is required when
-     * calling a withdrawAll. For MetaStablePools that enum value is called EXACT_BPT_IN_FOR_TOKENS_OUT -
-     * value "1" and for ComposableStablePools it is called EXACT_BPT_IN_FOR_ALL_TOKENS_OUT value "2".
+    /* enum Value that represents exit encoding where BPT tokens are supplied for
+     * proportional exit is required when calling a withdrawAll.
      */
     function _exactBptInTokensOutIndex()
         internal
@@ -341,12 +340,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 4 - Withdraw the balancer pool assets from the pool
 
-        /* Custom asset exit: BPT_IN_FOR_EXACT_TOKENS_OUT:
+        /* 
          * User sends an estimated but unknown (computed at run time) quantity of BPT,
          * and receives precise quantities of specified tokens.
          *
          * ['uint256', 'uint256[]', 'uint256']
-         * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
+         * [USER_ENCODING_ENUM, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
             _btpInExactTokensOutIndex(),
@@ -432,12 +431,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         uint256[] memory minAmountsOut = new uint256[](poolAssets.length);
 
         // STEP 2 - Withdraw the Balancer pool assets from the pool
-        /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
+        /* Proportional exit:
          * User sends a precise quantity of BPT, and receives an estimated but unknown
          * (computed at run time) quantity of a single token
          *
          * ['uint256', 'uint256']
-         * [EXACT_BPT_IN_FOR_TOKENS_OUT, bptAmountIn]
+         * [USER_ENCODING_ENUM, bptAmountIn]
          *
          * It is ok to pass an empty minAmountsOut since tilting the pool in any direction
          * when doing a proportional exit can only be beneficial to the strategy. Since

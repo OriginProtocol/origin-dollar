@@ -27,8 +27,8 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         )
     {}
 
-    /* enum Value that represents exit encoding where for BPT given
-     * request exactly specifies the minimum amount of underlying assets
+    /* enum Value that represents exit encoding where for max BPT given
+     * request exactly specifies the amount of underlying assets
      * to be returned.
      */
     function _btpInExactTokensOutIndex()
@@ -45,8 +45,8 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             );
     }
 
-    /* User encoding where BPT tokens are supplied for proportional exit is required when
-     * calling a withdrawAll
+    /* enum Value that represents exit encoding where BPT tokens are supplied for
+     * proportional exit is required when calling a withdrawAll.
      */
     function _exactBptInTokensOutIndex()
         internal
