@@ -14,52 +14,53 @@ import { StableMath } from "../../utils/StableMath.sol";
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    /* For Meta stable pools the enum value should be "2" as it is defined 
-     * in the IBalancerVault. From the Metastable pool codebase:
-     * 
-     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
-
-     * For Composable stable pools using IBalancerVault.MetaStablePoolExitKind is not
-     * ok since the enum values are in different order as they are in MetaStable pools.
-     * Value should be "1". From the pool code:
-     * 
-     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
-     */
-    uint256 public immutable balancerBptInExactTokensOutIndex;
-
-    /* we need to call EXACT_BPT_IN_FOR_TOKENS_OUT when doing withdrawAll.
-     * In meta stable pools that enum item with value 1 and for Composable stable pools
-     * that is enum item with value 2.
-     */
-    uint256 public immutable balancerExactBptInTokensOutIndex;
 
     int256[50] private ___reserved;
-
-    struct BaseMetaPoolConfig {
-        /* enum Value that represents exit encoding where for min BPT in
-         * user can exactly specify the underlying assets to be returned
-         */
-        uint256 balancerBptInExactTokensOutIndex;
-        /* enum Value that represents exit encoding where for exact amount
-         * of BPT in user can shall receive proportional amount of underlying assets
-         */
-        uint256 balancerExactBptInTokensOutIndex;
-    }
 
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
-        BaseMetaPoolConfig memory _metapoolConfig,
         address _auraRewardPoolAddress
     )
         InitializableAbstractStrategy(_stratConfig)
         BaseBalancerStrategy(_balancerConfig)
         BaseAuraStrategy(_auraRewardPoolAddress)
+    {}
+
+    /* enum Value that represents exit encoding where for BPT given
+     * request exactly specifies the minimum amount of underlying assets
+     * to be returned.
+     */
+    function _btpInExactTokensOutIndex()
+        internal
+        pure
+        virtual
+        returns (uint256)
     {
-        balancerBptInExactTokensOutIndex = _metapoolConfig
-            .balancerBptInExactTokensOutIndex;
-        balancerExactBptInTokensOutIndex = _metapoolConfig
-            .balancerExactBptInTokensOutIndex;
+        return
+            uint256(
+                IBalancerVault
+                    .MetaStablePoolExitKind
+                    .BPT_IN_FOR_EXACT_TOKENS_OUT
+            );
+    }
+
+    /* User encoding where BPT tokens are supplied for proportional exit is required when
+     * calling a withdrawAll. For MetaStablePools that enum value is called EXACT_BPT_IN_FOR_TOKENS_OUT -
+     * value "1" and for ComposableStablePools it is called EXACT_BPT_IN_FOR_ALL_TOKENS_OUT value "2".
+     */
+    function _exactBptInTokensOutIndex()
+        internal
+        pure
+        virtual
+        returns (uint256)
+    {
+        return
+            uint256(
+                IBalancerVault
+                    .MetaStablePoolExitKind
+                    .EXACT_BPT_IN_FOR_TOKENS_OUT
+            );
     }
 
     /**
@@ -348,7 +349,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
-            balancerBptInExactTokensOutIndex,
+            _btpInExactTokensOutIndex(),
             _getUserDataEncodedAmounts(poolAssetsAmountsOut),
             maxBPTtoWithdraw
         );
@@ -443,7 +444,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * it will receive more of the underlying tokens for the BPT traded in.
          */
         bytes memory userData = abi.encode(
-            balancerExactBptInTokensOutIndex,
+            _exactBptInTokensOutIndex(),
             BPTtoWithdraw
         );
 
