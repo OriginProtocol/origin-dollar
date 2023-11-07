@@ -83,6 +83,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function deposit(address[] calldata, uint256[] calldata)
         external
+        virtual
         onlyVault
         nonReentrant
     {

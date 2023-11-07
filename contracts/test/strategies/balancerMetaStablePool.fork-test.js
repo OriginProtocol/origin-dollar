@@ -267,9 +267,27 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
     it("Should be able to deposit with higher deposit deviation", async function () {});
 
+    it("Should fail when depositing an unsupported asset directly", async function () {
+      const fixture = await balancerRethWETHExposeFunctionFixture();
+      const { balancerREthStrategy, oethVault, frxETH, josh } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await frxETH
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [frxETH.address],
+            [oethUnits("1")]
+          )
+      ).to.be.revertedWith("Unsupported asset");
+    });
+
     it("Should revert when single asset deposit is called", async function () {
-      const { balancerREthStrategy, oethVault, weth, josh } =
-        fixture;
+      const { balancerREthStrategy, oethVault, weth, josh } = fixture;
       const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await weth
@@ -287,8 +305,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     });
 
     it("Should revert when multi asset deposit is called", async function () {
-      const { balancerREthStrategy, oethVault, weth, reth, josh } =
-        fixture;
+      const { balancerREthStrategy, oethVault, weth, reth, josh } = fixture;
       const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await weth
@@ -418,6 +435,21 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
       expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
       expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
+    });
+
+    it("Should fail when withdrawing an unsupported asset", async function () {
+      const { balancerREthStrategy, oethVault, frxETH } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [frxETH.address],
+            [oethUnits("1")]
+          )
+      ).to.be.revertedWith("Unsupported asset");
     });
 
     it("Should be able to withdraw with higher withdrawal deviation", async function () {});
