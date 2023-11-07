@@ -94,6 +94,25 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       );
     });
 
+    it("Should set setMaxDepositDeviation", async function () {
+      const { balancerREthStrategy, strategist } = fixture;
+
+      const currentDeviation = await balancerREthStrategy.maxDepositDeviation();
+
+      expect(currentDeviation).to.be.gte(oethUnits("0.01"));
+      expect(currentDeviation).to.be.lte(oethUnits("0.1"));
+      const newDeviation = currentDeviation.add(oethUnits("0.01"));
+
+      await balancerREthStrategy
+        .connect(strategist)
+        .setMaxDepositDeviation(newDeviation);
+
+      const newDeviationRead = await balancerREthStrategy.maxDepositDeviation();
+
+      expect(newDeviationRead).to.equal(newDeviation);
+      expect(newDeviationRead).to.not.equal(currentDeviation);
+    });
+
     it("Should safeApproveAllTokens", async function () {
       const { reth, rEthBPT, weth, balancerREthStrategy, timelock } = fixture;
       const balancerVault = await balancerREthStrategy.balancerVault();
@@ -248,14 +267,46 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
     it("Should be able to deposit with higher deposit deviation", async function () {});
 
-    it("Should revert when read-only re-entrancy is triggered", async function () {
-      /* - needs to be an asset default strategy
-       * - needs pool that supports native ETH
-       * - attacker needs to try to deposit to Balancer pool and withdraw
-       * - while withdrawing and receiving ETH attacker should take over the execution flow
-       *   and try calling mint/redeem with the strategy default asset on the OethVault
-       * - transaction should revert because of the `whenNotInVaultContext` modifier
-       */
+    it("Should revert when single asset deposit is called", async function () {
+      const { balancerREthStrategy, oethVault, weth, josh } =
+        fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address,uint256)"](
+            weth.address,
+            oethUnits("1")
+          )
+      ).to.be.revertedWith("Not supported");
+    });
+
+    it("Should revert when multi asset deposit is called", async function () {
+      const { balancerREthStrategy, oethVault, weth, reth, josh } =
+        fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("1"));
+
+      await reth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("1"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [reth.address, weth.address],
+            [oethUnits("1"), oethUnits("1")]
+          )
+      ).to.be.revertedWith("Not supported");
     });
 
     it("Should check balance for gas usage", async () => {
