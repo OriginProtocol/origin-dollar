@@ -122,6 +122,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         virtual
         returns (CurveFunctions memory);
 
+    /***************************************
+                    Deposits
+    ****************************************/
+
     /**
      * @notice Deposit a vault asset into the Curve pool.
      * This assumes the vault has already transferred the asset to this strategy contract.
@@ -288,9 +292,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Remove all assets from the Curve pool and send them to Vault contract.
-     * @dev This must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
-     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      * This will include all assets in the Curve pool and this strategy contract.
+     *
+     * `withdrawAll` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
@@ -300,7 +305,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             CURVE_POOL_ASSETS_COUNT
         );
 
-        // Remove liquidity
+        // Remove all liquidity from the Curve pool
         CurveFunctions memory curveFunctions = getCurveFunctions();
         curveFunctions.remove_liquidity(
             IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
@@ -326,7 +331,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Approve the spending of all assets by their corresponding pool tokens,
+     * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -422,11 +427,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * Revert if the `_coinIndex` is not supported by the Curve pool.
      * @param _coinIndex Index value of the coin in the Curve pool.
      * Can be checked using Curve's `coins` getter method.
+     * @param poolAsset the address of the coin in the Curve pool.
      */
     function _getAsset(uint256 _coinIndex)
         internal
         view
-        returns (address asset)
+        returns (address poolAsset)
     {
         if (_coinIndex == 0) {
             return coin0;
@@ -443,7 +449,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Retuns bool indicating whether vault asset is supported by the strategy
+     * @notice Returns bool indicating whether vault asset is supported by the strategy
      * @param _vaultAsset Address of the vault asset
      */
     function supportsAsset(address _vaultAsset)
