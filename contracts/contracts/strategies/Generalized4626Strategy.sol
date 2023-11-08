@@ -136,8 +136,12 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
                 vaultAddress,
                 address(this)
             );
+            emit Withdrawal(
+                address(assetToken),
+                address(shareToken),
+                assetAmount
+            );
         }
-        emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
     }
 
     /**
@@ -180,7 +184,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
-        external
+        public
         view
         virtual
         override

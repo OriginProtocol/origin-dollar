@@ -1,7 +1,8 @@
 const { formatUnits } = require("ethers/lib/utils");
 const { ethers } = hre;
 const addresses = require("./addresses");
-const { replaceContractAt } = require("./deploy");
+const { replaceContractAt } = require("./hardhat");
+
 const log = require("./logger")("utils:fork:mockOracle");
 
 const feedConfig = {
@@ -28,7 +29,7 @@ const setChainlinkOraclePrice = async (asset, price) => {
   const { feed, decimals } = feedConfig[asset];
   const { deploy } = deployments;
   if (!feed || !decimals) {
-    throw new Error(`Can not mock oracle for asset: ${assets}`);
+    throw new Error(`Can not mock oracle for asset: ${asset}`);
   }
 
   const contractName = `MockChainlinkOracleFeed_${asset}`;

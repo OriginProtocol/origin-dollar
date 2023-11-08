@@ -7,11 +7,9 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { Governable } from "../governance/Governable.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { BaseHarvester } from "./BaseHarvester.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../utils/Helpers.sol";
 

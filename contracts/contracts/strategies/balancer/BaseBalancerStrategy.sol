@@ -126,12 +126,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 

@@ -11,10 +11,6 @@ const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 const {
-  replaceContractAt,
-  // deployWithConfirmation,
-} = require("../utils/deploy");
-const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
 } = require("../utils/constants");
@@ -22,6 +18,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
+const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
   daiUnits,
@@ -73,8 +70,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
 
-  const harvesterProxy = await ethers.getContract("HarvesterProxy");
-
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -97,9 +92,15 @@ const defaultFixture = deployments.createFixture(async () => {
     woeth = await ethers.getContractAt("WOETH", woethProxy.address);
   }
 
+  const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
+  );
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
   );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
@@ -210,16 +211,13 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
-    LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
-    oethHarvester,
     oethDripper,
     oethZapper,
     swapper,
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    convexEthMetaStrategyProxy,
     convexEthMetaStrategy,
     fluxStrategy,
     vaultValueChecker,
@@ -325,13 +323,7 @@ const defaultFixture = deployments.createFixture(async () => {
       balancerRethStrategyProxy.address
     );
 
-    const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
-    oethHarvester = await ethers.getContractAt(
-      "OETHHarvester",
-      oethHarvesterProxy.address
-    );
-
-    convexEthMetaStrategyProxy = await ethers.getContract(
+    const convexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
     convexEthMetaStrategy = await ethers.getContractAt(
@@ -377,6 +369,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cusdt = await ethers.getContract("MockCUSDT");
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
+    bal = await ethers.getContract("MockBAL");
 
     crv = await ethers.getContract("MockCRV");
     cvx = await ethers.getContract("MockCVX");
@@ -434,7 +427,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
     flipper = await ethers.getContract("Flipper");
 
-    LUSDMetaStrategyProxy = await ethers.getContract(
+    const LUSDMetaStrategyProxy = await ethers.getContract(
       "ConvexLUSDMetaStrategyProxy"
     );
     LUSDMetaStrategy = await ethers.getContractAt(
@@ -637,11 +630,6 @@ async function oethDefaultFixture() {
       addresses.mainnet.FraxETHMinter,
       await ethers.getContract("MockFrxETHMinter")
     );
-    const mockedMinter = await ethers.getContractAt(
-      "MockFrxETHMinter",
-      addresses.mainnet.FraxETHMinter
-    );
-    await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Fund WETH contract
     await hardhatSetBalance(weth.address, "999999999999999");
@@ -1689,12 +1677,7 @@ async function compoundFixture() {
   await deploy("StandaloneCompound", {
     from: governorAddr,
     contract: "CompoundStrategy",
-    args: [
-      [
-        addresses.dead,
-        governorAddr, // Using Governor in place of Vault here
-      ],
-    ],
+    args: [[addresses.dead, fixture.vault.address]],
   });
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
@@ -1711,6 +1694,12 @@ async function compoundFixture() {
   await fixture.cStandalone
     .connect(sGovernor)
     .setHarvesterAddress(fixture.harvester.address);
+
+  // impersonate the vault and strategy
+  fixture.vaultSigner = await impersonateAndFund(fixture.vault.address);
+  fixture.strategySigner = await impersonateAndFund(
+    fixture.cStandalone.address
+  );
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),

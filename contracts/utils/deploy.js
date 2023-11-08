@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { BigNumber, utils } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const {
   advanceTime,
@@ -33,10 +33,7 @@ const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
-const {
-  setStorageAt,
-  setCode,
-} = require("@nomicfoundation/hardhat-network-helpers");
+const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -59,7 +56,8 @@ const deployWithConfirmation = async (
   contractName,
   args,
   contract,
-  skipUpgradeSafety = false
+  skipUpgradeSafety = false,
+  libraries = {}
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
@@ -79,6 +77,7 @@ const deployWithConfirmation = async (
       args,
       contract,
       fieldsToCompare: null,
+      libraries,
       ...(await getTxOpts()),
     })
   );
@@ -1207,13 +1206,6 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
-async function replaceContractAt(targetAddress, mockContract) {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
-
-  await setCode(targetAddress, mockCode);
-}
-
 module.exports = {
   log,
   sleep,
@@ -1226,5 +1218,4 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
-  replaceContractAt,
 };
