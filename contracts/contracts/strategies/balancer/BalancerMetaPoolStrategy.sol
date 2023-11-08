@@ -616,6 +616,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
+        /* Double approve is not required with the assets supported by the
+         * strategies today. This is defensive, future proof programming
+         * in case we ever utilize this asset for OUSD supporting non completely
+         * ERC20 compliant tokens (e.g. USDT)
+         */
+        // slither-disable-next-line unused-return
+        asset.approve(address(balancerVault), 0);
         // slither-disable-next-line unused-return
         asset.approve(address(balancerVault), type(uint256).max);
     }
