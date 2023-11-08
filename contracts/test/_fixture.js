@@ -6,6 +6,7 @@ const { formatUnits } = require("ethers/lib/utils");
 
 require("./_global-hooks");
 
+const { hotDeployOption } = require("./_hot-deploy.js");
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
@@ -999,6 +1000,10 @@ async function untiltBalancerMetaStableWETHPool({
  */
 async function balancerREthFixture(config = { defaultStrategy: true }) {
   const fixture = await defaultFixture();
+  await hotDeployOption(fixture, "balancerREthFixture", {
+    isOethFixture: true,
+  });
+
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
 
@@ -1245,6 +1250,7 @@ async function makerDsrFixture(
  */
 async function morphoCompoundFixture() {
   const fixture = await defaultFixture();
+  await hotDeployOption(fixture, "morphoCompoundFixture");
 
   const { timelock } = fixture;
 
@@ -1342,6 +1348,9 @@ async function oethMorphoAaveFixture() {
  */
 async function fraxETHStrategyFixture() {
   const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "fraxETHStrategyFixture", {
+    isOethFixture: true,
+  });
 
   if (isFork) {
     const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
@@ -1527,6 +1536,9 @@ async function convexOETHMetaVaultFixture(
   }
 ) {
   const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "convexOETHMetaVaultFixture", {
+    isOethFixture: true,
+  });
 
   const {
     convexEthMetaStrategy,
