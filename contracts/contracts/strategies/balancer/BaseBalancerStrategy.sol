@@ -538,7 +538,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         require(poolAssetsLength == providers.length, "Asset length mismatch");
 
-        for (uint256 i = 0; i < poolAssetsLength; i++) {
+        for (uint256 i = 0; i < poolAssetsLength; ++i) {
             if (address(providers[i]) == address(0)) {
                 assetToRateProviderCache[poolAssets[i]] = FIXED_RATE_PROVIDER;
             } else {

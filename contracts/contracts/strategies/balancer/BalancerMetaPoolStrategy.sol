@@ -130,8 +130,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             _strategyAssets.length == _strategyAmounts.length,
             "Array length missmatch"
         );
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory _poolAssets = poolAssets;
 
-        uint256[] memory amountsIn = new uint256[](poolAssets.length);
+        uint256[] memory amountsIn = new uint256[](_poolAssets.length);
 
         uint256[] memory strategyAssetAmountsToPoolAssetAmounts = new uint256[](
             _strategyAssets.length
@@ -200,7 +202,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
-            .JoinPoolRequest(poolAssets, amountsIn, userData, false);
+            .JoinPoolRequest(_poolAssets, amountsIn, userData, false);
 
         // Add the pool assets in this strategy to the Balancer pool
         balancerVault.joinPool(
@@ -289,11 +291,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Invalid input arrays"
         );
 
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory _poolAssets = poolAssets;
         // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Calculate the balancer pool assets and amounts to withdraw
         uint256[] memory poolAssetsAmountsOut = new uint256[](
-            poolAssets.length
+            _poolAssets.length
         );
         // Is the wrapped asset amount indexed by the assets array, not the order of the Balancer pool tokens
         // eg wstETH and sfrxETH amounts, not the stETH and frxETH amounts
@@ -342,7 +346,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
         uint256 maxBPTtoWithdraw = _getBPTExpected(
-            _getUserDataEncodedAssets(poolAssets),
+            _getUserDataEncodedAssets(_poolAssets),
             /* all non 0 values are overshot by 2 WEI and with the expected mainnet
              * ~1% withdrawal deviation, the 2 WEI aren't important
              */
@@ -378,7 +382,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(
-                poolAssets,
+                _poolAssets,
                 /* We specify the exact amount of a tokens we are expecting in the encoded
                  * userData, for that reason we don't need to specify the amountsOut here.
                  *
@@ -386,7 +390,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                  * https://github.com/balancer/balancer-v2-monorepo/issues/2541
                  * which is an extra reason why this field is empty.
                  */
-                new uint256[](poolAssets.length),
+                new uint256[](_poolAssets.length),
                 userData,
                 false
             );
@@ -456,14 +460,16 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     }
 
     function _withdrawAll(bool isRecoveryModeWithdrawal) internal {
-        // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
+        // store poolAssets storage variable into memory for gas optimizations
+        address[] memory _poolAssets = poolAssets;
 
+        // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
         _lpWithdrawAll();
         // Get the BPTs withdrawn from Aura plus any that were already in this strategy contract
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
-        uint256[] memory minAmountsOut = new uint256[](poolAssets.length);
+        uint256[] memory minAmountsOut = new uint256[](_poolAssets.length);
 
         // STEP 2 - Withdraw the Balancer pool assets from the pool
         /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
@@ -498,7 +504,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         }
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
-            .ExitPoolRequest(poolAssets, minAmountsOut, userData, false);
+            .ExitPoolRequest(_poolAssets, minAmountsOut, userData, false);
 
         balancerVault.exitPool(
             balancerPoolId,
@@ -512,8 +518,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 3 - Convert the balancer pool assets to the vault collateral assets and send to the vault
         // For each of the Balancer pool assets
-        for (uint256 i = 0; i < poolAssets.length; ++i) {
-            address poolAsset = poolAssets[i];
+        for (uint256 i = 0; i < _poolAssets.length; ++i) {
+            address poolAsset = _poolAssets[i];
             // Convert the balancer pool asset to the strategy asset
             address strategyAsset = _fromPoolAsset(poolAsset);
             // Get the balancer pool assets withdraw from the pool plus any that were already in this strategy contract
