@@ -436,6 +436,59 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
       expect(rethBalanceDiff).to.be.gte(await units("15", reth), 1);
       expect(frxEthBalanceDiff).to.be.gte(await units("15", frxETH), 1);
     });
+
+    it("Should be able to withdraw all of pool liquidity in recovery mode", async function () {
+      const {
+        oethVault,
+        stETH,
+        frxETH,
+        reth,
+        balancerSfrxWstRETHStrategy,
+        enableRecoveryMode,
+      } = fixture;
+
+      const stEthBalanceBefore = await balancerSfrxWstRETHStrategy[
+        "checkBalance(address)"
+      ](stETH.address);
+      const rethBalanceBefore = await balancerSfrxWstRETHStrategy[
+        "checkBalance(address)"
+      ](reth.address);
+      const frxEthBalanceBefore = await balancerSfrxWstRETHStrategy[
+        "checkBalance(address)"
+      ](frxETH.address);
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await expect(
+        balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .recoveryModeWithdrawAll()
+      ).to.be.revertedWith("Pool not in recovery mode");
+
+      await enableRecoveryMode();
+
+      await balancerSfrxWstRETHStrategy
+        .connect(oethVaultSigner)
+        .recoveryModeWithdrawAll();
+
+      const stEthBalanceDiff = stEthBalanceBefore.sub(
+        await balancerSfrxWstRETHStrategy["checkBalance(address)"](
+          stETH.address
+        )
+      );
+      const rethBalanceDiff = rethBalanceBefore.sub(
+        await balancerSfrxWstRETHStrategy["checkBalance(address)"](reth.address)
+      );
+      const frxEthBalanceDiff = frxEthBalanceBefore.sub(
+        await balancerSfrxWstRETHStrategy["checkBalance(address)"](
+          frxETH.address
+        )
+      );
+
+      expect(stEthBalanceDiff).to.be.gte(await units("15", stETH), 1);
+      expect(rethBalanceDiff).to.be.gte(await units("15", reth), 1);
+      expect(frxEthBalanceDiff).to.be.gte(await units("15", frxETH), 1);
+    });
   });
 
   describe("Large withdraw", function () {

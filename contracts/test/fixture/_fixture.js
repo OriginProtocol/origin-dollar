@@ -1022,6 +1022,19 @@ async function balancerFrxETHwstETHeETHFixture(
     josh
   );
 
+  /* balancer Gnosis safe authorized account
+   * Use this Dube query to get relevant transactions: 
+   - https://dune.com/queries/3184026
+   */
+  const authorizerAddress = "0xa29f61256e948f3fb707b4b3b138c5ccb9ef9888";
+  const recoveryModeSigner = await impersonateAndFund(authorizerAddress);
+
+  fixture.enableRecoveryMode = async () => {
+    await fixture.sfrxETHwstETHrEthBPT
+      .connect(recoveryModeSigner)
+      .enableRecoveryMode();
+  };
+
   await setERC20TokenBalance(josh.address, reth, "1000000", hre);
   await setERC20TokenBalance(josh.address, frxETH, "1000000", hre);
   await setERC20TokenBalance(josh.address, stETH, "1000000", hre);
