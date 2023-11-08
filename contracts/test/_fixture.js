@@ -147,6 +147,9 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
+  const oethOracle = await ethers.getContract("OETHOracle");
+  const oethOracleUpdater = await ethers.getContract("OETHOracleUpdater");
+
   let usdt,
     dai,
     tusd,
@@ -524,6 +527,8 @@ const defaultFixture = deployments.createFixture(async () => {
     compoundStrategy,
     oracleRouter,
     oethOracleRouter,
+    oethOracle,
+    oethOracleUpdater,
     // Assets
     usdt,
     dai,

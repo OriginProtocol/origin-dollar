@@ -6,7 +6,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "076_oeth_vault_upgrade",
+    deployName: "081_oeth_oracle",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: false,
@@ -54,7 +54,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 4. Governance Actions
     return {
-      name: "Upgrade the OETH Vault with price Oracle.",
+      name: "Upgrade the OETH Vault and deploy the OETH Oracle and Oracle Updater.",
       actions: [
         // 1. Upgrade the OETH Vault proxy to the new core vault implementation
         {
