@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
+const { ethers } = hre;
 const { BigNumber } = require("ethers");
 const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
@@ -173,6 +174,33 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         balancerREthStrategy.address,
         auraRewardPool
       );
+    });
+
+    // Un-skip once we re-deploy the strategy
+    it("Shouldn't be able to cache assets twice", async function () {
+      const { balancerREthStrategy, josh } = fixture;
+
+      // Temporary check that should be removed when new strategy implementation
+      // is deployed.
+      const strategyProxy = await ethers.getContractAt(
+        "InitializeGovernedUpgradeabilityProxy",
+        balancerREthStrategy.address
+      );
+      const implementationAddress = await strategyProxy.implementation();
+
+      /* Current implementation doesn't support this function yet. When a new one is
+       * deployed this test will be re-enabled
+       */
+      if (
+        implementationAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D"
+      ) {
+        return;
+      }
+      // END OF temporary check
+
+      await expect(
+        balancerREthStrategy.connect(josh).cachePoolAssets()
+      ).to.be.revertedWith("Assets already cached");
     });
   });
 
