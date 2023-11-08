@@ -430,7 +430,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * Revert if the `_coinIndex` is not supported by the Curve pool.
      * @param _coinIndex Index value of the coin in the Curve pool.
      * Can be checked using Curve's `coins` getter method.
-     * @param poolAsset the addres of the coin in the Curve pool.
+     * @param poolAsset the address of the coin in the Curve pool.
      */
     function _getAsset(uint256 _coinIndex)
         internal
@@ -452,7 +452,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Retuns bool indicating whether vault asset is supported by the strategy
+     * @notice Returns bool indicating whether vault asset is supported by the strategy
      * @param _vaultAsset Address of the vault asset
      */
     function supportsAsset(address _vaultAsset)

@@ -783,6 +783,19 @@ async function getGovernorFive() {
 
 async function getProposalState(proposalIdBn) {
   const governorFive = await getGovernorFive();
+  let state = -1;
+  /* Sometimes a bug happens where fetching the state will cause an exception. It doesn't happen
+   * if deploy is ran with "--trace" option. A workaround that doesn't fix the unknown underlying
+   * issue is to retry 3 times.
+   */
+  let tries = 3;
+  while (tries > 0) {
+    tries--;
+    try {
+      state = await governorFive.state(proposalIdBn);
+      tries = 0;
+    } catch (e) {}
+  }
 
   return [
     "Pending",
@@ -793,7 +806,7 @@ async function getProposalState(proposalIdBn) {
     "Queued",
     "Expired",
     "Executed",
-  ][await governorFive.state(proposalIdBn)];
+  ][state];
 }
 
 async function getTimelock() {
