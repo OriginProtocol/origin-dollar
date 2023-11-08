@@ -310,8 +310,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             if (poolAssetAmount > 0) {
                 strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
 
-                /* This check is triggered when the _withdrawal is unexpectedly
-                 * called with a duplicate asset in the _strategyAssets array
+                /* This check is triggered when the _withdrawal is called with
+                 * a duplicate asset in the _strategyAssets array
                  */
                 require(
                     poolAssetsAmountsOut[poolAssetIndex[poolAsset]] == 0,
