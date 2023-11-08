@@ -14,52 +14,52 @@ import { StableMath } from "../../utils/StableMath.sol";
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    /* For Meta stable pools the enum value should be "2" as it is defined 
-     * in the IBalancerVault. From the Metastable pool codebase:
-     * 
-     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
-
-     * For Composable stable pools using IBalancerVault.MetaStablePoolExitKind is not
-     * ok since the enum values are in different order as they are in MetaStable pools.
-     * Value should be "1". From the pool code:
-     * 
-     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
-     */
-    uint256 public immutable balancerBptInExactTokensOutIndex;
-
-    /* we need to call EXACT_BPT_IN_FOR_TOKENS_OUT when doing withdrawAll.
-     * In meta stable pools that enum item with value 1 and for Composable stable pools
-     * that is enum item with value 2.
-     */
-    uint256 public immutable balancerExactBptInTokensOutIndex;
 
     int256[50] private ___reserved;
-
-    struct BaseMetaPoolConfig {
-        /* enum Value that represents exit encoding where for min BPT in
-         * user can exactly specify the underlying assets to be returned
-         */
-        uint256 balancerBptInExactTokensOutIndex;
-        /* enum Value that represents exit encoding where for exact amount
-         * of BPT in user can shall receive proportional amount of underlying assets
-         */
-        uint256 balancerExactBptInTokensOutIndex;
-    }
 
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
-        BaseMetaPoolConfig memory _metapoolConfig,
         address _auraRewardPoolAddress
     )
         InitializableAbstractStrategy(_stratConfig)
         BaseBalancerStrategy(_balancerConfig)
         BaseAuraStrategy(_auraRewardPoolAddress)
+    {}
+
+    /* enum Value that represents exit encoding where for max BPT given
+     * request exactly specifies the amount of underlying assets
+     * to be returned.
+     */
+    function _btpInExactTokensOutIndex()
+        internal
+        pure
+        virtual
+        returns (uint256)
     {
-        balancerBptInExactTokensOutIndex = _metapoolConfig
-            .balancerBptInExactTokensOutIndex;
-        balancerExactBptInTokensOutIndex = _metapoolConfig
-            .balancerExactBptInTokensOutIndex;
+        return
+            uint256(
+                IBalancerVault
+                    .MetaStablePoolExitKind
+                    .BPT_IN_FOR_EXACT_TOKENS_OUT
+            );
+    }
+
+    /* enum Value that represents exit encoding where BPT tokens are supplied for
+     * proportional exit is required when calling a withdrawAll.
+     */
+    function _exactBptInTokensOutIndex()
+        internal
+        pure
+        virtual
+        returns (uint256)
+    {
+        return
+            uint256(
+                IBalancerVault
+                    .MetaStablePoolExitKind
+                    .EXACT_BPT_IN_FOR_TOKENS_OUT
+            );
     }
 
     /**
@@ -340,15 +340,15 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 4 - Withdraw the balancer pool assets from the pool
 
-        /* Custom asset exit: BPT_IN_FOR_EXACT_TOKENS_OUT:
+        /*
          * User sends an estimated but unknown (computed at run time) quantity of BPT,
          * and receives precise quantities of specified tokens.
          *
          * ['uint256', 'uint256[]', 'uint256']
-         * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
+         * [USER_ENCODING_ENUM, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
-            balancerBptInExactTokensOutIndex,
+            _btpInExactTokensOutIndex(),
             _getUserDataEncodedAmounts(poolAssetsAmountsOut),
             maxBPTtoWithdraw
         );
@@ -431,19 +431,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         uint256[] memory minAmountsOut = new uint256[](poolAssets.length);
 
         // STEP 2 - Withdraw the Balancer pool assets from the pool
-        /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
+        /* Proportional exit:
          * User sends a precise quantity of BPT, and receives an estimated but unknown
          * (computed at run time) quantity of a single token
          *
          * ['uint256', 'uint256']
-         * [EXACT_BPT_IN_FOR_TOKENS_OUT, bptAmountIn]
+         * [USER_ENCODING_ENUM, bptAmountIn]
          *
          * It is ok to pass an empty minAmountsOut since tilting the pool in any direction
          * when doing a proportional exit can only be beneficial to the strategy. Since
          * it will receive more of the underlying tokens for the BPT traded in.
          */
         bytes memory userData = abi.encode(
-            balancerExactBptInTokensOutIndex,
+            _exactBptInTokensOutIndex(),
             BPTtoWithdraw
         );
 

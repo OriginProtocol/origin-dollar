@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BalancerMetaPoolStrategy } from "./BalancerMetaPoolStrategy.sol";
+import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
@@ -17,16 +18,49 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
-        BaseMetaPoolConfig memory _metapoolConfig,
         address _auraRewardPoolAddress
     )
         BalancerMetaPoolStrategy(
             _stratConfig,
             _balancerConfig,
-            _metapoolConfig,
             _auraRewardPoolAddress
         )
     {}
+
+    /* enum Value that represents exit encoding where for max BPT given
+     * request exactly specifies the amount of underlying assets
+     * to be returned.
+     */
+    function _btpInExactTokensOutIndex()
+        internal
+        pure
+        override
+        returns (uint256)
+    {
+        return
+            uint256(
+                IBalancerVault
+                    .ComposablePoolExitKind
+                    .BPT_IN_FOR_EXACT_TOKENS_OUT
+            );
+    }
+
+    /* enum Value that represents exit encoding where BPT tokens are supplied for
+     * proportional exit is required when calling a withdrawAll.
+     */
+    function _exactBptInTokensOutIndex()
+        internal
+        pure
+        override
+        returns (uint256)
+    {
+        return
+            uint256(
+                IBalancerVault
+                    .ComposablePoolExitKind
+                    .EXACT_BPT_IN_FOR_ALL_TOKENS_OUT
+            );
+    }
 
     function _assetConfigVerification(address[] calldata _assets)
         internal

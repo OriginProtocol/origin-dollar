@@ -51,10 +51,6 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.balancerVault, // Address of the Balancer vault
           balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
         ],
-        [
-          1, // ComposablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
-          2, // ComposablePoolExitKind.EXACT_BPT_IN_FOR_(ALL_)TOKENS_OUT
-        ],
         addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
       ]);
     const cOETHBalancerComposablePoolStrategy = await ethers.getContractAt(
