@@ -36,7 +36,7 @@ module.exports = deploymentWithGovernanceProposal(
       dOETHOracleUpdater.address,
     ]);
     const cOETHOracle = await ethers.getContractAt(
-      "OETHOracleUpdater",
+      "OETHOracle",
       dOETHOracle.address
     );
 
@@ -61,6 +61,18 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
+        },
+        // 2. Accept governance for OETHOracleUpdater
+        {
+          contract: cOETHOracleUpdater,
+          signature: "claimGovernance()",
+          args: [],
+        },
+        // 3. Accept governance for OETHOracle
+        {
+          contract: cOETHOracle,
+          signature: "claimGovernance()",
+          args: [],
         },
       ],
     };

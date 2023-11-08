@@ -4,6 +4,7 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const { loadDefaultFixture } = require("../_fixture");
 const { isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers.js");
+const addresses = require("../../utils/addresses");
 
 const log = require("../../utils/logger")("test:fork:oracles");
 
@@ -60,6 +61,25 @@ describe("ForkTest: Oracles", function () {
     });
   });
   describe("OETH Oracle", () => {
+    it("Should be initialized", async () => {
+      const { oethOracle, oethOracleUpdater, oethVault } = fixture;
+
+      expect(await oethOracleUpdater.governor()).to.eq(
+        addresses.mainnet.Timelock
+      );
+      expect(await oethOracleUpdater.MAX_VAULT_PRICE()).to.eq(
+        parseUnits("0.995")
+      );
+      expect(await oethOracleUpdater.curvePool()).to.eq(
+        addresses.mainnet.CurveOETHMetaPool
+      );
+      expect(await oethOracleUpdater.vault()).to.eq(oethVault.address);
+
+      expect(await oethOracle.decimals()).to.eq(18);
+      expect(await oethOracle.version()).to.eq(1);
+      expect(await oethOracle.oracleUpdater()).to.eq(oethOracleUpdater.address);
+      expect(await oethOracle.governor()).to.eq(addresses.mainnet.Timelock);
+    });
     it("Should get price from OETH Oracle Updater", async () => {
       const { oethOracleUpdater } = fixture;
 
@@ -125,6 +145,38 @@ describe("ForkTest: Oracles", function () {
         await expect(
           oethOracle.connect(signer).addPrice(parseUnits("999", 15))
         ).to.revertedWith("OnlyOracleUpdater");
+      }
+    });
+    it("Should update the oracle updater by the governance timelock", async () => {
+      const { oethOracle, anna, timelock } = fixture;
+
+      const tx = await oethOracle
+        .connect(timelock)
+        .setOracleUpdater(anna.address);
+
+      await expect(tx)
+        .to.emit(oethOracle, "SetOracleUpdater")
+        .withArgs(anna.address);
+
+      expect(await oethOracle.oracleUpdater()).to.eq(anna.address);
+    });
+    it("Should not update the oracle updater by the governance timelock", async () => {
+      const { oethOracle, anna, strategist, governor, harvester, oethVault } =
+        fixture;
+
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      for (const signer of [
+        anna,
+        strategist,
+        governor,
+        harvesterSigner,
+        oethVaultSigner,
+      ]) {
+        await expect(
+          oethOracle.connect(signer).setOracleUpdater(anna.address)
+        ).to.revertedWith("Caller is not the Governor");
       }
     });
   });
