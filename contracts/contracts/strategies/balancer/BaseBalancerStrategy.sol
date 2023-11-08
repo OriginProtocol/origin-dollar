@@ -280,8 +280,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move
      * to ensure the expected changes took place.
      *
-     * @param _poolAsset Address of the Balancer pool asset
-     * @param _poolAmount Amount of the Balancer pool asset
+     * @param _poolAssets Array of addresses of the Balancer pool assets
+     * @param _poolAmounts Array of amounts of the Balancer pool assets
      * @return bptExpected of BPT expected in exchange for the asset
      *
      * @dev
@@ -296,19 +296,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
-    function _getBPTExpected(address _poolAsset, uint256 _poolAmount)
-        internal
-        view
-        virtual
-        returns (uint256 bptExpected)
-    {
-        uint256 bptRate = IRateProvider(platformAddress).getRate();
-        uint256 poolAssetRate = _getRateProviderRate(_poolAsset);
-        bptExpected = _poolAmount.mulTruncate(poolAssetRate).divPrecisely(
-            bptRate
-        );
-    }
-
     function _getBPTExpected(
         address[] memory _poolAssets,
         uint256[] memory _poolAmounts
@@ -427,32 +414,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             );
         } else {
             unwrappedAmount = amount;
-        }
-    }
-
-    /**
-     * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
-     * that the strategy supports. This function converts the rebasing strategy asset
-     * and corresponding amount to wrapped(pool) asset.
-     */
-    function _fromPoolAsset(address poolAsset, uint256 poolAmount)
-        internal
-        view
-        returns (address asset, uint256 amount)
-    {
-        if (poolAsset == wstETH) {
-            asset = stETH;
-            if (poolAmount > 0) {
-                amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
-            }
-        } else if (poolAsset == sfrxETH) {
-            asset = frxETH;
-            if (poolAmount > 0) {
-                amount = IERC4626(sfrxETH).convertToAssets(poolAmount);
-            }
-        } else {
-            asset = poolAsset;
-            amount = poolAmount;
         }
     }
 
