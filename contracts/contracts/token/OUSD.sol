@@ -31,6 +31,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCreditsPerToken
     );
 
+    event RebasingDisabled(
+        address indexed account,
+        uint256 balance,
+        uint256 rebasingCreditsPerToken
+    );
+    event RebasingEnabled(
+        address indexed account,
+        uint256 balance,
+        uint256 rebasingCreditsPerToken
+    );
+
     enum RebaseOptions {
         NotSet,
         OptOut,
@@ -48,7 +59,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     // do not receive yield unless they explicitly opt in)
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    mapping(address => RebaseOptions) public rebaseState;
+    mapping(address => RebaseOptions) public rebaseState; // User OptIn/OptOut
     mapping(address => uint256) public isUpgraded;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
@@ -458,7 +469,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         bool isContract = Address.isContract(_account);
         if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
-            _ensureRebasingMigration(_account);
+            _ensureMigrationToNonRebasing(_account);
         }
         return nonRebasingCreditsPerToken[_account] > 0;
     }
@@ -467,25 +478,86 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Ensures internal account for rebasing and non-rebasing credits and
      *      supply is updated following deployment of frozen yield change.
      */
-    function _ensureRebasingMigration(address _account) internal {
+    function _ensureMigrationToRebasing(address _account) internal {
         if (nonRebasingCreditsPerToken[_account] == 0) {
-            if (_creditBalances[_account] == 0) {
-                // Since there is no existing balance, we can directly set to
-                // high resolution, and do not have to do any other bookkeeping
-                nonRebasingCreditsPerToken[_account] = 1e27;
-            } else {
-                // Migrate an existing account:
-
-                // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-                // Update non rebasing supply
-                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-                // Update credit tallies
-                _rebasingCredits = _rebasingCredits.sub(
-                    _creditBalances[_account]
-                );
-            }
+            return; // Account already is rebasing
         }
+        // Precalculate old balance so that no partial
+        // account changes will affect it
+        uint256 oldBalance = balanceOf(msg.sender);
+
+        // Precalculate new credits, so that we avoid internal calls when
+        // atomically updating account.
+        // Convert balance into the same amount at the current exchange rate
+        uint256 newCreditBalance = _creditBalances[msg.sender]
+            .mul(_rebasingCreditsPerToken)
+            .div(_creditsPerToken(msg.sender));
+
+        // Atomicly update this account:
+        // Important that no internal calls happen during this.
+        // Remove pinned fixed credits per token
+        delete nonRebasingCreditsPerToken[msg.sender];
+        // New credits
+        _creditBalances[msg.sender] = newCreditBalance;
+
+        // Update global totals:
+        // Decrease non rebasing supply. We use the old balance, since that
+        // would have been the value that was originally used to adjust the
+        // nonRebasingSupply.
+        nonRebasingSupply = nonRebasingSupply.sub(oldBalance);
+        // Increase rebasing credits, totalSupply remains unchanged so no
+        // adjustment necessary
+        _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
+
+        emit RebasingEnabled(msg.sender, oldBalance, _rebasingCreditsPerToken);
+    }
+
+    /**
+     * @dev Ensures internal account for rebasing and non-rebasing credits and
+     *      supply is updated following deployment of frozen yield change.
+     */
+    function _ensureMigrationToNonRebasing(address _account) internal {
+        if (nonRebasingCreditsPerToken[_account] != 0) {
+            return; // Account already is non-rebasing
+        }
+        uint256 oldBalance = balanceOf(_account); // For checks
+        if (_creditBalances[_account] == 0) {
+            // Since there is no existing balance, we can directly set it to
+            // high resolution, and do not have to do any other bookkeeping
+            nonRebasingCreditsPerToken[_account] = 1e27;
+        } else {
+            // This does not change, but if it did, we would want to
+            // use the value before changes.
+            uint256 oldCredits = _creditBalances[_account];
+
+            // Atomicly update account information:
+            // It is important that balanceOf not be called inside updating
+            // account data, since it will give wrong answers if it does
+            // not have all an account's data in a consistent state.
+            //
+            // By setting a per account nonRebasingCreditsPerToken,
+            // this account will no longer follow with the global
+            // rebasing credits per token and will become non-rebasing.
+            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+
+            // Update global totals
+            // We use the current value of balanceOf, after the update, so
+            // that if any rounding errors happened in the conversion, we
+            // will be updating the nonRebasingSupply properly with
+            // the account balance
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+            _rebasingCredits = _rebasingCredits.sub(oldCredits);
+        }
+
+        // Moving to a non rebasing account should always allow perfect accounting.
+        // This check does cost extra gas, but migrating accounts is rare.
+        require(oldBalance == balanceOf(_account), "Balances do not match");
+
+        emit RebasingDisabled(
+            _account,
+            balanceOf(_account),
+            _rebasingCreditsPerToken
+        );
     }
 
     /**
@@ -496,24 +568,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptIn() public nonReentrant {
         require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
 
-        // Convert balance into the same amount at the current exchange rate
-        uint256 newCreditBalance = _creditBalances[msg.sender]
-            .mul(_rebasingCreditsPerToken)
-            .div(_creditsPerToken(msg.sender));
-
-        // Decreasing non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
-
-        _creditBalances[msg.sender] = newCreditBalance;
-
-        // Increase rebasing credits, totalSupply remains unchanged so no
-        // adjustment necessary
-        _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
+        _ensureMigrationToRebasing(msg.sender);
 
         rebaseState[msg.sender] = RebaseOptions.OptIn;
-
-        // Delete any fixed credits per token
-        delete nonRebasingCreditsPerToken[msg.sender];
     }
 
     /**
@@ -522,17 +579,25 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptOut() public nonReentrant {
         require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");
 
-        // Increase non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
-        // Set fixed credits per token
-        nonRebasingCreditsPerToken[msg.sender] = _rebasingCreditsPerToken;
+        _ensureMigrationToNonRebasing(msg.sender);
 
-        // Decrease rebasing credits, total supply remains unchanged so no
-        // adjustment necessary
-        _rebasingCredits = _rebasingCredits.sub(_creditBalances[msg.sender]);
-
-        // Mark explicitly opted out of rebasing
         rebaseState[msg.sender] = RebaseOptions.OptOut;
+    }
+
+    /**
+     * @dev Governance action to allow a contract that does not support
+     * opting in to earn yield
+     */
+    function rebaseOptInByGovernance(address _account)
+        external
+        onlyGovernor
+        nonReentrant
+    {
+        require(_isNonRebasingAccount(_account), "Account has not opted out");
+
+        _ensureMigrationToRebasing(_account);
+
+        rebaseState[_account] = RebaseOptions.OptIn;
     }
 
     /**

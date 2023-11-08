@@ -518,6 +518,13 @@ describe("Token", function () {
     );
   });
 
+  it("Should not allow a non governor account to call rebaseOptInByGovernance", async () => {
+    let { ousd, matt } = await loadFixture(defaultFixture);
+    await expect(
+      ousd.connect(matt).rebaseOptInByGovernance(matt.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
   it("Should maintain the correct balance on a partial transfer for a non-rebasing account without previously set creditsPerToken", async () => {
     let { ousd, matt, josh, mockNonRebasing } = fixture;
 
