@@ -6,7 +6,7 @@ const platformAddress = addresses.mainnet.wstETH_sfrxETH_rETH_BPT;
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "076_balancer_sfrxETH_wstETH_rETH",
+    deployName: "078_balancer_sfrxETH_wstETH_rETH",
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: true,
