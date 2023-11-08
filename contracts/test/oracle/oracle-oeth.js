@@ -3,6 +3,7 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../../utils/signers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 /*
  * Because the oracle code is so tightly integrated into the vault,
@@ -11,11 +12,22 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const maxVaultPrice = parseUnits("0.995");
 
-describe.only("OETH Oracle", async () => {
+describe("OETH Oracle", async () => {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.oethOracle,
+  }));
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.oethOracleUpdater,
+  }));
+
   const assetAddPrice = async (prices) => {
     const { anna, oethOracle, oethOracleUpdater } = fixture;
     const { vaultPrice, marketPrice, expectPrice, expectedVaultPrice } = prices;
