@@ -10,6 +10,7 @@ import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
@@ -474,12 +475,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             if (strategyAsset == frxETH && poolAssetAmount > 0) {
                 /* _unwrapPoolAsset internally increases the sfrxEth amount by 1 due to
                  * rounding errors. Since this correction tries to redeem more sfrxETH than
-                 * available in withdrawAll case we deduct 2 WEI:
+                 * available in withdrawAll's case we deduct 2 WEI:
                  *  - once to make up for overshooting in _unwrapPoolAsset
                  *  - again to avoid internal arithmetic issues of sfrxETH. Fuzzy testing would
                  *    help greatly here.
+                 *
+                 * @dev usage of Math.min is required since, there is a case possible where this
+                 * contract only has 1 wei of sfrxETH on balance. We still need to correct and deduct
+                 * that 1 wei preventing any unwrapping and reverting of the transaction.
                  */
-                poolAssetAmount -= FRX_ETH_REDEEM_CORRECTION * 2;
+                poolAssetAmount -= Math.min(
+                    poolAssetAmount,
+                    FRX_ETH_REDEEM_CORRECTION * 2
+                );
             }
 
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH

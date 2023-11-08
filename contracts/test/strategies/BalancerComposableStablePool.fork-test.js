@@ -444,6 +444,97 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
       expect(rethBalanceDiff).to.be.gte(await units("15", reth), 1);
       expect(frxEthBalanceDiff).to.be.gte(await units("15", frxETH), 1);
     });
+
+    it("Should be able to withdraw all of pool's liquidity twice", async function () {
+      const { oethVault, balancerSfrxWstRETHStrategy } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await balancerSfrxWstRETHStrategy.connect(oethVaultSigner).withdrawAll();
+      await balancerSfrxWstRETHStrategy.connect(oethVaultSigner).withdrawAll();
+    });
+
+    for (const assetAmount of ["2", "3", "4"]) {
+      const shareAmount = `${parseInt(assetAmount) - 1}`;
+      it(`Should be able to withdraw all when if malicious actor would somehow manage to give ${shareAmount}wei of sfrxETH to the strategy`, async function () {
+        const {
+          oethVault,
+          josh,
+          frxETH,
+          sfrxETH,
+          balancerSfrxWstRETHStrategy,
+        } = fixture;
+        const strategySigner = await impersonateAndFund(
+          balancerSfrxWstRETHStrategy.address
+        );
+
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
+        // empty the strategy
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .withdrawAll();
+
+        // send some frxETH dust
+        await frxETH
+          .connect(josh)
+          .transfer(balancerSfrxWstRETHStrategy.address, assetAmount);
+
+        await frxETH
+          .connect(strategySigner)
+          .approve(sfrxETH.address, assetAmount);
+
+        // this will mint `shareAmount` of wei of the sfrxETH "share" token to the strategy
+        await sfrxETH.connect(strategySigner).deposit(
+          assetAmount, // assets
+          balancerSfrxWstRETHStrategy.address // receiver
+        );
+
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .withdrawAll();
+      });
+    }
+
+    for (const bptTokens of ["1", "2", "3", "4", "5"]) {
+      it(`Should be able to withdraw all when balance of BPT tokens is ${bptTokens} wei`, async function () {
+        const {
+          oethVault,
+          josh,
+          sfrxETHwstETHrEthAuraPool,
+          sfrxETHwstETHrEthBPT,
+          balancerSfrxWstRETHStrategy,
+        } = fixture;
+        const strategySigner = await impersonateAndFund(
+          balancerSfrxWstRETHStrategy.address
+        );
+
+        // lift `bptTokens` wei of BPT from the reward pool
+        await sfrxETHwstETHrEthAuraPool.connect(strategySigner).withdraw(
+          bptTokens, // assets amount
+          balancerSfrxWstRETHStrategy.address, // receiver
+          balancerSfrxWstRETHStrategy.address // owner
+        );
+
+        // tuck `bptTokens` WEI of BPT token away
+        await sfrxETHwstETHrEthBPT
+          .connect(strategySigner)
+          .transfer(josh.address, bptTokens);
+
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .withdrawAll();
+
+        // give `bptTokens` WEI of BPT back to the strategy
+        await sfrxETHwstETHrEthBPT
+          .connect(josh)
+          .transfer(balancerSfrxWstRETHStrategy.address, bptTokens);
+
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .withdrawAll();
+      });
+    }
   });
 
   describe("Large withdraw", function () {
