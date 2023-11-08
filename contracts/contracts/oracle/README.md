@@ -20,24 +20,18 @@
 
 ![OETH Oracle Hierarchy](../../docs/OETHOracleHierarchy.svg)
 
-### Squashed
+### OETHOracle Squashed
 
 ![OETH Oracle Squashed](../../docs/OETHOracleSquashed.svg)
 
-### Storage
+### OETHOracle Storage
 
 ![OETH Oracle Storage](../../docs/OETHOracleStorage.svg)
 
-## OETH Oracle Updater
-
-### Hierarchy
-
-![OETH Oracle Updater Hierarchy](../../docs/OETHOracleUpdaterHierarchy.svg)
-
-### Squashed
+### OETHOracleUpdater Squashed
 
 ![OETH Oracle Updater Squashed](../../docs/OETHOracleUpdaterSquashed.svg)
 
-### Storage
+### OETHOracleUpdater Storage
 
 ![OETH Oracle Updater Storage](../../docs/OETHOracleUpdaterStorage.svg)

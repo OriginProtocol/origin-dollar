@@ -33,15 +33,13 @@ sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
 sol2uml storage .. -c Governor -o GovernorStorage.svg
 
 # contracts/oracles
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracleRouter -o OETHOracleRouterSquashed.svg
 sol2uml storage .. -c OETHOracleRouter -o OETHOracleRouterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracle -o OETHOracleHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHOracle,OETHOracleUpdater -o OETHOracleHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracle -o OETHOracleSquashed.svg
 sol2uml storage .. -c OETHOracle -o OETHOracleStorage.svg
-
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleUpdater -o OETHOracleUpdaterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracleUpdater -o OETHOracleUpdaterSquashed.svg
 sol2uml storage .. -c OETHOracleUpdater -o OETHOracleUpdaterStorage.svg
 
