@@ -11,6 +11,7 @@ const {
   balancerFrxETHwstETHeETHFixture,
   createFixtureLoader,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHMissConfiguredStrategy,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
@@ -319,6 +320,18 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         .connect(josh)
         .populateTransaction["checkBalance(address)"](stETH.address);
       await josh.sendTransaction(tx);
+    });
+  });
+
+  describe("Incorrect deployment configuration", function () {
+    it("Should fail when _bptTokenPoolPosition is miss-configured", async function () {
+      const loadBalancerFrxWstrETHFixture = createFixtureLoader(
+        balancerSfrxETHRETHWstETHMissConfiguredStrategy
+      );
+
+      await expect(loadBalancerFrxWstrETHFixture()).to.be.revertedWith(
+        "BPT token position incorrect"
+      );
     });
   });
 
