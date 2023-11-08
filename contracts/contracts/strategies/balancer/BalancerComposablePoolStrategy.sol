@@ -14,11 +14,20 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    /* @notice position of BPT token in the Balancer's pool
+     *
+     * @dev this could be a storage variable that gets set by reading Balancer's pool
+     * tokens and comparing it to platformAddress. Seems more convenient, but we rather
+     * go for gas savings of an immutable variable.
+     */
+    uint256 public immutable bptTokenPoolPosition;
+
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
         BaseMetaPoolConfig memory _metapoolConfig,
-        address _auraRewardPoolAddress
+        address _auraRewardPoolAddress,
+        uint256 _bptTokenPoolPosition
     )
         BalancerMetaPoolStrategy(
             _stratConfig,
@@ -26,7 +35,9 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             _metapoolConfig,
             _auraRewardPoolAddress
         )
-    {}
+    {
+        bptTokenPoolPosition = _bptTokenPoolPosition;
+    }
 
     function _assetConfigVerification(address[] calldata _assets)
         internal
@@ -38,9 +49,19 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             poolAssets.length - 1 == _assets.length,
             "Pool assets length mismatch"
         );
+
+        require(
+            // BPT position should be correctly configured
+            poolAssets[bptTokenPoolPosition] == platformAddress,
+            "BPT token position incorrect"
+        );
+
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(
-                _assets[i] == _fromPoolAsset(poolAssets[i + 1]),
+                _assets[i] ==
+                    _fromPoolAsset(
+                        poolAssets[i >= bptTokenPoolPosition ? i + 1 : i]
+                    ),
                 "Pool assets mismatch"
             );
         }
@@ -53,12 +74,11 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         override
         returns (uint256[] memory amounts)
     {
-        // first asset in the Composable stable pool is the BPT token.
-        // skip over that entry and shift all other assets for 1 position
-        // to the left
+        // remove the position in the array that represents the BPT
+        // token
         amounts = new uint256[](_amounts.length - 1);
         for (uint256 i = 0; i < _amounts.length - 1; ++i) {
-            amounts[i] = _amounts[i + 1];
+            amounts[i] = _amounts[i >= bptTokenPoolPosition ? i + 1 : i];
         }
     }
 
@@ -69,12 +89,11 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         override
         returns (address[] memory assets)
     {
-        // first asset in the Composable stable pool is the BPT token.
-        // skip over that entry and shift all other assets for 1 position
-        // to the left
+        // remove the position in the array that represents the BPT
+        // token
         assets = new address[](_assets.length - 1);
         for (uint256 i = 0; i < _assets.length - 1; ++i) {
-            assets[i] = _assets[i + 1];
+            assets[i] = _assets[i >= bptTokenPoolPosition ? i + 1 : i];
         }
     }
 }

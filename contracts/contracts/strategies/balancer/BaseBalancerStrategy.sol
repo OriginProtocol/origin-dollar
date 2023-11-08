@@ -483,8 +483,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         // Balancer vault for BPT token (required for removing liquidity)
         // slither-disable-next-line unused-return
-        pToken.approve(address(balancerVault), 0);
-        // slither-disable-next-line unused-return
         pToken.approve(address(balancerVault), type(uint256).max);
     }
 
@@ -505,7 +503,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         require(poolAssetsLength == providers.length, "Asset length mismatch");
 
-        for (uint256 i = 0; i < poolAssetsLength; i++) {
+        for (uint256 i = 0; i < poolAssetsLength; ++i) {
             if (address(providers[i]) == address(0)) {
                 assetToRateProviderCache[poolAssets[i]] = FIXED_RATE_PROVIDER;
             } else {
@@ -544,6 +542,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * initialized without this, would make it easier when upgrading it
      */
     function cachePoolAssets() public {
+        require(poolAssets.length == 0, "Assets already cached");
+
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
