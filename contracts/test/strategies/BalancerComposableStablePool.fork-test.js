@@ -192,6 +192,14 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         auraRewardPool
       );
     });
+
+    it("Shouldn't be able to cache assets twice", async function () {
+      const { balancerSfrxWstRETHStrategy, josh } = fixture;
+
+      await expect(
+        balancerSfrxWstRETHStrategy.connect(josh).cachePoolAssets()
+      ).to.be.revertedWith("Assets already cached");
+    });
   });
 
   describe("Deposit", function () {
