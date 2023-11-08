@@ -72,6 +72,7 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
+    // slither-disable-next-line uninitialized-state
     address[] internal allAssets;
 
     // Strategies approved for use by the Vault
