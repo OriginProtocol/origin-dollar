@@ -1,6 +1,8 @@
 const { expect } = require("chai");
 
-const { oethUnits, units, ethUnits } = require("../helpers");
+const { oethUnits, units } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const {
   createFixtureLoader,
@@ -15,6 +17,20 @@ describe("FraxETH Strategy", function () {
   beforeEach(async () => {
     fixture = await loadFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+    assets: [fixture.frxETH, fixture.weth],
+    valueAssets: [fixture.frxETH],
+    harvester: fixture.oethHarvester,
+    vault: fixture.oethVault,
+  }));
 
   describe("Mint", function () {
     it("Should allow minting with frxETH", async () => {
@@ -105,7 +121,7 @@ describe("FraxETH Strategy", function () {
           userAssetBalanceAfterRedeem[i]
             .sub(userAssetBalanceBeforeRedeem[i])
             .mul(redeemPrice)
-            .div(ethUnits("1"))
+            .div(oethUnits("1"))
         );
       }
       expect(netGainedAssetValue).to.approxEqualTolerance(
@@ -352,9 +368,9 @@ describe("FraxETH Strategy", function () {
     });
 
     it("Should not have pToken set for WETH", async () => {
-      const { fraxEthStrategy, weth } = fixture;
+      const { fraxEthStrategy, sfrxETH, weth } = fixture;
       expect(await fraxEthStrategy.assetToPToken(weth.address)).to.equal(
-        "0x0000000000000000000000000000000000000000"
+        sfrxETH.address
       );
     });
 

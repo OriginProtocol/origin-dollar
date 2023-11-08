@@ -23,10 +23,7 @@ const log = require("../utils/logger")("deploy:001_core");
  */
 const deployAaveStrategy = async () => {
   const assetAddresses = await getAssetAddresses(hre.deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -43,50 +40,31 @@ const deployAaveStrategy = async () => {
     "AaveStrategy",
     dAaveStrategyProxy.address
   );
-  await withConfirmation(
-    cAaveStrategyProxy["initialize(address,address,bytes)"](
-      dAaveStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
 
   const cAaveIncentivesController = await ethers.getContract(
     "MockAaveIncentivesController"
   );
 
-  log("Initialized AaveStrategyProxy");
-  const initFunctionName =
-    "initialize(address[],address[],address[],address,address)";
-  await withConfirmation(
-    cAaveStrategy
-      .connect(sDeployer)
-      // eslint-disable-next-line no-unexpected-multiline
-      [initFunctionName](
-        [assetAddresses.AAVE_TOKEN],
-        [assetAddresses.DAI],
-        [assetAddresses.aDAI],
-        cAaveIncentivesController.address,
-        assetAddresses.STKAAVE
-      )
+  const initData = cAaveStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[],address,address)",
+    [
+      [assetAddresses.AAVE_TOKEN],
+      [assetAddresses.DAI],
+      [assetAddresses.aDAI],
+      cAaveIncentivesController.address,
+      assetAddresses.STKAAVE,
+    ]
   );
-  log("Initialized AaveStrategy");
-  await withConfirmation(
-    cAaveStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`AaveStrategy transferGovernance(${governorAddr} called`);
 
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cAaveStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for AaveStrategy");
-  }
+  await withConfirmation(
+    cAaveStrategyProxy["initialize(address,address,bytes)"](
+      dAaveStrategy.address,
+      governorAddr,
+      initData
+    )
+  );
+
+  log("Initialized AaveStrategyProxy");
 
   return cAaveStrategy;
 };
@@ -98,10 +76,7 @@ const deployAaveStrategy = async () => {
  */
 const deployCompoundStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -118,40 +93,20 @@ const deployCompoundStrategy = async () => {
     "CompoundStrategy",
     dCompoundStrategyProxy.address
   );
+
+  const initData = cCompoundStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [[assetAddresses.COMP], [assetAddresses.DAI], [assetAddresses.cDAI]]
+  );
+
   await withConfirmation(
     cCompoundStrategyProxy["initialize(address,address,bytes)"](
       dCompoundStrategy.address,
-      deployerAddr,
-      []
+      governorAddr,
+      initData
     )
   );
-  log("Initialized CompoundStrategyProxy");
-  await withConfirmation(
-    cCompoundStrategy
-      .connect(sDeployer)
-      .initialize(
-        [assetAddresses.COMP],
-        [assetAddresses.DAI],
-        [assetAddresses.cDAI]
-      )
-  );
-  log("Initialized CompoundStrategy");
-  await withConfirmation(
-    cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`CompoundStrategy transferGovernance(${governorAddr} called`);
 
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cCompoundStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for CompoundStrategy");
-  }
   return cCompoundStrategy;
 };
 
@@ -539,9 +494,7 @@ const configureOETHVault = async () => {
  */
 const deployHarvesters = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -574,54 +527,29 @@ const deployHarvesters = async () => {
     "OETHHarvester",
     dOETHHarvesterProxy.address
   );
+
   await withConfirmation(
     cHarvesterProxy["initialize(address,address,bytes)"](
       dHarvester.address,
-      deployerAddr,
+      governorAddr,
       []
     )
   );
   await withConfirmation(
     cOETHHarvesterProxy["initialize(address,address,bytes)"](
       dOETHHarvester.address,
-      deployerAddr,
+      governorAddr,
       []
     )
   );
   log("Initialized OETHHarvesterProxy");
 
-  await withConfirmation(
-    cHarvester.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`Harvester transferGovernance(${governorAddr} called`);
-  await withConfirmation(
-    cOETHHarvester.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`OETHHarvester transferGovernance(${governorAddr} called`);
-
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
   if (!isMainnet) {
-    await withConfirmation(
-      cHarvester
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for Harvester");
-
     await withConfirmation(
       cHarvester
         .connect(sGovernor)
         .setRewardsProceedsAddress(cVaultProxy.address)
     );
-
-    await withConfirmation(
-      cOETHHarvester
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for Harvester");
 
     await withConfirmation(
       cOETHHarvester
@@ -1135,13 +1063,13 @@ const deployBuyback = async () => {
     )
   );
 
+  // Init proxy to implementation
   await withConfirmation(
     cOUSDBuyback.connect(sDeployer).transferGovernance(governorAddr)
   );
   await withConfirmation(
     cOETHBuyback.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`Buyback transferGovernance(${governorAddr} called`);
 
   await cOUSDBuyback.connect(sDeployer).safeApproveAllTokens();
   await cOETHBuyback.connect(sDeployer).safeApproveAllTokens();
@@ -1181,7 +1109,6 @@ const deployVaultValueChecker = async () => {
 const deployWOusd = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
@@ -1193,13 +1120,12 @@ const deployWOusd = async () => {
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
+  const initData = wousd.interface.encodeFunctionData("initialize()", []);
+
   await wousdProxy.connect(sDeployer)[
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
-  ](dWrappedOusdImpl.address, deployerAddr, []);
-  await wousd.connect(sDeployer)["initialize()"]();
-  await wousd.connect(sDeployer).transferGovernance(governorAddr);
-  await wousd.connect(sGovernor).claimGovernance();
+  ](dWrappedOusdImpl.address, governorAddr, initData);
 };
 
 const deployOETHSwapper = async () => {

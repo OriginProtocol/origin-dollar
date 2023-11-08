@@ -168,11 +168,11 @@ contract CompoundStrategy is BaseCompoundStrategy {
             uint256 cTokenBalance = cToken.balanceOf(address(this));
             if (cTokenBalance > 0) {
                 require(cToken.redeem(cTokenBalance) == 0, "Redeem failed");
+                uint256 assetBalance = asset.balanceOf(address(this));
                 // Transfer entire balance to Vault
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+                asset.safeTransfer(vaultAddress, assetBalance);
+
+                emit Withdrawal(address(asset), address(cToken), assetBalance);
             }
         }
     }
