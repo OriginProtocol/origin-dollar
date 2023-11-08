@@ -8,12 +8,18 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
+import { IBalancerPool } from "../../interfaces/balancer/IBalancerPool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    // Special ExitKind for all Balancer pools, used in Recovery Mode.
+    uint256 constant RECOVERY_MODE_EXIT_KIND = 255;
+
     /* For Meta stable pools the enum value should be "2" as it is defined 
      * in the IBalancerVault. From the Metastable pool codebase:
      * 
@@ -83,6 +89,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function deposit(address[] calldata, uint256[] calldata)
         external
+        virtual
         onlyVault
         nonReentrant
     {
@@ -157,6 +164,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 (, strategyAssetAmountsToPoolAssetAmounts[i]) = _wrapPoolAsset(
                     strategyAsset,
                     strategyAmount
+                );
+
+                /* This check is triggered when the _deposit is called with
+                 * a duplicate asset in the _strategyAssets array
+                 */
+                require(
+                    amountsIn[assetIndex] == 0,
+                    "No duplicate deposit assets"
                 );
 
                 amountsIn[assetIndex] = strategyAssetAmountsToPoolAssetAmounts[
@@ -304,6 +319,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             if (poolAssetAmount > 0) {
                 strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
 
+                /* This check is triggered when the _withdrawal is called with
+                 * a duplicate asset in the _strategyAssets array
+                 */
+                require(
+                    poolAssetsAmountsOut[poolAssetIndex[poolAsset]] == 0,
+                    "No duplicate withdrawal assets"
+                );
+
                 /* Because of the potential Balancer rounding error mentioned below
                  * the contract might receive 1-2 WEI smaller amount than required
                  * in the withdraw user data encoding. If slightly lesser token amount
@@ -425,6 +448,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * Is only executable by the OToken's Vault or the Governor.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        _withdrawAll(false);
+    }
+
+    function recoveryModeWithdrawAll()
+        external
+        onlyVaultOrGovernor
+        nonReentrant
+    {
+        _withdrawAll(true);
+    }
+
+    function _withdrawAll(bool isRecoveryModeWithdrawal) internal {
         // store poolAssets storage variable into memory for gas optimizations
         address[] memory _poolAssets = poolAssets;
 
@@ -447,11 +482,26 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * It is ok to pass an empty minAmountsOut since tilting the pool in any direction
          * when doing a proportional exit can only be beneficial to the strategy. Since
          * it will receive more of the underlying tokens for the BPT traded in.
+         *
+         * Important when `isRecoveryModeWithdrawal` is true then a special recovery mode exit
+         * kind is used for a much simpler and more gas efficient exit of the pool.
          */
         bytes memory userData = abi.encode(
-            balancerExactBptInTokensOutIndex,
+            isRecoveryModeWithdrawal
+                ? RECOVERY_MODE_EXIT_KIND
+                : balancerExactBptInTokensOutIndex,
             BPTtoWithdraw
         );
+
+        if (isRecoveryModeWithdrawal) {
+            /* Older Balancer pools don't support this functionality (e.g. rETH/WETH). In that case the
+             * transaction will just fail as it should.
+             */
+            require(
+                IBalancerPool(platformAddress).inRecoveryMode(),
+                "Pool not in recovery mode"
+            );
+        }
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(_poolAssets, minAmountsOut, userData, false);
@@ -480,12 +530,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             if (strategyAsset == frxETH && poolAssetAmount > 0) {
                 /* _unwrapPoolAsset internally increases the sfrxEth amount by 1 due to
                  * rounding errors. Since this correction tries to redeem more sfrxETH than
-                 * available in withdrawAll case we deduct 2 WEI:
+                 * available in withdrawAll's case we deduct 2 WEI:
                  *  - once to make up for overshooting in _unwrapPoolAsset
                  *  - again to avoid internal arithmetic issues of sfrxETH. Fuzzy testing would
                  *    help greatly here.
+                 *
+                 * @dev usage of Math.min is required since, there is a case possible where this
+                 * contract only has 1 wei of sfrxETH on balance. We still need to correct and deduct
+                 * that 1 wei preventing any unwrapping and reverting of the transaction.
                  */
-                poolAssetAmount -= FRX_ETH_REDEEM_CORRECTION * 2;
+                poolAssetAmount -= Math.min(
+                    poolAssetAmount,
+                    FRX_ETH_REDEEM_CORRECTION * 2
+                );
             }
 
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH

@@ -577,6 +577,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * initialized without this, would make it easier when upgrading it
      */
     function cachePoolAssets() public {
+        require(poolAssets.length == 0, "Assets already cached");
+
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
