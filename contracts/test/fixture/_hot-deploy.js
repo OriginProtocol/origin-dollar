@@ -85,6 +85,7 @@ async function hotDeployBalancerFrxEethRethWstEThStrategy(
         balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
       ],
       addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+      0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
     ],
   });
 

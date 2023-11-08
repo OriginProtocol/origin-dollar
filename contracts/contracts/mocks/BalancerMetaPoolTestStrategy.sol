@@ -30,4 +30,15 @@ contract BalancerMetaPoolTestStrategy is BalancerMetaPoolStrategy {
     {
         return _getRateProviderRate(_asset);
     }
+
+    /**
+     * @notice This exposes the function that is currently not implemented
+     * just to future proof the usage of _deposit.
+     */
+    function deposit(
+        address[] calldata _strategyAssets,
+        uint256[] calldata _strategyAmounts
+    ) external override onlyVault nonReentrant {
+        _deposit(_strategyAssets, _strategyAmounts);
+    }
 }
