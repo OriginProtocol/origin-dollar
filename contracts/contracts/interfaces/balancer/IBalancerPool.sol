@@ -8,4 +8,6 @@ interface IBalancerPool {
         external
         view
         returns (IRateProvider[] memory providers);
+
+    function inRecoveryMode() external view returns (bool);
 }

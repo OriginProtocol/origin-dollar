@@ -439,6 +439,16 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
     });
 
+    it("Should fail withdrawing all of pool liquidity in recovery mode (pool doesn't support it)", async function () {
+      const { oethVault, balancerREthStrategy } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await expect(
+        balancerREthStrategy.connect(oethVaultSigner).recoveryModeWithdrawAll()
+      ).to.be.reverted;
+    });
+
     it("Should be able to withdraw with higher withdrawal deviation", async function () {});
   });
 

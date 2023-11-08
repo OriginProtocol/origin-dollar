@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
+import { IBalancerPool } from "../../interfaces/balancer/IBalancerPool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -15,6 +16,10 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    // Special ExitKind for all Balancer pools, used in Recovery Mode.
+    uint256 constant RECOVERY_MODE_EXIT_KIND = 255;
+
     /* For Meta stable pools the enum value should be "2" as it is defined 
      * in the IBalancerVault. From the Metastable pool codebase:
      * 
@@ -439,6 +444,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * Is only executable by the OToken's Vault or the Governor.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        _withdrawAll(false);
+    }
+
+    function recoveryModeWithdrawAll()
+        external
+        onlyVaultOrGovernor
+        nonReentrant
+    {
+        _withdrawAll(true);
+    }
+
+    function _withdrawAll(bool isRecoveryModeWithdrawal) internal {
         // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
 
         _lpWithdrawAll();
@@ -459,11 +476,26 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * It is ok to pass an empty minAmountsOut since tilting the pool in any direction
          * when doing a proportional exit can only be beneficial to the strategy. Since
          * it will receive more of the underlying tokens for the BPT traded in.
+         *
+         * Important when `isRecoveryModeWithdrawal` is true then a special recovery mode exit
+         * kind is used for a much simpler and more gas efficient exit of the pool.
          */
         bytes memory userData = abi.encode(
-            balancerExactBptInTokensOutIndex,
+            isRecoveryModeWithdrawal
+                ? RECOVERY_MODE_EXIT_KIND
+                : balancerExactBptInTokensOutIndex,
             BPTtoWithdraw
         );
+
+        if (isRecoveryModeWithdrawal) {
+            /* Older Balancer pools don't support this functionality (e.g. rETH/WETH). In that case the
+             * transaction will just fail as it should.
+             */
+            require(
+                IBalancerPool(platformAddress).inRecoveryMode(),
+                "Pool not in recovery mode"
+            );
+        }
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(poolAssets, minAmountsOut, userData, false);
