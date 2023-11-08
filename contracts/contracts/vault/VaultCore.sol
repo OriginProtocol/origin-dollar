@@ -573,7 +573,7 @@ contract VaultCore is VaultInitializer {
      * For OUSD, that's the Curve OUSD/3Crv pool.
      * @param price the price to 18 decimals.
      */
-    function floorPrice() external view returns (uint256 price) {
+    function floorPrice() external view virtual returns (uint256 price) {
         // Get the assets for redeeming 1 OETH
         // This has already had the redeem fee applied
         uint256[] memory redeemAssets = _calculateRedeemOutputs(1e18);

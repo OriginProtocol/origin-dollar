@@ -4,11 +4,11 @@ const { loadDefaultFixture } = require("../_fixture");
 const { ousdUnits, setOracleTokenPriceUsd } = require("../helpers");
 
 /*
- * Because the oracle code is so tightly intergrated into the vault,
+ * Because the oracle code is so tightly integrated into the vault,
  * the actual tests for the core oracle features are just a part of the vault tests.
  */
 
-describe("Oracle", async () => {
+describe("Vault Oracle", async () => {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();

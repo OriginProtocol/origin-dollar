@@ -148,6 +148,9 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
+  const oethOracleUpdater = await ethers.getContract("OETHOracleUpdater");
+  const oethOracle = await ethers.getContract("OETHOracle");
+
   let usdt,
     dai,
     tusd,
@@ -218,9 +221,7 @@ const defaultFixture = deployments.createFixture(async () => {
     convexEthMetaStrategy,
     fluxStrategy,
     vaultValueChecker,
-    oethVaultValueChecker,
-    oethOracleUpdater,
-    oethOracle;
+    oethVaultValueChecker;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -348,9 +349,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
-
-    oethOracleUpdater = await ethers.getContract("OETHOracleUpdater");
-    oethOracle = await ethers.getContract("OETHOracle");
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");

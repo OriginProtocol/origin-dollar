@@ -1191,6 +1191,50 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
+/**
+ * Deploy the OETHOracle contracts.
+ */
+const deployOETHOracle = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  await deployWithConfirmation("MockCurveOethEthPool", [
+    [oeth.address, addresses.ETH],
+  ]);
+  const curveOethEthPool = await ethers.getContract("MockCurveOethEthPool");
+
+  const vault = await ethers.getContract("MockVault");
+
+  await deployWithConfirmation("OETHOracleUpdater", [
+    vault.address,
+    curveOethEthPool.address,
+  ]);
+  const cOETHOracleUpdater = await ethers.getContract("OETHOracleUpdater");
+
+  await withConfirmation(
+    cOETHOracleUpdater.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  await withConfirmation(
+    cOETHOracleUpdater
+      .connect(sGovernor) // Claim governance with governor
+      .claimGovernance()
+  );
+
+  await deployWithConfirmation("OETHOracle", [cOETHOracleUpdater.address]);
+  const cOETHOracle = await ethers.getContract("OETHOracle");
+
+  await withConfirmation(
+    cOETHOracle.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  await withConfirmation(
+    cOETHOracle
+      .connect(sGovernor) // Claim governance with governor
+      .claimGovernance()
+  );
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -1216,6 +1260,7 @@ const main = async () => {
   await deployWOusd();
   await deployOETHSwapper();
   await deployOUSDSwapper();
+  await deployOETHOracle();
   console.log("001_core deploy done.");
   return true;
 };
