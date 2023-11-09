@@ -44,7 +44,12 @@ describe("OETH Oracle", async () => {
 
     await expect(tx)
       .to.emit(oethOracleUpdater, "AddPrice")
-      .withArgs(expectPrice, expectedVaultPrice, marketPrice);
+      .withArgs(
+        oethOracle.address,
+        expectPrice,
+        expectedVaultPrice,
+        marketPrice
+      );
 
     const roundData = await oethOracle.latestRoundData();
     expect(roundData.answer).to.eq(expectPrice);

@@ -96,7 +96,9 @@ describe("ForkTest: Oracles", function () {
 
       const tx = await oethOracleUpdater.addPrice(oethOracle.address);
 
-      await expect(tx).to.emit(oethOracleUpdater, "AddPrice");
+      await expect(tx)
+        .to.emit(oethOracleUpdater, "AddPrice")
+        .withNamedArgs({ oracle: oethOracle.address });
 
       const data = await oethOracle.latestRoundData();
       log(`OETH price: ${formatUnits(data.answer, 18)}`);

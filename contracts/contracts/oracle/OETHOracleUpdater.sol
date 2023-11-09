@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { IOracleReceiver } from "./IOracleReceiver.sol";
 import { IVault } from "../interfaces/IVault.sol";
-import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { Governable } from "../governance/Governable.sol";
 import { ICurvePool } from "../strategies/ICurvePool.sol";
 
@@ -29,7 +28,12 @@ contract OETHOracleUpdater is Governable {
         address curvePool;
     }
 
-    event AddPrice(uint256 answer, uint256 vaultPrice, uint256 marketPrice);
+    event AddPrice(
+        address indexed oracle,
+        uint256 answer,
+        uint256 vaultPrice,
+        uint256 marketPrice
+    );
 
     /**
      * @param _vault Address of the OETH Vault
@@ -50,7 +54,7 @@ contract OETHOracleUpdater is Governable {
             uint256 marketPrice
         ) = _getPrices();
 
-        emit AddPrice(answer, vaultPrice, marketPrice);
+        emit AddPrice(address(oracle), answer, vaultPrice, marketPrice);
 
         // Add the new aggregated price to the oracle.
         // Authorization is handled on Oracle side
@@ -72,8 +76,8 @@ contract OETHOracleUpdater is Governable {
         // Get the aggregated market price from on-chain DEXs
         marketPrice = _getMarketPrice();
 
-        // If market price is above the vault price with the withdraw fee
-        if (marketPrice > MAX_VAULT_PRICE) {
+        // If market price is equal or above the vault price with the withdraw fee
+        if (marketPrice >= MAX_VAULT_PRICE) {
             answer = marketPrice;
             // Avoid getting the vault price as this is gas intensive.
             // its not going to be higher than 0.995 with a 0.5% withdraw fee
