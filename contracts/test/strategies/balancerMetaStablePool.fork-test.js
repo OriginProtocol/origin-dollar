@@ -95,6 +95,25 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       );
     });
 
+    it("Should set setMaxDepositDeviation", async function () {
+      const { balancerREthStrategy, strategist } = fixture;
+
+      const currentDeviation = await balancerREthStrategy.maxDepositDeviation();
+
+      expect(currentDeviation).to.be.gte(oethUnits("0.01"));
+      expect(currentDeviation).to.be.lte(oethUnits("0.1"));
+      const newDeviation = currentDeviation.add(oethUnits("0.01"));
+
+      await balancerREthStrategy
+        .connect(strategist)
+        .setMaxDepositDeviation(newDeviation);
+
+      const newDeviationRead = await balancerREthStrategy.maxDepositDeviation();
+
+      expect(newDeviationRead).to.equal(newDeviation);
+      expect(newDeviationRead).to.not.equal(currentDeviation);
+    });
+
     it("Should safeApproveAllTokens", async function () {
       const { reth, rEthBPT, weth, balancerREthStrategy, timelock } = fixture;
       const balancerVault = await balancerREthStrategy.balancerVault();
@@ -221,23 +240,40 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
           )
       ).to.be.revertedWith("Asset unsupported");
     });
-    it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
+
+    // a list of WETH/RETH pairs
+    const depositTestCases = [
+      [5, 5],
+      [12, 0],
+      [0, 30],
+      [0, 1],
+      [0.00003, 0],
+      [0, 0.000013],
+      [0.000013, 0.000013],
+      [1, 1],
+    ];
+
+    for (const [wethAmount, rethAmount] of depositTestCases) {
+      it(`Should deposit ${wethAmount} WETH and ${rethAmount} rETH in Balancer MetaStablePool strateg`, async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        await depositTest(
+          fixture,
+          [wethAmount, rethAmount],
+          [weth, reth],
+          rEthBPT
+        );
+      });
+    }
+
+    it("Should be able to deposit assets in any order", async function () {
       const { reth, rEthBPT, weth } = fixture;
-      await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-    });
-    it("Should deposit 12 WETH in Balancer MetaStablePool strategy", async function () {
-      const { reth, rEthBPT, weth } = fixture;
-      await depositTest(fixture, [12, 0], [weth, reth], rEthBPT);
-    });
-    it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
-      const { reth, rEthBPT, weth } = fixture;
-      await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
+      await depositTest(fixture, [10, 10], [weth, reth], rEthBPT);
+      await depositTest(fixture, [10, 10], [reth, weth], rEthBPT);
     });
 
     it("Should fail when depositing by duplicating an asset", async function () {
       const fixture = await balancerRethWETHExposeFunctionFixture();
-      const { balancerREthStrategy, oethVault, weth, josh } =
-        fixture;
+      const { balancerREthStrategy, oethVault, weth, josh } = fixture;
       const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await weth
@@ -256,6 +292,21 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
             [oethUnits("1"), oethUnits("1")]
           )
       ).to.be.revertedWith("No duplicate deposit assets");
+    });
+
+    it("Should fail when depositing such amount that would imbalance the pool too much", async function () {
+      const fixture = await balancerRethWETHExposeFunctionFixture();
+      const { balancerREthStrategy, oethVault, weth } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [weth.address],
+            [oethUnits("200000000")] // 200m WETH
+          )
+      ).to.be.revertedWith("BAL#208");
     });
 
     it("Should deposit all WETH and rETH in strategy to pool", async function () {
@@ -301,14 +352,63 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
     it("Should be able to deposit with higher deposit deviation", async function () {});
 
-    it("Should revert when read-only re-entrancy is triggered", async function () {
-      /* - needs to be an asset default strategy
-       * - needs pool that supports native ETH
-       * - attacker needs to try to deposit to Balancer pool and withdraw
-       * - while withdrawing and receiving ETH attacker should take over the execution flow
-       *   and try calling mint/redeem with the strategy default asset on the OethVault
-       * - transaction should revert because of the `whenNotInVaultContext` modifier
-       */
+    it("Should fail when depositing an unsupported asset directly", async function () {
+      const fixture = await balancerRethWETHExposeFunctionFixture();
+      const { balancerREthStrategy, oethVault, frxETH, josh } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await frxETH
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [frxETH.address],
+            [oethUnits("1")]
+          )
+      ).to.be.revertedWith("Unsupported asset");
+    });
+
+    it("Should revert when single asset deposit is called", async function () {
+      const { balancerREthStrategy, oethVault, weth, josh } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address,uint256)"](
+            weth.address,
+            oethUnits("1")
+          )
+      ).to.be.revertedWith("Not supported");
+    });
+
+    it("Should revert when multi asset deposit is called", async function () {
+      const { balancerREthStrategy, oethVault, weth, reth, josh } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("1"));
+
+      await reth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("1"));
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [reth.address, weth.address],
+            [oethUnits("1"), oethUnits("1")]
+          )
+      ).to.be.revertedWith("Not supported");
     });
 
     it("Should check balance for gas usage", async () => {
@@ -397,6 +497,42 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       });
     }
 
+    it(`Should be able to withdraw when assets are specified in any order`, async function () {
+      const { reth, balancerREthStrategy, oethVault, weth } = fixture;
+      const wethAmount = "1";
+      const rethAmount = "1";
+
+      const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+      const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
+      const wethWithdrawAmount = await units(wethAmount, weth);
+      const rethWithdrawAmount = await units(rethAmount, reth);
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      // prettier-ignore
+      await balancerREthStrategy
+        .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+          oethVault.address,
+          [weth.address, reth.address],
+          [wethWithdrawAmount, rethWithdrawAmount]
+        );
+
+      // prettier-ignore
+      await balancerREthStrategy
+        .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+          oethVault.address,
+          [reth.address, weth.address],
+          [wethWithdrawAmount, rethWithdrawAmount]
+        );
+
+      expect(
+        (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+      ).to.approxEqualTolerance(wethWithdrawAmount.mul("2"), 0.01);
+      expect(
+        (await reth.balanceOf(oethVault.address)).sub(vaultRethBalanceBefore)
+      ).to.approxEqualTolerance(rethWithdrawAmount.mul("2"), 0.01);
+    });
+
     it(`Should fail when duplicating an asset in withdrawal call`, async function () {
       const { balancerREthStrategy, oethVault, weth } = fixture;
 
@@ -437,6 +573,21 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
       expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
       expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
+    });
+
+    it("Should fail when withdrawing an unsupported asset", async function () {
+      const { balancerREthStrategy, oethVault, frxETH } = fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [frxETH.address],
+            [oethUnits("1")]
+          )
+      ).to.be.revertedWith("Unsupported asset");
     });
 
     it("Should fail withdrawing all of pool liquidity in recovery mode (pool doesn't support it)", async function () {
@@ -1269,6 +1420,16 @@ async function depositTest(
     reth,
   };
 
+  const minUnitAmounts = amounts.map(() => oethUnits("0.000000001"));
+  /* Trigger a super small deposit to pick up any dust left on the contracts
+   * as a result of previous withdrawals.
+   */
+  await oethVault.connect(strategist).depositToStrategy(
+    balancerREthStrategy.address,
+    allAssets.map((asset) => asset.address),
+    minUnitAmounts
+  );
+
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
   const ethAmounts = await Promise.all(
     allAssets.map((asset, i) =>
@@ -1283,7 +1444,6 @@ async function depositTest(
   );
 
   const before = await logBalances(logParams);
-
   await oethVault.connect(strategist).depositToStrategy(
     balancerREthStrategy.address,
     allAssets.map((asset) => asset.address),

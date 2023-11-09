@@ -223,42 +223,35 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
           )
       ).to.be.revertedWith("Asset unsupported");
     });
-    it("Should deposit 5 stETH, 5 frxETH and 5 rETH in Balancer Composable Stable Pool strategy", async function () {
-      const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
-      await depositTest(
-        fixture,
-        [5, 5, 5],
-        [stETH, frxETH, reth],
-        sfrxETHwstETHrEthBPT
-      );
-    });
-    it("Should deposit 30 stETH, 0 frxETH and 0 rETH in Balancer Composable Stable Pool strategy", async function () {
-      const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
-      await depositTest(
-        fixture,
-        [30, 0, 0],
-        [stETH, frxETH, reth],
-        sfrxETHwstETHrEthBPT
-      );
-    });
-    it("Should deposit 0 stETH, 30 frxETH and 0 rETH in Balancer Composable Stable Pool strategy", async function () {
-      const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
-      await depositTest(
-        fixture,
-        [0, 30, 0],
-        [stETH, frxETH, reth],
-        sfrxETHwstETHrEthBPT
-      );
-    });
-    it("Should deposit 0 stETH, 0 frxETH and 30 rETH in Balancer Composable Stable Pool strategy", async function () {
-      const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
-      await depositTest(
-        fixture,
-        [0, 0, 30],
-        [stETH, frxETH, reth],
-        sfrxETHwstETHrEthBPT
-      );
-    });
+
+    // a list of WETH/RETH pairs
+    const depositTestCases = [
+      [5, 5, 5],
+      [12, 0, 0],
+      [0, 30, 0],
+      [0, 30, 24],
+      [0, 1, 0],
+      [1, 0, 0],
+      [0, 0, 1],
+      [0.00003, 0, 0],
+      [0, 0, 0.00003],
+      [0, 0.000013, 0],
+      [0.000013, 0.000013, 0.000013],
+      [1, 1, 1],
+    ];
+
+    for (const [stETHAmount, frxETHAmount, rethAmount] in depositTestCases) {
+      it(`Should deposit ${frxETHAmount} stETH, ${rethAmount} frxETH and ${depositTestCases} rETH in Balancer Composable Stable Pool strategy`, async function () {
+        const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
+        await depositTest(
+          fixture,
+          [stETHAmount, frxETHAmount, rethAmount],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        );
+      });
+    }
+
     it("Should deposit all rETH, stETH, frxETH in strategy to pool", async function () {
       const { balancerSfrxWstRETHStrategy, oethVault, reth, stETH, frxETH } =
         fixture;
@@ -309,6 +302,20 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         rethValue.add(stethUnits).add(frxethUnits),
         0.05
       );
+    });
+
+    it("Should fail when depositing such amount that would imbalance the pool too much", async function () {
+      const fixture = await balancerSfrxETHRETHWstETHExposeFunctionFixture();
+      const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
+
+      await expect(
+        depositTest(
+          fixture,
+          ["0", "0", "200000000"],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        )
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
     it("Should check balance for gas usage", async () => {
@@ -1380,6 +1387,22 @@ async function depositTest(
     pid: sfrxETHwstETHrEthPID,
     reth,
   };
+
+  /* Trigger a super small deposit to pick up any dust left on the contracts
+   * as a result of previous withdrawals.
+   */
+  const minUnitAmounts = amounts.map(() => oethUnits("0.000000001"));
+  for (let i = 0; i < allAssets.length; i++) {
+    // fund the Vault
+    await allAssets[i]
+      .connect(fixture.josh)
+      .transfer(oethVault.address, minUnitAmounts[i]);
+  }
+  await oethVault.connect(strategist).depositToStrategy(
+    balancerSfrxWstRETHStrategy.address,
+    allAssets.map((asset) => asset.address),
+    minUnitAmounts
+  );
 
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
   const ethAmounts = await Promise.all(
