@@ -1,6 +1,6 @@
 from world import *
 
-from new_buyback import *
+from buyback import *
 
 
 def main():

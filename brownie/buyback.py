@@ -1,84 +1,74 @@
-from brownie import Contract
-import io
-
 from world import *
+from prices import *
 
-BUYBACK_CONTRACT = buyback
-OGV_CONTRACT = Contract.from_explorer(OGV)
+def build_buyback_tx(otoken_address, amount, max_ogv_slippage=1.0, max_cvx_slippage=2.0):
+    buyback = oeth_buyback if otoken_address == OETH else ousd_buyback
+    otoken = oeth if otoken_address == OETH else ousd
+    otoken_label = "OETH" if otoken_address == OETH else "OUSD"
 
-def sim_buyback_ogv(amount):
-    """
-    Run a simulated buyback, and return how much OGV we get back.
-    """
-    buyback = BUYBACK_CONTRACT
-    ogv = OGV_CONTRACT
-    with TemporaryFork():
-        before = ogv.balanceOf(REWARDS)
-        with silent_tx():
-            buyback.distributeAndSwap(amount, 1, {"from": STRATEGIST})
-        after = ogv.balanceOf(REWARDS)
-        return after - before
+    amount_for_ogv = int(amount / 2)
+    amount_for_cvx = amount - amount_for_ogv
 
+    available_otokens = otoken.balanceOf(buyback.address)
 
-def build_buyback_tx(max_dollars=5000, max_slippage=2.0, with_fork=True):
-    """
-    Build a buyback transaction and print a varity of information about it.
+    ogv_quote, ogv_quote_wo_slippage, expected_ogv_slippage, ogv_price_impact = get_token_quote(otoken_address, OGV, amount_for_ogv)
+    cvx_quote, cvx_quote_wo_slippage, expected_cvx_slippage, cvx_price_impact = get_token_quote(otoken_address, CVX, amount_for_cvx)
 
-    :param float max_dollars:
-      How much OUSD to use for the buyback. Will use balance if balance is smaller
-    :param float max_slippage:
-      Percentage of slippage from current prices to allow.
-    """
-    buyback = BUYBACK_CONTRACT
-    treasuryBps = BUYBACK_CONTRACT.treasuryBps()
+    # Compute min tokens
+    min_ogv = int(ogv_quote_wo_slippage * (100 - max_ogv_slippage) / 100)
+    min_cvx = int(cvx_quote_wo_slippage * (100 - max_cvx_slippage) / 100)
 
-    # Calculate buyback amount
-    ousd_available = ousd.balanceOf(buyback)
-    buyback_amount = min(ousd_available, int(max_dollars * 10**18))
+    print("\n--------------------")
+    print("###### {} Buyback:".format(otoken_label))
+    print("--------------------")
 
-    ousd_for_treasury = buyback_amount * treasuryBps / 10**4
-    ousd_to_swap = buyback_amount - ousd_for_treasury
+    print("Balance in contract:             {}".format(c18(available_otokens, False)))
+    print("\nTo be swapped to OGV:            {}".format(c18(amount_for_ogv, False)))
+    print("Expected OGV:                    {}".format(c18(ogv_quote, False)))
+    print("Minimum OGV:                     {}".format(c18(min_ogv, False)))
+    print("Expected OGV Slippage:           {}".format(pcts(expected_ogv_slippage)))
+    print("Expected OGV Price Impact:       {}".format(pcts(ogv_price_impact)))
+    print("\nTo be swapped to CVX:            {}".format(c18(amount_for_cvx, False)))
+    print("Expected CVX:                    {}".format(c18(cvx_quote, False)))
+    print("Minimum CVX:                     {}".format(c18(min_cvx, False)))
+    print("Expected CVX Slippage:           {}".format(pcts(expected_cvx_slippage)))
+    print("Expected CVX Price Impact:       {}".format(pcts(cvx_price_impact)))
 
-    # Calculate returned OGV
-    no_slippage_ogv = sim_buyback_ogv(10**18) * buyback_amount / 10**18
-    expected_slippage_ogv = sim_buyback_ogv(buyback_amount)
-    min_slippage_ogv = no_slippage_ogv * (1.0 - (max_slippage / 100))
+    higher_ogv_slippage = expected_ogv_slippage > max_ogv_slippage
+    higher_cvx_slippage = expected_cvx_slippage > max_cvx_slippage
 
-    # Display buyback amounts
-    print("OUSD available on contract:   {}".format(c18(ousd_available)))
-    print("OUSD to use for transaction:  {}".format(c18(buyback_amount)))
-    print("OUSD to send to treasury:     {}".format(c18(ousd_for_treasury)))
-    print("OUSD to swap:                 {}".format(c18(ousd_to_swap)))
-    print("----")
+    if higher_cvx_slippage and higher_ogv_slippage:
+        raise Exception("Slippage is too high at the moment for CVX and OGV")
+    elif higher_cvx_slippage:
+        raise Exception("Slippage is too high at the moment for CVX")
+    elif higher_ogv_slippage:
+        raise Exception("Slippage is too high at the moment for OGV")
 
-    x = no_slippage_ogv
-    slippage = 1.0 - x / no_slippage_ogv
-    print("No slippage {} OGV ({:.2f}% slippage)".format(c18(x), slippage * 100))
-
-    x = expected_slippage_ogv
-    slippage = 1.0 - x / no_slippage_ogv
-    print("Expected    {} OGV ({:.2f}% slippage)".format(c18(x), slippage * 100))
-
-    x = min_slippage_ogv
-    slippage = 1.0 - x / no_slippage_ogv
-    print("Minimum     {} OGV ({:.2f}% slippage)".format(c18(x), slippage * 100))
-
-    if expected_slippage_ogv < min_slippage_ogv:
-        raise Exception(
-            "Minimum slippage less expected slippage. Transaction would fail."
-        )
-
-    if with_fork:
-        # Display transaction data
-        with TemporaryFork():
-            with silent_tx():
-                tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
-
-        print("")
-        print("To: {}".format(tx.receiver))
-        print("Data: {}".format(tx.input))
-        print(tx.error())
-    else:
-        tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
-
+    tx = buyback.swap(amount, min_ogv, min_cvx, std)
     return tx
+
+def get_token_quote(otoken, to_token, amount):
+    min_amount = 10 * 1e18 if otoken == OUSD else 0.01 * 1e18
+
+    buyback = oeth_buyback if otoken == OETH else ousd_buyback
+    path = buyback.ogvPath() if to_token == OGV else buyback.cvxPath()
+
+    uni_quote, prices_before, _, _ = get_uniswap_v3_quote(path, min_amount)
+    price_before = parse_uniswap_x96_price(prices_before[len(prices_before) - 1])
+
+    no_slippage_quote = max([
+        get_coingecko_quote(otoken, to_token, min_amount),
+        get_cmc_quote(otoken, to_token, min_amount),
+        uni_quote
+    ])
+    no_slippage_quote = amount * no_slippage_quote / min_amount
+
+    actual_quote, prices_after, _, _ = get_uniswap_v3_quote(path, amount)
+
+    # WETH<>to_token price impact
+    price_after = parse_uniswap_x96_price(prices_after[len(prices_after) - 1])
+    price_impact = 100 * ((price_after - price_before) / price_before)
+
+    slippage = 100 * (no_slippage_quote - actual_quote) / actual_quote
+
+    return (actual_quote, no_slippage_quote, slippage, price_impact)
