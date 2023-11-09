@@ -10,6 +10,9 @@ require("./_global-hooks");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 
 const {
+  deployBalancerFrxEethRethWstEThStrategyMissConfigured,
+} = require("./_custom-deploys");
+const {
   hotDeployBalancerRethWETHStrategy,
   hotDeployBalancerFrxEethRethWstEThStrategy,
 } = require("./_hot-deploy");
@@ -1022,6 +1025,19 @@ async function balancerFrxETHwstETHeETHFixture(
     josh
   );
 
+  /* balancer Gnosis safe authorized account
+   * Use this Dube query to get relevant transactions: 
+   - https://dune.com/queries/3184026
+   */
+  const authorizerAddress = "0xa29f61256e948f3fb707b4b3b138c5ccb9ef9888";
+  const recoveryModeSigner = await impersonateAndFund(authorizerAddress);
+
+  fixture.enableRecoveryMode = async () => {
+    await fixture.sfrxETHwstETHrEthBPT
+      .connect(recoveryModeSigner)
+      .enableRecoveryMode();
+  };
+
   await setERC20TokenBalance(josh.address, reth, "1000000", hre);
   await setERC20TokenBalance(josh.address, frxETH, "1000000", hre);
   await setERC20TokenBalance(josh.address, stETH, "1000000", hre);
@@ -1048,6 +1064,13 @@ async function balancerRethWETHExposeFunctionFixture() {
   await balancerREthStrategy.connect(josh).cacheRateProviders();
 
   return fixture;
+}
+
+/**
+ * Deploy the Balancer Composable Stable pool with incorrect configuration
+ */
+async function balancerSfrxETHRETHWstETHMissConfiguredStrategy() {
+  return await deployBalancerFrxEethRethWstEThStrategyMissConfigured();
 }
 
 /**
@@ -1935,7 +1958,7 @@ async function fluxStrategyFixture() {
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
- * The returned `loadFixture` function is typically inlcuded in the beforeEach().
+ * The returned `loadFixture` function is typically included in the beforeEach().
  * @example
  *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
  *   beforeEach(async () => {
@@ -2004,6 +2027,7 @@ module.exports = {
   ousdCollateralSwapFixture,
   balancerRethWETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHMissConfiguredStrategy,
   fluxStrategyFixture,
   nodeSnapshot,
   nodeRevert,

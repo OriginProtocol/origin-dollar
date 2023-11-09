@@ -280,8 +280,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move
      * to ensure the expected changes took place.
      *
-     * @param _asset Address of the Balancer pool asset
-     * @param _amount Amount of the Balancer pool asset
+     * @param _poolAsset Address of the Balancer pool asset
+     * @param _poolAmount Amount of the Balancer pool asset
      * @return bptExpected of BPT expected in exchange for the asset
      *
      * @dev
@@ -296,32 +296,38 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
-    function _getBPTExpected(address _asset, uint256 _amount)
+    function _getBPTExpected(address _poolAsset, uint256 _poolAmount)
         internal
         view
         virtual
         returns (uint256 bptExpected)
     {
         uint256 bptRate = IRateProvider(platformAddress).getRate();
-        uint256 poolAssetRate = _getRateProviderRate(_asset);
-        bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
+        uint256 poolAssetRate = _getRateProviderRate(_poolAsset);
+        bptExpected = _poolAmount.mulTruncate(poolAssetRate).divPrecisely(
+            bptRate
+        );
     }
 
     function _getBPTExpected(
-        address[] memory _assets,
-        uint256[] memory _amounts
+        address[] memory _poolAssets,
+        uint256[] memory _poolAmounts
     ) internal view virtual returns (uint256 bptExpected) {
-        require(_assets.length == _amounts.length, "Assets & amounts mismatch");
+        require(
+            _poolAssets.length == _poolAmounts.length,
+            "Assets & amounts mismatch"
+        );
 
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            uint256 poolAssetRate = _getRateProviderRate(_assets[i]);
+        uint256 ethAmount = 0;
+        for (uint256 i = 0; i < _poolAssets.length; ++i) {
+            uint256 poolAssetRate = _getRateProviderRate(_poolAssets[i]);
             // convert asset amount to ETH amount
-            bptExpected += _amounts[i].mulTruncate(poolAssetRate);
+            ethAmount += _poolAmounts[i].mulTruncate(poolAssetRate);
         }
 
         uint256 bptRate = IRateProvider(platformAddress).getRate();
         // Convert ETH amount to BPT amount
-        bptExpected = bptExpected.divPrecisely(bptRate);
+        bptExpected = ethAmount.divPrecisely(bptRate);
     }
 
     function _lpDepositAll() internal virtual;
@@ -516,8 +522,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         // Balancer vault for BPT token (required for removing liquidity)
         // slither-disable-next-line unused-return
-        pToken.approve(address(balancerVault), 0);
-        // slither-disable-next-line unused-return
         pToken.approve(address(balancerVault), type(uint256).max);
     }
 
@@ -538,7 +542,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         require(poolAssetsLength == providers.length, "Asset length mismatch");
 
-        for (uint256 i = 0; i < poolAssetsLength; i++) {
+        for (uint256 i = 0; i < poolAssetsLength; ++i) {
             if (address(providers[i]) == address(0)) {
                 assetToRateProviderCache[poolAssets[i]] = FIXED_RATE_PROVIDER;
             } else {
@@ -577,6 +581,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * initialized without this, would make it easier when upgrading it
      */
     function cachePoolAssets() public {
+        require(poolAssets.length == 0, "Assets already cached");
+
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );

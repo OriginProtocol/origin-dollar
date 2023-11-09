@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
+const { ethers } = hre;
 const { BigNumber } = require("ethers");
 const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
@@ -193,9 +194,36 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         auraRewardPool
       );
     });
+
+    // Un-skip once we re-deploy the strategy
+    it("Shouldn't be able to cache assets twice", async function () {
+      const { balancerREthStrategy, josh } = fixture;
+
+      // Temporary check that should be removed when new strategy implementation
+      // is deployed.
+      const strategyProxy = await ethers.getContractAt(
+        "InitializeGovernedUpgradeabilityProxy",
+        balancerREthStrategy.address
+      );
+      const implementationAddress = await strategyProxy.implementation();
+
+      /* Current implementation doesn't support this function yet. When a new one is
+       * deployed this test will be re-enabled
+       */
+      if (
+        implementationAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D"
+      ) {
+        return;
+      }
+      // END OF temporary check
+
+      await expect(
+        balancerREthStrategy.connect(josh).cachePoolAssets()
+      ).to.be.revertedWith("Assets already cached");
+    });
   });
 
-  describe("Deposit", function () {
+  describe("Deposit", async function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
     });
@@ -224,6 +252,31 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       const { reth, rEthBPT, weth } = fixture;
       await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
     });
+
+    it("Should fail when depositing by duplicating an asset", async function () {
+      const fixture = await balancerRethWETHExposeFunctionFixture();
+      const { balancerREthStrategy, oethVault, weth, josh } =
+        fixture;
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await weth
+        .connect(josh)
+        .transfer(balancerREthStrategy.address, oethUnits("2"));
+
+      /* Calling deposit with multiple assets is currently disabled. In case we ever
+       * enable it we have a check in the contract that will revert when depositing
+       * with duplicate assets.
+       */
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["deposit(address[],uint256[])"](
+            [weth.address, weth.address],
+            [oethUnits("1"), oethUnits("1")]
+          )
+      ).to.be.revertedWith("No duplicate deposit assets");
+    });
+
     it("Should deposit all WETH and rETH in strategy to pool", async function () {
       const { balancerREthStrategy, oethVault, reth, weth } = fixture;
 
@@ -412,6 +465,23 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       });
     }
 
+    it(`Should fail when duplicating an asset in withdrawal call`, async function () {
+      const { balancerREthStrategy, oethVault, weth } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+      const wethWithdrawAmount = await units("1", weth);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [weth.address, weth.address],
+            [wethWithdrawAmount, wethWithdrawAmount]
+          )
+      ).to.be.revertedWith("No duplicate withdrawal assets");
+    });
+
     it("Should be able to withdraw all of pool liquidity", async function () {
       const { oethVault, weth, reth, balancerREthStrategy } = fixture;
 
@@ -450,6 +520,16 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
             [oethUnits("1")]
           )
       ).to.be.revertedWith("Unsupported asset");
+    });
+
+    it("Should fail withdrawing all of pool liquidity in recovery mode (pool doesn't support it)", async function () {
+      const { oethVault, balancerREthStrategy } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await expect(
+        balancerREthStrategy.connect(oethVaultSigner).recoveryModeWithdrawAll()
+      ).to.be.reverted;
     });
 
     it("Should be able to withdraw with higher withdrawal deviation", async function () {});
