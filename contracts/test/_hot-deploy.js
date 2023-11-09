@@ -2,15 +2,18 @@
  * used for fork-contract development process where the standalone (separate terminal) node
  * doesn't need to be restarted to pick up code and ABI changes.
  */
-const { replaceContractAt } = require("../utils/deploy");
+const { ethers } = hre;
+
+const { isFork } = require("./helpers");
 const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
   oethPoolLpPID,
 } = require("../utils/constants");
+const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
-const { ethers } = hre;
+
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
 // based on a contract name create new implementation
@@ -99,6 +102,8 @@ async function hotDeployOption(
   fixtureName,
   config = { isOethFixture: false }
 ) {
+  if (!isFork) return;
+
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
     .map((item) => item.trim());
@@ -107,8 +112,6 @@ async function hotDeployOption(
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
-
-  console.log("isOethFixture", isOethFixture);
 
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);

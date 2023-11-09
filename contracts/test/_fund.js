@@ -52,7 +52,7 @@ const findBalancesSlot = async (tokenAddress) => {
 
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
-  const account = ethrs.constants.AddressZero;
+  const account = addresses.ETH;
   const probeA = encode(
     ["uint"],
     [parseEther("99999999999999999999999999999999")]
@@ -96,6 +96,9 @@ const findBalancesSlot = async (tokenAddress) => {
       ) {
         const isVyper = probedSlot == slots[1];
         balancesContractSlotCache[tokenAddress] = [i, isVyper];
+        log(
+          `Found balance slot ${i} for ${tokenAddress}. is Vyper? ${isVyper} `
+        );
         return [i, isVyper];
       }
     }
