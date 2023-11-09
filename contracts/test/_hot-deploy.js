@@ -126,8 +126,6 @@ async function hotDeployOption(
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
 
-  console.log("isOethFixture", isOethFixture);
-
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
 

@@ -3,10 +3,10 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "081_locked_frax_convex_strategy",
+    deployName: "081_frax_convex_strategy",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: false,
+    reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
   },
@@ -25,16 +25,16 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 1. Deploy strategy proxy
-    const dConvexFrxEthWethStrategyProxy = await deployWithConfirmation(
-      "LockedFraxConvexStrategyProxy"
+    const dFraxConvexWethStrategyProxy = await deployWithConfirmation(
+      "FraxConvexWethStrategyProxy"
     );
-    const cConvexFrxEthWethStrategyProxy = await ethers.getContract(
-      "LockedFraxConvexStrategyProxy"
+    const cFraxConvexWethStrategyProxy = await ethers.getContract(
+      "FraxConvexWethStrategyProxy"
     );
 
     // 2. Deploy strategy implementation
-    const dLockedFraxConvexStrategy = await deployWithConfirmation(
-      "LockedFraxConvexStrategy",
+    const dFraxConvexStrategy = await deployWithConfirmation(
+      "FraxConvexStrategy",
       [
         [
           addresses.mainnet.CurveFrxEthWethPool,
@@ -47,23 +47,23 @@ module.exports = deploymentWithGovernanceProposal(
         ],
         [
           // stkcvxfrxeth-ng-f-frax
-          addresses.mainnet.FraxStakedConvexWrapperFrxEthWeth,
+          addresses.mainnet.FraxStakedConvexWrapperWeth,
           // locked stkcvxfrxeth-ng-f-frax
-          addresses.mainnet.LockedFraxStakedConvexFrxEthWeth,
+          addresses.mainnet.LockedFraxStakedConvexWeth,
         ],
       ]
     );
-    const cLockedFraxConvexStrategy = await ethers.getContractAt(
-      "LockedFraxConvexStrategy",
-      dConvexFrxEthWethStrategyProxy.address
+    const cFraxConvexStrategy = await ethers.getContractAt(
+      "FraxConvexStrategy",
+      dFraxConvexWethStrategyProxy.address
     );
 
     // 3. Initialize the new Curve frxETH/WETH strategy
     // Construct initialize call data to init and configure the new strategy
-    const initData = cLockedFraxConvexStrategy.interface.encodeFunctionData(
+    const initData = cFraxConvexStrategy.interface.encodeFunctionData(
       "initialize(address[],address[],address[])",
       [
-        [addresses.mainnet.CRV, addresses.mainnet.CVX],
+        [addresses.mainnet.CRV, addresses.mainnet.CVX, addresses.mainnet.FXS],
         [addresses.mainnet.WETH, addresses.mainnet.frxETH],
         [
           addresses.mainnet.CurveFrxEthWethPool,
@@ -71,43 +71,44 @@ module.exports = deploymentWithGovernanceProposal(
         ],
       ]
     );
-    console.log("About to initialize locked Frax Convex frxETH/WETH Strategy");
+    console.log("About to initialize Frax Convex frxETH/WETH Strategy");
 
     // prettier-ignore
     await withConfirmation(
-      cConvexFrxEthWethStrategyProxy
+      cFraxConvexWethStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
-          dLockedFraxConvexStrategy.address,
+          dFraxConvexStrategy.address,
           timelockAddr,
           initData,
           await getTxOpts()
         )
     );
-    console.log("Initialized locked Frax Convex frxETH/WETH Strategy");
+    console.log("Initialized Frax Convex frxETH/WETH Strategy");
 
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new locked Frax Convex frxETH/WETH Strategy.",
+      name: "Deploy new Frax Convex frxETH/WETH Strategy.",
       actions: [
         // 1. Approve the new strategy in the OETH Vault
         {
           contract: cVault,
           signature: "approveStrategy(address)",
-          args: [cLockedFraxConvexStrategy.address],
+          args: [cFraxConvexStrategy.address],
         },
         // 2. Add the new strategy to the OETH Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cLockedFraxConvexStrategy.address, true],
+          args: [cFraxConvexStrategy.address, true],
         },
         // 3. Set the harvester address on the new strategy
         {
-          contract: cLockedFraxConvexStrategy,
+          contract: cFraxConvexStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvester.address],
         },
+        // TODO add Harvest of FXS
       ],
     };
   }

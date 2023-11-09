@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Locked Frax Staked Convex Strategy
+ * @title Frax Convex Strategy
  * @notice Investment strategy for locking Frax Staked Convex Liquidity Provider tokens.
  * @dev This strategy can NOT be set as the Vault's default strategy for an asset.
  * This is because deposits and withdraws can be sandwich attacked if not protected
@@ -26,7 +26,7 @@ import { IFraxConvexStakingWrapper } from "../interfaces/IFraxConvexStakingWrapp
 import { IERC20, BaseCurveStrategy, CurveFunctions, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
+contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -38,7 +38,7 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     /// @dev Has deposit, withdrawAndUnwrap and getReward functions
     address public immutable fraxStakingWrapper;
     /// @notice Frax Staking for Convex that holds the locked liquidity
-    /// @dev Has lockedLiquidityOf function
+    /// @dev Has stakeLocked, lockLonger, withdrawLocked and lockedLiquidityOf functions
     address public immutable fraxStaking;
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
@@ -69,14 +69,14 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /**
      * Initializer for setting up strategy internal state.
-     * @param _rewardTokenAddresses Address of CRV & CVX
+     * @param _rewardTokenAddresses Address of CRV, CVX and FXS
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
-     * @param _pTokens Platform Token corresponding addresses
+     * @param _pTokens Address of the Curve pool for each asset
      */
     function initialize(
-        address[] calldata _rewardTokenAddresses, // CRV + CVX
+        address[] calldata _rewardTokenAddresses, // CRV + CVX + FXS
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
@@ -178,9 +178,8 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // Withdraw all the locked Frax Staked Convex LP tokens for the lock
             // to this strategy contract and do not claim rewards.
             // Add the amount withdrawn to the unlocked Frax Staked Convex LP tokens
-            unlockedFraxStakedConvexLPs += IFraxConvexStaking(
-                fraxStakingWrapper
-            ).withdrawLocked(lockKey, address(this), false);
+            unlockedFraxStakedConvexLPs += IFraxConvexStaking(fraxStaking)
+                .withdrawLocked(lockKey, address(this), false);
         }
 
         require(
@@ -192,7 +191,11 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             requiredCurveLpTokens
         );
 
-        pendingRedeemRequest -= uint128(requiredCurveLpTokens);
+        if (requiredCurveLpTokens < pendingRedeemRequest) {
+            pendingRedeemRequest -= uint128(requiredCurveLpTokens);
+        } else {
+            pendingRedeemRequest = 0;
+        }
     }
 
     /**
@@ -201,15 +204,17 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This will NOT revert if the Convex pool has been shut down.
      */
     function _lpWithdrawAll() internal override {
-        // If the locked Frax Staked Convex LP tokens have expired
-        if (block.timestamp > unlockTimestamp) {
+        // If there is a lock and it has expired
+        if (lockKey > 0 && block.timestamp > unlockTimestamp) {
             // Withdraw all the Frax Staked Convex LP tokens for the lock
             // to this strategy contract and do not claim rewards
-            IFraxConvexStaking(fraxStakingWrapper).withdrawLocked(
+            IFraxConvexStaking(fraxStaking).withdrawLocked(
                 lockKey,
                 address(this),
-                false
+                false // don't claim rewards
             );
+
+            lockKey = bytes32(0);
         }
 
         // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked
@@ -232,7 +237,10 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This will NOT revert if the Convex pool has been shut down??
      */
     function extendLock() external {
-        require(block.timestamp > unlockTimestamp, "Lock not expired");
+        require(
+            lockKey > 0 && block.timestamp > unlockTimestamp,
+            "Lock not expired"
+        );
 
         // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked
         uint256 unlockedFraxStakedConvexLPs = IERC20(fraxStakingWrapper)
@@ -243,9 +251,8 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // Withdraw all the Frax Staked Convex LP tokens for the lock
             // to this strategy contract and do not claim rewards
             // Add to the unstaked Frax Staked Convex LP tokens
-            unlockedFraxStakedConvexLPs += IFraxConvexStaking(
-                fraxStakingWrapper
-            ).withdrawLocked(lockKey, address(this), false);
+            unlockedFraxStakedConvexLPs += IFraxConvexStaking(fraxStaking)
+                .withdrawLocked(lockKey, address(this), false);
 
             // The previous withdraw all deletes the old lock
             lockKey = bytes32(0);
@@ -284,6 +291,9 @@ contract LockedFraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         // Approve the Frax Staking Wrapper to transfer the Curve pool's LP token
         // slither-disable-next-line unused-return
         curveLpToken.approve(fraxStakingWrapper, type(uint256).max);
+
+        // Approve the Frax contract that locks the Frax Staked Convex LP token
+        IERC20(fraxStakingWrapper).approve(fraxStaking, type(uint256).max);
     }
 
     /**

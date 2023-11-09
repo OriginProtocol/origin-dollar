@@ -1,7 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IFraxConvexStakingWrapper {
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IFraxConvexStakingWrapper is IERC20 {
+    event Deposited(
+        address indexed _user,
+        address indexed _account,
+        uint256 _amount,
+        bool _wrapped
+    );
+    event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
+    event RewardInvalidated(address _rewardToken);
+    event RewardRedirected(address indexed _account, address _forward);
+    event RewardAdded(address _token);
+    event Shutdown();
+
     struct EarnedData {
         address token;
         uint256 amount;

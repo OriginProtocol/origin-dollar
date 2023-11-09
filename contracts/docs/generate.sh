@@ -50,11 +50,14 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.s
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy -o ConvexStrategiesHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy,FraxConvexStrategy -o ConvexStrategiesHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexThreePoolStrategy -o ConvexThreePoolStrategySquashed.svg
 sol2uml storage .. -c ConvexThreePoolStrategy -o ConvexThreePoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 sol2uml .. -s -d 0 -b ConvexTwoPoolStrategy -o ConvexTwoPoolStrategySquashed.svg
 sol2uml storage .. -c ConvexTwoPoolStrategy -o ConvexTwoPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+sol2uml .. -s -d 0 -b FraxConvexStrategy -o FraxConvexStrategySquashed.svg
+sol2uml storage .. -c FraxConvexStrategy -o FraxConvexStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg

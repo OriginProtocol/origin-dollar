@@ -206,10 +206,9 @@ contract ConvexFrxEthWethStrategyProxy is
 }
 
 /**
- * @notice LockedFraxConvexStrategyProxy delegates calls to a LockedFraxConvexStrategy implementation
+ * @notice FraxConvexWethStrategyProxy delegates calls to a FraxConvexStrategy implementation
+ * for the Curve frxETH/WETH pool
  */
-contract LockedFraxConvexStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
+contract FraxConvexWethStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
