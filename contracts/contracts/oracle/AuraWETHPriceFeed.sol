@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 
 contract AuraWETHPriceFeed is AggregatorV3Interface {
     using SafeCast for uint256;
+    using SafeCast for int256;
     
     uint8 public constant override decimals = 18;
     string public constant override description = "";
@@ -39,17 +40,18 @@ contract AuraWETHPriceFeed is AggregatorV3Interface {
         });
 
         uint256[] memory prices = auraOracleWeightedPool.getTimeWeightedAverage(queries);
+        int256 price_1h = prices[0].toInt256();
+        int256 price_5m = prices[1].toInt256();
+
+        int256 diff = (1e18 * (price_1h - price_5m)) / ((price_1h + price_5m) / 2);
+        uint256 absDiff = diff >= 0 ? diff.toUint256() : (-diff).toUint256();
 
         // Ensure the price hasn't moved too much (2% tolerance)
         // between now and the past hour
-        if (prices[0] > prices[1]) {
-            require((1 ether - (1 ether * prices[0] / prices[1])) <= 0.02 ether, "High price volatility");
-        } else if (prices[1] > prices[0]) {
-            require((1 ether - (1 ether * prices[1] / prices[0])) <= 0.02 ether, "High price volatility");
-        }
+        require(absDiff <= 0.02 ether, "High price volatility");
 
         // Return the recent price
-        return prices[0].toInt256();
+        return price_5m;
     }
 
     function latestRoundData()

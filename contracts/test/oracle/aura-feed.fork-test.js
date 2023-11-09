@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 describe("ForkTest: Aura/WETH Price Feed", function () {
   this.timeout(0);
@@ -13,7 +14,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
     await deployments.deploy("AuraWETHPriceFeed", {
       from: await fixture.strategist.getAddress(),
       args: [
-        "0xc29562b045d80fd77c69bec09541f5c16fe20d9d"
+        addresses.mainnet.auraWETHWeightedPool
       ]
     });
 
@@ -21,7 +22,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     fixture.auraWETHWeightedPool = await ethers.getContractAt(
       "IOracleWeightedPool",
-      "0xc29562b045d80fd77c69bec09541f5c16fe20d9d"
+      addresses.mainnet.auraWETHWeightedPool
     );
   });
 

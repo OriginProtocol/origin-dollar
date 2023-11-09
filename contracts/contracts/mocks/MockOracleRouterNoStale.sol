@@ -29,7 +29,7 @@ contract MockOETHOracleRouterNoStale is OETHOracleRouter {
 
     function feedMetadata(address asset)
         internal
-        pure
+        view
         virtual
         override
         returns (address feedAddress, uint256 maxStaleness)

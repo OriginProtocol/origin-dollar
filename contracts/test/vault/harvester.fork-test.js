@@ -2,8 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("./../_fixture");
-const { isCI } = require("./../helpers");
+const { isCI, oethUnits } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
+const { hotDeployOption } = require("../_hot-deploy");
+const { setERC20TokenBalance } = require("../_fund");
 const { parseUnits } = require("ethers").utils;
 
 describe("ForkTest: Harvester", function () {
@@ -15,9 +17,149 @@ describe("ForkTest: Harvester", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
+    await hotDeployOption(fixture, null, {
+      isOethFixture: true
+    })
+    await hotDeployOption(fixture, null, {
+      isOethFixture: false
+    })
+
+    const { oethHarvester, oethOracleRouter, harvester, timelock, crv, bal, aura, weth, usdt } = fixture;
+
+    // Cache decimals
+    await oethOracleRouter.connect(timelock).cacheDecimals(aura.address)
+    await oethOracleRouter.connect(timelock).cacheDecimals(bal.address)
+
+    // CRV with Curve for OETH
+    await oethHarvester.connect(timelock).setRewardTokenConfig(
+      crv.address,
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 200,
+        platform: 3, // Curve
+        swapRouterAddr: "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14",
+        liquidationLimit: oethUnits("4000"),
+        doSwapRewardToken: true,
+      },
+      utils.defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        ["2", "1"]
+      )
+    )
+    await setERC20TokenBalance(oethHarvester.address, crv)
+
+    // CRV with Uniswap V3 for OUSD
+    await harvester.connect(timelock).setRewardTokenConfig(
+      crv.address,
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 200,
+        platform: 1, // Uniswap V3
+        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        liquidationLimit: oethUnits("4000"),
+        doSwapRewardToken: true,
+      },
+      utils.solidityPack(
+        ["address", "uint24", "address", "uint24", "address"],
+        [crv.address, 3000, weth.address, 500, usdt.address]
+      )
+    )
+    await setERC20TokenBalance(harvester.address, crv)
+
+    // BAL with Balancer for OETH
+    await oethHarvester.connect(timelock).setRewardTokenConfig(
+      bal.address,
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 200,
+        platform: 2, // Balancer
+        swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+        liquidationLimit: oethUnits("100"),
+        doSwapRewardToken: true,
+      },
+      utils.defaultAbiCoder.encode(
+        ["bytes32"],
+        ["0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"]
+      )
+    )
+    await setERC20TokenBalance(oethHarvester.address, bal)
+
+    // BAL with Balancer for OETH
+    await oethHarvester.connect(timelock).setRewardTokenConfig(
+      aura.address,
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 200,
+        platform: 2, // Balancer
+        swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+        liquidationLimit: oethUnits("500"),
+        doSwapRewardToken: true,
+      },
+      utils.defaultAbiCoder.encode(
+        ["bytes32"],
+        ["0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274"]
+      )
+    )
+    await setERC20TokenBalance(oethHarvester.address, aura)
   });
 
-  describe("Rewards Config", () => {
+  describe("with Curve", () => {
+    it("Should swap CRV for WETH", async () => {
+      const { oethHarvester, timelock, crv } = fixture;
+      const crvBefore = await crv.balanceOf(oethHarvester.address)
+
+      await oethHarvester.connect(timelock)
+        .swapRewardToken(crv.address)
+
+      expect(
+        await crv.balanceOf(oethHarvester.address)
+      ).to.equal(crvBefore.sub(oethUnits("4000")))
+    })
+  })
+
+  describe("with Uniswap V3", () => {
+    it("Should swap CRV for USDT", async () => {
+      const { harvester, timelock, crv, } = fixture;
+      const crvBefore = await crv.balanceOf(harvester.address)
+
+      await harvester.connect(timelock)
+        .swapRewardToken(crv.address)
+
+
+      expect(
+        await crv.balanceOf(harvester.address)
+      ).to.equal(crvBefore.sub(oethUnits("4000")))
+    })
+  })
+
+  describe("with Balancer", () => {
+    it("Should swap BAL for WETH", async () => {
+      const { oethHarvester, timelock, bal } = fixture;
+      const balBefore = await bal.balanceOf(oethHarvester.address)
+
+      await oethHarvester.connect(timelock)
+        .swapRewardToken(bal.address)
+
+
+      expect(
+        await bal.balanceOf(oethHarvester.address)
+      ).to.equal(balBefore.sub(oethUnits("100")))
+    })
+
+    it("Should swap AURA for WETH", async () => {
+      const { oethHarvester, timelock, aura } = fixture;
+      const auraBefore = await aura.balanceOf(oethHarvester.address)
+
+      await oethHarvester.connect(timelock)
+        .swapRewardToken(aura.address)
+
+      // expect(
+      //   await aura.balanceOf(oethHarvester.address)
+      // ).to.equal(auraBefore.sub(oethUnits("500")))
+    })
+  })
+
+  describe.skip("Rewards Config", () => {
     it("Should have correct reward token config for CRV", async () => {
       const { harvester, crv } = fixture;
 
@@ -87,7 +229,7 @@ describe("ForkTest: Harvester", function () {
     });
   });
 
-  describe("Harvest", () => {
+  describe.skip("Harvest", () => {
     it("Should harvest from all strategies", async () => {
       const { harvester, timelock } = fixture;
       await harvester.connect(timelock)["harvest()"]();

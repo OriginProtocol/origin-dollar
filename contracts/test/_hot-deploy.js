@@ -2,7 +2,7 @@
  * used for fork-contract development process where the standalone (separate terminal) node
  * doesn't need to be restarted to pick up code and ABI changes.
  */
-const { replaceContractAt } = require("../utils/deploy");
+const { replaceContractAt } = require("../utils/hardhat");
 const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
@@ -107,8 +107,7 @@ async function hotDeployOption(
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
-
-  console.log("isOethFixture", isOethFixture);
+  const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
 
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
@@ -150,7 +149,16 @@ async function hotDeployOption(
     );
   }
   if (deployHarvester) {
-    // TODO: update harvester
+    await hotDeployHarvester(
+      fixture,
+      isOethFixture
+    )
+  }
+  if (deployOracleRouter) {
+    await hotDeployOracleRouter(
+      fixture,
+      isOethFixture
+    )
   }
 }
 
@@ -206,6 +214,70 @@ async function hotDeployVaultAdmin(
 
     await replaceContractAt(liveImplContractAddress, implementation);
   }
+}
+
+async function hotDeployHarvester(
+  fixture,
+  forOETH
+) {
+  const { deploy } = deployments
+  const harvesterName = `${forOETH ? "OETH" : ""}Harvester`;
+  const harvesterProxyName = `${forOETH ? "OETH" : ""}HarvesterProxy`;
+  const vault = forOETH ? fixture.oethVault : fixture.vault
+  const baseToken = forOETH ? fixture.weth : fixture.usdt
+
+  const cHarvesterProxy = await ethers.getContract(harvesterProxyName);
+
+  log(`Deploying new ${harvesterName} implementation`);
+  await deploy(harvesterName, {
+    from: addresses.mainnet.Timelock,
+    contract: harvesterName,
+    args: [vault.address, baseToken.address]
+  });
+  const implementation = await ethers.getContract(harvesterName);
+  const liveImplContractAddress = await cHarvesterProxy.implementation();
+  log(
+    `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
+  );
+  await replaceContractAt(liveImplContractAddress, implementation);
+}
+
+async function hotDeployOracleRouter(
+  fixture,
+  forOETH
+) {
+  const { deploy } = deployments
+  const routerName = `${forOETH ? "OETH" : ""}OracleRouter`;
+
+  const cRouter = await ethers.getContract(routerName);
+
+  if (forOETH) {
+    await deploy("AuraWETHPriceFeed", {
+      from: await fixture.strategist.getAddress(),
+      args: [
+        addresses.mainnet.AuraWeightedOraclePool
+      ]
+    })
+    const auraPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
+    
+    await deploy(routerName, {
+      from: await fixture.strategist.getAddress(),
+      args: [
+        auraPriceFeed.address
+      ]
+    })
+  } else {
+    await deploy(routerName, {
+      from: await fixture.strategist.getAddress(),
+      args: []
+    })
+  }
+
+  const implementation = await ethers.getContract(routerName);
+  log(
+    `Replacing implementation at ${cRouter.address} with the fresh bytecode`
+  );
+  await replaceContractAt(cRouter.address, implementation);
 }
 
 /* Run the fixture and replace the main strategy contract(s) of the fixture

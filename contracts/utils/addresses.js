@@ -220,6 +220,7 @@ addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
+addresses.mainnet.AuraWeightedOraclePool = "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
 // Flux Strategy
 addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";

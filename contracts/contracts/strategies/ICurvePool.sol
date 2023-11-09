@@ -30,6 +30,14 @@ interface ICurvePool {
         view
         returns (uint256);
 
+    function exchange(
+        uint256 i,
+        uint256 j,
+        uint256 dx,
+        uint256 min_dy
+    ) external returns (uint256);
+
+
     function coins(uint256 _index) external view returns (address);
 
     function remove_liquidity_imbalance(

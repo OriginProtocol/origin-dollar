@@ -110,6 +110,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Mock AURA token
+  await deploy("MockAura", {
+    from: deployerAddr,
+  });
+
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
