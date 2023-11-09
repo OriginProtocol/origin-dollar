@@ -497,6 +497,42 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       });
     }
 
+    it(`Should be able to withdraw when assets are specified in any order`, async function () {
+      const { reth, balancerREthStrategy, oethVault, weth } = fixture;
+      const wethAmount = "1";
+      const rethAmount = "1";
+
+      const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+      const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
+      const wethWithdrawAmount = await units(wethAmount, weth);
+      const rethWithdrawAmount = await units(rethAmount, reth);
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      // prettier-ignore
+      await balancerREthStrategy
+        .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+          oethVault.address,
+          [weth.address, reth.address],
+          [wethWithdrawAmount, rethWithdrawAmount]
+        );
+
+      await balancerREthStrategy
+        .connect(oethVaultSigner)
+        ["withdraw(address,address[],uint256[])"](
+          oethVault.address,
+          [reth.address, weth.address],
+          [wethWithdrawAmount, rethWithdrawAmount]
+        );
+
+      expect(
+        (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+      ).to.approxEqualTolerance(wethWithdrawAmount.mul("2"), 0.01);
+      expect(
+        (await reth.balanceOf(oethVault.address)).sub(vaultRethBalanceBefore)
+      ).to.approxEqualTolerance(rethWithdrawAmount.mul("2"), 0.01);
+    });
+
     it(`Should fail when duplicating an asset in withdrawal call`, async function () {
       const { balancerREthStrategy, oethVault, weth } = fixture;
 
