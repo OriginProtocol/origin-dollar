@@ -236,8 +236,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
 
     it("Should fail when depositing by duplicating an asset", async function () {
       const fixture = await balancerRethWETHExposeFunctionFixture();
-      const { balancerREthStrategy, oethVault, weth, josh } =
-        fixture;
+      const { balancerREthStrategy, oethVault, weth, josh } = fixture;
       const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       await weth
