@@ -2236,12 +2236,12 @@ async function buybackFixture() {
     await setERC20TokenBalance(
       oethBuyback.address,
       oeth,
-      oethUnits("999999999")
+      oethUnits("99999999999")
     );
     await setERC20TokenBalance(
       ousdBuyback.address,
       ousd,
-      ousdUnits("999999999999")
+      ousdUnits("99999999999999")
     );
   } else {
     fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
