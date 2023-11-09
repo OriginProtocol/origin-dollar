@@ -1,16 +1,17 @@
 const { isFork, isForkWithLocalNode } = require("../test/helpers");
-const {
-  replaceContractAt,
-  deployWithConfirmation,
-} = require("../utils/deploy");
+const { deployWithConfirmation } = require("../utils/deploy");
 const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
-const daiAbi = require("../test/abi/dai.json").abi;
-const { hardhatSetBalance } = require("../test/_fund");
+const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
+const { hardhatSetBalance } = require("../test/_fund");
+
+const daiAbi = require("../test/abi/dai.json").abi;
+
+const log = require("../utils/logger")("deploy:999_fork_test_setup");
 
 const main = async (hre) => {
-  console.log(`Running 999_fork_test_setup deployment...`);
+  log(`Running 999_fork_test_setup deployment...`);
 
   async function resetAllowance(
     tokenContract,
@@ -40,16 +41,14 @@ const main = async (hre) => {
     "MockOETHOracleRouterNoStale",
     ["0xc29562b045d80fd77c69bec09541f5c16fe20d9d"]
   );
-  console.log(
-    "Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale"
-  );
+  log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
   await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
   await replaceContractAt(
     oethOracleRouter.address,
     dMockOETHOracleRouterNoStale
   );
 
-  console.log("Replaced Oracle contracts for fork test");
+  log("Replaced Oracle contracts for fork test");
 
   const signers = await hre.ethers.getSigners();
 
@@ -61,10 +60,10 @@ const main = async (hre) => {
   await impersonateAndFund(governorAddr);
   await impersonateAndFund(strategistAddr);
   await impersonateAndFund(addresses.mainnet.OldTimelock);
-  console.log("Unlocked and funded named accounts with ETH");
+  log("Unlocked and funded named accounts with ETH");
 
   await fundAccounts();
-  console.log("Funded accounts with other tokens");
+  log("Funded accounts with other tokens");
 
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
@@ -98,9 +97,9 @@ const main = async (hre) => {
     }
   }
 
-  console.log("Funded and allowance reset for all signers");
+  log("Funded and allowance reset for all signers");
 
-  console.log(`999_fork_test_setup deployment done!`);
+  log(`999_fork_test_setup deployment done!`);
 };
 
 main.id = "999_no_stale_oracles";
