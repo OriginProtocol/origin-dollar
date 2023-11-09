@@ -134,11 +134,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
                     address(this)
                 );
                 require(actual == balance, "Did not withdraw enough");
+
+                uint256 assetBalance = asset.balanceOf(address(this));
                 // Transfer entire balance to Vault
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+                asset.safeTransfer(vaultAddress, assetBalance);
+
+                emit Withdrawal(address(asset), aToken, assetBalance);
             }
         }
     }
@@ -163,12 +164,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 

@@ -167,7 +167,7 @@ async function hardhatSetBalance(address, amount = "10000") {
  * @param {[ERC20]} tokensTransfer Tokens that sets the balance by token.transfer tx
  * @param {number} [amount=10000] Amount of tokens to set
  */
-const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
+const setERC20TokenBalance = async (account, token, amount = "10000") => {
   /* Format:
    * config = {
    *   tokenContract.address1: {
