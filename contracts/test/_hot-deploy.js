@@ -2,7 +2,7 @@
  * used for fork-contract development process where the standalone (separate terminal) node
  * doesn't need to be restarted to pick up code and ABI changes.
  */
-const { replaceContractAt } = require("../utils/deploy");
+const { replaceContractAt } = require("../utils/hardhat");
 const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
@@ -76,6 +76,24 @@ async function constructNewContract(fixture, implContractName) {
           addresses.mainnet.WETH,
         ],
       ];
+    } else if (implContractName === "FraxConvexStrategy") {
+      return [
+        [
+          addresses.mainnet.CurveFrxEthWethPool,
+          addresses.mainnet.OETHVaultProxy,
+        ],
+        [
+          2, //assets in the Curve pool
+          addresses.mainnet.CurveFrxEthWethPool, // Curve pool
+          addresses.mainnet.CurveFrxEthWethPool, // Curve LP token
+        ],
+        [
+          // stkcvxfrxeth-ng-f-frax
+          addresses.mainnet.FraxStakedConvexWrapperWeth,
+          // locked stkcvxfrxeth-ng-f-frax
+          addresses.mainnet.LockedFraxStakedConvexWeth,
+        ],
+      ];
     }
   };
 
@@ -137,6 +155,12 @@ async function hotDeployOption(
         fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName
         "ConvexEthMetaStrategy" // implContractName
+      );
+    } else if (fixtureName === "fraxConvexWethFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "fraxConvexWethStrategy", // fixtureStrategyVarName
+        "FraxConvexStrategy" // implContractName
       );
     }
   }
