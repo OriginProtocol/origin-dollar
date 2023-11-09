@@ -21,11 +21,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
 
     /*
-     * When redeeming sfrxETH for frxETH there is usually a 1 WEI rounding
+     * @dev When redeeming sfrxETH for frxETH there is usually a 1 WEI rounding
      * error. To mitigate this issue we overshoot by 1 WEI when redeeming.
      */
     uint256 public constant FRX_ETH_REDEEM_CORRECTION = 1;
-    // A constant representing a rate provider with a fixed 1e18 rate
+    /// @dev A constant representing a rate provider with a fixed 1e18 rate
     address public constant FIXED_RATE_PROVIDER =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -40,16 +40,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /// @notice Balancer pool identifier
     bytes32 public immutable balancerPoolId;
 
-    // Max withdrawal deviation denominated in 1e18 (1e18 == 100%)
+    /// @notice Max withdrawal deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalDeviation;
-    // Max deposit deviation denominated in 1e18 (1e18 == 100%)
+    /// @notice Max deposit deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositDeviation;
-    // Cache of asset => rateProvider
+    /// @dev Cache of asset => rateProvider
     mapping(address => address) public assetToRateProviderCache;
 
-    // all the pool assets as returned by the balancerVault.getPoolTokens() function
+    /// @dev all the pool assets as returned by the balancerVault.getPoolTokens() function
     address[] public poolAssets;
-    /* A mapping of pool asset address to asset index. With Balancer the
+
+    /* @dev A mapping of pool asset address to asset index. With Balancer the
      * configured order of the pool assets is important and never changes.
      * For those reasons these assets are cached as they greatly simplify the
      * code and make it more gas efficient.
