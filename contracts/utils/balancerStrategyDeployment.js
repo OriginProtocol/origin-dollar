@@ -54,10 +54,6 @@ module.exports = ({
             addresses.mainnet.balancerVault, // Address of the Balancer vault
             poolId, // Pool ID of the Balancer pool
           ],
-          [
-            2, // WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
-            1, // WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
-          ],
           auraRewardsContractAddress,
         ],
         null,
