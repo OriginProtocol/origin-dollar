@@ -517,9 +517,9 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
           [wethWithdrawAmount, rethWithdrawAmount]
         );
 
+      // prettier-ignore
       await balancerREthStrategy
-        .connect(oethVaultSigner)
-        ["withdraw(address,address[],uint256[])"](
+        .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
           oethVault.address,
           [reth.address, weth.address],
           [wethWithdrawAmount, rethWithdrawAmount]
