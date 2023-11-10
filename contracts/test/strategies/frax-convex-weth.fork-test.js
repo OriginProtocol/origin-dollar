@@ -2,11 +2,7 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { advanceTime, units, oethUnits, isCI } = require("../helpers");
-const {
-  createFixtureLoader,
-  fraxConvexWethFixture,
-  loadDefaultFixture,
-} = require("../_fixture");
+const { createFixtureLoader, fraxConvexWethFixture } = require("../_fixture");
 const addresses = require("../../utils/addresses");
 const { resolveAsset } = require("../../utils/assets");
 const { MAX_UINT256 } = require("../../utils/constants");
@@ -74,6 +70,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       expect(await fraxConvexWethStrategy.fraxLocking()).to.equal(
         addresses.mainnet.LockedFraxStakedConvexWeth
       );
+      expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(0);
+      expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
 
       // Storage slots
       // Rewards

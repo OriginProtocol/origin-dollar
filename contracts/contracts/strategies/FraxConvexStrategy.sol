@@ -15,6 +15,14 @@ pragma solidity ^0.8.0;
  * that can hijack execution. For example, the Curve ETH/stETH pool is vulnerable to
  * read-only reentry.
  * https://x.com/danielvf/status/1657019677544001536
+ *
+ * There are multiple levels of tokens managed by this strategy
+ * - Vault assets. eg WETH and frxETH
+ * - Curve LP tokens. eg frxETH-ng-f
+ * - Convex LP tokens. eg cvxfrxeth-ng-f
+ * - Frax Staked Convex LP tokens. eg stkcvxfrxeth-ng-f-frax
+ * - Locked Frax Staked Convex LP tokens which do not have a LP token
+ *
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -40,7 +48,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     /// @dev Has deposit, withdrawAndUnwrap and getReward functions
     address public immutable fraxStaking;
     /// @notice Frax locking contract for Frax Staked Convex LP tokens. eg FraxUnifiedFarm_ERC20_Convex_frxETH
-    /// @dev Has stakeLocked, lockLonger, withdrawLocked and lockedLiquidityOf functions
+    /// @dev Has stakeLocked, lockAdditional, lockLonger, withdrawLocked and lockedLiquidityOf functions
     address public immutable fraxLocking;
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
@@ -140,6 +148,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // Withdraw all the Frax Staked Convex LP tokens from the lock
             // to this strategy contract and do not claim rewards.
             // Have to withdraw all as we can't withdraw a partial amount.
+            // slither-disable-next-line unused-return
             IFraxConvexLocking(fraxLocking).withdrawLocked(
                 lockKey,
                 address(this),
@@ -147,9 +156,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             );
 
             // The previous withdraw deletes the old lock
+            // slither-disable-next-line reentrancy-no-eth
             lockKey = bytes32(0);
 
-            // Add to the unlocked Frax Staked Convex LP balance
+            // This assumes all the locked Frax Staked Convex LP tokens are withdraw from the lock.
+            // that is, there are no rounding issues.
             unlockedAmount = lockedBalance;
         }
         // else the lock does not exist or has not expired
@@ -175,6 +186,10 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // Don't bother locking if the amount is too small
             if (lockAmount < MIN_LOCK_AMOUNT) return;
 
+            // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
+            // slither-disable-next-line reentrancy-no-eth
+            unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+
             // If no lock exists
             if (lockKey == bytes32(0)) {
                 // Lock the Frax Staked Convex LP tokens for the required duration
@@ -183,7 +198,6 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     lockAmount,
                     LOCK_DURATION
                 );
-                unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
             } else {
                 // Add Frax Staked Convex LP tokens to the existing lock.
                 // Add even if the lock has expired as we'll extend the lock next if needed.
@@ -198,7 +212,6 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     lockKey,
                     block.timestamp + LOCK_DURATION
                 );
-                unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
             }
         }
         // else the target lock balance is not under the locked balance
@@ -341,6 +354,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         curveLpToken.approve(fraxStaking, type(uint256).max);
 
         // Approve the Frax contract that locks the Frax Staked Convex LP token
+        // slither-disable-next-line unused-return
         IERC20(fraxStaking).approve(fraxLocking, type(uint256).max);
     }
 
