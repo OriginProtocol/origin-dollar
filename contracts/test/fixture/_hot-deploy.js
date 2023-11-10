@@ -104,7 +104,58 @@ async function hotDeployBalancerFrxEethRethWstEThStrategy(
   return fixture;
 }
 
+async function hotDeployBalancerFrxEethRethWstEThBrokenStrategy(
+  balancerFrxETHwstETHeETHFixture
+) {
+  /* Because of the way hardhat fixture caching works it is vital that
+   * the fixtures are loaded before the hot-deployment of contracts. If the
+   * contracts are hot-deployed and fixture load happens afterwards the deployed
+   * contract is not visible in deployments.
+   */
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  const { balancerSfrxWstRETHStrategy } = fixture;
+  const { deploy } = deployments;
+
+  // deploy this contract that exposes internal function
+  await deploy("BalancerComposablePoolBrokenTestStrategy", {
+    from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+    contract: "BalancerComposablePoolBrokenTestStrategy",
+    args: [
+      [
+        addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
+        addresses.mainnet.OETHVaultProxy,
+      ],
+      [
+        addresses.mainnet.rETH,
+        addresses.mainnet.stETH,
+        addresses.mainnet.wstETH,
+        addresses.mainnet.frxETH,
+        addresses.mainnet.sfrxETH,
+        addresses.mainnet.balancerVault, // Address of the Balancer vault
+        balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
+      ],
+      addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+      0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
+    ],
+  });
+
+  await replaceContractAt(
+    balancerSfrxWstRETHStrategy.address,
+    await ethers.getContract("BalancerComposablePoolBrokenTestStrategy")
+  );
+
+  // add additional contract functions present in the byte code while keeping
+  // the existing storage slots.
+  fixture.balancerSfrxWstRETHStrategy = await ethers.getContractAt(
+    "BalancerComposablePoolBrokenTestStrategy",
+    balancerSfrxWstRETHStrategy.address
+  );
+
+  return fixture;
+}
+
 module.exports = {
   hotDeployBalancerRethWETHStrategy,
   hotDeployBalancerFrxEethRethWstEThStrategy,
+  hotDeployBalancerFrxEethRethWstEThBrokenStrategy
 };

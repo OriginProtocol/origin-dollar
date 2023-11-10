@@ -15,6 +15,7 @@ const {
 const {
   hotDeployBalancerRethWETHStrategy,
   hotDeployBalancerFrxEethRethWstEThStrategy,
+  hotDeployBalancerFrxEethRethWstEThBrokenStrategy,
 } = require("./_hot-deploy");
 const { replaceContractAt } = require("../../utils/deploy");
 const {
@@ -1086,6 +1087,18 @@ async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
 }
 
 /**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that fails on a withdrawAll call
+ */
+async function balancerSfrxETHRETHWstETHBrokenWithdrawalFixture() {
+  const fixture = await hotDeployBalancerFrxEethRethWstEThBrokenStrategy(
+    balancerFrxETHwstETHeETHFixture
+  );
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with the balancer strategy for wstETH/WETH pool
  */
 async function balancerWstEthFixture() {
@@ -2027,6 +2040,7 @@ module.exports = {
   ousdCollateralSwapFixture,
   balancerRethWETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
   fluxStrategyFixture,
   nodeSnapshot,

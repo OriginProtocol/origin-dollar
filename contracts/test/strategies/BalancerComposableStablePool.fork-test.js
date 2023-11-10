@@ -11,6 +11,7 @@ const {
   balancerFrxETHwstETHeETHFixture,
   createFixtureLoader,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
 } = require("../fixture/_fixture");
 
@@ -427,6 +428,14 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         ).to.approxEqualTolerance(rethWithdrawAmount, 0.01);
       });
     }
+
+    it.only("Should be able to call withdrawAllFromStrategies even when one errors out", async function () {
+      const fixture = await balancerSfrxETHRETHWstETHBrokenWithdrawalFixture();
+      const { timelock, oethVault, sfrxETHwstETHrEthBPT } = fixture;
+
+      // Withdraw all from strategies and deposit it to Flux
+      await oethVault.connect(timelock).withdrawAllFromStrategies();
+    });
 
     it("Should be able to withdraw all of pool liquidity", async function () {
       const { oethVault, stETH, frxETH, reth, balancerSfrxWstRETHStrategy } =
