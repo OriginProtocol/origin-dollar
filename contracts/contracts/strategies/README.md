@@ -36,6 +36,14 @@
 
 ![Convex Two Pool Strategy Storage](../../docs/ConvexTwoPoolStrategyStorage.svg)
 
+### Frax Convex Squashed
+
+![Frax Convex Strategy Squashed](../../docs/FraxConvexStrategySquashed.svg)
+
+### Frax Convex Storage
+
+![Frax Convex Strategy Storage](../../docs/FraxConvexStrategyStorage.svg)
+
 ## Convex ETH AMO Strategy
 
 ### Hierarchy
