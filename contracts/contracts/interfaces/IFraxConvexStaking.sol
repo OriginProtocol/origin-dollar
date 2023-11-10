@@ -1,80 +1,69 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IFraxConvexStaking {
-    // Struct for the stake
-    struct LockedStake {
-        bytes32 kek_id;
-        uint256 start_timestamp;
-        uint256 liquidity;
-        uint256 ending_timestamp;
-        uint256 lock_multiplier; // 6 decimals of precision. 1x = 1000000
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IFraxConvexStaking is IERC20 {
+    event Deposited(
+        address indexed _user,
+        address indexed _account,
+        uint256 _amount,
+        bool _wrapped
+    );
+    event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
+    event RewardInvalidated(address _rewardToken);
+    event RewardRedirected(address indexed _account, address _forward);
+    event RewardAdded(address _token);
+    event Shutdown();
+
+    struct EarnedData {
+        address token;
+        uint256 amount;
     }
 
-    function curvePool() external view returns (address);
+    function collateralVault() external view returns (address);
+
+    function convexBooster() external view returns (address);
+
+    function convexPool() external view returns (address);
+
+    function convexPoolId() external view returns (uint256);
+
+    function convexToken() external view returns (address);
 
     function curveToken() external view returns (address);
 
-    function earned(address account)
+    function deposit(uint256 _amount, address _to) external;
+
+    function earned(address _account)
         external
-        view
-        returns (uint256[] memory new_earned);
+        returns (EarnedData[] memory claimable);
 
-    function getAllRewardTokens() external view returns (address[] memory);
+    function getReward(address _account, address _forwardTo) external;
 
-    function getReward(address destination_address)
-        external
-        returns (uint256[] memory);
+    function getReward(address _account) external;
 
-    function getReward2(address destination_address, bool claim_extra_too)
-        external
-        returns (uint256[] memory);
+    function isShutdown() external view returns (bool);
 
-    function getRewardForDuration()
-        external
-        view
-        returns (uint256[] memory rewards_per_duration_arr);
+    function rewardLength() external view returns (uint256);
 
-    function lastRewardClaimTime(address) external view returns (uint256);
+    function rewardRedirect(address) external view returns (address);
 
-    function lastUpdateTime() external view returns (uint256);
-
-    function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
-
-    function lockLonger(bytes32 kek_id, uint256 new_ending_ts) external;
-
-    function lockMultiplier(uint256 secs) external view returns (uint256);
-
-    function lockedLiquidityOf(address account) external view returns (uint256);
-
-    function lockedStakes(address, uint256)
+    function rewards(uint256)
         external
         view
         returns (
-            bytes32 kek_id,
-            uint256 start_timestamp,
-            uint256 liquidity,
-            uint256 ending_timestamp,
-            uint256 lock_multiplier
+            address reward_token,
+            address reward_pool,
+            uint256 reward_integral,
+            uint256 reward_remaining
         );
 
-    function lockedStakesOf(address account)
-        external
-        view
-        returns (LockedStake[] memory);
+    function stake(uint256 _amount, address _to) external;
 
-    function lockedStakesOfLength(address account)
-        external
-        view
-        returns (uint256);
+    function totalBalanceOf(address _account) external view returns (uint256);
 
-    function stakeLocked(uint256 liquidity, uint256 secs)
-        external
-        returns (bytes32);
+    function withdraw(uint256 _amount) external;
 
-    function withdrawLocked(
-        bytes32 kek_id,
-        address destination_address,
-        bool claim_rewards
-    ) external returns (uint256);
+    function withdrawAndUnwrap(uint256 _amount) external;
 }

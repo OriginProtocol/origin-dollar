@@ -1829,13 +1829,13 @@ async function fraxConvexWethFixture(
       addresses.mainnet.CurveFrxEthWethPool
     );
 
-    fixture.fraxConvexWrapperWeth = await ethers.getContractAt(
-      "IFraxConvexStakingWrapper",
-      addresses.mainnet.FraxStakedConvexWrapperWeth
+    fixture.fraxConvexStakingWeth = await ethers.getContractAt(
+      "IFraxConvexStaking",
+      addresses.mainnet.FraxStakedConvexWeth
     );
 
-    fixture.fraxConvexWethLocked = await ethers.getContractAt(
-      "IFraxConvexStaking",
+    fixture.fraxConvexLockedWeth = await ethers.getContractAt(
+      "IFraxConvexLocking",
       addresses.mainnet.LockedFraxStakedConvexWeth
     );
 

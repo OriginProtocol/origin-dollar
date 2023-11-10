@@ -92,7 +92,7 @@ async function constructNewContract(fixture, implContractName) {
         ],
         [
           // stkcvxfrxeth-ng-f-frax
-          addresses.mainnet.FraxStakedConvexWrapperWeth,
+          addresses.mainnet.FraxStakedConvexWeth,
           // locked stkcvxfrxeth-ng-f-frax
           addresses.mainnet.LockedFraxStakedConvexWeth,
         ],

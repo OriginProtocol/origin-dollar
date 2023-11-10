@@ -168,7 +168,7 @@ addresses.mainnet.CurveFrxEthWethGauge =
   "0x4e21418095d32d15c6e2b96a9910772613a50d50";
 addresses.mainnet.ConvexFrxEthWethRewardsPool =
   "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
-addresses.mainnet.FraxStakedConvexWrapperWeth =
+addresses.mainnet.FraxStakedConvexWeth =
   "0x08061feC3FC09Aa2Eb4B4B72EA618034CBFD22b0";
 addresses.mainnet.LockedFraxStakedConvexWeth =
   "0xB4fdD7444E1d86b2035c97124C46b1528802DA35";

@@ -23,8 +23,9 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
 
   let fixture;
   describe("with mainnet data", () => {
+    const loadFixture = createFixtureLoader(fraxConvexWethFixture);
     beforeEach(async () => {
-      fixture = await loadDefaultFixture();
+      fixture = await loadFixture();
     });
     it("Should have constants and immutables set", async () => {
       const { fraxConvexWethStrategy } = fixture;
@@ -67,10 +68,10 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         addresses.mainnet.CurveFrxEthWethPool
       );
       // Frax pool
-      expect(await fraxConvexWethStrategy.fraxStakingWrapper()).to.equal(
-        addresses.mainnet.FraxStakedConvexWrapperWeth
-      );
       expect(await fraxConvexWethStrategy.fraxStaking()).to.equal(
+        addresses.mainnet.FraxStakedConvexWeth
+      );
+      expect(await fraxConvexWethStrategy.fraxLocking()).to.equal(
         addresses.mainnet.LockedFraxStakedConvexWeth
       );
 
@@ -107,14 +108,24 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       });
     });
     it("Should be able to re-approve tokens by Governor", async () => {
-      const { fraxConvexWethStrategy, frxETH, weth, timelock } = fixture;
+      const {
+        curveFrxEthWethPool,
+        fraxConvexWethStrategy,
+        fraxConvexStakingWeth,
+        frxETH,
+        weth,
+        timelock,
+      } = fixture;
       await fraxConvexWethStrategy.connect(timelock).safeApproveAllTokens();
+
+      // Strategy approves the Curve pool to transfer frxETH
       expect(
         await frxETH.allowance(
           fraxConvexWethStrategy.address,
           addresses.mainnet.CurveFrxEthWethPool
         )
       ).to.eq(MAX_UINT256);
+      // Strategy approves the Curve pool to transfer WETH
       expect(
         await weth.allowance(
           fraxConvexWethStrategy.address,
@@ -122,7 +133,21 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         )
       ).to.eq(MAX_UINT256);
 
-      // TODO Strategy approves the Frax stating contracts
+      // Strategy approves Frax Staked Convex to transfer Curve pool LP tokens
+      expect(
+        await curveFrxEthWethPool.allowance(
+          fraxConvexWethStrategy.address,
+          addresses.mainnet.FraxStakedConvexWeth
+        )
+      ).to.eq(MAX_UINT256);
+
+      // Strategy approves Frax locking contract to transfer Frax Staked Convex LP tokens
+      expect(
+        await fraxConvexStakingWeth.allowance(
+          fraxConvexWethStrategy.address,
+          addresses.mainnet.LockedFraxStakedConvexWeth
+        )
+      ).to.eq(MAX_UINT256);
 
       // Run a second time
       await fraxConvexWethStrategy.connect(timelock).safeApproveAllTokens();
@@ -814,17 +839,17 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     const {
       fraxConvexWethStrategy,
       curveFrxEthWethPool,
-      fraxConvexWrapperWeth,
-      fraxConvexWethLocked,
+      fraxConvexStakingWeth,
+      fraxConvexLockedWeth,
     } = fixture;
 
     // Get the ETH and OETH balances in the Curve Metapool
     const curveBalances = await curveFrxEthWethPool.get_balances();
-    const strategyFraxConvexLpAmount = await fraxConvexWrapperWeth.balanceOf(
+    const strategyFraxConvexLpAmount = await fraxConvexStakingWeth.balanceOf(
       fraxConvexWethStrategy.address
     );
     const strategyFraxConvexLpLockedAmount =
-      await fraxConvexWethLocked.lockedLiquidityOf(
+      await fraxConvexLockedWeth.lockedLiquidityOf(
         fraxConvexWethStrategy.address
       );
     const strategyLpAmount = strategyFraxConvexLpAmount.add(
