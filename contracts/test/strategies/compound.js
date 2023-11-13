@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { createFixtureLoader, compoundFixture } = require("../fixture/_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 const { usdcUnits, isFork } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Compound strategy", function () {
   if (isFork) {
@@ -15,34 +18,30 @@ describe("Compound strategy", function () {
     fixture = await loadFixture();
   });
 
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.cStandalone,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.cStandalone,
+    assets: [fixture.dai, fixture.usdc],
+    vault: fixture.vault,
+  }));
+
   it("Should allow a withdraw", async () => {
-    const { cStandalone, governor, usdc, cusdc } = fixture;
-
-    const governorAddress = await governor.getAddress();
-    const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
+    const { cStandalone, usdc, cusdc, vault, vaultSigner } = fixture;
     const stratCUSDBalance = await cusdc.balanceOf(cStandalone.address);
-
-    await expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
-
-    // Fund the fake "vault" (governor)
-    await expect(await usdc.balanceOf(fakeVaultAddress)).to.be.equal(
-      usdcUnits("1000")
+    // Fund the strategy
+    const strategySigner = await impersonateAndFund(
+      fixture.cStandalone.address
     );
-
-    // Give the strategy some funds
-    await usdc
-      .connect(fakeVault)
-      .transfer(cStandalone.address, usdcUnits("1000"));
-    await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
-      usdcUnits("1000")
-    );
-
+    usdc.connect(strategySigner).mint(usdcUnits("1000"));
     // Run deposit()
     await cStandalone
-      .connect(fakeVault)
+      .connect(vaultSigner)
       .deposit(usdc.address, usdcUnits("1000"));
-
     const exchangeRate = await cusdc.exchangeRateStored();
     // 0xde0b6b3a7640000 == 1e18
     const expectedCusd = usdcUnits("1000")
@@ -58,40 +57,36 @@ describe("Compound strategy", function () {
     await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
       usdcUnits("0")
     );
-
     // event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     await expect(
       cStandalone
-        .connect(fakeVault)
-        .withdraw(fakeVaultAddress, usdc.address, usdcUnits("1000"))
+        .connect(vaultSigner)
+        .withdraw(vault.address, usdc.address, usdcUnits("1000"))
     )
       .to.emit(cStandalone, "Withdrawal")
       .withArgs(usdc.address, cusdc.address, usdcUnits("1000"));
-
     await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
       stratCUSDBalance
     );
   });
 
   it("Should collect rewards", async () => {
-    const { cStandalone, vault, governor, harvester, usdc, comp } = fixture;
-
-    const governorAddress = await governor.getAddress();
-    const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
+    const {
+      cStandalone,
+      strategySigner,
+      vault,
+      vaultSigner,
+      governor,
+      harvester,
+      usdc,
+      comp,
+    } = fixture;
 
     await expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
 
-    // Fund the fake "vault" (governor)
-    await expect(await usdc.balanceOf(fakeVaultAddress)).to.be.equal(
-      usdcUnits("1000")
-    );
-
-    // Give the strategy some funds
-    await usdc
-      .connect(fakeVault)
-      .transfer(cStandalone.address, usdcUnits("1000"));
-    await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
+    // Fund the strategy
+    usdc.connect(strategySigner).mint(usdcUnits("1000"));
+    expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
       usdcUnits("1000")
     );
 
@@ -104,15 +99,14 @@ describe("Compound strategy", function () {
 
     // Run deposit()
     await cStandalone
-      .connect(fakeVault)
+      .connect(vaultSigner)
       .deposit(usdc.address, usdcUnits("1000"));
 
     const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(cStandalone.address, compAmount);
+    await comp.connect(strategySigner).mint(compAmount);
 
     // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(governorAddress)).to.be.equal("0");
+    await expect(await comp.balanceOf(vault.address)).to.be.equal("0");
     await expect(await comp.balanceOf(cStandalone.address)).to.be.equal(
       compAmount
     );

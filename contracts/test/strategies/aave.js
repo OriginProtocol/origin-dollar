@@ -6,13 +6,14 @@ const {
   aaveVaultFixture,
 } = require("../fixture/_fixture");
 const {
-  daiUnits,
   ousdUnits,
   units,
   expectApproxSupply,
   getBlockTimestamp,
   isFork,
 } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Aave Strategy", function () {
   if (isFork) {
@@ -68,6 +69,18 @@ describe("Aave Strategy", function () {
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPool();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.aaveStrategy,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.aaveStrategy,
+    assets: [fixture.dai],
+    vault: fixture.vault,
+  }));
 
   describe("Mint", function () {
     it("Should be able to mint DAI and it should show up in the Aave core", async function () {
@@ -127,25 +140,6 @@ describe("Aave Strategy", function () {
       await expect(anna).to.have.an.approxBalanceOf("20955.65", usdc);
       await expect(anna).to.have.an.approxBalanceOf("20955.65", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
-    });
-
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd.connect(anna).transfer(aaveStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await aaveStrategy
-        .connect(governor)
-        .transferToken(ousd.address, ousdUnits("8.0"));
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
-      await expect(
-        aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
-      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 

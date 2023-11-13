@@ -31,6 +31,8 @@ const balancesContractSlotCache = {
   [addresses.mainnet.USDT.toLowerCase()]: [2, false],
   [addresses.mainnet.TUSD.toLowerCase()]: [14, false],
   [addresses.mainnet.OGN.toLowerCase()]: [0, true],
+  [addresses.mainnet.OETHProxy.toLowerCase()]: [157, false],
+  [addresses.mainnet.OUSDProxy.toLowerCase()]: [157, false],
 };
 
 /**
@@ -50,7 +52,7 @@ const findBalancesSlot = async (tokenAddress) => {
 
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
-  const account = ethrs.constants.AddressZero;
+  const account = addresses.ETH;
   const probeA = encode(
     ["uint"],
     [parseEther("99999999999999999999999999999999")]
@@ -94,6 +96,9 @@ const findBalancesSlot = async (tokenAddress) => {
       ) {
         const isVyper = probedSlot == slots[1];
         balancesContractSlotCache[tokenAddress] = [i, isVyper];
+        log(
+          `Found balance slot ${i} for ${tokenAddress}. is Vyper? ${isVyper} `
+        );
         return [i, isVyper];
       }
     }
@@ -165,7 +170,7 @@ async function hardhatSetBalance(address, amount = "10000") {
  * @param {[ERC20]} tokensTransfer Tokens that sets the balance by token.transfer tx
  * @param {number} [amount=10000] Amount of tokens to set
  */
-const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
+const setERC20TokenBalance = async (account, token, amount = "10000") => {
   /* Format:
    * config = {
    *   tokenContract.address1: {

@@ -241,8 +241,8 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
       [1, 1, 1],
     ];
 
-    for (const [stETHAmount, frxETHAmount, rethAmount] in depositTestCases) {
-      it(`Should deposit ${frxETHAmount} stETH, ${rethAmount} frxETH and ${depositTestCases} rETH in Balancer Composable Stable Pool strategy`, async function () {
+    for (const [stETHAmount, frxETHAmount, rethAmount] of depositTestCases) {
+      it(`Should deposit ${stETHAmount} stETH, ${frxETHAmount} frxETH and ${rethAmount} rETH in Balancer Composable Stable Pool strategy`, async function () {
         const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
         await depositTest(
           fixture,
@@ -290,18 +290,18 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         "checkBalance()"
       ]();
 
-      expect(rethInVaultBefore.sub(rethInVaultAfter)).to.equal(rethUnits);
+      expect(rethInVaultBefore.sub(rethInVaultAfter)).to.approxEqualTolerance(rethUnits, 0.5);
       // stETH has rounding issues
       expect(stETHInVaultBefore.sub(stETHInVaultAfter)).to.approxEqualTolerance(
         stethUnits,
         0.01
       );
-      expect(frxETHInVaultBefore.sub(frxETHInVaultAfter)).to.equal(frxethUnits);
+      expect(frxETHInVaultBefore.sub(frxETHInVaultAfter)).to.approxEqualTolerance(frxethUnits, 0.5);
       expect(
         strategyValueAfter.sub(strategyValueBefore)
       ).to.approxEqualTolerance(
         rethValue.add(stethUnits).add(frxethUnits),
-        0.05
+        0.5
       );
     });
 

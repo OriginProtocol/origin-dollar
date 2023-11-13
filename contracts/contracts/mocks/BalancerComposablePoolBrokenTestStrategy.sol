@@ -27,6 +27,6 @@ contract BalancerComposablePoolBrokenTestStrategy is BalancerComposablePoolStrat
 
     
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        //require(false, "Simulating a failed call");
+        require(false, "Simulating a failed call");
     }   
 }

@@ -1,9 +1,9 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrFork } = require("../test/helpers");
-const { threeCRVPid } = require("../utils/constants");
-const { replaceContractAt } = require("../utils/deploy");
-
 const addresses = require("../utils/addresses");
+const { threeCRVPid } = require("../utils/constants");
+const { replaceContractAt } = require("../utils/hardhat");
+const { hardhatSetBalance } = require("../test/_fund");
 
 const {
   abi: FACTORY_ABI,
@@ -40,7 +40,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
-    "MockWETH",
     "MockOGV",
     "MockAave",
     "MockRETH",
@@ -51,6 +50,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
+
+  await deploy("MockWETH", { from: deployerAddr });
+  // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  const mockWETH = await ethers.getContract("MockWETH");
+  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
+  await hardhatSetBalance(addresses.mainnet.WETH, "999999999999999");
+  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   await deploy("MocksfrxETH", {
     from: deployerAddr,
@@ -100,6 +106,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Mock BAL token
+  await deploy("MockBAL", {
+    from: deployerAddr,
+  });
+
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
@@ -108,11 +119,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
-
-  // Replace WETH
-  const mockWETH = await ethers.getContract("MockWETH");
-  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
-  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
@@ -272,8 +278,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockCVX", {
     from: deployerAddr,
   });
-
   const mockCVX = await ethers.getContract("MockCVX");
+  await deploy("MockCVXLocker", {
+    from: deployerAddr,
+    args: [mockCVX.address],
+  });
 
   await deploy("MockBooster", {
     from: deployerAddr,
@@ -363,10 +372,18 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
+  const frxETH = await ethers.getContract("MockfrxETH");
+  const sfrxETH = await ethers.getContract("MocksfrxETH");
   await deploy("MockFrxETHMinter", {
     from: deployerAddr,
-    args: [(await ethers.getContract("MocksfrxETH")).address],
+    args: [frxETH.address, sfrxETH.address],
   });
+  // Replace frxETHMinter
+  await replaceContractAt(
+    addresses.mainnet.FraxETHMinter,
+    await ethers.getContract("MockFrxETHMinter")
+  );
+
   await deploy("MockSwapper", {
     from: deployerAddr,
   });
