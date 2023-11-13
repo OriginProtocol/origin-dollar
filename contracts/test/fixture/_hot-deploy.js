@@ -39,8 +39,12 @@ async function constructNewContract(fixture, implContractName) {
         ],
         addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
       ];
-    } 
-    else if (implContractName === "BalancerComposablePoolTestStrategy") {
+    } else if (
+      [
+        "BalancerComposablePoolBrokenTestStrategy",
+        "BalancerComposablePoolTestStrategy",
+      ].includes(implContractName)
+    ) {
       return [
         [
           addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
@@ -102,15 +106,16 @@ async function constructNewContract(fixture, implContractName) {
 async function hotDeployOption(
   fixture,
   fixtureName,
-  config = { isOethFixture: false }
+  config = { isOethFixture: false, forceDeployStrategy: false }
 ) {
   if (!isFork) return;
 
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
     .map((item) => item.trim());
-  const { isOethFixture } = config;
-  const deployStrat = hotDeployOptions.includes("strategy");
+  const { isOethFixture, forceDeployStrategy } = config;
+  const deployStrat =
+    hotDeployOptions.includes("strategy") || forceDeployStrategy;
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
@@ -127,10 +132,13 @@ async function hotDeployOption(
       );
 
       // IMPORTANT: remove once rETH/WETH is redeployed with the new code base
-      await fixture.balancerREthStrategy.connect(fixture.josh).cachePoolAssets();
+      await fixture.balancerREthStrategy
+        .connect(fixture.josh)
+        .cachePoolAssets();
       // IMPORTANT also remove this one
-      await fixture.balancerREthStrategy.connect(fixture.josh).cacheRateProviders();
-
+      await fixture.balancerREthStrategy
+        .connect(fixture.josh)
+        .cacheRateProviders();
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
         fixture, // fixture
@@ -155,19 +163,48 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolTestStrategy" // implContractName
       );
-    } else if (fixtureName === "balancerRethWETHExposeFunctionFixture") {
-      await hotDeployFixture(
-        fixture, // fixture
-        "balancerREthStrategy", // fixtureStrategyVarName
-        "BalancerMetaPoolTestStrategy" // implContractName
-      );
-    } else if (fixtureName === "balancerSfrxETHRETHWstETHExposeFunctionFixture") {
+    } else if (
+      fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture"
+    ) {
       await hotDeployFixture(
         fixture, // fixture
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
-        "BalancerComposablePoolTestStrategy" // implContractName
+        "BalancerComposablePoolBrokenTestStrategy" // implContractName
       );
-    } else if (fixtureName === "deployBalancerFrxEethRethWstEThStrategyMissConfigured") {
+      /*
+       * Delete this piece of code once the new VaultAdmin implementation is deployed.
+       */
+      const oethVaultAdminImplAddress =
+        "0x" +
+        (
+          await ethers.provider.send("eth_getStorageAt", [
+            fixture.oethVault.address,
+            "0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9", // Vault admin implementation position
+            "latest", // block
+          ])
+        ).substring(26);
+
+      if (
+        oethVaultAdminImplAddress !==
+        "0x31a91336414d3b955e494e7d485a6b06b55fc8fb"
+      ) {
+        throw Error(
+          "OETHVaultAdmin has been re-deployed. Hot-deploy shouldn't be re-deploying it anymore."
+        );
+      }
+
+      await hotDeployVaultAdmin(
+        fixture,
+        true, // deploy VaultAdmin
+        false, // deploy VaultCore
+        true // isOethFixture
+      );
+    } else if (
+      [
+        "balancerSfrxETHRETHWstETHExposeFunctionFixture",
+        "deployBalancerFrxEethRethWstEThStrategyMissConfigured",
+      ].includes(fixtureName)
+    ) {
       await hotDeployFixture(
         fixture, // fixture
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
