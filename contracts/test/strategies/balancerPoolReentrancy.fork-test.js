@@ -10,7 +10,7 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");
 
-describe.only("ForkTest: Balancer MetaStablePool - Read-only Reentrancy", function () {
+describe("ForkTest: Balancer MetaStablePool - Read-only Reentrancy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
