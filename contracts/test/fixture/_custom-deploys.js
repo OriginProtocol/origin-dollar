@@ -32,7 +32,7 @@ const deployBalancerFrxEethRethWstEThStrategyMissConfigured = async () => {
   });
 
   const strategy = await ethers.getContract("BalancerComposablePoolStrategy");
-  log("Strategy deployed, calling initialize")
+  log("Strategy deployed, calling initialize");
   // prettier-ignore
   await strategy
     .connect(sTimelock)["initialize(address[],address[],address[])"](

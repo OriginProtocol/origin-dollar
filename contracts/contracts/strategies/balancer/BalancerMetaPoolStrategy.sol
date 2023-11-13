@@ -444,7 +444,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
     /**
      * @notice Withdraws all supported Vault collateral assets from the Balancer pool
-     * and send to the OToken's Vault.
+     * (when not in recovery mode) and send to the OToken's Vault.
      *
      * Is only executable by the OToken's Vault or the Governor.
      */
@@ -452,6 +452,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _withdrawAll(false);
     }
 
+    /**
+     * @notice Withdraws all supported Vault collateral assets from the Balancer pool
+     * (when the pool is in recovery mode) and send to the OToken's Vault.
+     *
+     * Is only executable by the OToken's Vault or the Governor.
+     */
     function recoveryModeWithdrawAll()
         external
         onlyVaultOrGovernor

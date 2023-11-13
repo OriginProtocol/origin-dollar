@@ -289,13 +289,18 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         "checkBalance()"
       ]();
 
-      expect(rethInVaultBefore.sub(rethInVaultAfter)).to.approxEqualTolerance(rethUnits, 0.5);
+      expect(rethInVaultBefore.sub(rethInVaultAfter)).to.approxEqualTolerance(
+        rethUnits,
+        0.5
+      );
       // stETH has rounding issues
       expect(stETHInVaultBefore.sub(stETHInVaultAfter)).to.approxEqualTolerance(
         stethUnits,
         0.01
       );
-      expect(frxETHInVaultBefore.sub(frxETHInVaultAfter)).to.approxEqualTolerance(frxethUnits, 0.5);
+      expect(
+        frxETHInVaultBefore.sub(frxETHInVaultAfter)
+      ).to.approxEqualTolerance(frxethUnits, 0.5);
       expect(
         strategyValueAfter.sub(strategyValueBefore)
       ).to.approxEqualTolerance(

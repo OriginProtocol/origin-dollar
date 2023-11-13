@@ -1034,11 +1034,8 @@ async function balancerFrxETHwstETHeETHFixture(
  * replace the byte code with the one that exposes internal functions
  */
 async function balancerRethWETHExposeFunctionFixture() {
-
   const fixture = await balancerREthFixture();
   await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture");
-
-  const { balancerREthStrategy, josh } = fixture;
 
   return fixture;
 }
@@ -1056,7 +1053,10 @@ async function balancerSfrxETHRETHWstETHMissConfiguredStrategy() {
  */
 async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
   const fixture = await balancerFrxETHwstETHeETHFixture();
-  await hotDeployOption(fixture, "balancerSfrxETHRETHWstETHExposeFunctionFixture");
+  await hotDeployOption(
+    fixture,
+    "balancerSfrxETHRETHWstETHExposeFunctionFixture"
+  );
   return fixture;
 }
 
