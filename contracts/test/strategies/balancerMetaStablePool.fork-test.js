@@ -550,6 +550,27 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       ).to.be.revertedWith("No duplicate withdrawal assets");
     });
 
+    /* Ideally this would also revert, but that would make the withdrawal function more gas expensive
+     * and doesn't seem like a good trade-off.
+     */
+    it(`Should succeed when duplicating an asset and first amount being 0`, async function () {
+      const { balancerREthStrategy, oethVault, weth } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+      const zeroAmount = await units("0", weth);
+      const wethWithdrawAmount = await units("1", weth);
+
+      // prettier-ignore
+      await expect(
+        balancerREthStrategy
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [weth.address, weth.address],
+            [zeroAmount, wethWithdrawAmount]
+          )
+      ).to.not.be.reverted;
+    });
+
     it("Should be able to withdraw all of pool liquidity", async function () {
       const { oethVault, weth, reth, balancerREthStrategy } = fixture;
 

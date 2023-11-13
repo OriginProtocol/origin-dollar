@@ -47,10 +47,10 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         internal
         pure
         override
-        returns (uint256)
+        returns (uint8)
     {
         return
-            uint256(
+            uint8(
                 IBalancerVault
                     .ComposablePoolExitKind
                     .BPT_IN_FOR_EXACT_TOKENS_OUT
@@ -65,10 +65,10 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         internal
         pure
         override
-        returns (uint256)
+        returns (uint8)
     {
         return
-            uint256(
+            uint8(
                 IBalancerVault
                     .ComposablePoolExitKind
                     .EXACT_BPT_IN_FOR_ALL_TOKENS_OUT
