@@ -434,13 +434,15 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
       });
     }
 
-    it("Should be able to call withdrawAllFromStrategies even when one errors out", async function () {
+    it("Should be able to call faultTolerantWithdrawAllFromStrategies even when one errors out", async function () {
       const fixture = await balancerSfrxETHRETHWstETHBrokenWithdrawalFixture();
       const { timelock, oethVault, balancerSfrxWstRETHStrategy } = fixture;
       const strategyAddress = balancerSfrxWstRETHStrategy.address.toLowerCase();
 
       // Withdraw all from strategies
-      const tx = await oethVault.connect(timelock).withdrawAllFromStrategies();
+      const tx = await oethVault
+        .connect(timelock)
+        .faultTolerantWithdrawAllFromStrategies();
       const events = (await tx.wait()).events || [];
       /*
        * If OethVaultAdmin has triggered the "WithdrawFromStrategyFailed" with the
@@ -458,6 +460,9 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         .find((evtStrategyAddress) => evtStrategyAddress === strategyAddress);
 
       expect(balancerStrategyAddressOption).to.not.be.undefined;
+
+      await expect(oethVault.connect(timelock).withdrawAllFromStrategies()).to
+        .be.reverted;
     });
 
     it("Should be able to withdraw all of pool liquidity", async function () {
