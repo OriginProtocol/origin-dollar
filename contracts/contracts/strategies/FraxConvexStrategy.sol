@@ -53,11 +53,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
     bytes32 lockKey;
+    /// @notice The UNIX timestamp in seconds when the lock expires
+    uint64 unlockTimestamp;
     /// @notice the desired level of locked Frax Staked Convex LP tokens
     /// @dev limited to 128 bits so it is packed with the following unlockTimestamp storage variable into single slot
     uint128 targetLockedBalance;
-    /// @notice The UNIX timestamp in seconds when the lock expires
-    uint64 unlockTimestamp;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
 
@@ -266,9 +266,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
             .lockedLiquidityOf(address(this));
 
-        // revert if not enough unlocked tokens and
-        //  (locked tokens have not expired or
-        //  not enough unlocked + expired locked tokens)
+        // revert if not enough unlocked tokens or
+        // not enough unlocked + expired tokens
         require(
             curveLpTokens <= unlockedBalance ||
                 (unlockTimestamp < block.timestamp &&
