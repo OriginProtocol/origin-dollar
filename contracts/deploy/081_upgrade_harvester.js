@@ -47,20 +47,24 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(
       "new OETHOracleRouter address: ",
       dOETHRouter.address
-    );
-
+      );
+      
     // 2.1. Cache decimals on OETHOracleRouter
     await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.CRV)
+      dOETHRouter.cacheDecimals(addresses.mainnet.CRV, await getTxOpts())
     )
     await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.CVX)
+      dOETHRouter.cacheDecimals(addresses.mainnet.CVX, await getTxOpts())
     )
     await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.AURA)
+      dOETHRouter.cacheDecimals(addresses.mainnet.AURA, await getTxOpts())
     )
     await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.BAL)
+      dOETHRouter.cacheDecimals(addresses.mainnet.BAL, await getTxOpts())
+    )
+    const dOUSDRouter = await ethers.getContract("OracleRouter")
+    await withConfirmation(
+      dOUSDRouter.cacheDecimals(addresses.mainnet.Aave, await getTxOpts())
     )
 
     // 3. Deploy Harvester
@@ -250,27 +254,26 @@ module.exports = deploymentWithGovernanceProposal(
             )
           ]
         },
-        // // TODO: Debug why this fails
-        // // 11. Configure OUSD Harvester to swap AAVE with Uniswap V3
-        // {
-        //   contract: cOUSDHarvester,
-        //   signature: setRewardTokenConfigSig,
-        //   args: [
-        //     addresses.mainnet.Aave,
-        //     {
-        //       allowedSlippageBps: 300,
-        //       harvestRewardBps: 100,
-        //       platform: 1, // Uniswap V3
-        //       swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        //       liquidationLimit: 0,
-        //       doSwapRewardToken: true,
-        //     },
-        //     utils.solidityPack(
-        //       ["address", "uint24", "address", "uint24", "address"],
-        //       [addresses.mainnet.Aave, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
-        //     )
-        //   ]
-        // }
+        // 11. Configure OUSD Harvester to swap AAVE with Uniswap V3
+        {
+          contract: cOUSDHarvester,
+          signature: setRewardTokenConfigSig,
+          args: [
+            addresses.mainnet.Aave,
+            {
+              allowedSlippageBps: 300,
+              harvestRewardBps: 100,
+              platform: 1, // Uniswap V3
+              swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+              liquidationLimit: 0,
+              doSwapRewardToken: true,
+            },
+            utils.solidityPack(
+              ["address", "uint24", "address", "uint24", "address"],
+              [addresses.mainnet.Aave, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
+            )
+          ]
+        }
       ],
     };
   }

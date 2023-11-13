@@ -77,7 +77,7 @@ describe("Harvester", function () {
     expect(compConfig.liquidationLimit).to.equal(utils.parseUnits("1.44", 18));
     expect(compConfig.allowedSlippageBps).to.equal(300);
     expect(compConfig.harvestRewardBps).to.equal(100);
-    expect(compConfig.protocol).to.equal(
+    expect(compConfig.platform).to.equal(
       "0" // Uniswap V2
     );
     expect(compConfig.swapRouter).to.equal(
