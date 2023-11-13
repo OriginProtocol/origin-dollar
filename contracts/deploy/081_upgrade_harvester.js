@@ -39,7 +39,6 @@ module.exports = deploymentWithGovernanceProposal(
       auraPriceFeed.address
     );
 
-
     // 2. Deploy OETHOracleRouter
     await deployWithConfirmation("OETHOracleRouter", [
       auraPriceFeed.address

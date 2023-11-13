@@ -20,7 +20,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     fixture.auraWETHWeightedPool = await ethers.getContractAt(
       "IOracleWeightedPool",
-      addresses.mainnet.auraWETHWeightedPool
+      addresses.mainnet.AuraWeightedOraclePool
     );
   });
 
@@ -56,4 +56,9 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     await expect(auraWETHPriceFeed.getRoundData(1)).to.be.revertedWith("Not implemented")
   });
+
+  it("should get price from oracle", async () => {
+    const { oethOracleRouter, aura } = fixture;
+    await oethOracleRouter.price(aura.address);
+  })
 });
