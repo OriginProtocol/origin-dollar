@@ -50,18 +50,20 @@ module.exports = deploymentWithGovernanceProposal(
       );
       
     // 2.1. Cache decimals on OETHOracleRouter
-    await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.CRV, await getTxOpts())
-    )
-    await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.CVX, await getTxOpts())
-    )
-    await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.AURA, await getTxOpts())
-    )
-    await withConfirmation(
-      dOETHRouter.cacheDecimals(addresses.mainnet.BAL, await getTxOpts())
-    )
+    for (const asset of [
+      addresses.mainnet.CRV,
+      addresses.mainnet.CVX,
+      addresses.mainnet.AURA,
+      addresses.mainnet.BAL,
+      addresses.mainnet.WETH,
+      addresses.mainnet.stETH,
+      addresses.mainnet.rETH,
+      addresses.mainnet.frxETH
+    ]) {
+      await withConfirmation(
+        dOETHRouter.cacheDecimals(asset, await getTxOpts())
+      )
+    }
     const dOUSDRouter = await ethers.getContract("OracleRouter")
     await withConfirmation(
       dOUSDRouter.cacheDecimals(addresses.mainnet.Aave, await getTxOpts())
