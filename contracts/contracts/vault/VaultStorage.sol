@@ -52,7 +52,6 @@ contract VaultStorage is Initializable, Governable {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
-    event WithdrawAllFailed(string reason);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {

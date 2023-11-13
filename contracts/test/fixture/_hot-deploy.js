@@ -39,8 +39,7 @@ async function constructNewContract(fixture, implContractName) {
         ],
         addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
       ];
-    } 
-    else if (implContractName === "BalancerComposablePoolTestStrategy") {
+    } else if (implContractName === "BalancerComposablePoolTestStrategy") {
       return [
         [
           addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
@@ -127,10 +126,13 @@ async function hotDeployOption(
       );
 
       // IMPORTANT: remove once rETH/WETH is redeployed with the new code base
-      await fixture.balancerREthStrategy.connect(fixture.josh).cachePoolAssets();
+      await fixture.balancerREthStrategy
+        .connect(fixture.josh)
+        .cachePoolAssets();
       // IMPORTANT also remove this one
-      await fixture.balancerREthStrategy.connect(fixture.josh).cacheRateProviders();
-
+      await fixture.balancerREthStrategy
+        .connect(fixture.josh)
+        .cacheRateProviders();
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
         fixture, // fixture
@@ -155,19 +157,17 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolTestStrategy" // implContractName
       );
-    } else if (fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture") {
-      await hotDeployFixture(
-        fixture, // fixture
-        "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
-        "BalancerComposablePoolBrokenTestStrategy" // implContractName
-      );
-    } else if (fixtureName === "balancerSfrxETHRETHWstETHExposeFunctionFixture") {
+    } else if (
+      fixtureName === "balancerSfrxETHRETHWstETHExposeFunctionFixture"
+    ) {
       await hotDeployFixture(
         fixture, // fixture
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
         "BalancerComposablePoolTestStrategy" // implContractName
       );
-    } else if (fixtureName === "deployBalancerFrxEethRethWstEThStrategyMissConfigured") {
+    } else if (
+      fixtureName === "deployBalancerFrxEethRethWstEThStrategyMissConfigured"
+    ) {
       await hotDeployFixture(
         fixture, // fixture
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName

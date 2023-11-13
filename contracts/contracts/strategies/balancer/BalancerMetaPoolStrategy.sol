@@ -448,7 +448,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      *
      * Is only executable by the OToken's Vault or the Governor.
      */
-    function withdrawAll() external virtual override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _withdrawAll(false);
     }
 

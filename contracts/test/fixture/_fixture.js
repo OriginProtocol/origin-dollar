@@ -1034,11 +1034,8 @@ async function balancerFrxETHwstETHeETHFixture(
  * replace the byte code with the one that exposes internal functions
  */
 async function balancerRethWETHExposeFunctionFixture() {
-
   const fixture = await balancerREthFixture();
   await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture");
-
-  const { balancerREthStrategy, josh } = fixture;
 
   return fixture;
 }
@@ -1056,18 +1053,10 @@ async function balancerSfrxETHRETHWstETHMissConfiguredStrategy() {
  */
 async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
   const fixture = await balancerFrxETHwstETHeETHFixture();
-  await hotDeployOption(fixture, "balancerSfrxETHRETHWstETHExposeFunctionFixture");
-  return fixture;
-}
-
-/**
- * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
- * replace the byte code with the one that fails on a withdrawAll call
- */
-async function balancerSfrxETHRETHWstETHBrokenWithdrawalFixture() {
-  const fixture = await balancerFrxETHwstETHeETHFixture();
-  await hotDeployOption(fixture, "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture");
-
+  await hotDeployOption(
+    fixture,
+    "balancerSfrxETHRETHWstETHExposeFunctionFixture"
+  );
   return fixture;
 }
 
@@ -2093,7 +2082,6 @@ module.exports = {
   ousdCollateralSwapFixture,
   balancerRethWETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
-  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
   fluxStrategyFixture,
   buybackFixture,

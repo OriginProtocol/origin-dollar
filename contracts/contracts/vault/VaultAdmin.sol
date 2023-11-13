@@ -618,10 +618,7 @@ contract VaultAdmin is VaultStorage {
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
         uint256 stratCount = allStrategies.length;
         for (uint256 i = 0; i < stratCount; ++i) {
-            try IStrategy(allStrategies[i]).withdrawAll() { } 
-            catch Error(string memory reason) {
-                emit WithdrawAllFailed(reason);
-            }
+            IStrategy(allStrategies[i]).withdrawAll();
         }
     }
 
