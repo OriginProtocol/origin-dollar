@@ -1,12 +1,14 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { loadDefaultFixture } = require("./../_fixture");
+const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
 const { isCI, oethUnits } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { hotDeployOption } = require("../_hot-deploy");
-const { setERC20TokenBalance } = require("../_fund");
+const addresses = require("../../utils/addresses");
 const { parseUnits } = require("ethers").utils;
+
+const loadFixture = createFixtureLoader(harvesterFixture)
 
 describe("ForkTest: Harvester", function () {
   this.timeout(0);
@@ -16,7 +18,7 @@ describe("ForkTest: Harvester", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadDefaultFixture();
+    fixture = await loadFixture();
     await hotDeployOption(fixture, null, {
       isOethFixture: true
     })
@@ -24,83 +26,6 @@ describe("ForkTest: Harvester", function () {
       isOethFixture: false
     })
 
-    const { oethHarvester, oethOracleRouter, harvester, timelock, crv, bal, aura, weth, usdt } = fixture;
-
-    // Cache decimals
-    await oethOracleRouter.connect(timelock).cacheDecimals(aura.address)
-    await oethOracleRouter.connect(timelock).cacheDecimals(bal.address)
-
-    // CRV with Curve for OETH
-    await oethHarvester.connect(timelock).setRewardTokenConfig(
-      crv.address,
-      {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        platform: 3, // Curve
-        swapRouterAddr: "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14",
-        liquidationLimit: oethUnits("4000"),
-        doSwapRewardToken: true,
-      },
-      utils.defaultAbiCoder.encode(
-        ["uint256", "uint256"],
-        ["2", "1"]
-      )
-    )
-    await setERC20TokenBalance(oethHarvester.address, crv)
-
-    // CRV with Uniswap V3 for OUSD
-    await harvester.connect(timelock).setRewardTokenConfig(
-      crv.address,
-      {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        platform: 1, // Uniswap V3
-        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        liquidationLimit: oethUnits("4000"),
-        doSwapRewardToken: true,
-      },
-      utils.solidityPack(
-        ["address", "uint24", "address", "uint24", "address"],
-        [crv.address, 3000, weth.address, 500, usdt.address]
-      )
-    )
-    await setERC20TokenBalance(harvester.address, crv)
-
-    // BAL with Balancer for OETH
-    await oethHarvester.connect(timelock).setRewardTokenConfig(
-      bal.address,
-      {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        platform: 2, // Balancer
-        swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-        liquidationLimit: oethUnits("100"),
-        doSwapRewardToken: true,
-      },
-      utils.defaultAbiCoder.encode(
-        ["bytes32"],
-        ["0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"]
-      )
-    )
-    await setERC20TokenBalance(oethHarvester.address, bal)
-
-    // BAL with Balancer for OETH
-    await oethHarvester.connect(timelock).setRewardTokenConfig(
-      aura.address,
-      {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        platform: 2, // Balancer
-        swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-        liquidationLimit: oethUnits("500"),
-        doSwapRewardToken: true,
-      },
-      utils.defaultAbiCoder.encode(
-        ["bytes32"],
-        ["0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274"]
-      )
-    )
-    await setERC20TokenBalance(oethHarvester.address, aura)
   });
 
   describe("with Curve", () => {
@@ -150,16 +75,17 @@ describe("ForkTest: Harvester", function () {
       const { oethHarvester, timelock, aura } = fixture;
       const auraBefore = await aura.balanceOf(oethHarvester.address)
 
+
       await oethHarvester.connect(timelock)
         .swapRewardToken(aura.address)
 
-      // expect(
-      //   await aura.balanceOf(oethHarvester.address)
-      // ).to.equal(auraBefore.sub(oethUnits("500")))
+      expect(
+        await aura.balanceOf(oethHarvester.address)
+      ).to.equal(auraBefore.sub(oethUnits("500")))
     })
   })
 
-  describe.skip("Rewards Config", () => {
+  describe("OUSD Rewards Config", () => {
     it("Should have correct reward token config for CRV", async () => {
       const { harvester, crv } = fixture;
 
@@ -167,14 +93,21 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.protocol).to.equal(
-        "0" // Uniswap V2 compatible
+      expect(config.platform).to.equal(
+        1 // Uniswap V3
       );
       expect(config.swapRouterAddr).to.equal(
-        "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
+        "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
+      expect(await harvester.uniswapV3Path(crv.address))
+        .to.eq(
+          utils.solidityPack(
+            ["address", "uint24", "address", "uint24", "address"],
+            [addresses.mainnet.CRV, 3000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
+          )
+        )
     });
 
     it("Should have correct reward token config for CVX", async () => {
@@ -184,14 +117,21 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.protocol).to.equal(
-        "0" // Uniswap V2 compatible
+      expect(config.platform).to.equal(
+        1 // Uniswap V3
       );
       expect(config.swapRouterAddr).to.equal(
-        "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
+        "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(utils.parseEther("2500"));
+      expect(await harvester.uniswapV3Path(cvx.address))
+        .to.eq(
+          utils.solidityPack(
+            ["address", "uint24", "address", "uint24", "address"],
+            [addresses.mainnet.CVX, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
+          )
+        )
     });
 
     it("Should have correct reward token config for COMP", async () => {
@@ -201,14 +141,21 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.protocol).to.equal(
-        "0" // Uniswap V2 compatible
+      expect(config.platform).to.equal(
+        1 // Uniswap V3
       );
       expect(config.swapRouterAddr).to.equal(
-        "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
+        "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
-      expect(config.liquidationLimit).to.equal(MAX_UINT256);
+      expect(config.liquidationLimit).to.equal(0);
+      expect((await harvester.uniswapV3Path(comp.address)).toLowerCase())
+        .to.eq(
+          utils.solidityPack(
+            ["address", "uint24", "address", "uint24", "address"],
+            [addresses.mainnet.COMP, 3000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
+          )
+        )
     });
 
     it("Should have correct reward token config for AAVE", async () => {
@@ -218,14 +165,104 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.protocol).to.equal(
-        "0" // Uniswap V2 compatible
+      expect(config.platform).to.equal(
+        1 // Uniswap V3
       );
       expect(config.swapRouterAddr).to.equal(
-        "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
+        "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
-      expect(config.liquidationLimit).to.equal(MAX_UINT256);
+      expect(config.liquidationLimit).to.equal(0);
+
+      expect((await harvester.uniswapV3Path(aave.address)).toLowerCase())
+        .to.eq(
+          utils.solidityPack(
+            ["address", "uint24", "address", "uint24", "address"],
+            [addresses.mainnet.Aave, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
+          )
+        )
+    });
+  });
+
+  describe("OETH Rewards Config", () => {
+    it("Should have correct reward token config for CRV", async () => {
+      const { oethHarvester, crv } = fixture;
+
+      const config = await oethHarvester.rewardTokenConfigs(crv.address);
+
+      expect(config.allowedSlippageBps).to.equal(300);
+      expect(config.harvestRewardBps).to.equal(200);
+      expect(config.platform).to.equal(
+        3 // Curve
+      );
+      expect(config.swapRouterAddr).to.equal(
+        "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14"
+      );
+      expect(config.doSwapRewardToken).to.be.true;
+      expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
+      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(crv.address);
+      expect(coin1Index.toString()).to.equal("2");
+      expect(coin2Index.toString()).to.equal("1");
+    });
+
+    it("Should have correct reward token config for CVX", async () => {
+      const { oethHarvester, cvx } = fixture;
+
+      const config = await oethHarvester.rewardTokenConfigs(cvx.address);
+
+      expect(config.allowedSlippageBps).to.equal(300);
+      expect(config.harvestRewardBps).to.equal(200);
+      expect(config.platform).to.equal(
+        3 // Curve
+      );
+      expect(config.swapRouterAddr).to.equal(
+        "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4"
+      );
+      expect(config.doSwapRewardToken).to.be.true;
+      expect(config.liquidationLimit).to.equal(parseUnits("2500", 18));
+      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(cvx.address);
+      expect(coin1Index.toString()).to.equal("1");
+      expect(coin2Index.toString()).to.equal("0");
+    });
+
+    it("Should have correct reward token config for BAL", async () => {
+      const { oethHarvester, bal } = fixture;
+
+      const config = await oethHarvester.rewardTokenConfigs(bal.address);
+
+      expect(config.allowedSlippageBps).to.equal(300);
+      expect(config.harvestRewardBps).to.equal(200);
+      expect(config.platform).to.equal(
+        2 // Balancer
+      );
+      expect(config.swapRouterAddr).to.equal(
+        "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+      );
+      expect(config.doSwapRewardToken).to.be.true;
+      expect(config.liquidationLimit).to.equal(parseUnits("100", 18));
+      expect(await oethHarvester.balancerPoolId(bal.address)).to.equal(
+        "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
+      );
+    });
+
+    it("Should have correct reward token config for AURA", async () => {
+      const { oethHarvester, aura } = fixture;
+
+      const config = await oethHarvester.rewardTokenConfigs(aura.address);
+
+      expect(config.allowedSlippageBps).to.equal(300);
+      expect(config.harvestRewardBps).to.equal(200);
+      expect(config.platform).to.equal(
+        2 // Balancer
+      );
+      expect(config.swapRouterAddr).to.equal(
+        "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+      );
+      expect(config.doSwapRewardToken).to.be.true;
+      expect(config.liquidationLimit).to.equal(parseUnits("500", 18));
+      expect(await oethHarvester.balancerPoolId(aura.address)).to.equal(
+        "0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274"
+      );
     });
   });
 

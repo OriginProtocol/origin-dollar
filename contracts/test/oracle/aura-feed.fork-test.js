@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
+const { hotDeployOption } = require("../_hot-deploy");
 
 describe("ForkTest: Aura/WETH Price Feed", function () {
   this.timeout(0);
@@ -11,12 +12,9 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
 
-    await deployments.deploy("AuraWETHPriceFeed", {
-      from: await fixture.strategist.getAddress(),
-      args: [
-        addresses.mainnet.auraWETHWeightedPool
-      ]
-    });
+    hotDeployOption(fixture, null, {
+      isOethFixture: true
+    })
 
     fixture.auraWETHPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
 

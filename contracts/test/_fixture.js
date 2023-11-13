@@ -1985,6 +1985,19 @@ async function buybackFixture() {
   return fixture;
 }
 
+async function harvesterFixture() {
+  const fixture = await defaultFixture();
+
+  const { oethHarvester, harvester, crv, bal, aura } = fixture;
+
+  await setERC20TokenBalance(oethHarvester.address, crv)
+  await setERC20TokenBalance(oethHarvester.address, bal)
+  await setERC20TokenBalance(oethHarvester.address, aura)
+  await setERC20TokenBalance(harvester.address, crv)
+
+  return fixture
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2058,6 +2071,7 @@ module.exports = {
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
   buybackFixture,
+  harvesterFixture,
   nodeSnapshot,
   nodeRevert,
 };

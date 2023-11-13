@@ -107,6 +107,9 @@ async function hotDeployOption(
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
     .map((item) => item.trim());
+
+  if (!hotDeployOptions.length) return;
+
   const { isOethFixture } = config;
   const deployStrat = hotDeployOptions.includes("strategy");
   const deployVaultCore = hotDeployOptions.includes("vaultCore");

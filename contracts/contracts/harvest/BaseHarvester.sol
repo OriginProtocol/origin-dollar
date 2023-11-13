@@ -38,6 +38,7 @@ abstract contract BaseHarvester is Governable {
         uint16 harvestRewardBps,
         SwapPlatform platform,
         address swapRouterAddr,
+        bytes swapData,
         uint256 liquidationLimit,
         bool doSwapRewardToken
     );
@@ -48,7 +49,6 @@ abstract contract BaseHarvester is Governable {
         uint256 amountIn,
         uint256 amountOut
     );
-
     event RewardProceedsTransferred(
         address indexed token,
         address farmer,
@@ -80,16 +80,6 @@ abstract contract BaseHarvester is Governable {
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
     mapping(address => bool) public supportedStrategies;
 
-    mapping(address => address[]) public uniswapV2Path;
-    mapping(address => bytes) public uniswapV3Path;
-    mapping(address => bytes32) public balancerPoolId;
-
-    struct CurvePoolData {
-        uint256 rewardTokenIndex;
-        uint256 baseTokenIndex;
-    }
-    mapping(address => CurvePoolData) public curvePoolData;
-
     address public immutable vaultAddress;
 
     /**
@@ -103,6 +93,18 @@ abstract contract BaseHarvester is Governable {
      * to the `rewardProceedsAddress`. USDT for OUSD and WETH for OETH.
      **/
     address public immutable baseTokenAddress;
+    uint256 public immutable baseTokenDecimals;
+
+    mapping(address => address[]) public uniswapV2Path;
+    mapping(address => bytes) public uniswapV3Path;
+    mapping(address => bytes32) public balancerPoolId;
+
+    struct CurvePoolData {
+        // TODO: Check if storing as single slot would help with gas here
+        uint256 rewardTokenIndex;
+        uint256 baseTokenIndex;
+    }
+    mapping(address => CurvePoolData) public curvePoolData;
 
     // "_usdtAddress" is set to Vault's address, but is really not used
     constructor(address _vaultAddress, address _baseTokenAddress) {
@@ -110,6 +112,8 @@ abstract contract BaseHarvester is Governable {
         require(_baseTokenAddress != address(0));
         vaultAddress = _vaultAddress;
         baseTokenAddress = _baseTokenAddress;
+        // Cache decimals as well
+        baseTokenDecimals = Helpers.getDecimals(_baseTokenAddress);
     }
 
     /***************************************
@@ -162,12 +166,6 @@ abstract contract BaseHarvester is Governable {
     function setRewardTokenConfig(
         address _tokenAddress,
         RewardTokenConfig calldata tokenConfig,
-        // uint16 _allowedSlippageBps,
-        // uint16 _harvestRewardBps,
-        // SwapPlatform _platform,
-        // address _swapRouterAddr,
-        // uint256 _liquidationLimit,
-        // bool _doSwapRewardToken,
         bytes calldata swapData
     ) external onlyGovernor {
         require(
@@ -185,27 +183,15 @@ abstract contract BaseHarvester is Governable {
             "Swap router address should be non zero address"
         );
 
-        // RewardTokenConfig memory tokenConfig = RewardTokenConfig({
-        //     allowedSlippageBps: _allowedSlippageBps,
-        //     harvestRewardBps: _harvestRewardBps,
-        //     swapRouterAddr: _swapRouterAddr,
-        //     doSwapRewardToken: _doSwapRewardToken,
-        //     platform: _platform,
-        //     liquidationLimit: _liquidationLimit
-        // });
-
-        SwapPlatform _platform = tokenConfig.platform;
         address oldRouterAddress = rewardTokenConfigs[_tokenAddress]
             .swapRouterAddr;
         rewardTokenConfigs[_tokenAddress] = tokenConfig;
 
-        IERC20 token = IERC20(_tokenAddress);
-        address priceProvider = IVault(vaultAddress).priceProvider();
-
         // Revert if feed does not exist
         // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_tokenAddress);
+        IOracle(IVault(vaultAddress).priceProvider()).price(_tokenAddress);
 
+        IERC20 token = IERC20(_tokenAddress);
         // if changing token swap provider cancel existing allowance
         if (
             /* oldRouterAddress == address(0) when there is no pre-existing
@@ -223,6 +209,7 @@ abstract contract BaseHarvester is Governable {
             token.safeApprove(newRouterAddress, type(uint256).max);
         }
 
+        SwapPlatform _platform = tokenConfig.platform;
         if (_platform == SwapPlatform.UniswapV2Compatible) {
             uniswapV2Path[_tokenAddress] = _decodeUniswapV2Path(swapData, _tokenAddress);
         } else if (_platform == SwapPlatform.UniswapV3) {
@@ -233,7 +220,6 @@ abstract contract BaseHarvester is Governable {
             curvePoolData[_tokenAddress] = _decodeCurvePool(swapData, newRouterAddress, _tokenAddress);
         } else {
             revert("Unknown SwapPlatfrom");
-            // require(swapData.length == 0, "Invalid swapData");
         }
 
         emit RewardTokenConfigUpdated(
@@ -242,6 +228,7 @@ abstract contract BaseHarvester is Governable {
             tokenConfig.harvestRewardBps,
             _platform,
             newRouterAddress,
+            swapData,
             tokenConfig.liquidationLimit,
             tokenConfig.doSwapRewardToken
         );
@@ -274,16 +261,6 @@ abstract contract BaseHarvester is Governable {
         }
         require(address(bytes20(tokBytes)) == baseTokenAddress, "Invalid Base Token in swap path");
     }
-
-    // function testPure() external pure returns (bytes memory) {
-    //     return abi.encodePacked(
-    //         address(0xD533a949740bb3306d119CC777fa900bA034cd52),
-    //         uint24(300),
-    //         address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2),
-    //         uint24(500),
-    //         address(0xdAC17F958D2ee523a2206206994597C13D831ec7)
-    //     );
-    // }
 
     function _decodeBalancerPoolId(bytes calldata data) internal pure returns (bytes32 poolId) {
         (poolId) = abi.decode(data, (bytes32));
@@ -338,15 +315,16 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Swap all supported swap tokens for stablecoins via Uniswap.
+     * @dev Swap all supported reward tokens for
+     *      base token on the configured swap platforms
      */
     function swap() external onlyGovernor nonReentrant {
         _swap(rewardProceedsAddress);
     }
 
     /*
-     * @dev Collect reward tokens from all strategies and swap for supported
-     *      stablecoin via Uniswap
+     * @dev Collect reward tokens from all strategies and swap them for
+     *      base token on the configured swap platform
      */
     function harvestAndSwap() external onlyGovernor nonReentrant {
         _harvest();
@@ -362,9 +340,9 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap. Can be called by anyone. Rewards incentivizing
-     *      the caller are sent to the caller of this function.
+     * @dev Collect reward tokens from a specific strategy and swap them for
+     *      base token on the configured swap platform. Can be called by anyone. 
+     *      Rewards incentivizing the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvestAndSwap(address _strategyAddr) external nonReentrant {
@@ -373,8 +351,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap. Can be called by anyone.
+     * @dev Collect reward tokens from a specific strategy and swap them for
+     *      base token on the configured swap platform. Can be called by anyone
      * @param _strategyAddr Address of the strategy to collect rewards from
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
@@ -412,8 +390,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap.
+     * @dev Collect reward tokens from a specific strategy and swap them for
+     *      base token on the configured swap platform
      * @param _strategyAddr Address of the strategy to collect rewards from
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
@@ -430,8 +408,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens from a single strategy and swap them for a
-     *      supported stablecoin via Uniswap
+     * @dev Collect reward tokens from a specific strategy and swap them for
+     *      base token on the configured swap platform
      * @param _strategyAddr Address of the strategy to collect rewards from.
      */
     function _harvest(address _strategyAddr) internal {
@@ -445,8 +423,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Swap all supported swap tokens for stablecoins via Uniswap. And send the incentive part
-     * of the rewards to _rewardTo address.
+     * @dev Swap all supported swap tokens for the base token. And send the incentive part
+     *      of the rewards to _rewardTo address.
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
@@ -466,33 +444,43 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Swap a reward token for stablecoins on Uniswap. The token must have
-     *       a registered price feed with the price provider.
-     * @param _swapToken Address of the token to swap.
+     * @dev Swap a reward token for the base token on the configured 
+     *      swap platform. The token must have a registered price feed 
+     *      with the price provider
+     * @param _swapToken Address of the token to swap
      * @param _rewardTo Address where to send the share of harvest rewards to
      */
     function _swap(address _swapToken, address _rewardTo) internal virtual {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         if (tokenConfig.platform == SwapPlatform.UniswapV2Compatible) {
-            _swap(_swapToken, _rewardTo, _swapWithUniswapV2);
+            _swap(tokenConfig, _swapToken, _rewardTo, _swapWithUniswapV2);
         } else if (tokenConfig.platform == SwapPlatform.UniswapV3) {
-            _swap(_swapToken, _rewardTo, _swapWithUniswapV3);
+            _swap(tokenConfig, _swapToken, _rewardTo, _swapWithUniswapV3);
         } else if (tokenConfig.platform == SwapPlatform.Balancer) {
-            _swap(_swapToken, _rewardTo, _swapWithBalancer);
+            _swap(tokenConfig, _swapToken, _rewardTo, _swapWithBalancer);
         } else if (tokenConfig.platform == SwapPlatform.Curve) {
-            _swap(_swapToken, _rewardTo, _swapWithCurve);
+            _swap(tokenConfig, _swapToken, _rewardTo, _swapWithCurve);
         } else {
             revert("Unknown swap platform");
         }
     }
 
+    /**
+     * @dev Swap a reward token for the base token on the configured 
+     *      swap platform. The token must have a registered price feed 
+     *      with the price provider.
+     * @param tokenConfig RewardTokenConfig for the token to swap
+     * @param _swapToken Address of the token to swap
+     * @param swapper Pointer to the actual swap function
+     */
     function _swap(
+        RewardTokenConfig memory tokenConfig,
         address _swapToken,
         address _rewardTo,
         function(RewardTokenConfig memory, address, uint256, uint256) returns (uint256) swapper
     ) internal virtual {
-        RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
+        // RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
          * or we have temporarily disabled swapping of specific reward token via setting
@@ -502,39 +490,35 @@ abstract contract BaseHarvester is Governable {
             return;
         }
 
-        {
-            address priceProvider = IVault(vaultAddress).priceProvider();
-            IERC20 swapToken = IERC20(_swapToken);
-            uint256 balance = swapToken.balanceOf(address(this));
+        address priceProvider = IVault(vaultAddress).priceProvider();
+        uint256 balance = IERC20(_swapToken).balanceOf(address(this));
 
-            if (balance == 0) {
-                return;
-            }
-
-            if (tokenConfig.liquidationLimit > 0) {
-                balance = Math.min(balance, tokenConfig.liquidationLimit);
-
-            }
-
-            // This'll revert if there is no price feed
-            uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
-
-            // Oracle price is 1e18
-            uint256 minExpected = (balance *
-                (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
-                oraclePrice).scaleBy(Helpers.getDecimals(baseTokenAddress), Helpers.getDecimals(_swapToken)) /
-                1e4 / // fix the max slippage decimal position
-                1e18; // and oracle price decimals position
-            
-            // Do the swap
-            uint256 amountReceived = swapper(
-                tokenConfig,
-                _swapToken,
-                balance,
-                minExpected
-            );
-            emit RewardTokenSwapped(_swapToken, baseTokenAddress, tokenConfig.platform, balance, amountReceived);
+        if (balance == 0) {
+            return;
         }
+
+        if (tokenConfig.liquidationLimit > 0) {
+            balance = Math.min(balance, tokenConfig.liquidationLimit);
+        }
+
+        // This'll revert if there is no price feed
+        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
+
+        // Oracle price is 1e18
+        uint256 minExpected = (balance *
+            (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
+            oraclePrice).scaleBy(baseTokenDecimals, Helpers.getDecimals(_swapToken)) /
+            1e4 / // fix the max slippage decimal position
+            1e18; // and oracle price decimals position
+        
+        // Do the swap
+        uint256 amountReceived = swapper(
+            tokenConfig,
+            _swapToken,
+            balance,
+            minExpected
+        );
+        emit RewardTokenSwapped(_swapToken, baseTokenAddress, tokenConfig.platform, balance, amountReceived);
 
         IERC20 desiredToken = IERC20(baseTokenAddress);
         uint256 desiredTokenBalance = desiredToken.balanceOf(address(this));
@@ -552,7 +536,7 @@ abstract contract BaseHarvester is Governable {
         desiredToken.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
         desiredToken.safeTransfer(
             _rewardTo,
-            farmerShare // remaining share of the rewards
+            farmerShare // Remaining share of the rewards
         );
         emit RewardProceedsTransferred(
             baseTokenAddress,
@@ -562,9 +546,18 @@ abstract contract BaseHarvester is Governable {
         );
     }
 
+    /**
+     * Swaps the token to `baseToken` with Uniswap V2
+     * 
+     * @param tokenConfig Config of the tokenIn
+     * @param swapToken Address of the tokenIn
+     * @param amountIn Amount of `swapToken` to swap
+     * @param minAmountOut Minimum expected amount of `baseToken`
+     * 
+     * @return amountOut Amount of `baseToken` received after the swap
+     */
     function _swapWithUniswapV2(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
         address[] memory path = uniswapV2Path[swapToken];
-        require(path.length >= 2, "Swap path not configured");
 
         uint256[] memory amounts = IUniswapV2Router(tokenConfig.swapRouterAddr)
             .swapExactTokensForTokens(
@@ -577,11 +570,19 @@ abstract contract BaseHarvester is Governable {
 
         amountOut = amounts[amounts.length - 1];
     }
-    // function _getUniV2SwapPath(address token) internal virtual returns (address[] memory);
 
+    /**
+     * Swaps the token to `baseToken` with Uniswap V3
+     * 
+     * @param tokenConfig Config of the tokenIn
+     * @param swapToken Address of the tokenIn
+     * @param amountIn Amount of `swapToken` to swap
+     * @param minAmountOut Minimum expected amount of `baseToken`
+     * 
+     * @return amountOut Amount of `baseToken` received after the swap
+     */
     function _swapWithUniswapV3(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
         bytes memory path = uniswapV3Path[swapToken];
-        require(path.length > 0, "Swap path not configured");
 
         IUniswapV3Router.ExactInputParams memory params = IUniswapV3Router.ExactInputParams({
             path: path,
@@ -592,11 +593,19 @@ abstract contract BaseHarvester is Governable {
         });
         amountOut = IUniswapV3Router(tokenConfig.swapRouterAddr).exactInput(params);
     }
-    // function _getUniV3SwapPath(address token) internal virtual returns (bytes memory);
 
+    /**
+     * Swaps the token to `baseToken` on Balancer
+     * 
+     * @param tokenConfig Config of the tokenIn
+     * @param swapToken Address of the tokenIn
+     * @param amountIn Amount of `swapToken` to swap
+     * @param minAmountOut Minimum expected amount of `baseToken`
+     * 
+     * @return amountOut Amount of `baseToken` received after the swap
+     */
     function _swapWithBalancer(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
         bytes32 poolId = balancerPoolId[swapToken];
-        require(poolId != bytes32(0), "Pool ID not configured");
 
         IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap({
             poolId: poolId,
@@ -618,6 +627,16 @@ abstract contract BaseHarvester is Governable {
             .swap(singleSwap, fundMgmt, minAmountOut, block.timestamp);
     }
 
+    /**
+     * Swaps the token to `baseToken` on Curve
+     * 
+     * @param tokenConfig Config of the tokenIn
+     * @param swapToken Address of the tokenIn
+     * @param amountIn Amount of `swapToken` to swap
+     * @param minAmountOut Minimum expected amount of `baseToken`
+     * 
+     * @return amountOut Amount of `baseToken` received after the swap
+     */
     function _swapWithCurve(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
         CurvePoolData memory poolData = curvePoolData[swapToken];
 

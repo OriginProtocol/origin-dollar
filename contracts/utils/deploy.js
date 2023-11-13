@@ -388,7 +388,9 @@ const executeGovernanceProposalOnFork = async ({
     await advanceTime(queuePeriod + 1);
   }
 
-  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn);
+  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
+    gasLimit: executeGasLimit
+  });
 
   const newProposalState = await getProposalState(proposalIdBn);
   if (newProposalState === "Executed") {
@@ -697,6 +699,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         proposalIdBn,
         proposalState,
         reduceQueueTime,
+        executeGasLimit
       });
 
       // proposal executed skip deployment
@@ -831,6 +834,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     proposalId,
     deployerIsProposer = false, // The deployer issues the propose to OGV Governor
     reduceQueueTime = false, // reduce governance queue times
+    executeGasLimit = null,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -897,6 +901,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalIdBn,
         proposalState,
         reduceQueueTime,
+        executeGasLimit,
       });
       log("Proposal executed.");
     } else {
