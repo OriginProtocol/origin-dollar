@@ -1076,7 +1076,6 @@ async function balancerSfrxETHRETHWstETHBrokenWithdrawalFixture() {
       forceDeployStrategy: true,
     }
   );
-
   return fixture;
 }
 

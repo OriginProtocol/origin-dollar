@@ -171,6 +171,7 @@ async function hotDeployOption(
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
         "BalancerComposablePoolBrokenTestStrategy" // implContractName
       );
+
       /*
        * Delete this piece of code once the new VaultAdmin implementation is deployed.
        */
