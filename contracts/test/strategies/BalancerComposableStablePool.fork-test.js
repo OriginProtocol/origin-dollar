@@ -12,6 +12,7 @@ const {
   createFixtureLoader,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
+  balancerWstEthComposableFixture,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
@@ -20,6 +21,13 @@ const temporaryFork = require("../../utils/temporaryFork");
 
 const log = require("../../utils/logger")(
   "test:fork:strategy:balancer:composable"
+);
+
+const loadBalancerWstEthComposableFixture = createFixtureLoader(
+  balancerWstEthComposableFixture,
+  {
+    defaultStrategy: false,
+  }
 );
 
 const loadBalancerFrxWstrETHFixture = createFixtureLoader(
@@ -1319,6 +1327,220 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
   });
 });
 
+describe("ForkTest: Balancer CoposableStablePool wstETH/WETH Strategy", function () {
+  describe("Deposit", function () {
+    let fixture;
+
+    beforeEach(async () => {
+      fixture = await loadBalancerWstEthComposableFixture();
+      const { timelock, stETH, weth, oethVault } = fixture;
+      await oethVault
+        .connect(timelock)
+        .setAssetDefaultStrategy(stETH.address, addresses.zero);
+      await oethVault
+        .connect(timelock)
+        .setAssetDefaultStrategy(weth.address, addresses.zero);
+    });
+
+    it("Should fail when depositing with an unsupported asset", async function () {
+      const {
+        frxETH,
+        oethVault,
+        strategist,
+        balancerWstEthComposableStrategy,
+      } = fixture;
+
+      await expect(
+        oethVault
+          .connect(strategist)
+          .depositToStrategy(
+            balancerWstEthComposableStrategy.address,
+            [frxETH.address],
+            [oethUnits("1")]
+          )
+      ).to.be.revertedWith("Asset unsupported");
+    });
+    it("Should deposit 5 WETH and 5 stETH in Balancer ComposableStablePool strategy", async function () {
+      const { stETH, stEthComposableBPT, weth } = fixture;
+      await wstETHDepositTest(
+        fixture,
+        [5, 5],
+        [weth, stETH],
+        stEthComposableBPT
+      );
+    });
+    it("Should deposit 12 WETH in Balancer ComposableStablePool strategy", async function () {
+      const { stETH, stEthComposableBPT, weth } = fixture;
+      await wstETHDepositTest(
+        fixture,
+        [12, 0],
+        [weth, stETH],
+        stEthComposableBPT
+      );
+    });
+
+    it("Should deposit 30 stETH in Balancer ComposableStablePool strategy", async function () {
+      const { stETH, stEthComposableBPT, weth } = fixture;
+      await wstETHDepositTest(
+        fixture,
+        [0, 30],
+        [weth, stETH],
+        stEthComposableBPT
+      );
+    });
+
+    it("Should check balance for gas usage", async () => {
+      const { balancerWstEthComposableStrategy, josh, weth } = fixture;
+
+      // Check balance in a transaction so the gas usage can be measured
+      await balancerWstEthComposableStrategy["checkBalance(address)"](
+        weth.address
+      );
+      const tx = await balancerWstEthComposableStrategy
+        .connect(josh)
+        .populateTransaction["checkBalance(address)"](weth.address);
+      await josh.sendTransaction(tx);
+    });
+  });
+
+  describe("Withdraw", function () {
+    let fixture;
+
+    beforeEach(async () => {
+      fixture = await loadBalancerWstEthComposableFixture();
+      const {
+        balancerWstEthComposableStrategy,
+        oethVault,
+        strategist,
+        stETH,
+        weth,
+      } = fixture;
+
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          balancerWstEthComposableStrategy.address,
+          [weth.address, stETH.address],
+          [units("35", weth), oethUnits("35")]
+        );
+    });
+
+    it("Should fail when withdrawing with an unsupported asset", async function () {
+      const {
+        frxETH,
+        oethVault,
+        strategist,
+        balancerWstEthComposableStrategy,
+      } = fixture;
+
+      // prettier-ignore
+      await expect(
+          oethVault
+            .connect(strategist)
+            // eslint-disable-next-line
+            ["withdrawFromStrategy(address,address[],uint256[])"](
+              balancerWstEthComposableStrategy.address,
+              [frxETH.address],
+              [oethUnits("1")]
+            )
+        ).to.be.revertedWith("Unsupported asset");
+    });
+
+    // a list of WETH/STeth pairs
+    const withdrawalTestCases = [
+      ["10", "0"],
+      ["0", "8"],
+      ["11", "14"],
+      ["2.9543", "9.234"],
+      ["1.0001", "0"],
+      ["9.99998", "0"],
+      ["0", "7.00123"],
+      ["0", "0.210002"],
+      ["38.432", "12.5643"],
+      ["5.123452", "29.00123"],
+      ["22.1232", "30.12342"],
+    ];
+
+    for (const [wethAmount, stETHAmount] of withdrawalTestCases) {
+      it(`Should be able to withdraw ${wethAmount} WETH and ${stETHAmount} stETH from the pool`, async function () {
+        const { stETH, balancerWstEthComposableStrategy, oethVault, weth } =
+          fixture;
+
+        const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+        const vaultstEthBalanceBefore = await stETH.balanceOf(
+          oethVault.address
+        );
+        const wethWithdrawAmount = await units(wethAmount, weth);
+        const stETHWithdrawAmount = await units(stETHAmount, stETH);
+
+        const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+        // prettier-ignore
+        await balancerWstEthComposableStrategy
+            // eslint-disable-next-line
+            .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+              oethVault.address,
+              [weth.address, stETH.address],
+              [wethWithdrawAmount, stETHWithdrawAmount]
+            );
+
+        expect(
+          (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+        ).to.approxEqualTolerance(wethWithdrawAmount, 1);
+        expect(
+          (await stETH.balanceOf(oethVault.address)).sub(
+            vaultstEthBalanceBefore
+          )
+        ).to.approxEqualTolerance(stETHWithdrawAmount, 1);
+      });
+    }
+
+    it("Should be able to withdraw all of pool liquidity", async function () {
+      const { oethVault, weth, stETH, balancerWstEthComposableStrategy } =
+        fixture;
+
+      const wethBalanceBefore = await balancerWstEthComposableStrategy[
+        "checkBalance(address)"
+      ](weth.address);
+      const stEthBalanceBefore = await balancerWstEthComposableStrategy[
+        "checkBalance(address)"
+      ](stETH.address);
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await balancerWstEthComposableStrategy
+        .connect(oethVaultSigner)
+        .withdrawAll();
+
+      const wethBalanceDiff = wethBalanceBefore.sub(
+        await balancerWstEthComposableStrategy["checkBalance(address)"](
+          weth.address
+        )
+      );
+      const stEthBalanceDiff = stEthBalanceBefore.sub(
+        await balancerWstEthComposableStrategy["checkBalance(address)"](
+          stETH.address
+        )
+      );
+
+      expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
+      expect(stEthBalanceDiff).to.be.gte(await units("15", stETH), 1);
+    });
+  });
+
+  describe("Harvest rewards", function () {
+    it("Should be able to collect reward tokens", async function () {
+      const { josh, balancerWstEthComposableStrategy, oethHarvester } =
+        await loadBalancerWstEthComposableFixture();
+
+      await oethHarvester.connect(josh)[
+        // eslint-disable-next-line
+        "harvestAndSwap(address)"
+      ](balancerWstEthComposableStrategy.address);
+    });
+  });
+});
+
 async function fundAccount(assets, fromAccount, target, amount = "50") {
   for (let i = 0; i < assets.length; i++) {
     await assets[i].connect(fromAccount).transfer(target, parseUnits(amount));
@@ -1451,6 +1673,55 @@ async function depositTest(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
   ).to.approxEqualTolerance(after.strategyValues.sum, 0.01);
+}
+
+async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
+  const {
+    oethVault,
+    oeth,
+    balancerWstEthComposableStrategy,
+    balancerVault,
+    balancerWstEthComposablePID,
+    strategist,
+    reth,
+  } = fixture;
+  const logParams = {
+    oeth,
+    oethVault,
+    bpt,
+    balancerVault,
+    strategy: balancerWstEthComposableStrategy,
+    allAssets,
+    pid: balancerWstEthComposablePID,
+    reth,
+  };
+
+  const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
+  const ethAmounts = unitAmounts;
+  const sumEthAmounts = ethAmounts.reduce(
+    (a, b) => a.add(b),
+    BigNumber.from(0)
+  );
+
+  const before = await logBalances(logParams);
+
+  await oethVault.connect(strategist).depositToStrategy(
+    balancerWstEthComposableStrategy.address,
+    allAssets.map((asset) => asset.address),
+    unitAmounts
+  );
+
+  const after = await logBalances(logParams);
+
+  // Should have liquidity in Balancer
+  const strategyValuesDiff = after.strategyValues.sum.sub(
+    before.strategyValues.sum
+  );
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
+  expect(
+    after.strategyValues.value,
+    "strategy total value = sum of asset values"
+  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
 }
 
 async function logBalances({

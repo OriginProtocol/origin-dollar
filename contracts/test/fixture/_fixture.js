@@ -16,6 +16,8 @@ const {
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
+  aura_stETH_WETH_COMPOSABLE_PID,
+  balancer_stETH_WETH_COMPOSABLE_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
 } = require("../../utils/constants");
 const {
@@ -52,6 +54,7 @@ const sfrxETHAbi = require("../abi/sfrxETH.json");
 
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../../utils/balancerStrategyDeployment");
+const balancerComposableStrategyDeployment = require("../../utils/balancerComposableStrategyDeployment");
 const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fixtures");
@@ -1061,7 +1064,80 @@ async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
 }
 
 /**
- * Configure a Vault with the balancer strategy for wstETH/WETH pool
+ * Configure a Vault with the Balancer Composable strategy for wstETH/WETH pool
+ */
+async function balancerWstEthComposableFixture() {
+  const fixture = await defaultFixture();
+
+  const d = balancerComposableStrategyDeployment({
+    deploymentOpts: {
+      deployName: "99998_balancer_composable_wstETH_WETH",
+      forceDeploy: true,
+      deployerIsProposer: true,
+      reduceQueueTime: true,
+    },
+    proxyContractName: "OETHBalancerComposablePoolwstEthStrategyProxy",
+
+    platformAddress: addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT,
+    poolId: balancer_stETH_WETH_COMPOSABLE_PID,
+
+    auraRewardsContractAddress:
+      addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards,
+    positionOfTheBPTToken: 1,
+    rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
+    assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
+  });
+
+  await d(hre);
+
+  const balancerWstEthComposableStrategyProxy = await ethers.getContract(
+    "OETHBalancerComposablePoolwstEthStrategyProxy"
+  );
+  const balancerWstEthComposableStrategy = await ethers.getContractAt(
+    "BalancerComposablePoolStrategy",
+    balancerWstEthComposableStrategyProxy.address
+  );
+
+  fixture.balancerWstEthComposableStrategy = balancerWstEthComposableStrategy;
+
+  const { oethVault, timelock, weth, stETH, josh } = fixture;
+
+  await oethVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(
+      stETH.address,
+      balancerWstEthComposableStrategy.address
+    );
+  await oethVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(
+      weth.address,
+      balancerWstEthComposableStrategy.address
+    );
+
+  fixture.stEthComposableBPT = await ethers.getContractAt(
+    "IERC20Metadata",
+    addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT,
+    josh
+  );
+  fixture.balancerWstEthComposablePID = balancer_stETH_WETH_COMPOSABLE_PID;
+
+  fixture.auraPool = await ethers.getContractAt(
+    "IERC4626",
+    addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards
+  );
+
+  fixture.balancerVault = await ethers.getContractAt(
+    "IBalancerVault",
+    addresses.mainnet.balancerVault,
+    josh
+  );
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for wstETH/WETH pool
  */
 async function balancerWstEthFixture() {
   const fixture = await defaultFixture();
@@ -2075,6 +2151,7 @@ module.exports = {
   balancerREthFixture,
   balancerFrxETHwstETHeETHFixture,
   balancerWstEthFixture,
+  balancerWstEthComposableFixture,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
