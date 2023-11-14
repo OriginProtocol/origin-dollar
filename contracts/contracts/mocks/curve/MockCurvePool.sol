@@ -15,10 +15,15 @@ contract MockCurvePool {
     address[] public coins;
     uint256[3] public balances;
     address lpToken;
+    uint256 public slippage = 1 ether;
 
     constructor(address[3] memory _coins, address _lpToken) {
         coins = _coins;
         lpToken = _lpToken;
+    }
+
+    function setCoins(address[] memory _coins) external {
+        coins = _coins;
     }
 
     // Returns the same amount of LP tokens in 1e18 decimals
@@ -124,4 +129,15 @@ contract MockCurvePool {
     function fee() external pure returns (uint256) {
         return 1000000;
     }
+
+    function exchange(uint256 coin0, uint256 coin1, uint256 amountIn, uint256 minAmountOut) external returns (uint256 amountOut) {
+        IERC20(coins[coin0]).transferFrom(msg.sender, address(this), amountIn);
+        amountOut = (minAmountOut * slippage) / 1 ether;
+        require(amountOut >= minAmountOut, "Slippage error");
+        IMintableERC20(coins[coin1]).mintTo(msg.sender, amountOut);
+    }
+
+    function setSlippage(uint256 _slippage) external {
+        slippage = _slippage;
+    } 
 }

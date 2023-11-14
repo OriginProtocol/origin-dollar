@@ -2,17 +2,18 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import { MintableERC20 } from "./MintableERC20.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract MockUniswapRouter is IUniswapV2Router {
     using StableMath for uint256;
 
     mapping(address => address) public pairMaps;
+    uint256 public slippage = 1 ether;
 
     function initialize(
         address[] calldata _0tokens,
@@ -27,6 +28,10 @@ contract MockUniswapRouter is IUniswapV2Router {
         }
     }
 
+    function setSlippage(uint256 _slippage) external {
+        slippage = _slippage;
+    } 
+
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -34,18 +39,19 @@ contract MockUniswapRouter is IUniswapV2Router {
         address to,
         // solhint-disable-next-line no-unused-vars
         uint256
-    ) external override returns (uint256[] memory) {
+    ) external override returns (uint256[] memory amountsOut) {
         address tok0 = path[0];
-        address tok1 = pairMaps[tok0];
-        // Give 1:1
-        uint256 amountOut = amountIn.scaleBy(
-            Helpers.getDecimals(tok1),
-            Helpers.getDecimals(tok0)
-        );
+        address tok1 = path[path.length - 1];
+
+
+        uint256 amountOut = (amountOutMin * slippage) / 1 ether;
         require(amountOut >= amountOutMin, "Slippage error");
 
         IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(tok1).transfer(to, amountOut);
+        MintableERC20(tok1).mintTo(to, amountOut);
+
+        amountsOut = new uint256[](path.length);
+        amountsOut[path.length - 1] = amountOut;
     }
 
     struct ExactInputParams {
@@ -63,13 +69,10 @@ contract MockUniswapRouter is IUniswapV2Router {
     {
         (address tok0, address tok1) = _getFirstAndLastToken(params.path);
 
-        amountOut = params.amountIn.scaleBy(
-            Helpers.getDecimals(tok1),
-            Helpers.getDecimals(tok0)
-        );
+        amountOut = (params.amountOutMinimum * slippage) / 1 ether;
 
         IERC20(tok0).transferFrom(msg.sender, address(this), params.amountIn);
-        IERC20(tok1).transfer(params.recipient, amountOut);
+        MintableERC20(tok1).mintTo(params.recipient, amountOut);
 
         require(
             amountOut >= params.amountOutMinimum,
@@ -126,7 +129,7 @@ contract MockUniswapRouter is IUniswapV2Router {
                 Helpers.getDecimals(token1)
             );
 
-            IERC20(token1).transfer(recipient, amountOutMinimum);
+            MintableERC20(token1).mintTo(recipient, amountOutMinimum);
         }
     }
 
