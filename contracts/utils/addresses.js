@@ -119,6 +119,8 @@ addresses.mainnet.chainlinkstETH_ETH =
   "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
 addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
+addresses.mainnet.chainlinkBAL_ETH =
+  "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";

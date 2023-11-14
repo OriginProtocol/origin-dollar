@@ -55,7 +55,6 @@ module.exports = deploymentWithGovernanceProposal(
       addresses.mainnet.CVX,
       addresses.mainnet.AURA,
       addresses.mainnet.BAL,
-      addresses.mainnet.WETH,
       addresses.mainnet.stETH,
       addresses.mainnet.rETH,
       addresses.mainnet.frxETH

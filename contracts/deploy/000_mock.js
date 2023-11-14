@@ -238,9 +238,19 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 18).toString(), 18], // 1 frxETH = 1 ETH , 18 digits decimal.
   });
+  await deploy("MockChainlinkOracleFeedBALETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.002", 18).toString(), 18], // 500 BAL = 1 ETH , 18 digits decimal.
+  });
 
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
+    from: deployerAddr,
+  });
+
+  // Deploy mock Uniswap router
+  await deploy("MockBalancerVault", {
     from: deployerAddr,
   });
 
@@ -393,6 +403,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
   await deploy("Mock1InchSwapRouter", {
     from: deployerAddr,
+  });
+
+
+  await deploy("MockOracleWeightedPool", {
+    from: deployerAddr
   });
 
   console.log("000_mock deploy done.");

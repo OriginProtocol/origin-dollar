@@ -11,6 +11,7 @@ const {
   expectApproxSupply,
   isFork,
 } = require("../helpers");
+const { parseUnits } = require("ethers/lib/utils");
 
 describe("Convex Strategy", function () {
   if (isFork) {
@@ -145,58 +146,44 @@ describe("Convex Strategy", function () {
     it("Should collect all reward tokens even though the swap limits are set", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      await expect(
-        harvester
-          .connect(governor)
-          .setRewardTokenConfig(
-            crv.address,
-            300,
-            100,
-            0, // Uniswap V2 compatible
-            mockUniswapRouter.address,
-            utils.parseUnits("1", 18),
-            true
-          )
-      )
-        .to.emit(harvester, "RewardTokenConfigUpdated")
-        .withArgs(
+      await harvester.connect(governor).setRewardTokenConfig(
+        crv.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 100,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: parseUnits("1")
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
           crv.address,
-          300,
-          100,
-          mockUniswapRouter.address,
-          utils.parseUnits("1", 18),
-          true
-        );
+          usdt.address
+        ]])
+      );
 
-      await expect(
-        harvester
-          .connect(governor)
-          .setRewardTokenConfig(
-            cvx.address,
-            300,
-            100,
-            0, // Uniswap V2 compatible
-            mockUniswapRouter.address,
-            utils.parseUnits("1.5", 18),
-            true
-          )
-      )
-        .to.emit(harvester, "RewardTokenConfigUpdated")
-        .withArgs(
+      await harvester.connect(governor).setRewardTokenConfig(
+        cvx.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 100,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: parseUnits("1")
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
           cvx.address,
-          300,
-          100,
-          mockUniswapRouter.address,
-          utils.parseUnits("1.5", 18),
-          true
-        );
+          usdt.address
+        ]])
+      );
 
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
+      expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -218,34 +205,38 @@ describe("Convex Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      await mockUniswapRouter.initialize(
-        [crv.address, cvx.address],
-        [usdt.address, usdt.address]
+      await harvester.connect(governor).setRewardTokenConfig(
+        crv.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 200,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: 0
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
+          crv.address,
+          usdt.address
+        ]])
       );
 
-      await harvester
-        .connect(governor)
-        .setRewardTokenConfig(
-          crv.address,
-          300,
-          200,
-          0, // Uniswap V2 compatible
-          mockUniswapRouter.address,
-          MAX_UINT256,
-          true
-        );
-
-      await harvester
-        .connect(governor)
-        .setRewardTokenConfig(
+      await harvester.connect(governor).setRewardTokenConfig(
+        cvx.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 200,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: 0
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
           cvx.address,
-          300,
-          200,
-          0, // Uniswap V2 compatible
-          mockUniswapRouter.address,
-          MAX_UINT256,
-          true
-        );
+          usdt.address
+        ]])
+      );
+
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -285,44 +276,44 @@ describe("Convex Strategy", function () {
 
     const harvestAndSwapTokens = async (callAsGovernor) => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-      await mockUniswapRouter.initialize(
-        [crv.address, cvx.address],
-        [usdt.address, usdt.address]
-      );
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
       await expect(vault).has.a.balanceOf("0", crv);
       await expect(vault).has.a.balanceOf("0", cvx);
 
-      // Give Uniswap mock some USDT so it can give it back in CRV liquidation
-      await usdt
-        .connect(anna)
-        .transfer(mockUniswapRouter.address, usdtUnits("1000"));
-
-      await harvester
-        .connect(governor)
-        .setRewardTokenConfig(
+      // Configure harvester
+      await harvester.connect(governor).setRewardTokenConfig(
+        crv.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 100,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: parseUnits("0.8")
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
           crv.address,
-          300,
-          100,
-          0, // Uniswap V2 compatible
-          mockUniswapRouter.address,
-          utils.parseUnits("0.8", 18),
-          true
-        );
-
-      await harvester
-        .connect(governor)
-        .setRewardTokenConfig(
+          usdt.address
+        ]])
+      );
+      await harvester.connect(governor).setRewardTokenConfig(
+        cvx.address, // reward token
+        {
+          allowedSlippageBps: 300,
+          harvestRewardBps: 100,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: parseUnits("1.5")
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
           cvx.address,
-          300,
-          100,
-          0, // Uniswap V2 compatible
-          mockUniswapRouter.address,
-          utils.parseUnits("1.5", 18),
-          true
-        );
+          usdt.address
+        ]])
+      );
+
 
       const crvConfig = await harvester.rewardTokenConfigs(crv.address);
       const cvxConfig = await harvester.rewardTokenConfigs(cvx.address);

@@ -329,17 +329,24 @@ describe("Vault with Compound strategy", function () {
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
-
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
     await harvester.connect(governor).setRewardTokenConfig(
       comp.address, // reward token
-      300, // max slippage bps
-      0, // harvest reward bps
-      mockUniswapRouter.address,
-      MAX_UINT256,
-      true
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 0,
+        swapRouterAddr: mockUniswapRouter.address, 
+        doSwapRewardToken: true,
+        platform: 0,
+        liquidationLimit: 0
+      },
+      utils.defaultAbiCoder.encode(["address[]"], [[
+        comp.address,
+        usdt.address
+      ]])
     );
+
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -680,23 +687,25 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
-
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 0,
+        swapRouterAddr: mockUniswapRouter.address, 
+        doSwapRewardToken: true,
+        platform: 0,
+        liquidationLimit: 0
+      },
+      utils.defaultAbiCoder.encode(["address[]"], [[
         comp.address,
-        300,
-        100,
-        0, // Uniswap V2 compatible
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
+        usdt.address
+      ]])
+    );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -741,8 +750,6 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
-
     // Mock router gives 1:1, if we set this to something high there will be
     // too much slippage
     await setOracleTokenPriceUsd("COMP", "1.3");
@@ -751,18 +758,21 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 100,
+        swapRouterAddr: mockUniswapRouter.address, 
+        doSwapRewardToken: true,
+        platform: 0,
+        liquidationLimit: 0
+      },
+      utils.defaultAbiCoder.encode(["address[]"], [[
         comp.address,
-        300,
-        100,
-        0, // Uniswap V2 compatible
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
-
+        usdt.address
+      ]])
+    );
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
 
@@ -796,18 +806,21 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 100,
+        swapRouterAddr: mockUniswapRouter.address, 
+        doSwapRewardToken: true,
+        platform: 0,
+        liquidationLimit: 0
+      },
+      utils.defaultAbiCoder.encode(["address[]"], [[
         comp.address,
-        300,
-        100,
-        0, // Uniswap V2 compatible
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
-
+        usdt.address
+      ]])
+    );
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
 

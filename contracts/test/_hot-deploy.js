@@ -4,7 +4,7 @@
  */
 const { ethers } = hre;
 
-const { isFork } = require("./helpers");
+const { isFork, isCI } = require("./helpers");
 const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
@@ -102,7 +102,8 @@ async function hotDeployOption(
   fixtureName,
   config = { isOethFixture: false }
 ) {
-  if (!isFork) return;
+  // Disable Hot Deploy on CI and for unit tests
+  if (!isFork || isCI) return;
 
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")

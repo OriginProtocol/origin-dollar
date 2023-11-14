@@ -172,15 +172,20 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      await mockUniswapRouter.initialize([crv.address], [usdt.address]);
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
-        300, // max slippage bps
-        100, // harvest reward bps
-        0, // Uniswap V2 compatible
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
+        {
+          allowedSlippageBps: 200,
+          harvestRewardBps: 500,
+          swapRouterAddr: mockUniswapRouter.address, 
+          doSwapRewardToken: true,
+          platform: 0,
+          liquidationLimit: 0
+        },
+        utils.defaultAbiCoder.encode(["address[]"], [[
+          crv.address,
+          usdt.address
+        ]])
       );
 
       // Make sure Vault has 0 USDT balance
@@ -194,10 +199,6 @@ describe("3Pool Strategy", function () {
       await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      // Give Uniswap mock some USDT so it can give it back in CRV liquidation
-      await usdt
-        .connect(anna)
-        .transfer(mockUniswapRouter.address, usdtUnits("100"));
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
       await harvester
