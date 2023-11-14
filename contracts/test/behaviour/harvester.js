@@ -464,7 +464,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
   });
 
-  describe.only("Swap", () => {
+  describe("Swap", () => {
     async function _swapWithRouter(swapRouterConfig, swapData) {
       const { harvester, strategies, rewardProceedsAddress, fixture } =
         context();
