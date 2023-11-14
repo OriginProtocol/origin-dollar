@@ -82,10 +82,10 @@ describe("Compound strategy", function () {
       comp,
     } = fixture;
 
-    await expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
+    expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
 
     // Fund the strategy
-    usdc.connect(strategySigner).mint(usdcUnits("1000"));
+    usdc.connect(strategySigner).mintTo(cStandalone.address, usdcUnits("1000"));
     expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
       usdcUnits("1000")
     );
@@ -103,7 +103,7 @@ describe("Compound strategy", function () {
       .deposit(usdc.address, usdcUnits("1000"));
 
     const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(strategySigner).mint(compAmount);
+    await comp.connect(strategySigner).mintTo(cStandalone.address, compAmount);
 
     // Make sure the Strategy has COMP balance
     await expect(await comp.balanceOf(vault.address)).to.be.equal("0");

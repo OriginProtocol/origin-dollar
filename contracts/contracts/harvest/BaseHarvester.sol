@@ -119,21 +119,10 @@ abstract contract BaseHarvester is Governable {
     ****************************************/
 
     /**
-     * @dev Throws if called by any address other than the Vault.
-     */
-    modifier onlyVaultOrGovernor() {
-        require(
-            msg.sender == vaultAddress || isGovernor(),
-            "Caller is not the Vault or Governor"
-        );
-        _;
-    }
-
-    /**
      * Set the Address receiving rewards proceeds.
      * @param _rewardProceedsAddress Address of the reward token
      */
-    function setRewardsProceedsAddress(address _rewardProceedsAddress)
+    function setRewardProceedsAddress(address _rewardProceedsAddress)
         external
         onlyGovernor
     {
@@ -321,7 +310,7 @@ abstract contract BaseHarvester is Governable {
      */
     function setSupportedStrategy(address _strategyAddress, bool _isSupported)
         external
-        onlyVaultOrGovernor
+        onlyGovernor
     {
         supportedStrategies[_strategyAddress] = _isSupported;
         emit SupportedStrategyUpdate(_strategyAddress, _isSupported);

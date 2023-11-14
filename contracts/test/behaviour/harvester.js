@@ -3,6 +3,8 @@ const { expect } = require("chai");
 const {
   changeInMultipleBalances,
   setOracleTokenPriceUsd,
+  usdtUnits,
+  daiUnits,
 } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
@@ -280,7 +282,7 @@ const shouldBehaveLikeHarvester = (context) => {
           .setRewardTokenConfig(
             crv.address,
             config,
-            utils.defaultAbiCoder.encode(["uint256", "uint256"], ["0", "1"])
+            utils.defaultAbiCoder.encode(["uint256", "uint256"], ["2", "2"])
           )
       ).to.be.revertedWith("Invalid Reward Token Index");
 
@@ -636,14 +638,212 @@ const shouldBehaveLikeHarvester = (context) => {
       );
     });
 
-    it("Should not swap when disabled", async () => {});
+    it("Should not swap when disabled", async () => {
+      const { harvester, strategies, fixture } = context();
+      const { governor, uniswapRouter, domen } = fixture;
 
-    it("Should not swap when balance is zero", async () => {});
+      const { strategy, rewardTokens } = strategies[0];
 
-    it("Should use liquidation limit", async () => {});
+      const swapToken = rewardTokens[0];
+
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 200,
+        harvestRewardBps: 500,
+        swapRouterAddr: uniswapRouter.address,
+        doSwapRewardToken: false,
+        platform: 2,
+        liquidationLimit: 0,
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      const swapTx = await harvester
+        .connect(domen)
+        ["harvestAndSwap(address)"](strategy.address);
+
+      await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
+      await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
+    });
+
+    it("Should not swap when balance is zero", async () => {
+      const { harvester, strategies, fixture } = context();
+      const { governor, uniswapRouter, domen } = fixture;
+
+      const { rewardTokens } = strategies[0];
+
+      const swapToken = rewardTokens[0];
+
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 200,
+        harvestRewardBps: 500,
+        swapRouterAddr: uniswapRouter.address,
+        doSwapRewardToken: true,
+        platform: 2,
+        liquidationLimit: 0,
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      const swapTx = await harvester
+        .connect(governor)
+        .swapRewardToken(swapToken.address);
+
+      await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
+      await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
+    });
+
+    it("Should use liquidation limit", async () => {
+      const { harvester, strategies, fixture } = context();
+      const { governor, balancerVault, domen } = fixture;
+
+      const { rewardTokens } = strategies[0];
+
+      const swapToken = rewardTokens[0];
+      const baseToken = await ethers.getContractAt(
+        "MockUSDT",
+        await harvester.baseTokenAddress()
+      );
+
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 0,
+        harvestRewardBps: 500,
+        swapRouterAddr: balancerVault.address,
+        doSwapRewardToken: true,
+        platform: 2,
+        liquidationLimit: usdtUnits("100"),
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      await swapToken
+        .connect(domen)
+        .mintTo(harvester.address, usdtUnits("1000"));
+
+      const swapTx = await harvester
+        .connect(governor)
+        .swapRewardToken(swapToken.address);
+
+      await expect(swapTx)
+        .to.emit(harvester, "RewardTokenSwapped")
+        .withArgs(
+          swapToken.address,
+          baseToken.address,
+          2,
+          usdtUnits("100"),
+          usdtUnits("100")
+        );
+    });
   });
 
-  describe("Admin function", () => {});
+  describe("Admin function", () => {
+    it("Should only allow governor to change RewardProceedsAddress", async () => {
+      const { harvester, fixture } = context();
+      const { governor, daniel, strategist } = fixture;
+
+      await harvester
+        .connect(governor)
+        .setRewardProceedsAddress(strategist.address);
+
+      expect(await harvester.rewardProceedsAddress()).to.equal(
+        strategist.address
+      );
+
+      for (const signer of [daniel, strategist]) {
+        await expect(
+          harvester.connect(signer).setRewardProceedsAddress(governor.address)
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+
+    it("Should not allow to set invalid rewardProceedsAddress", async () => {
+      const { harvester, fixture } = context();
+      const { governor } = fixture;
+
+      await expect(
+        harvester.connect(governor).setRewardProceedsAddress(addresses.zero)
+      ).to.be.revertedWith(
+        "Rewards proceeds address should be a non zero address"
+      );
+    });
+
+    it("Should allow governor to set supported strategies", async () => {
+      const { harvester, fixture } = context();
+      const { governor, strategist } = fixture;
+
+      expect(await harvester.supportedStrategies(strategist.address)).to.be
+        .false;
+      await harvester
+        .connect(governor)
+        .setSupportedStrategy(strategist.address, true);
+      expect(await harvester.supportedStrategies(strategist.address)).to.be
+        .true;
+
+      await expect(
+        harvester
+          .connect(strategist)
+          .setSupportedStrategy(strategist.address, false)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Should allow governor to transfer any token", async () => {
+      const { harvester, fixture } = context();
+      const { governor, strategist, dai } = fixture;
+
+      await dai.connect(governor).mintTo(harvester.address, daiUnits("1000"));
+
+      await expect(
+        harvester.connect(strategist).transferToken(dai.address, "1")
+      ).to.be.revertedWith("Caller is not the Governor");
+
+      await harvester
+        .connect(governor)
+        .transferToken(dai.address, daiUnits("1000"));
+
+      expect(await dai.balanceOf(harvester.address)).to.eq("0");
+    });
+  });
 };
 
 module.exports = {

@@ -4,7 +4,6 @@ const { utils } = require("ethers");
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const {
   daiUnits,
-  usdtUnits,
   ousdUnits,
   units,
   expectApproxSupply,
@@ -207,8 +206,8 @@ describe("Convex Strategy", function () {
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
         {
-          allowedSlippageBps: 300,
-          harvestRewardBps: 200,
+          allowedSlippageBps: 0,
+          harvestRewardBps: 0,
           swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
@@ -223,8 +222,8 @@ describe("Convex Strategy", function () {
       await harvester.connect(governor).setRewardTokenConfig(
         cvx.address, // reward token
         {
-          allowedSlippageBps: 300,
-          harvestRewardBps: 200,
+          allowedSlippageBps: 0,
+          harvestRewardBps: 0,
           swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
@@ -241,16 +240,11 @@ describe("Convex Strategy", function () {
       await expect(vault).has.a.balanceOf("0", crv);
       await expect(vault).has.a.balanceOf("0", cvx);
 
-      // Give Uniswap mock some USDT so it can give it back in CRV liquidation
-      await usdt
-        .connect(anna)
-        .transfer(mockUniswapRouter.address, usdtUnits("100"));
-
       // prettier-ignore
       await harvester
         .connect(governor)["harvestAndSwap()"]();
 
-      // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
+      // Make sure Vault has 5 USDT balance
       await expect(vault).has.a.balanceOf("5", usdt);
 
       // No CRV in Vault or Compound strategy
@@ -284,7 +278,7 @@ describe("Convex Strategy", function () {
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
         {
-          allowedSlippageBps: 300,
+          allowedSlippageBps: 0,
           harvestRewardBps: 100,
           swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
@@ -299,7 +293,7 @@ describe("Convex Strategy", function () {
       await harvester.connect(governor).setRewardTokenConfig(
         cvx.address, // reward token
         {
-          allowedSlippageBps: 300,
+          allowedSlippageBps: 0,
           harvestRewardBps: 100,
           swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
