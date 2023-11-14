@@ -229,7 +229,7 @@ jobs:
           wget https://github.com/ethereum/solidity/releases/download/v0.8.7/solc-static-linux
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
-          pip3 install slither-analyzer
+          pip3 install slither-analyzer==0.10.0
 
       - name: Use Node.js
         uses: actions/setup-node@v3
