@@ -169,12 +169,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
                 /* This check is triggered when the _deposit is called with
                  * a duplicate asset in the _strategyAssets array
-<<<<<<< Updated upstream
-=======
                  *
                  * A duplicate asset supplied with 0 amount or an amount close to
                  * 0 that wraps to a 0 amount will still pass this check.
->>>>>>> Stashed changes
                  */
                 require(
                     amountsIn[assetIndex] == 0,
