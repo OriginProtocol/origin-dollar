@@ -405,9 +405,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
-
   await deploy("MockOracleWeightedPool", {
-    from: deployerAddr
+    from: deployerAddr,
   });
 
   console.log("000_mock deploy done.");

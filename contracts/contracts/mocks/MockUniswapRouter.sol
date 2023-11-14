@@ -30,7 +30,7 @@ contract MockUniswapRouter is IUniswapV2Router {
 
     function setSlippage(uint256 _slippage) external {
         slippage = _slippage;
-    } 
+    }
 
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -42,7 +42,6 @@ contract MockUniswapRouter is IUniswapV2Router {
     ) external override returns (uint256[] memory amountsOut) {
         address tok0 = path[0];
         address tok1 = path[path.length - 1];
-
 
         uint256 amountOut = (amountOutMin * slippage) / 1 ether;
         require(amountOut >= amountOutMin, "Slippage error");

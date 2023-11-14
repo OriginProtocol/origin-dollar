@@ -25,7 +25,7 @@ contract MockOracleRouterNoStale is OracleRouter {
 
 // @notice Oracle Router used to bypass staleness
 contract MockOETHOracleRouterNoStale is OETHOracleRouter {
-    constructor (address auraPriceFeed) OETHOracleRouter(auraPriceFeed) {}
+    constructor(address auraPriceFeed) OETHOracleRouter(auraPriceFeed) {}
 
     function feedMetadata(address asset)
         internal

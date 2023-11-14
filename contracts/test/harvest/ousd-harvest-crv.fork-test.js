@@ -52,17 +52,15 @@ describe("ForkTest: Harvest OUSD", function () {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          0, // Uniswap V2 compatible
-          oldCrvTokenConfig.swapRouterAddr,
-          MAX_UINT256,
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapRouterAddr,
+        MAX_UINT256,
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it should only fail on a specific block number, where
@@ -90,17 +88,15 @@ describe("ForkTest: Harvest OUSD", function () {
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
 
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          0, // Uniswap V2 compatible
-          oldCrvTokenConfig.swapRouterAddr,
-          parseUnits(crvLimit.toString(), 18),
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapRouterAddr,
+        parseUnits(crvLimit.toString(), 18),
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it will only succeed again on a specific block number.

@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { MAX_UINT256 } = require("../../utils/constants");
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const {
   daiUnits,
@@ -151,15 +150,15 @@ describe("Convex Strategy", function () {
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 100,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: parseUnits("1")
+          liquidationLimit: parseUnits("1"),
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          crv.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[crv.address, usdt.address]]
+        )
       );
 
       await harvester.connect(governor).setRewardTokenConfig(
@@ -167,15 +166,15 @@ describe("Convex Strategy", function () {
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 100,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: parseUnits("1")
+          liquidationLimit: parseUnits("1"),
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          cvx.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[cvx.address, usdt.address]]
+        )
       );
 
       // Mint of MockCRVMinter mints a fixed 2e18
@@ -210,15 +209,15 @@ describe("Convex Strategy", function () {
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 200,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: 0
+          liquidationLimit: 0,
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          crv.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[crv.address, usdt.address]]
+        )
       );
 
       await harvester.connect(governor).setRewardTokenConfig(
@@ -226,17 +225,16 @@ describe("Convex Strategy", function () {
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 200,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: 0
+          liquidationLimit: 0,
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          cvx.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[cvx.address, usdt.address]]
+        )
       );
-
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -288,32 +286,31 @@ describe("Convex Strategy", function () {
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 100,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: parseUnits("0.8")
+          liquidationLimit: parseUnits("0.8"),
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          crv.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[crv.address, usdt.address]]
+        )
       );
       await harvester.connect(governor).setRewardTokenConfig(
         cvx.address, // reward token
         {
           allowedSlippageBps: 300,
           harvestRewardBps: 100,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: parseUnits("1.5")
+          liquidationLimit: parseUnits("1.5"),
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          cvx.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[cvx.address, usdt.address]]
+        )
       );
-
 
       const crvConfig = await harvester.rewardTokenConfigs(crv.address);
       const cvxConfig = await harvester.rewardTokenConfigs(cvx.address);

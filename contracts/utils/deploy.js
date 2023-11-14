@@ -389,7 +389,7 @@ const executeGovernanceProposalOnFork = async ({
   }
 
   await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
-    gasLimit: executeGasLimit
+    gasLimit: executeGasLimit,
   });
 
   const newProposalState = await getProposalState(proposalIdBn);
@@ -699,7 +699,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         proposalIdBn,
         proposalState,
         reduceQueueTime,
-        executeGasLimit
+        executeGasLimit,
       });
 
       // proposal executed skip deployment

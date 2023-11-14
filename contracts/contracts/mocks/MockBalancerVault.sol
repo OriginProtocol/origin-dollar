@@ -8,7 +8,7 @@ import { StableMath } from "../utils/StableMath.sol";
 
 // import "hardhat/console.sol";
 
-contract MockBalancerVault  {
+contract MockBalancerVault {
     using StableMath for uint256;
     uint256 public slippage = 1 ether;
 
@@ -20,8 +20,15 @@ contract MockBalancerVault  {
     ) external returns (uint256 amountCalculated) {
         amountCalculated = (minAmountOut * slippage) / 1 ether;
         require(amountCalculated >= minAmountOut, "Slippage error");
-        IERC20(singleSwap.assetIn).transferFrom(funds.sender, address(this), singleSwap.amount);
-        MintableERC20(singleSwap.assetOut).mintTo(funds.recipient, amountCalculated);
+        IERC20(singleSwap.assetIn).transferFrom(
+            funds.sender,
+            address(this),
+            singleSwap.amount
+        );
+        MintableERC20(singleSwap.assetOut).mintTo(
+            funds.recipient,
+            amountCalculated
+        );
     }
 
     function setSlippage(uint256 _slippage) external {

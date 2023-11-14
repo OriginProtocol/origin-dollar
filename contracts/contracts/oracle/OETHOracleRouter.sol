@@ -11,7 +11,7 @@ contract OETHOracleRouter is OracleRouterBase {
 
     address public immutable auraPriceFeed;
 
-    constructor (address _auraPriceFeed) {
+    constructor(address _auraPriceFeed) {
         auraPriceFeed = _auraPriceFeed;
     }
 

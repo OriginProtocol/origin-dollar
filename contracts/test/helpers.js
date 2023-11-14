@@ -463,7 +463,8 @@ const getAssetAddresses = async (deployments) => {
       uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
         .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
-      auraWeightedOraclePool: (await deployments.get("MockOracleWeightedPool")).address,
+      auraWeightedOraclePool: (await deployments.get("MockOracleWeightedPool"))
+        .address,
       AURA: (await deployments.get("MockAura")).address,
       BAL: (await deployments.get("MockBAL")).address,
     };
@@ -544,37 +545,40 @@ async function changeInMultipleBalances(
   accounts
 ) {
   const _getBalances = async () => {
-    const out = {}
+    const out = {};
 
     for (const account of accounts) {
-      out[account] = {}
+      out[account] = {};
 
-      const balances = await Promise.all(tokens.map(t => t.balanceOf(account)))
+      const balances = await Promise.all(
+        tokens.map((t) => t.balanceOf(account))
+      );
 
       for (let i = 0; i < balances.length; i++) {
-        out[account][tokens[i].address] = balances[i]
+        out[account][tokens[i].address] = balances[i];
       }
     }
 
-    return out
-  }
+    return out;
+  };
 
-  const balanceBefore = await _getBalances()
+  const balanceBefore = await _getBalances();
 
   await functionChangingBalance();
 
-  const balanceAfter = await _getBalances()
+  const balanceAfter = await _getBalances();
 
-  const balanceDiff = {}
+  const balanceDiff = {};
   for (const account of accounts) {
-    balanceDiff[account] = {}
+    balanceDiff[account] = {};
     for (const token of tokens) {
-      const tokenAddr = token.address
-      balanceDiff[account][tokenAddr] = balanceAfter[account][tokenAddr] - balanceBefore[account][tokenAddr]
+      const tokenAddr = token.address;
+      balanceDiff[account][tokenAddr] =
+        balanceAfter[account][tokenAddr] - balanceBefore[account][tokenAddr];
     }
   }
 
-  return balanceDiff
+  return balanceDiff;
 }
 
 /**

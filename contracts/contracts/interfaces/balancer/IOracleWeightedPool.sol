@@ -13,7 +13,11 @@ pragma solidity ^0.8.0;
 //   USDC in which BPT is worth $5 will be 5.0, despite the BPT having 18 decimals and USDC 6.
 //
 // - INVARIANT: the value of the Pool's invariant, which serves as a measure of its liquidity.
-enum Variable { PAIR_PRICE, BPT_PRICE, INVARIANT }
+enum Variable {
+    PAIR_PRICE,
+    BPT_PRICE,
+    INVARIANT
+}
 
 /**
  * @dev Information for a Time Weighted Average query.
@@ -29,7 +33,6 @@ struct OracleAverageQuery {
 }
 
 interface IOracleWeightedPool {
-
     /**
      * @dev Returns the time average weighted price corresponding to each of `queries`. Prices are represented as 18
      * decimal fixed point values.

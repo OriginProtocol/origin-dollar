@@ -3,12 +3,11 @@ const { utils } = require("ethers");
 
 const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
 const { isCI, oethUnits } = require("./../helpers");
-const { MAX_UINT256 } = require("../../utils/constants");
 const { hotDeployOption } = require("../_hot-deploy");
 const addresses = require("../../utils/addresses");
 const { parseUnits } = require("ethers").utils;
 
-const loadFixture = createFixtureLoader(harvesterFixture)
+const loadFixture = createFixtureLoader(harvesterFixture);
 
 describe("ForkTest: Harvester", function () {
   this.timeout(0);
@@ -20,70 +19,62 @@ describe("ForkTest: Harvester", function () {
   beforeEach(async () => {
     fixture = await loadFixture();
     await hotDeployOption(fixture, null, {
-      isOethFixture: true
-    })
+      isOethFixture: true,
+    });
     await hotDeployOption(fixture, null, {
-      isOethFixture: false
-    })
-
+      isOethFixture: false,
+    });
   });
 
   describe("with Curve", () => {
     it("Should swap CRV for WETH", async () => {
       const { oethHarvester, timelock, crv } = fixture;
-      const crvBefore = await crv.balanceOf(oethHarvester.address)
+      const crvBefore = await crv.balanceOf(oethHarvester.address);
 
-      await oethHarvester.connect(timelock)
-        .swapRewardToken(crv.address)
+      await oethHarvester.connect(timelock).swapRewardToken(crv.address);
 
-      expect(
-        await crv.balanceOf(oethHarvester.address)
-      ).to.equal(crvBefore.sub(oethUnits("4000")))
-    })
-  })
+      expect(await crv.balanceOf(oethHarvester.address)).to.equal(
+        crvBefore.sub(oethUnits("4000"))
+      );
+    });
+  });
 
   describe("with Uniswap V3", () => {
     it("Should swap CRV for USDT", async () => {
-      const { harvester, timelock, crv, } = fixture;
-      const crvBefore = await crv.balanceOf(harvester.address)
+      const { harvester, timelock, crv } = fixture;
+      const crvBefore = await crv.balanceOf(harvester.address);
 
-      await harvester.connect(timelock)
-        .swapRewardToken(crv.address)
+      await harvester.connect(timelock).swapRewardToken(crv.address);
 
-
-      expect(
-        await crv.balanceOf(harvester.address)
-      ).to.equal(crvBefore.sub(oethUnits("4000")))
-    })
-  })
+      expect(await crv.balanceOf(harvester.address)).to.equal(
+        crvBefore.sub(oethUnits("4000"))
+      );
+    });
+  });
 
   describe("with Balancer", () => {
     it("Should swap BAL for WETH", async () => {
       const { oethHarvester, timelock, bal } = fixture;
-      const balBefore = await bal.balanceOf(oethHarvester.address)
+      const balBefore = await bal.balanceOf(oethHarvester.address);
 
-      await oethHarvester.connect(timelock)
-        .swapRewardToken(bal.address)
+      await oethHarvester.connect(timelock).swapRewardToken(bal.address);
 
-
-      expect(
-        await bal.balanceOf(oethHarvester.address)
-      ).to.equal(balBefore.sub(oethUnits("100")))
-    })
+      expect(await bal.balanceOf(oethHarvester.address)).to.equal(
+        balBefore.sub(oethUnits("100"))
+      );
+    });
 
     it("Should swap AURA for WETH", async () => {
       const { oethHarvester, timelock, aura } = fixture;
-      const auraBefore = await aura.balanceOf(oethHarvester.address)
+      const auraBefore = await aura.balanceOf(oethHarvester.address);
 
+      await oethHarvester.connect(timelock).swapRewardToken(aura.address);
 
-      await oethHarvester.connect(timelock)
-        .swapRewardToken(aura.address)
-
-      expect(
-        await aura.balanceOf(oethHarvester.address)
-      ).to.equal(auraBefore.sub(oethUnits("500")))
-    })
-  })
+      expect(await aura.balanceOf(oethHarvester.address)).to.equal(
+        auraBefore.sub(oethUnits("500"))
+      );
+    });
+  });
 
   describe("OUSD Rewards Config", () => {
     it("Should have correct reward token config for CRV", async () => {
@@ -101,13 +92,18 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
-      expect(await harvester.uniswapV3Path(crv.address))
-        .to.eq(
-          utils.solidityPack(
-            ["address", "uint24", "address", "uint24", "address"],
-            [addresses.mainnet.CRV, 3000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
-          )
+      expect(await harvester.uniswapV3Path(crv.address)).to.eq(
+        utils.solidityPack(
+          ["address", "uint24", "address", "uint24", "address"],
+          [
+            addresses.mainnet.CRV,
+            3000,
+            addresses.mainnet.WETH,
+            500,
+            addresses.mainnet.USDT,
+          ]
         )
+      );
     });
 
     it("Should have correct reward token config for CVX", async () => {
@@ -125,13 +121,18 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(utils.parseEther("2500"));
-      expect(await harvester.uniswapV3Path(cvx.address))
-        .to.eq(
-          utils.solidityPack(
-            ["address", "uint24", "address", "uint24", "address"],
-            [addresses.mainnet.CVX, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
-          )
+      expect(await harvester.uniswapV3Path(cvx.address)).to.eq(
+        utils.solidityPack(
+          ["address", "uint24", "address", "uint24", "address"],
+          [
+            addresses.mainnet.CVX,
+            10000,
+            addresses.mainnet.WETH,
+            500,
+            addresses.mainnet.USDT,
+          ]
         )
+      );
     });
 
     it("Should have correct reward token config for COMP", async () => {
@@ -149,13 +150,18 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(0);
-      expect((await harvester.uniswapV3Path(comp.address)).toLowerCase())
-        .to.eq(
-          utils.solidityPack(
-            ["address", "uint24", "address", "uint24", "address"],
-            [addresses.mainnet.COMP, 3000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
-          )
+      expect((await harvester.uniswapV3Path(comp.address)).toLowerCase()).to.eq(
+        utils.solidityPack(
+          ["address", "uint24", "address", "uint24", "address"],
+          [
+            addresses.mainnet.COMP,
+            3000,
+            addresses.mainnet.WETH,
+            500,
+            addresses.mainnet.USDT,
+          ]
         )
+      );
     });
 
     it("Should have correct reward token config for AAVE", async () => {
@@ -174,13 +180,18 @@ describe("ForkTest: Harvester", function () {
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(0);
 
-      expect((await harvester.uniswapV3Path(aave.address)).toLowerCase())
-        .to.eq(
-          utils.solidityPack(
-            ["address", "uint24", "address", "uint24", "address"],
-            [addresses.mainnet.Aave, 10000, addresses.mainnet.WETH, 500, addresses.mainnet.USDT]
-          )
+      expect((await harvester.uniswapV3Path(aave.address)).toLowerCase()).to.eq(
+        utils.solidityPack(
+          ["address", "uint24", "address", "uint24", "address"],
+          [
+            addresses.mainnet.Aave,
+            10000,
+            addresses.mainnet.WETH,
+            500,
+            addresses.mainnet.USDT,
+          ]
         )
+      );
     });
   });
 
@@ -200,7 +211,9 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
-      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(crv.address);
+      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(
+        crv.address
+      );
       expect(coin1Index.toString()).to.equal("2");
       expect(coin2Index.toString()).to.equal("1");
     });
@@ -220,7 +233,9 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("2500", 18));
-      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(cvx.address);
+      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(
+        cvx.address
+      );
       expect(coin1Index.toString()).to.equal("1");
       expect(coin2Index.toString()).to.equal("0");
     });

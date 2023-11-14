@@ -717,13 +717,14 @@ const deployOracles = async () => {
   const oracleContract = isMainnet ? "OracleRouter" : "MockOracleRouter";
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
-  log("Deployed OracleRouter")
-
+  log("Deployed OracleRouter");
 
   const assetAddresses = await getAssetAddresses(deployments);
-  await deployWithConfirmation("AuraWETHPriceFeed", [assetAddresses.auraWeightedOraclePool]);
-  const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
-  log("Deployed AuraWETHPriceFeed")
+  await deployWithConfirmation("AuraWETHPriceFeed", [
+    assetAddresses.auraWeightedOraclePool,
+  ]);
+  const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
+  log("Deployed AuraWETHPriceFeed");
 
   // Register feeds
   // Not needed in production
@@ -752,14 +753,8 @@ const deployOracles = async () => {
       assetAddresses.NonStandardToken,
       oracleAddresses.chainlink.NonStandardToken_USD,
     ],
-    [
-      assetAddresses.AURA,
-      auraWethPriceFeed.address,
-    ],
-    [
-      assetAddresses.BAL,
-      oracleAddresses.chainlink.BAL_ETH,
-    ],
+    [assetAddresses.AURA, auraWethPriceFeed.address],
+    [assetAddresses.BAL, oracleAddresses.chainlink.BAL_ETH],
   ];
 
   for (const [asset, oracle] of oracleFeeds) {
@@ -767,7 +762,7 @@ const deployOracles = async () => {
       oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
     );
   }
-  log("Initialized AuraWETHPriceFeed")
+  log("Initialized AuraWETHPriceFeed");
 };
 
 /**

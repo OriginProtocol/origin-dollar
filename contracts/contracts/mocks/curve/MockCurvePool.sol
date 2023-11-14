@@ -130,7 +130,12 @@ contract MockCurvePool {
         return 1000000;
     }
 
-    function exchange(uint256 coin0, uint256 coin1, uint256 amountIn, uint256 minAmountOut) external returns (uint256 amountOut) {
+    function exchange(
+        uint256 coin0,
+        uint256 coin1,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) external returns (uint256 amountOut) {
         IERC20(coins[coin0]).transferFrom(msg.sender, address(this), amountIn);
         amountOut = (minAmountOut * slippage) / 1 ether;
         require(amountOut >= minAmountOut, "Slippage error");
@@ -139,5 +144,5 @@ contract MockCurvePool {
 
     function setSlippage(uint256 _slippage) external {
         slippage = _slippage;
-    } 
+    }
 }

@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
-const { MAX_UINT256 } = require("../../utils/constants");
 
 const {
   advanceTime,
@@ -336,17 +335,16 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 300,
         harvestRewardBps: 0,
-        swapRouterAddr: mockUniswapRouter.address, 
+        swapRouterAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
         platform: 0,
-        liquidationLimit: 0
+        liquidationLimit: 0,
       },
-      utils.defaultAbiCoder.encode(["address[]"], [[
-        comp.address,
-        usdt.address
-      ]])
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
     );
-
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -696,15 +694,15 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 300,
         harvestRewardBps: 0,
-        swapRouterAddr: mockUniswapRouter.address, 
+        swapRouterAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
         platform: 0,
-        liquidationLimit: 0
+        liquidationLimit: 0,
       },
-      utils.defaultAbiCoder.encode(["address[]"], [[
-        comp.address,
-        usdt.address
-      ]])
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
     );
 
     // Make sure Vault has 0 USDT balance
@@ -763,15 +761,15 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 300,
         harvestRewardBps: 100,
-        swapRouterAddr: mockUniswapRouter.address, 
+        swapRouterAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
         platform: 0,
-        liquidationLimit: 0
+        liquidationLimit: 0,
       },
-      utils.defaultAbiCoder.encode(["address[]"], [[
-        comp.address,
-        usdt.address
-      ]])
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
     );
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -811,15 +809,15 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 300,
         harvestRewardBps: 100,
-        swapRouterAddr: mockUniswapRouter.address, 
+        swapRouterAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
         platform: 0,
-        liquidationLimit: 0
+        liquidationLimit: 0,
       },
-      utils.defaultAbiCoder.encode(["address[]"], [[
-        comp.address,
-        usdt.address
-      ]])
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
     );
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);

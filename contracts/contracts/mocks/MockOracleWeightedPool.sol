@@ -12,9 +12,10 @@ contract MockOracleWeightedPool is IOracleWeightedPool {
         external
         view
         override
-        returns (uint256[] memory results) {
-            return nextResults;
-        }
+        returns (uint256[] memory results)
+    {
+        return nextResults;
+    }
 
     function setNextResults(uint256[] calldata results) external {
         nextResults = results;

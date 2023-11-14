@@ -10,7 +10,7 @@ import "hardhat/console.sol";
 contract AuraWETHPriceFeed is AggregatorV3Interface {
     using SafeCast for uint256;
     using SafeCast for int256;
-    
+
     uint8 public constant override decimals = 18;
     string public constant override description = "";
     uint256 public constant override version = 1;
@@ -39,11 +39,14 @@ contract AuraWETHPriceFeed is AggregatorV3Interface {
             ago: 0 // From now
         });
 
-        uint256[] memory prices = auraOracleWeightedPool.getTimeWeightedAverage(queries);
+        uint256[] memory prices = auraOracleWeightedPool.getTimeWeightedAverage(
+            queries
+        );
         int256 price_1h = prices[0].toInt256();
         int256 price_5m = prices[1].toInt256();
 
-        int256 diff = (1e18 * (price_1h - price_5m)) / ((price_1h + price_5m) / 2);
+        int256 diff = (1e18 * (price_1h - price_5m)) /
+            ((price_1h + price_5m) / 2);
         uint256 absDiff = diff >= 0 ? diff.toUint256() : (-diff).toUint256();
 
         // Ensure the price hasn't moved too much (2% tolerance)
@@ -64,10 +67,11 @@ contract AuraWETHPriceFeed is AggregatorV3Interface {
             uint256,
             uint256 updatedAt,
             uint80
-        ) {
-            answer = _price();
-            updatedAt = block.timestamp;
-        }
+        )
+    {
+        answer = _price();
+        updatedAt = block.timestamp;
+    }
 
     function getRoundData(uint80)
         external
@@ -79,7 +83,8 @@ contract AuraWETHPriceFeed is AggregatorV3Interface {
             uint256,
             uint256,
             uint80
-        ) {
-            revert("Not implemented");
-        }
+        )
+    {
+        revert("Not implemented");
+    }
 }

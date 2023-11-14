@@ -158,16 +158,10 @@ async function hotDeployOption(
     );
   }
   if (deployHarvester) {
-    await hotDeployHarvester(
-      fixture,
-      isOethFixture
-    )
+    await hotDeployHarvester(fixture, isOethFixture);
   }
   if (deployOracleRouter) {
-    await hotDeployOracleRouter(
-      fixture,
-      isOethFixture
-    )
+    await hotDeployOracleRouter(fixture, isOethFixture);
   }
 }
 
@@ -225,15 +219,12 @@ async function hotDeployVaultAdmin(
   }
 }
 
-async function hotDeployHarvester(
-  fixture,
-  forOETH
-) {
-  const { deploy } = deployments
+async function hotDeployHarvester(fixture, forOETH) {
+  const { deploy } = deployments;
   const harvesterName = `${forOETH ? "OETH" : ""}Harvester`;
   const harvesterProxyName = `${forOETH ? "OETH" : ""}HarvesterProxy`;
-  const vault = forOETH ? fixture.oethVault : fixture.vault
-  const baseToken = forOETH ? fixture.weth : fixture.usdt
+  const vault = forOETH ? fixture.oethVault : fixture.vault;
+  const baseToken = forOETH ? fixture.weth : fixture.usdt;
 
   const cHarvesterProxy = await ethers.getContract(harvesterProxyName);
 
@@ -241,7 +232,7 @@ async function hotDeployHarvester(
   await deploy(harvesterName, {
     from: addresses.mainnet.Timelock,
     contract: harvesterName,
-    args: [vault.address, baseToken.address]
+    args: [vault.address, baseToken.address],
   });
   const implementation = await ethers.getContract(harvesterName);
   const liveImplContractAddress = await cHarvesterProxy.implementation();
@@ -251,11 +242,8 @@ async function hotDeployHarvester(
   await replaceContractAt(liveImplContractAddress, implementation);
 }
 
-async function hotDeployOracleRouter(
-  fixture,
-  forOETH
-) {
-  const { deploy } = deployments
+async function hotDeployOracleRouter(fixture, forOETH) {
+  const { deploy } = deployments;
   const routerName = `${forOETH ? "OETH" : ""}OracleRouter`;
 
   const cRouter = await ethers.getContract(routerName);
@@ -263,29 +251,23 @@ async function hotDeployOracleRouter(
   if (forOETH) {
     await deploy("AuraWETHPriceFeed", {
       from: await fixture.strategist.getAddress(),
-      args: [
-        addresses.mainnet.AuraWeightedOraclePool
-      ]
-    })
-    const auraPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
-    
+      args: [addresses.mainnet.AuraWeightedOraclePool],
+    });
+    const auraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
+
     await deploy(routerName, {
       from: await fixture.strategist.getAddress(),
-      args: [
-        auraPriceFeed.address
-      ]
-    })
+      args: [auraPriceFeed.address],
+    });
   } else {
     await deploy(routerName, {
       from: await fixture.strategist.getAddress(),
-      args: []
-    })
+      args: [],
+    });
   }
 
   const implementation = await ethers.getContract(routerName);
-  log(
-    `Replacing implementation at ${cRouter.address} with the fresh bytecode`
-  );
+  log(`Replacing implementation at ${cRouter.address} with the fresh bytecode`);
   await replaceContractAt(cRouter.address, implementation);
 }
 

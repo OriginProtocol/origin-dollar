@@ -89,7 +89,7 @@ abstract contract BaseHarvester is Governable {
     address public rewardProceedsAddress;
 
     /**
-     * All tokens are swapped to this token before it gets transferred 
+     * All tokens are swapped to this token before it gets transferred
      * to the `rewardProceedsAddress`. USDT for OUSD and WETH for OETH.
      **/
     address public immutable baseTokenAddress;
@@ -211,13 +211,23 @@ abstract contract BaseHarvester is Governable {
 
         SwapPlatform _platform = tokenConfig.platform;
         if (_platform == SwapPlatform.UniswapV2Compatible) {
-            uniswapV2Path[_tokenAddress] = _decodeUniswapV2Path(swapData, _tokenAddress);
+            uniswapV2Path[_tokenAddress] = _decodeUniswapV2Path(
+                swapData,
+                _tokenAddress
+            );
         } else if (_platform == SwapPlatform.UniswapV3) {
-            uniswapV3Path[_tokenAddress] = _decodeUniswapV3Path(swapData, _tokenAddress);
+            uniswapV3Path[_tokenAddress] = _decodeUniswapV3Path(
+                swapData,
+                _tokenAddress
+            );
         } else if (_platform == SwapPlatform.Balancer) {
             balancerPoolId[_tokenAddress] = _decodeBalancerPoolId(swapData);
         } else if (_platform == SwapPlatform.Curve) {
-            curvePoolData[_tokenAddress] = _decodeCurvePool(swapData, newRouterAddress, _tokenAddress);
+            curvePoolData[_tokenAddress] = _decodeCurvePool(
+                swapData,
+                newRouterAddress,
+                _tokenAddress
+            );
         } else {
             revert("Unknown SwapPlatfrom");
         }
@@ -234,18 +244,27 @@ abstract contract BaseHarvester is Governable {
         );
     }
 
-    function _decodeUniswapV2Path(bytes calldata data, address token) internal view returns (address[] memory path) {
+    function _decodeUniswapV2Path(bytes calldata data, address token)
+        internal
+        view
+        returns (address[] memory path)
+    {
         (path) = abi.decode(data, (address[]));
 
         // Do some validation
         require(
-            path.length >= 2 
-                && path[0] == token 
-                && path[path.length - 1] == baseTokenAddress
-        , "Invalid Uniswap V2 path");
+            path.length >= 2 &&
+                path[0] == token &&
+                path[path.length - 1] == baseTokenAddress,
+            "Invalid Uniswap V2 path"
+        );
     }
 
-    function _decodeUniswapV3Path(bytes calldata data, address token) internal view returns (bytes calldata path) {
+    function _decodeUniswapV3Path(bytes calldata data, address token)
+        internal
+        view
+        returns (bytes calldata path)
+    {
         path = data;
 
         // Do some validation
@@ -253,28 +272,48 @@ abstract contract BaseHarvester is Governable {
         for (uint256 i = 0; i < 20; ++i) {
             tokBytes[i] = path[i];
         }
-        require(address(bytes20(tokBytes)) == token, "Invalid Reward Token in swap path");
+        require(
+            address(bytes20(tokBytes)) == token,
+            "Invalid Reward Token in swap path"
+        );
 
         uint256 tok1Offset = path.length - 20;
         for (uint256 i = 0; i < 20; ++i) {
             tokBytes[i] = path[i + tok1Offset];
         }
-        require(address(bytes20(tokBytes)) == baseTokenAddress, "Invalid Base Token in swap path");
+        require(
+            address(bytes20(tokBytes)) == baseTokenAddress,
+            "Invalid Base Token in swap path"
+        );
     }
 
-    function _decodeBalancerPoolId(bytes calldata data) internal pure returns (bytes32 poolId) {
+    function _decodeBalancerPoolId(bytes calldata data)
+        internal
+        pure
+        returns (bytes32 poolId)
+    {
         (poolId) = abi.decode(data, (bytes32));
 
         // Do some validation
         require(poolId != bytes32(0), "Invalid Balancer Pool ID");
     }
 
-    function _decodeCurvePool(bytes calldata data, address poolAddress, address token) internal view returns (CurvePoolData memory poolData) {
+    function _decodeCurvePool(
+        bytes calldata data,
+        address poolAddress,
+        address token
+    ) internal view returns (CurvePoolData memory poolData) {
         (poolData) = abi.decode(data, (CurvePoolData));
 
         ICurvePool pool = ICurvePool(poolAddress);
-        require(token == pool.coins(poolData.rewardTokenIndex), "Invalid Reward Token Index");
-        require(baseTokenAddress == pool.coins(poolData.baseTokenIndex), "Invalid Base Token Index");
+        require(
+            token == pool.coins(poolData.rewardTokenIndex),
+            "Invalid Reward Token Index"
+        );
+        require(
+            baseTokenAddress == pool.coins(poolData.baseTokenIndex),
+            "Invalid Base Token Index"
+        );
     }
 
     /**
@@ -341,7 +380,7 @@ abstract contract BaseHarvester is Governable {
 
     /**
      * @dev Collect reward tokens from a specific strategy and swap them for
-     *      base token on the configured swap platform. Can be called by anyone. 
+     *      base token on the configured swap platform. Can be called by anyone.
      *      Rewards incentivizing the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
@@ -444,8 +483,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Swap a reward token for the base token on the configured 
-     *      swap platform. The token must have a registered price feed 
+     * @dev Swap a reward token for the base token on the configured
+     *      swap platform. The token must have a registered price feed
      *      with the price provider
      * @param _swapToken Address of the token to swap
      * @param _rewardTo Address where to send the share of harvest rewards to
@@ -467,8 +506,8 @@ abstract contract BaseHarvester is Governable {
     }
 
     /**
-     * @dev Swap a reward token for the base token on the configured 
-     *      swap platform. The token must have a registered price feed 
+     * @dev Swap a reward token for the base token on the configured
+     *      swap platform. The token must have a registered price feed
      *      with the price provider.
      * @param tokenConfig RewardTokenConfig for the token to swap
      * @param _swapToken Address of the token to swap
@@ -478,7 +517,8 @@ abstract contract BaseHarvester is Governable {
         RewardTokenConfig memory tokenConfig,
         address _swapToken,
         address _rewardTo,
-        function(RewardTokenConfig memory, address, uint256, uint256) returns (uint256) swapper
+        function(RewardTokenConfig memory, address, uint256, uint256)
+            returns (uint256) swapper
     ) internal virtual {
         // RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
@@ -507,10 +547,13 @@ abstract contract BaseHarvester is Governable {
         // Oracle price is 1e18
         uint256 minExpected = (balance *
             (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
-            oraclePrice).scaleBy(baseTokenDecimals, Helpers.getDecimals(_swapToken)) /
+            oraclePrice).scaleBy(
+                baseTokenDecimals,
+                Helpers.getDecimals(_swapToken)
+            ) /
             1e4 / // fix the max slippage decimal position
             1e18; // and oracle price decimals position
-        
+
         // Do the swap
         uint256 amountReceived = swapper(
             tokenConfig,
@@ -518,7 +561,13 @@ abstract contract BaseHarvester is Governable {
             balance,
             minExpected
         );
-        emit RewardTokenSwapped(_swapToken, baseTokenAddress, tokenConfig.platform, balance, amountReceived);
+        emit RewardTokenSwapped(
+            _swapToken,
+            baseTokenAddress,
+            tokenConfig.platform,
+            balance,
+            amountReceived
+        );
 
         IERC20 desiredToken = IERC20(baseTokenAddress);
         uint256 desiredTokenBalance = desiredToken.balanceOf(address(this));
@@ -548,15 +597,20 @@ abstract contract BaseHarvester is Governable {
 
     /**
      * Swaps the token to `baseToken` with Uniswap V2
-     * 
+     *
      * @param tokenConfig Config of the tokenIn
      * @param swapToken Address of the tokenIn
      * @param amountIn Amount of `swapToken` to swap
      * @param minAmountOut Minimum expected amount of `baseToken`
-     * 
+     *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithUniswapV2(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
+    function _swapWithUniswapV2(
+        RewardTokenConfig memory tokenConfig,
+        address swapToken,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) internal returns (uint256 amountOut) {
         address[] memory path = uniswapV2Path[swapToken];
 
         uint256[] memory amounts = IUniswapV2Router(tokenConfig.swapRouterAddr)
@@ -573,71 +627,95 @@ abstract contract BaseHarvester is Governable {
 
     /**
      * Swaps the token to `baseToken` with Uniswap V3
-     * 
+     *
      * @param tokenConfig Config of the tokenIn
      * @param swapToken Address of the tokenIn
      * @param amountIn Amount of `swapToken` to swap
      * @param minAmountOut Minimum expected amount of `baseToken`
-     * 
+     *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithUniswapV3(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
+    function _swapWithUniswapV3(
+        RewardTokenConfig memory tokenConfig,
+        address swapToken,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) internal returns (uint256 amountOut) {
         bytes memory path = uniswapV3Path[swapToken];
 
-        IUniswapV3Router.ExactInputParams memory params = IUniswapV3Router.ExactInputParams({
-            path: path,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: minAmountOut
-        });
-        amountOut = IUniswapV3Router(tokenConfig.swapRouterAddr).exactInput(params);
+        IUniswapV3Router.ExactInputParams memory params = IUniswapV3Router
+            .ExactInputParams({
+                path: path,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: minAmountOut
+            });
+        amountOut = IUniswapV3Router(tokenConfig.swapRouterAddr).exactInput(
+            params
+        );
     }
 
     /**
      * Swaps the token to `baseToken` on Balancer
-     * 
+     *
      * @param tokenConfig Config of the tokenIn
      * @param swapToken Address of the tokenIn
      * @param amountIn Amount of `swapToken` to swap
      * @param minAmountOut Minimum expected amount of `baseToken`
-     * 
+     *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithBalancer(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
+    function _swapWithBalancer(
+        RewardTokenConfig memory tokenConfig,
+        address swapToken,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) internal returns (uint256 amountOut) {
         bytes32 poolId = balancerPoolId[swapToken];
 
-        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap({
-            poolId: poolId,
-            kind: IBalancerVault.SwapKind.GIVEN_IN,
-            assetIn: swapToken,
-            assetOut: baseTokenAddress,
-            amount: amountIn,
-            userData: hex""
-        });
+        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault
+            .SingleSwap({
+                poolId: poolId,
+                kind: IBalancerVault.SwapKind.GIVEN_IN,
+                assetIn: swapToken,
+                assetOut: baseTokenAddress,
+                amount: amountIn,
+                userData: hex""
+            });
 
-        IBalancerVault.FundManagement memory fundMgmt = IBalancerVault.FundManagement({
-            sender: address(this),
-            fromInternalBalance: false,
-            recipient: payable(address(this)),
-            toInternalBalance: false
-        });
+        IBalancerVault.FundManagement memory fundMgmt = IBalancerVault
+            .FundManagement({
+                sender: address(this),
+                fromInternalBalance: false,
+                recipient: payable(address(this)),
+                toInternalBalance: false
+            });
 
-        amountOut = IBalancerVault(tokenConfig.swapRouterAddr)
-            .swap(singleSwap, fundMgmt, minAmountOut, block.timestamp);
+        amountOut = IBalancerVault(tokenConfig.swapRouterAddr).swap(
+            singleSwap,
+            fundMgmt,
+            minAmountOut,
+            block.timestamp
+        );
     }
 
     /**
      * Swaps the token to `baseToken` on Curve
-     * 
+     *
      * @param tokenConfig Config of the tokenIn
      * @param swapToken Address of the tokenIn
      * @param amountIn Amount of `swapToken` to swap
      * @param minAmountOut Minimum expected amount of `baseToken`
-     * 
+     *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithCurve(RewardTokenConfig memory tokenConfig, address swapToken, uint256 amountIn, uint256 minAmountOut) internal returns (uint256 amountOut) {
+    function _swapWithCurve(
+        RewardTokenConfig memory tokenConfig,
+        address swapToken,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) internal returns (uint256 amountOut) {
         CurvePoolData memory poolData = curvePoolData[swapToken];
 
         amountOut = ICurvePool(tokenConfig.swapRouterAddr).exchange(

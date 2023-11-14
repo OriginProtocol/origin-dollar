@@ -13,7 +13,9 @@ const {
   isCI,
 } = require("./../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
-const { shouldHaveRewardTokensConfigured } = require("../behaviour/reward-tokens");
+const {
+  shouldHaveRewardTokensConfigured,
+} = require("../behaviour/reward-tokens");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -418,39 +420,43 @@ describe("ForkTest: Vault", function () {
       [fixture.aave.address]: {
         allowedSlippageBps: 300,
         harvestRewardBps: 100,
-        swapRouterAddr: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         doSwapRewardToken: true,
         platform: 1,
         liquidationLimit: 0,
-        uniswapV3Path: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7',
+        uniswapV3Path:
+          "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
       [fixture.cvx.address]: {
         allowedSlippageBps: 300,
         harvestRewardBps: 100,
-        swapRouterAddr: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         doSwapRewardToken: true,
         platform: 1,
         liquidationLimit: ousdUnits("2500"),
-        uniswapV3Path: '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7'
+        uniswapV3Path:
+          "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
       [fixture.crv.address]: {
         allowedSlippageBps: 300,
         harvestRewardBps: 200,
-        swapRouterAddr: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         doSwapRewardToken: true,
         platform: 1,
         liquidationLimit: ousdUnits("4000"),
-        uniswapV3Path: '0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7'
+        uniswapV3Path:
+          "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
       [fixture.comp.address]: {
         allowedSlippageBps: 300,
         harvestRewardBps: 100,
-        swapRouterAddr: '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+        swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         doSwapRewardToken: true,
         platform: 1,
         liquidationLimit: 0,
-        uniswapV3Path: '0xc00e94cb662c3520282e6f5717214004a7f26888000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7'
+        uniswapV3Path:
+          "0xc00e94cb662c3520282e6f5717214004a7f26888000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
-    }
-  }))
+    },
+  }));
 });

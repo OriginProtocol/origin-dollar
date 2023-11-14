@@ -1,11 +1,9 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { MAX_UINT256 } = require("../../utils/constants");
 
 const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
 const {
   daiUnits,
-  usdtUnits,
   ousdUnits,
   units,
   expectApproxSupply,
@@ -177,15 +175,15 @@ describe("3Pool Strategy", function () {
         {
           allowedSlippageBps: 200,
           harvestRewardBps: 500,
-          swapRouterAddr: mockUniswapRouter.address, 
+          swapRouterAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
           platform: 0,
-          liquidationLimit: 0
+          liquidationLimit: 0,
         },
-        utils.defaultAbiCoder.encode(["address[]"], [[
-          crv.address,
-          usdt.address
-        ]])
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[crv.address, usdt.address]]
+        )
       );
 
       // Make sure Vault has 0 USDT balance

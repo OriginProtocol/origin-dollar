@@ -37,7 +37,7 @@ const main = async (hre) => {
   const dMockOracleRouterNoStale = await deployWithConfirmation(
     "MockOracleRouterNoStale"
   );
-  const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
+  const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
     "MockOETHOracleRouterNoStale",
     [dAuraPriceFeed.address]

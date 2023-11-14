@@ -52,11 +52,11 @@ const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");
 
-let snapshotId
+let snapshotId;
 
 const defaultFixture = deployments.createFixture(async () => {
   if (!snapshotId && !isFork) {
-    snapshotId = await nodeSnapshot()
+    snapshotId = await nodeSnapshot();
   }
 
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
@@ -1994,24 +1994,32 @@ async function buybackFixture() {
 
 async function harvesterFixture() {
   let fixture;
-  
-  if (isFork) {
-    fixture = await defaultFixture()
-    const { oethHarvester, harvester, crv, bal, aura } = fixture;
-  
-    await setERC20TokenBalance(oethHarvester.address, crv)
-    await setERC20TokenBalance(oethHarvester.address, bal)
-    await setERC20TokenBalance(oethHarvester.address, aura)
-    await setERC20TokenBalance(harvester.address, crv)
-  } else {
-    fixture = await compoundVaultFixture()
 
-    const { vault, governor, harvester, dai, aaveStrategy, comp, aaveToken, strategist, compoundStrategy } = fixture
+  if (isFork) {
+    fixture = await defaultFixture();
+    const { oethHarvester, harvester, crv, bal, aura } = fixture;
+
+    await setERC20TokenBalance(oethHarvester.address, crv);
+    await setERC20TokenBalance(oethHarvester.address, bal);
+    await setERC20TokenBalance(oethHarvester.address, aura);
+    await setERC20TokenBalance(harvester.address, crv);
+  } else {
+    fixture = await compoundVaultFixture();
+
+    const {
+      vault,
+      governor,
+      harvester,
+      dai,
+      aaveStrategy,
+      comp,
+      aaveToken,
+      strategist,
+      compoundStrategy,
+    } = fixture;
 
     // Add Aave which only supports DAI
-    await vault
-      .connect(governor)
-      .approveStrategy(aaveStrategy.address);
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await harvester
       .connect(governor)
@@ -2022,16 +2030,19 @@ async function harvesterFixture() {
       .connect(governor)
       .setAssetDefaultStrategy(dai.address, aaveStrategy.address);
 
-
     // Let strategies hold some reward tokens
-    await comp.connect(strategist).mintTo(compoundStrategy.address, ousdUnits("120"));
-    await aaveToken.connect(strategist).mintTo(aaveStrategy.address, ousdUnits("150"));
+    await comp
+      .connect(strategist)
+      .mintTo(compoundStrategy.address, ousdUnits("120"));
+    await aaveToken
+      .connect(strategist)
+      .mintTo(aaveStrategy.address, ousdUnits("150"));
 
     fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
     fixture.balancerVault = await ethers.getContract("MockBalancerVault");
   }
 
-  return fixture
+  return fixture;
 }
 
 /**
@@ -2075,9 +2086,9 @@ async function loadDefaultFixture() {
 
 mocha.after(async () => {
   if (snapshotId) {
-    await nodeRevert(snapshotId)
+    await nodeRevert(snapshotId);
   }
-})
+});
 
 module.exports = {
   createFixtureLoader,
