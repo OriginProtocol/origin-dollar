@@ -230,6 +230,7 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install slither-analyzer
+          pip3 inspect
 
       - name: Use Node.js
         uses: actions/setup-node@v3
