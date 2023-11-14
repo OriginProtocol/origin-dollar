@@ -7,8 +7,6 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-import "hardhat/console.sol";
-
 contract MockUniswapRouter is IUniswapV2Router {
     using StableMath for uint256;
 

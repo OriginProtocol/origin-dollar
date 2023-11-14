@@ -5,8 +5,6 @@ import { Variable, OracleAverageQuery, IOracleWeightedPool } from "../interfaces
 import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import "hardhat/console.sol";
-
 contract AuraWETHPriceFeed is AggregatorV3Interface {
     using SafeCast for uint256;
     using SafeCast for int256;

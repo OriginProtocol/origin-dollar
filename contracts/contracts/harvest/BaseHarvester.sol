@@ -17,8 +17,6 @@ import { IBalancerVault } from "../interfaces/balancer/IBalancerVault.sol";
 import { ICurvePool } from "../strategies/ICurvePool.sol";
 import "../utils/Helpers.sol";
 
-import "hardhat/console.sol";
-
 abstract contract BaseHarvester is Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
