@@ -269,9 +269,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // Collect available rewards and restart the cooldown timer, if either of
         // those should be run.
         if (block.timestamp > windowStart || cooldown == 0) {
+            uint256 assetsMappedLength = assetsMapped.length;
             // aToken addresses for incentives controller
-            address[] memory aTokens = new address[](assetsMapped.length);
-            for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address[] memory aTokens = new address[](assetsMappedLength);
+            for (uint256 i = 0; i < assetsMappedLength; i++) {
                 aTokens[i] = _getATokenFor(assetsMapped[i]);
             }
 

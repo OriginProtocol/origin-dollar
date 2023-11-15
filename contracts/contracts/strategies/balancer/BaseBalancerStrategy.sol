@@ -540,6 +540,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function cachePoolAssets() public {
         require(poolAssets.length == 0, "Assets already cached");
 
+        // slither-disable-next-line unused-return
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
