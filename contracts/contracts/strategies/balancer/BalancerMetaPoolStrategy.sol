@@ -18,7 +18,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using StableMath for uint256;
 
     /// @dev Special ExitKind for all Balancer pools, used in Recovery Mode.
-    uint256 constant RECOVERY_MODE_EXIT_KIND = 255;
+    uint8 constant RECOVERY_MODE_EXIT_KIND = 255;
 
     int256[50] private ___reserved;
 
@@ -37,14 +37,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * request exactly specifies the amount of underlying assets
      * to be returned.
      */
-    function _btpInExactTokensOutIndex()
-        internal
-        pure
-        virtual
-        returns (uint256)
-    {
+    function _btpInExactTokensOutIndex() internal pure virtual returns (uint8) {
         return
-            uint256(
+            uint8(
                 IBalancerVault
                     .MetaStablePoolExitKind
                     .BPT_IN_FOR_EXACT_TOKENS_OUT
@@ -55,14 +50,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * @dev enum Value that represents exit encoding where BPT tokens are supplied for
      * proportional exit is required when calling a withdrawAll.
      */
-    function _exactBptInTokensOutIndex()
-        internal
-        pure
-        virtual
-        returns (uint256)
-    {
+    function _exactBptInTokensOutIndex() internal pure virtual returns (uint8) {
         return
-            uint256(
+            uint8(
                 IBalancerVault
                     .MetaStablePoolExitKind
                     .EXACT_BPT_IN_FOR_TOKENS_OUT
