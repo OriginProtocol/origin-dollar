@@ -670,7 +670,7 @@ const shouldBehaveLikeHarvester = (context) => {
         );
 
       await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
-      
+
       // prettier-ignore
       const swapTx = await harvester
         .connect(domen)["harvestAndSwap(address)"](strategy.address);
@@ -735,7 +735,7 @@ const shouldBehaveLikeHarvester = (context) => {
       // Configure to use Uniswap V3
       const config = {
         allowedSlippageBps: 0,
-        harvestRewardBps: 500,
+        harvestRewardBps: 0,
         swapRouterAddr: balancerVault.address,
         doSwapRewardToken: true,
         platform: 2,
