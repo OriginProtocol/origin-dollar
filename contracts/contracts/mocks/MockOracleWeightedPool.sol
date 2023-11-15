@@ -6,7 +6,9 @@ import { Variable, OracleAverageQuery, IOracleWeightedPool } from "../interfaces
 contract MockOracleWeightedPool is IOracleWeightedPool {
     uint256[] public nextResults;
 
-    constructor() {}
+    constructor() {
+        nextResults = [1 ether, 1 ether];
+    }
 
     function getTimeWeightedAverage(OracleAverageQuery[] memory)
         external

@@ -709,7 +709,7 @@ const deployFraxEthStrategy = async () => {
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -722,6 +722,7 @@ const deployOracles = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [
     assetAddresses.auraWeightedOraclePool,
+    governorAddr
   ]);
   const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
   log("Deployed AuraWETHPriceFeed");

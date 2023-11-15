@@ -56,7 +56,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
     }
 
     await expect(auraWETHPriceFeed.getRoundData(1)).to.be.revertedWith(
-      "Not implemented"
+      "No data present"
     );
   });
 

@@ -16,6 +16,8 @@ module.exports = deploymentWithGovernanceProposal(
     executeGasLimit: 30000000,
   },
   async ({ deployWithConfirmation, ethers, getTxOpts }) => {
+    const { timelockAddr } = await getNamedAccounts();
+
     // Current contracts
     const cOUSDVaultProxy = await ethers.getContract("VaultProxy");
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -44,6 +46,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 1. Deploy Aura Price feed
     await deployWithConfirmation("AuraWETHPriceFeed", [
       addresses.mainnet.AuraWeightedOraclePool,
+      timelockAddr
     ]);
     const auraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
     console.log("AuraWETHPriceFeed address: ", auraPriceFeed.address);
