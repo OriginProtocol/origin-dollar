@@ -46,7 +46,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 1. Deploy Aura Price feed
     await deployWithConfirmation("AuraWETHPriceFeed", [
       addresses.mainnet.AuraWeightedOraclePool,
-      timelockAddr
+      timelockAddr,
     ]);
     const auraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
     console.log("AuraWETHPriceFeed address: ", auraPriceFeed.address);

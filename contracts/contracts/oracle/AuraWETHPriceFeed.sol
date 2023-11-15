@@ -34,7 +34,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * (1h data from 5m ago and the recent 5m data) and ensures that
      * the price hasn't deviated too much and returns the most recent
      * TWAP price.
-     * 
+     *
      * @return price The price scaled to 18 decimals
      **/
     function price() external view returns (int256) {
@@ -95,7 +95,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     /**
      * Set the max amount of tolerance acceptable between
      * two different price points.
-     * 
+     *
      * @param _tolerance New tolerance value
      **/
     function setTolerance(uint256 _tolerance) external onlyGovernor {
@@ -105,13 +105,13 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     }
 
     /**
-     * @dev This function exists to make the contract compatible 
-     * with AggregatorV3Interface (which OETHOracleRouter uses to 
+     * @dev This function exists to make the contract compatible
+     * with AggregatorV3Interface (which OETHOracleRouter uses to
      * get the price).
-     * 
+     *
      * The `answer` returned by this is same as what `price()` would return.
-     * 
-     * It doesn't return any data about rounds (since those doesn't exist). 
+     *
+     * It doesn't return any data about rounds (since those doesn't exist).
      **/
     function latestRoundData()
         external
@@ -130,10 +130,10 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     }
 
     /**
-     * @dev This function exists to make the contract compatible 
+     * @dev This function exists to make the contract compatible
      * with AggregatorV3Interface.
-     * 
-     * Always reverts since there're no round data in this contract. 
+     *
+     * Always reverts since there're no round data in this contract.
      **/
     function getRoundData(uint80)
         external

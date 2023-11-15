@@ -722,7 +722,7 @@ const deployOracles = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [
     assetAddresses.auraWeightedOraclePool,
-    governorAddr
+    governorAddr,
   ]);
   const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
   log("Deployed AuraWETHPriceFeed");

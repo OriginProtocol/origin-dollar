@@ -3,8 +3,9 @@ const { expect } = require("chai");
 const {
   changeInMultipleBalances,
   setOracleTokenPriceUsd,
-  usdtUnits,
   daiUnits,
+  ousdUnits,
+  usdtUnits,
 } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
@@ -681,7 +682,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
     it("Should not swap when balance is zero", async () => {
       const { harvester, strategies, fixture } = context();
-      const { governor, uniswapRouter, domen } = fixture;
+      const { governor, uniswapRouter } = fixture;
 
       const { rewardTokens } = strategies[0];
 
@@ -739,7 +740,7 @@ const shouldBehaveLikeHarvester = (context) => {
         swapRouterAddr: balancerVault.address,
         doSwapRewardToken: true,
         platform: 2,
-        liquidationLimit: usdtUnits("100"),
+        liquidationLimit: ousdUnits("100"),
       };
 
       await harvester
@@ -759,7 +760,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await swapToken
         .connect(domen)
-        .mintTo(harvester.address, usdtUnits("1000"));
+        .mintTo(harvester.address, ousdUnits("1000"));
 
       const swapTx = await harvester
         .connect(governor)
@@ -771,7 +772,7 @@ const shouldBehaveLikeHarvester = (context) => {
           swapToken.address,
           baseToken.address,
           2,
-          usdtUnits("100"),
+          ousdUnits("100"),
           usdtUnits("100")
         );
     });
