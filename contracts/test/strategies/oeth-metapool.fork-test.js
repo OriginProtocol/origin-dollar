@@ -555,6 +555,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddOethAmount: 500,
+      balancePool: true,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
