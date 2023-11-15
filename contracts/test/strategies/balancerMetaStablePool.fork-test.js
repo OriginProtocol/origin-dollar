@@ -37,7 +37,7 @@ const loadBalancerREthFixtureNotDefault = createFixtureLoader(
 
 const loadBalancerWstEthFixture = createFixtureLoader(balancerWstEthFixture);
 
-describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
+describe.only("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
@@ -534,6 +534,11 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     });
 
     it(`Should fail when duplicating an asset in withdrawal call`, async function () {
+      /* using expose function so that the code is force-deployed - unit needed,
+       * that is until we deploy updated implementation to the mainnet
+       */
+      fixture = await balancerRethWETHExposeFunctionFixture();
+
       const { balancerREthStrategy, oethVault, weth } = fixture;
 
       const oethVaultSigner = await impersonateAndFund(oethVault.address);

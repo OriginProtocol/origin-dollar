@@ -39,7 +39,12 @@ async function constructNewContract(fixture, implContractName) {
         ],
         addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
       ];
-    } else if (implContractName === "BalancerComposablePoolTestStrategy") {
+    } else if (
+      [
+        "BalancerComposablePoolBrokenTestStrategy",
+        "BalancerComposablePoolTestStrategy",
+      ].includes(implContractName)
+    ) {
       return [
         [
           addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
@@ -101,21 +106,43 @@ async function constructNewContract(fixture, implContractName) {
 async function hotDeployOption(
   fixture,
   fixtureName,
-  config = { isOethFixture: false }
+  config = { isOethFixture: false, forceDeployStrategy: false }
 ) {
   if (!isFork) return;
 
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
     .map((item) => item.trim());
-  const { isOethFixture } = config;
-  const deployStrat = hotDeployOptions.includes("strategy");
+  const { isOethFixture, forceDeployStrategy } = config;
+  const deployStrat =
+    hotDeployOptions.includes("strategy") || forceDeployStrategy;
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
 
-  log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
+  log(`Running fixture [${fixtureName}] hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
+
+  const cacheAssetsAndProviders = async (strategyVarName) => {
+    const proxy = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      fixture[strategyVarName].address
+    );
+
+    const implAddress = await proxy.implementation();
+    log(`Current impl address: ${implAddress}`);
+    // new version with cached rate providers / assets has not been deployed yet
+    if (implAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D") {
+      log(`Caching rate providers and pool assets`);
+      await fixture[strategyVarName].connect(fixture.josh).cachePoolAssets();
+
+      await fixture[strategyVarName].connect(fixture.josh).cacheRateProviders();
+    } else {
+      throw new Error(
+        `New ${strategyVarName} deployed, removed manual caching!`
+      );
+    }
+  };
 
   if (deployStrat) {
     if (fixtureName === "balancerREthFixture") {
@@ -125,14 +152,7 @@ async function hotDeployOption(
         "BalancerMetaPoolStrategy" // implContractName
       );
 
-      // IMPORTANT: remove once rETH/WETH is redeployed with the new code base
-      await fixture.balancerREthStrategy
-        .connect(fixture.josh)
-        .cachePoolAssets();
-      // IMPORTANT also remove this one
-      await fixture.balancerREthStrategy
-        .connect(fixture.josh)
-        .cacheRateProviders();
+      await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
         fixture, // fixture
@@ -157,16 +177,50 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolTestStrategy" // implContractName
       );
+
+      await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (
-      fixtureName === "balancerSfrxETHRETHWstETHExposeFunctionFixture"
+      fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture"
     ) {
       await hotDeployFixture(
         fixture, // fixture
         "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
-        "BalancerComposablePoolTestStrategy" // implContractName
+        "BalancerComposablePoolBrokenTestStrategy" // implContractName
+      );
+
+      /*
+       * Delete this piece of code once the new VaultAdmin implementation is deployed.
+       */
+      const oethVaultAdminImplAddress =
+        "0x" +
+        (
+          await ethers.provider.send("eth_getStorageAt", [
+            fixture.oethVault.address,
+            "0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9", // Vault admin implementation position
+            "latest", // block
+          ])
+        ).substring(26);
+
+      if (
+        oethVaultAdminImplAddress !==
+        "0x31a91336414d3b955e494e7d485a6b06b55fc8fb"
+      ) {
+        throw Error(
+          "OETHVaultAdmin has been re-deployed. Hot-deploy shouldn't be re-deploying it anymore."
+        );
+      }
+
+      await hotDeployVaultAdmin(
+        fixture,
+        true, // deploy VaultAdmin
+        false, // deploy VaultCore
+        true // isOethFixture
       );
     } else if (
-      fixtureName === "deployBalancerFrxEethRethWstEThStrategyMissConfigured"
+      [
+        "balancerSfrxETHRETHWstETHExposeFunctionFixture",
+        "deployBalancerFrxEethRethWstEThStrategyMissConfigured",
+      ].includes(fixtureName)
     ) {
       await hotDeployFixture(
         fixture, // fixture

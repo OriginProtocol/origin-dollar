@@ -322,12 +322,12 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const balancerRethStrategyProxy = await ethers.getContract(
+    const balancerREthStrategyProxy = await ethers.getContract(
       "OETHBalancerMetaPoolrEthStrategyProxy"
     );
     balancerREthStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
-      balancerRethStrategyProxy.address
+      balancerREthStrategyProxy.address
     );
 
     const balancerSfrxWstRETHStrategyProxy = await ethers.getContract(
@@ -907,6 +907,7 @@ async function convexVaultFixture() {
  */
 async function balancerREthFixture(config = { defaultStrategy: true }) {
   const fixture = await defaultFixture();
+
   await hotDeployOption(fixture, "balancerREthFixture", {
     isOethFixture: true,
   });
@@ -1037,8 +1038,9 @@ async function balancerFrxETHwstETHeETHFixture(
  */
 async function balancerRethWETHExposeFunctionFixture() {
   const fixture = await balancerREthFixture();
-  await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture");
-
+  await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture", {
+    forceDeployStrategy: true,
+  });
   return fixture;
 }
 
@@ -1057,7 +1059,30 @@ async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
   const fixture = await balancerFrxETHwstETHeETHFixture();
   await hotDeployOption(
     fixture,
-    "balancerSfrxETHRETHWstETHExposeFunctionFixture"
+    "balancerSfrxETHRETHWstETHExposeFunctionFixture",
+    {
+      forceDeployStrategy: true,
+    }
+  );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that fails on a withdrawAll call
+ */
+async function balancerSfrxETHRETHWstETHBrokenWithdrawalFixture() {
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  await hotDeployOption(
+    fixture,
+    "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture",
+    {
+      isOethFixture: true,
+      /* force deploy strategy (+ vaultAdmin in this case) for test suite
+       * to be able to run a VaultAdmin test that hasn't been deployed yet.
+       */
+      forceDeployStrategy: true,
+    }
   );
   return fixture;
 }
@@ -2159,6 +2184,7 @@ module.exports = {
   balancerRethWETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
+  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   fluxStrategyFixture,
   buybackFixture,
   nodeSnapshot,
