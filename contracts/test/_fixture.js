@@ -1607,7 +1607,7 @@ async function convexOETHMetaVaultFixture(
     if (diff > 0) {
       config.poolAddOethAmount = (config.poolAddOethAmount || 0) + diff;
     } else if (diff < 0) {
-      config.poolAddEthAmount = (config.poolAddOethAmount || 0) - diff;
+      config.poolAddEthAmount = (config.poolAddEthAmount || 0) - diff;
     }
   }
 
