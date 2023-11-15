@@ -1524,6 +1524,7 @@ async function convexOETHMetaVaultFixture(
     depositToStrategy: false,
     poolAddEthAmount: 0,
     poolAddOethAmount: 0,
+    balancePool: false,
   }
 ) {
   const fixture = await oethDefaultFixture();
@@ -1592,6 +1593,21 @@ async function convexOETHMetaVaultFixture(
           [weth.address],
           [wethAmount]
         );
+    }
+  }
+
+  if (config?.balancePool) {
+    const ethBalance = await fixture.oethMetaPool.balances(0);
+    const oethBalance = await fixture.oethMetaPool.balances(1);
+
+    const diff = parseInt(
+      ethBalance.sub(oethBalance).div(oethUnits("1")).toString()
+    );
+
+    if (diff > 0) {
+      config.poolAddOethAmount = (config.poolAddOethAmount || 0) + diff;
+    } else if (diff < 0) {
+      config.poolAddEthAmount = (config.poolAddOethAmount || 0) - diff;
     }
   }
 
