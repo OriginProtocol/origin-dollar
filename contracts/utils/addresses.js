@@ -208,6 +208,11 @@ addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";
 addresses.mainnet.wstETH_WETH_AuraRewards =
   "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
+// wstETH/WETH Composable
+addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT =
+  "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd";
+addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards =
+  "0x2a14db8d09db0542f6a371c0cb308a768227d67d";
 // rETH/WETH
 addresses.mainnet.rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276";
 addresses.mainnet.rETH_WETH_AuraRewards =

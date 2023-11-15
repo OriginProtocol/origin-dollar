@@ -176,6 +176,16 @@ contract OETHBalancerMetaPoolwstEthStrategyProxy is
 }
 
 /**
+ * @notice OETHBalancerComposablePoolwstEthStrategyProxy delegates calls to a
+ * BalancerComposablePoolStrategy implementation
+ */
+contract OETHBalancerComposablePoolwstEthStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
  * @notice OETHBalancerCompPoolSfrxEthWstETHrETHStrategyProxy delegates calls to a
  * BalancerComposablePoolStrategy implementation
  */

@@ -13,6 +13,10 @@ const aura_stETH_WETH_PID = 115;
 const balancer_stETH_WETH_PID =
   "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 
+const aura_stETH_WETH_COMPOSABLE_PID = 153;
+const balancer_stETH_WETH_COMPOSABLE_PID =
+  "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2";
+
 // wstETH/sfrxETH/rETH
 const aura_wstETH_sfrxETH_rETH_PID = 50;
 const balancer_wstETH_sfrxETH_rETH_PID =
@@ -35,6 +39,8 @@ module.exports = {
   balancer_wstETH_sfrxETH_rETH_PID,
   aura_rETH_WETH_PID,
   balancer_rETH_WETH_PID,
+  aura_stETH_WETH_COMPOSABLE_PID,
+  balancer_stETH_WETH_COMPOSABLE_PID,
 };
 
 // These are all the metapool ids. For easier future reference
