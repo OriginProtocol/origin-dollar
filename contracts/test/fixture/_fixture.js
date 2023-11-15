@@ -16,7 +16,6 @@ const {
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
-  aura_stETH_WETH_COMPOSABLE_PID,
   balancer_stETH_WETH_COMPOSABLE_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
 } = require("../../utils/constants");
