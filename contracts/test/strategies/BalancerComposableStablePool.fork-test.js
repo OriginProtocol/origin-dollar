@@ -38,7 +38,7 @@ const loadBalancerFrxWstrETHFixture = createFixtureLoader(
   }
 );
 
-describe.only("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy", function () {
+describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
