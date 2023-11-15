@@ -12,6 +12,7 @@ const {
   createFixtureLoader,
   balancerSfrxETHRETHWstETHExposeFunctionFixture,
   balancerSfrxETHRETHWstETHMissConfiguredStrategy,
+  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
@@ -432,6 +433,37 @@ describe("ForkTest: Balancer ComposableStablePool sfrxETH/wstETH/rETH Strategy",
         ).to.approxEqualTolerance(rethWithdrawAmount, 0.01);
       });
     }
+
+    it("Should be able to call faultTolerantWithdrawAllFromStrategies even when one errors out", async function () {
+      const fixture = await balancerSfrxETHRETHWstETHBrokenWithdrawalFixture();
+      const { timelock, oethVault, balancerSfrxWstRETHStrategy } = fixture;
+      const strategyAddress = balancerSfrxWstRETHStrategy.address.toLowerCase();
+
+      // Withdraw all from strategies
+      const tx = await oethVault
+        .connect(timelock)
+        .faultTolerantWithdrawAllFromStrategies();
+      const events = (await tx.wait()).events || [];
+      /*
+       * If OethVaultAdmin has triggered the "WithdrawFromStrategyFailed" with the
+       * balancerSfrxWstRETHStrategy address the below variable will equal that address,
+       * otherwise it will be `undefined`
+       */
+      const balancerStrategyAddressOption = events
+        // 0xbf15... -> "WithdrawFromStrategyFailed" event
+        .filter(
+          (e) =>
+            e.topics[0] ===
+            "0xbf15aee350c3b4fb830dccbe5255de03252ad7eea9c1e5e721c2280704ef5b37"
+        )
+        .map((e) => "0x" + e.data.substring(26).toLowerCase())
+        .find((evtStrategyAddress) => evtStrategyAddress === strategyAddress);
+
+      expect(balancerStrategyAddressOption).to.not.be.undefined;
+
+      await expect(oethVault.connect(timelock).withdrawAllFromStrategies()).to
+        .be.reverted;
+    });
 
     it("Should be able to withdraw all of pool liquidity", async function () {
       const { oethVault, stETH, frxETH, reth, balancerSfrxWstRETHStrategy } =

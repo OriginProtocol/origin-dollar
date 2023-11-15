@@ -160,7 +160,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 /* This check is triggered when the _deposit is called with
                  * a duplicate asset in the _strategyAssets array
                  *
-                 * A duplicate asset supplied with 0 amount or an amount close to 
+                 * A duplicate asset supplied with 0 amount or an amount close to
                  * 0 that wraps to a 0 amount will still pass this check.
                  */
                 require(
@@ -441,7 +441,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      *
      * Is only executable by the OToken's Vault or the Governor.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         _withdrawAll(false);
     }
 

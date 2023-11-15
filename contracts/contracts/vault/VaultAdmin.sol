@@ -622,6 +622,22 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @notice Withdraws all assets from all the strategies and sends assets to the Vault.
+     * and doesn't revert event when `withdrawAll` of a strategy reverts.
+     */
+    function faultTolerantWithdrawAllFromStrategies()
+        external
+        onlyGovernorOrStrategist
+    {
+        uint256 stratCount = allStrategies.length;
+        for (uint256 i = 0; i < stratCount; ++i) {
+            try IStrategy(allStrategies[i]).withdrawAll() {} catch {
+                emit WithdrawFromStrategyFailed(allStrategies[i]);
+            }
+        }
+    }
+
     /***************************************
                     Utils
     ****************************************/

@@ -124,6 +124,8 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
+    function faultTolerantWithdrawAllFromStrategies() external;
+
     function withdrawFromStrategy(
         address _strategyFromAddress,
         address[] calldata _assets,
