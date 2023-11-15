@@ -35,6 +35,7 @@ contract OETHOracleRouter is OracleRouterBase {
         }
         require(_feed != address(0), "Asset not available");
 
+        // slither-disable-next-line unused-return
         (, int256 _iprice, , uint256 updatedAt, ) = AggregatorV3Interface(_feed)
             .latestRoundData();
 

@@ -49,6 +49,7 @@ abstract contract OracleRouterBase is IOracle {
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
 
+        // slither-disable-next-line unused-return
         (, int256 _iprice, , uint256 updatedAt, ) = AggregatorV3Interface(_feed)
             .latestRoundData();
 

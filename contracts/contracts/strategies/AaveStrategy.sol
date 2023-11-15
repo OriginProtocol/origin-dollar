@@ -270,8 +270,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // those should be run.
         if (block.timestamp > windowStart || cooldown == 0) {
             // aToken addresses for incentives controller
-            address[] memory aTokens = new address[](assetsMapped.length);
-            for (uint256 i = 0; i < assetsMapped.length; i++) {
+            uint256 assetsLen = assetsMapped.length;
+            address[] memory aTokens = new address[](assetsLen);
+            for (uint256 i = 0; i < assetsLen; i++) {
                 aTokens[i] = _getATokenFor(assetsMapped[i]);
             }
 
