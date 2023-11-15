@@ -718,7 +718,7 @@ describe.skip("Harvester", function () {
       true
     );
 
-    await harvester.connect(governor).setRewardsProceedsAddress(josh.address);
+    await harvester.connect(governor).setRewardProceedsAddress(josh.address);
 
     let annaBalanceChange;
     // prettier-ignore

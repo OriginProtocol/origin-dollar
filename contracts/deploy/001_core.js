@@ -549,13 +549,13 @@ const deployHarvesters = async () => {
     await withConfirmation(
       cHarvester
         .connect(sGovernor)
-        .setRewardsProceedsAddress(cVaultProxy.address)
+        .setRewardProceedsAddress(cVaultProxy.address)
     );
 
     await withConfirmation(
       cOETHHarvester
         .connect(sGovernor)
-        .setRewardsProceedsAddress(cOETHVaultProxy.address)
+        .setRewardProceedsAddress(cOETHVaultProxy.address)
     );
   }
 

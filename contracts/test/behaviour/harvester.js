@@ -670,10 +670,10 @@ const shouldBehaveLikeHarvester = (context) => {
         );
 
       await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
-
+      
+      // prettier-ignore
       const swapTx = await harvester
-        .connect(domen)
-        ["harvestAndSwap(address)"](strategy.address);
+        .connect(domen)["harvestAndSwap(address)"](strategy.address);
 
       await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
       await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
