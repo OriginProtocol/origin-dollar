@@ -7,7 +7,7 @@ const { isCI, oethUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const {
   shouldHaveRewardTokensConfigured,
-} = require("../behaviour/reward-tokens");
+} = require("../behaviour/reward-tokens.fork");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
