@@ -120,8 +120,29 @@ async function hotDeployOption(
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
 
-  log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
+  log(`Running fixture [${fixtureName}] hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
+
+  const cacheAssetsAndProviders = async (strategyVarName) => {
+    const proxy = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      fixture[strategyVarName].address
+    );
+
+    const implAddress = await proxy.implementation();
+    log(`Current impl address: ${implAddress}`);
+    // new version with cached rate providers / assets has not been deployed yet
+    if (implAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D") {
+      log(`Caching rate providers and pool assets`);
+      await fixture[strategyVarName].connect(fixture.josh).cachePoolAssets();
+
+      await fixture[strategyVarName].connect(fixture.josh).cacheRateProviders();
+    } else {
+      throw new Error(
+        `New ${strategyVarName} deployed, removed manual caching!`
+      );
+    }
+  };
 
   if (deployStrat) {
     if (fixtureName === "balancerREthFixture") {
@@ -131,14 +152,7 @@ async function hotDeployOption(
         "BalancerMetaPoolStrategy" // implContractName
       );
 
-      // IMPORTANT: remove once rETH/WETH is redeployed with the new code base
-      await fixture.balancerREthStrategy
-        .connect(fixture.josh)
-        .cachePoolAssets();
-      // IMPORTANT also remove this one
-      await fixture.balancerREthStrategy
-        .connect(fixture.josh)
-        .cacheRateProviders();
+      await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
         fixture, // fixture
@@ -163,6 +177,8 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolTestStrategy" // implContractName
       );
+
+      await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (
       fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture"
     ) {
