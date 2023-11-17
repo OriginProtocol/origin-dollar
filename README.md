@@ -221,3 +221,19 @@ Want to contribute to OUSD? Awesome!
 OUSD is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing to the code, and helping us improve our community.
 
 The best way to get involved is to join the Origin Protocol [discord server](https://discord.gg/jyxpUSe) and head over to the channel named ORIGIN DOLLAR & DEFI
+
+# Utils
+
+## Git pre-commit hooks (using Husky)
+
+### Setup
+```
+# install Husky
+npx install husky
+
+# from project root folder install Husky hooks
+npx husky install
+
+```
+
+If the script in .husky/pre-commit returns non 0 exit the pre-commit hook will fail. Currently the script prevents a commit if there is an ".only" in the test scripts. Use "git commit --no-verify" if you have the hook enabled and you'd like to skip pre-commit check.
