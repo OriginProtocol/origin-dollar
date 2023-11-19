@@ -265,3 +265,15 @@ yarn test:fork:coverage
 ```
 
 The CI will upload the coverage reports to Codecov if they complete successfully.
+
+# Utils
+
+## Transaction gas inspector
+
+To measure the gas usage of any transaction wrap it into `GetGas` globally defined function. Example: 
+```
+	const gas = await GetGas(await cEvilContract.connect(daniel).approveAllTokens());
+	console.log('Gas used: ' + gas);
+```
+
+
