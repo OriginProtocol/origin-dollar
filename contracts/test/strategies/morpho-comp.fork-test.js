@@ -60,7 +60,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
       expect(supplyAdded).to.approxEqualTolerance(ousdUnits("60000"), 1);
-      
+
       const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
       // Now try to redeem 30k
