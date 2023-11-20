@@ -1,7 +1,8 @@
-# Origin Dollar
+# Origin DeFi's OTokens: Origin Dollar (OUSD) and Origin Ether (OETH)
+ 
+For more details about the product, checkout [our docs](https://docs.oeth.com).
 
-OUSD is a new kind of stablecoin that passively accrues yield while you are holding it.
-Checkout our [docs](https://docs.ousd.com) for more details about the product.
+---
 
 | Branch    | CI/CD Status                                                                                                                                                                                                      |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -153,44 +154,6 @@ When freshly starting a node it is usually necessary to also reset Metamask Acco
 
 If you get an `error Command "husky-run" not found.` type of error:
 Go to root of the project and run `npx husky install`
-
----
-
-## (Core Contributors) Running dapp in Production/Staging Mode Locally
-
-There may be a time that you will need to run the dapp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet.
-
-### Requirements
-
-- `Google Cloud` CLI tool installed as explained [HERE](https://cloud.google.com/sdk/docs/quickstart)
-- Permission to the Origin GCP Account to decrypt `*.secrets.enc` and deploy infrastructure
-
-#### Login to Google Cloud
-
-```
-# Login to GCP
-gcloud auth login
-```
-
-#### Staging
-
-```
-# Decrypt staging secrets to local
-yarn run decrypt-secrets:staging
-
-# Start local dapp in Staging mode
-yarn run start:staging
-```
-
-#### Production
-
-```
-# Decrypt staging secrets to local
-yarn run decrypt-secrets:production
-
-# Start local dapp in Production mode
-yarn run start:production
-```
 
 ---
 
