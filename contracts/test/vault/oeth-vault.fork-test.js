@@ -54,6 +54,7 @@ describe("ForkTest: OETH Vault", function () {
       }
     });
   });
+
   describe("user operations", () => {
     let oethWhaleSigner;
     beforeEach(async () => {

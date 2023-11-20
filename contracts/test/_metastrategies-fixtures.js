@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { formatUnits } = require("ethers/lib/utils");
 
-const { ousdUnits } = require("./helpers");
+const { ousdUnits, units } = require("./helpers");
 const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
@@ -18,7 +18,8 @@ const log = require("../utils/logger")("test:fixtures:strategies:meta");
 async function withDefaultOUSDMetapoolStrategiesSet() {
   const fixture = await convexMetaVaultFixture();
 
-  const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy } = fixture;
+  const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy, daniel } =
+    fixture;
 
   await vault
     .connect(timelock)
@@ -36,6 +37,14 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
     "IRewardStaking",
     addresses.mainnet.CVXRewardsPool
   );
+
+  // Also, mint some OUSD so that there's some in the pool
+  const amount = "20000";
+  for (const asset of [usdt, usdc, dai]) {
+    await vault
+      .connect(daniel)
+      .mint(asset.address, await units(amount, asset), 0);
+  }
 
   return fixture;
 }
