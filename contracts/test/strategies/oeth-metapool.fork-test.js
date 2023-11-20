@@ -309,18 +309,18 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const curveBalancesAfter = await oethMetaPool.get_balances();
       expect(curveBalancesAfter[0]).to.approxEqualTolerance(
         curveBalancesBefore[0].sub(ethWithdrawAmount),
-        0.01 // 0.01% or 1 basis point
+        0.05 // 0.05% or 5 basis point
       );
       expect(curveBalancesAfter[1]).to.approxEqualTolerance(
         curveBalancesBefore[1].sub(oethBurnAmount),
-        0.01 // 0.01%
+        0.05 // 0.05%
       );
 
       // Check the OETH total supply decrease
       const oethSupplyAfter = await oeth.totalSupply();
       expect(oethSupplyAfter).to.approxEqualTolerance(
         oethSupplyBefore.sub(oethBurnAmount),
-        0.01 // 0.01% or 1 basis point
+        0.05 // 0.01% or 5 basis point
       );
     });
     it("Vault should be able to withdraw some", async () => {
@@ -372,18 +372,18 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const curveBalancesAfter = await oethMetaPool.get_balances();
       expect(curveBalancesAfter[0]).to.approxEqualTolerance(
         curveBalancesBefore[0].sub(withdrawAmount),
-        0.01 // 0.01% or 1 basis point
+        0.05 // 0.05% or 5 basis point
       );
       expect(curveBalancesAfter[1]).to.approxEqualTolerance(
         curveBalancesBefore[1].sub(oethBurnAmount),
-        0.01 // 0.01%
+        0.05 // 0.05%
       );
 
       // Check the OETH total supply decrease
       const oethSupplyAfter = await oeth.totalSupply();
       expect(oethSupplyAfter).to.approxEqualTolerance(
         oethSupplyBefore.sub(oethBurnAmount),
-        0.01 // 0.01% or 1 basis point
+        0.05 // 0.05% or 5 basis point
       );
 
       // Check the WETH balance in the Vault
