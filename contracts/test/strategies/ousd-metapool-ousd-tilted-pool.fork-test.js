@@ -22,24 +22,12 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", function 
       await mintTest(fixture, josh, usdt, "100000");
     });
 
-    describe("Mint", function () {
-      it("Should stake USDT in Curve gauge via metapool", async function () {
-        const { josh, usdt } = fixture;
-        await mintTest(fixture, josh, usdt, "100000");
-      });
-
-      it("Should stake USDC in Curve gauge via metapool", async function () {
-        const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
-      });
-
-      it("Should stake DAI in Curve gauge via metapool", async function () {
-        const { anna, dai } = fixture;
-        await mintTest(fixture, anna, dai, "110000");
-      });
+    it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { matt, usdc } = fixture;
+      await mintTest(fixture, matt, usdc, "120000");
     });
 
-    it("Should NOT stake DAI in Curve gauge via metapool", async function () {
+    it("Should stake DAI in Curve gauge via metapool", async function () {
       const { anna, dai } = fixture;
       await mintTest(fixture, anna, dai, "110000");
     });
