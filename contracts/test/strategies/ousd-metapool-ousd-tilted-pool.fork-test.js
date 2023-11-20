@@ -52,6 +52,9 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", function 
       await vault.connect(anna).allocate();
 
       const supplyBeforeMint = await ousd.totalSupply();
+      const strategyBalanceBeforeMint = (
+        await OUSDmetaStrategy.checkBalance(dai.address)
+      ).mul(3);
 
       const amount = "10000";
 
@@ -68,9 +71,12 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", function 
       const strategyBalance = (
         await OUSDmetaStrategy.checkBalance(dai.address)
       ).mul(3);
+      const strategyBalanceChange = strategyBalance.sub(
+        strategyBalanceBeforeMint
+      );
 
       // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
-      expect(strategyBalance).to.be.gte(ousdUnits("59500"));
+      expect(strategyBalanceChange).to.be.gte(ousdUnits("59500"));
 
       // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k
       const currentSupply = await ousd.totalSupply();
@@ -80,10 +86,10 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", function 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem the amount
-      const redeemAmount = ousdUnits("5000");
+      const redeemAmount = ousdUnits("10000");
       await vault.connect(anna).redeem(redeemAmount, 0);
 
-      // User balance should be down by 5k
+      // User balance should be down by 10k
       const newBalance = await ousd.connect(anna).balanceOf(anna.address);
       expect(newBalance).to.approxEqualTolerance(
         currentBalance.sub(redeemAmount),
