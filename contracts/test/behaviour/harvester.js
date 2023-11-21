@@ -80,41 +80,6 @@ const shouldBehaveLikeHarvester = (context) => {
         ).to.be.revertedWith("Caller is not the Harvester");
       }
     });
-
-    it("Should allow the governor to call harvest for a specific strategy", async () => {
-      const { fixture, strategies, harvester } = context();
-      const { governor } = fixture;
-      const { strategy } = strategies[0];
-
-      // prettier-ignore
-      await _checkBalancesPostHarvesting(
-        async () => await harvester.connect(governor)["harvest(address)"](strategy.address),
-        strategies[0]
-      )
-    });
-
-    it("Should NOT allow anyone else to call harvest for a specific strategy", async () => {
-      const { fixture, harvester, strategies } = context();
-      const { strategist, anna } = fixture;
-      const { strategy } = strategies[0];
-
-      for (const signer of [anna, strategist]) {
-        // prettier-ignore
-        await expect(
-          harvester.connect(signer)["harvest(address)"](strategy.address)
-        ).to.be.revertedWith("Caller is not the Governor");
-      }
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      const { fixture, strategies, harvester } = context();
-      const { governor } = fixture;
-
-      await _checkBalancesPostHarvesting(
-        async () => await harvester.connect(governor)["harvest()"](),
-        strategies
-      );
-    });
   });
 
   describe("RewardTokenConfig", () => {

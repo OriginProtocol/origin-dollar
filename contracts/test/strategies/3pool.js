@@ -135,33 +135,10 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the governor to call harvest for a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](threePoolStrategy.address);
-    });
-
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-    });
-
-    it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await harvester.connect(governor)[
-        // eslint-disable-next-line
-        "harvest(address)"
-      ](threePoolStrategy.address);
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );

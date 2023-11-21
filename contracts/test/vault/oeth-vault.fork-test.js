@@ -165,7 +165,7 @@ describe("ForkTest: OETH Vault", function () {
         doSwapRewardToken: true,
         platform: 3,
         liquidationLimit: oethUnits("2500"),
-        curvePoolData: [1, 0],
+        curvePoolIndices: [1, 0],
       },
       [fixture.crv.address]: {
         allowedSlippageBps: 300,
@@ -174,7 +174,7 @@ describe("ForkTest: OETH Vault", function () {
         doSwapRewardToken: true,
         platform: 3,
         liquidationLimit: oethUnits("4000"),
-        curvePoolData: [2, 1],
+        curvePoolIndices: [2, 1],
       },
       [fixture.bal.address]: {
         allowedSlippageBps: 300,

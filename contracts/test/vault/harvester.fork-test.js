@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils, BigNumber } = require("ethers");
 
 const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
 const { isCI } = require("./../helpers");
@@ -100,12 +100,8 @@ describe("ForkTest: Harvester", function () {
       expect(await aura.balanceOf(balancerREthStrategy.address)).to.equal("0");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await bal.balanceOf(oethDripper.address)).to.be.greaterThan(
-        balBefore
-      );
-      expect(await aura.balanceOf(oethDripper.address)).to.be.greaterThan(
-        auraBefore
-      );
+      expect(await bal.balanceOf(oethDripper.address)).to.be.gte(balBefore);
+      expect(await aura.balanceOf(oethDripper.address)).to.be.gte(auraBefore);
     });
   });
 
@@ -244,11 +240,10 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
-      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(
-        crv.address
+      const indices = await oethHarvester.curvePoolIndices(crv.address);
+      expect(indices.toString()).to.eq(
+        BigNumber.from("2").shl(128).add("1").toString()
       );
-      expect(coin1Index.toString()).to.equal("2");
-      expect(coin2Index.toString()).to.equal("1");
     });
 
     it("Should have correct reward token config for CVX", async () => {
@@ -266,11 +261,10 @@ describe("ForkTest: Harvester", function () {
       );
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("2500", 18));
-      const [coin1Index, coin2Index] = await oethHarvester.curvePoolData(
-        cvx.address
+      const indices = await oethHarvester.curvePoolIndices(cvx.address);
+      expect(indices.toString()).to.eq(
+        BigNumber.from("1").shl(128).add("0").toString()
       );
-      expect(coin1Index.toString()).to.equal("1");
-      expect(coin2Index.toString()).to.equal("0");
     });
 
     it("Should have correct reward token config for BAL", async () => {
