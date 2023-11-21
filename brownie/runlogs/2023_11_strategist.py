@@ -77,3 +77,27 @@ def main():
     txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
 
     txs.append(vault_core.allocate({'from': STRATEGIST}))
+
+# -------------------------------------
+# Nov 20, 2023 - OETH AMO Burn
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(vault_oeth_core.rebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+    # Remove 6522 LP Tokens (~6537 OETH)
+    txs.append(oeth_meta_strat.removeAndBurnOTokens(6522 * 1e18, std))
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
