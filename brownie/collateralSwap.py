@@ -130,6 +130,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
+    c_vault_core = vault_core if from_token in OUSD_ASSET_ADDRESSES else oeth_vault_core
     min_slippage_amount = scale_amount(WETH, from_token, 10**18) # 1 token of from_token (like 1WETH, 1DAI or 1USDT)
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
@@ -186,7 +187,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
         return to, data
     
     decoded_input = vault_core.swapCollateral.decode_input(data)
-    return vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    return c_vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
 
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill, dry_run

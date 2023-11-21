@@ -101,3 +101,52 @@ def main():
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# Nov 21, 2023 - OETH swap and allocation
+# -------------------------------------
+from world import *
+from collateralSwap import *
+
+# two thirds of the Vault's holding
+two_thirds_steth = 3100603269179117666304 # 3100k 
+
+def main():
+  txs = []
+  with TemporaryFork():
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    txs.append(
+      build_swap_tx(
+        STETH,
+        WETH,
+        two_thirds_steth,
+        0.3,
+        False,
+        dry_run=False
+      )
+    )
+
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [weth], 
+        [two_thirds_steth],
+        {'from': STRATEGIST}
+      )
+    )
+
+    #txs.append(vault_value_checker.checkDelta(0, (1 * 10**18), 0, (1 * 10**18), {'from': STRATEGIST}))
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.5 * 10**18), vault_change, (1.5 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+  print(to_gnosis_json(txs))
+
+main()
