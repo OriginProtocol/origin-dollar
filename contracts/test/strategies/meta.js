@@ -41,11 +41,8 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
-    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
-    crv = fixture.crv;
-    cvx = fixture.cvx;
     OUSDmetaStrategy = fixture.OUSDmetaStrategy;
     metapoolToken = fixture.metapoolToken;
     cvxBooster = fixture.cvxBooster;
