@@ -109,7 +109,7 @@ from world import *
 from collateralSwap import *
 
 # two thirds of the Vault's holding
-two_thirds_steth = 3100603269179117666304 # 3100k 
+two_thirds_steth = 3100603269179117666304 # 3100 stETH
 
 def main():
   txs = []
