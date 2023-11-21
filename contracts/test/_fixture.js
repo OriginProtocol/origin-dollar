@@ -2013,12 +2013,6 @@ async function harvesterFixture() {
 
   if (isFork) {
     fixture = await defaultFixture();
-    const { oethHarvester, harvester, crv, bal, aura } = fixture;
-
-    await setERC20TokenBalance(oethHarvester.address, crv);
-    await setERC20TokenBalance(oethHarvester.address, bal);
-    await setERC20TokenBalance(oethHarvester.address, aura);
-    await setERC20TokenBalance(harvester.address, crv);
   } else {
     fixture = await compoundVaultFixture();
 

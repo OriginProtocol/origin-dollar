@@ -527,11 +527,6 @@ const shouldBehaveLikeHarvester = (context) => {
       const protocolShare = (tokensReceived * 9500) / 10000;
       const farmerShare = (tokensReceived * 500) / 10000;
 
-      // console.log(swapToken.address, baseToken.address, 1, balanceSwapped, tokensReceived)
-      // console.log(baseToken.address, domen.address, protocolShare, farmerShare)
-
-      // console.log((await swapTx.wait()).events.map(x => x.args))
-
       await expect(swapTx)
         .to.emit(harvester, "RewardTokenSwapped")
         .withArgs(

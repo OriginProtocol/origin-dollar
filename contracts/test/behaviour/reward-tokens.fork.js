@@ -2,6 +2,7 @@ const { expect } = require("chai");
 
 const { isFork } = require("../helpers");
 const addresses = require("../../utils/addresses");
+const { BigNumber } = require("ethers");
 
 /**
  *
@@ -93,12 +94,17 @@ const shouldHaveRewardTokensConfigured = (context) => {
                 expectedConfig.balancerPoolId
               );
             } else if (config.platform == 3) {
+              const [rewardTokenIndex, baseTokenIndex] =
+                expectedConfig.curvePoolIndices;
               // Curve
               expect(
-                (await harvester.curvePoolData(token)).map((x) =>
-                  parseInt(x.toString())
-                )
-              ).to.deep.eq(expectedConfig.curvePoolData);
+                (await harvester.curvePoolIndices(token)).toString()
+              ).to.eq(
+                BigNumber.from(rewardTokenIndex)
+                  .shl(128)
+                  .add(baseTokenIndex)
+                  .toString()
+              );
             }
           }
         }

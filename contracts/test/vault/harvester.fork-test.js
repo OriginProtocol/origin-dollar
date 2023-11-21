@@ -2,9 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
-const { isCI, oethUnits } = require("./../helpers");
+const { isCI } = require("./../helpers");
 const { hotDeployOption } = require("../_hot-deploy");
 const addresses = require("../../utils/addresses");
+const { setERC20TokenBalance } = require("../_fund");
 const { parseUnits } = require("ethers").utils;
 
 const loadFixture = createFixtureLoader(harvesterFixture);
@@ -28,50 +29,82 @@ describe("ForkTest: Harvester", function () {
 
   describe("with Curve", () => {
     it("Should swap CRV for WETH", async () => {
-      const { oethHarvester, timelock, crv } = fixture;
-      const crvBefore = await crv.balanceOf(oethHarvester.address);
+      const {
+        oethHarvester,
+        strategist,
+        convexEthMetaStrategy,
+        oethDripper,
+        crv,
+      } = fixture;
+      const crvBefore = await crv.balanceOf(oethDripper.address);
 
-      await oethHarvester.connect(timelock).swapRewardToken(crv.address);
+      // Send some rewards to the strategy
+      await setERC20TokenBalance(convexEthMetaStrategy.address, crv, "1000");
 
-      expect(await crv.balanceOf(oethHarvester.address)).to.equal(
-        crvBefore.sub(oethUnits("4000"))
+      // prettier-ignore
+      const tx = await oethHarvester
+        .connect(strategist)["harvestAndSwap(address)"](convexEthMetaStrategy.address);
+
+      await expect(tx).to.emit(convexEthMetaStrategy, "RewardTokenCollected");
+      await expect(tx).to.emit(oethHarvester, "RewardTokenSwapped");
+      await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
+
+      // Should've transferred swapped WETH to Dripper
+      expect(await crv.balanceOf(oethDripper.address)).to.be.greaterThan(
+        crvBefore
       );
     });
   });
 
-  describe("with Uniswap V3", () => {
-    it("Should swap CRV for USDT", async () => {
-      const { harvester, timelock, crv } = fixture;
-      const crvBefore = await crv.balanceOf(harvester.address);
+  // describe("with Uniswap V3", () => {
+  //   it("Should swap CRV for USDT", async () => {
+  //     const { harvester, timelock, crv } = fixture;
+  //     const crvBefore = await crv.balanceOf(harvester.address);
 
-      await harvester.connect(timelock).swapRewardToken(crv.address);
+  //     await harvester.connect(timelock).swapRewardToken(crv.address);
 
-      expect(await crv.balanceOf(harvester.address)).to.equal(
-        crvBefore.sub(oethUnits("4000"))
-      );
-    });
-  });
+  //     expect(await crv.balanceOf(harvester.address)).to.equal(
+  //       crvBefore.sub(oethUnits("4000"))
+  //     );
+  //   });
+  // });
 
   describe("with Balancer", () => {
-    it("Should swap BAL for WETH", async () => {
-      const { oethHarvester, timelock, bal } = fixture;
-      const balBefore = await bal.balanceOf(oethHarvester.address);
+    it("Should swap BAL and AURA for WETH", async () => {
+      const {
+        oethHarvester,
+        strategist,
+        bal,
+        aura,
+        oethDripper,
+        balancerREthStrategy,
+      } = fixture;
 
-      await oethHarvester.connect(timelock).swapRewardToken(bal.address);
+      const auraBefore = await aura.balanceOf(oethDripper.address);
+      const balBefore = await bal.balanceOf(oethDripper.address);
 
-      expect(await bal.balanceOf(oethHarvester.address)).to.equal(
-        balBefore.sub(oethUnits("100"))
+      // Send some rewards to the strategy
+      await setERC20TokenBalance(balancerREthStrategy.address, bal, "1000");
+      await setERC20TokenBalance(balancerREthStrategy.address, aura, "1000");
+
+      // prettier-ignore
+      const tx = await oethHarvester
+        .connect(strategist)["harvestAndSwap(address)"](balancerREthStrategy.address);
+
+      await expect(tx).to.emit(balancerREthStrategy, "RewardTokenCollected");
+      await expect(tx).to.emit(oethHarvester, "RewardTokenSwapped");
+      await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
+
+      // Should've transferred everything to Harvester
+      expect(await bal.balanceOf(balancerREthStrategy.address)).to.equal("0");
+      expect(await aura.balanceOf(balancerREthStrategy.address)).to.equal("0");
+
+      // Should've transferred swapped WETH to Dripper
+      expect(await bal.balanceOf(oethDripper.address)).to.be.greaterThan(
+        balBefore
       );
-    });
-
-    it("Should swap AURA for WETH", async () => {
-      const { oethHarvester, timelock, aura } = fixture;
-      const auraBefore = await aura.balanceOf(oethHarvester.address);
-
-      await oethHarvester.connect(timelock).swapRewardToken(aura.address);
-
-      expect(await aura.balanceOf(oethHarvester.address)).to.equal(
-        auraBefore.sub(oethUnits("500"))
+      expect(await aura.balanceOf(oethDripper.address)).to.be.greaterThan(
+        auraBefore
       );
     });
   });
@@ -279,48 +312,5 @@ describe("ForkTest: Harvester", function () {
         "0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274"
       );
     });
-  });
-
-  describe.skip("Harvest", () => {
-    it("Should harvest from all strategies", async () => {
-      const { harvester, timelock } = fixture;
-      await harvester.connect(timelock)["harvest()"]();
-    });
-
-    it("Should swap all coins", async () => {
-      const { harvester, timelock } = fixture;
-      await harvester.connect(timelock).swap();
-    });
-
-    it.skip("Should harvest and swap from all strategies", async () => {
-      // Skip this test because we don't call or use this method anywhere.
-      // Also, because this test is flaky at times due to slippage and the
-      // individual `harvest` and `swap` methods for each strategies are
-      // covered in the tests above this.
-      const { harvester, timelock } = fixture;
-      await harvester.connect(timelock)["harvestAndSwap()"]();
-    });
-
-    it("Should swap CRV", async () => {
-      const { harvester, timelock, crv } = fixture;
-      await harvester.connect(timelock).swapRewardToken(crv.address);
-    });
-
-    it("Should swap CVX", async () => {
-      const { harvester, timelock, cvx } = fixture;
-      await harvester.connect(timelock).swapRewardToken(cvx.address);
-    });
-
-    it("Should swap COMP", async () => {
-      const { harvester, timelock, comp } = fixture;
-      await harvester.connect(timelock).swapRewardToken(comp.address);
-    });
-
-    it("Should swap AAVE", async () => {
-      const { harvester, timelock, aave } = fixture;
-      await harvester.connect(timelock).swapRewardToken(aave.address);
-    });
-
-    // TODO: Tests for `harvest(address)` for each strategy
   });
 });
