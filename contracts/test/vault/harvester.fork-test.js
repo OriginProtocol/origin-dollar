@@ -50,11 +50,14 @@ describe("ForkTest: Harvester", function () {
       await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await crv.balanceOf(oethDripper.address)).to.be.greaterThan(
+      expect(await crv.balanceOf(oethDripper.address)).to.be.gt(
         crvBefore
       );
     });
   });
+
+  // Commenting this out since none of the strategies have anything 
+  // that we want to harvest on Uniswap V2 or V3 right now.
 
   // describe("with Uniswap V3", () => {
   //   it("Should swap CRV for USDT", async () => {
