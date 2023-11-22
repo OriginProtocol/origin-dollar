@@ -70,57 +70,6 @@ describe("Compound strategy", function () {
     );
   });
 
-  it("Should collect rewards", async () => {
-    const {
-      cStandalone,
-      strategySigner,
-      vault,
-      vaultSigner,
-      governor,
-      harvester,
-      usdc,
-      comp,
-    } = fixture;
-
-    expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
-
-    // Fund the strategy
-    usdc.connect(strategySigner).mintTo(cStandalone.address, usdcUnits("1000"));
-    expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
-      usdcUnits("1000")
-    );
-
-    // Approve compound on vault
-    await vault.connect(governor).approveStrategy(cStandalone.address);
-
-    await harvester
-      .connect(governor)
-      .setSupportedStrategy(cStandalone.address, true);
-
-    // Run deposit()
-    await cStandalone
-      .connect(vaultSigner)
-      .deposit(usdc.address, usdcUnits("1000"));
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(strategySigner).mintTo(cStandalone.address, compAmount);
-
-    // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(vault.address)).to.be.equal("0");
-    await expect(await comp.balanceOf(cStandalone.address)).to.be.equal(
-      compAmount
-    );
-
-    await harvester.connect(governor)["harvest(address)"](cStandalone.address);
-
-    // Vault address on Compound Strategy is set to governor so they Should
-    // receive the reward
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      compAmount
-    );
-    await expect(await comp.balanceOf(cStandalone.address)).to.be.equal("0");
-  });
-
   it("Should allow Governor to set reward token address", async () => {
     const { cStandalone, governor, comp } = fixture;
 

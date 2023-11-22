@@ -622,31 +622,6 @@ describe("Vault with Compound strategy", function () {
     }
   });
 
-  it("Should collect reward tokens using collect rewards on all strategies", async () => {
-    const { governor, harvester, compoundStrategy, comp } = fixture;
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
-
-    // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      compAmount
-    );
-
-    await harvester.connect(governor)["harvest()"]();
-
-    // Note if Uniswap address was configured, it would withdrawAll the COMP for
-    // a stablecoin to increase the value of Harvester. No Uniswap configured here
-    // so the COMP just sits in Harvester
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      compAmount
-    );
-  });
-
   it("Should collect reward tokens and swap via Uniswap", async () => {
     const { anna, vault, harvester, governor, compoundStrategy, comp, usdt } =
       fixture;

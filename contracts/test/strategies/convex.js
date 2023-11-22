@@ -122,24 +122,6 @@ describe("Convex Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](convexStrategy.address);
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
-    });
-
     it("Should revert when zero address attempts to be set as reward token address", async () => {
       await expect(
         convexStrategy

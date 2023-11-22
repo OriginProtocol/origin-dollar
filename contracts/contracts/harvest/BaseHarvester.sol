@@ -53,6 +53,9 @@ abstract contract BaseHarvester is Governable {
         uint256 protocolShare,
         uint256 farmerShare
     );
+    event RewardProceedsAddressChanged(
+        address newProceedsAddress
+    );
 
     // Configuration properties for harvesting logic of reward tokens
     struct RewardTokenConfig {
@@ -132,6 +135,7 @@ abstract contract BaseHarvester is Governable {
         );
 
         rewardProceedsAddress = _rewardProceedsAddress;
+        emit RewardProceedsAddressChanged(_rewardProceedsAddress);
     }
 
     /**
@@ -390,19 +394,6 @@ abstract contract BaseHarvester is Governable {
     {
         // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, _rewardTo);
-    }
-
-    /**
-     * @dev Governance convenience function to swap a specific _rewardToken and send
-     *       rewards to the vault.
-     * @param _swapToken Address of the token to swap.
-     */
-    function swapRewardToken(address _swapToken)
-        external
-        onlyGovernor
-        nonReentrant
-    {
-        _swap(_swapToken, rewardProceedsAddress);
     }
 
     /**

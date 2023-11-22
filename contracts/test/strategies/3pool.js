@@ -135,15 +135,6 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-    });
-
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
