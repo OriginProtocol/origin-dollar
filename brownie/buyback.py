@@ -57,8 +57,8 @@ def get_token_quote(otoken, to_token, amount):
     price_before = parse_uniswap_x96_price(prices_before[len(prices_before) - 1])
 
     no_slippage_quote = max([
-        get_coingecko_quote(otoken, to_token, min_amount),
-        get_cmc_quote(otoken, to_token, min_amount),
+        # get_coingecko_quote(otoken, to_token, min_amount),
+        # get_cmc_quote(otoken, to_token, min_amount),
         uni_quote
     ])
     no_slippage_quote = amount * no_slippage_quote / min_amount

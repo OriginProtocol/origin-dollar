@@ -38,29 +38,18 @@ def get_1inch_swap(
     UNISWAP_SELECTOR = "0xf78dc253" #unoswapTo(address,address,uint256,uint256,uint256[])
     UNISWAPV3_SWAP_TO_SELECTOR = "0xbc80f1a8" #uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
+    result = get_1inch_swap_data(
+        from_token=from_token.lower(),
+        to_token=to_token.lower(),
+        swap_amount=from_amount,
+        slippage=slippage,
+        from_address=swapper_address.lower(),
+        to_address=vault_addr.lower(),
+    )
 
-    req = requests.get('https://{}.1inch.io/v5.0/1/swap'.format(ONEINCH_SUBDOMAIN), params={
-        'fromTokenAddress': from_token.lower(),
-        'fromAddress': swapper_address.lower(),
-        'destReceiver': vault_addr.lower(),
-        'toTokenAddress': to_token.lower(),
-        'amount': str(from_amount),
-        'allowPartialFill': allowPartialFill,
-        'disableEstimate': 'true',
-        'slippage': slippage
-    }, headers={
-        'accept': 'application/json'
-    })
+    input_decoded = router_1inch.decode_input(result.input)
 
-    if req.status_code != 200:
-        print(req.json())
-        raise Exception("Error calling 1inch api")
-
-    result = req.json()
-
-    input_decoded = router_1inch.decode_input(result['tx']['data'])
-
-    selector = result['tx']['data'][:10]
+    selector = result.input[:10]
     data = '0x'
     # Swap selector
     if selector == SWAP_SELECTOR:
@@ -72,9 +61,9 @@ def get_1inch_swap(
         raise Exception("Unrecognized 1Inch swap selector {}".format(selector))
 
     swap_collateral_data = c_vault_core.swapCollateral.encode_input(
-        result['fromToken']['address'],
-        result['toToken']['address'],
-        result['fromTokenAmount'],
+        from_token.lower(),
+        to_token.lower(),
+        str(from_amount),
         min_expected_amount,
         data
     )
@@ -130,19 +119,20 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
+    c_vault_core = vault_core if from_token in OUSD_ASSET_ADDRESSES else oeth_vault_core
     min_slippage_amount = scale_amount(WETH, from_token, 10**18) # 1 token of from_token (like 1WETH, 1DAI or 1USDT)
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
     quote_1inch_min_swap_amount = from_amount * quote_1inch_min_swap_amount_price / min_slippage_amount
     quote_oracles = get_oracle_router_quote(from_token, to_token, from_amount)
-    quote_coingecko = get_coingecko_quote(from_token, to_token, from_amount)
-    quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
+    # quote_coingecko = get_coingecko_quote(from_token, to_token, from_amount)
+    # quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
 
     # subtract the max slippage from minimum slippage query
     min_tokens_with_slippage = scale_amount(from_token, to_token, from_amount * quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 / min_slippage_amount)
-    coingecko_to_1inch_diff = (quote_1inch - quote_coingecko) / quote_1inch
+    # coingecko_to_1inch_diff = (quote_1inch - quote_coingecko) / quote_1inch
     oracle_to_1inch_diff = (quote_1inch - quote_oracles) / quote_1inch
-    cmc_to_1inch_diff = (quote_1inch - quote_cmc) / quote_1inch
+    # cmc_to_1inch_diff = (quote_1inch - quote_cmc) / quote_1inch
 
     actual_slippage = (quote_1inch_min_swap_amount - quote_1inch) / quote_1inch
 
@@ -150,14 +140,14 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     print("1Inch expected tokens:                   {:.6f}".format(scale_amount(to_token, 'human', quote_1inch)))
     print("1Inch expected tokens (no slippage):     {:.6f}".format(scale_amount(to_token, 'human', quote_1inch_min_swap_amount)))
     print("Oracle expected tokens:                  {:.6f}".format(scale_amount(to_token, 'human', quote_oracles)))
-    print("Coingecko expected tokens:               {:.6f}".format(scale_amount(to_token, 'human', quote_coingecko)))
-    print("CoinmarketCap expected tokens:           {:.6f}".format(scale_amount(to_token, 'human', quote_cmc)))
+    # print("Coingecko expected tokens:               {:.6f}".format(scale_amount(to_token, 'human', quote_coingecko)))
+    # print("CoinmarketCap expected tokens:           {:.6f}".format(scale_amount(to_token, 'human', quote_cmc)))
     print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, scale_amount(to_token, 'human', min_tokens_with_slippage)))
     print("")
     print("------ Price Diffs -------")
     print("1Inch to Oracle Difference:              {:.6f}%".format(oracle_to_1inch_diff * 100))
-    print("1Inch to Coingecko Difference:           {:.6f}%".format(coingecko_to_1inch_diff * 100))
-    print("1Inch to CoinmarketCap Difference:       {:.6f}%".format(cmc_to_1inch_diff * 100))
+    # print("1Inch to Coingecko Difference:           {:.6f}%".format(coingecko_to_1inch_diff * 100))
+    # print("1Inch to CoinmarketCap Difference:       {:.6f}%".format(cmc_to_1inch_diff * 100))
     print("")
     print("-------- Slippage --------")
     print("Current market Slippage:                 {:.6f}%".format(actual_slippage * 100))
@@ -172,8 +162,8 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
 
     for protocol, price_diff in {
             "Oracle": oracle_to_1inch_diff,
-            "Coingecko": coingecko_to_1inch_diff,
-            "CoinmarketCap": cmc_to_1inch_diff
+            # "Coingecko": coingecko_to_1inch_diff,
+            # "CoinmarketCap": cmc_to_1inch_diff
         }.items():
         if (abs(price_diff * 100) > MAX_PRICE_DEVIATION):
             error = "1Inch and {} have too large price deviation: {:.6f}%".format(protocol, price_diff * 100)
@@ -186,7 +176,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
         return to, data
     
     decoded_input = vault_core.swapCollateral.decode_input(data)
-    return vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    return c_vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
 
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill, dry_run
