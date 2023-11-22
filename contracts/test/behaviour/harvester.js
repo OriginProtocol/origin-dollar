@@ -751,9 +751,13 @@ const shouldBehaveLikeHarvester = (context) => {
       const { harvester, fixture } = context();
       const { governor, daniel, strategist } = fixture;
 
-      await harvester
+      const tx = await harvester
         .connect(governor)
         .setRewardProceedsAddress(strategist.address);
+
+      await expect(tx)
+        .to.emit(harvester, "RewardProceedsAddressChanged")
+        .withArgs(strategist.address);
 
       expect(await harvester.rewardProceedsAddress()).to.equal(
         strategist.address
