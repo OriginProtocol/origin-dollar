@@ -743,6 +743,7 @@ const deployOracles = async () => {
     [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
     [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
     [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
+    [assetAddresses.AAVE_TOKEN, oracleAddresses.chainlink.AAVE_USD],
     [assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD],
     [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD],
     [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH],

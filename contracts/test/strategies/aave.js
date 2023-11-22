@@ -188,9 +188,32 @@ describe("Aave Strategy", function () {
           );
         }
 
+        // Disable swap
+        // await oracleRouter.connect(governor)
+        //   .setFeed(aave.address, )
+        await harvester.connect(governor).setRewardTokenConfig(
+          aave.address,
+          {
+            allowedSlippageBps: 200,
+            harvestRewardBps: 0,
+            swapRouterAddr: aave.address,
+            doSwapRewardToken: false,
+            platform: 2,
+            liquidationLimit: 0,
+          },
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
         // Run
         // ----
-        await harvester.connect(governor)["harvest()"]();
+        // prettier-ignore
+        await harvester
+          .connect(governor)["harvestAndSwap(address)"](aaveStrategy.address);
         currentTimestamp = await getBlockTimestamp();
 
         // Verification

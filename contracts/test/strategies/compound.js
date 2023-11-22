@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const { impersonateAndFund } = require("../../utils/signers");
 const { createFixtureLoader, compoundFixture } = require("../_fixture");

@@ -53,9 +53,7 @@ abstract contract BaseHarvester is Governable {
         uint256 protocolShare,
         uint256 farmerShare
     );
-    event RewardProceedsAddressChanged(
-        address newProceedsAddress
-    );
+    event RewardProceedsAddressChanged(address newProceedsAddress);
 
     // Configuration properties for harvesting logic of reward tokens
     struct RewardTokenConfig {

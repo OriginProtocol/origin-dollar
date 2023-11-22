@@ -644,7 +644,7 @@ const shouldBehaveLikeHarvester = (context) => {
       const { harvester, strategies, fixture } = context();
       const { governor, uniswapRouter } = fixture;
 
-      const { rewardTokens } = strategies[0];
+      const { rewardTokens, strategy } = strategies[0];
 
       const swapToken = rewardTokens[0];
 
@@ -673,9 +673,17 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
 
+      // Remove everything from strategy
+      await swapToken
+        .connect(await impersonateAndFund(strategy.address))
+        .transfer(
+          governor.address,
+          await swapToken.balanceOf(strategy.address)
+        );
+
+      // prettier-ignore
       const swapTx = await harvester
-        .connect(governor)
-        .swapRewardToken(swapToken.address);
+        .connect(governor)["harvestAndSwap(address)"](strategy.address);
 
       await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
       await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
@@ -685,7 +693,7 @@ const shouldBehaveLikeHarvester = (context) => {
       const { harvester, strategies, fixture } = context();
       const { governor, balancerVault, domen } = fixture;
 
-      const { rewardTokens } = strategies[0];
+      const { strategy, rewardTokens } = strategies[0];
 
       const swapToken = rewardTokens[0];
       const baseToken = await ethers.getContractAt(
@@ -693,7 +701,7 @@ const shouldBehaveLikeHarvester = (context) => {
         await harvester.baseTokenAddress()
       );
 
-      // Configure to use Uniswap V3
+      // Configure to use Balancer
       const config = {
         allowedSlippageBps: 0,
         harvestRewardBps: 0,
@@ -722,9 +730,9 @@ const shouldBehaveLikeHarvester = (context) => {
         .connect(domen)
         .mintTo(harvester.address, ousdUnits("1000"));
 
+      // prettier-ignore
       const swapTx = await harvester
-        .connect(governor)
-        .swapRewardToken(swapToken.address);
+        .connect(domen)["harvestAndSwap(address)"](strategy.address);
 
       await expect(swapTx)
         .to.emit(harvester, "RewardTokenSwapped")

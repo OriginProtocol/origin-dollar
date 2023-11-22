@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const {
@@ -18,10 +17,8 @@ describe("Convex Strategy", function () {
   let anna,
     ousd,
     vault,
-    harvester,
     governor,
     crv,
-    cvx,
     threePoolToken,
     convexStrategy,
     cvxBooster,
@@ -44,11 +41,9 @@ describe("Convex Strategy", function () {
     const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
-    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     crv = fixture.crv;
-    cvx = fixture.cvx;
     threePoolToken = fixture.threePoolToken;
     convexStrategy = fixture.convexStrategy;
     cvxBooster = fixture.cvxBooster;
