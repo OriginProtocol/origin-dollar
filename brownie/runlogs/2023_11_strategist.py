@@ -149,4 +149,31 @@ def main():
 
   print(to_gnosis_json(txs))
 
-main()
+# -------------------------------------
+# Nov 22, 2023 - OETH & OUSD Buyback
+# -------------------------------------
+from buyback import *
+
+def main():
+  txs = []
+
+  with TemporaryFork():
+    txs.append(
+      build_buyback_tx(
+        OETH,
+        oeth.balanceOf(OETH_BUYBACK),
+        max_ogv_slippage=1,
+        max_cvx_slippage=1
+      )
+    )
+
+    txs.append(
+      build_buyback_tx(
+        OUSD,
+        ousd.balanceOf(OUSD_BUYBACK),
+        max_ogv_slippage=1,
+        max_cvx_slippage=1
+      )
+    )
+
+    print(to_gnosis_json(txs))
