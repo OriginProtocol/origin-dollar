@@ -15,9 +15,13 @@ contract MockOracleRouterNoStale is OracleRouter {
         pure
         virtual
         override
-        returns (address feedAddress, uint256 maxStaleness)
+        returns (
+            address feedAddress,
+            uint256 maxStaleness,
+            uint256 decimals
+        )
     {
-        (feedAddress, ) = super.feedMetadata(asset);
+        (feedAddress, , decimals) = super.feedMetadata(asset);
         maxStaleness = 365 days;
     }
 }
@@ -29,9 +33,13 @@ contract MockOETHOracleRouterNoStale is OETHOracleRouter {
         pure
         virtual
         override
-        returns (address feedAddress, uint256 maxStaleness)
+        returns (
+            address feedAddress,
+            uint256 maxStaleness,
+            uint256 decimals
+        )
     {
-        (feedAddress, ) = super.feedMetadata(asset);
+        (feedAddress, , decimals) = super.feedMetadata(asset);
         maxStaleness = 365 days;
     }
 }

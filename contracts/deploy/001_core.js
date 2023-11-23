@@ -728,28 +728,31 @@ const deployOracles = async () => {
   const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
   const oracleFeeds = [
-    [assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD],
-    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
-    [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD],
-    [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
-    [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
-    [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
-    [assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD],
-    [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD],
-    [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH],
-    [assetAddresses.WETH, oracleAddresses.chainlink.WETH_ETH],
-    [addresses.mainnet.WETH, oracleAddresses.chainlink.WETH_ETH],
-    [assetAddresses.stETH, oracleAddresses.chainlink.STETH_ETH],
-    [assetAddresses.frxETH, oracleAddresses.chainlink.FRXETH_ETH],
+    [assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD, 8],
+    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD, 8],
+    [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD, 8],
+    [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD, 8],
+    [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD, 8],
+    [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD, 8],
+    [assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD, 18],
+    [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD, 18],
+    [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH, 18],
+    [assetAddresses.WETH, oracleAddresses.chainlink.WETH_ETH, 18],
+    [addresses.mainnet.WETH, oracleAddresses.chainlink.WETH_ETH, 18],
+    [assetAddresses.stETH, oracleAddresses.chainlink.STETH_ETH, 18],
+    [assetAddresses.frxETH, oracleAddresses.chainlink.FRXETH_ETH, 18],
     [
       assetAddresses.NonStandardToken,
       oracleAddresses.chainlink.NonStandardToken_USD,
+      8,
     ],
   ];
 
-  for (const [asset, oracle] of oracleFeeds) {
+  for (const [asset, oracle, decimals] of oracleFeeds) {
     await withConfirmation(
-      oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
+      oracleRouter
+        .connect(sDeployer)
+        .setFeed(asset, oracle, maxStaleness, decimals)
     );
   }
 };

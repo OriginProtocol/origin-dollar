@@ -24,6 +24,7 @@ describe("ForkTest: Oracles", function () {
     beforeEach(async () => {
       oethOracleRouter = await ethers.getContract("OETHOracleRouter");
     });
+
     it("should get rETH price", async () => {
       const { reth } = fixture;
 

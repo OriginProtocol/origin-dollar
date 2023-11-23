@@ -39,9 +39,9 @@ describe("Vault", function () {
     await oracleRouter.setFeed(
       ousd.address,
       oracleAddresses.chainlink.DAI_USD,
-      maxStaleness
+      maxStaleness,
+      8
     );
-    await oracleRouter.cacheDecimals(ousd.address);
     await expect(vault.connect(governor).supportAsset(ousd.address, 0)).to.emit(
       vault,
       "AssetSupported"
@@ -136,10 +136,8 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
-      fixture;
+    const { ousd, vault, anna, nonStandardToken, governor } = fixture;
 
-    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.30");
@@ -168,10 +166,8 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
-      fixture;
+    const { ousd, vault, anna, nonStandardToken, governor } = fixture;
 
-    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);

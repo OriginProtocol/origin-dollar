@@ -13,6 +13,13 @@ describe("Vault Oracle", async () => {
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
   });
+  it("should have decimals configured correctly", async () => {
+    const { oracleRouter, dai, usdc, usdt, crv, cvx } = fixture;
+
+    for (const asset of [dai, usdc, usdt, crv, cvx]) {
+      expect(await oracleRouter.isDecimalsValid(asset.address)).to.be.true;
+    }
+  });
   describe("Oracle read methods for DAPP", () => {
     it("should read the mint price", async () => {
       const { vault, usdt } = fixture;
