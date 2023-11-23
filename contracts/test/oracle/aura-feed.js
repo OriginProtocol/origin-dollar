@@ -80,7 +80,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
       .setNextResults([oethUnits("1.03"), oethUnits("1")]);
 
     await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
-      "HighPriceVolatility"
+      "PriceFeedPausedError"
     );
   });
 
