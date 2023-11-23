@@ -500,20 +500,6 @@ abstract contract BaseHarvester is Governable {
             1e4 / // fix the max slippage decimal position
             1e18; // and oracle price decimals position
 
-        // uint256 minExpected = balance
-        //     .mulTruncateScale(
-        //         1e4 - tokenConfig.allowedSlippageBps * oraclePrice,
-
-        //         // 1e4 to fix Max Slippage decimal position,
-        //         // and 1e18 for the Oracle Price
-        //         1e4 * 1e18
-        //     );
-        //     // .mulTruncate(oraclePrice)
-        //     // .scaleBy(
-        //     //     baseTokenDecimals,
-        //     //     Helpers.getDecimals(_swapToken)
-        //     // );
-
         // Do the swap
         uint256 amountReceived = _doSwap(
             tokenConfig.swapPlatform,

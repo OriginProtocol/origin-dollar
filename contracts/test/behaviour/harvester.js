@@ -278,8 +278,12 @@ const shouldBehaveLikeHarvester = (context) => {
       await expect(
         harvester
           .connect(governor)
-          .setRewardTokenConfig(crv.address, config, [])
-      ).to.be.revertedWith("InvalidSwapPlatform");
+          .setRewardTokenConfig(
+            crv.address,
+            config,
+            utils.defaultAbiCoder.encode(["uint256"], ["0"])
+          )
+      ).to.be.reverted;
     });
 
     it("Should reset allowance on older router", async () => {
