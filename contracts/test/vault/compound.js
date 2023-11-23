@@ -335,9 +335,9 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 300,
         harvestRewardBps: 0,
-        swapRouterAddr: mockUniswapRouter.address,
+        swapPlatformAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       },
       utils.defaultAbiCoder.encode(
@@ -637,9 +637,9 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 0,
         harvestRewardBps: 100,
-        swapRouterAddr: mockUniswapRouter.address,
+        swapPlatformAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       },
       utils.defaultAbiCoder.encode(
@@ -696,9 +696,9 @@ describe("Vault with Compound strategy", function () {
       {
         allowedSlippageBps: 0,
         harvestRewardBps: 100,
-        swapRouterAddr: mockUniswapRouter.address,
+        swapPlatformAddr: mockUniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       },
       utils.defaultAbiCoder.encode(

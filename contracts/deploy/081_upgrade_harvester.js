@@ -136,8 +136,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 200,
-              platform: 3, // Curve
-              swapRouterAddr: "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14",
+              swapPlatform: 3, // Curve
+              swapPlatformAddr: "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14",
               liquidationLimit: oethUnits("4000"),
               doSwapRewardToken: true,
             },
@@ -153,8 +153,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 200,
-              platform: 2, // Balancer
-              swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+              swapPlatform: 2, // Balancer
+              swapPlatformAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
               liquidationLimit: oethUnits("1000"),
               doSwapRewardToken: true,
             },
@@ -175,8 +175,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 200,
-              platform: 2, // Balancer
-              swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+              swapPlatform: 2, // Balancer
+              swapPlatformAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
               liquidationLimit: oethUnits("4000"),
               doSwapRewardToken: true,
             },
@@ -197,8 +197,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 200,
-              platform: 3, // Curve
-              swapRouterAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+              swapPlatform: 3, // Curve
+              swapPlatformAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
               liquidationLimit: oethUnits("2500"),
               doSwapRewardToken: true,
             },
@@ -214,8 +214,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 200,
-              platform: 1, // Uniswap V3
-              swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+              swapPlatform: 1, // Uniswap V3
+              swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
               liquidationLimit: oethUnits("4000"),
               doSwapRewardToken: true,
             },
@@ -240,8 +240,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 100,
-              platform: 1, // Uniswap V3
-              swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+              swapPlatform: 1, // Uniswap V3
+              swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
               liquidationLimit: oethUnits("2500"),
               doSwapRewardToken: true,
             },
@@ -266,8 +266,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 100,
-              platform: 1, // Uniswap V3
-              swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+              swapPlatform: 1, // Uniswap V3
+              swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
               liquidationLimit: 0,
               doSwapRewardToken: true,
             },
@@ -292,8 +292,8 @@ module.exports = deploymentWithGovernanceProposal(
             {
               allowedSlippageBps: 300,
               harvestRewardBps: 100,
-              platform: 1, // Uniswap V3
-              swapRouterAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+              swapPlatform: 1, // Uniswap V3
+              swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
               liquidationLimit: 0,
               doSwapRewardToken: true,
             },

@@ -47,7 +47,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
       .setNextResults([oethUnits("1"), oethUnits("1.03")]);
 
     await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
-      "High price volatility"
+      "HighPriceVolatility"
     );
 
     // Price with > 2% deviation
@@ -56,7 +56,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
       .setNextResults([oethUnits("1.03"), oethUnits("1")]);
 
     await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
-      "High price volatility"
+      "HighPriceVolatility"
     );
   });
 
@@ -104,13 +104,13 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     await expect(
       auraWETHPriceFeed.connect(governor).unpause()
-    ).to.be.revertedWith("Feed not paused");
+    ).to.be.revertedWith("PriceFeedUnpausedError");
 
     await auraWETHPriceFeed.connect(governor).pause();
 
     await expect(
       auraWETHPriceFeed.connect(governor).pause()
-    ).to.be.revertedWith("Feed already paused");
+    ).to.be.revertedWith("PriceFeedPausedError");
   });
 
   it("Should allow governor to set tolerance value", async () => {
@@ -133,7 +133,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
       .setNextResults([oethUnits("1"), oethUnits("1.1")]);
 
     await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
-      "High price volatility"
+      "HighPriceVolatility"
     );
 
     // Price with < 9% deviation
@@ -157,7 +157,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     await expect(
       auraWETHPriceFeed.connect(governor).setTolerance(oethUnits("0.11"))
-    ).to.be.revertedWith("Tolerance shoud not be >10%");
+    ).to.be.revertedWith("InvalidToleranceBps");
   });
 
   it("should get price from oracle", async () => {

@@ -734,12 +734,12 @@ async function oeth1InchSwapperFixture() {
   const fixture = await oethDefaultFixture();
   const { mock1InchSwapRouter } = fixture;
 
-  const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
-  await replaceContractAt(swapRouterAddr, mock1InchSwapRouter);
+  const swapPlatformAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+  await replaceContractAt(swapPlatformAddr, mock1InchSwapRouter);
 
   const stubbedRouterContract = await hre.ethers.getContractAt(
     "Mock1InchSwapRouter",
-    swapRouterAddr
+    swapPlatformAddr
   );
   fixture.mock1InchSwapRouter = stubbedRouterContract;
 

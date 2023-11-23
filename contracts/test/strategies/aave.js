@@ -196,9 +196,9 @@ describe("Aave Strategy", function () {
           {
             allowedSlippageBps: 200,
             harvestRewardBps: 0,
-            swapRouterAddr: aave.address,
+            swapPlatformAddr: aave.address,
             doSwapRewardToken: false,
-            platform: 2,
+            swapPlatform: 2,
             liquidationLimit: 0,
           },
           utils.defaultAbiCoder.encode(

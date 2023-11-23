@@ -35,8 +35,9 @@ describe("ForkTest: Harvester", function () {
         convexEthMetaStrategy,
         oethDripper,
         crv,
+        weth,
       } = fixture;
-      const crvBefore = await crv.balanceOf(oethDripper.address);
+      const wethBefore = await weth.balanceOf(oethDripper.address);
 
       // Send some rewards to the strategy
       await setERC20TokenBalance(convexEthMetaStrategy.address, crv, "1000");
@@ -50,7 +51,7 @@ describe("ForkTest: Harvester", function () {
       await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await crv.balanceOf(oethDripper.address)).to.be.gt(crvBefore);
+      expect(await weth.balanceOf(oethDripper.address)).to.be.gt(wethBefore);
     });
   });
 
@@ -77,12 +78,12 @@ describe("ForkTest: Harvester", function () {
         strategist,
         bal,
         aura,
+        weth,
         oethDripper,
         balancerREthStrategy,
       } = fixture;
 
-      const auraBefore = await aura.balanceOf(oethDripper.address);
-      const balBefore = await bal.balanceOf(oethDripper.address);
+      const wethBefore = await weth.balanceOf(oethDripper.address);
 
       // Send some rewards to the strategy
       await setERC20TokenBalance(balancerREthStrategy.address, bal, "1000");
@@ -101,8 +102,7 @@ describe("ForkTest: Harvester", function () {
       expect(await aura.balanceOf(balancerREthStrategy.address)).to.equal("0");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await bal.balanceOf(oethDripper.address)).to.be.gte(balBefore);
-      expect(await aura.balanceOf(oethDripper.address)).to.be.gte(auraBefore);
+      expect(await weth.balanceOf(oethDripper.address)).to.be.gte(wethBefore);
     });
   });
 
@@ -114,10 +114,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         1 // Uniswap V3
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -143,10 +143,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         1 // Uniswap V3
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -172,10 +172,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         1 // Uniswap V3
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -201,10 +201,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(100);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         1 // Uniswap V3
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xE592427A0AEce92De3Edee1F18E0157C05861564"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -233,10 +233,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         3 // Curve
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -254,10 +254,10 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         3 // Curve
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4"
       );
       expect(config.doSwapRewardToken).to.be.true;
@@ -275,14 +275,14 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         2 // Balancer
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
       );
       expect(config.doSwapRewardToken).to.be.true;
-      expect(config.liquidationLimit).to.equal(parseUnits("100", 18));
+      expect(config.liquidationLimit).to.equal(parseUnits("1000", 18));
       expect(await oethHarvester.balancerPoolId(bal.address)).to.equal(
         "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
       );
@@ -295,14 +295,14 @@ describe("ForkTest: Harvester", function () {
 
       expect(config.allowedSlippageBps).to.equal(300);
       expect(config.harvestRewardBps).to.equal(200);
-      expect(config.platform).to.equal(
+      expect(config.swapPlatform).to.equal(
         2 // Balancer
       );
-      expect(config.swapRouterAddr).to.equal(
+      expect(config.swapPlatformAddr).to.equal(
         "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
       );
       expect(config.doSwapRewardToken).to.be.true;
-      expect(config.liquidationLimit).to.equal(parseUnits("500", 18));
+      expect(config.liquidationLimit).to.equal(parseUnits("4000", 18));
       expect(await oethHarvester.balancerPoolId(aura.address)).to.equal(
         "0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274"
       );

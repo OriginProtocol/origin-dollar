@@ -34,4 +34,15 @@ contract MockBalancerVault {
     function setSlippage(uint256 _slippage) external {
         slippage = _slippage;
     }
+
+    function getPoolTokenInfo(bytes32 poolId, address token)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address
+        )
+    {}
 }

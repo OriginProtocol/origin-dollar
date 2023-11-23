@@ -57,7 +57,7 @@ const shouldHaveRewardTokensConfigured = (context) => {
             const expectedConfig = expectedConfigs[token.toLowerCase()];
 
             // Each reward token should have a swap route configured
-            expect(config.swapRouterAddr).to.not.eq(
+            expect(config.swapPlatformAddr).to.not.eq(
               addresses.zero,
               `Harvester not configured for token: ${token}`
             );
@@ -66,8 +66,10 @@ const shouldHaveRewardTokensConfigured = (context) => {
               `Swap disabled for token: ${token}`
             );
 
-            expect(config.platform).to.eq(expectedConfig.platform);
-            expect(config.swapRouterAddr).to.eq(expectedConfig.swapRouterAddr);
+            expect(config.swapPlatform).to.eq(expectedConfig.swapPlatform);
+            expect(config.swapPlatformAddr).to.eq(
+              expectedConfig.swapPlatformAddr
+            );
             expect(config.harvestRewardBps).to.eq(
               expectedConfig.harvestRewardBps
             );
@@ -78,22 +80,22 @@ const shouldHaveRewardTokensConfigured = (context) => {
               expectedConfig.liquidationLimit
             );
 
-            if (config.platform == 0) {
+            if (config.swapPlatform == 0) {
               // Uniswap V2
               expect(await harvester.uniswapV2Path(token)).to.eq(
                 expectedConfig.uniswapV2Path
               );
-            } else if (config.platform == 1) {
+            } else if (config.swapPlatform == 1) {
               // Uniswap V3
               expect(await harvester.uniswapV3Path(token)).to.eq(
                 expectedConfig.uniswapV3Path
               );
-            } else if (config.platform == 2) {
+            } else if (config.swapPlatform == 2) {
               // Balancer
               expect(await harvester.balancerPoolId(token)).to.eq(
                 expectedConfig.balancerPoolId
               );
-            } else if (config.platform == 3) {
+            } else if (config.swapPlatform == 3) {
               const [rewardTokenIndex, baseTokenIndex] =
                 expectedConfig.curvePoolIndices;
               // Curve

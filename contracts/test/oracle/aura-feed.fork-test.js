@@ -46,7 +46,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
 
     if (shouldRevert) {
       await expect(auraWETHPriceFeed.price).to.be.revertedWith(
-        "High price volatility"
+        "HighPriceVolatility"
       );
     } else {
       expect(await auraWETHPriceFeed.price()).to.equal(price_5m);

@@ -14,6 +14,11 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     event PriceFeedUnpaused();
     event ToleranceChanged(uint256 oldTolerance, uint256 newTolerance);
 
+    error PriceFeedPausedError();
+    error PriceFeedUnpausedError();
+    error InvalidToleranceBps();
+    error HighPriceVolatility(uint256 deviation);
+
     bool public paused;
     uint256 public tolerance = 0.02 ether; // 2% by default
 
@@ -42,7 +47,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     }
 
     function _price() internal view returns (int256) {
-        require(!paused, "Price Feed is paused");
+        if (paused) {
+            revert PriceFeedPausedError();
+        }
         OracleAverageQuery[] memory queries = new OracleAverageQuery[](2);
 
         queries[0] = OracleAverageQuery({
@@ -68,7 +75,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
 
         // Ensure the price hasn't moved too much (2% tolerance)
         // between now and the past hour
-        require(absDiff <= tolerance, "High price volatility");
+        if (absDiff > tolerance) {
+            revert HighPriceVolatility(absDiff);
+        }
 
         // Return the recent price
         return price_5m;
@@ -78,7 +87,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * Pauses the price feed. Callable by Strategist as well.
      **/
     function pause() external onlyGovernorOrStrategist {
-        require(!paused, "Feed already paused");
+        if (paused) {
+            revert PriceFeedPausedError();
+        }
         paused = true;
         emit PriceFeedPaused();
     }
@@ -87,7 +98,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * Unpauses the price feed. Only Governor can call it
      **/
     function unpause() external onlyGovernor {
-        require(paused, "Feed not paused");
+        if (!paused) {
+            revert PriceFeedUnpausedError();
+        }
         paused = false;
         emit PriceFeedUnpaused();
     }
@@ -99,7 +112,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * @param _tolerance New tolerance value
      **/
     function setTolerance(uint256 _tolerance) external onlyGovernor {
-        require(_tolerance <= 0.1 ether, "Tolerance shoud not be >10%");
+        if (tolerance > 0.1 ether) {
+            revert InvalidToleranceBps();
+        }
         emit ToleranceChanged(tolerance, _tolerance);
         tolerance = _tolerance;
     }

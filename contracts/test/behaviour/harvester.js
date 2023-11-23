@@ -90,9 +90,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -105,15 +105,14 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, uniV2Path)
-      ).to.be.revertedWith("Invalid Uniswap V2 path");
+      ).to.be.revertedWith("InvalidTokenInSwapPath");
 
       uniV2Path = utils.defaultAbiCoder.encode(["address[]"], [[usdt.address]]);
-
       await expect(
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, uniV2Path)
-      ).to.be.revertedWith("Invalid Uniswap V2 path");
+      ).to.be.revertedWith("InvalidUniswapV2PathLength");
 
       uniV2Path = utils.defaultAbiCoder.encode(
         ["address[]"],
@@ -134,9 +133,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 1,
+        swapPlatform: 1,
         liquidationLimit: 0,
       };
 
@@ -148,7 +147,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, uniV3Path)
-      ).to.be.revertedWith("Invalid Reward Token in swap path");
+      ).to.be.revertedWith("InvalidTokenInSwapPath");
 
       uniV3Path = utils.solidityPack(
         ["address", "uint24", "address"],
@@ -158,7 +157,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, uniV3Path)
-      ).to.be.revertedWith("Invalid Base Token in swap path");
+      ).to.be.revertedWith("InvalidTokenInSwapPath");
 
       uniV3Path = utils.solidityPack(
         ["address", "uint24", "address"],
@@ -173,14 +172,14 @@ const shouldBehaveLikeHarvester = (context) => {
 
     it("Should only allow valid balancer config", async () => {
       const { harvester, fixture } = context();
-      const { crv, governor, uniswapRouter } = fixture;
+      const { crv, governor, balancerVault } = fixture;
 
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: balancerVault.address,
         doSwapRewardToken: true,
-        platform: 2,
+        swapPlatform: 2,
         liquidationLimit: 0,
       };
 
@@ -197,7 +196,7 @@ const shouldBehaveLikeHarvester = (context) => {
               ]
             )
           )
-      ).to.be.revertedWith("Invalid Balancer Pool ID");
+      ).to.be.revertedWith("EmptyBalancerPoolId");
 
       await expect(
         harvester
@@ -222,9 +221,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: threePool.address,
+        swapPlatformAddr: threePool.address,
         doSwapRewardToken: true,
-        platform: 3,
+        swapPlatform: 3,
         liquidationLimit: 0,
       };
 
@@ -240,7 +239,7 @@ const shouldBehaveLikeHarvester = (context) => {
             config,
             utils.defaultAbiCoder.encode(["uint256", "uint256"], ["1", "0"])
           )
-      ).to.be.revertedWith("Invalid Base Token Index");
+      ).to.be.revertedWith("InvalidCurvePoolAssetIndex");
 
       await expect(
         harvester
@@ -250,7 +249,7 @@ const shouldBehaveLikeHarvester = (context) => {
             config,
             utils.defaultAbiCoder.encode(["uint256", "uint256"], ["2", "2"])
           )
-      ).to.be.revertedWith("Invalid Reward Token Index");
+      ).to.be.revertedWith("InvalidCurvePoolAssetIndex");
 
       await expect(
         harvester
@@ -270,9 +269,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 4,
+        swapPlatform: 4,
         liquidationLimit: 0,
       };
 
@@ -280,7 +279,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, [])
-      ).to.be.reverted;
+      ).to.be.revertedWith("InvalidSwapPlatform");
     });
 
     it("Should reset allowance on older router", async () => {
@@ -292,9 +291,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: oldRouter.address,
+        swapPlatformAddr: oldRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -317,7 +316,7 @@ const shouldBehaveLikeHarvester = (context) => {
         crv.address,
         {
           ...config,
-          swapRouterAddr: uniswapRouter.address,
+          swapPlatformAddr: uniswapRouter.address,
         },
         uniV2Path
       );
@@ -338,9 +337,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: addresses.zero,
+        swapPlatformAddr: addresses.zero,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -348,7 +347,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, [])
-      ).to.be.revertedWith("Swap router address should be non zero address");
+      ).to.be.revertedWith("EmptyAddress");
     });
 
     it("Should not allow higher slippage", async () => {
@@ -358,9 +357,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 1001,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -368,7 +367,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, [])
-      ).to.be.revertedWith("Allowed slippage should not be over 10%");
+      ).to.be.revertedWith("InvalidSlippageBps");
     });
 
     it("Should not allow higher reward fee", async () => {
@@ -378,9 +377,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 133,
         harvestRewardBps: 1001,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -388,7 +387,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvester
           .connect(governor)
           .setRewardTokenConfig(crv.address, config, [])
-      ).to.be.revertedWith("Harvest reward fee should not be over 10%");
+      ).to.be.revertedWith("InvalidHarvestRewardBps");
     });
 
     it("Should revert for unsupported tokens", async () => {
@@ -398,9 +397,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 133,
         harvestRewardBps: 344,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -418,9 +417,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 133,
         harvestRewardBps: 344,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 0,
+        swapPlatform: 0,
         liquidationLimit: 0,
       };
 
@@ -450,9 +449,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 1,
+        swapPlatform: 1,
         liquidationLimit: 0,
         ...swapRouterConfig,
       };
@@ -497,7 +496,7 @@ const shouldBehaveLikeHarvester = (context) => {
         .withArgs(
           swapToken.address,
           baseToken.address,
-          config.platform,
+          config.swapPlatform,
           balanceSwapped.toString(),
           tokensReceived.toString()
         );
@@ -527,8 +526,8 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await _swapWithRouter(
         {
-          platform: 0,
-          swapRouterAddr: uniswapRouter.address,
+          swapPlatform: 0,
+          swapPlatformAddr: uniswapRouter.address,
         },
         utils.defaultAbiCoder.encode(
           ["address[]"],
@@ -550,8 +549,8 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await _swapWithRouter(
         {
-          platform: 1,
-          swapRouterAddr: uniswapRouter.address,
+          swapPlatform: 1,
+          swapPlatformAddr: uniswapRouter.address,
         },
         utils.solidityPack(
           ["address", "uint24", "address"],
@@ -565,8 +564,8 @@ const shouldBehaveLikeHarvester = (context) => {
       const { balancerVault } = fixture;
       await _swapWithRouter(
         {
-          platform: 2,
-          swapRouterAddr: balancerVault.address,
+          swapPlatform: 2,
+          swapPlatformAddr: balancerVault.address,
         },
         utils.defaultAbiCoder.encode(
           ["bytes32"],
@@ -592,8 +591,8 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await _swapWithRouter(
         {
-          platform: 3,
-          swapRouterAddr: threePool.address,
+          swapPlatform: 3,
+          swapPlatformAddr: threePool.address,
         },
         utils.defaultAbiCoder.encode(["uint256", "uint256"], ["0", "2"])
       );
@@ -611,9 +610,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: false,
-        platform: 2,
+        swapPlatform: 2,
         liquidationLimit: 0,
       };
 
@@ -652,9 +651,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapRouterAddr: uniswapRouter.address,
+        swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        platform: 2,
+        swapPlatform: 2,
         liquidationLimit: 0,
       };
 
@@ -705,9 +704,9 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 0,
         harvestRewardBps: 0,
-        swapRouterAddr: balancerVault.address,
+        swapPlatformAddr: balancerVault.address,
         doSwapRewardToken: true,
-        platform: 2,
+        swapPlatform: 2,
         liquidationLimit: ousdUnits("100"),
       };
 
@@ -744,6 +743,17 @@ const shouldBehaveLikeHarvester = (context) => {
           usdtUnits("100")
         );
     });
+
+    it("Should not harvest from unsupported strategies", async () => {
+      const { harvester, fixture } = context();
+      const { domen } = fixture;
+
+      // prettier-ignore
+      await expect(
+        harvester
+          .connect(domen)["harvestAndSwap(address)"](domen.address)
+      ).to.be.revertedWith("UnsupportedStrategy");
+    });
   });
 
   describe("Admin function", () => {
@@ -776,9 +786,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await expect(
         harvester.connect(governor).setRewardProceedsAddress(addresses.zero)
-      ).to.be.revertedWith(
-        "Rewards proceeds address should be a non zero address"
-      );
+      ).to.be.revertedWith("EmptyAddress");
     });
 
     it("Should allow governor to set supported strategies", async () => {

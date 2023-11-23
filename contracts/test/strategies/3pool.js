@@ -143,9 +143,9 @@ describe("3Pool Strategy", function () {
         {
           allowedSlippageBps: 0,
           harvestRewardBps: 200,
-          swapRouterAddr: mockUniswapRouter.address,
+          swapPlatformAddr: mockUniswapRouter.address,
           doSwapRewardToken: true,
-          platform: 0,
+          swapPlatform: 0,
           liquidationLimit: 0,
         },
         utils.defaultAbiCoder.encode(

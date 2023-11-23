@@ -188,4 +188,14 @@ interface IBalancerVault {
         uint256 limit,
         uint256 deadline
     ) external returns (uint256 amountCalculated);
+
+    function getPoolTokenInfo(bytes32 poolId, address token)
+        external
+        view
+        returns (
+            uint256 cash,
+            uint256 managed,
+            uint256 lastChangeBlock,
+            address assetManager
+        );
 }
