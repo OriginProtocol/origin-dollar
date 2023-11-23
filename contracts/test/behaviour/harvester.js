@@ -600,7 +600,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
     it("Should not swap when disabled", async () => {
       const { harvester, strategies, fixture } = context();
-      const { governor, uniswapRouter, domen } = fixture;
+      const { governor, balancerVault, domen } = fixture;
 
       const { strategy, rewardTokens } = strategies[0];
 
@@ -610,7 +610,7 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapPlatformAddr: uniswapRouter.address,
+        swapPlatformAddr: balancerVault.address,
         doSwapRewardToken: false,
         swapPlatform: 2,
         liquidationLimit: 0,
@@ -641,7 +641,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
     it("Should not swap when balance is zero", async () => {
       const { harvester, strategies, fixture } = context();
-      const { governor, uniswapRouter } = fixture;
+      const { governor, balancerVault } = fixture;
 
       const { rewardTokens, strategy } = strategies[0];
 
@@ -651,7 +651,7 @@ const shouldBehaveLikeHarvester = (context) => {
       const config = {
         allowedSlippageBps: 200,
         harvestRewardBps: 500,
-        swapPlatformAddr: uniswapRouter.address,
+        swapPlatformAddr: balancerVault.address,
         doSwapRewardToken: true,
         swapPlatform: 2,
         liquidationLimit: 0,

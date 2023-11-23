@@ -500,6 +500,20 @@ abstract contract BaseHarvester is Governable {
             1e4 / // fix the max slippage decimal position
             1e18; // and oracle price decimals position
 
+        // uint256 minExpected = balance
+        //     .mulTruncateScale(
+        //         1e4 - tokenConfig.allowedSlippageBps * oraclePrice,
+
+        //         // 1e4 to fix Max Slippage decimal position,
+        //         // and 1e18 for the Oracle Price
+        //         1e4 * 1e18
+        //     );
+        //     // .mulTruncate(oraclePrice)
+        //     // .scaleBy(
+        //     //     baseTokenDecimals,
+        //     //     Helpers.getDecimals(_swapToken)
+        //     // );
+
         // Do the swap
         uint256 amountReceived = _doSwap(
             tokenConfig.swapPlatform,
@@ -518,8 +532,10 @@ abstract contract BaseHarvester is Governable {
 
         IERC20 baseToken = IERC20(baseTokenAddress);
         uint256 baseTokenBalance = baseToken.balanceOf(address(this));
-        uint256 farmerShare = (baseTokenBalance *
-            tokenConfig.harvestRewardBps) / 1e4;
+        uint256 farmerShare = baseTokenBalance.mulTruncateScale(
+            tokenConfig.harvestRewardBps,
+            1e4
+        );
         uint256 rewardsProceedsShare = baseTokenBalance - farmerShare;
 
         baseToken.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);

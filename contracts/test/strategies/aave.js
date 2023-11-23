@@ -189,8 +189,6 @@ describe("Aave Strategy", function () {
         }
 
         // Disable swap
-        // await oracleRouter.connect(governor)
-        //   .setFeed(aave.address, )
         await harvester.connect(governor).setRewardTokenConfig(
           aave.address,
           {
@@ -202,10 +200,8 @@ describe("Aave Strategy", function () {
             liquidationLimit: 0,
           },
           utils.defaultAbiCoder.encode(
-            ["bytes32"],
-            [
-              "0x000000000000000000000000000000000000000000000000000000000000dead",
-            ]
+            ["address[]"],
+            [[aave.address, fixture.usdt.address]]
           )
         );
 
