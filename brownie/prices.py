@@ -61,7 +61,7 @@ def get_cmc_quote(from_token, to_token, from_amount):
 
     if req.status_code != 200:
         print(req.json())
-        raise Exception("Error accessing 1inch api")
+        raise Exception("Error accessing CMC api")
 
     result = req.json()
 
