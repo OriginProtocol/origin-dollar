@@ -12,8 +12,6 @@ abstract contract OracleRouterBase is IOracle {
     using StableMath for uint256;
     using SafeCast for int256;
 
-    uint256 internal constant MIN_DRIFT = 0.7e18;
-    uint256 internal constant MAX_DRIFT = 1.3e18;
     address internal constant FIXED_PRICE =
         0x0000000000000000000000000000000000000001;
     // Maximum allowed staleness buffer above normal Oracle maximum staleness
@@ -36,14 +34,14 @@ abstract contract OracleRouterBase is IOracle {
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
      * @param asset address of the asset
-     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
+     * @return _price unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
         external
         view
         virtual
         override
-        returns (uint256)
+        returns (uint256 _price)
     {
         (address _feed, uint256 maxStaleness) = feedMetadata(asset);
         require(_feed != address(0), "Asset not available");
@@ -59,12 +57,7 @@ abstract contract OracleRouterBase is IOracle {
 
         uint8 decimals = getDecimals(_feed);
 
-        uint256 _price = _iprice.toUint256().scaleBy(18, decimals);
-        if (shouldBePegged(asset)) {
-            require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
-            require(_price >= MIN_DRIFT, "Oracle: Price under min");
-        }
-        return _price;
+        _price = _iprice.toUint256().scaleBy(18, decimals);
     }
 
     function getDecimals(address _feed) internal view virtual returns (uint8) {
@@ -87,15 +80,6 @@ abstract contract OracleRouterBase is IOracle {
         uint8 decimals = AggregatorV3Interface(_feed).decimals();
         decimalsCache[_feed] = decimals;
         return decimals;
-    }
-
-    function shouldBePegged(address _asset) internal view returns (bool) {
-        string memory symbol = Helpers.getSymbol(_asset);
-        bytes32 symbolHash = keccak256(abi.encodePacked(symbol));
-        return
-            symbolHash == keccak256(abi.encodePacked("DAI")) ||
-            symbolHash == keccak256(abi.encodePacked("USDC")) ||
-            symbolHash == keccak256(abi.encodePacked("USDT"));
     }
 }
 
@@ -167,14 +151,14 @@ contract OETHOracleRouter is OracleRouter {
      *         This implementation does not (!) do range checks as the
      *         parent OracleRouter does.
      * @param asset address of the asset
-     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
+     * @return _price unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
         external
         view
         virtual
         override
-        returns (uint256)
+        returns (uint256 _price)
     {
         (address _feed, uint256 maxStaleness) = feedMetadata(asset);
         if (_feed == FIXED_PRICE) {
@@ -191,8 +175,7 @@ contract OETHOracleRouter is OracleRouter {
         );
 
         uint8 decimals = getDecimals(_feed);
-        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
-        return _price;
+        _price = uint256(_iprice).scaleBy(18, decimals);
     }
 
     /**
