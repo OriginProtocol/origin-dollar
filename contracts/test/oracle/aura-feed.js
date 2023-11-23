@@ -60,6 +60,30 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
     );
   });
 
+  it("should revert if paused", async () => {
+    const { auraWETHPriceFeed, auraWETHWeightedPool, strategist } = fixture;
+
+    // Price with > 2% deviation
+    await auraWETHWeightedPool
+      .connect(strategist)
+      .setNextResults([oethUnits("1"), oethUnits("1")]);
+
+    await auraWETHPriceFeed.connect(strategist).pause();
+
+    await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
+      "PriceFeedPausedError"
+    );
+
+    // Price with > 2% deviation
+    await auraWETHWeightedPool
+      .connect(strategist)
+      .setNextResults([oethUnits("1.03"), oethUnits("1")]);
+
+    await expect(auraWETHPriceFeed.price()).to.be.revertedWith(
+      "HighPriceVolatility"
+    );
+  });
+
   it("Should allow strategist to pause price feeds", async () => {
     const { auraWETHPriceFeed, strategist } = fixture;
 

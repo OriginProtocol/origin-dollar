@@ -107,6 +107,17 @@ const shouldBehaveLikeHarvester = (context) => {
           .setRewardTokenConfig(crv.address, config, uniV2Path)
       ).to.be.revertedWith("InvalidTokenInSwapPath");
 
+      uniV2Path = utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[crv.address, crv.address]]
+      );
+
+      await expect(
+        harvester
+          .connect(governor)
+          .setRewardTokenConfig(crv.address, config, uniV2Path)
+      ).to.be.revertedWith("InvalidTokenInSwapPath");
+
       uniV2Path = utils.defaultAbiCoder.encode(["address[]"], [[usdt.address]]);
       await expect(
         harvester
@@ -542,8 +553,8 @@ const shouldBehaveLikeHarvester = (context) => {
 
     it("Should harvest and swap with Uniswap V3", async () => {
       const { fixture, harvester, strategies } = context();
-      const { uniswapRouter } = fixture;
-      const { rewardTokens } = strategies[0];
+      const { uniswapRouter, domen, daniel, governor } = fixture;
+      const { strategy, rewardTokens } = strategies[0];
 
       const baseToken = await ethers.getContractAt(
         "MockUSDT",
@@ -551,16 +562,38 @@ const shouldBehaveLikeHarvester = (context) => {
       );
       const swapToken = rewardTokens[0];
 
-      await _swapWithRouter(
-        {
-          swapPlatform: 1,
-          swapPlatformAddr: uniswapRouter.address,
-        },
-        utils.solidityPack(
-          ["address", "uint24", "address"],
-          [swapToken.address, 3000, baseToken.address]
-        )
-      );
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 200,
+        harvestRewardBps: 500,
+        swapPlatformAddr: uniswapRouter.address,
+        doSwapRewardToken: true,
+        swapPlatform: 0,
+        liquidationLimit: 0,
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["address[]"],
+            [[swapToken.address, baseToken.address]]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      const balBefore = await baseToken.balanceOf(daniel.address);
+
+      // prettier-ignore
+      await harvester.connect(domen)["harvestAndSwap(address,address)"](
+        strategy.address,
+        daniel.address
+      )
+
+      expect(await baseToken.balanceOf(daniel.address)).to.be.gt(balBefore);
     });
 
     it("Should harvest and swap with Balancer", async () => {
@@ -641,6 +674,29 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
       await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
+    });
+
+    it("Should harvest and swap and send rewards to external address", async () => {
+      const { fixture, harvester, strategies } = context();
+      const { uniswapRouter } = fixture;
+      const { rewardTokens } = strategies[0];
+
+      const baseToken = await ethers.getContractAt(
+        "MockUSDT",
+        await harvester.baseTokenAddress()
+      );
+      const swapToken = rewardTokens[0];
+
+      await _swapWithRouter(
+        {
+          swapPlatform: 0,
+          swapPlatformAddr: uniswapRouter.address,
+        },
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[swapToken.address, baseToken.address]]
+        )
+      );
     });
 
     it("Should not swap when balance is zero", async () => {
