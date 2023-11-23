@@ -112,7 +112,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * @param _tolerance New tolerance value
      **/
     function setTolerance(uint256 _tolerance) external onlyGovernor {
-        if (tolerance > 0.1 ether) {
+        if (_tolerance > 0.1 ether) {
             revert InvalidToleranceBps();
         }
         emit ToleranceChanged(tolerance, _tolerance);
