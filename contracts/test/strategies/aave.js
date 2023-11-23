@@ -196,7 +196,7 @@ describe("Aave Strategy", function () {
             harvestRewardBps: 0,
             swapPlatformAddr: aave.address,
             doSwapRewardToken: false,
-            swapPlatform: 2,
+            swapPlatform: 0,
             liquidationLimit: 0,
           },
           utils.defaultAbiCoder.encode(
