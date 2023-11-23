@@ -155,7 +155,7 @@ module.exports = deploymentWithGovernanceProposal(
               harvestRewardBps: 200,
               platform: 2, // Balancer
               swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-              liquidationLimit: oethUnits("100"), // TODO: Adjust the value
+              liquidationLimit: oethUnits("1000"),
               doSwapRewardToken: true,
             },
             utils.defaultAbiCoder.encode(
@@ -177,7 +177,7 @@ module.exports = deploymentWithGovernanceProposal(
               harvestRewardBps: 200,
               platform: 2, // Balancer
               swapRouterAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-              liquidationLimit: oethUnits("500"), // TODO: Adjust the value
+              liquidationLimit: oethUnits("4000"),
               doSwapRewardToken: true,
             },
             utils.defaultAbiCoder.encode(
