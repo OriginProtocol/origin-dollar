@@ -12,6 +12,7 @@ require("hardhat-deploy-ethers");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+require("hardhat-gas-trackooor");
 
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
