@@ -5,6 +5,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers.js");
 const addresses = require("../../utils/addresses");
+const { setFraxOraclePrice } = require("../../utils/frax.js");
 
 const log = require("../../utils/logger")("test:fork:oracles");
 
@@ -74,6 +75,24 @@ describe("ForkTest: Oracles", function () {
           .populateTransaction.price(asset.address);
         await josh.sendTransaction(tx);
       }
+    });
+    it("Should get frxETH price under 0.7", async () => {
+      const { frxETH } = fixture;
+
+      const testPrice = parseUnits("0.65");
+      await setFraxOraclePrice(testPrice);
+
+      const price = await oethOracleRouter.price(frxETH.address);
+      expect(price).to.eq(testPrice);
+    });
+    it("Should get frxETH price over 1.0", async () => {
+      const { frxETH } = fixture;
+
+      const testPrice = parseUnits("1.01");
+      await setFraxOraclePrice(testPrice);
+
+      const price = await oethOracleRouter.price(frxETH.address);
+      expect(price).to.eq(testPrice);
     });
   });
   describe("OETH Oracle", () => {
