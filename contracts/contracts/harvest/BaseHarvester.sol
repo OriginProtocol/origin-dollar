@@ -439,8 +439,10 @@ abstract contract BaseHarvester is Governable {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i], _rewardTo);
+        IOracle priceProvider = IOracle(IVault(vaultAddress).priceProvider());
+        uint256 len = rewardTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            _swap(rewardTokens[i], _rewardTo, priceProvider);
         }
     }
 
@@ -464,8 +466,13 @@ abstract contract BaseHarvester is Governable {
      *      with the price provider
      * @param _swapToken Address of the token to swap
      * @param _rewardTo Address where to send the share of harvest rewards to
+     * @param _priceProvider Oracle to get prices of the swap token
      */
-    function _swap(address _swapToken, address _rewardTo) internal virtual {
+    function _swap(
+        address _swapToken,
+        address _rewardTo,
+        IOracle _priceProvider
+    ) internal virtual {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
@@ -487,8 +494,7 @@ abstract contract BaseHarvester is Governable {
         }
 
         // This'll revert if there is no price feed
-        uint256 oraclePrice = IOracle(IVault(vaultAddress).priceProvider())
-            .price(_swapToken);
+        uint256 oraclePrice = _priceProvider.price(_swapToken);
 
         // Oracle price is 1e18
         uint256 minExpected = (balance *
