@@ -191,6 +191,7 @@ async function hotDeployVaultAdmin(
   const vaultProxyName = `${isOeth ? "OETH" : ""}VaultProxy`;
   const vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
   const vaultAdminName = `${isOeth ? "OETH" : ""}VaultAdmin`;
+  const vaultVariableName = `${isOeth ? "oethVault" : "vault"}`;
 
   const cVaultProxy = await ethers.getContract(vaultProxyName);
 
@@ -211,6 +212,11 @@ async function hotDeployVaultAdmin(
     // TODO: this might be faster by replacing bytecode of existing implementation contract
     const signerTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
     await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
+
+    fixture[vaultVariableName] = await ethers.getContractAt(
+      "IVault",
+      cVaultProxy.address
+    );
   }
   if (deployVaultCore) {
     log(`Deploying new ${vaultCoreName} implementation`);

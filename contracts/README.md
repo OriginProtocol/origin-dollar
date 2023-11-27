@@ -44,9 +44,7 @@ yarn lint
 
 ### Install slither
 
-If you use the slither documented "pip3 install slither-analyzer" there might be problems
-with package collisions. Just use pipx that installs any package and all dependencies in 
-sandbox to circumvent the issue: `pipx install slither-analyzer`
+If you use the slither documented "pip3 install slither-analyzer" there might be problems with package collisions. Just use pipx that installs any package and all dependencies in sandbox to circumvent the issue: `pipx install slither-analyzer`
 
 [Slither](https://github.com/crytic/slither#slither-the-solidity-source-analyzer) is used to for Solidity static analysis.
 
@@ -226,6 +224,59 @@ If enabled, the gas usage will be output in a table after the tests have execute
 |  MockOETHOracleRouterNoStale   ·          -  ·          -  ·     529194  ·        1.8 %  ·          -  │
 ·································|·············|·············|·············|···············|··············
 |  MockOracleRouterNoStale       ·          -  ·          -  ·     743016  ·        2.5 %  ·          -  │
+```
+
+## Signers
+
+When using Hardhat tasks, there are a few options for specifying the wallet to send transactions from.
+
+1. Primary key
+2. Impersonate
+3. Defender Relayer
+
+### Primary Key
+
+The primary key of the account to be used can be set with the `DEPLOYER_PK` or `GOVERNOR_PK` environment variables. These are traditionally used for contract deployments.
+
+> Add `export HISTCONTROL=ignorespace` to your shell config, eg `~/.profile` or `~/.zprofile`, so any command with a space at the start won’t go into your history file.
+
+When finished, you can unset the `DEPLOYER_PK` and `GOVERNOR_PK` environment variables so they aren't accidentally used.
+
+```
+unset DEPLOYER_PK
+unset GOVERNOR_PK
+```
+
+### Impersonate
+
+If using a fork test or node, you can impersonate any externally owned account or contract. Export `IMPERSONATE` with the address of the account you want to impersonate. The account will be funded with some Ether. For example
+
+```
+export IMPERSONATE=0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC
+```
+
+When finished, you can stop impersonating by unsetting the `IMPERSONATE` environment variable.
+
+```
+unset IMPERSONATE
+```
+
+### Defender Relayer
+
+Open Zeppelin's [Defender](https://defender.openzeppelin.com/) product has a [Relayer](https://docs.openzeppelin.com/defender/v2/manage/relayers) service that is a managed wallet. It handles the nonce, gas, signing and sending of transactions.
+
+To use a [Relayer](https://defender.openzeppelin.com/v2/#/manage/relayers) account, first log into Defender and create an API key for the account you want to use. Use the generated API key and secret to set the `DEFENDER_API_KEY` and `DEFENDER_API_SECRET` environment variables.
+
+```
+export DEFENDER_API_KEY=
+export DEFENDER_API_SECRET=
+```
+
+Once you have finished sending your transactions, the API key for hte Relayer account should be deleted in Defender and the environment variables unset.
+
+```
+unset DEFENDER_API_KEY
+unset DEFENDER_API_SECRET
 ```
 
 ## Contract Verification
