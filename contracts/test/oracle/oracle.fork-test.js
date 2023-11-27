@@ -25,6 +25,21 @@ describe("ForkTest: Oracles", function () {
       oethOracleRouter = await ethers.getContract("OETHOracleRouter");
     });
 
+    it("should have valid Oracle decimals", async () => {
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.WETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.rETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.frxETH))
+        .to.be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.stETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.CRV)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.CVX)).to
+        .be.true;
+    });
+
     it("should get rETH price", async () => {
       const { reth } = fixture;
 
@@ -59,6 +74,14 @@ describe("ForkTest: Oracles", function () {
           .populateTransaction.price(asset.address);
         await josh.sendTransaction(tx);
       }
+    });
+    it.only("should get gas costs of assets", async () => {
+      const { weth, josh } = fixture;
+
+      const tx = await oethOracleRouter
+        .connect(josh)
+        .populateTransaction.price(weth.address);
+      await josh.sendTransaction(tx);
     });
   });
   describe("OETH Oracle", () => {
