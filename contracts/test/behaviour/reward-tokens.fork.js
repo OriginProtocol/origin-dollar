@@ -98,14 +98,13 @@ const shouldHaveRewardTokensConfigured = (context) => {
             } else if (config.swapPlatform == 3) {
               const [rewardTokenIndex, baseTokenIndex] =
                 expectedConfig.curvePoolIndices;
+              const actualIndices = await harvester.curvePoolIndices(token);
               // Curve
-              expect(
-                (await harvester.curvePoolIndices(token)).toString()
-              ).to.eq(
-                BigNumber.from(rewardTokenIndex)
-                  .shl(128)
-                  .add(baseTokenIndex)
-                  .toString()
+              expect(actualIndices[0].toString()).to.eq(
+                BigNumber.from(rewardTokenIndex).toString()
+              );
+              expect(actualIndices[1].toString()).to.eq(
+                BigNumber.from(baseTokenIndex).toString()
               );
             }
           }

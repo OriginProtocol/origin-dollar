@@ -114,8 +114,14 @@ abstract contract BaseHarvester is Governable {
     mapping(address => bytes) public uniswapV3Path;
     // Pool ID to use for reward tokens on Balancer
     mapping(address => bytes32) public balancerPoolId;
+
+    struct CurvePoolIndices {
+        // Casted into uint128 and stored in a struct to save gas
+        uint128 rewardTokenIndex;
+        uint128 baseTokenIndex;
+    }
     // Packed indices of assets on the Curve pool
-    mapping(address => uint256) public curvePoolIndices;
+    mapping(address => CurvePoolIndices) public curvePoolIndices;
 
     constructor(address _vaultAddress, address _baseTokenAddress) {
         require(_vaultAddress != address(0));
@@ -350,22 +356,14 @@ abstract contract BaseHarvester is Governable {
         bytes calldata data,
         address poolAddress,
         address token
-    ) internal view returns (uint256 indices) {
-        (uint256 rewardTokenIndex, uint256 baseTokenIndex) = abi.decode(
-            data,
-            (uint256, uint256)
-        );
-
-        // Pack it into one slot for gas savings
-        // Shifts left rewardTokenIndex by 128 bits and then
-        // adds baseTokenIndex to avoid overlaps
-        indices = (rewardTokenIndex << 128) + baseTokenIndex;
+    ) internal view returns (CurvePoolIndices memory indices) {
+        indices = abi.decode(data, (CurvePoolIndices));
 
         ICurvePool pool = ICurvePool(poolAddress);
-        if (token != pool.coins(rewardTokenIndex)) {
+        if (token != pool.coins(indices.rewardTokenIndex)) {
             revert InvalidCurvePoolAssetIndex(token);
         }
-        if (baseTokenAddress != pool.coins(baseTokenIndex)) {
+        if (baseTokenAddress != pool.coins(indices.baseTokenIndex)) {
             revert InvalidCurvePoolAssetIndex(baseTokenAddress);
         }
     }
@@ -705,17 +703,11 @@ abstract contract BaseHarvester is Governable {
         uint256 amountIn,
         uint256 minAmountOut
     ) internal returns (uint256 amountOut) {
-        uint256 packedIndices = curvePoolIndices[swapToken];
-
-        // Indices are stored in a single uint256 slot, unpack them
-        // The first 128-bit contains rewardTokenIndex
-        uint256 rewardTokenIndex = packedIndices >> 128;
-        // Last 128-bit contains baseTokenIndex
-        uint256 baseTokenIndex = uint128(packedIndices);
+        CurvePoolIndices memory indices = curvePoolIndices[swapToken];
 
         amountOut = ICurvePool(poolAddress).exchange(
-            rewardTokenIndex,
-            baseTokenIndex,
+            uint256(indices.rewardTokenIndex),
+            uint256(indices.baseTokenIndex),
             amountIn,
             minAmountOut
         );

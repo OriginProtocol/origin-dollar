@@ -141,7 +141,7 @@ module.exports = deploymentWithGovernanceProposal(
               liquidationLimit: oethUnits("4000"),
               doSwapRewardToken: true,
             },
-            utils.defaultAbiCoder.encode(["uint256", "uint256"], ["2", "1"]),
+            utils.defaultAbiCoder.encode(["uint128", "uint128"], ["2", "1"]),
           ],
         },
         // 5. Configure OETH Harvester to swap BAL with Balancer
@@ -202,7 +202,7 @@ module.exports = deploymentWithGovernanceProposal(
               liquidationLimit: oethUnits("2500"),
               doSwapRewardToken: true,
             },
-            utils.defaultAbiCoder.encode(["uint256", "uint256"], ["1", "0"]),
+            utils.defaultAbiCoder.encode(["uint128", "uint128"], ["1", "0"]),
           ],
         },
         // 8. Configure OUSD Harvester to swap CRV with Uniswap V3
