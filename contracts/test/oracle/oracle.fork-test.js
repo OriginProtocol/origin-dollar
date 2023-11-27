@@ -75,14 +75,6 @@ describe("ForkTest: Oracles", function () {
         await josh.sendTransaction(tx);
       }
     });
-    it.only("should get gas costs of assets", async () => {
-      const { weth, josh } = fixture;
-
-      const tx = await oethOracleRouter
-        .connect(josh)
-        .populateTransaction.price(weth.address);
-      await josh.sendTransaction(tx);
-    });
   });
   describe("OETH Oracle", () => {
     it("Should be initialized", async () => {
