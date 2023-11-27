@@ -297,6 +297,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * by numerical order.
      */
     function _getPoolAssets() internal view returns (IERC20[] memory assets) {
+        // slither-disable-next-line unused-return
         (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
     }
 
