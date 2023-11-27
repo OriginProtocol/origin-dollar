@@ -94,10 +94,8 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
-    const { ousd, vault, anna, governor, oracleRouter, nonStandardToken } =
-      fixture;
+    const { ousd, vault, anna, governor, nonStandardToken } = fixture;
 
-    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");

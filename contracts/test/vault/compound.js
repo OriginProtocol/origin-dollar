@@ -418,10 +418,8 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let { ousd, vault, matt, nonStandardToken, oracleRouter, governor } =
-      fixture;
+    let { ousd, vault, matt, nonStandardToken, governor } = fixture;
 
-    await oracleRouter.cacheDecimals(nonStandardToken.address);
     if (nonStandardToken) {
       await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     }

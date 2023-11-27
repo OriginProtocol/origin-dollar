@@ -5,6 +5,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers.js");
 const addresses = require("../../utils/addresses");
+const { setFraxOraclePrice } = require("../../utils/frax.js");
 
 const log = require("../../utils/logger")("test:fork:oracles");
 
@@ -24,6 +25,22 @@ describe("ForkTest: Oracles", function () {
     beforeEach(async () => {
       oethOracleRouter = await ethers.getContract("OETHOracleRouter");
     });
+
+    it("should have valid Oracle decimals", async () => {
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.WETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.rETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.frxETH))
+        .to.be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.stETH)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.CRV)).to
+        .be.true;
+      expect(await oethOracleRouter.isDecimalsValid(addresses.mainnet.CVX)).to
+        .be.true;
+    });
+
     it("should get rETH price", async () => {
       const { reth } = fixture;
 
@@ -58,6 +75,24 @@ describe("ForkTest: Oracles", function () {
           .populateTransaction.price(asset.address);
         await josh.sendTransaction(tx);
       }
+    });
+    it("Should get frxETH price under 0.7", async () => {
+      const { frxETH } = fixture;
+
+      const testPrice = parseUnits("0.65");
+      await setFraxOraclePrice(testPrice);
+
+      const price = await oethOracleRouter.price(frxETH.address);
+      expect(price).to.eq(testPrice);
+    });
+    it("Should get frxETH price over 1.0", async () => {
+      const { frxETH } = fixture;
+
+      const testPrice = parseUnits("1.01");
+      await setFraxOraclePrice(testPrice);
+
+      const price = await oethOracleRouter.price(frxETH.address);
+      expect(price).to.eq(testPrice);
     });
   });
   describe("OETH Oracle", () => {

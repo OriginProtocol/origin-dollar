@@ -13,6 +13,7 @@ contract MockOracleRouter is OracleRouterBase {
     struct FeedMetadata {
         address feedAddress;
         uint256 maxStaleness;
+        uint256 decimals;
     }
 
     mapping(address => FeedMetadata) public assetToFeedMetadata;
@@ -25,19 +26,14 @@ contract MockOracleRouter is OracleRouterBase {
     function setFeed(
         address _asset,
         address _feed,
-        uint256 _maxStaleness
+        uint256 _maxStaleness,
+        uint256 _decimals
     ) external {
-        assetToFeedMetadata[_asset] = FeedMetadata(_feed, _maxStaleness);
-    }
-
-    /*
-     * The dev version of the Oracle doesn't need to gas optimize and cache the decimals
-     */
-    function getDecimals(address _feed) internal view override returns (uint8) {
-        require(_feed != address(0), "Asset not available");
-        require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
-
-        return AggregatorV3Interface(_feed).decimals();
+        assetToFeedMetadata[_asset] = FeedMetadata(
+            _feed,
+            _maxStaleness,
+            _decimals
+        );
     }
 
     /**
@@ -51,10 +47,15 @@ contract MockOracleRouter is OracleRouterBase {
         internal
         view
         override
-        returns (address feedAddress, uint256 maxStaleness)
+        returns (
+            address feedAddress,
+            uint256 maxStaleness,
+            uint256 decimals
+        )
     {
         FeedMetadata storage fm = assetToFeedMetadata[asset];
         feedAddress = fm.feedAddress;
         maxStaleness = fm.maxStaleness;
+        decimals = fm.decimals;
     }
 }

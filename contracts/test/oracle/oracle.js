@@ -13,6 +13,13 @@ describe("Vault Oracle", async () => {
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
   });
+  it("should have decimals configured correctly", async () => {
+    const { oracleRouter, dai, usdc, usdt, crv, cvx } = fixture;
+
+    for (const asset of [dai, usdc, usdt, crv, cvx]) {
+      expect(await oracleRouter.isDecimalsValid(asset.address)).to.be.true;
+    }
+  });
   describe("Oracle read methods for DAPP", () => {
     it("should read the mint price", async () => {
       const { vault, usdt } = fixture;
@@ -60,15 +67,15 @@ describe("Vault Oracle", async () => {
 
   describe("Min/Max Drift", async () => {
     const tests = [
-      ["0.10", "Oracle: Price under min"],
-      ["0.699", "Oracle: Price under min"],
+      ["0.10", "Vault: Price under min"],
+      ["0.699", "Vault: Price under min"],
       ["0.70"],
       ["0.98"],
       ["1.00"],
       ["1.04"],
       ["1.30"],
-      ["1.31", "Oracle: Price exceeds max"],
-      ["6.00", "Oracle: Price exceeds max"],
+      ["1.31", "Vault: Price exceeds max"],
+      ["6.00", "Vault: Price exceeds max"],
     ];
 
     for (const test of tests) {

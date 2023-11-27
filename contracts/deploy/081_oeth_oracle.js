@@ -1,3 +1,5 @@
+const { expect } = require("chai");
+
 const addresses = require("../utils/addresses");
 const {
   deploymentWithGovernanceProposal,
@@ -19,6 +21,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 1. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
 
     // 2. Deploy the new Vault implementation
     const dVaultCore = await deployWithConfirmation("OETHVaultCore");
@@ -52,6 +58,24 @@ module.exports = deploymentWithGovernanceProposal(
         .transferGovernance(addresses.mainnet.Timelock)
     );
 
+    // 5. Deploy the new OETH Oracle Router
+    await deployWithConfirmation("OETHOracleRouter", [], null, true);
+    const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
+
+    // Putting checks in here are the fixture replaced the OETHOracleRouter implementation
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.WETH)).to
+      .be.true;
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.stETH)).to
+      .be.true;
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.rETH)).to
+      .be.true;
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.frxETH)).to
+      .be.true;
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.CRV)).to.be
+      .true;
+    expect(await cOETHOracleRouter.isDecimalsValid(addresses.mainnet.CVX)).to.be
+      .true;
+
     // 4. Governance Actions
     return {
       name: "Upgrade the OETH Vault and deploy the OETH Oracle and Oracle Updater.",
@@ -73,6 +97,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHOracle,
           signature: "claimGovernance()",
           args: [],
+        },
+        {
+          contract: cVaultAdmin,
+          signature: "setPriceProvider(address)",
+          args: [cOETHOracleRouter.address],
         },
       ],
     };

@@ -294,12 +294,13 @@ const getOracleAddress = async (deployments) => {
  */
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   const symbolMap = {
-    USDC: 6,
-    USDT: 6,
-    DAI: 6,
-    COMP: 6,
-    CVX: 6,
-    CRV: 6,
+    USDC: 8,
+    USDT: 8,
+    DAI: 8,
+    COMP: 8,
+    CVX: 18,
+    CRV: 18,
+    RETHETH: 18
   };
 
   if (isMainnetOrFork) {
@@ -314,7 +315,7 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
 
   const decimals = Object.keys(symbolMap).includes(tokenSymbol)
     ? symbolMap[tokenSymbol]
-    : 18;
+    : 8;
   await tokenFeed.setDecimals(decimals);
   await tokenFeed.setPrice(parseUnits(usdPrice, decimals));
 };

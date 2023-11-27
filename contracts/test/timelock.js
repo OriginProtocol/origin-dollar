@@ -30,8 +30,8 @@ describe("Governor's Timelock controls oracleRouter", function () {
     const args = [
       {
         contract: oracle,
-        signature: "setFeed(address,address,uint256)",
-        args: [WETH, WETH, 0],
+        signature: "setFeed(address,address,uint256,uint256)",
+        args: [WETH, WETH, 0, 18],
       },
     ];
     proposalId = await propose(fixture, args, "Set Feed");
