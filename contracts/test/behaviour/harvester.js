@@ -520,9 +520,7 @@ const shouldBehaveLikeHarvester = (context) => {
         .to.emit(harvester, "RewardProceedsTransferred")
         .withArgs(baseToken.address, domen.address, protocolYield, farmerFee);
 
-      expect(balanceDiff[domen.address][baseToken.address]).to.equal(
-        farmerFee
-      );
+      expect(balanceDiff[domen.address][baseToken.address]).to.equal(farmerFee);
       expect(balanceDiff[rewardProceedsAddress][baseToken.address]).to.equal(
         protocolYield
       );
