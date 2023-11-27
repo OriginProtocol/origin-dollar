@@ -70,6 +70,18 @@ async function tokenTransfer(taskArguments) {
     throw new Error(`Invalid Ethereum address: ${to}`);
   }
 
+  // If ETH transfer
+  if (symbol === "ETH") {
+    log(`About to send ${amount} ${symbol} to ${to}`);
+    // send ETH in a transaction
+    const tx = await signer.sendTransaction({
+      to,
+      value: parseUnits(amount.toString()),
+    });
+    await logTxDetails(tx, "send");
+    return;
+  }
+
   const asset = await resolveAsset(symbol);
   const assetUnits = parseUnits(amount.toString(), await asset.decimals());
 
