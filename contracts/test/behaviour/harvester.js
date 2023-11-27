@@ -503,8 +503,8 @@ const shouldBehaveLikeHarvester = (context) => {
         balanceDiff[rewardProceedsAddress][baseToken.address] +
         balanceDiff[domen.address][baseToken.address];
 
-      const protocolShare = (tokensReceived * 9500) / 10000;
-      const farmerShare = (tokensReceived * 500) / 10000;
+      const protocolYield = (tokensReceived * 9500) / 10000;
+      const farmerFee = (tokensReceived * 500) / 10000;
 
       await expect(swapTx)
         .to.emit(harvester, "RewardTokenSwapped")
@@ -518,13 +518,13 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await expect(swapTx)
         .to.emit(harvester, "RewardProceedsTransferred")
-        .withArgs(baseToken.address, domen.address, protocolShare, farmerShare);
+        .withArgs(baseToken.address, domen.address, protocolYield, farmerFee);
 
       expect(balanceDiff[domen.address][baseToken.address]).to.equal(
-        farmerShare
+        farmerFee
       );
       expect(balanceDiff[rewardProceedsAddress][baseToken.address]).to.equal(
-        protocolShare
+        protocolYield
       );
     }
 

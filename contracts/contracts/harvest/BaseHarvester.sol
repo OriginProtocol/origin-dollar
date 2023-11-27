@@ -50,8 +50,8 @@ abstract contract BaseHarvester is Governable {
     event RewardProceedsTransferred(
         address indexed token,
         address farmer,
-        uint256 protocolShare,
-        uint256 farmerShare
+        uint256 protcolYield,
+        uint256 farmerFee
     );
     event RewardProceedsAddressChanged(address newProceedsAddress);
 
@@ -518,19 +518,19 @@ abstract contract BaseHarvester is Governable {
 
         IERC20 baseToken = IERC20(baseTokenAddress);
         uint256 baseTokenBalance = baseToken.balanceOf(address(this));
-        uint256 farmerShare = baseTokenBalance.mulTruncateScale(
+        uint256 farmerFee = baseTokenBalance.mulTruncateScale(
             tokenConfig.harvestRewardBps,
             1e4
         );
-        uint256 rewardsProceedsShare = baseTokenBalance - farmerShare;
+        uint256 protcolYield = baseTokenBalance - farmerFee;
 
-        baseToken.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
-        baseToken.safeTransfer(_rewardTo, farmerShare);
+        baseToken.safeTransfer(rewardProceedsAddress, protcolYield);
+        baseToken.safeTransfer(_rewardTo, farmerFee);
         emit RewardProceedsTransferred(
             baseTokenAddress,
             _rewardTo,
-            rewardsProceedsShare,
-            farmerShare
+            protcolYield,
+            farmerFee
         );
     }
 
