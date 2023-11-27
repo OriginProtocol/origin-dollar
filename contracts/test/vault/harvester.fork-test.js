@@ -262,8 +262,8 @@ describe("ForkTest: Harvester", function () {
       expect(config.doSwapRewardToken).to.be.true;
       expect(config.liquidationLimit).to.equal(parseUnits("2500", 18));
       const indices = await oethHarvester.curvePoolIndices(cvx.address);
-      expect(indices[0]).to.eq(BigNumber.from("2"));
-      expect(indices[1]).to.eq(BigNumber.from("1"));
+      expect(indices[0]).to.eq(BigNumber.from("1"));
+      expect(indices[1]).to.eq(BigNumber.from("0"));
     });
 
     it("Should have correct reward token config for BAL", async () => {
