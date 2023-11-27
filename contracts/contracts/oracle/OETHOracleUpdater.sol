@@ -5,13 +5,15 @@ import { IOracleReceiver } from "./IOracleReceiver.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { Governable } from "../governance/Governable.sol";
 import { ICurvePool } from "../strategies/ICurvePool.sol";
+import { AutomationCompatibleInterface } from "../interfaces/chainlink/AutomationCompatibleInterface.sol";
+import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
 
 /**
  * @title OETH Oracle Updater
  * @notice Gathers on-chain OETH pricing data and updates the OETHOracle contract.
  * @author Origin Protocol Inc
  */
-contract OETHOracleUpdater is Governable {
+contract OETHOracleUpdater is Governable, AutomationCompatibleInterface {
     /// @notice Max OETH price when redeeming via the vault to 18 decimals.
     /// The vault charges a 0.5% withdraw fee and the oracle prices of
     /// the vault collateral assets are capped at 1 so the max price is 0.995.
@@ -127,5 +129,52 @@ contract OETHOracleUpdater is Governable {
         )
     {
         (answer, vaultPrice, marketPrice) = _getPrices();
+    }
+
+    function checkUpkeep(bytes calldata checkData)
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        AggregatorV3Interface oracle = AggregatorV3Interface(
+            abi.decode(checkData, (address))
+        );
+
+        // Get latest round data
+        (, int256 lastAnswer, , uint256 updatedAt, ) = oracle.latestRoundData();
+
+        // TODO: Make tolerance and frequency configurable by governor
+        if ((block.timestamp - updatedAt) > 1 days) {
+            // Update if it has been 24h since last update
+            upkeepNeeded = true;
+        } else {
+            // Get latest price
+            (uint256 _newAnswer, , ) = _getPrices();
+            int256 newAnswer = int256(_newAnswer);
+
+            // Check for any deviation
+            int256 diff = (1e18 * (lastAnswer - newAnswer)) /
+                ((lastAnswer + newAnswer) / 2);
+            uint256 absDiff = diff < 0 ? uint256(-diff) : uint256(diff);
+
+            // Update if the price divergence is higher
+            upkeepNeeded = absDiff > 0.02 ether;
+        }
+
+        // Pass the oracle address back to `performUpkeep`
+        performData = checkData;
+    }
+
+    function performUpkeep(bytes calldata performData) external override {
+        // TODO: Check if reentrancy is possible here somehow,
+        // Since `addPrice` only reads the price from vault and calls
+        // the `addPrice` method on the address passed to this function,
+        // theoritically it should be safe.
+        IOracleReceiver oracle = IOracleReceiver(
+            abi.decode(performData, (address))
+        );
+
+        this.addPrice(oracle);
     }
 }
