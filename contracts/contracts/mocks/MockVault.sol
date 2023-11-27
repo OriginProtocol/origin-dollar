@@ -10,6 +10,7 @@ contract MockVault is VaultCore {
     using StableMath for uint256;
 
     uint256 storedTotalValue;
+    uint256 public override floorPrice;
 
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
@@ -41,5 +42,9 @@ contract MockVault is VaultCore {
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
+    }
+
+    function setFloorPrice(uint256 _floorPrice) external {
+        floorPrice = _floorPrice;
     }
 }

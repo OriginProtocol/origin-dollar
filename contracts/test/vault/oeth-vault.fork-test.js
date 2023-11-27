@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
+const { resolveAsset } = require("../../utils/assets");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
@@ -17,42 +18,112 @@ describe("ForkTest: OETH Vault", function () {
   this.retries(isCI ? 3 : 0);
 
   let fixture;
-
-  describe("post deployment", () => {
-    const loadFixture = createFixtureLoader(oethDefaultFixture);
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-
-    it("Should have the correct governor address set", async () => {
-      const {
-        oethVault,
-        oethDripper,
-        convexEthMetaStrategy,
-        fraxEthStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      } = fixture;
-
-      const oethContracts = [
-        oethVault,
-        oethDripper,
-        convexEthMetaStrategy,
-        fraxEthStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      ];
-
-      for (let i = 0; i < oethContracts.length; i++) {
-        expect(await oethContracts[i].governor()).to.equal(
-          addresses.mainnet.Timelock
-        );
-      }
-    });
+  const loadFixture = createFixtureLoader(oethDefaultFixture);
+  beforeEach(async () => {
+    fixture = await loadFixture();
   });
 
+  describe("OETH Vault", () => {
+    describe("post deployment", () => {
+      const loadFixture = createFixtureLoader(oethDefaultFixture);
+      beforeEach(async () => {
+        fixture = await loadFixture();
+      });
+      it("Should have the correct governor address set", async () => {
+        const {
+          oethVault,
+          oethDripper,
+          convexEthMetaStrategy,
+          fraxEthStrategy,
+          oeth,
+          woeth,
+          oethHarvester,
+        } = fixture;
+
+        const oethContracts = [
+          oethVault,
+          oethDripper,
+          convexEthMetaStrategy,
+          fraxEthStrategy,
+          oeth,
+          woeth,
+          oethHarvester,
+        ];
+
+        for (let i = 0; i < oethContracts.length; i++) {
+          expect(await oethContracts[i].governor()).to.equal(
+            addresses.mainnet.Timelock
+          );
+        }
+      });
+    });
+    describe("Oracle prices", () => {
+      const assetPriceRanges = {
+        WETH: {
+          min: parseUnits("1"),
+          max: parseUnits("1"),
+        },
+        stETH: {
+          min: parseUnits("0.99"),
+          max: parseUnits("1"),
+        },
+        rETH: {
+          min: parseUnits("1.08"),
+          max: parseUnits("1.1"),
+        },
+        frxETH: {
+          min: parseUnits("0.985"),
+          max: parseUnits("1"),
+        },
+      };
+      for (const [symbol, { min, max }] of Object.entries(assetPriceRanges)) {
+        it(`Should return a price for minting with ${symbol}`, async () => {
+          const { oethVault, oethOracleRouter } = fixture;
+
+          const asset = await resolveAsset(symbol);
+
+          const oraclePrice = await oethOracleRouter.price(asset.address);
+          if (oraclePrice.gt(parseUnits("0.998"))) {
+            const price = await oethVault.priceUnitMint(asset.address);
+
+            log(`Price for minting with ${symbol}: ${formatUnits(price, 18)}`);
+
+            expect(price).to.be.gte(min);
+            expect(price).to.be.lte(max);
+          } else {
+            const tx = oethVault.priceUnitMint(asset.address);
+            await expect(tx).to.revertedWith("Asset price below peg");
+          }
+        });
+        it(`Should return a price for redeeming with ${symbol}`, async () => {
+          const { oethVault } = fixture;
+
+          const asset = await resolveAsset(symbol);
+          const price = await oethVault.priceUnitRedeem(asset.address);
+
+          log(`Price for redeeming with ${symbol}: ${formatUnits(price, 18)}`);
+
+          expect(price).to.be.gte(min);
+          expect(price).to.be.lte(max);
+        });
+      }
+      it("Should return OETH floor price", async () => {
+        const { oethVault, josh } = fixture;
+
+        const price = await oethVault.floorPrice();
+        log(`OETH price: ${formatUnits(price, 18)}`);
+
+        expect(price).to.be.gte(parseUnits("0.99"));
+        expect(price).to.be.lte(parseUnits("1"));
+
+        // This uses a transaction to call a view function so the gas usage can be reported.
+        const tx = await oethVault
+          .connect(josh)
+          .populateTransaction.floorPrice();
+        await josh.sendTransaction(tx);
+      });
+    });
+  });
   describe("user operations", () => {
     let oethWhaleSigner;
     const loadFixture = createFixtureLoader(oethDefaultFixture);

@@ -11,13 +11,12 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
-
-import "./VaultInitializer.sol";
+import { IStrategy, VaultInitializer } from "./VaultInitializer.sol";
 
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
@@ -566,6 +565,34 @@ contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
+     * @notice The value (USD or ETH) of the collateral assets received from
+     * redeeming 1 Origin Token (OUSD or OETH) from the Vault.
+     * This is the minimum price for the OToken. A better price is usually achieved by
+     * swapping the OToken on the Curve pool used for Automated Market Operations (AMO).
+     * For OETH, that's the Curve OETH/ETH pool.
+     * For OUSD, that's the Curve OUSD/3Crv pool.
+     * @param price the price to 18 decimals.
+     */
+    function floorPrice() external view virtual returns (uint256 price) {
+        // Get the assets for redeeming 1 OETH
+        // This has already had the redeem fee applied
+        uint256[] memory redeemAssets = _calculateRedeemOutputs(1e18);
+
+        // For each of the redeemed assets
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
+            // Sum the value of the vault asset = asset amount * oracle price
+            // For OUSD's USDC and USDT assets that are to 6 decimals, the oracle
+            // price is to 18 decimals, so we do not need to scale them up to 18 decimals
+            price +=
+                redeemAssets[i] *
+                IOracle(priceProvider).price(allAssets[i]);
+        }
+
+        // scale back down to 18 decimals as we multiplied two 18 decimals numbers to get the value.
+        price = price / 1e18;
+    }
+
+    /**
      * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
@@ -662,15 +689,15 @@ contract VaultCore is VaultInitializer {
     function _toUnitPrice(address _asset, bool isMint)
         internal
         view
-        returns (uint256 price)
+        returns (uint256 price_)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
-        price = IOracle(priceProvider).price(_asset);
+        price_ = IOracle(priceProvider).price(_asset);
 
         if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
-            price = (price * 1e18) / exchangeRate;
+            price_ = (price_ * 1e18) / exchangeRate;
         } else if (conversion != UnitConversion.DECIMALS) {
             revert("Unsupported conversion type");
         }
@@ -679,23 +706,23 @@ contract VaultCore is VaultInitializer {
          * so the price checks are agnostic to underlying asset being
          * pegged to a USD or to an ETH or having a custom exchange rate.
          */
-        require(price <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
-        require(price >= MIN_UNIT_PRICE_DRIFT, "Vault: Price under min");
+        require(price_ <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
+        require(price_ >= MIN_UNIT_PRICE_DRIFT, "Vault: Price under min");
 
         if (isMint) {
             /* Never price a normalized unit price for more than one
              * unit of OETH/OUSD when minting.
              */
-            if (price > 1e18) {
-                price = 1e18;
+            if (price_ > 1e18) {
+                price_ = 1e18;
             }
-            require(price >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
+            require(price_ >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
         } else {
             /* Never give out more than 1 normalized unit amount of assets
              * for one unit of OETH/OUSD when redeeming.
              */
-            if (price < 1e18) {
-                price = 1e18;
+            if (price_ < 1e18) {
+                price_ = 1e18;
             }
         }
     }

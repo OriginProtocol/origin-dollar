@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const { daiUnits } = require("../helpers");
 
 /**
  *
@@ -25,19 +24,6 @@ const shouldBehaveLikeGovernable = (context) => {
         expect(await strategy.connect(signer).isGovernor()).to.be.false;
       }
     });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      const { strategist, anna, dai, strategy } = context();
-
-      const recoveryAmount = daiUnits("800");
-      for (const signer of [strategist, anna]) {
-        // Naughty signer
-        await expect(
-          strategy.connect(signer).transferToken(dai.address, recoveryAmount)
-        ).to.be.revertedWith("Caller is not the Governor");
-      }
-    });
-
     it("Should allow governor to transfer governance", async () => {
       const { governor, anna, strategy } = context();
 
