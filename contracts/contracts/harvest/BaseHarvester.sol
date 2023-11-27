@@ -274,8 +274,8 @@ abstract contract BaseHarvester is Governable {
             revert InvalidTokenInSwapPath(path[0]);
         }
 
-        if (path[--len] != baseTokenAddress) {
-            revert InvalidTokenInSwapPath(path[len]);
+        if (path[len - 1] != baseTokenAddress) {
+            revert InvalidTokenInSwapPath(path[len - 1]);
         }
     }
 
