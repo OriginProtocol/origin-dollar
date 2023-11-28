@@ -53,12 +53,12 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
     /// @dev This strategy contract will only hold one lock at a time. It can not have multiple locks.
-    bytes32 lockKey;
+    bytes32 public lockKey;
     /// @notice The UNIX timestamp in seconds when the lock expires
-    uint64 unlockTimestamp;
+    uint64 public unlockTimestamp;
     /// @notice the desired level of locked Frax Staked Convex LP tokens
     /// @dev limited to 128 bits so it is packed with the following unlockTimestamp storage variable into single slot
-    uint128 targetLockedBalance;
+    uint128 public targetLockedBalance;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
 
@@ -129,28 +129,17 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     /**
      * @dev Unlock all the Frax Convex LP tokens if
      * - there is a lock and
-     * - the lock has expired and
-     * - the locked balance is over the target lock balance
-     * @param lockedBalance The balance of the Frax Staked Convex LP tokens that are locked.
-     * This includes any tokens in an expired lock.
+     * - the lock has expired
      * @return unlockedAmount The amount of Frax Staked Convex LP tokens unlocked.
      * This can be zero if the lock has not expired yet.
      */
-    function _unlock(uint256 lockedBalance)
-        internal
-        returns (uint256 unlockedAmount)
-    {
+    function _unlock() internal returns (uint256 unlockedAmount) {
         // If over the target lock balance
-        if (
-            lockKey > 0 &&
-            block.timestamp > unlockTimestamp &&
-            targetLockedBalance < lockedBalance
-        ) {
+        if (lockKey > 0 && block.timestamp > unlockTimestamp) {
             // Withdraw all the Frax Staked Convex LP tokens from the lock
             // to this strategy contract and do not claim rewards.
             // Have to withdraw all as we can't withdraw a partial amount.
-            // slither-disable-next-line unused-return
-            IFraxConvexLocking(fraxLocking).withdrawLocked(
+            unlockedAmount = IFraxConvexLocking(fraxLocking).withdrawLocked(
                 lockKey,
                 address(this),
                 false
@@ -159,13 +148,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // The previous withdraw deletes the old lock
             // slither-disable-next-line reentrancy-no-eth
             lockKey = bytes32(0);
-
-            // This assumes all the locked Frax Staked Convex LP tokens are withdraw from the lock.
-            // that is, there are no rounding issues.
-            unlockedAmount = lockedBalance;
         }
-        // else the lock does not exist or has not expired
-        // return unlockedAmount = 0
+        // else no lock exists or has not expired
     }
 
     /**
@@ -220,8 +204,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     }
 
     /**
-     * @dev Stake the Curve Pool LP tokens into the Frax Convex staking contract and
-     * lock up to the target lock level for 7 days.
+     * @dev Stake the Curve Pool LP tokens into the Frax Convex staking contract.
+     * The locked balance is not reset to the target lock balance.
      *
      * This will revert if the Frax Staking contract or Convex pool has been shut down.
      */
@@ -235,35 +219,12 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         // to receive Frax Staked Convex LP tokens.
         // eg deposit frxeth-ng-f for stkcvxfrxeth-ng-f-frax
         IFraxConvexStaking(fraxStaking).deposit(curveLpBalance, address(this));
-
-        // Get the strategy's balance of Frax Staked Convex LP tokens that are locked.
-        // this includes tokens in an expired lock.
-        uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
-            .lockedLiquidityOf(address(this));
-        // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked
-        uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
-
-        // Unlock all if the locked balance is over the target lock balance and the lock has expired
-        _unlock(lockedBalance);
-
-        // Lock more if the locked balance is under the target lock balance
-        // and extend the lock for a full duration even if the lock has not expired.
-        _lock(unlockedBalance, lockedBalance);
     }
 
     /**
-     * @dev
-     * Pre-condition: Strategist has previously set a low enough target locked amount so
-     * there is enough unlocked tokens to withdraw.
-     *
-     * Steps:
-     * - get unlocked LP tokens
-     * - get locked staked LP tokens
-     * - revert if unlocked + locked < requested LP tokens
-     * - if requested LP tokens > unlocked tokens
-         - unlock all
-     * - withdraw requested LP tokens
-     * - lock excess tokens
+     * @dev Withdraw Curve Pool LP tokens from the Frax Convex staking contract.
+     * This does not withdraw from any expired locked tokens.
+     * The locked balance is not reset to the target lock balance.
      *
      * This will NOT revert if the Convex pool has been shut down.
      */
@@ -271,31 +232,12 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked.
         // This does not include tokens in an expired lock.
         uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
-        // Get the strategy's balance of Frax Staked Convex LP tokens that are locked.
-        // This includes tokens in an expired lock.
-        uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
-            .lockedLiquidityOf(address(this));
 
-        // revert if not enough unlocked tokens or
-        // not enough unlocked + expired tokens
-        require(
-            curveLpTokens <= unlockedBalance ||
-                (unlockTimestamp < block.timestamp &&
-                    curveLpTokens <= unlockedBalance + lockedBalance),
-            "Not enough unlocked"
-        );
-
-        // unlock all locked tokens if not enough unlocked tokens
-        if (curveLpTokens > unlockedBalance) {
-            unlockedBalance += _unlock(lockedBalance);
-        }
+        // revert if not enough unlocked Frax Staked Convex LP tokens
+        require(curveLpTokens <= unlockedBalance, "Not enough unlocked");
 
         // convert the Frax Staked Convex LP tokens to to Curve LP tokens
         IFraxConvexStaking(fraxStaking).withdrawAndUnwrap(curveLpTokens);
-        unlockedBalance -= curveLpTokens;
-
-        // lock any excess unlocked tokens if under the locked target
-        _lock(unlockedBalance, lockedBalance);
     }
 
     /**
@@ -313,42 +255,44 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         // any expired locked tokens.
         targetLockedBalance = 0;
 
+        // withdraw all tokens from lock if it has expired
+        _unlock();
+
         // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked.
-        // This does not include tokens in an expired lock.
+        // This will include any expired locks that were unlocked in the previous step.
         uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
-
-        // Get the strategy's balance of Frax Staked Convex LP tokens that are locked.
-        // this includes tokens in an expired lock.
-        uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
-            .lockedLiquidityOf(address(this));
-
-        // withdraw from lock if it has expired
-        unlockedBalance += _unlock(lockedBalance);
 
         // convert the unlocked Frax Staked Convex LP tokens to to Curve LP tokens
         IFraxConvexStaking(fraxStaking).withdrawAndUnwrap(unlockedBalance);
     }
 
     /**
-     * @notice Anyone can extend the lock for 7 days.
+     * @notice Anyone can adjust the amount of locked tokens to the target locked balance
+     * and extend the lock for 7 days.
+     * If locked balance > target lock balance, unlock all if lock has expired.
+     * If locked balance < target lock balance, lock any excess unlocked tokens.
+     *   If no lock exists, create a new lock.
+     *   If a lock exists, add tokens to the existing lock.
+     *
      * This will revert if the Frax Staking contract has been paused.
      */
-    function extendLock() external {
-        require(
-            lockKey > 0 && block.timestamp > unlockTimestamp,
-            "Lock not expired"
-        );
-
-        // Get the strategy's balance of Frax Staked Convex LP tokens that are NOT locked
-        uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
+    function updateLock() external {
         // Get the strategy's balance of Frax Staked Convex LP tokens that are locked
         uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
             .lockedLiquidityOf(address(this));
 
-        // Unlock all if the locked balance is over the target lock balance and the lock has expired
-        unlockedBalance += _unlock(lockedBalance);
+        // Unlock all if the locked balance is over the target lock balance
+        if (lockedBalance > targetLockedBalance) {
+            // Will only unlock if a lock exists and has expired.
+            // Updated the locked balance if the lock has expired.
+            lockedBalance -= _unlock();
+        }
 
-        // lock any excess unlocked tokens if under the locked target
+        // Get the strategy's balance of Frax Staked Convex LP tokens that are NOT locked
+        // This will include any expired locks that were unlocked in the previous step.
+        uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
+
+        // Lock any excess unlocked tokens if under the locked target
         _lock(unlockedBalance, lockedBalance);
     }
 

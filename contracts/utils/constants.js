@@ -1,5 +1,6 @@
 const { BigNumber } = require("ethers");
 
+const ZERO_BYTES32 = "0x0000000000000000000000000000000000000000000000000000000000000000"
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
@@ -25,6 +26,7 @@ const balancer_rETH_WETH_PID =
   "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112";
 
 module.exports = {
+  ZERO_BYTES32,
   threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
