@@ -237,4 +237,8 @@ addresses.mainnet.FrxEthFraxOracle =
 addresses.mainnet.FrxEthEthDualOracle =
   "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
 
+// Curve Pools
+addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
+addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
+
 module.exports = addresses;

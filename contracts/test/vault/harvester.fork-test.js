@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
 const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
-const { isCI } = require("./../helpers");
+const { isCI, oethUnits } = require("./../helpers");
 const { hotDeployOption } = require("../_hot-deploy");
 const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");
@@ -51,7 +51,9 @@ describe("ForkTest: Harvester", function () {
       await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await weth.balanceOf(oethDripper.address)).to.be.gt(wethBefore);
+      expect(await weth.balanceOf(oethDripper.address)).to.be.gt(
+        wethBefore.add(oethUnits("0.1"))
+      );
     });
   });
 
@@ -102,7 +104,9 @@ describe("ForkTest: Harvester", function () {
       expect(await aura.balanceOf(balancerREthStrategy.address)).to.equal("0");
 
       // Should've transferred swapped WETH to Dripper
-      expect(await weth.balanceOf(oethDripper.address)).to.be.gte(wethBefore);
+      expect(await weth.balanceOf(oethDripper.address)).to.be.gt(
+        wethBefore.add(oethUnits("0.1"))
+      );
     });
   });
 
