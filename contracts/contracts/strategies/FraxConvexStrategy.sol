@@ -52,6 +52,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     address public immutable fraxLocking;
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
+    /// @dev This strategy contract will only hold one lock at a time. It can not have multiple locks.
     bytes32 lockKey;
     /// @notice The UNIX timestamp in seconds when the lock expires
     uint64 unlockTimestamp;
@@ -252,17 +253,26 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /**
      * @dev
+     * Pre-condition: Strategist has previously set a low enough target locked amount so
+     * there is enough unlocked tokens to withdraw.
+     *
+     * Steps:
+     * - get unlocked LP tokens
+     * - get locked staked LP tokens
+     * - revert if unlocked + locked < requested LP tokens
+     * - if requested LP tokens > unlocked tokens
+         - unlock all
+     * - withdraw requested LP tokens
+     * - lock excess tokens
      *
      * This will NOT revert if the Convex pool has been shut down.
      */
     function _lpWithdraw(uint256 curveLpTokens) internal override {
-        // - strategist has previously set a low enough target locked amount
-
         // Get the strategy's balance of Frax Staked Convex LP tokens that are not locked.
         // This does not include tokens in an expired lock.
         uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
         // Get the strategy's balance of Frax Staked Convex LP tokens that are locked.
-        // this includes tokens in an expired lock.
+        // This includes tokens in an expired lock.
         uint256 lockedBalance = IFraxConvexLocking(fraxLocking)
             .lockedLiquidityOf(address(this));
 
@@ -292,7 +302,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * @dev Withdraw what we can. If Frax Staked Convex LP tokens are still locked
      * leave and just withdraw the unlocked Frax Staked Convex LP tokens.
      * Sets the target lock balance to zero so we can withdraw any expired locked tokens.
-     * Any locked tokens can with withdraw once the lock has expired. These can not be
+     * Any locked tokens can be withdrawn once the lock has expired. These can not be
      * relocked after expiry as the target lock balance is zero.
      *
      * This will NOT revert if the Convex pool has been shut down.
