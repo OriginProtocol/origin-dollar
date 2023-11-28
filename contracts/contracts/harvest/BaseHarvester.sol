@@ -541,7 +541,10 @@ abstract contract BaseHarvester is Governable {
             revert BalanceMismatchAfterSwap(baseTokenBalance, amountReceived);
         }
 
-        uint256 farmerFee = baseTokenBalance.mulTruncateScale(
+        // Farmer only gets fee from the base amount they helped farm,
+        // They do not get anything from anything that already was there
+        // on the Harvester
+        uint256 farmerFee = amountReceived.mulTruncateScale(
             tokenConfig.harvestRewardBps,
             1e4
         );
@@ -724,6 +727,9 @@ abstract contract BaseHarvester is Governable {
     ) internal returns (uint256 amountOut) {
         CurvePoolIndices memory indices = curvePoolIndices[swapToken];
 
+        // Note: Not all CurvePools return the `amountOut`, make sure
+        // to use only pool that do. Otherwise the swap would revert
+        // always
         amountOut = ICurvePool(poolAddress).exchange(
             uint256(indices.rewardTokenIndex),
             uint256(indices.baseTokenIndex),
