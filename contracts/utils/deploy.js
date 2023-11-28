@@ -833,6 +833,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
+    preProposalId,
     deployerIsProposer = false, // The deployer issues the propose to OGV Governor
     reduceQueueTime = false, // reduce governance queue times
     executeGasLimit = null,
@@ -856,6 +857,17 @@ function deploymentWithGovernanceProposal(opts, fn) {
      *  - been executed by running this function
      *  - is in one of the states that can't get to execution: "Expired", "Canceled", "Defeated"
      */
+    if (
+      await handlePossiblyActiveGovernanceProposal(
+        preProposalId,
+        deployName,
+        governorFive,
+        false,
+        executeGasLimit
+      )
+    ) {
+      return;
+    }
     if (
       await handlePossiblyActiveGovernanceProposal(
         proposalId,
