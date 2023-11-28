@@ -12,7 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
-    deployerIsProposer: true,
+    deployerIsProposer: false,
     executeGasLimit: 30000000,
   },
   async ({ deployWithConfirmation, ethers, getTxOpts }) => {
@@ -38,6 +38,12 @@ module.exports = deploymentWithGovernanceProposal(
     const cOETHHarvester = await ethers.getContractAt(
       "OETHHarvester",
       cOETHHarvesterProxy.address
+    );
+
+    const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
+    const cOETHDripper = await ethers.getContractAt(
+      "OETHDripper",
+      cOETHDripperProxy.address
     );
 
     // Deployer Actions
@@ -308,6 +314,12 @@ module.exports = deploymentWithGovernanceProposal(
               ]
             ),
           ],
+        },
+        // Change Drip duration to 14 days for OETH Dripper
+        {
+          contract: cOETHDripper,
+          signature: "setDripDuration(uint256)",
+          args: [14 * 24 * 60 * 60], // 14 days
         },
       ],
     };

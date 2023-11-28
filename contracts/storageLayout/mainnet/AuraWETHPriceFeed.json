@@ -1,0 +1,55 @@
+{
+  "solcVersion": "0.8.7",
+  "storage": [
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:13"
+    },
+    {
+      "label": "paused",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_bool",
+      "contract": "AuraWETHPriceFeed",
+      "src": "contracts/oracle/AuraWETHPriceFeed.sol:22"
+    },
+    {
+      "label": "tolerance",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_uint256",
+      "contract": "AuraWETHPriceFeed",
+      "src": "contracts/oracle/AuraWETHPriceFeed.sol:23"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
