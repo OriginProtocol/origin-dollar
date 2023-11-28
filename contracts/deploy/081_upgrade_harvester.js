@@ -14,6 +14,8 @@ module.exports = deploymentWithGovernanceProposal(
     reduceQueueTime: true,
     deployerIsProposer: false,
     executeGasLimit: 30000000,
+    proposalId:
+      "70744121595007528818249644545963691097758184661168820806929451960448344720141",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts }) => {
     const { timelockAddr } = await getNamedAccounts();
@@ -315,7 +317,7 @@ module.exports = deploymentWithGovernanceProposal(
             ),
           ],
         },
-        // Change Drip duration to 14 days for OETH Dripper
+        // 12. Change Drip duration to 14 days for OETH Dripper
         {
           contract: cOETHDripper,
           signature: "setDripDuration(uint256)",
