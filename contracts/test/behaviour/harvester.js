@@ -6,6 +6,7 @@ const {
   daiUnits,
   ousdUnits,
   usdtUnits,
+  oethUnits,
 } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
@@ -744,6 +745,93 @@ const shouldBehaveLikeHarvester = (context) => {
 
       await expect(swapTx).to.not.emit(harvester, "RewardTokenSwapped");
       await expect(swapTx).to.not.emit(harvester, "RewardProceedsTransferred");
+    });
+
+    it("Should revert when swap platform doesn't return enough tokens", async () => {
+      const { harvester, strategies, fixture } = context();
+      const { governor, balancerVault } = fixture;
+
+      const { rewardTokens, strategy } = strategies[0];
+
+      const swapToken = rewardTokens[0];
+
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 200,
+        harvestRewardBps: 500,
+        swapPlatformAddr: balancerVault.address,
+        doSwapRewardToken: true,
+        swapPlatform: 2,
+        liquidationLimit: 0,
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      // Disable transfer on mock balancerVault
+      await balancerVault.connect(governor).disableTransfer();
+
+      // prettier-ignore
+      const swapTx = harvester
+        .connect(governor)["harvestAndSwap(address)"](strategy.address);
+
+      await expect(swapTx).to.be.revertedWith("BalanceMismatchAfterSwap");
+    });
+
+    it("Should revert when slippage is high", async () => {
+      const { harvester, strategies, fixture } = context();
+      const { governor, balancerVault } = fixture;
+
+      const { rewardTokens, strategy } = strategies[0];
+
+      const swapToken = rewardTokens[0];
+
+      // Configure to use Uniswap V3
+      const config = {
+        allowedSlippageBps: 200,
+        harvestRewardBps: 500,
+        swapPlatformAddr: balancerVault.address,
+        doSwapRewardToken: true,
+        swapPlatform: 2,
+        liquidationLimit: 0,
+      };
+
+      await harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          swapToken.address,
+          config,
+          utils.defaultAbiCoder.encode(
+            ["bytes32"],
+            [
+              "0x000000000000000000000000000000000000000000000000000000000000dead",
+            ]
+          )
+        );
+
+      await setOracleTokenPriceUsd(await swapToken.symbol(), "1");
+
+      // Disable transfer on mock balancerVault
+      await balancerVault.connect(governor).disableSlippageError();
+      await balancerVault.connect(governor).setSlippage(oethUnits("0.1"));
+
+      // prettier-ignore
+      const swapTx = harvester
+        .connect(governor)["harvestAndSwap(address)"](strategy.address);
+
+      await expect(swapTx).to.be.revertedWith("SlippageError");
     });
 
     it("Should use liquidation limit", async () => {

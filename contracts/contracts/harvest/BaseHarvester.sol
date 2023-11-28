@@ -68,6 +68,9 @@ abstract contract BaseHarvester is Governable {
 
     error UnsupportedStrategy(address strategyAddress);
 
+    error SlippageError(uint256 actualBalance, uint256 minExpected);
+    error BalanceMismatchAfterSwap(uint256 actualBalance, uint256 minExpected);
+
     // Configuration properties for harvesting logic of reward tokens
     struct RewardTokenConfig {
         // Max allowed slippage when swapping reward token for a stablecoin denominated in basis points.
@@ -239,6 +242,9 @@ abstract contract BaseHarvester is Governable {
                 _tokenAddress
             );
         } else {
+            // Note: This code is unreachable since Solidity reverts when
+            // the value is outside the range of defined values of the enum
+            // (even if it's under the max length of the base type)
             revert InvalidSwapPlatform(_platform);
         }
 
@@ -512,6 +518,11 @@ abstract contract BaseHarvester is Governable {
             balance,
             minExpected
         );
+
+        if (amountReceived < minExpected) {
+            revert SlippageError(amountReceived, minExpected);
+        }
+
         emit RewardTokenSwapped(
             _swapToken,
             baseTokenAddress,
@@ -522,6 +533,14 @@ abstract contract BaseHarvester is Governable {
 
         IERC20 baseToken = IERC20(baseTokenAddress);
         uint256 baseTokenBalance = baseToken.balanceOf(address(this));
+        if (baseTokenBalance < amountReceived) {
+            // Note: It's possible to bypass this check by transfering `baseToken`
+            // directly to Harvester before calling the `harvestAndSwap`. However,
+            // there's no incentive for an attacker to do that. Doing a balance diff
+            // will increase the gas cost significantly
+            revert BalanceMismatchAfterSwap(baseTokenBalance, amountReceived);
+        }
+
         uint256 farmerFee = baseTokenBalance.mulTruncateScale(
             tokenConfig.harvestRewardBps,
             1e4

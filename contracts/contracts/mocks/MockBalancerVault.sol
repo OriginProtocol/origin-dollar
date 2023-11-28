@@ -11,6 +11,8 @@ import { StableMath } from "../utils/StableMath.sol";
 contract MockBalancerVault {
     using StableMath for uint256;
     uint256 public slippage = 1 ether;
+    bool public transferDisabled = false;
+    bool public slippageErrorDisabled = false;
 
     function swap(
         IBalancerVault.SingleSwap calldata singleSwap,
@@ -19,16 +21,20 @@ contract MockBalancerVault {
         uint256
     ) external returns (uint256 amountCalculated) {
         amountCalculated = (minAmountOut * slippage) / 1 ether;
-        require(amountCalculated >= minAmountOut, "Slippage error");
+        if (!slippageErrorDisabled) {
+            require(amountCalculated >= minAmountOut, "Slippage error");
+        }
         IERC20(singleSwap.assetIn).transferFrom(
             funds.sender,
             address(this),
             singleSwap.amount
         );
-        MintableERC20(singleSwap.assetOut).mintTo(
-            funds.recipient,
-            amountCalculated
-        );
+        if (!transferDisabled) {
+            MintableERC20(singleSwap.assetOut).mintTo(
+                funds.recipient,
+                amountCalculated
+            );
+        }
     }
 
     function setSlippage(uint256 _slippage) external {
@@ -45,4 +51,12 @@ contract MockBalancerVault {
             address
         )
     {}
+
+    function disableTransfer() external {
+        transferDisabled = true;
+    }
+
+    function disableSlippageError() external {
+        slippageErrorDisabled = true;
+    }
 }
