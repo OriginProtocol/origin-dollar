@@ -662,7 +662,8 @@ const handlePossiblyActiveGovernanceProposal = async (
   proposalId,
   deployName,
   governorFive,
-  reduceQueueTime
+  reduceQueueTime,
+  executeGasLimit
 ) => {
   if (isFork && proposalId) {
     let proposalState;
@@ -860,7 +861,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalId,
         deployName,
         governorFive,
-        reduceQueueTime
+        reduceQueueTime,
+        executeGasLimit
       )
     ) {
       return;
