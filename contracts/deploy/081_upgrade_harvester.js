@@ -11,12 +11,9 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "081_upgrade_harvester",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: false,
     executeGasLimit: 30000000,
-    // Temporary fix until this is executed, will remove before merging
-    preProposalId:
-      "22983443710848978447682038093447564105657898650006428914638357537618097496145",
     proposalId:
       "70744121595007528818249644545963691097758184661168820806929451960448344720141",
   },

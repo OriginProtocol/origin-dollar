@@ -531,13 +531,13 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     await setStorageAt(
       governorFive.address,
       "0x5",
-      "0x0000000000000000000000000000000000000000000000000000000000004380" // 17280 blocks
+      "0x0000000000000000000000000000000000000000000000000000000000003840" // 14400 blocks
     );
     // slot[11]uint256 lateQuoruVoteExtension
     await setStorageAt(
       governorFive.address,
       "0xB", // 11
-      "0x0000000000000000000000000000000000000000000000000000000000002d00" // 11520 blocks
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
     // slot[2]uint256 _minDelay
     await setStorageAt(
@@ -833,7 +833,6 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
-    preProposalId,
     deployerIsProposer = false, // The deployer issues the propose to OGV Governor
     reduceQueueTime = false, // reduce governance queue times
     executeGasLimit = null,
@@ -852,22 +851,26 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const governorFive = await getGovernorFive();
 
+    if (deployName == "081_upgrade_harvester") {
+      const ogvRebrandProposalId = BigNumber.from(
+        "22983443710848978447682038093447564105657898650006428914638357537618097496145"
+      );
+      if ((await getProposalState(ogvRebrandProposalId)) == "Queued") {
+        // Temporary fix until this is executed, will remove before merging
+        await executeGovernanceProposalOnFork({
+          proposalIdBn: ogvRebrandProposalId,
+          proposalState: "Queued",
+          reduceQueueTime: false,
+          executeGasLimit: "30000000",
+        });
+      }
+    }
+
     /* Proposal has either:
      *  - already been executed before running this function or
      *  - been executed by running this function
      *  - is in one of the states that can't get to execution: "Expired", "Canceled", "Defeated"
      */
-    if (
-      await handlePossiblyActiveGovernanceProposal(
-        preProposalId,
-        deployName,
-        governorFive,
-        false,
-        executeGasLimit
-      )
-    ) {
-      return;
-    }
     if (
       await handlePossiblyActiveGovernanceProposal(
         proposalId,
