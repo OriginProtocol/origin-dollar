@@ -5,7 +5,7 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IUniswapUniversalRouter } from "../interfaces/IUniswapUniversalRouter.sol";
+import { IUniswapUniversalRouter } from "../interfaces/uniswap/IUniswapUniversalRouter.sol";
 import { ICVXLocker } from "../interfaces/ICVXLocker.sol";
 
 import { Initializable } from "../utils/Initializable.sol";

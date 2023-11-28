@@ -119,6 +119,8 @@ addresses.mainnet.chainlinkstETH_ETH =
   "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
 addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
+addresses.mainnet.chainlinkBAL_ETH =
+  "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
@@ -220,6 +222,8 @@ addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
+addresses.mainnet.AuraWeightedOraclePool =
+  "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
 // Flux Strategy
 addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
@@ -232,5 +236,9 @@ addresses.mainnet.FrxEthFraxOracle =
 // FrxEthEthDualOracle gets the oracle prices from the Curve and Uniswap pools
 addresses.mainnet.FrxEthEthDualOracle =
   "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
+
+// Curve Pools
+addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
+addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 
 module.exports = addresses;
