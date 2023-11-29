@@ -33,7 +33,11 @@ const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
-const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
+const {
+  setStorageAt,
+  getStorageAt,
+} = require("@nomicfoundation/hardhat-network-helpers");
+const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -346,14 +350,38 @@ const executeGovernanceProposalOnFork = async ({
       }
     }
 
-    const votingPeriod = Number((await governorFive.votingPeriod()).toString());
-    log(
-      `Advancing ${
-        votingPeriod + 1
-      } blocks to make transaction for from Active to Succeeded`
+    let slotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 1] // `_proposals` is in slot 1
+      )
     );
-    // advance to the end of voting period
-    await advanceBlocks(votingPeriod + 1);
+    // Add one to get the `endTime` slot
+    slotKey = BigNumber.from(slotKey).add(1);
+
+    const deadline = BigNumber.from(
+      await getStorageAt(governorFive.address, slotKey)
+    ).toNumber();
+    const currentBlock = await hre.ethers.provider.getBlockNumber();
+    let blocksToMine = deadline - currentBlock;
+
+    if (blocksToMine > 0) {
+      if (reduceQueueTime) {
+        blocksToMine = 10;
+        await setStorageAt(
+          governorFive.address,
+          slotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + 10
+        );
+      }
+      log(
+        `Advancing ${blocksToMine} blocks to make transaction for from Active to Succeeded`
+      );
+
+      // Advance to the end of voting period
+      await advanceBlocks(blocksToMine + 1);
+    }
 
     proposalState = "Succeeded";
     let newState = await getProposalState(proposalIdBn);
