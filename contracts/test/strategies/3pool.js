@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { MAX_UINT256 } = require("../../utils/constants");
 
 const {
   createFixtureLoader,
@@ -8,7 +7,6 @@ const {
 } = require("../fixture/_fixture");
 const {
   daiUnits,
-  usdtUnits,
   ousdUnits,
   units,
   expectApproxSupply,
@@ -140,49 +138,23 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the governor to call harvest for a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](threePoolStrategy.address);
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-    });
-
-    it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await harvester.connect(governor)[
-        // eslint-disable-next-line
-        "harvest(address)"
-      ](threePoolStrategy.address);
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-    });
-
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      await mockUniswapRouter.initialize([crv.address], [usdt.address]);
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
-        300, // max slippage bps
-        100, // harvest reward bps
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
+        {
+          allowedSlippageBps: 0,
+          harvestRewardBps: 200,
+          swapPlatformAddr: mockUniswapRouter.address,
+          doSwapRewardToken: true,
+          swapPlatform: 0,
+          liquidationLimit: 0,
+        },
+        utils.defaultAbiCoder.encode(
+          ["address[]"],
+          [[crv.address, usdt.address]]
+        )
       );
 
       // Make sure Vault has 0 USDT balance
@@ -190,16 +162,10 @@ describe("3Pool Strategy", function () {
 
       // Make sure the Strategy has CRV balance
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await expect(
-        await crv.balanceOf(await governor.getAddress())
-      ).to.be.equal("0");
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
+      expect(await crv.balanceOf(await governor.getAddress())).to.be.equal("0");
+      expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      // Give Uniswap mock some USDT so it can give it back in CRV liquidation
-      await usdt
-        .connect(anna)
-        .transfer(mockUniswapRouter.address, usdtUnits("100"));
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
       await harvester
@@ -207,17 +173,15 @@ describe("3Pool Strategy", function () {
 
       const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
-      // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-      await expect(vault).has.a.balanceOf("1.98", usdt);
-      await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
-        utils.parseUnits("0.02", 6)
+      // Make sure Vault has 100 USDT balance
+      await expect(vault).has.a.balanceOf("1.96", usdt);
+      expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+        utils.parseUnits("0.04", 6)
       );
 
       // No CRV in Vault or Compound strategy
       await expect(harvester).has.a.balanceOf("0", crv);
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
-        "0"
-      );
+      expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal("0");
     });
   });
 });

@@ -47,21 +47,20 @@ describe("ForkTest: Harvest OUSD", function () {
       await expect(usdtSwapped).to.be.gt(usdtUnits("3100"));
     });
   });
-  describe("no CRV liquidation limit", function () {
+  describe.skip("no CRV liquidation limit", function () {
     beforeEach(async () => {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
-          MAX_UINT256,
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapPlatformAddr,
+        MAX_UINT256,
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it should only fail on a specific block number, where
@@ -71,7 +70,7 @@ describe("ForkTest: Harvest OUSD", function () {
      *  - depth of the SushiSwap pool is not deep enough to handle the swap without
      *    hitting the slippage limit.
      */
-    it.skip("should not harvest and swap", async function () {
+    it("should not harvest and swap", async function () {
       const { anna, OUSDmetaStrategy, harvester } = fixture;
 
       // prettier-ignore
@@ -82,30 +81,29 @@ describe("ForkTest: Harvest OUSD", function () {
       );
     });
   });
-  describe("CRV liquidation limit", function () {
+  describe.skip("CRV liquidation limit", function () {
     const crvLimit = 4000;
     beforeEach(async () => {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
 
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
-          parseUnits(crvLimit.toString(), 18),
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapPlatformAddr,
+        parseUnits(crvLimit.toString(), 18),
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it will only succeed again on a specific block number.
      * If strategy doesn't have enough CRV not nearly enough rewards are going to be
      * harvested for the test to pass.
      */
-    it.skip("should harvest and swap", async function () {
+    it("should harvest and swap", async function () {
       const { crv, OUSDmetaStrategy, dripper, harvester, timelock, usdt } =
         fixture;
 

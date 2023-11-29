@@ -5,6 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "076_upgrade_fraxeth_strategy",
     forceDeploy: false,
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",

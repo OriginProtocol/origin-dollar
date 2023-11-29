@@ -2,6 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
+const mocha = require("mocha");
 
 const addresses = require("../../utils/addresses");
 const { setFraxOraclePrice } = require("../../utils/frax");
@@ -58,7 +59,13 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fixtures");
 
+let snapshotId;
+
 const defaultFixture = deployments.createFixture(async () => {
+  if (!snapshotId && !isFork) {
+    snapshotId = await nodeSnapshot();
+  }
+
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
 
   log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
@@ -386,6 +393,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
     bal = await ethers.getContract("MockBAL");
+    aura = await ethers.getContract("MockAura");
 
     crv = await ethers.getContract("MockCRV");
     cvx = await ethers.getContract("MockCVX");
@@ -747,12 +755,12 @@ async function oeth1InchSwapperFixture() {
   const fixture = await oethDefaultFixture();
   const { mock1InchSwapRouter } = fixture;
 
-  const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
-  await replaceContractAt(swapRouterAddr, mock1InchSwapRouter);
+  const swapPlatformAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+  await replaceContractAt(swapPlatformAddr, mock1InchSwapRouter);
 
   const stubbedRouterContract = await hre.ethers.getContractAt(
     "Mock1InchSwapRouter",
-    swapRouterAddr
+    swapPlatformAddr
   );
   fixture.mock1InchSwapRouter = stubbedRouterContract;
 
@@ -1650,6 +1658,7 @@ async function convexOETHMetaVaultFixture(
     depositToStrategy: false,
     poolAddEthAmount: 0,
     poolAddOethAmount: 0,
+    balancePool: false,
   }
 ) {
   const fixture = await oethDefaultFixture();
@@ -1718,6 +1727,21 @@ async function convexOETHMetaVaultFixture(
           [weth.address],
           [wethAmount]
         );
+    }
+  }
+
+  if (config?.balancePool) {
+    const ethBalance = await fixture.oethMetaPool.balances(0);
+    const oethBalance = await fixture.oethMetaPool.balances(1);
+
+    const diff = parseInt(
+      ethBalance.sub(oethBalance).div(oethUnits("1")).toString()
+    );
+
+    if (diff > 0) {
+      config.poolAddOethAmount = (config.poolAddOethAmount || 0) + diff;
+    } else if (diff < 0) {
+      config.poolAddEthAmount = (config.poolAddEthAmount || 0) - diff;
     }
   }
 
@@ -2110,6 +2134,53 @@ async function buybackFixture() {
   return fixture;
 }
 
+async function harvesterFixture() {
+  let fixture;
+
+  if (isFork) {
+    fixture = await defaultFixture();
+  } else {
+    fixture = await compoundVaultFixture();
+
+    const {
+      vault,
+      governor,
+      harvester,
+      dai,
+      aaveStrategy,
+      comp,
+      aaveToken,
+      strategist,
+      compoundStrategy,
+    } = fixture;
+
+    // Add Aave which only supports DAI
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
+
+    await harvester
+      .connect(governor)
+      .setSupportedStrategy(aaveStrategy.address, true);
+
+    // Add direct allocation of DAI to Aave
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, aaveStrategy.address);
+
+    // Let strategies hold some reward tokens
+    await comp
+      .connect(strategist)
+      .mintTo(compoundStrategy.address, ousdUnits("120"));
+    await aaveToken
+      .connect(strategist)
+      .mintTo(aaveStrategy.address, ousdUnits("150"));
+
+    fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
+    fixture.balancerVault = await ethers.getContract("MockBalancerVault");
+  }
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2149,6 +2220,12 @@ async function loadDefaultFixture() {
   return await defaultFixture();
 }
 
+mocha.after(async () => {
+  if (snapshotId) {
+    await nodeRevert(snapshotId);
+  }
+});
+
 module.exports = {
   createFixtureLoader,
   loadDefaultFixture,
@@ -2187,6 +2264,7 @@ module.exports = {
   balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   fluxStrategyFixture,
   buybackFixture,
+  harvesterFixture,
   nodeSnapshot,
   nodeRevert,
 };
