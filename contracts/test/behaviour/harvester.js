@@ -567,7 +567,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvestRewardBps: 500,
         swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        swapPlatform: 0,
+        swapPlatform: 1,
         liquidationLimit: 0,
       };
 
