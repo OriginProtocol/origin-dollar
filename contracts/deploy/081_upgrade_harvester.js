@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "081_upgrade_harvester",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: false,
     executeGasLimit: 30000000,
     proposalId:
