@@ -851,21 +851,6 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const governorFive = await getGovernorFive();
 
-    if (deployName == "081_upgrade_harvester") {
-      const ogvRebrandProposalId = BigNumber.from(
-        "22983443710848978447682038093447564105657898650006428914638357537618097496145"
-      );
-      if ((await getProposalState(ogvRebrandProposalId)) == "Queued") {
-        // Temporary fix until this is executed, will remove before merging
-        await executeGovernanceProposalOnFork({
-          proposalIdBn: ogvRebrandProposalId,
-          proposalState: "Queued",
-          reduceQueueTime: false,
-          executeGasLimit: "30000000",
-        });
-      }
-    }
-
     /* Proposal has either:
      *  - already been executed before running this function or
      *  - been executed by running this function
