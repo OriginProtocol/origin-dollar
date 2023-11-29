@@ -372,7 +372,7 @@ const executeGovernanceProposalOnFork = async ({
           governorFive.address,
           slotKey,
           // Make it queueable in 10 blocks
-          currentBlock + 10
+          currentBlock + blocksToMine
         );
       }
       log(
