@@ -100,31 +100,43 @@ const getIInchSwapData = async ({
   };
   log("swap API params: ", params);
 
-  try {
-    const response = await axios.get(ONEINCH_API_ENDPOINT, {
-      params,
-      headers: {
-        Authorization: `Bearer ${ONEINCH_API_KEY}`,
-      },
-    });
+  let retries = 3;
 
-    if (!response.data.tx || !response.data.tx.data) {
-      console.error(response.data);
-      throw Error("response is missing tx.data");
+  while (retries > 0) {
+    try {
+      const response = await axios.get(ONEINCH_API_ENDPOINT, {
+        params,
+        headers: {
+          Authorization: `Bearer ${ONEINCH_API_KEY}`,
+        },
+      });
+
+      if (!response.data.tx || !response.data.tx.data) {
+        console.error(response.data);
+        throw Error("response is missing tx.data");
+      }
+
+      log("swap API toAmount: ", formatUnits(response.data.toAmount));
+      log("swap API swap paths: ", JSON.stringify(response.data.protocols));
+      // log("swap API tx.data: ", response.data.tx.data);
+
+      return response.data.tx.data;
+    } catch (err) {
+      if (err.response) {
+        console.error("Response data  : ", err.response.data);
+        console.error("Response status: ", err.response.status);
+      }
+      if (err.response?.status == 429) {
+        retries = retries - 1;
+        // Wait for 2s before next try
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw Error(`Call to 1Inch swap API failed: ${err.message}`);
     }
-
-    log("swap API toAmount: ", formatUnits(response.data.toAmount));
-    log("swap API swap paths: ", JSON.stringify(response.data.protocols));
-    // log("swap API tx.data: ", response.data.tx.data);
-
-    return response.data.tx.data;
-  } catch (err) {
-    if (err.response) {
-      console.error("Response data  : ", err.response.data);
-      console.error("Response status: ", err.response.status);
-    }
-    throw Error(`Call to 1Inch swap API failed: ${err.message}`);
   }
+
+  throw Error(`Call to 1Inch swap API failed: Rate-limited`);
 };
 
 module.exports = {
