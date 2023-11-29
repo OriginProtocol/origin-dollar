@@ -576,9 +576,9 @@ const shouldBehaveLikeHarvester = (context) => {
         .setRewardTokenConfig(
           swapToken.address,
           config,
-          utils.defaultAbiCoder.encode(
-            ["address[]"],
-            [[swapToken.address, baseToken.address]]
+          utils.solidityPack(
+            ["address", "uint24", "address"],
+            [swapToken.address, 500, baseToken.address]
           )
         );
 
