@@ -2,6 +2,8 @@ const { BigNumber } = require("ethers");
 
 const ZERO_BYTES32 =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
+const ONE_BYTES32 =
+  "0x0000000000000000000000000000000000000000000000000000000000000001";
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
@@ -32,6 +34,7 @@ const balancer_rETH_WETH_PID =
 
 module.exports = {
   ZERO_BYTES32,
+  ONE_BYTES32,
   DAY,
   WEEK,
   threeCRVPid,

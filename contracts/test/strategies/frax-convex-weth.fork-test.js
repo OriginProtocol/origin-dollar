@@ -5,7 +5,12 @@ const { advanceTime, units, oethUnits, isCI } = require("../helpers");
 const { createFixtureLoader, fraxConvexWethFixture } = require("../_fixture");
 const addresses = require("../../utils/addresses");
 const { resolveAsset } = require("../../utils/assets");
-const { MAX_UINT256, ZERO_BYTES32, WEEK } = require("../../utils/constants");
+const {
+  MAX_UINT256,
+  ONE_BYTES32,
+  DAY,
+  WEEK,
+} = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
@@ -370,24 +375,34 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     return { wethWithdrawAmount, frxEthWithdrawAmount, curveBalances };
   }
 
+  async function assertUnlock(tx, lockKey, unlockAmount, unlockTimestamp) {
+    const { fraxConvexWethStrategy } = fixture;
+
+    await expect(tx)
+      .to.emit(fraxConvexWethStrategy, "Unlock")
+      .withArgs(lockKey, unlockAmount, unlockTimestamp);
+  }
+
   async function assertNoUnlock(tx) {
     const { fraxConvexWethStrategy } = fixture;
 
     await expect(tx).to.not.emit(fraxConvexWethStrategy, "Unlock");
   }
 
-  async function assertNoLock(tx) {
+  async function assertNoLock(tx, unlockTimestamp = 0) {
     const { fraxConvexWethStrategy, fraxConvexLockedWeth } = fixture;
 
     await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
 
-    expect(await fraxConvexWethStrategy.lockKey()).to.equal(ZERO_BYTES32);
+    expect(await fraxConvexWethStrategy.lockKey()).to.equal(ONE_BYTES32);
     expect(
       await fraxConvexLockedWeth.lockedLiquidityOf(
         fraxConvexWethStrategy.address
       )
     ).to.equal(0);
-    expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
+    expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(
+      unlockTimestamp
+    );
   }
 
   /**
@@ -404,10 +419,17 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         fraxConvexWethStrategy.address
       )
     ).to.equal(expectedLockedBalance);
-    expect(await fraxConvexWethStrategy.lockKey()).to.not.equal(ZERO_BYTES32);
+    expect(await fraxConvexWethStrategy.lockKey()).to.not.equal(ONE_BYTES32);
     // unlock in 1 week
     const currentTime = (await hre.ethers.provider.getBlock("latest"))
       .timestamp;
+    const lockState = await fraxConvexLockedWeth.lockedStakes(
+      fraxConvexWethStrategy.address,
+      0
+    );
+    expect(lockState.ending_timestamp).to.eq(
+      unlockTimestamp || WEEK.add(currentTime).add(1)
+    );
     expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(
       unlockTimestamp || WEEK.add(currentTime).add(1)
     );
@@ -431,6 +453,9 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     const stakedAmountBefore = await fraxConvexStakingWeth.balanceOf(
       fraxConvexWethStrategy.address
     );
+    const lockedAmountBefore = await fraxConvexLockedWeth.lockedLiquidityOf(
+      fraxConvexWethStrategy.address
+    );
 
     // transfer some frxETH to the strategy so it can be deposited
     await frxETH
@@ -448,12 +473,18 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     expect(
       await fraxConvexStakingWeth.balanceOf(fraxConvexWethStrategy.address)
     ).to.approxEqualTolerance(stakedAmountBefore.add(depositAmount));
+
     // no change to locked amounts
     await expect(tx).to.not.emit(fraxConvexWethStrategy, "Unlock");
     await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
+    expect(
+      await fraxConvexLockedWeth.lockedLiquidityOf(
+        fraxConvexWethStrategy.address
+      )
+    ).to.eq(lockedAmountBefore);
 
     if (!options.unlockTimestamp) {
-      expect(await fraxConvexWethStrategy.lockKey()).to.equal(ZERO_BYTES32);
+      expect(await fraxConvexWethStrategy.lockKey()).to.equal(ONE_BYTES32);
       expect(
         await fraxConvexLockedWeth.lockedLiquidityOf(
           fraxConvexWethStrategy.address
@@ -461,7 +492,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       ).to.equal(0);
       expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
     } else {
-      expect(await fraxConvexWethStrategy.lockKey()).to.not.equal(ZERO_BYTES32);
+      expect(await fraxConvexWethStrategy.lockKey()).to.not.equal(ONE_BYTES32);
       expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(
         options.unlockTimestamp
       );
@@ -478,89 +509,77 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
   }
 
   async function assertWithdraw(withdrawAssetAmount) {
-    {
-      const {
-        fraxConvexWethStrategy,
-        fraxConvexStakingWeth,
-        curveFrxEthWethPool,
-        frxETH,
-        oethVaultSigner,
-        oethVault,
-      } = fixture;
+    const {
+      fraxConvexWethStrategy,
+      fraxConvexStakingWeth,
+      curveFrxEthWethPool,
+      frxETH,
+      oethVaultSigner,
+      oethVault,
+    } = fixture;
 
-      const stakedAmountBefore = await fraxConvexStakingWeth.balanceOf(
-        fraxConvexWethStrategy.address
+    const stakedAmountBefore = await fraxConvexStakingWeth.balanceOf(
+      fraxConvexWethStrategy.address
+    );
+
+    const tx = await fraxConvexWethStrategy
+      .connect(oethVaultSigner)
+      .withdraw(oethVault.address, frxETH.address, withdrawAssetAmount);
+
+    // new staked amount = old staked amount - withdraw amount
+    // Note the withdraw amount is in frxETH while the staked amount is in Staked Curve LP tokens.
+    // This is why we are approximating the remaining staked amount to 1%
+    expect(
+      await fraxConvexStakingWeth.balanceOf(fraxConvexWethStrategy.address)
+    ).to.approxEqualTolerance(stakedAmountBefore.sub(withdrawAssetAmount));
+
+    // Parse the Withdrawn event from the logs from the IFraxConvexStaking contract
+    const withdrawnTopic =
+      fraxConvexStakingWeth.interface.getEventTopic("Withdrawn");
+    const receipt = await tx.wait();
+    const stakedLogs = receipt.logs.filter(
+      (log) => (log.address = fraxConvexStakingWeth.address)
+    );
+    const withdrawnLog = stakedLogs.find(
+      (log) => log.topics.indexOf(withdrawnTopic) >= 0
+    );
+    expect(withdrawnLog).to.not.be.undefined;
+    const withdrawnEvent =
+      fraxConvexStakingWeth.interface.parseLog(withdrawnLog);
+    const curveLpAmount = withdrawnEvent.args["_amount"];
+
+    // Check staked Frax Convex LP tokens are burnt from the strategy contract
+    await expect(tx)
+      .to.emit(fraxConvexStakingWeth, "Transfer")
+      .withArgs(fraxConvexWethStrategy.address, addresses.zero, curveLpAmount);
+    // Check Curve LP tokens transferred to strategy contract
+    await expect(tx)
+      .to.emit(curveFrxEthWethPool, "Transfer")
+      .withArgs(
+        fraxConvexStakingWeth.address,
+        fraxConvexWethStrategy.address,
+        curveLpAmount
       );
+    // Check Curve LP tokens burnt from strategy
+    await expect(tx)
+      .to.emit(curveFrxEthWethPool, "Transfer")
+      .withArgs(fraxConvexWethStrategy.address, addresses.zero, curveLpAmount);
 
-      const tx = await fraxConvexWethStrategy
-        .connect(oethVaultSigner)
-        .withdraw(oethVault.address, frxETH.address, withdrawAssetAmount);
-
-      // new staked amount = old staked amount - withdraw amount
-      // Note the withdraw amount is in frxETH while the staked amount is in Staked Curve LP tokens.
-      // This is why we are approximating the remaining staked amount to 1%
-      expect(
-        await fraxConvexStakingWeth.balanceOf(fraxConvexWethStrategy.address)
-      ).to.approxEqualTolerance(stakedAmountBefore.sub(withdrawAssetAmount));
-
-      // Parse the Withdrawn event from the logs from the IFraxConvexStaking contract
-      const withdrawnTopic =
-        fraxConvexStakingWeth.interface.getEventTopic("Withdrawn");
-      const receipt = await tx.wait();
-      const stakedLogs = receipt.logs.filter(
-        (log) => (log.address = fraxConvexStakingWeth.address)
-      );
-      const withdrawnLog = stakedLogs.find(
-        (log) => log.topics.indexOf(withdrawnTopic) >= 0
-      );
-      expect(withdrawnLog).to.not.be.undefined;
-      const withdrawnEvent =
-        fraxConvexStakingWeth.interface.parseLog(withdrawnLog);
-      const curveLpAmount = withdrawnEvent.args["_amount"];
-
-      // Check staked Frax Convex LP tokens are burnt from the strategy contract
-      await expect(tx)
-        .to.emit(fraxConvexStakingWeth, "Transfer")
-        .withArgs(
-          fraxConvexWethStrategy.address,
-          addresses.zero,
-          curveLpAmount
-        );
-      // Check Curve LP tokens transferred to strategy contract
-      await expect(tx)
-        .to.emit(curveFrxEthWethPool, "Transfer")
-        .withArgs(
-          fraxConvexStakingWeth.address,
-          fraxConvexWethStrategy.address,
-          curveLpAmount
-        );
-      // Check Curve LP tokens burnt from strategy
-      await expect(tx)
-        .to.emit(curveFrxEthWethPool, "Transfer")
-        .withArgs(
-          fraxConvexWethStrategy.address,
-          addresses.zero,
-          curveLpAmount
-        );
-
-      // no change to locked amounts
-      await expect(tx).to.not.emit(fraxConvexWethStrategy, "Unlock");
-      await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
-    }
+    // no change to locked amounts
+    await expect(tx).to.not.emit(fraxConvexWethStrategy, "Unlock");
+    await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
   }
 
   async function assertFailedWithdraw(withdrawAmount) {
-    {
-      const { fraxConvexWethStrategy, frxETH, oethVaultSigner, oethVault } =
-        fixture;
+    const { fraxConvexWethStrategy, frxETH, oethVaultSigner, oethVault } =
+      fixture;
 
-      // revert as withdraw amount > staked amount == 0
-      await expect(
-        fraxConvexWethStrategy
-          .connect(oethVaultSigner)
-          .withdraw(oethVault.address, frxETH.address, withdrawAmount)
-      ).to.be.revertedWith("Not enough unlocked");
-    }
+    // revert as withdraw amount > staked amount == 0
+    await expect(
+      fraxConvexWethStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, frxETH.address, withdrawAmount)
+    ).to.be.revertedWith("Not enough unlocked");
   }
 
   /**
@@ -569,85 +588,91 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
    * @param {{lockedBalance: BigNumber, unlockTimestamp: number}} options
    */
   async function assertWithdrawAll(withdrawAmount, options) {
-    {
-      const {
-        fraxConvexWethStrategy,
-        fraxConvexStakingWeth,
-        curveFrxEthWethPool,
-        oethVaultSigner,
-      } = fixture;
+    const { fraxConvexWethStrategy, fraxConvexStakingWeth, oethVaultSigner } =
+      fixture;
 
-      const tx = await fraxConvexWethStrategy
-        .connect(oethVaultSigner)
-        .withdrawAll();
+    const tx = await fraxConvexWethStrategy
+      .connect(oethVaultSigner)
+      .withdrawAll();
 
-      // target locked balance = 0
-      expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(0);
+    // target locked balance = 0
+    expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(0);
 
-      // no unlock
-      await assertNoUnlock(tx);
-      if (!options?.unlockTimestamp) {
-        // no add to lock
-        await assertNoLock(tx);
-      } else {
-        // lock exists
-        await assertLock(options.lockedBalance, options.unlockTimestamp);
-      }
+    // no unlock
+    await assertNoUnlock(tx);
 
-      // Check no staked Frax Convex LP tokens
-      expect(
-        await fraxConvexStakingWeth.balanceOf(fraxConvexWethStrategy.address)
-      ).to.eq(0);
+    // new lock
+    if (!options?.unlockTimestamp) {
+      // no add to lock
+      await assertNoLock(tx);
+    } else {
+      // lock exists
+      await assertLock(options.lockedBalance, options.unlockTimestamp);
+    }
 
-      // No tokens withdrawn
-      if (withdrawAmount.eq(0)) {
-        // Check staked Frax Convex LP tokens are not burnt from the strategy contract
-        await expect(tx)
-          .to.not.emit(fraxConvexStakingWeth, "Transfer")
-          .withNamedArgs({
-            from: fraxConvexWethStrategy.address,
-            to: addresses.zero,
-          });
-        // Check Curve LP tokens not transferred to strategy contract
-        await expect(tx)
-          .to.not.emit(curveFrxEthWethPool, "Transfer")
-          .withNamedArgs({
-            from: fraxConvexStakingWeth.address,
-            to: fraxConvexWethStrategy.address,
-          });
-        // Check Curve LP tokens not burnt from strategy
-        await expect(tx)
-          .to.not.emit(curveFrxEthWethPool, "Transfer")
-          .withNamedArgs({
-            from: fraxConvexWethStrategy.address,
-            to: addresses.zero,
-          });
-      } else {
-        // Check staked Frax Convex LP tokens are burnt from the strategy contract
-        await expect(tx)
-          .to.emit(fraxConvexStakingWeth, "Transfer")
-          .withArgs(
-            fraxConvexWethStrategy.address,
-            addresses.zero,
-            withdrawAmount
-          );
-        // Check Curve LP tokens transferred to strategy contract
-        await expect(tx)
-          .to.emit(curveFrxEthWethPool, "Transfer")
-          .withArgs(
-            fraxConvexStakingWeth.address,
-            fraxConvexWethStrategy.address,
-            withdrawAmount
-          );
-        // Check Curve LP tokens burnt from strategy
-        await expect(tx)
-          .to.emit(curveFrxEthWethPool, "Transfer")
-          .withArgs(
-            fraxConvexWethStrategy.address,
-            addresses.zero,
-            withdrawAmount
-          );
-      }
+    // Check no staked Frax Convex LP tokens
+    expect(
+      await fraxConvexStakingWeth.balanceOf(fraxConvexWethStrategy.address)
+    ).to.eq(0);
+
+    await assertStakedWithdraw(tx, withdrawAmount);
+  }
+
+  async function assertStakedWithdraw(tx, withdrawAmount) {
+    const {
+      fraxConvexWethStrategy,
+      fraxConvexStakingWeth,
+      curveFrxEthWethPool,
+    } = fixture;
+
+    // No tokens withdrawn
+    if (withdrawAmount.eq(0)) {
+      // Check staked Frax Convex LP tokens are not burnt from the strategy contract
+      await expect(tx)
+        .to.not.emit(fraxConvexStakingWeth, "Transfer")
+        .withNamedArgs({
+          from: fraxConvexWethStrategy.address,
+          to: addresses.zero,
+        });
+      // Check Curve LP tokens not transferred to strategy contract
+      await expect(tx)
+        .to.not.emit(curveFrxEthWethPool, "Transfer")
+        .withNamedArgs({
+          from: fraxConvexStakingWeth.address,
+          to: fraxConvexWethStrategy.address,
+        });
+      // Check Curve LP tokens not burnt from strategy
+      await expect(tx)
+        .to.not.emit(curveFrxEthWethPool, "Transfer")
+        .withNamedArgs({
+          from: fraxConvexWethStrategy.address,
+          to: addresses.zero,
+        });
+    } else {
+      // Check staked Frax Convex LP tokens are burnt from the strategy contract
+      await expect(tx)
+        .to.emit(fraxConvexStakingWeth, "Transfer")
+        .withArgs(
+          fraxConvexWethStrategy.address,
+          addresses.zero,
+          withdrawAmount
+        );
+      // Check Curve LP tokens transferred to strategy contract
+      await expect(tx)
+        .to.emit(curveFrxEthWethPool, "Transfer")
+        .withArgs(
+          fraxConvexStakingWeth.address,
+          fraxConvexWethStrategy.address,
+          withdrawAmount
+        );
+      // Check Curve LP tokens burnt from strategy
+      await expect(tx)
+        .to.emit(curveFrxEthWethPool, "Transfer")
+        .withArgs(
+          fraxConvexWethStrategy.address,
+          addresses.zero,
+          withdrawAmount
+        );
     }
   }
 
@@ -713,7 +738,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         addresses.mainnet.LockedFraxStakedConvexWeth
       );
       expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(0);
-      expect(await fraxConvexWethStrategy.lockKey()).to.equal(ZERO_BYTES32);
+      expect(await fraxConvexWethStrategy.lockKey()).to.equal(ONE_BYTES32);
       expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
 
       // Storage slots
@@ -939,7 +964,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             fraxConvexWethStrategy.address
           )
         ).to.equal(0);
-        expect(await fraxConvexWethStrategy.lockKey()).to.equal(ZERO_BYTES32);
+        expect(await fraxConvexWethStrategy.lockKey()).to.equal(ONE_BYTES32);
         expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
       });
       describe("with no staked amount", () => {
@@ -1177,7 +1202,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             fraxConvexWethStrategy.address
           )
         ).to.equal(0);
-        expect(await fraxConvexWethStrategy.lockKey()).to.equal(ZERO_BYTES32);
+        expect(await fraxConvexWethStrategy.lockKey()).to.equal(ONE_BYTES32);
         expect(await fraxConvexWethStrategy.unlockTimestamp()).to.equal(0);
       });
       describe("with staked amount", () => {
@@ -1188,6 +1213,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           stakedAmount = await fraxConvexStakingWeth.balanceOf(
             fraxConvexWethStrategy.address
           );
+          log(`Staked amount ${formatUnits(stakedAmount)}`);
           expect(stakedAmount).to.approxEqualTolerance(parseUnits("8990"));
         });
         describe("with zero target locked balance", () => {
@@ -1330,6 +1356,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         unexpiredAmount = await fraxConvexLockedWeth.lockedLiquidityOf(
           fraxConvexWethStrategy.address
         );
+        log(`Unexpired locked amount ${formatUnits(unexpiredAmount)}`);
         unlockTimestampBefore = await fraxConvexWethStrategy.unlockTimestamp();
       });
       describe("with no staked amount", () => {
@@ -1495,6 +1522,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           stakedAmount = await fraxConvexStakingWeth.balanceOf(
             fraxConvexWethStrategy.address
           );
+          log(`Staked amount ${formatUnits(stakedAmount)}`);
           // approximate as we are comparing Curve LP to frxETH
           expect(stakedAmount).to.approxEqualTolerance(frxEthDepositAmount);
         });
@@ -1503,8 +1531,14 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             await setTargetLockedBalance(0);
           });
           it("should update lock", async () => {
+            const { fraxConvexWethStrategy } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // no unlock
-            // no add to lock
+            await assertNoUnlock(tx);
+            // lock exists but not added to
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1523,10 +1557,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2000");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
             // revert as withdraw amount > staked
-            await assertFailedWithdraw(parseUnits("3000"));
+            const withdrawAmount = parseUnits("3300");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
             // target locked balance = 0
@@ -1539,13 +1578,24 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
         });
         describe("with unexpired locked amount < target locked balance < unexpired locked amount + staked amount", () => {
-          const targetLockedBalance = parseUnits("6000");
+          const targetLockedBalance = parseUnits("11000");
           beforeEach(async () => {
             await setTargetLockedBalance(targetLockedBalance);
+            expect(unexpiredAmount).lt(targetLockedBalance);
+            expect(targetLockedBalance).lt(unexpiredAmount.add(stakedAmount));
           });
           it("should update lock ", async () => {
+            const { fraxConvexWethStrategy } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // no unlock
+            await assertNoUnlock(tx);
+
             // add target locked balance - unexpired locked amount to lock
+            // lock exists and is now equal to target locked balance
+            // with unlock time in one week
+            await assertLock(targetLockedBalance);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1564,9 +1614,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2000");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
             // revert as withdraw amount > staked
+            const withdrawAmount = parseUnits("3100");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
             // target locked balance = 0
@@ -1579,13 +1635,24 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
         });
         describe("with unexpired locked amount < unexpired locked amount + staked amount < target locked balance", () => {
-          const targetLockedBalance = parseUnits("2200");
+          const targetLockedBalance = parseUnits("22000");
           beforeEach(async () => {
             await setTargetLockedBalance(targetLockedBalance);
+            expect(unexpiredAmount).lt(unexpiredAmount.add(stakedAmount));
+            expect(unexpiredAmount.add(stakedAmount)).lt(targetLockedBalance);
           });
           it("should update lock ", async () => {
+            const { fraxConvexWethStrategy } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // no unlock
+            await assertNoUnlock(tx);
+
             // add staked amount to lock
+            // lock exists and is now equal to unexpired amount + staked amount
+            // with unlock time in one week
+            await assertLock(unexpiredAmount.add(stakedAmount));
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1604,9 +1671,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2500");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
             // revert as withdraw amount > staked
+            const withdrawAmount = parseUnits("4000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
             // target locked balance = 0
@@ -1619,9 +1692,21 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
         });
         describe("with 0 < target locked balance < unexpired locked amount", () => {
+          const targetLockedBalance = parseUnits("6000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(targetLockedBalance).lt(unexpiredAmount);
+          });
           it("should update lock ", async () => {
+            const { fraxConvexWethStrategy } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // no unlock
-            // no add to lock
+            await assertNoUnlock(tx);
+
+            // lock exists but not added to
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1633,16 +1718,22 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should deposit all", async () => {
             // add to staked amount
             // no change to locked amounts
+            await assertDepositAll(parseUnits("0.001"), {
+              unlockTimestamp: unlockTimestampBefore,
+            });
           });
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
-            await assertDepositAll(parseUnits("98.76"), {
-              unlockTimestamp: unlockTimestampBefore,
-            });
+            const withdrawAmount = parseUnits("10");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
             // revert as withdraw amount > staked
+            const withdrawAmount = parseUnits("3000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
             // target locked balance = 0
@@ -1656,7 +1747,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         });
       });
     });
-    describe.skip("with expired locked amount", () => {
+    describe("with expired locked amount", () => {
+      let lockKeyBefore;
       let expiredAmount;
       let unlockTimestampBefore;
       beforeEach(async () => {
@@ -1668,8 +1760,14 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         expiredAmount = await fraxConvexLockedWeth.lockedLiquidityOf(
           fraxConvexWethStrategy.address
         );
+        log(`Expired locked amount ${formatUnits(expiredAmount)}`);
+
+        lockKeyBefore = await fraxConvexWethStrategy.lockKey();
         unlockTimestampBefore = await fraxConvexWethStrategy.unlockTimestamp();
-        await advanceTime(WEEK);
+        log(`unlockTimestampBefore ${unlockTimestampBefore}`);
+
+        // Move ahead in time so the lock expires
+        await advanceTime(WEEK.add(DAY));
       });
       describe("with no staked amount", () => {
         describe("with zero target locked balance", () => {
@@ -1677,9 +1775,26 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             await setTargetLockedBalance(0);
           });
           it("should update lock", async () => {
+            const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
             // no new lock
+            await assertNoLock(tx, unlockTimestampBefore);
+
             // staked amount = expired locked amount
+            expect(
+              await fraxConvexStakingWeth.balanceOf(
+                fraxConvexWethStrategy.address
+              )
+            ).to.equal(expiredAmount);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1697,18 +1812,59 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
           it("should fail withdraw amount", async () => {
             // revert as withdraw amount > staked amount == 0
+            await assertFailedWithdraw(parseUnits("1"));
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount
+            await assertStakedWithdraw(tx, expiredAmount);
           });
         });
         describe("with 0 < target locked balance < expired locked amount", () => {
+          const targetLockedBalance = parseUnits("1000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(targetLockedBalance).lt(expiredAmount);
+          });
           it("should update lock", async () => {
+            const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // create a new lock for 7 days with target locked balance
+            await assertLock(targetLockedBalance);
+
             // staked amount = expired locked amount - target locked balance
+            expect(
+              await fraxConvexStakingWeth.balanceOf(
+                fraxConvexWethStrategy.address
+              )
+            ).to.equal(expiredAmount.sub(targetLockedBalance));
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1726,18 +1882,55 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
           it("should fail withdraw amount", async () => {
             // revert as withdraw amount > staked amount == 0
+            await assertFailedWithdraw(parseUnits("1"));
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount
+            await assertStakedWithdraw(tx, expiredAmount);
           });
         });
         describe("with expired locked amount < target locked balance", () => {
+          const targetLockedBalance = parseUnits("20000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(expiredAmount).lt(targetLockedBalance);
+          });
           it("should update lock", async () => {
+            const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
+            // no unlock
+            await assertNoUnlock(tx);
+
             // add 7 days to existing lock
             // locked amount = expired locked amount
+            await assertLock(expiredAmount);
+
             // staked amount = 0
+            expect(
+              await fraxConvexStakingWeth.balanceOf(
+                fraxConvexWethStrategy.address
+              )
+            ).to.equal(0);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1755,23 +1948,83 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
           it("should fail withdraw amount", async () => {
             // revert as withdraw amount > staked amount == 0
+            await assertFailedWithdraw(parseUnits("1"));
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount
+            await assertStakedWithdraw(tx, expiredAmount);
           });
         });
       });
       describe("with staked amount", () => {
+        let stakedAmount;
+        beforeEach(async () => {
+          const {
+            frxETH,
+            fraxConvexWethStrategy,
+            fraxConvexStakingWeth,
+            oethVaultSigner,
+          } = fixture;
+          // transfer some amount for a staked amount
+          const frxEthDepositAmount = parseUnits("3000");
+          await frxETH.transfer(
+            fraxConvexWethStrategy.address,
+            frxEthDepositAmount
+          );
+          await fraxConvexWethStrategy.connect(oethVaultSigner).depositAll();
+
+          // Check staked amount
+          stakedAmount = await fraxConvexStakingWeth.balanceOf(
+            fraxConvexWethStrategy.address
+          );
+          log(`Staked amount ${formatUnits(stakedAmount)}`);
+          // approximate as we are comparing Curve LP to frxETH
+          expect(stakedAmount).to.approxEqualTolerance(frxEthDepositAmount);
+        });
         describe("with zero target locked balance", () => {
           beforeEach(async () => {
             await setTargetLockedBalance(0);
           });
           it("should update lock", async () => {
+            const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // no new lock
+            await assertNoLock(tx, unlockTimestampBefore);
+
             // staked amount = expired locked amount + staked amount
+            expect(
+              await fraxConvexStakingWeth.balanceOf(
+                fraxConvexWethStrategy.address
+              )
+            ).to.equal(expiredAmount.add(stakedAmount));
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1790,21 +2043,73 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2000");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
-            // revert as withdraw amount < staked amount
+            // revert as withdraw amount > staked
+            const withdrawAmount = parseUnits("3000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount + staked amount
+            await assertStakedWithdraw(tx, expiredAmount.add(stakedAmount));
           });
         });
         describe("with 0 < target locked balance < expired locked amount", () => {
+          const targetLockedBalance = parseUnits("2000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(targetLockedBalance).lt(expiredAmount);
+          });
           it("should update lock", async () => {
             // unlock expired locked amount
             // create a new lock for 7 days with target locked balance
             // new staked amount = expired locked amount - target locked balance + old staked amount
+
+            const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+            const tx = await fraxConvexWethStrategy.updateLock();
+
+            // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
+            // create a new lock for 7 days with target locked balance
+            await assertLock(targetLockedBalance);
+
+            // new staked amount = expired locked amount - target locked balance + old staked amount
+            expect(
+              await fraxConvexStakingWeth.balanceOf(
+                fraxConvexWethStrategy.address
+              )
+            ).to.equal(
+              expiredAmount.sub(targetLockedBalance).add(stakedAmount)
+            );
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1823,21 +2128,51 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2000");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
-            // revert as withdraw amount < staked amount
+            // revert as withdraw amount > staked amount
+            const withdrawAmount = parseUnits("3000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount + staked amount
+            await assertStakedWithdraw(tx, expiredAmount.add(stakedAmount));
           });
         });
         describe("with expired locked amount < target locked balance < expired locked amount + staked amount", () => {
+          const targetLockedBalance = parseUnits("11000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(expiredAmount).lt(targetLockedBalance);
+            expect(targetLockedBalance).lt(expiredAmount.add(stakedAmount));
+          });
           it("should update lock", async () => {
             // add 7 days to lock
             // add target locked balance - expired locked amount
             // new staked amount =  old staked amount - (target locked balance - expired locked amount)
+            // TODO
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1856,22 +2191,52 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2000");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
-            // revert as withdraw amount < staked amount
+            // revert as withdraw amount > staked amount
+            const withdrawAmount = parseUnits("3000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
             // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
             // withdraw expired locked amount + staked amount
+            await assertStakedWithdraw(tx, expiredAmount.add(stakedAmount));
           });
         });
         describe("with expired locked amount < target locked balance > expired locked amount + staked amount", () => {
+          const targetLockedBalance = parseUnits("20000");
+          beforeEach(async () => {
+            await setTargetLockedBalance(targetLockedBalance);
+            expect(expiredAmount).lt(targetLockedBalance);
+            expect(targetLockedBalance).gt(expiredAmount.add(stakedAmount));
+          });
           it("should update lock", async () => {
             // no unlock
             // add 7 days to lock
             // add staked amount to lock
             // new staked amount = 0
+            // TODO
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1890,14 +2255,37 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should withdraw amount < staked amount", async () => {
             // new staked amount = old staked amount - withdraw amount
             // no change to locked amounts
+            const withdrawAmount = parseUnits("2222");
+            expect(withdrawAmount).lt(stakedAmount);
+            await assertWithdraw(withdrawAmount);
           });
           it("should fail withdraw amount > staked amount", async () => {
-            // revert as withdraw amount < staked amount
+            // revert as withdraw amount > staked amount
+            const withdrawAmount = parseUnits("3000");
+            expect(withdrawAmount).gt(stakedAmount);
+            await assertFailedWithdraw(withdrawAmount);
           });
           it("should withdraw all", async () => {
+            const { fraxConvexWethStrategy, oethVaultSigner } = fixture;
+
+            const tx = await fraxConvexWethStrategy
+              .connect(oethVaultSigner)
+              .withdrawAll();
+
             // target locked balance = 0
-            // unlock expired amount
-            // withdraw expired amount + staked amount
+            expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+              0
+            );
+            // unlock expired locked amount
+            await assertUnlock(
+              tx,
+              lockKeyBefore,
+              expiredAmount,
+              unlockTimestampBefore
+            );
+
+            // withdraw expired locked amount + staked amount
+            await assertStakedWithdraw(tx, expiredAmount.add(stakedAmount));
           });
         });
       });

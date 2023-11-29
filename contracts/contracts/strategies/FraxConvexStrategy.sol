@@ -43,6 +43,9 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     /// 7 days is the minimum to get token rewards.
     uint256 constant LOCK_DURATION = 7 days + 1;
     uint256 constant MIN_LOCK_AMOUNT = 1e17;
+    // Using a nonzero value to save gas when overriding with a real lock key
+    bytes32 constant NO_KEY =
+        0x0000000000000000000000000000000000000000000000000000000000000001;
 
     /// @notice Wrapper contract for Frax Staked Convex pools (ConvexStakingWrapperFrax)
     /// @dev Has deposit, withdrawAndUnwrap and getReward functions
@@ -53,6 +56,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
     /// @dev This strategy contract will only hold one lock at a time. It can not have multiple locks.
+    /// If no lock exists the value will be `NO_KEY` which is a nonzero value to save gas.
     bytes32 public lockKey;
     /// @notice The UNIX timestamp in seconds when the lock expires
     uint64 public unlockTimestamp;
@@ -62,7 +66,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
     event Lock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
-    event Unlock(bytes32 lockKey, uint256 amount);
+    event Unlock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -110,6 +114,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             _assets.length == CURVE_POOL_ASSETS_COUNT,
             "Incorrect number of assets"
         );
+        lockKey = NO_KEY;
 
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -137,7 +142,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      */
     function _unlock() internal returns (uint256 unlockedAmount) {
         // If over the target lock balance
-        if (lockKey > 0 && block.timestamp > unlockTimestamp) {
+        if (lockKey != NO_KEY && block.timestamp > unlockTimestamp) {
             // Withdraw all the Frax Staked Convex LP tokens from the lock
             // to this strategy contract and do not claim rewards.
             // Have to withdraw all as we can't withdraw a partial amount.
@@ -147,11 +152,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                 false
             );
 
-            // The previous withdraw deletes the old lock
-            // slither-disable-next-line reentrancy-no-eth
-            lockKey = bytes32(0);
+            emit Unlock(lockKey, unlockedAmount, unlockTimestamp);
 
-            emit Unlock(lockKey, unlockedAmount);
+            // The previous withdraw deletes the old lock so reset
+            // slither-disable-next-line reentrancy-no-eth
+            lockKey = NO_KEY;
         }
         // else no lock exists or has not expired
     }
@@ -162,6 +167,18 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This includes any tokens in an expired lock.
      */
     function _lock(uint256 unlockedBalance, uint256 lockedBalance) internal {
+        if (lockKey != NO_KEY) {
+            // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
+            // slither-disable-next-line reentrancy-no-eth
+            unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+
+            // Extend the lock for another 7 days even if it has not expired yet
+            IFraxConvexLocking(fraxLocking).lockLonger(
+                lockKey,
+                block.timestamp + LOCK_DURATION
+            );
+        }
+
         // If under the target lock balance
         if (targetLockedBalance > lockedBalance) {
             // Calculate the amount of Frax Staked Convex LP tokens to lock.
@@ -172,15 +189,15 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                 ? targetLockAmount
                 : unlockedBalance;
 
-            // Don't bother locking if the amount is too small
+            // Don't bother locking more if the amount is too small
             if (lockAmount < MIN_LOCK_AMOUNT) return;
 
-            // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
-            // slither-disable-next-line reentrancy-no-eth
-            unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
-
             // If no lock exists
-            if (lockKey == bytes32(0)) {
+            if (lockKey == NO_KEY) {
+                // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
+                // slither-disable-next-line reentrancy-no-eth
+                unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+
                 // Lock the Frax Staked Convex LP tokens for the required duration
                 // eg lock stkcvxfrxeth-ng-f-frax for 7 days
                 lockKey = IFraxConvexLocking(fraxLocking).stakeLocked(
