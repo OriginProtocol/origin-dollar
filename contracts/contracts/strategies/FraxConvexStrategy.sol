@@ -61,6 +61,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     uint128 public targetLockedBalance;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
+    event Lock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
+    event Unlock(bytes32 lockKey, uint256 amount);
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -148,6 +150,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // The previous withdraw deletes the old lock
             // slither-disable-next-line reentrancy-no-eth
             lockKey = bytes32(0);
+
+            emit Unlock(lockKey, unlockedAmount);
         }
         // else no lock exists or has not expired
     }
@@ -183,6 +187,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     lockAmount,
                     LOCK_DURATION
                 );
+
+                emit Lock(lockKey, lockAmount, unlockTimestamp);
             } else {
                 // Add Frax Staked Convex LP tokens to the existing lock.
                 // Add even if the lock has expired as we'll extend the lock next if needed.
@@ -197,6 +203,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     lockKey,
                     block.timestamp + LOCK_DURATION
                 );
+
+                emit Lock(lockKey, lockAmount, unlockTimestamp);
             }
         }
         // else the target lock balance is not under the locked balance
@@ -263,7 +271,9 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         uint256 unlockedBalance = IERC20(fraxStaking).balanceOf(address(this));
 
         // convert the unlocked Frax Staked Convex LP tokens to to Curve LP tokens
-        IFraxConvexStaking(fraxStaking).withdrawAndUnwrap(unlockedBalance);
+        if (unlockedBalance > 0) {
+            IFraxConvexStaking(fraxStaking).withdrawAndUnwrap(unlockedBalance);
+        }
     }
 
     /**

@@ -2,6 +2,33 @@
 pragma solidity ^0.8.0;
 
 interface IFraxConvexLocking {
+    /* ========== EVENTS ========== */
+    event LockedAdditional(
+        address indexed user,
+        bytes32 kek_id,
+        uint256 amount
+    );
+    event LockedLonger(
+        address indexed user,
+        bytes32 kek_id,
+        uint256 new_secs,
+        uint256 new_start_ts,
+        uint256 new_end_ts
+    );
+    event StakeLocked(
+        address indexed user,
+        uint256 amount,
+        uint256 secs,
+        bytes32 kek_id,
+        address source_address
+    );
+    event WithdrawLocked(
+        address indexed user,
+        uint256 liquidity,
+        bytes32 kek_id,
+        address destination_address
+    );
+
     // Struct for the stake
     struct LockedStake {
         bytes32 kek_id;

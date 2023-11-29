@@ -1,9 +1,14 @@
 const { BigNumber } = require("ethers");
 
-const ZERO_BYTES32 = "0x0000000000000000000000000000000000000000000000000000000000000000"
+const ZERO_BYTES32 =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+
+const DAY = BigNumber.from(24 * 60 * 60);
+const WEEK = BigNumber.from(7 * 24 * 60 * 60);
+
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
@@ -27,6 +32,8 @@ const balancer_rETH_WETH_PID =
 
 module.exports = {
   ZERO_BYTES32,
+  DAY,
+  WEEK,
   threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,

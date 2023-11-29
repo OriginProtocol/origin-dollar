@@ -1797,6 +1797,7 @@ async function fraxConvexWethFixture(
     wethMintAmount: 0,
     frxEthMintAmount: 0,
     depositToStrategy: false,
+    fundFXS: false,
   }
 ) {
   const fixture = await oethDefaultFixture();
@@ -1818,24 +1819,22 @@ async function fraxConvexWethFixture(
   } = fixture;
 
   if (isFork) {
-    log(
-      `LockedFraxStakedConvexWeth FXS balance before: ${formatUnits(
-        await fxs.balanceOf(addresses.mainnet.LockedFraxStakedConvexWeth)
-      )}`
-    );
     await setERC20TokenBalance(josh.address, frxETH, "10000000", hre);
     await setERC20TokenBalance(josh.address, weth, "10000000", hre);
     await setERC20TokenBalance(josh.address, fxs, "10000000", hre);
-    // As we move ahead in time, the Locked Frax Staked Convex contract needs more FXS
-    // otherwise it will revert with "Not enough reward tokens available"
-    await setERC20TokenBalance(
-      addresses.mainnet.LockedFraxStakedConvexWeth,
-      fxs,
-      "10000000",
-      hre
-    );
+
+    if (config.fundFXS) {
+      // The Locked Frax Staked Convex contract needs FXS
+      // otherwise it will revert with "Not enough reward tokens available"
+      await setERC20TokenBalance(
+        addresses.mainnet.LockedFraxStakedConvexWeth,
+        fxs,
+        "10000000",
+        hre
+      );
+    }
     log(
-      `LockedFraxStakedConvexWeth FXS balance after: ${formatUnits(
+      `LockedFraxStakedConvexWeth FXS balance: ${formatUnits(
         await fxs.balanceOf(addresses.mainnet.LockedFraxStakedConvexWeth)
       )}`
     );
