@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     // No longer being used. The locked Frax Staked Convex strategy is now being used instead.
     forceSkip: false,
-    reduceQueueTime: false,
+    reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
   },

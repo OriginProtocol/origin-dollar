@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "081_frax_convex_strategy",
+    deployName: "082_frax_convex_strategy",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
