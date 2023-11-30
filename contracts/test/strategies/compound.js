@@ -4,6 +4,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const { createFixtureLoader, compoundFixture } = require("../_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Compound strategy", function () {
@@ -19,6 +20,12 @@ describe("Compound strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
+    strategy: fixture.cStandalone,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    harvester: fixture.harvester,
     strategy: fixture.cStandalone,
   }));
 
