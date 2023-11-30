@@ -976,7 +976,9 @@ function deploymentWithGovernanceProposal(opts, fn) {
     main.skip = () => false;
   } else {
     const networkName = isForkTest ? "hardhat" : "localhost";
-    const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+    const migrations = isForkTest
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
 
     if (isFork && proposalId) {
       // Skip if proposal is older than 14 days
