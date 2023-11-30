@@ -167,15 +167,16 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This includes any tokens in an expired lock.
      */
     function _lock(uint256 unlockedBalance, uint256 lockedBalance) internal {
-        if (lockKey != NO_KEY) {
+        uint64 newUnlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+        if (lockKey != NO_KEY && unlockTimestamp < newUnlockTimestamp) {
             // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
             // slither-disable-next-line reentrancy-no-eth
-            unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+            unlockTimestamp = newUnlockTimestamp;
 
             // Extend the lock for another 7 days even if it has not expired yet
             IFraxConvexLocking(fraxLocking).lockLonger(
                 lockKey,
-                block.timestamp + LOCK_DURATION
+                newUnlockTimestamp
             );
         }
 
@@ -196,7 +197,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             if (lockKey == NO_KEY) {
                 // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
                 // slither-disable-next-line reentrancy-no-eth
-                unlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
+                unlockTimestamp = newUnlockTimestamp;
 
                 // Lock the Frax Staked Convex LP tokens for the required duration
                 // eg lock stkcvxfrxeth-ng-f-frax for 7 days
@@ -205,7 +206,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     LOCK_DURATION
                 );
 
-                emit Lock(lockKey, lockAmount, unlockTimestamp);
+                emit Lock(lockKey, lockAmount, newUnlockTimestamp);
             } else {
                 // Add Frax Staked Convex LP tokens to the existing lock.
                 // Add even if the lock has expired as we'll extend the lock next if needed.
@@ -215,13 +216,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
                     lockAmount
                 );
 
-                // Extend the lock for another 7 days even if it has not expired yet
-                IFraxConvexLocking(fraxLocking).lockLonger(
-                    lockKey,
-                    block.timestamp + LOCK_DURATION
-                );
-
-                emit Lock(lockKey, lockAmount, unlockTimestamp);
+                emit Lock(lockKey, lockAmount, newUnlockTimestamp);
             }
         }
         // else the target lock balance is not under the locked balance
