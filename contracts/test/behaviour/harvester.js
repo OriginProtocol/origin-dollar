@@ -16,18 +16,30 @@ const { MAX_UINT256 } = require("../../utils/constants");
 /**
  *
  * @param {*} context a function that returns a fixture with the additional properties:
- * - strategy: the strategy to test
- * - rewards: array of objects with asset and expected properties
+ * - harvester: OUSD Harvester or OETH Harvester
+ * - strategies: an array of objects with the following properties:
+ *   - strategy: strategy contract
+ *   - rewardTokens: an array of reward tokens.
+ * - rewardProceedsAddress: address to send the rewards to. eg vault
  * @example
     shouldBehaveLikeHarvester(() => ({
-        fixture,
+        ...fixture,
         harvester: fixture.harvester,
-        strategies: [{ strategy, rewardTokens }],
-        rewardProceedsAddress: fixture.vault.address,
+        strategies: [
+        {
+          strategy: fixture.compoundStrategy,
+          rewardTokens: [fixture.comp],
+        },
+        {
+          strategy: fixture.aaveStrategy,
+          rewardTokens: [fixture.aaveToken],
+        },
+      ],
+      rewardProceedsAddress: fixture.vault.address,
     }));
  */
 const shouldBehaveLikeHarvester = (context) => {
-  describe("Harvest", () => {
+  describe("Harvest behaviour", () => {
     async function _checkBalancesPostHarvesting(harvestFn, strategies) {
       const { harvester } = context();
 
@@ -71,8 +83,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should NOT allow rewards to be collected by non-harvester", async () => {
-      const { fixture, strategies } = context();
-      const { anna, governor, strategist } = fixture;
+      const { anna, governor, strategist, strategies } = context();
       const { strategy } = strategies[0];
 
       for (const signer of [anna, governor, strategist]) {
@@ -85,8 +96,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
   describe("RewardTokenConfig", () => {
     it("Should only allow valid Uniswap V2 path", async () => {
-      const { harvester, fixture } = context();
-      const { crv, usdt, governor, uniswapRouter } = fixture;
+      const { harvester, crv, usdt, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -139,8 +149,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should only allow valid Uniswap V3 path", async () => {
-      const { harvester, fixture } = context();
-      const { crv, usdt, governor, uniswapRouter } = fixture;
+      const { harvester, crv, usdt, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -183,8 +192,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should only allow valid balancer config", async () => {
-      const { harvester, fixture } = context();
-      const { crv, governor, balancerVault } = fixture;
+      const { harvester, crv, governor, balancerVault } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -227,8 +235,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should only allow valid Curve config", async () => {
-      const { harvester, fixture } = context();
-      const { crv, usdt, governor, threePool } = fixture;
+      const { harvester, crv, usdt, governor, threePool } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -275,8 +282,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should revert on unsupported platform", async () => {
-      const { harvester, fixture } = context();
-      const { crv, governor, uniswapRouter } = fixture;
+      const { harvester, crv, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -299,8 +305,8 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should reset allowance on older router", async () => {
-      const { harvester, fixture } = context();
-      const { crv, usdt, governor, vault, uniswapRouter } = fixture;
+      const { harvester, crv, usdt, governor, vault, uniswapRouter } =
+        context();
 
       const oldRouter = vault; // Pretend vault is a router
 
@@ -347,8 +353,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not allow setting a valid router address", async () => {
-      const { harvester, fixture } = context();
-      const { crv, governor } = fixture;
+      const { harvester, crv, governor } = context();
 
       const config = {
         allowedSlippageBps: 200,
@@ -367,8 +372,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not allow higher slippage", async () => {
-      const { harvester, fixture } = context();
-      const { crv, governor, uniswapRouter } = fixture;
+      const { harvester, crv, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 1001,
@@ -387,8 +391,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not allow higher reward fee", async () => {
-      const { harvester, fixture } = context();
-      const { crv, governor, uniswapRouter } = fixture;
+      const { harvester, crv, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 133,
@@ -407,8 +410,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should revert for unsupported tokens", async () => {
-      const { harvester, fixture } = context();
-      const { ousd, governor, uniswapRouter } = fixture;
+      const { harvester, ousd, governor, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 133,
@@ -427,8 +429,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should revert when it's not Governor", async () => {
-      const { harvester, fixture } = context();
-      const { ousd, strategist, uniswapRouter } = fixture;
+      const { harvester, ousd, strategist, uniswapRouter } = context();
 
       const config = {
         allowedSlippageBps: 133,
@@ -449,9 +450,14 @@ const shouldBehaveLikeHarvester = (context) => {
 
   describe("Swap", () => {
     async function _swapWithRouter(swapRouterConfig, swapData) {
-      const { harvester, strategies, rewardProceedsAddress, fixture } =
-        context();
-      const { governor, uniswapRouter, domen } = fixture;
+      const {
+        harvester,
+        strategies,
+        rewardProceedsAddress,
+        governor,
+        uniswapRouter,
+        domen,
+      } = context();
 
       const { strategy, rewardTokens } = strategies[0];
 
@@ -528,8 +534,7 @@ const shouldBehaveLikeHarvester = (context) => {
     }
 
     it("Should harvest and swap with Uniswap V2", async () => {
-      const { fixture, harvester, strategies } = context();
-      const { uniswapRouter } = fixture;
+      const { harvester, strategies, uniswapRouter } = context();
       const { rewardTokens } = strategies[0];
 
       const baseToken = await ethers.getContractAt(
@@ -551,8 +556,8 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should harvest and swap with Uniswap V3", async () => {
-      const { fixture, harvester, strategies } = context();
-      const { uniswapRouter, domen, daniel, governor } = fixture;
+      const { uniswapRouter, domen, daniel, governor, harvester, strategies } =
+        context();
       const { strategy, rewardTokens } = strategies[0];
 
       const baseToken = await ethers.getContractAt(
@@ -596,8 +601,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should harvest and swap with Balancer", async () => {
-      const { fixture } = context();
-      const { balancerVault } = fixture;
+      const { balancerVault } = context();
       await _swapWithRouter(
         {
           swapPlatform: 2,
@@ -611,8 +615,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should harvest and swap with Curve", async () => {
-      const { fixture, harvester, strategies } = context();
-      const { threePool, governor } = fixture;
+      const { threePool, governor, harvester, strategies } = context();
       const { rewardTokens } = strategies[0];
 
       const baseToken = await ethers.getContractAt(
@@ -635,8 +638,8 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not swap when disabled", async () => {
-      const { harvester, strategies, fixture } = context();
-      const { governor, balancerVault, domen } = fixture;
+      const { harvester, strategies, governor, balancerVault, domen } =
+        context();
 
       const { strategy, rewardTokens } = strategies[0];
 
@@ -676,8 +679,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should harvest and swap and send rewards to external address", async () => {
-      const { fixture, harvester, strategies } = context();
-      const { uniswapRouter } = fixture;
+      const { harvester, strategies, uniswapRouter } = context();
       const { rewardTokens } = strategies[0];
 
       const baseToken = await ethers.getContractAt(
@@ -699,8 +701,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not swap when balance is zero", async () => {
-      const { harvester, strategies, fixture } = context();
-      const { governor, balancerVault } = fixture;
+      const { harvester, strategies, governor, balancerVault } = context();
 
       const { rewardTokens, strategy } = strategies[0];
 
@@ -748,8 +749,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should revert when swap platform doesn't return enough tokens", async () => {
-      const { harvester, strategies, fixture } = context();
-      const { governor, balancerVault } = fixture;
+      const { harvester, strategies, governor, balancerVault } = context();
 
       const { rewardTokens, strategy } = strategies[0];
 
@@ -791,8 +791,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should revert when slippage is high", async () => {
-      const { harvester, strategies, fixture } = context();
-      const { governor, balancerVault } = fixture;
+      const { harvester, strategies, governor, balancerVault } = context();
 
       const { rewardTokens, strategy } = strategies[0];
 
@@ -835,8 +834,8 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should use liquidation limit", async () => {
-      const { harvester, strategies, fixture } = context();
-      const { governor, balancerVault, domen } = fixture;
+      const { harvester, strategies, governor, balancerVault, domen } =
+        context();
 
       const { strategy, rewardTokens } = strategies[0];
 
@@ -891,8 +890,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not harvest from unsupported strategies", async () => {
-      const { harvester, fixture } = context();
-      const { domen } = fixture;
+      const { harvester, domen } = context();
 
       // prettier-ignore
       await expect(
@@ -904,8 +902,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
   describe("Admin function", () => {
     it("Should only allow governor to change RewardProceedsAddress", async () => {
-      const { harvester, fixture } = context();
-      const { governor, daniel, strategist } = fixture;
+      const { harvester, governor, daniel, strategist } = context();
 
       const tx = await harvester
         .connect(governor)
@@ -927,8 +924,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should not allow to set invalid rewardProceedsAddress", async () => {
-      const { harvester, fixture } = context();
-      const { governor } = fixture;
+      const { harvester, governor } = context();
 
       await expect(
         harvester.connect(governor).setRewardProceedsAddress(addresses.zero)
@@ -936,8 +932,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should allow governor to set supported strategies", async () => {
-      const { harvester, fixture } = context();
-      const { governor, strategist } = fixture;
+      const { harvester, governor, strategist } = context();
 
       expect(await harvester.supportedStrategies(strategist.address)).to.be
         .false;
@@ -955,8 +950,7 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should allow governor to transfer any token", async () => {
-      const { harvester, fixture } = context();
-      const { governor, strategist, dai } = fixture;
+      const { governor, strategist, dai, harvester } = context();
 
       await dai.connect(governor).mintTo(harvester.address, daiUnits("1000"));
 
