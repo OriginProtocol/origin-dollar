@@ -356,6 +356,13 @@ const executeGovernanceProposalOnFork = async ({
         [proposalIdBn, 1] // `_proposals` is in slot 1
       )
     );
+    const extendedDeadlineSlotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 12] // `_extendedDeadlines` is in slot 12
+      )
+    );
+
     // Add one to get the `endTime` slot
     slotKey = BigNumber.from(slotKey).add(1);
 
@@ -371,6 +378,12 @@ const executeGovernanceProposalOnFork = async ({
         await setStorageAt(
           governorFive.address,
           slotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + blocksToMine
+        );
+        await setStorageAt(
+          governorFive.address,
+          extendedDeadlineSlotKey,
           // Make it queueable in 10 blocks
           currentBlock + blocksToMine
         );
