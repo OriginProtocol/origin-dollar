@@ -1,11 +1,10 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { parseUnits } = require("ethers/lib/utils");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 
 describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
   if (isFork) {
@@ -23,14 +22,9 @@ describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
     strategy: fixture.OUSDmetaStrategy,
   }));
 
-  shouldBehaveLikeHarvester(() => ({
+  shouldBehaveLikeHarvestable(() => ({
     ...fixture,
     strategy: fixture.OUSDmetaStrategy,
-    dripAsset: fixture.usdt,
-    rewards: [
-      { asset: fixture.crv, expected: parseUnits("2") },
-      { asset: fixture.cvx, expected: parseUnits("3") },
-    ],
   }));
 
   const mint = async (amount, asset) => {
