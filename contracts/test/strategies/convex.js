@@ -1,9 +1,8 @@
 const { expect } = require("chai");
-const { parseUnits } = require("ethers/lib/utils");
 
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
@@ -24,14 +23,10 @@ describe("Convex Strategy", function () {
     strategy: fixture.convexStrategy,
   }));
 
-  shouldBehaveLikeHarvester(() => ({
+  shouldBehaveLikeHarvestable(() => ({
     ...fixture,
+    harvester: fixture.harvester,
     strategy: fixture.convexStrategy,
-    dripAsset: fixture.usdt,
-    rewards: [
-      { asset: fixture.crv, expected: parseUnits("2") },
-      { asset: fixture.cvx, expected: parseUnits("3") },
-    ],
   }));
 
   shouldBehaveLikeStrategy(() => ({

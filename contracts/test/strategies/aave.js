@@ -10,6 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Aave Strategy", function () {
@@ -69,6 +70,12 @@ describe("Aave Strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
+    strategy: fixture.aaveStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    harvester: fixture.harvester,
     strategy: fixture.aaveStrategy,
   }));
 
@@ -188,9 +195,28 @@ describe("Aave Strategy", function () {
           );
         }
 
+        // Disable swap
+        await harvester.connect(governor).setRewardTokenConfig(
+          aave.address,
+          {
+            allowedSlippageBps: 200,
+            harvestRewardBps: 0,
+            swapPlatformAddr: aave.address,
+            doSwapRewardToken: false,
+            swapPlatform: 0,
+            liquidationLimit: 0,
+          },
+          utils.defaultAbiCoder.encode(
+            ["address[]"],
+            [[aave.address, fixture.usdt.address]]
+          )
+        );
+
         // Run
         // ----
-        await harvester.connect(governor)["harvest()"]();
+        // prettier-ignore
+        await harvester
+          .connect(governor)["harvestAndSwap(address)"](aaveStrategy.address);
         currentTimestamp = await getBlockTimestamp();
 
         // Verification

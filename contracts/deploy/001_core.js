@@ -525,6 +525,7 @@ const deployHarvesters = async () => {
   ]);
   const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
     cOETHVaultProxy.address,
+    assetAddresses.WETH,
   ]);
   const cHarvester = await ethers.getContractAt(
     "Harvester",
@@ -555,13 +556,13 @@ const deployHarvesters = async () => {
     await withConfirmation(
       cHarvester
         .connect(sGovernor)
-        .setRewardsProceedsAddress(cVaultProxy.address)
+        .setRewardProceedsAddress(cVaultProxy.address)
     );
 
     await withConfirmation(
       cOETHHarvester
         .connect(sGovernor)
-        .setRewardsProceedsAddress(cOETHVaultProxy.address)
+        .setRewardProceedsAddress(cOETHVaultProxy.address)
     );
   }
 
@@ -715,7 +716,7 @@ const deployFraxEthStrategy = async () => {
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -723,11 +724,19 @@ const deployOracles = async () => {
   const oracleContract = isMainnet ? "OracleRouter" : "MockOracleRouter";
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
+  log("Deployed OracleRouter");
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  await deployWithConfirmation("AuraWETHPriceFeed", [
+    assetAddresses.auraWeightedOraclePool,
+    governorAddr,
+  ]);
+  const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
+  log("Deployed AuraWETHPriceFeed");
 
   // Register feeds
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
-  const assetAddresses = await getAssetAddresses(deployments);
   /* Mock oracle feeds report 0 for updatedAt data point. Set
    * maxStaleness to 100 years from epoch to make the Oracle
    * feeds valid
@@ -741,6 +750,7 @@ const deployOracles = async () => {
     [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
     [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
     [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
+    [assetAddresses.AAVE_TOKEN, oracleAddresses.chainlink.AAVE_USD],
     [assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD],
     [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD],
     [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH],
@@ -752,6 +762,8 @@ const deployOracles = async () => {
       assetAddresses.NonStandardToken,
       oracleAddresses.chainlink.NonStandardToken_USD,
     ],
+    [assetAddresses.AURA, auraWethPriceFeed.address],
+    [assetAddresses.BAL, oracleAddresses.chainlink.BAL_ETH],
   ];
 
   for (const [asset, oracle] of oracleFeeds) {
@@ -759,6 +771,7 @@ const deployOracles = async () => {
       oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
     );
   }
+  log("Initialized AuraWETHPriceFeed");
 };
 
 /**

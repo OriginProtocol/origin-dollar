@@ -335,6 +335,9 @@ const getOracleAddresses = async (deployments) => {
         OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
         RETH_ETH: addresses.mainnet.chainlinkRETH_ETH,
         stETH_ETH: addresses.mainnet.chainlinkstETH_ETH,
+        BAL_ETH: addresses.mainnet.chainlinkBAL_ETH,
+        // TODO: Update with deployed address
+        // AURA_ETH: addresses.mainnet.chainlinkAURA_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
     };
@@ -365,6 +368,8 @@ const getOracleAddresses = async (deployments) => {
         FRXETH_ETH: (await deployments.get("MockChainlinkOracleFeedfrxETHETH"))
           .address,
         WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
+          .address,
+        BAL_ETH: (await deployments.get("MockChainlinkOracleFeedBALETH"))
           .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
@@ -415,6 +420,9 @@ const getAssetAddresses = async (deployments) => {
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
       uniswapUniversalRouter: addresses.mainnet.uniswapUniversalRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
+      auraWeightedOraclePool: addresses.mainnet.AuraWeightedOraclePool,
+      AURA: addresses.mainnet.AURA,
+      BAL: addresses.mainnet.BAL,
     };
   } else {
     const addressMap = {
@@ -458,6 +466,10 @@ const getAssetAddresses = async (deployments) => {
       uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
         .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      auraWeightedOraclePool: (await deployments.get("MockOracleWeightedPool"))
+        .address,
+      AURA: (await deployments.get("MockAura")).address,
+      BAL: (await deployments.get("MockBAL")).address,
     };
 
     try {
@@ -522,6 +534,54 @@ async function changeInBalance(
     balanceChangeAccount
   );
   return balanceAfter - balanceBefore;
+}
+
+/**
+ * Calculates the change in balance after a function has been executed on a contract
+ * @param {Function} functionChangingBalance - The function that changes the balance
+ * @param {[Object]} tokens - The token contract
+ * @param {[string]} accounts - An array of addresses
+ **/
+async function changeInMultipleBalances(
+  functionChangingBalance,
+  tokens,
+  accounts
+) {
+  const _getBalances = async () => {
+    const out = {};
+
+    for (const account of accounts) {
+      out[account] = {};
+
+      const balances = await Promise.all(
+        tokens.map((t) => t.balanceOf(account))
+      );
+
+      for (let i = 0; i < balances.length; i++) {
+        out[account][tokens[i].address] = balances[i];
+      }
+    }
+
+    return out;
+  };
+
+  const balanceBefore = await _getBalances();
+
+  await functionChangingBalance();
+
+  const balanceAfter = await _getBalances();
+
+  const balanceDiff = {};
+  for (const account of accounts) {
+    balanceDiff[account] = {};
+    for (const token of tokens) {
+      const tokenAddr = token.address;
+      balanceDiff[account][tokenAddr] =
+        balanceAfter[account][tokenAddr] - balanceBefore[account][tokenAddr];
+    }
+  }
+
+  return balanceDiff;
 }
 
 /**
@@ -722,6 +782,7 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
+  changeInMultipleBalances,
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,

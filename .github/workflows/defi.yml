@@ -104,6 +104,7 @@ jobs:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
+      ONEINCH_API_KEY: ${{ secrets.ONEINCH_API_KEY }}
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
     steps:

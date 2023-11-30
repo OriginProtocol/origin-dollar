@@ -1,3 +1,7 @@
+# contracts/buyback
+sol2uml .. -v -hv -hf -he -hs -hl -b OUSDBuyback -o OUSDBuybackHierarchy.svg
+sol2uml .. -s -d 0 -b OUSDBuyback -o OUSDBuybackSquashed.svg
+sol2uml storage .. -c OUSDBuyback -o OUSDBuybackStorage.svg
 
 # contracts/buyback
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b OUSDBuyback,OETHBuyback -o BuybackHierarchy.svg
@@ -35,6 +39,14 @@ sol2uml storage .. -c Governor -o GovernorStorage.svg
 sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracleRouter -o OETHOracleRouterSquashed.svg
 sol2uml storage .. -c OETHOracleRouter -o OETHOracleRouterStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
+sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
+sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
+sol2uml .. -s -d 0 -b AuraWETHPriceFeed -o AuraWETHPriceFeedSquashed.svg
+sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
 sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
