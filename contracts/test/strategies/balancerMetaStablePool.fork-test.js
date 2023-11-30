@@ -595,10 +595,25 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         oethHarvester,
         rEthBPT,
         oethDripper,
+        bal,
+        aura,
       } = fixture;
 
+      // Deposite some LP to the pool so that we can harvest some tokens
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
       await mine(1000);
+
+      // Let the strategy have some tokens it can send to Harvester
+      await setERC20TokenBalance(
+        balancerREthStrategy.address,
+        bal,
+        oethUnits("50")
+      );
+      await setERC20TokenBalance(
+        balancerREthStrategy.address,
+        aura,
+        oethUnits("50")
+      );
 
       const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
       await oethHarvester.connect(josh)[
@@ -606,11 +621,11 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         "harvestAndSwap(address)"
       ](balancerREthStrategy.address);
 
-      const wethBalanceDiff = wethBalanceBefore.sub(
-        await weth.balanceOf(oethDripper.address)
+      const wethBalanceDiff = (await weth.balanceOf(oethDripper.address)).sub(
+        wethBalanceBefore
       );
 
-      expect(wethBalanceDiff).to.be.gte(oethUnits("0"));
+      expect(wethBalanceDiff).to.be.gt(oethUnits("0"));
     });
   });
 });
@@ -748,13 +763,47 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
 
   describe("Harvest rewards", function () {
     it("Should be able to collect reward tokens", async function () {
-      const { josh, balancerWstEthStrategy, oethHarvester } =
-        await loadBalancerWstEthFixture();
+      const fixture = await loadBalancerWstEthFixture();
+      const {
+        josh,
+        balancerWstEthStrategy,
+        oethHarvester,
+        oethDripper,
+        stETH,
+        stEthBPT,
+        weth,
+        bal,
+        aura,
+      } = fixture;
+
+      // Deposite some LP to the pool so that we can harvest some tokens
+      await wstETHDepositTest(fixture, [5, 5], [weth, stETH], stEthBPT);
+      await mine(1000);
+
+      // Let the strategy have some tokens it can send to Harvester
+      await setERC20TokenBalance(
+        balancerWstEthStrategy.address,
+        bal,
+        oethUnits("50")
+      );
+      await setERC20TokenBalance(
+        balancerWstEthStrategy.address,
+        aura,
+        oethUnits("50")
+      );
+
+      const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
 
       await oethHarvester.connect(josh)[
         // eslint-disable-next-line
         "harvestAndSwap(address)"
       ](balancerWstEthStrategy.address);
+
+      const wethBalanceDiff = (await weth.balanceOf(oethDripper.address)).sub(
+        wethBalanceBefore
+      );
+
+      expect(wethBalanceDiff).to.be.gt(oethUnits("0"));
     });
   });
 

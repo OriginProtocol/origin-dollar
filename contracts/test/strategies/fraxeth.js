@@ -2,6 +2,7 @@ const { expect } = require("chai");
 
 const { oethUnits, units } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const {
@@ -20,6 +21,12 @@ describe("FraxETH Strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
+    strategy: fixture.fraxEthStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    harvester: fixture.oethHarvester,
     strategy: fixture.fraxEthStrategy,
   }));
 
