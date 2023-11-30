@@ -1005,6 +1005,10 @@ function deploymentWithGovernanceProposal(opts, fn) {
        * doesn't even get evaluated.
        */
       if (!olderProposal) {
+        // We skip force running deployments that have been run 
+        // more than 14 days ago on mainnet with a governance proposal.
+        // Any deployment without a proposal, which has not been run yet,
+        // will still be force run on fork.
         main.id = `${deployName}_force`;
       }
     }
