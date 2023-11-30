@@ -929,6 +929,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       wethMintAmount: 5000,
       frxEthMintAmount: 4000,
       depositToStrategy: false,
+      fundFXS: true,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -1097,6 +1098,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       wethMintAmount: 5000,
       frxEthMintAmount: 4000,
       depositToStrategy: true,
+      fundFXS: true,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
