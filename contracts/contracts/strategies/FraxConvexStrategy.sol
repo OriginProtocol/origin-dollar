@@ -170,7 +170,6 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         uint64 newUnlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
         if (lockKey != NO_KEY && unlockTimestamp < newUnlockTimestamp) {
             // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
-            // slither-disable-next-line reentrancy-no-eth
             unlockTimestamp = newUnlockTimestamp;
 
             // Extend the lock for another 7 days even if it has not expired yet
@@ -201,6 +200,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
                 // Lock the Frax Staked Convex LP tokens for the required duration
                 // eg lock stkcvxfrxeth-ng-f-frax for 7 days
+                // slither-disable-next-line reentrancy-no-eth
                 lockKey = IFraxConvexLocking(fraxLocking).stakeLocked(
                     lockAmount,
                     LOCK_DURATION
