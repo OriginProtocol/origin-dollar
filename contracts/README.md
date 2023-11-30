@@ -48,7 +48,7 @@ If you use the slither documented "pip3 install slither-analyzer" there might be
 
 #### Troubleshooting
 
-Run `slither --version` and make sure it is >= 0.10.0. If the version is lower it is possible that pipx has used an older version of the python to create a virtual environment and install the slither package. To mitigate: 
+Run `slither --version` and make sure it is >= 0.10.0. If the version is lower it is possible that pipx has used an older version of the python to create a virtual environment and install the slither package. E.g. Slither 0.10.0 requires python >= 3.8.0 and if lower one is available a lower version of slither shall be installed. To mitigate: 
 
 ```
 # uninstall slither analyzer (which also uninstalls virtual environment)
