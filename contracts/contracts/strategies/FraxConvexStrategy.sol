@@ -53,12 +53,12 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
 
     /// @notice The key of locked Frax Staked Convex LP tokens. eg locked stkcvxfrxeth-ng-f-frax
     /// @dev This strategy contract will only hold one lock at a time. It can not have multiple locks.
-    bytes32 lockKey;
+    bytes32 public lockKey;
     /// @notice The UNIX timestamp in seconds when the lock expires
-    uint64 unlockTimestamp;
+    uint64 public unlockTimestamp;
     /// @notice the desired level of locked Frax Staked Convex LP tokens
     /// @dev limited to 128 bits so it is packed with the following unlockTimestamp storage variable into single slot
-    uint128 targetLockedBalance;
+    uint128 public targetLockedBalance;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
 
