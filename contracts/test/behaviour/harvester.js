@@ -572,7 +572,7 @@ const shouldBehaveLikeHarvester = (context) => {
         harvestRewardBps: 500,
         swapPlatformAddr: uniswapRouter.address,
         doSwapRewardToken: true,
-        swapPlatform: 0,
+        swapPlatform: 1,
         liquidationLimit: 0,
       };
 
@@ -581,9 +581,9 @@ const shouldBehaveLikeHarvester = (context) => {
         .setRewardTokenConfig(
           swapToken.address,
           config,
-          utils.defaultAbiCoder.encode(
-            ["address[]"],
-            [[swapToken.address, baseToken.address]]
+          utils.solidityPack(
+            ["address", "uint24", "address"],
+            [swapToken.address, 500, baseToken.address]
           )
         );
 
