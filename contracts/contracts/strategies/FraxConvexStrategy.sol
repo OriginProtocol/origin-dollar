@@ -16,6 +16,9 @@ pragma solidity ^0.8.0;
  * read-only reentry.
  * https://x.com/danielvf/status/1657019677544001536
  *
+ * This strategy only supports assets with the same number of decimals. This is
+ * checked in the initialize function.
+ *
  * There are multiple levels of tokens managed by this strategy
  * - Vault assets. eg WETH and frxETH
  * - Curve LP tokens. eg frxETH-ng-f
@@ -115,6 +118,12 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             "Incorrect number of assets"
         );
         lockKey = NO_KEY;
+
+        // This strategy only supports assets with the same number of decimals
+        require(decimals0 == decimals1, "Decimals do not match");
+        if (CURVE_POOL_ASSETS_COUNT == 3) {
+            require(decimals1 == decimals2, "Decimals do not match");
+        }
 
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -324,7 +333,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      */
     function _approveBase() internal override {
         IERC20 curveLpToken = IERC20(CURVE_LP_TOKEN);
-        // Approve the Frax Staking Wrapper to transfer the Curve pool's LP token
+        // Approve the  Wrapper contract for Frax Staked Convex pools (ConvexStakingWrapperFrax)
+        // to transfer the Curve pool's LP token
         // slither-disable-next-line unused-return
         curveLpToken.approve(fraxStaking, type(uint256).max);
 
@@ -371,12 +381,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             uint256 value = (curveLpTokens *
                 ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
 
-            // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
-            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
+            // Divide by the number of assets in the Curve pool. eg 2 for the frxETH/WETH pool.
             // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
             // No matter what the balance of the asset in the Curve pool is, the value of each asset will
             // be the average of the Curve pool's total value.
-            // _getAssetDecimals will revert if _asset is an invalid asset.
+            // This assumes all assets in the Curve pool have the same number of decimals.
             balance = value / CURVE_POOL_ASSETS_COUNT;
         }
     }
@@ -390,8 +399,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         onlyHarvester
         nonReentrant
     {
-        // Collect CRV, CVX and FXS rewards
+        // Collect CRV, CVX and FXS rewards from staking contract
         IFraxConvexStaking(fraxStaking).getReward(address(this));
+
+        // Collect FXS rewards from locking contract
+        IFraxConvexLocking(fraxLocking).getReward(address(this));
 
         // Transfer each of the rewards to the Harvester
         _collectRewardTokens();

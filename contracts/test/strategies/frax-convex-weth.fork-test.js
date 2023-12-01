@@ -717,6 +717,21 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     }
   }
 
+  async function getStrategyBalances() {
+    const { fraxConvexWethStrategy, frxETH, weth } = fixture;
+
+    return {
+      frxETH: await fraxConvexWethStrategy.checkBalance(frxETH.address),
+      weth: await fraxConvexWethStrategy.checkBalance(weth.address),
+    };
+  }
+
+  async function assertStrategyBalances(balancesExpected) {
+    const balancesAfter = await getStrategyBalances();
+    expect(balancesAfter.frxETH).to.equal(balancesExpected.frxETH);
+    expect(balancesAfter.weth).to.equal(balancesExpected.weth);
+  }
+
   async function setTargetLockedBalance(targetLockedBalance) {
     {
       const { strategist, fraxConvexWethStrategy } = fixture;
@@ -866,6 +881,26 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
     beforeEach(async () => {
       fixture = await loadFixture();
     });
+    it("Should be able to collect the rewards by Harvester", async function () {
+      const {
+        josh,
+        oethHarvester,
+        oethVaultSigner,
+        strategist,
+        timelock,
+        fraxConvexWethStrategy,
+      } = fixture;
+
+      const harvesterSigner = await impersonateAndFund(oethHarvester.address);
+      await fraxConvexWethStrategy
+        .connect(harvesterSigner)
+        .collectRewardTokens();
+
+      for (const signer of [josh, strategist, timelock, oethVaultSigner]) {
+        const tx = fraxConvexWethStrategy.connect(signer).collectRewardTokens();
+        await expect(tx).to.be.revertedWith("Caller is not the Harvester");
+      }
+    });
     it.skip("Should be able to harvest the rewards", async function () {
       const {
         josh,
@@ -920,6 +955,58 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           .connect(signer)
           .safeApproveAllTokens();
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Only Strategist can set target locked balance", async () => {
+      const {
+        timelock,
+        strategist,
+        anna,
+        josh,
+        oethVaultSigner,
+        fraxConvexWethStrategy,
+      } = fixture;
+
+      // Strategist sets target locked balance
+      const targetBalance = parseUnits("1234");
+      const tx = await fraxConvexWethStrategy
+        .connect(strategist)
+        .setTargetLockedBalance(targetBalance);
+      await expect(tx).to.emit(
+        fraxConvexWethStrategy,
+        "TargetLockedBalanceUpdated"
+      );
+      expect(await fraxConvexWethStrategy.targetLockedBalance()).to.equal(
+        targetBalance
+      );
+
+      for (const signer of [timelock, anna, josh, oethVaultSigner]) {
+        const tx = fraxConvexWethStrategy
+          .connect(signer)
+          .setTargetLockedBalance(targetBalance);
+        await expect(tx).to.be.revertedWith("Caller is not the Strategist");
+      }
+    });
+    it("Should allow anyone to update the lock", async () => {
+      const {
+        timelock,
+        strategist,
+        anna,
+        josh,
+        oethVaultSigner,
+        fraxConvexWethStrategy,
+      } = fixture;
+
+      for (const signer of [
+        timelock,
+        strategist,
+        anna,
+        josh,
+        oethVaultSigner,
+      ]) {
+        // Just check anyone can call.
+        // Checks on the unlocking and locking are done in other tests.
+        await fraxConvexWethStrategy.connect(signer).updateLock();
       }
     });
   });
@@ -1821,6 +1908,25 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         // Move ahead in time so the lock expires
         await advanceTime(WEEK.add(DAY));
       });
+      it("Should be able to collect the rewards", async function () {
+        const { crv, cvx, fxs, oethHarvester, fraxConvexWethStrategy } =
+          fixture;
+
+        const harvesterSigner = await impersonateAndFund(oethHarvester.address);
+        const tx = await fraxConvexWethStrategy
+          .connect(harvesterSigner)
+          .collectRewardTokens();
+
+        await expect(tx)
+          .to.emit(crv, "Transfer")
+          .withNamedArgs({ to: oethHarvester.address });
+        await expect(tx)
+          .to.emit(cvx, "Transfer")
+          .withNamedArgs({ to: oethHarvester.address });
+        await expect(tx)
+          .to.emit(fxs, "Transfer")
+          .withNamedArgs({ to: oethHarvester.address });
+      });
       describe("with no staked amount", () => {
         describe("with zero target locked balance", () => {
           beforeEach(async () => {
@@ -2027,6 +2133,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
 
+            const balancesBefore = await getStrategyBalances();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // unlock expired locked amount
@@ -2046,6 +2154,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
                 fraxConvexWethStrategy.address
               )
             ).to.equal(expiredAmount.add(stakedAmount));
+
+            await assertStrategyBalances(balancesBefore);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -2095,6 +2205,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
 
+            const balancesBefore = await getStrategyBalances();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // unlock expired locked amount
@@ -2117,6 +2229,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             ).to.equal(
               expiredAmount.sub(targetLockedBalance).add(stakedAmount)
             );
+
+            await assertStrategyBalances(balancesBefore);
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -2167,6 +2281,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
 
+            const balancesBefore = await getStrategyBalances();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // no unlock
@@ -2184,6 +2300,8 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             ).to.equal(
               stakedAmount.sub(targetLockedBalance.sub(expiredAmount))
             );
+
+            await assertStrategyBalances(balancesBefore);
           });
           it("should deposit amount", async () => {
             // add to staked amount
