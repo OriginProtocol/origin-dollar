@@ -37,7 +37,7 @@ object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
 }
 
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX, BAL, AURA
+    rewards: CRV, CVX, BAL, AURA, FXS
 }
 
 ' Strategies
@@ -55,20 +55,24 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
     Aave token: aWETH
 }
-
 object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     assets: rETH, WETH
     Balancer Pool Token: B-rETH-STABLE
     Rewards: BAL, AURA
 }
-
-object "ConvexStrategy" as convexFrxEthWethStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+' object "ConvexStrategy" as convexFrxEthWethStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+'     assets: frxETH, WETH
+'     Curve pool: frxeth-ng-f
+'     Convex pool: cvxfrxeth-ng-f
+'     Rewards: CRV, CVX
+' }
+object "FraxConvexStrategy" as fraxConvexFrxEthWethStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     assets: frxETH, WETH
     Curve pool: frxeth-ng-f
     Convex pool: cvxfrxeth-ng-f
-    Rewards: CRV, CVX
+    Frax Staked Convex: stkcvxfrxeth-ng-f-frax
+    Rewards: CRV, CVX, FXS
 }
-
 
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
@@ -77,7 +81,10 @@ pairs:
     stETH/ETH
     rETH/ETH
     CRV/ETH
-    CVX/ETH 
+    CVX/ETH
+    BAL/ETH
+    AURA/ETH
+    FXS/ETH
 }
 
 ' object "EACAggregatorProxy" as chain <<Chainlink>> {
@@ -224,8 +231,12 @@ oeth <... balancerStrat
 harv <..> balancerStrat
 
 ' Convex Strategy for frxETH/WETH pool
-oethv <...> convexFrxEthWethStrat
-harv <..> convexFrxEthWethStrat
+' oethv <...> convexFrxEthWethStrat
+' harv <..> convexFrxEthWethStrat
+
+' Frax Convex Strategy for frxETH/WETH pool
+oethv <...> fraxConvexFrxEthWethStrat
+harv <..> fraxConvexFrxEthWethStrat
 
 ' ' Vault to Assets
 ' oethv .....> frxeth

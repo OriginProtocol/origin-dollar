@@ -1177,6 +1177,46 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           });
         });
       });
+      describe("with tiny staked amount", () => {
+        beforeEach(async () => {
+          const {
+            fraxConvexWethStrategy,
+            fraxConvexStakingWeth,
+            frxETH,
+            oethVaultSigner,
+            strategist,
+          } = fixture;
+
+          // transfer a small amount for a staked amount
+          const frxEthDepositAmount = parseUnits("0.05");
+          await frxETH.transfer(
+            fraxConvexWethStrategy.address,
+            frxEthDepositAmount
+          );
+          await fraxConvexWethStrategy.connect(oethVaultSigner).depositAll();
+
+          // Check actual staked amount
+          expect(
+            await fraxConvexStakingWeth.balanceOf(
+              fraxConvexWethStrategy.address
+            )
+          ).to.approxEqualTolerance(frxEthDepositAmount);
+
+          await fraxConvexWethStrategy
+            .connect(strategist)
+            .setTargetLockedBalance(parseUnits("1000"));
+        });
+        it("should not lock small staked amount", async () => {
+          const { fraxConvexWethStrategy } = fixture;
+
+          const tx = await fraxConvexWethStrategy.updateLock();
+
+          // no unlock
+          await assertNoUnlock(tx);
+          // no lock as staked amount is too small
+          await assertNoLock(tx);
+        });
+      });
     });
   });
 
