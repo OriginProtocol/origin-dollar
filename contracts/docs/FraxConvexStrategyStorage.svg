@@ -93,9 +93,9 @@
 <polyline fill="none" stroke="black" points="74.81,-25.3 862.93,-25.3 "/>
 <text text-anchor="middle" x="163.82" y="-8.7" font-family="Courier New" font-size="14.00">unallocated (8)</text>
 <polyline fill="none" stroke="black" points="252.83,-0.5 252.83,-25.3 "/>
-<text text-anchor="middle" x="392.75" y="-8.7" font-family="Courier New" font-size="14.00">uint64: unlockTimestamp (8)</text>
-<polyline fill="none" stroke="black" points="532.67,-0.5 532.67,-25.3 "/>
-<text text-anchor="middle" x="697.79" y="-8.7" font-family="Courier New" font-size="14.00">uint128: targetLockedBalance (16)</text>
+<text text-anchor="middle" x="417.95" y="-8.7" font-family="Courier New" font-size="14.00">uint128: targetLockedBalance (16)</text>
+<polyline fill="none" stroke="black" points="583.08,-0.5 583.08,-25.3 "/>
+<text text-anchor="middle" x="722.99" y="-8.7" font-family="Courier New" font-size="14.00">uint64: unlockTimestamp (8)</text>
 </g>
 <!-- 1 -->
 <g id="node2" class="node">
