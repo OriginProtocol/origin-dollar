@@ -1,8 +1,8 @@
 const { isFork, isForkWithLocalNode } = require("../test/helpers");
-const { deployWithConfirmation } = require("../utils/deploy");
+// const { deployWithConfirmation } = require("../utils/deploy");
 const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
-const { replaceContractAt } = require("../utils/hardhat");
+// const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
 const { hardhatSetBalance } = require("../test/_fund");
 
@@ -28,28 +28,28 @@ const main = async (hre) => {
 
   hardhatSetBalance(deployerAddr, "1000000");
 
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract(
-    isFork ? "OETHOracleRouter" : "OracleRouter"
-  );
+  // const oracleRouter = await ethers.getContract("OracleRouter");
+  // const oethOracleRouter = await ethers.getContract(
+  //   isFork ? "OETHOracleRouter" : "OracleRouter"
+  // );
 
-  // Replace OracleRouter to disable staleness
-  const dMockOracleRouterNoStale = await deployWithConfirmation(
-    "MockOracleRouterNoStale"
-  );
-  const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
-  const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-    "MockOETHOracleRouterNoStale",
-    [dAuraPriceFeed.address]
-  );
-  log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
-  await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-  await replaceContractAt(
-    oethOracleRouter.address,
-    dMockOETHOracleRouterNoStale
-  );
+  // // Replace OracleRouter to disable staleness
+  // const dMockOracleRouterNoStale = await deployWithConfirmation(
+  //   "MockOracleRouterNoStale"
+  // );
+  // const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
+  // const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+  //   "MockOETHOracleRouterNoStale",
+  //   [dAuraPriceFeed.address]
+  // );
+  // log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
+  // await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
+  // await replaceContractAt(
+  //   oethOracleRouter.address,
+  //   dMockOETHOracleRouterNoStale
+  // );
 
-  log("Replaced Oracle contracts for fork test");
+  // log("Replaced Oracle contracts for fork test");
 
   const signers = await hre.ethers.getSigners();
 
