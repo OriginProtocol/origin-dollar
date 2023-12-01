@@ -403,6 +403,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         IFraxConvexStaking(fraxStaking).getReward(address(this));
 
         // Collect FXS rewards from locking contract
+        // slither-disable-next-line unused-return
         IFraxConvexLocking(fraxLocking).getReward(address(this));
 
         // Transfer each of the rewards to the Harvester
