@@ -15,6 +15,7 @@ const {
   getAssetAddresses,
   isSmokeTest,
   isForkTest,
+  getBlockTimestamp,
 } = require("../test/helpers.js");
 
 const {
@@ -33,7 +34,11 @@ const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
-const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
+const {
+  setStorageAt,
+  getStorageAt,
+} = require("@nomicfoundation/hardhat-network-helpers");
+const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -346,14 +351,51 @@ const executeGovernanceProposalOnFork = async ({
       }
     }
 
-    const votingPeriod = Number((await governorFive.votingPeriod()).toString());
-    log(
-      `Advancing ${
-        votingPeriod + 1
-      } blocks to make transaction for from Active to Succeeded`
+    let slotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 1] // `_proposals` is in slot 1
+      )
     );
-    // advance to the end of voting period
-    await advanceBlocks(votingPeriod + 1);
+    const extendedDeadlineSlotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 12] // `_extendedDeadlines` is in slot 12
+      )
+    );
+
+    // Add one to get the `endTime` slot
+    slotKey = BigNumber.from(slotKey).add(1);
+
+    const deadline = BigNumber.from(
+      await getStorageAt(governorFive.address, slotKey)
+    ).toNumber();
+    const currentBlock = await hre.ethers.provider.getBlockNumber();
+    let blocksToMine = deadline - currentBlock;
+
+    if (blocksToMine > 0) {
+      if (reduceQueueTime) {
+        blocksToMine = 10;
+        await setStorageAt(
+          governorFive.address,
+          slotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + blocksToMine
+        );
+        await setStorageAt(
+          governorFive.address,
+          extendedDeadlineSlotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + blocksToMine
+        );
+      }
+      log(
+        `Advancing ${blocksToMine} blocks to make transaction for from Active to Succeeded`
+      );
+
+      // Advance to the end of voting period
+      await advanceBlocks(blocksToMine + 1);
+    }
 
     proposalState = "Succeeded";
     let newState = await getProposalState(proposalIdBn);
@@ -382,10 +424,46 @@ const executeGovernanceProposalOnFork = async ({
    * In that case such proposalId should not be included in migration files
    */
   if (proposalState === "Queued") {
-    const queuePeriod = Number((await timelock.getMinDelay()).toString());
-    log(`Advancing queue period (minDelay on the timelock) to ${queuePeriod}`);
-    // advance to the end of queue period
-    await advanceTime(queuePeriod + 1);
+    const timelockId = await getStorageAt(
+      governorFive.address,
+      keccak256(
+        defaultAbiCoder.encode(
+          ["uint256", "uint256"],
+          [proposalIdBn, 10] // `_timelockIds` is in slot 10
+        )
+      )
+    );
+
+    const minDelaySlot = keccak256(
+      defaultAbiCoder.encode(
+        ["bytes32", "uint256"],
+        [timelockId, 1] // `_timestamps` is in slot 1
+      )
+    );
+
+    const timelockTimestamp = BigNumber.from(
+      await getStorageAt(timelock.address, minDelaySlot)
+    ).toNumber();
+
+    const tNow = await getBlockTimestamp();
+    let timeToAdvance = timelockTimestamp - tNow;
+
+    if (timeToAdvance > 0) {
+      if (reduceQueueTime) {
+        // Advance by 30s
+        timeToAdvance = 30;
+
+        // Make it executable now
+        await setStorageAt(timelock.address, minDelaySlot, tNow - 60);
+      }
+
+      log(
+        `Advancing to the end of the queue period (on the timelock): ${timeToAdvance}`
+      );
+      // advance to the end of queue period
+      await advanceTime(timeToAdvance + 1);
+      await advanceBlocks(2);
+    }
   }
 
   await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
@@ -531,13 +609,13 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     await setStorageAt(
       governorFive.address,
       "0x5",
-      "0x0000000000000000000000000000000000000000000000000000000000004380" // 17280 blocks
+      "0x0000000000000000000000000000000000000000000000000000000000003840" // 14400 blocks
     );
     // slot[11]uint256 lateQuoruVoteExtension
     await setStorageAt(
       governorFive.address,
       "0xB", // 11
-      "0x0000000000000000000000000000000000000000000000000000000000002d00" // 11520 blocks
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
     // slot[2]uint256 _minDelay
     await setStorageAt(
@@ -662,7 +740,8 @@ const handlePossiblyActiveGovernanceProposal = async (
   proposalId,
   deployName,
   governorFive,
-  reduceQueueTime
+  reduceQueueTime,
+  executeGasLimit
 ) => {
   if (isFork && proposalId) {
     let proposalState;
@@ -860,7 +939,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalId,
         deployName,
         governorFive,
-        reduceQueueTime
+        reduceQueueTime,
+        executeGasLimit
       )
     ) {
       return;
@@ -932,39 +1012,52 @@ function deploymentWithGovernanceProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
-    /** Just for context of fork env change the id of the deployment script. This is required
-     * in circumstances when:
-     * - the deployment script has already been run on the mainnet
-     * - proposal has been either "Queued" or is still "New"
-     * - all the deployment artifacts and migration information is already present in the repo
-     *
-     * Problem: as part of normal deployment procedure we want to be able to simulate the
-     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
-     * since deployment artifacts are already present and migration file has already been updated
-     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
-     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
-     *
-     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
-     * as a workaround so that Hardhat executes it. If proposal has already been executed the
-     * `runDeployment` function will exit without applying the deployment.
-     *
-     * And we can not package this inside of `skip` function since without this workaround it
-     * doesn't even get evaluated.
-     */
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isForkTest
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
     if (isFork && proposalId) {
-      main.id = `${deployName}_force`;
+      // Skip if proposal is older than 14 days
+      const olderProposal =
+        Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
+      /** Just for context of fork env change the id of the deployment script. This is required
+       * in circumstances when:
+       * - the deployment script has already been run on the mainnet
+       * - proposal has been either "Queued" or is still "New"
+       * - all the deployment artifacts and migration information is already present in the repo
+       *
+       * Problem: as part of normal deployment procedure we want to be able to simulate the
+       * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
+       * since deployment artifacts are already present and migration file has already been updated
+       * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
+       * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
+       *
+       * For that reason for any deployment ran on fork with proposalId we change the id of deployment
+       * as a workaround so that Hardhat executes it. If proposal has already been executed the
+       * `runDeployment` function will exit without applying the deployment.
+       *
+       * And we can not package this inside of `skip` function since without this workaround it
+       * doesn't even get evaluated.
+       */
+      if (!olderProposal) {
+        // We skip force running deployments that have been run
+        // more than 14 days ago on mainnet with a governance proposal.
+        // Any deployment without a proposal, which has not been run yet,
+        // will still be force run on fork.
+        main.id = `${deployName}_force`;
+      }
     }
 
     main.skip = async () => {
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
+      } else if (isFork) {
         /* running on fork, and proposal not yet submitted. This is usually during development
          * before kicking off deploy.
          */
-      } else if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
         return onlyOnFork ? true : !isMainnet || isSmokeTest;
