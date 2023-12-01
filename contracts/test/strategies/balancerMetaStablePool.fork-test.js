@@ -566,23 +566,19 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       } = fixture;
 
       const sHarvester = await impersonateAndFund(oethHarvester.address);
-      expect(await bal.balanceOf(oethHarvester.address)).to.equal(
-        oethUnits("0")
-      );
-      expect(await aura.balanceOf(oethHarvester.address)).to.equal(
-        oethUnits("0")
-      );
+      const balBefore = await bal.balanceOf(oethHarvester.address);
+      const auraBefore = await aura.balanceOf(oethHarvester.address);
 
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
       await mine(1000);
 
       await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
 
-      expect(await bal.balanceOf(oethHarvester.address)).to.be.gte(
-        oethUnits("0")
+      expect(await bal.balanceOf(oethHarvester.address)).to.be.gt(
+        balBefore.add(oethUnits("0.1"))
       );
-      expect(await aura.balanceOf(oethHarvester.address)).to.be.gte(
-        oethUnits("0")
+      expect(await aura.balanceOf(oethHarvester.address)).to.be.gt(
+        auraBefore.add(oethUnits("0.1"))
       );
     });
 
