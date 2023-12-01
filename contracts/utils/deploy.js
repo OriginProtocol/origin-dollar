@@ -15,6 +15,7 @@ const {
   getAssetAddresses,
   isSmokeTest,
   isForkTest,
+  getBlockTimestamp,
 } = require("../test/helpers.js");
 
 const {
@@ -423,10 +424,46 @@ const executeGovernanceProposalOnFork = async ({
    * In that case such proposalId should not be included in migration files
    */
   if (proposalState === "Queued") {
-    const queuePeriod = Number((await timelock.getMinDelay()).toString());
-    log(`Advancing queue period (minDelay on the timelock) to ${queuePeriod}`);
-    // advance to the end of queue period
-    await advanceTime(queuePeriod + 1);
+    const timelockId = await getStorageAt(
+      governorFive.address,
+      keccak256(
+        defaultAbiCoder.encode(
+          ["uint256", "uint256"],
+          [proposalIdBn, 10] // `_timelockIds` is in slot 10
+        )
+      )
+    );
+
+    const minDelaySlot = keccak256(
+      defaultAbiCoder.encode(
+        ["bytes32", "uint256"],
+        [timelockId, 1] // `_timestamps` is in slot 1
+      )
+    );
+
+    const timelockTimestamp = BigNumber.from(
+      await getStorageAt(timelock.address, minDelaySlot)
+    ).toNumber();
+
+    const tNow = await getBlockTimestamp();
+    let timeToAdvance = timelockTimestamp - tNow;
+
+    if (timeToAdvance > 0) {
+      if (reduceQueueTime) {
+        // Advance by 30s
+        timeToAdvance = 30;
+
+        // Make it executable now
+        await setStorageAt(timelock.address, minDelaySlot, tNow - 60);
+      }
+
+      log(
+        `Advancing to the end of the queue period (on the timelock): ${timeToAdvance}`
+      );
+      // advance to the end of queue period
+      await advanceTime(timeToAdvance + 1);
+      await advanceBlocks(2);
+    }
   }
 
   await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
