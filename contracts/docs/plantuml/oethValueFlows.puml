@@ -10,6 +10,8 @@ participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
 participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
+participant "OGV\nRewards" as ogvRewards <<Origin>> #DeepSkyBlue
+participant "Buyback" as buyBack <<Origin>> #DeepSkyBlue
 
 participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
 participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
@@ -19,7 +21,7 @@ participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
 participant "OETH-ETH\nMetapool" as oethCrv <<Curve>>
 participant "OETH-ETH\nPool" as oethCvx <<Convex>>
 participant "Rewards\nPool" as cvxRewards <<Convex>>
-participant "Locked CVX" as icvx <<Convex>>
+participant "Locked\nCVX" as icvx <<Convex>>
 
 participant "rETH/WETH\nBalancer\nMetaStable\nStrategy" as balMetaStrat <<Origin>> #DeepSkyBlue
 participant "Balancer\nVault" as balVault <<Balancer>>
@@ -31,9 +33,12 @@ participant "Morpho\nAave V2" as morpho <<Morpho>>
 participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
 participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
-participant "Uniswap V2" as uni <<Uniswap>>
 participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
 participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
+participant "Universal\nRouter" as uniRouter <<Uniswap>>
+participant "OETH/ETH\nV3 Pool" as uniOeth <<Uniswap>>
+participant "OGV/ETH\nV3 Pool" as uniOgv <<Uniswap>>
+participant "CVX/ETH\nV3 Pool" as uniCvx <<Uniswap>>
 
 participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
 
@@ -305,9 +310,9 @@ cvxeth -> weth : ETH
 note left : withdraw ETH from Wrapped ETH
 weth o-> cvxeth : WETH
 cvxeth -> harv : WETH
-harv -> drip : WETH
+harv -> drip : 98% WETH
 note left : 98% of WETH to Dripper
-harv -> anyone : WETH
+harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 
 harv -> triCrv : CRV
@@ -316,9 +321,9 @@ triCrv -> weth : ETH
 note left : withdraw ETH from Wrapped ETH
 weth o-> triCrv : WETH
 triCrv -> harv : WETH
-harv -> drip : WETH
+harv -> drip : 98% WETH
 note left : 98% of WETH to Dripper
-harv -> anyone : WETH
+harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 end
 
@@ -352,21 +357,39 @@ end
 group Collect and Rebase [can be called by anyone]
 
 drip -> vault : WETH
-note left : stream WETH to vault\nover 14 days
+note left : stream harvested WETH\nto Vault over 14 days
 
-vault o-> trust : OETH
-note left : 20% performance\nfee from rebase
+group Rebase [increase in underlying assets]
+vault o-> vault : 80% OETH
+note left : 80% of rebased\nto OETH holders
+
+vault o-> trust : 20% OETH
+note left : 20% of rebase\nto trustee as\nperformance fee
+end 
 end
 
-group Trustee buys and locks CVX for voting power
+group Trustee OETH rewards
 
-trust -> uni : OETH
-note left : swap for CVX using Uniswap
-uni -> trust : CVX
+group OGV buyback for OGV stakers
+trust -> uniRouter : OETH
+uniRouter -> uniOeth : 50% OETH
+note left : swap 50% OETH for WETH\nusing OETH/WETH V3 pool
+uniOeth -> uniOgv : WETH
+note left : swap WETH for OGV\nusing OGV/WETH V3 pool
+uniOgv -> ogvRewards : OGV
+note left : transfer OGV\nto Staking Rewards
+end
 
-trust -> icvx : CVX
-note left : lock CVX for delegated voting power
-icvx -> trust : vlCVX
+group CVX buyback and locking for increased Convex rewards
+uniRouter -> uniOeth : 50% OETH
+note left : swap 50% OETH for WETH\nusing OETH/WETH V3 pool
+uniOeth -> uniRouter : WETH
+uniRouter -> uniCvx : WETH
+note left : swap WETH for CVX\nusing CVX/WETH V3 pool
+uniCvx -> buyBack : CVX
+buyBack -> icvx : CVX
+note left : lock CVX for\nveCVX voting power
+end
 
 end
 
