@@ -1,4 +1,4 @@
-const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
+const { createFixtureLoader, harvesterFixture } = require("./../fixture/_fixture");
 const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
 
 const loadFixture = createFixtureLoader(harvesterFixture);
