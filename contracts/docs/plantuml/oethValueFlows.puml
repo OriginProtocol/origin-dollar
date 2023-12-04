@@ -3,7 +3,7 @@
 title "OETH Flow of Value"
 
 actor "User" as user
-actor "Harvester" as harvUser
+actor "Anyone" as anyone
 actor "Trustee" as trust <<Origin>> #DeepSkyBlue
 participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
@@ -21,19 +21,29 @@ participant "OETH-ETH\nPool" as oethCvx <<Convex>>
 participant "OETH-ETH\nRewards" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
 
-participant "Convex\nfrxETH/WTH\nStrategy" as cvxFrxStrat <<Origin>> #DeepSkyBlue
+participant "frxETH/WETH\nConvex\nStrategy" as cvxFrxStrat <<Origin>> #DeepSkyBlue
 participant "frxETH-WETH\nPool" as frxCrv <<Curve>>
+participant "frxETH-WETH\nStaked Convex" as frxCvStk <<Frax>>
+participant "frxETH-WETH\nLocked Stake" as frxCvStkLck <<Frax>>
 participant "frxETH-WETH\nPool" as frxCvx <<Convex>>
 participant "frxETH-WETH\nRewards" as cvxFrxRewards <<Convex>>
+
+participant "rETH/WETH\nBalancer\nMetaStable\nStrategy" as balMetaStrat <<Origin>> #DeepSkyBlue
+participant "Balancer\nVault" as balVault <<Balancer>>
+participant "rETH\nMetaStable\nPool" as balMetaPool <<Balancer>>
+participant "rETH\nRewards\nPool" as auraRewards <<Aura>>
 
 participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
 participant "Morpho\nAave V2" as morpho <<Morpho>>
 participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
 participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
+participant "Uniswap V2" as uni <<Uniswap>>
+participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
+participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
+
 participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
 
-participant "Uniswap V2" as uni <<Uniswap>>
 participant "1Inch\nRouter" as 1r <<1Inch>>
 
 ' Deposit ETH via Zapper
@@ -140,34 +150,36 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
-' Convex strategy for the Curve frxETH/WETH pool
-group Deposit WETH to Convex frxETH/WETH Strategy [unallocated WETH in vault]
-vault -> cvxFrxStrat : WETH
-note left : Vault transfers\nWETH to strategy
-cvxFrxStrat -> frxCrv : WETH
-note left : add liquidity to the Curve pool
-frxCrv o-> cvxFrxStrat : frxeth-ng-f
-note left: strategy gets Curve pool LP tokens
+' Balancer MetaPool Strategy
+group Deposit rETH and WETH to Balancer MetaStable Strategy [unallocated rETH and WETH in vault]
+vault -> balMetaStrat : rETH and WETH
+note left : Vault transfers\nrETH and WETH to strategy
+balMetaStrat -> balVault : rETH and WETH
+note left : join Balancer pool
+balMetaPool o-> balMetaStrat : B-rETH-STABLE
+balMetaStrat -> auraRewards : B-rETH-STABLE
+note left : deposit BPT to Aura
+auraRewards o-> balMetaStrat : auraB-rETH-STABLE-vault
 
-cvxFrxStrat -> frxCvx : frxeth-ng-f
-note left : deposit Curve pool LP to Convex
-frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
-note left : stake Convex LP tokens
 end
 
-' Convex strategy for the Curve frxETH/WETH pool
-group Deposit frxETH to Convex frxETH/WETH Strategy [unallocated frxETH in vault]
-vault -> cvxFrxStrat : frxETH
-note left : Vault transfers\nfrxETH to strategy
-cvxFrxStrat -> frxCrv : frxETH
+' Frax Convex strategy for the Curve frxETH/WETH pool
+group Deposit WETH or frxETH to Frax Convex Strategy using Curve frxETH/WETH pool [unallocated WETH or frxETH in vault]
+vault -> cvxFrxStrat : WETH or frxETH
+note left : Vault transfers\nasset to strategy
+cvxFrxStrat -> frxCrv : WETH or frxETH
 note left : add liquidity to the Curve pool
 frxCrv o-> cvxFrxStrat : frxeth-ng-f
 note left: strategy gets Curve pool LP tokens
 
-cvxFrxStrat -> frxCvx : frxeth-ng-f
-note left : deposit Curve pool LP to Convex
+cvxFrxStrat -> frxCvStk : frxeth-ng-f
+note left : deposit to Frax Convex Staking
+frxCvStk -> frxCvx : frxeth-ng-f
+note left : deposit to Convex pool
 frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
 note left : stake Convex LP tokens
+frxCvStk o-> cvxFrxStrat : stkcvxfrxeth-ng-f-frax
+note left : mint Staked Frax Convex LP tokens
 end
 
 ' Morpho Aave Strategy
@@ -185,6 +197,23 @@ note left : deposit WETH to Aave
 end
 end
 
+end
+
+group Update lock on Frax Convex Strategy [target lock balance < staked balance]
+
+cvxFrxStrat -> frxCvStkLck : stkcvxfrxeth-ng-f-frax
+note left : lock Staked Frax Convex LP tokens\n for 7 days by anyone
+note right : no locked LP token minted
+end
+
+
+group Update lock on Frax Convex Strategy [target lock balance > expired locked tokens]
+
+frxCvStkLck -> cvxFrxStrat : CRV, CVX & FXS
+note left : collects rewards
+frxCvStkLck -> cvxFrxStrat : stkcvxfrxeth-ng-f-frax
+note left : withdraw locked\nStaked Frax Convex LP tokens
+note right : no locked LP token burned
 end
 
 ' Redeem
@@ -270,7 +299,6 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
-
 ' Curve AMO Strategy - remove and burn OETH
 group Strategist removes and burns oTokens from Curve pool [too much OETH in Curve pool]
 cvxRewards -x oethCvx : cvxOETHCRV-f
@@ -305,34 +333,104 @@ weth o-> vault : WETH
 note left : transfer to vault
 end
 
-' Harvest and Swap
-group Harvest and Swap [can be called by anyone]
+' Harvest and swap Convex AMO
+group Harvest and swap Convex AMO rewards [can be called by anyone]
 
-cvxRewards -> harv : CVX & CRV
+cvxRewards -> crvStrat : CVX & CRV
 note left : collect Convex rewards
+crvStrat -> harv : CVX & CRV
+note left : transfer rewards to Harvester
 
-harv -> uni : CVX
-note left : swap CVX for ETH
-uni -> harv : WETH
+harv -> cvxeth : CVX
+note left : exchange CVX for ETH\nmax 2,500 CVX
+cvxeth -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> cvxeth : WETH
+cvxeth -> harv : WETH
 harv -> drip : WETH
-note left : 99% of WETH to Dripper
-harv -> harvUser : WETH
-note left : 1% of WETH\nto Harvest caller
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
 
-harv -> uni : CRV
-note left : swap CRV for ETH
-uni -> harv : WETH
+harv -> triCrv : CRV
+note left : exchange CRV for WETH\nmax 4,000 CRV
+triCrv -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> triCrv : WETH
+triCrv -> harv : WETH
 harv -> drip : WETH
-note left : 99% of WETH to Dripper
-harv -> harvUser : WETH
-note left : 1% of WETH\nto Harvest caller
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+end
+
+' Harvest and swap Balancer
+group Harvest and swap Balancer rewards [can be called by anyone]
+
+balMetaPool -> balMetaStrat : BAL
+note left : collect Balancer rewards
+auraRewards  -> balMetaStrat : AURA
+note left : collect Aura rewards
+balMetaStrat -> harv : BAL & AURA
+note left : transfer rewards to Harvester
+harv -> balVault : BAL
+note left : swap BAL for WETH\nmax 1,000 BAL
+balVault -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+harv -> balVault : AURA
+note left : swap AURA for WETH\nmax 4,000 BAL
+balVault -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+
+end
+
+' Harvest and Swap
+group Harvest and swap Frax Convex rewards [can be called by anyone]
+
+frxCvStk -> cvxFrxStrat : CRV, CVX
+note left : collects staked rewards
+frxCvStkLck -> cvxFrxStrat : CRV, CVX & FXS
+note left : collects locked rewards
+cvxFrxStrat -> harv : CVX, CRV & FXS
+note left : transfer rewards to Harvester
+
+harv -> cvxeth : CVX
+note left : exchange CVX for ETH\nmax 2,500 CVX
+cvxeth -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> cvxeth : WETH
+cvxeth -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+
+harv -> triCrv : CRV
+note left : exchange CRV for WETH\nmax 4,000 CRV
+triCrv -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> triCrv : WETH
+triCrv -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+
+' TODO - add FXS swap
+
 end
 
 ' Collect and Rebase
 group Collect and Rebase [can be called by anyone]
 
 drip -> vault : WETH
-note left : stream WETH to vault
+note left : stream WETH to vault\nover 14 days
 
 vault o-> trust : OETH
 note left : 20% performance\nfee from rebase
