@@ -3,7 +3,7 @@
 title "OETH Flow of Value"
 
 actor "User" as user
-actor "Harvester" as harvUser
+actor "Anyone" as anyone
 actor "Trustee" as trust <<Origin>> #DeepSkyBlue
 participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
@@ -21,14 +21,22 @@ participant "OETH-ETH\nPool" as oethCvx <<Convex>>
 participant "Rewards\nPool" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
 
+participant "rETH/WETH\nBalancer\nMetaStable\nStrategy" as balMetaStrat <<Origin>> #DeepSkyBlue
+participant "Balancer\nVault" as balVault <<Balancer>>
+participant "rETH\nMetaStable\nPool" as balMetaPool <<Balancer>>
+participant "rETH\nRewards\nPool" as auraRewards <<Aura>>
+
 participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
 participant "Morpho\nAave V2" as morpho <<Morpho>>
 participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
 participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
+participant "Uniswap V2" as uni <<Uniswap>>
+participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
+participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
+
 participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
 
-participant "Uniswap V2" as uni <<Uniswap>>
 participant "1Inch\nRouter" as 1r <<1Inch>>
 
 ' Deposit ETH via Zapper
@@ -135,6 +143,19 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
+' Balancer MetaPool Strategy
+group Deposit rETH and WETH to Balancer MetaStable Strategy [unallocated rETH and WETH in vault]
+vault -> balMetaStrat : rETH and WETH
+note left : Vault transfers\nrETH and WETH to strategy
+balMetaStrat -> balVault : rETH and WETH
+note left : join Balancer pool
+balMetaPool o-> balMetaStrat : B-rETH-STABLE
+balMetaStrat -> auraRewards : B-rETH-STABLE
+note left : deposit BPT to Aura
+auraRewards o-> balMetaStrat : auraB-rETH-STABLE-vault
+
+end
+
 ' Morpho Aave Strategy
 group Deposit to Morpho Aave Strategy [unallocated WETH in vault]
 vault -> morphAaveStrat : WETH
@@ -151,6 +172,7 @@ end
 end
 
 end
+
 
 ' Redeem
 group User redeem OETH
@@ -235,7 +257,6 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
-
 ' Curve AMO Strategy - remove and burn OETH
 group Strategist removes and burns oTokens from Metapool [too much OETH in Metapool]
 cvxRewards -x oethCvx : cvxOETHCRV-f
@@ -270,34 +291,68 @@ weth o-> vault : WETH
 note left : transfer to vault
 end
 
-' Harvest and Swap
-group Harvest and Swap [can be called by anyone]
+' Harvest and swap Convex AMO
+group Harvest and swap Convex AMO rewards [can be called by anyone]
 
-cvxRewards -> harv : CVX & CRV
+cvxRewards -> crvStrat : CVX & CRV
 note left : collect Convex rewards
+crvStrat -> harv : CVX & CRV
+note left : transfer rewards to Harvester
 
-harv -> uni : CVX
-note left : swap CVX for ETH
-uni -> harv : WETH
+harv -> cvxeth : CVX
+note left : exchange CVX for ETH\nmax 2,500 CVX
+cvxeth -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> cvxeth : WETH
+cvxeth -> harv : WETH
 harv -> drip : WETH
-note left : 99% of WETH to Dripper
-harv -> harvUser : WETH
-note left : 1% of WETH\nto Harvest caller
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
 
-harv -> uni : CRV
-note left : swap CRV for ETH
-uni -> harv : WETH
+harv -> triCrv : CRV
+note left : exchange CRV for WETH\nmax 4,000 CRV
+triCrv -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> triCrv : WETH
+triCrv -> harv : WETH
 harv -> drip : WETH
-note left : 99% of WETH to Dripper
-harv -> harvUser : WETH
-note left : 1% of WETH\nto Harvest caller
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+end
+
+' Harvest and swap Balancer
+group Harvest and swap Balancer rewards [can be called by anyone]
+
+balMetaPool -> balMetaStrat : BAL
+note left : collect Balancer rewards
+auraRewards  -> balMetaStrat : AURA
+note left : collect Aura rewards
+balMetaStrat -> harv : BAL & AURA
+note left : transfer rewards to Harvester
+harv -> balVault : BAL
+note left : swap BAL for WETH\nmax 1,000 BAL
+balVault -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+harv -> balVault : AURA
+note left : swap AURA for WETH\nmax 4,000 BAL
+balVault -> harv : WETH
+harv -> drip : WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : WETH
+note left : 2% of WETH\nto Harvest caller
+
 end
 
 ' Collect and Rebase
 group Collect and Rebase [can be called by anyone]
 
 drip -> vault : WETH
-note left : stream WETH to vault
+note left : stream WETH to vault\nover 14 days
 
 vault o-> trust : OETH
 note left : 20% performance\nfee from rebase
