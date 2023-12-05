@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1238.6)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-1238.6 825.69,-1238.6 825.69,4 -4,4"/>
-<!-- 183 -->
+<!-- 195 -->
 <g id="node1" class="node">
-<title>183</title>
+<title>195</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-1234.1 821.69,-1234.1 821.69,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="410.85" y="-1217.5" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="410.85" y="-1200.7" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
@@ -56,16 +56,16 @@
 <text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;withdraw(_recipient: address, _asset: address, _amount: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-546.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;withdrawAll() &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-529.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;checkBalance(_asset: address): (balance: uint256) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-512.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;supportsAsset(_asset: address): bool &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-495.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-479.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-462.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;collectRewardTokens() &lt;&lt;onlyHarvester, nonReentrant&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setRewardTokenAddresses(_rewardTokenAddresses: address[]) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getRewardTokenAddresses(): address[] &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setPTokenAddress(_asset: address, _pToken: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;removePToken(_assetIndex: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setHarvesterAddress(_harvesterAddress: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00">Public:</text>
+<text text-anchor="start" x="8" y="-512.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-495.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-479.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;collectRewardTokens() &lt;&lt;onlyHarvester, nonReentrant&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-462.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setRewardTokenAddresses(_rewardTokenAddresses: address[]) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getRewardTokenAddresses(): address[] &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setPTokenAddress(_asset: address, _pToken: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;removePToken(_assetIndex: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setHarvesterAddress(_harvesterAddress: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00">Public:</text>
+<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;supportsAsset(_asset: address): bool &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-344.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PendingGovernorshipTransfer(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-327.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; GovernorshipTransferred(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-311.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PTokenAdded(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>

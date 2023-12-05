@@ -47,21 +47,20 @@ describe("ForkTest: Harvest OUSD", function () {
       await expect(usdtSwapped).to.be.gt(usdtUnits("3100"));
     });
   });
-  describe("no CRV liquidation limit", function () {
+  describe.skip("no CRV liquidation limit", function () {
     beforeEach(async () => {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
-          MAX_UINT256,
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapPlatformAddr,
+        MAX_UINT256,
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it should only fail on a specific block number, where
@@ -82,23 +81,22 @@ describe("ForkTest: Harvest OUSD", function () {
       );
     });
   });
-  describe("CRV liquidation limit", function () {
+  describe.skip("CRV liquidation limit", function () {
     const crvLimit = 4000;
     beforeEach(async () => {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
 
-      await harvester
-        .connect(timelock)
-        .setRewardTokenConfig(
-          crv.address,
-          oldCrvTokenConfig.allowedSlippageBps,
-          oldCrvTokenConfig.harvestRewardBps,
-          oldCrvTokenConfig.uniswapV2CompatibleAddr,
-          parseUnits(crvLimit.toString(), 18),
-          oldCrvTokenConfig.doSwapRewardToken
-        );
+      await harvester.connect(timelock).setRewardTokenConfig(
+        crv.address,
+        oldCrvTokenConfig.allowedSlippageBps,
+        oldCrvTokenConfig.harvestRewardBps,
+        0, // Uniswap V2 compatible
+        oldCrvTokenConfig.swapPlatformAddr,
+        parseUnits(crvLimit.toString(), 18),
+        oldCrvTokenConfig.doSwapRewardToken
+      );
     });
     /*
      * Skipping this test as it will only succeed again on a specific block number.

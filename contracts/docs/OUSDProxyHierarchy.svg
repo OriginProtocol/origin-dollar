@@ -9,36 +9,36 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 203.8)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-203.8 372.62,-203.8 372.62,4 -4,4"/>
-<!-- 18 -->
+<!-- 20 -->
 <g id="node1" class="node">
-<title>18</title>
+<title>20</title>
 <polygon fill="#f2f2f2" stroke="black" points="66.88,-157.7 66.88,-199.3 301.74,-199.3 301.74,-157.7 66.88,-157.7"/>
 <text text-anchor="middle" x="184.31" y="-182.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="184.31" y="-165.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 110 -->
+<!-- 119 -->
 <g id="node2" class="node">
-<title>110</title>
+<title>119</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-79.1 0,-120.7 368.62,-120.7 368.62,-79.1 0,-79.1"/>
 <text text-anchor="middle" x="184.31" y="-104.1" font-family="Times,serif" font-size="14.00">InitializeGovernedUpgradeabilityProxy</text>
 <text text-anchor="middle" x="184.31" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol</text>
 </g>
-<!-- 110&#45;&gt;18 -->
+<!-- 119&#45;&gt;20 -->
 <g id="edge1" class="edge">
-<title>110&#45;&gt;18</title>
+<title>119&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M184.31,-121.03C184.31,-123.05 184.31,-125.16 184.31,-127.33"/>
 <polygon fill="none" stroke="black" points="173.81,-127.51 184.31,-157.51 194.81,-127.51 173.81,-127.51"/>
 </g>
-<!-- 111 -->
+<!-- 120 -->
 <g id="node3" class="node">
-<title>111</title>
+<title>120</title>
 <polygon fill="#f2f2f2" stroke="black" points="90.19,-0.5 90.19,-42.1 278.44,-42.1 278.44,-0.5 90.19,-0.5"/>
 <text text-anchor="middle" x="184.31" y="-25.5" font-family="Times,serif" font-size="14.00">OUSDProxy</text>
 <text text-anchor="middle" x="184.31" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/proxies/Proxies.sol</text>
 </g>
-<!-- 111&#45;&gt;110 -->
+<!-- 120&#45;&gt;119 -->
 <g id="edge2" class="edge">
-<title>111&#45;&gt;110</title>
+<title>120&#45;&gt;119</title>
 <path fill="none" stroke="black" d="M184.31,-42.43C184.31,-44.45 184.31,-46.56 184.31,-48.73"/>
 <polygon fill="none" stroke="black" points="173.81,-48.91 184.31,-78.91 194.81,-48.91 173.81,-48.91"/>
 </g>

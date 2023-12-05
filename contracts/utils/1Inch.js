@@ -4,8 +4,8 @@ const { defaultAbiCoder, formatUnits } = require("ethers/lib/utils");
 const addresses = require("./addresses");
 const log = require("./logger")("utils:1inch");
 
-const ONE_INCH_API =
-  process.env.ONEINCH_API || "https://api.1inch.io/v5.0/1/swap";
+const ONEINCH_API_ENDPOINT = "https://api.1inch.dev/swap/v5.2/1/swap";
+const ONEINCH_API_KEY = process.env.ONEINCH_API_KEY;
 const SWAP_SELECTOR = "0x12aa3caf"; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
 const UNISWAP_SELECTOR = "0xf78dc253"; // unoswapTo(address,address,uint256,uint256,uint256[])
 const UNISWAPV3_SELECTOR = "0xbc80f1a8"; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
@@ -86,39 +86,57 @@ const getIInchSwapData = async ({
   const swapper = await ethers.getContract("Swapper1InchV5");
 
   const params = {
-    fromTokenAddress: fromAsset.address,
-    toTokenAddress: toAsset.address,
+    src: fromAsset.address,
+    dst: toAsset.address,
     amount: fromAmount.toString(),
     fromAddress: swapper.address,
-    destReceiver: vault.address,
+    receiver: vault.address,
     slippage: slippage ?? 0.5,
     disableEstimate: true,
     allowPartialFill: false,
+    includeProtocols: true,
     // add protocols property if it exists
     ...(protocols && { protocols }),
   };
   log("swap API params: ", params);
 
-  try {
-    const response = await axios.get(ONE_INCH_API, { params });
+  let retries = 3;
 
-    if (!response.data.tx || !response.data.tx.data) {
-      console.error(response.data);
-      throw Error("response is missing tx.data");
+  while (retries > 0) {
+    try {
+      const response = await axios.get(ONEINCH_API_ENDPOINT, {
+        params,
+        headers: {
+          Authorization: `Bearer ${ONEINCH_API_KEY}`,
+        },
+      });
+
+      if (!response.data.tx || !response.data.tx.data) {
+        console.error(response.data);
+        throw Error("response is missing tx.data");
+      }
+
+      log("swap API toAmount: ", formatUnits(response.data.toAmount));
+      log("swap API swap paths: ", JSON.stringify(response.data.protocols));
+      // log("swap API tx.data: ", response.data.tx.data);
+
+      return response.data.tx.data;
+    } catch (err) {
+      if (err.response) {
+        console.error("Response data  : ", err.response.data);
+        console.error("Response status: ", err.response.status);
+      }
+      if (err.response?.status == 429) {
+        retries = retries - 1;
+        // Wait for 2s before next try
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw Error(`Call to 1Inch swap API failed: ${err.message}`);
     }
-
-    log("swap API toTokenAmount: ", formatUnits(response.data.toTokenAmount));
-    log("swap API swap paths: ", JSON.stringify(response.data.protocols));
-    // log("swap API tx.data: ", response.data.tx.data);
-
-    return response.data.tx.data;
-  } catch (err) {
-    if (err.response) {
-      console.error("Response data  : ", err.response.data);
-      console.error("Response status: ", err.response.status);
-    }
-    throw Error(`Call to 1Inch swap API failed: ${err.message}`);
   }
+
+  throw Error(`Call to 1Inch swap API failed: Rate-limited`);
 };
 
 module.exports = {

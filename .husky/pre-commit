@@ -1,0 +1,25 @@
+#!/bin/sh
+
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+files=""
+# find all file ending with test.js that are not in node_modules
+for file in $(find . -type d -name node_modules -prune -o -name '*test.js' -print); do
+    # uncomment below to debug which files match
+    # echo "$file"
+		# search if any contain it.only or describe.only
+		match=$(grep -E "(describe|it)\.only[[:space:]]*\(" "$file")
+
+		# add together the files containing .only
+    if [[ -n "${match}" ]]; then
+    	files=${files}${file}'\n'
+    fi
+done
+if [[ -n "${files}" ]]; then
+	# fail pre-commit if
+	echo "${RED}Git pre-commit hook failed! Remove \".only\" from the following test file(s):${GREEN}"
+	echo ${files}
+	echo "${NC}"
+	exit 1
+fi

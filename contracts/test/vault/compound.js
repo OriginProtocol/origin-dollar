@@ -5,7 +5,6 @@ const {
   createFixtureLoader,
   compoundVaultFixture,
 } = require("../fixture/_fixture");
-const { MAX_UINT256 } = require("../../utils/constants");
 
 const {
   advanceTime,
@@ -327,16 +326,22 @@ describe("Vault with Compound strategy", function () {
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
-
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
     await harvester.connect(governor).setRewardTokenConfig(
       comp.address, // reward token
-      300, // max slippage bps
-      0, // harvest reward bps
-      mockUniswapRouter.address,
-      MAX_UINT256,
-      true
+      {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 0,
+        swapPlatformAddr: mockUniswapRouter.address,
+        doSwapRewardToken: true,
+        swapPlatform: 0,
+        liquidationLimit: 0,
+      },
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
     );
 
     // Matt deposits USDC, 6 decimals
@@ -615,101 +620,40 @@ describe("Vault with Compound strategy", function () {
     }
   });
 
-  it("Should collect reward tokens using collect rewards on all strategies", async () => {
-    const { governor, harvester, compoundStrategy, comp } = fixture;
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
-
-    // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      compAmount
-    );
-
-    await harvester.connect(governor)["harvest()"]();
-
-    // Note if Uniswap address was configured, it would withdrawAll the COMP for
-    // a stablecoin to increase the value of Harvester. No Uniswap configured here
-    // so the COMP just sits in Harvester
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      compAmount
-    );
-  });
-
-  it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-    const { harvester, governor, compoundStrategy, comp } = fixture;
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
-
-    // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      compAmount
-    );
-
-    // prettier-ignore
-    await harvester
-      .connect(governor)["harvest(address)"](compoundStrategy.address);
-
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      compAmount
-    );
-  });
-
   it("Should collect reward tokens and swap via Uniswap", async () => {
-    const {
-      josh,
-      anna,
-      vault,
-      harvester,
-      governor,
-      compoundStrategy,
-      comp,
-      usdt,
-    } = fixture;
+    const { anna, vault, harvester, governor, compoundStrategy, comp, usdt } =
+      fixture;
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
-
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      {
+        allowedSlippageBps: 0,
+        harvestRewardBps: 100,
+        swapPlatformAddr: mockUniswapRouter.address,
+        doSwapRewardToken: true,
+        swapPlatform: 0,
+        liquidationLimit: 0,
+      },
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
+    );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
 
     // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+    expect(await comp.balanceOf(await governor.getAddress())).to.be.equal("0");
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
       compAmount
     );
-
-    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
-    await usdt
-      .connect(josh)
-      .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
     const balanceBeforeAnna = await usdt.balanceOf(anna.address);
 
@@ -724,10 +668,8 @@ describe("Vault with Compound strategy", function () {
 
     // No COMP in Harvester or Compound strategy
     await expect(harvester).has.a.balanceOf("0", comp);
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
       utils.parseUnits("1", 6)
     );
   });
@@ -738,8 +680,6 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
-
     // Mock router gives 1:1, if we set this to something high there will be
     // too much slippage
     await setOracleTokenPriceUsd("COMP", "1.3");
@@ -747,97 +687,35 @@ describe("Vault with Compound strategy", function () {
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+    await mockUniswapRouter.setSlippage(utils.parseEther("0.75"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
-
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      {
+        allowedSlippageBps: 0,
+        harvestRewardBps: 100,
+        swapPlatformAddr: mockUniswapRouter.address,
+        doSwapRewardToken: true,
+        swapPlatform: 0,
+        liquidationLimit: 0,
+      },
+      utils.defaultAbiCoder.encode(
+        ["address[]"],
+        [[comp.address, usdt.address]]
+      )
+    );
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
 
     // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+    expect(await comp.balanceOf(await governor.getAddress())).to.be.equal("0");
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
       compAmount
     );
-
-    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
-    await usdt
-      .connect(josh)
-      .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
     // prettier-ignore
     await expect(harvester
       .connect(josh)["harvestAndSwap(address)"](compoundStrategy.address)).to.be.revertedWith("Slippage error");
-  });
-
-  it("Should collect reward tokens and swap as separate calls", async () => {
-    const { josh, vault, harvester, governor, compoundStrategy, comp, usdt } =
-      fixture;
-
-    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-
-    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
-
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true
-      );
-
-    // Make sure Vault has 0 USDT balance
-    await expect(vault).has.a.balanceOf("0", usdt);
-
-    // Make sure the Strategy has COMP balance
-    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
-      "0"
-    );
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      compAmount
-    );
-
-    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
-    await usdt
-      .connect(josh)
-      .transfer(mockUniswapRouter.address, usdtUnits("100"));
-
-    // prettier-ignore
-    await harvester.connect(governor)["harvest()"]();
-
-    // COMP should be sitting in Harvester
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      compAmount
-    );
-
-    // Call the swap
-    await harvester.connect(governor)["swap()"]();
-
-    // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-    await expect(vault).has.a.balanceOf("100", usdt);
-
-    // No COMP in Vault or Compound strategy
-    await expect(harvester).has.a.balanceOf("0", comp);
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
   });
 
   const mintDoesAllocate = async (amount) => {

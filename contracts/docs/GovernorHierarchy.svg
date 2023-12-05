@@ -9,37 +9,37 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 220.6)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-220.6 227.2,-220.6 227.2,4 -4,4"/>
-<!-- 19 -->
+<!-- 21 -->
 <g id="node1" class="node">
-<title>19</title>
+<title>21</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-42.1 223.2,-42.1 223.2,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="111.6" y="-25.5" font-family="Times,serif" font-size="14.00">Governor</text>
 <text text-anchor="middle" x="111.6" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/governance/Governor.sol</text>
 </g>
-<!-- 172 -->
+<!-- 184 -->
 <g id="node3" class="node">
-<title>172</title>
+<title>184</title>
 <polygon fill="#f2f2f2" stroke="black" points="7.77,-79.1 7.77,-120.7 215.44,-120.7 215.44,-79.1 7.77,-79.1"/>
 <text text-anchor="middle" x="111.6" y="-104.1" font-family="Times,serif" font-size="14.00">Timelock</text>
 <text text-anchor="middle" x="111.6" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/timelock/Timelock.sol</text>
 </g>
-<!-- 19&#45;&gt;172 -->
+<!-- 21&#45;&gt;184 -->
 <g id="edge1" class="edge">
-<title>19&#45;&gt;172</title>
+<title>21&#45;&gt;184</title>
 <path fill="none" stroke="black" d="M111.6,-42.43C111.6,-44.45 111.6,-46.56 111.6,-48.73"/>
 <polygon fill="none" stroke="black" points="101.1,-48.91 111.6,-78.91 122.1,-48.91 101.1,-48.91"/>
 </g>
-<!-- 171 -->
+<!-- 183 -->
 <g id="node2" class="node">
-<title>171</title>
+<title>183</title>
 <polygon fill="#f2f2f2" stroke="black" points="7.77,-157.7 7.77,-216.1 215.44,-216.1 215.44,-157.7 7.77,-157.7"/>
 <text text-anchor="middle" x="111.6" y="-199.5" font-family="Times,serif" font-size="14.00">&lt;&lt;Interface&gt;&gt;</text>
 <text text-anchor="middle" x="111.6" y="-182.7" font-family="Times,serif" font-size="14.00">CapitalPausable</text>
 <text text-anchor="middle" x="111.6" y="-165.9" font-family="Times,serif" font-size="14.00">../contracts/timelock/Timelock.sol</text>
 </g>
-<!-- 172&#45;&gt;171 -->
+<!-- 184&#45;&gt;183 -->
 <g id="edge2" class="edge">
-<title>172&#45;&gt;171</title>
+<title>184&#45;&gt;183</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M111.6,-121.04C111.6,-128.96 111.6,-138.33 111.6,-147.44"/>
 <polygon fill="black" stroke="black" points="108.1,-147.54 111.6,-157.54 115.1,-147.54 108.1,-147.54"/>
 </g>
