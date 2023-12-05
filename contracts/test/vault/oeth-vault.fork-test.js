@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { createFixtureLoader, oethDefaultFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  oethDefaultFixture,
+} = require("../fixture/_fixture");
 const { isCI, oethUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const {

@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { createFixtureLoader, harvesterFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  harvesterFixture,
+} = require("../fixture/_fixture");
 const { isCI, oethUnits } = require("../helpers");
 const { hotDeployOption } = require("../_hot-deploy");
 const addresses = require("../../utils/addresses");
