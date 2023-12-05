@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  threepoolVaultFixture,
+} = require("../fixture/_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");

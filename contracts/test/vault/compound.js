@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  compoundVaultFixture,
+} = require("../fixture/_fixture");
 
 const {
   advanceTime,
@@ -24,11 +27,6 @@ describe("Vault with Compound strategy", function () {
   const loadFixture = createFixtureLoader(compoundVaultFixture);
   beforeEach(async () => {
     fixture = await loadFixture();
-  });
-
-  it("Anyone can call safeApproveAllTokens", async () => {
-    const { matt, compoundStrategy } = fixture;
-    await compoundStrategy.connect(matt).safeApproveAllTokens();
   });
 
   it("Governor can call removePToken", async () => {

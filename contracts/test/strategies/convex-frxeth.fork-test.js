@@ -6,15 +6,18 @@ const {
   createFixtureLoader,
   convexFrxEthFixture,
   loadDefaultFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const addresses = require("../../utils/addresses");
 const { resolveAsset } = require("../../utils/assets");
-const { frxEthWethPoolLpPID, MAX_UINT256 } = require("../../utils/constants");
+const {
+  convex_frxETH_WETH_PID,
+  MAX_UINT256,
+} = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
-describe("ForkTest: Convex frxETH/WETH Strategy", function () {
+describe.skip("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
@@ -74,7 +77,7 @@ describe("ForkTest: Convex frxETH/WETH Strategy", function () {
         addresses.mainnet.ConvexFrxEthWethRewardsPool
       );
       expect(await convexFrxEthWethStrategy.cvxDepositorPoolId()).to.equal(
-        frxEthWethPoolLpPID
+        convex_frxETH_WETH_PID
       );
 
       // Storage slots

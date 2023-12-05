@@ -88,9 +88,13 @@ const getDefenderSigner = async () => {
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
 
-  await hhHelpers.impersonateAccount(account);
+  try {
+    await hhHelpers.impersonateAccount(account);
 
-  return await ethers.provider.getSigner(account);
+    return await ethers.provider.getSigner(account);
+  } catch (err) {
+    throw Error(`Failed to impersonate ${account}: ${err}`, { cause: err });
+  }
 }
 
 /**

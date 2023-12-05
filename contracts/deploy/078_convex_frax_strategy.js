@@ -1,12 +1,12 @@
 const addresses = require("../utils/addresses");
-const { frxEthWethPoolLpPID } = require("../utils/constants");
+const { convex_frxETH_WETH_PID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "078_convex_frax_strategy",
     forceDeploy: false,
-    // forceSkip: true,
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
@@ -46,7 +46,7 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.CurveFrxEthWethPool, // Curve pool
           addresses.mainnet.CurveFrxEthWethPool, // Curve LP token
         ],
-        [addresses.mainnet.CVXBooster, frxEthWethPoolLpPID],
+        [addresses.mainnet.CVXBooster, convex_frxETH_WETH_PID],
       ]
     );
     const cConvexFrxEthWethStrategy = await ethers.getContractAt(

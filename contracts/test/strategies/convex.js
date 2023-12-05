@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  convexVaultFixture,
+} = require("../fixture/_fixture");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");

@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const {
   createFixtureLoader,
   convexLUSDMetaVaultFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

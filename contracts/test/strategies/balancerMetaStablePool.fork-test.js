@@ -13,7 +13,7 @@ const {
   createFixtureLoader,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 const temporaryFork = require("../../utils/temporaryFork");
 const { impersonateAndFund } = require("../../utils/signers");

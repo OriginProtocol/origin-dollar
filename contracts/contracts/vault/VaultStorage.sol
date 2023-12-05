@@ -32,7 +32,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
+    event AMOStrategyUpdated(address _addr, bool _isAMO);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -42,7 +42,10 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event MintForStrategyThresholdChanged(
+        address _strategy,
+        uint256 _threshold
+    );
     event SwapperChanged(address _address);
     event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
@@ -74,12 +77,21 @@ contract VaultStorage is Initializable, Governable {
     /// @dev list of all assets supported by the vault.
     address[] internal allAssets;
 
-    // Strategies approved for use by the Vault
+    /// @param isSupported flag if strategy is approved for use by the Vault
+    /// @param isAMO flag if AMO strategy that can mint and burn OTokens
+    /// @param mintForStrategy How much OTokens are currently minted by the strategy
+    /// @param mintForStrategyThreshold How much net total OTokens are allowed to be minted by the strategy
+    /// @dev The Strategy struct has been packed to fit in a single storage slot
+    /// 96-bits, signed integer is capped at 39b for 18 decimal numbers
     struct Strategy {
         bool isSupported;
-        uint256 _deprecated; // Deprecated storage slot
+        bool isAMO;
+        int96 mintForStrategy;
+        int96 mintForStrategyThreshold;
+        // uint256 _deprecated; // Deprecated unused storage slot
     }
-    /// @dev mapping of strategy contracts to their configiration
+    /// @dev strategy configiration. ie is supported and is AMO
+    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -137,14 +149,17 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
-    /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
-    address public ousdMetaStrategy = address(0);
+    /// @dev Deprecated: AMO strategy that is allowed to mint/burn OTokens without changing collateral
+    // slither-disable-next-line constable-states
+    address private _deprecatedOusdMetaStrategy;
 
-    /// @notice How much OTokens are currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    /// @dev Deprecated: How much OTokens are currently minted by the strategy
+    // slither-disable-next-line constable-states
+    int256 private _deprecatedNetOusdMintedForStrategy;
 
-    /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold = 0;
+    /// @dev Deprecated: How much net total OTokens are allowed to be minted by all strategies
+    // slither-disable-next-line constable-states
+    uint256 private _deprecatedNetOusdMintForStrategyThreshold;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -174,5 +189,20 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
+    }
+
+    /**
+     * @dev Returns the downcasted int96 from uint256, reverting on
+     * overflow (when the input is greater than largest int96).
+     *
+     * Based off OZ's SafeCast but implemented here as the OZ version
+     * used doesn't support casting to int96.
+     */
+    function toInt96(uint256 value) internal pure returns (int96) {
+        require(
+            value <= uint96(type(int96).max),
+            "value doesn't fit in 96 bits"
+        );
+        return int96(uint96(value));
     }
 }

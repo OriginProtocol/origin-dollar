@@ -1,15 +1,14 @@
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
 
 const { oethUnits, units } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
-
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-} = require("./../_fixture");
-const { BigNumber } = require("ethers");
+} = require("../fixture/_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("FraxETH Strategy", function () {

@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { createFixtureLoader, buybackFixture } = require("../_fixture");
+const { createFixtureLoader, buybackFixture } = require("../fixture/_fixture");
 const { ousdUnits, oethUnits } = require("../helpers");
 
 const loadFixture = createFixtureLoader(buybackFixture);

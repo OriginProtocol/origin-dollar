@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
-const { loadDefaultFixture } = require("./../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const {
   ousdUnits,
   usdtUnits,
@@ -77,10 +77,16 @@ describe("ForkTest: Vault", function () {
       );
     });
 
-    it("Should have the correct OUSD MetaStrategy address set", async () => {
+    it("Should have AMO strategy configured in the vault", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(
+      const config = await vault.getStrategyConfig(
         addresses.mainnet.ConvexOUSDAMOStrategy
+      );
+      expect(config.isSupported).to.be.true;
+      expect(config.isAMO).to.be.true;
+      expect(config.mintForStrategy).to.eq(0);
+      expect(config.mintForStrategyThreshold).to.be.eq(
+        utils.parseUnits("50", 24)
       );
     });
 

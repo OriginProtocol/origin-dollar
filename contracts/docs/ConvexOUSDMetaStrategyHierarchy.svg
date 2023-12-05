@@ -16,7 +16,7 @@
 <text text-anchor="middle" x="117.43" y="-398.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 152 -->
+<!-- 243 -->
 <g id="node2" class="node">
 <title>152</title>
 <polygon fill="#f2f2f2" stroke="black" points="81.38,-79.1 81.38,-137.5 385.48,-137.5 385.48,-79.1 81.38,-79.1"/>
@@ -29,8 +29,8 @@
 <title>154</title>
 <polygon fill="#f2f2f2" stroke="black" points="100.43,-174.5 100.43,-232.9 366.42,-232.9 366.42,-174.5 100.43,-174.5"/>
 <text text-anchor="middle" x="233.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
-<text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">BaseCurveStrategy</text>
-<text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseCurveStrategy.sol</text>
+<text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">BaseAMOStrategy</text>
+<text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/BaseAMOStrategy.sol</text>
 </g>
 <!-- 152&#45;&gt;154 -->
 <g id="edge1" class="edge">

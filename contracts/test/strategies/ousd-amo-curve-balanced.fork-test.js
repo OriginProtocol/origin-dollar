@@ -2,12 +2,14 @@ const { expect } = require("chai");
 const { run } = require("hardhat");
 
 const { units, ousdUnits, isCI } = require("../helpers");
-const { createFixtureLoader } = require("../_fixture");
-const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
+const { createFixtureLoader } = require("../fixture/_fixture");
+const {
+  withBalancedOUSDMetaPool,
+} = require("../fixture/_metastrategies-fixtures");
 
 const log = require("../../utils/logger")("test:fork:ousd:metapool");
 
-describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", function () {
+describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -30,15 +32,81 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
       await mintTest(fixture, matt, usdc, "120000");
     });
 
-    it("Should stake DAI in Curve gauge via metapool", async function () {
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
+    describe("Redeem", function () {
+      it("Should redeem", async () => {
+        const { vault, ousd, usdt, usdc, dai, anna, convexOusdAMOStrategy } =
+          fixture;
+
+        await vault.connect(anna).allocate();
+
+        const supplyBeforeMint = await ousd.totalSupply();
+
+        const amount = "10000";
+
+        const beforeMintBlock = await ethers.provider.getBlockNumber();
+
+        // Mint with all three assets
+        for (const asset of [usdt, usdc, dai]) {
+          await vault
+            .connect(anna)
+            .mint(asset.address, await units(amount, asset), 0);
+        }
+
+        await vault.connect(anna).allocate();
+
+        log("After mints and allocate to strategy");
+        await run("amoStrat", {
+          pool: "OUSD",
+          output: false,
+          fromBlock: beforeMintBlock,
+        });
+
+        const afterMintBlock = await ethers.provider.getBlockNumber();
+
+        // we multiply it by 3 because 1/3 of balance is represented by each of the assets
+        const strategyBalance = (
+          await convexOusdAMOStrategy.checkBalance(dai.address)
+        ).mul(3);
+
+        // 3x 10k assets + 3x 10k OUSD = 60k
+        await expect(strategyBalance).to.be.gte(ousdUnits("59990"));
+
+        // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
+        const currentSupply = await ousd.totalSupply();
+        const supplyAdded = currentSupply.sub(supplyBeforeMint);
+        expect(supplyAdded).to.be.gte(ousdUnits("49995"));
+
+        const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+
+        // Now try to redeem the amount
+        const redeemAmount = ousdUnits("29990");
+        await vault.connect(anna).redeem(redeemAmount, 0);
+
+        log("After redeem");
+        await run("amoStrat", {
+          pool: "OUSD",
+          output: false,
+          fromBlock: afterMintBlock,
+        });
+
+        // User balance should be down by 30k
+        const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+        expect(newBalance).to.approxEqualTolerance(
+          currentBalance.sub(redeemAmount),
+          1
+        );
+
+        const newSupply = await ousd.totalSupply();
+        const supplyDiff = currentSupply.sub(newSupply);
+        expect(supplyDiff).to.be.gte(redeemAmount);
+      });
     });
   });
 
   describe("Redeem", function () {
     it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+      const { vault, ousd, usdt, usdc, dai, anna, convexOusdAMOStrategy } =
+        fixture;
 
       await vault.connect(anna).allocate();
 
@@ -66,7 +134,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
 
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
 
       // 3x 10k assets + 3x 10k OUSD = 60k
@@ -99,7 +167,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;
+  const { vault, ousd, convexOusdAMOStrategy, cvxRewardPool } = fixture;
 
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
@@ -110,7 +178,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const currentBalance = await ousd.connect(user).balanceOf(user.address);
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
 
   // Mint OUSD w/ asset
   await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -127,10 +195,10 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   // Ensure 2x OUSD has been added to supply
   expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 1);
 
-  // Ensure some LP tokens got staked under OUSDMetaStrategy address
+  // Ensure some LP tokens got staked under convexOusdAMOStrategy address
   const newRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
     currentRewardPoolBalance
   );

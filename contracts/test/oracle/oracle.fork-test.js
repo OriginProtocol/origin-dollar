@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { isCI } = require("../helpers");
 
 describe("ForkTest: OETH Oracle Routers", function () {

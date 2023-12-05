@@ -6,7 +6,7 @@ const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-} = require("./../_fixture");
+} = require("../fixture/_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
 

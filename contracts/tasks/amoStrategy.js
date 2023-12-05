@@ -279,33 +279,32 @@ async function amoStrategyTask(taskArguments, hre) {
   );
 
   // Strategy's net minted and threshold
-  const netMintedForStrategy = await vault.netOusdMintedForStrategy({
+  const strategyConfig = await vault.getStrategyConfig(amoStrategy.address, {
     blockTag,
   });
-  const netMintedForStrategyThreshold =
-    await vault.netOusdMintForStrategyThreshold({ blockTag });
-  const netMintedForStrategyDiff =
-    netMintedForStrategyThreshold.sub(netMintedForStrategy);
+  const mintForStrategyDiff = strategyConfig.mintForStrategyThreshold.sub(
+    strategyConfig.mintForStrategy
+  );
 
   output(
     displayProperty(
       "\nNet minted for strategy",
       assetSymbol,
-      netMintedForStrategy
+      strategyConfig.mintForStrategy
     )
   );
   output(
     displayProperty(
       "Net minted threshold",
       assetSymbol,
-      netMintedForStrategyThreshold
+      strategyConfig.mintForStrategyThreshold
     )
   );
   output(
     displayProperty(
       "Net minted for strat diff",
       assetSymbol,
-      netMintedForStrategyDiff
+      mintForStrategyDiff
     )
   );
 }

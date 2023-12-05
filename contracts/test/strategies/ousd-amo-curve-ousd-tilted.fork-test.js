@@ -1,17 +1,19 @@
 const { expect } = require("chai");
 
 const { units, ousdUnits, isCI } = require("../helpers");
-const { createFixtureLoader } = require("../_fixture");
-const { withCRV3TitledOUSDMetapool } = require("../_metastrategies-fixtures");
+const { createFixtureLoader } = require("../fixture/_fixture");
+const {
+  withOUSDTitledMetapool,
+} = require("../fixture/_metastrategies-fixtures");
 
-describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function () {
+describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
   let fixture;
-  const loadFixture = createFixtureLoader(withCRV3TitledOUSDMetapool);
+  const loadFixture = createFixtureLoader(withOUSDTitledMetapool);
   beforeEach(async () => {
     fixture = await loadFixture();
   });
@@ -19,12 +21,12 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function 
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via metapool", async function () {
       const { josh, usdt } = fixture;
-      await mintTest(fixture, josh, usdt, "200000");
+      await mintTest(fixture, josh, usdt, "100000");
     });
 
     it("Should stake USDC in Curve gauge via metapool", async function () {
       const { matt, usdc } = fixture;
-      await mintTest(fixture, matt, usdc, "110000");
+      await mintTest(fixture, matt, usdc, "120000");
     });
 
     it("Should stake DAI in Curve gauge via metapool", async function () {
@@ -35,11 +37,15 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function 
 
   describe("Redeem", function () {
     it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+      const { vault, ousd, usdt, usdc, dai, anna, convexOusdAMOStrategy } =
+        fixture;
 
       await vault.connect(anna).allocate();
 
       const supplyBeforeMint = await ousd.totalSupply();
+      const strategyBalanceBeforeMint = (
+        await convexOusdAMOStrategy.checkBalance(dai.address)
+      ).mul(3);
 
       const amount = "10000";
 
@@ -54,40 +60,43 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function 
 
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
+      const strategyBalanceChange = strategyBalance.sub(
+        strategyBalanceBeforeMint
+      );
 
-      // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-      await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+      // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
+      expect(strategyBalanceChange).to.be.gte(ousdUnits("59000"));
 
-      // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
+      // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.be.gte(ousdUnits("49999"));
+      expect(supplyAdded).to.be.gte(ousdUnits("59000"));
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem the amount
-      await vault.connect(anna).redeem(ousdUnits("29900"), 0);
+      const redeemAmount = ousdUnits("10000");
+      await vault.connect(anna).redeem(redeemAmount, 0);
 
-      // User balance should be down by 30k
+      // User balance should be down by 10k
       const newBalance = await ousd.connect(anna).balanceOf(anna.address);
       expect(newBalance).to.approxEqualTolerance(
-        currentBalance.sub(ousdUnits("29900")),
+        currentBalance.sub(redeemAmount),
         1
       );
 
       const newSupply = await ousd.totalSupply();
       const supplyDiff = currentSupply.sub(newSupply);
 
-      expect(supplyDiff).to.be.gte(ousdUnits("29900"));
+      expect(supplyDiff).to.be.gte(redeemAmount);
     });
   });
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;
-
+  const { vault, ousd, convexOusdAMOStrategy, cvxRewardPool } = fixture;
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
 
@@ -97,7 +106,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const currentBalance = await ousd.connect(user).balanceOf(user.address);
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
 
   // Mint OUSD w/ asset
   await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -111,19 +120,22 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   // Supply checks
   const newSupply = await ousd.totalSupply();
   const supplyDiff = newSupply.sub(currentSupply);
-  const ousdUnitAmount = ousdUnits(amount);
 
-  // The pool is titled to 3CRV by a million
-  // It should have added amount*3 supply
-  expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
+  // The pool is titled to 3CRV by a millions
+  // It should have added 2 times the OUSD amount.
+  // 1x for 3poolLp tokens and 1x for minimum amount of OUSD printed
+  expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 5);
 
-  // Ensure some LP tokens got staked under OUSDMetaStrategy address
+  // Ensure some LP tokens got staked under convexOusdAMOStrategy address
   const newRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
     currentRewardPoolBalance
   );
   // Should have staked the LP tokens for USDT and USDC
-  expect(rewardPoolBalanceDiff).to.be.gte(ousdUnits(amount).mul(3).div(2));
+  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
+    ousdUnits(amount).mul(2),
+    5
+  );
 }

@@ -30,7 +30,7 @@ contract MockCurvePool {
     function add_liquidity(uint256[3] calldata _amounts, uint256 _minAmount)
         external
     {
-        uint256 sum = 0;
+        uint256 lpAmount = 0;
         for (uint256 i = 0; i < _amounts.length; i++) {
             if (_amounts[i] > 0) {
                 IERC20(coins[i]).transferFrom(
@@ -40,16 +40,16 @@ contract MockCurvePool {
                 );
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
-                sum += _amounts[i].scaleBy(18, assetDecimals);
+                lpAmount += _amounts[i].scaleBy(18, assetDecimals);
                 balances[i] = balances[i] + _amounts[i];
             }
         }
         // Hacky way of simulating slippage to check _minAmount
-        if (sum == 29000e18) sum = 14500e18;
-        require(sum >= _minAmount, "Slippage ruined your day");
+        if (lpAmount == 29000e18) lpAmount = 14500e18;
+        require(lpAmount >= _minAmount, "Slippage ruined your day");
         // Send LP token to sender, e.g. 3CRV
-        IMintableERC20(lpToken).mint(sum);
-        IERC20(lpToken).transfer(msg.sender, sum);
+        IMintableERC20(lpToken).mint(lpAmount);
+        IERC20(lpToken).transfer(msg.sender, lpAmount);
     }
 
     // Dumb implementation that returns the same amount
@@ -85,9 +85,9 @@ contract MockCurvePool {
     function remove_liquidity(uint256 _lpAmount, uint256[3] memory _min_amounts)
         public
     {
+        uint256 totalSupply = IERC20(lpToken).totalSupply();
         // Burn the Curve LP tokens
         IBurnableERC20(lpToken).burnFrom(msg.sender, _lpAmount);
-        uint256 totalSupply = IERC20(lpToken).totalSupply();
         for (uint256 i = 0; i < 3; i++) {
             uint256 coinAmount = totalSupply > 0
                 ? (_lpAmount * IERC20(coins[i]).balanceOf(address(this))) /

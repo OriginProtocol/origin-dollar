@@ -204,3 +204,10 @@ contract ConvexFrxEthWethStrategyProxy is
 {
 
 }
+
+/**
+ * @notice ConvexFrxETHAMOStrategyProxy delegates calls to a ConvexFrxETHAMOStrategy implementation
+ */
+contract ConvexFrxETHAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

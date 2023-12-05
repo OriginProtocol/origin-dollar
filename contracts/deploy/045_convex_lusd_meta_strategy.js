@@ -1,5 +1,5 @@
 const generalizedConvexStratDeployment = require("../utils/generalizedConvexStratDeployment");
-const { lusdMetapoolLPCRVPid } = require("../utils/constants");
+const { convex_LUSD_3CRV_PID } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "045_convex_lusd_meta_strategy",
@@ -14,7 +14,7 @@ module.exports = generalizedConvexStratDeployment({
   metapoolLPToken: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
   mainTokenAddress: "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0", // LUSD
   cvxRewardStakerAddress: "0x2ad92A7aE036a038ff02B96c88de868ddf3f8190",
-  cvxDepositorPTokenId: lusdMetapoolLPCRVPid, // 33
+  cvxDepositorPTokenId: convex_LUSD_3CRV_PID, // 33
   redeployVault: false,
   deployStrategyImplementation: true,
   skipMainnetDeploy: false,

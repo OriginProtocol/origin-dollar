@@ -57,6 +57,8 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
 addresses.mainnet.CVX = "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
+addresses.mainnet.ConvexPoolManager =
+  "0xc461E1CE3795Ee30bA2EC59843d5fAe14d5782D5";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
 
@@ -134,6 +136,10 @@ addresses.mainnet.CompoundStrategyProxy =
   "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3";
 addresses.mainnet.CompoundStrategy =
   "0xFaf23Bd848126521064184282e8AD344490BA6f0";
+
+// Curve
+addresses.mainnet.CurveGaugeController =
+  "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB";
 addresses.mainnet.CurveUSDCStrategyProxy =
   "0x67023c56548BA15aD3542E65493311F19aDFdd6d";
 addresses.mainnet.CurveUSDCStrategy =
@@ -142,15 +148,18 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
 addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
-addresses.mainnet.CurveOUSDMetaPool =
-  "0x87650D7bbfC3A9F10587d7778206671719d9910D";
 addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
+
+// OUSD AMO for Curve OUSD/3CRV pool
+addresses.mainnet.CurveOUSDMetaPool =
+  "0x87650D7bbfC3A9F10587d7778206671719d9910D";
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 
-// Curve OETH/ETH pool
+// OETH AMO for Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
   "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
 addresses.mainnet.CurveOETHMetaPool =
@@ -158,6 +167,16 @@ addresses.mainnet.CurveOETHMetaPool =
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+
+// OETH AMO for Curve frxETH/OETH pool
+addresses.mainnet.ConvexFraxAMOStrategy =
+  "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438"; // TODO set once deployed
+addresses.mainnet.CurveFrxETHOETHPool =
+  "0xfa0BBB0A5815F6648241C9221027b70914dd8949";
+addresses.mainnet.CurveFrxETHOETHGauge =
+  "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
+addresses.mainnet.CVXFrxETHRewardsPool =
+  "0x105fb5f119117853af8D7D57581a13dDeCa01e21";
 
 // Curve frxETH/WETH pool
 addresses.mainnet.ConvexFrxEthWethStrategy =

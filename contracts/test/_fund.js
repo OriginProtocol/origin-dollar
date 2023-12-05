@@ -45,6 +45,9 @@ const balancesContractSlotCache = {
 const findBalancesSlot = async (tokenAddress) => {
   tokenAddress = tokenAddress.toLowerCase();
   if (balancesContractSlotCache[tokenAddress]) {
+    log(
+      `Found balance slot ${balancesContractSlotCache[tokenAddress][0]} for token ${tokenAddress} in cache`
+    );
     return balancesContractSlotCache[tokenAddress];
   }
 
