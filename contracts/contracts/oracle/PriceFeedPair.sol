@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Strategizable } from "../governance/Strategizable.sol";
 import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -19,7 +18,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
  * ETH/USD prices. Since we need the latter reversed to get the desired result we configure the contract
  * by using FXS/USD as feed 0 and USD/ETH (reversed from ETH/USD) as feed 1.
  */
-contract PriceFeedPair is AggregatorV3Interface, Strategizable {
+contract PriceFeedPair is AggregatorV3Interface {
     using SafeCast for uint256;
     using SafeCast for int256;
     using StableMath for uint256;
@@ -28,25 +27,21 @@ contract PriceFeedPair is AggregatorV3Interface, Strategizable {
     uint8 public constant override decimals = 18;
     string public constant override description = "";
     uint256 public constant override version = 1;
-    address internal immutable addressFeed0;
-    address internal immutable addressFeed1;
-    bool internal immutable reverseFeed0;
-    bool internal immutable reverseFeed1;
+    address public immutable addressFeed0;
+    address public immutable addressFeed1;
+    bool public immutable reverseFeed0;
+    bool public immutable reverseFeed1;
     uint8 internal immutable decimalsFeed0;
     uint8 internal immutable decimalsFeed1;
 
     error PriceFeedAddressError(address _address);
 
     constructor(
-        address _governor,
-        address _strategist,
         address _addressFeed0,
         address _addressFeed1,
         bool _reverseFeed0,
         bool _reverseFeed1
     ) {
-        _setGovernor(_governor);
-        _setStrategistAddr(_strategist);
         if (_addressFeed0 == address(0)) {
             revert PriceFeedAddressError(_addressFeed0);
         }

@@ -31,8 +31,6 @@ module.exports = deploymentWithGovernanceProposal(
     await deployWithConfirmation(
       "FXS_ETHPriceFeedPair",
       [
-        timelockAddr, // governor
-        strategistAddr, // strategist
         addresses.mainnet.chainlinkFXS_USD, // _addressFeed0
         addresses.mainnet.chainlinkETH_USD, // _addressFeed1
         false, // _reverseFeed0
