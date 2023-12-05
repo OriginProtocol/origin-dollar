@@ -486,7 +486,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         internal
         override
     {
-        require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
+        // TODO
+        // require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
         InitializableAbstractStrategy._setPTokenAddress(_asset, _pToken);
     }
 

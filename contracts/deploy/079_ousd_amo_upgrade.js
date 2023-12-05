@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "079_ousd_amo_upgrade",
     forceDeploy: false,
     forceSkip: true,
-    reduceQueueTime: false,
+    reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
   },

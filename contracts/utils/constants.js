@@ -9,6 +9,7 @@ const convex_LUSD_3CRV_PID = 33;
 const convex_OETH_ETH_PID = 174;
 const convex_frxETH_OETH_PID = 237;
 const convex_frxETH_WETH_PID = 219;
+const convex_Try_LSD_PID = 251;
 
 // stETH/WETH
 const aura_stETH_WETH_PID = 115;
@@ -32,6 +33,7 @@ module.exports = {
   convex_OETH_ETH_PID,
   convex_frxETH_OETH_PID,
   convex_frxETH_WETH_PID,
+  convex_Try_LSD_PID,
   MAX_UINT256,
   aura_stETH_WETH_PID,
   balancer_stETH_WETH_PID,
