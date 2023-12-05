@@ -9,7 +9,7 @@ const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
-  oethPoolLpPID,
+  convex_OETH_ETH_PID,
 } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAndFund } = require("../utils/signers");
@@ -72,11 +72,16 @@ async function constructNewContract(fixture, implContractName) {
       return [
         [addresses.mainnet.CurveOETHMetaPool, addresses.mainnet.OETHVaultProxy],
         [
-          addresses.mainnet.CVXBooster,
-          addresses.mainnet.CVXETHRewardsPool,
-          oethPoolLpPID,
-          addresses.mainnet.OETHProxy,
-          addresses.mainnet.WETH,
+          addresses.mainnet.OETHProxy, // oTokenAddress,
+          addresses.mainnet.WETH, // vaultAssetAddress (WETH)
+          addresses.ETH, // poolAssetAddress (ETH)
+          1, // Curve pool index for OToken OETH
+          0, // Curve pool index for asset ETH
+        ],
+        [
+          addresses.mainnet.CVXBooster, // cvxDepositorAddress,
+          addresses.mainnet.CVXETHRewardsPool, // cvxRewardStakerAddress,
+          convex_OETH_ETH_PID, // cvxDepositorPTokenId
         ],
       ];
     }
@@ -140,7 +145,7 @@ async function hotDeployOption(
         "fraxEthStrategy", // fixtureStrategyVarName
         "FraxETHStrategy" // implContractName
       );
-    } else if (fixtureName === "convexOETHMetaVaultFixture") {
+    } else if (fixtureName === "convexOethEthAmoFixture") {
       await hotDeployFixture(
         fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName

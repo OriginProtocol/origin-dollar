@@ -1558,7 +1558,7 @@ async function convexOethEthAmoFixture(
   }
 ) {
   const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "convexOETHMetaVaultFixture", {
+  await hotDeployOption(fixture, "convexOethEthAmoFixture", {
     isOethFixture: true,
   });
 
@@ -1659,8 +1659,8 @@ async function convexOethEthAmoFixture(
   }
 
   if (config?.balancePool) {
-    const ethBalance = await fixture.oethMetaPool.balances(0);
-    const oethBalance = await fixture.oethMetaPool.balances(1);
+    const ethBalance = await fixture.curveOethEthPool.balances(0);
+    const oethBalance = await fixture.curveOethEthPool.balances(1);
 
     const diff = parseInt(
       ethBalance.sub(oethBalance).div(oethUnits("1")).toString()
@@ -2471,6 +2471,7 @@ module.exports = {
   nodeSnapshot,
   nodeRevert,
   rebornFixture,
+  resetAllowance,
   threepoolFixture,
   threepoolVaultFixture,
 };

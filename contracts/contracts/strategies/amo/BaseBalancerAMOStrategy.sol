@@ -78,6 +78,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         uint256 minMintAmount
     ) internal override returns (uint256 lpDeposited) {
         // TODO do we need to check if the tokens in the pool have changed?
+        // slither-disable-next-line unused-return
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
@@ -162,6 +163,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         uint256[] memory poolAssetsAmountsOut
     ) internal {
         // TODO do we need to check if the tokens in the pool have changed?
+        // slither-disable-next-line unused-return
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
@@ -217,6 +219,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         returns (uint256[2] memory balances)
     {
         // Get all the supported Balancer pool assets and balances
+        // slither-disable-next-line unused-return
         (IERC20[] memory tokens, uint256[] memory allBalances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
         require(tokens[oTokenCoinIndex] == oToken, "Invalid Balancer oToken");
@@ -236,6 +239,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
         uint128 coinIndex = _getCoinIndex(poolAsset);
 
         // Get all the supported Balancer pool assets and balances
+        // slither-disable-next-line unused-return
         (IERC20[] memory tokens, uint256[] memory allBalances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
         require(

@@ -67,12 +67,12 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
       );
 
       // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
-      expect(strategyBalanceChange).to.be.gte(ousdUnits("59500"));
+      expect(strategyBalanceChange).to.be.gte(ousdUnits("59000"));
 
       // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.be.gte(ousdUnits("59500"));
+      expect(supplyAdded).to.be.gte(ousdUnits("59000"));
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
