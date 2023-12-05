@@ -5,10 +5,14 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../../utils/StableMath.sol";
-import { ICurvePool } from "./ICurvePool.sol";
+import { ICurveCrypto } from "./ICurveCrypto.sol";
 import { CurveFunctions } from "../BaseCurveStrategy.sol";
 
-contract CurveThreeCoinFunctions {
+/**
+ * @title Implement Curve functions for of CurveSwap. eg TryLSD
+ * @author Origin Protocol Inc
+ */
+contract CurveCryptoFunctions {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
@@ -50,7 +54,8 @@ contract CurveThreeCoinFunctions {
             _amounts[2]
         ];
 
-        ICurvePool(_CURVE_POOL).add_liquidity(amounts, _min_mint_amount);
+        // slither-disable-next-line unchecked-transfer unused-return
+        ICurveCrypto(_CURVE_POOL).add_liquidity(amounts, _min_mint_amount);
     }
 
     /**
@@ -73,7 +78,8 @@ contract CurveThreeCoinFunctions {
             _min_amounts[2]
         ];
 
-        ICurvePool(_CURVE_POOL).remove_liquidity(_burn_amount, min_amounts);
+        // slither-disable-next-line unchecked-transfer unused-return
+        ICurveCrypto(_CURVE_POOL).remove_liquidity(_burn_amount, min_amounts);
     }
 
     /**
@@ -81,7 +87,6 @@ contract CurveThreeCoinFunctions {
      * @param _amount The amount of underlying coin to withdraw
      * @param _coin_index Curve pool index of the coin to withdraw
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
-     * @param _asset The token address of the coin being withdrawn
      * @param _receiver Address that receives the withdrawn coins
      * @return poolAssetAmount Amount of pool assets removed from the Curve pool
      */
@@ -89,20 +94,17 @@ contract CurveThreeCoinFunctions {
         uint256 _amount,
         uint256 _coin_index,
         uint256 _max_burn_amount,
-        address _asset,
+        address,
         address _receiver
     ) internal returns (uint256 poolAssetAmount) {
-        uint256[COIN_COUNT] memory amounts = [uint256(0), 0, 0];
-        amounts[_coin_index] = _amount;
-
-        ICurvePool(_CURVE_POOL).remove_liquidity_imbalance(
-            amounts,
-            _max_burn_amount
+        // This can transfer more assets than what's required to the strategy
+        poolAssetAmount = ICurveCrypto(_CURVE_POOL).remove_liquidity_one_coin(
+            _max_burn_amount,
+            _coin_index,
+            _amount,
+            false,
+            _receiver
         );
-
-        IERC20(_asset).safeTransfer(_receiver, _amount);
-
-        poolAssetAmount = _amount;
     }
 
     /**
@@ -138,7 +140,7 @@ contract CurveThreeCoinFunctions {
         amounts[_coinIndex] = _assetAmount;
 
         // LP required when removing required asset including slippage but ignoring fees
-        uint256 lpRequiredNoFees = ICurvePool(_CURVE_POOL).calc_token_amount(
+        uint256 lpRequiredNoFees = ICurveCrypto(_CURVE_POOL).calc_token_amount(
             amounts,
             false
         );
@@ -147,18 +149,15 @@ contract CurveThreeCoinFunctions {
          * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
          */
         uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + ICurvePool(_CURVE_POOL).fee(),
+            1e10 + ICurveCrypto(_CURVE_POOL).fee(),
             1e10
         );
 
         /* Asset received when withdrawing full fee applicable LP accounting for slippage and fees.
          * Unlike calc_token_amount which does not include fees, calc_withdraw_one_coin includes fees.
          */
-        uint256 assetReceivedForFullLPFees = ICurvePool(_CURVE_POOL)
-            .calc_withdraw_one_coin(
-                lpRequiredFullFees,
-                int128(uint128(_coinIndex))
-            );
+        uint256 assetReceivedForFullLPFees = ICurveCrypto(_CURVE_POOL)
+            .calc_withdraw_one_coin(lpRequiredFullFees, _coinIndex);
 
         // The required amount of Curve LP tokens including fees is calculated by reducing the full fee LP amount
         // by the ratio of required assets to assets received from the full fee LP amount.

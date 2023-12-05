@@ -211,3 +211,10 @@ contract ConvexFrxEthWethStrategyProxy is
 contract ConvexFrxETHAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ConvexTryLSDStrategyProxy delegates calls to a ConvexCryptoStrategy implementation
+ */
+contract ConvexTryLSDStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

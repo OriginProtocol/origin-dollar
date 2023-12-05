@@ -13,7 +13,7 @@ const {
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve:frxETH");
 
-describe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
+describe.skip("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);

@@ -180,6 +180,7 @@ abstract contract ConvexStrategy is BaseCurveStrategy {
     function checkBalance(address _asset)
         public
         view
+        virtual
         override
         returns (uint256 balance)
     {

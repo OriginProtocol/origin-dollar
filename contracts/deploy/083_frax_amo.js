@@ -9,8 +9,8 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "083_frax_amo",
     forceDeploy: false,
-    // forceSkip: true,
-    reduceQueueTime: false,
+    forceSkip: true,
+    reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
   },

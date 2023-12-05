@@ -74,8 +74,8 @@ contract CurveTwoCoinFunctions {
      * @param _amount The amount of underlying coin to withdraw
      * @param _coin_index Curve pool index of the coin to withdraw
      * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
-     * param _asset is not used in this implementation but is in the CurveThreeCoinLib implementation
      * @param _receiver Address that receives the withdrawn coins
+     * @return poolAssetAmount Amount of pool assets removed from the Curve pool
      */
     function remove_liquidity_imbalance(
         uint256 _amount,
@@ -83,7 +83,7 @@ contract CurveTwoCoinFunctions {
         uint256 _max_burn_amount,
         address,
         address _receiver
-    ) internal {
+    ) internal returns (uint256 poolAssetAmount) {
         uint256[COIN_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coin_index] = _amount;
 
@@ -93,6 +93,8 @@ contract CurveTwoCoinFunctions {
             _max_burn_amount,
             _receiver
         );
+
+        poolAssetAmount = _amount;
     }
 
     /**

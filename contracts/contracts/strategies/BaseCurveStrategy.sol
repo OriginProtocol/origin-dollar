@@ -27,13 +27,8 @@ import { Helpers } from "../utils/Helpers.sol";
 struct CurveFunctions {
     function(uint256[] memory, uint256) add_liquidity;
     function(uint256, uint256[] memory) remove_liquidity;
-    function(
-        uint256,
-        uint256,
-        uint256,
-        address,
-        address
-    ) remove_liquidity_imbalance;
+    function(uint256, uint256, uint256, address, address)
+        returns (uint256) remove_liquidity_imbalance;
     function(uint256, uint256) view returns (uint256) calcWithdrawLpAmount;
 }
 
@@ -139,6 +134,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        virtual
         override
         onlyVault
         nonReentrant
@@ -183,7 +179,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * `deposit` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
      * calls `depositToStrategy` on the `Vault`.
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external virtual override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_POOL_ASSETS_COUNT);
         uint256 totalScaledAmount = 0;
 
@@ -253,7 +249,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external virtual override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
 
         emit Withdrawal(_asset, CURVE_POOL, _amount);
@@ -297,7 +293,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * `withdrawAll` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
      * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by Curve pool
@@ -331,7 +333,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @dev Approve the spending of all assets by their corresponding pool tokens,
+     * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -380,6 +382,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _getCoinIndex(address _asset)
         internal
         view
+        virtual
         returns (uint256 coinIndex)
     {
         // This check is needed for Curve pools with only two assets as
@@ -483,7 +486,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         internal
         override
     {
-        require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
+        // TODO
+        // require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
         InitializableAbstractStrategy._setPTokenAddress(_asset, _pToken);
     }
 

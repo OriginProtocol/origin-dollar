@@ -188,6 +188,16 @@ addresses.mainnet.CurveFrxEthWethGauge =
 addresses.mainnet.ConvexFrxEthWethRewardsPool =
   "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
 
+// Curve TryLSD pool
+addresses.mainnet.ConvexTryLSDStrategy =
+  "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F"; // TODO set after deployment
+addresses.mainnet.CurveTryLSDPool =
+  "0x2570f1bD5D2735314FC102eb12Fc1aFe9e6E7193";
+addresses.mainnet.CurveTryLSDGauge =
+  "0xea012f5b25fa0d8e46123b85f585d0a5075e96b5";
+addresses.mainnet.ConvexTryLSDRewardsPool =
+  "0xb14B2bbA5446BcE656b37b22f4c2De6446226dFb";
+
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
