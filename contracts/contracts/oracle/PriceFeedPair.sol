@@ -8,7 +8,16 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
- * @notice Price feed when the feed of 2 oracle prices need combining to achieve desired result
+ * @notice Price feed when the feed of 2 oracle prices need combining to achieve desired result.
+ * 
+ * @dev multiplying oracle pair prices has combining properties. E.g. price FXS/USD multiplied by
+ * USD/ETH results effectively in FXS/ETH price. Since oracle prices express asset on the left priced
+ * by the asset on the right, we sometimes need to reverse prices in order to achieve desired results. 
+ * ETH/USD reversed is USD/ETH.
+ * 
+ * In our first usage of this contract we required FXS/ETH price. It can be derived using FXS/USD and 
+ * ETH/USD prices. Since we need the latter reversed to get the desired result we configure the contract
+ * by using FXS/USD as feed 0 and USD/ETH (reversed from ETH/USD) as feed 1.
  */
 contract PriceFeedPair is AggregatorV3Interface, Strategizable {
     using SafeCast for uint256;
@@ -77,7 +86,6 @@ contract PriceFeedPair is AggregatorV3Interface, Strategizable {
      * @dev This function exists to make the contract compatible
      * with AggregatorV3Interface (which OETHOracleRouter uses to
      * get the price).
-     *
      **/
     function latestRoundData()
         external

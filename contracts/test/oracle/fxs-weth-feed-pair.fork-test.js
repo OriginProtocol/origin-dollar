@@ -24,18 +24,18 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
       "FXS_ETHPriceFeedPair"
     );
 
-    fxsUsdFeed = await ethers.getContractAt(
+    fixture.fxsUsdFeed = await ethers.getContractAt(
       aggregatorInterfaceAbi,
       addresses.mainnet.chainlinkFXS_USD
     );
-    ethUsdFeed = await ethers.getContractAt(
+    fixture.ethUsdFeed = await ethers.getContractAt(
       aggregatorInterfaceAbi,
       addresses.mainnet.chainlinkETH_USD
     );
   });
 
   it("should correctly report feed price", async () => {
-    const { fxsWethPriceFeedPair } = fixture;
+    const { fxsWethPriceFeedPair, fxsUsdFeed, ethUsdFeed } = fixture;
     const decimals18 = BigNumber.from("1000000000000000000");
     const decimals8 = BigNumber.from("100000000");
     const decimals2 = BigNumber.from("100");
@@ -56,7 +56,7 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
   });
 
   it("should correctly report updatedAt time", async () => {
-    const { fxsWethPriceFeedPair } = fixture;
+    const { fxsWethPriceFeedPair, fxsUsdFeed, ethUsdFeed } = fixture;
 
     const fxsUsdUpdatedAt = (await fxsUsdFeed.latestRoundData())[3];
     const ethUsdUpdatedAt = (await ethUsdFeed.latestRoundData())[3];
@@ -70,5 +70,11 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
     const fxsWethUpdatedAt = (await fxsWethPriceFeedPair.latestRoundData())[3];
 
     expect(expectedFxsWethUpdatedAt).to.equal(fxsWethUpdatedAt);
+  });
+
+  it("should revert querying specific round data", async () => {
+    const { fxsWethPriceFeedPair } = fixture;
+    expect(fxsWethPriceFeedPair.getRoundData(BigNumber.from("1")))
+      .to.be.revertedWith("No data present");
   });
 });
