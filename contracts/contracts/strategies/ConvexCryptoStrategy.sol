@@ -121,7 +121,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
 
         if (totalLpToken > 0) {
             // get the Strategy's total LP token value priced in the first token of the Curve pool.
-            // eg wsthETH for TryLSD
+            // eg wstETH for TryLSD
             uint256 totalLpValueInCoin0 = totalLpToken.mulTruncate(
                 ICurveCrypto(CURVE_POOL).get_virtual_price()
             );
@@ -143,7 +143,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
             );
 
             // the Strategy's total LP token value priced in OTokens. eg OETH
-            // For exmaple, OETH for TryLSD
+            // For example, OETH for TryLSD
             uint256 totalLpValueInOTokens = totalLpValueInVaultAsset0 *
                 priceVaultAsset0;
 
@@ -199,7 +199,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         uint256 priceVaultAsset0 = IOracle(priceProvider).price(vaultAsset0);
 
         // Calculate the vault asset amount in the vault asset that corresponds to the first coin in the Curve pool.
-        // For TryLSD, this convers all vault amounts to stETH.
+        // For TryLSD, this covers all vault amounts to stETH.
         uint256 depositAmountInAsset0 = _calcAmountInAsset0(
             priceProvider,
             _vaultAsset,
@@ -207,7 +207,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
             priceVaultAsset0
         );
 
-        // Convert the unwrapped, rebasing deposit amount to wrapped, non-rebaseing deposit amount.
+        // Convert the unwrapped, rebasing deposit amount to wrapped, non-rebasing deposit amount.
         // For TryLSD, this is the wstETH amount from the stETH amount.
         uint256 depositAmountInCoin0 = _toPoolAsset(
             vaultAsset0,
@@ -221,7 +221,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         uint256 depositAmountInLp = depositAmountInCoin0.divPrecisely(
             ICurveCrypto(CURVE_POOL).get_virtual_price()
         );
-        // The mimimum allowed LP amount = fair LP amount * (1 - max allowed slippage)
+        // The minimum allowed LP amount = fair LP amount * (1 - max allowed slippage)
         uint256 minLpAmount = depositAmountInLp.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
@@ -265,8 +265,9 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
                 // set the amount of pool assets we are depositing
                 _poolAmounts[i] = _wrapPoolAsset(vaultAsset, vaultAssetBalance);
 
-                // Calculate the vault asset amount in the vault asset that corresponds to the first coin in the Curve pool.
-                // For TryLSD, this convers all vault amounts to stETH.
+                // Calculate the vault asset amount in the vault asset that corresponds
+                // to the first coin in the Curve pool.
+                // For TryLSD, this covers all vault amounts to stETH.
                 totalDepositAmountInAsset0 += _calcAmountInAsset0(
                     priceProvider,
                     vaultAsset,
@@ -278,7 +279,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
             }
         }
 
-        // Convert the unwrapped, rebasing deposit amount to wrapped, non-rebaseing deposit amount.
+        // Convert the unwrapped, rebasing deposit amount to wrapped, non-rebasing deposit amount.
         // For TryLSD, this is the wstETH amount from the total deposit amount in stETH units.
         uint256 totalDepositAmountInCoin0 = _toPoolAsset(
             vaultAsset0,
@@ -292,7 +293,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
         uint256 totalDepositAmountInLp = totalDepositAmountInCoin0.divPrecisely(
             ICurveCrypto(CURVE_POOL).get_virtual_price()
         );
-        // The mimimum allowed LP amount = fair LP amount * (1 - max allowed slippage)
+        // The minimum allowed LP amount = fair LP amount * (1 - max allowed slippage)
         uint256 minLpAmount = totalDepositAmountInLp.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
@@ -464,7 +465,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
      * Revert if the `_coinIndex` is not supported by the Curve pool.
      * @param _coinIndex Index value of the coin in the Curve pool.
      * Can be checked using Curve's `coins` getter method.
-     * @param vaultAsset the addres of the vault asset.
+     * @param vaultAsset the address of the vault asset.
      */
     function _getVaultAsset(uint256 _coinIndex)
         internal
@@ -547,7 +548,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
     /**
      * @dev Converts a unwrapped, rebasing assets used in the vault to
      * its wrapped, non-rebasing counterpart used in the Curve pool.
-     * For exmaple, converts stETH to wstETH or frxETH to sfrxETH.
+     * For example, converts stETH to wstETH or frxETH to sfrxETH.
      * rETH is not rebasing so rETH is returned.
      *
      * @param vaultAsset Address of the unwrapped, rebasing assets used in the vault.
@@ -580,7 +581,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
     /**
      * @dev Converts wrapped, non-rebasing assets used in the Curve pool to
      * its unwrapped, rebasing counterpart used in the vault.
-     * For exmaple, converts wstETH to stETH or sfrxETH or frxETH.
+     * For example, converts wstETH to stETH or sfrxETH or frxETH.
      *
      * @param vaultAsset Address of the unwrapped, rebasing assets used in the vault. eg stETH or frxETH
      * @param wrappedAmount The amount of wrapped, non-rebasing assets used in the Curve pool.
@@ -612,7 +613,7 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
      * @param vaultAsset Address of the unwrapped, rebasing assets used in the vault. eg stETH, frxETH or rETH
      * @param vaultAssetAmount the amount of unwrapped, rebasing assets used in the vault.
      * @param priceVaultAsset0 the vault asset that corresponds to the first coin in the Curve pool.
-     * For exmaple, stETH for TryLSD
+     * For example, stETH for TryLSD
      * @param amountInAsset0 the amount in the vault asset that corresponds to the first coin in the Curve pool.
      * For example, stETH for TryLSD
      */
@@ -632,10 +633,10 @@ contract ConvexCryptoStrategy is CurveCryptoFunctions, ConvexStrategy {
 
         // Calculate the deposit amount in OTokens = deposit amount in vault assets * vault asset/OToken exchange rate
         // For example, deposit amount in OETH = frxETH amount * frxETH/OETH exchange rate
-        uint256 depositAmounntInOTokens = vaultAssetAmount * priceDepositAsset;
+        uint256 depositAmountInOTokens = vaultAssetAmount * priceDepositAsset;
 
         // Calculate the deposit amount in the vault asset that corresponds to the first coin in the Curve pool.
         // For example, stETH value = deposit value in OETH / stETH/OETH exchange rate
-        amountInAsset0 = depositAmounntInOTokens / priceVaultAsset0;
+        amountInAsset0 = depositAmountInOTokens / priceVaultAsset0;
     }
 }

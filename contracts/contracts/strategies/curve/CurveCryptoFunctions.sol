@@ -54,6 +54,7 @@ contract CurveCryptoFunctions {
             _amounts[2]
         ];
 
+        // slither-disable-next-line unchecked-transfer unused-return
         ICurveCrypto(_CURVE_POOL).add_liquidity(amounts, _min_mint_amount);
     }
 
@@ -77,6 +78,7 @@ contract CurveCryptoFunctions {
             _min_amounts[2]
         ];
 
+        // slither-disable-next-line unchecked-transfer unused-return
         ICurveCrypto(_CURVE_POOL).remove_liquidity(_burn_amount, min_amounts);
     }
 
