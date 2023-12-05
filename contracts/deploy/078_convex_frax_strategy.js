@@ -6,7 +6,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "078_convex_frax_strategy",
     forceDeploy: false,
-    // forceSkip: true,
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",

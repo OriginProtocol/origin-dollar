@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "079_ousd_amo_upgrade",
     forceDeploy: false,
-    // forceSkip: true,
+    forceSkip: true,
     reduceQueueTime: false,
     deployerIsProposer: true,
     // proposalId: "",
