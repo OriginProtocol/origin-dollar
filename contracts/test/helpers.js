@@ -32,20 +32,37 @@ chai.Assertion.addMethod(
   function (expected, maxTolerancePct = 1, message = undefined) {
     const actual = this._obj;
     expected = BigNumber.from(expected);
+    const precision = 1000000000;
     if (expected.gte(BigNumber.from(0))) {
       chai
         .expect(actual, message)
-        .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+        .gte(
+          expected
+            .mul(precision - maxTolerancePct * (precision / 100))
+            .div(precision)
+        );
       chai
         .expect(actual, message)
-        .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+        .lte(
+          expected
+            .mul(precision + maxTolerancePct * (precision / 100))
+            .div(precision)
+        );
     } else {
       chai
         .expect(actual, message)
-        .gte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+        .gte(
+          expected
+            .mul(precision + maxTolerancePct * (precision / 100))
+            .div(precision)
+        );
       chai
         .expect(actual, message)
-        .lte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+        .lte(
+          expected
+            .mul(precision - maxTolerancePct * (precision / 100))
+            .div(precision)
+        );
     }
   }
 );

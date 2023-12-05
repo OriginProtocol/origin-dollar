@@ -38,9 +38,10 @@ const main = async (hre) => {
     "MockOracleRouterNoStale"
   );
   const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
+  const cFxsETHPriceFeed = await ethers.getContract("FXS_ETHPriceFeedPair");
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
     "MockOETHOracleRouterNoStale",
-    [dAuraPriceFeed.address]
+    [dAuraPriceFeed.address, cFxsETHPriceFeed.address]
   );
   log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
   await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);

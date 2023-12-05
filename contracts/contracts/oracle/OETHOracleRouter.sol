@@ -10,9 +10,11 @@ contract OETHOracleRouter is OracleRouterBase {
     using StableMath for uint256;
 
     address public immutable auraPriceFeed;
+    address public immutable fxsPriceFeed;
 
-    constructor(address _auraPriceFeed) {
+    constructor(address _auraPriceFeed, address _fxsPriceFeed) {
         auraPriceFeed = _auraPriceFeed;
+        fxsPriceFeed = _fxsPriceFeed;
     }
 
     /**
@@ -105,6 +107,16 @@ contract OETHOracleRouter is OracleRouterBase {
             // AURA/ETH
             feedAddress = auraPriceFeed;
             maxStaleness = 0;
+        } else if (asset == 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0) {
+            /* FXS/ETH PriceFeedPar feed contract
+             *
+             * Is combining the following to feeds to achieve target feed:
+             *  - https://data.chain.link/ethereum/mainnet/crypto-usd/fxs-usd
+             *  - https://data.chain.link/ethereum/mainnet/crypto-usd/eth-usd (inverted)
+             */
+            feedAddress = fxsPriceFeed;
+            // eth-usd heartbeat is 1 hour and fxs-usd feed is 1 day
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else {
             revert("Asset not available");
         }

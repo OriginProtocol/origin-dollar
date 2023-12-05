@@ -45,6 +45,13 @@ describe("ForkTest: OETH Oracle Routers", function () {
     expect(price).to.approxEqualTolerance(parseUnits("1", 18), 1);
   });
 
+  it("should get FXS price", async () => {
+    const { fxs } = fixture;
+
+    const price = await oethOracleRouter.price(fxs.address);
+    expect(price).to.lt(parseUnits("1", 18));
+  });
+
   it("should get gas costs of assets", async () => {
     const { reth, frxETH, stETH, weth, josh } = fixture;
 

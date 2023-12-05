@@ -2300,6 +2300,17 @@ async function harvesterFixture() {
 
   if (isFork) {
     fixture = await defaultFixture();
+    let signers = await hre.ethers.getSigners();
+    // fund accounts with FXS
+    signers = signers.slice(4);
+    for (const signer of signers) {
+      const communityBags = await impersonateAndFund(
+        addresses.mainnet.FraxCommunityBags
+      );
+      await fixture.fxs
+        .connect(communityBags)
+        .transfer(signer.address, oethUnits("10000"));
+    }
   } else {
     fixture = await compoundVaultFixture();
 
@@ -2310,6 +2321,7 @@ async function harvesterFixture() {
       dai,
       aaveStrategy,
       comp,
+      fxs,
       aaveToken,
       strategist,
       compoundStrategy,
