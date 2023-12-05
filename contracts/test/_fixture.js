@@ -134,14 +134,6 @@ const defaultFixture = deployments.createFixture(async () => {
     convexStrategyProxy.address
   );
 
-  const convexFrxEthWethStrategyProxy = await ethers.getContract(
-    "ConvexFrxEthWethStrategyProxy"
-  );
-  const convexFrxEthWethStrategy = await ethers.getContractAt(
-    "ConvexTwoPoolStrategy",
-    convexFrxEthWethStrategyProxy.address
-  );
-
   const OUSDmetaStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
@@ -616,7 +608,6 @@ const defaultFixture = deployments.createFixture(async () => {
     oethMorphoAaveStrategy,
     woeth,
     convexEthMetaStrategy,
-    convexFrxEthWethStrategy,
     fraxConvexWethStrategy,
     oethDripper,
     oethHarvester,
@@ -1688,7 +1679,6 @@ async function convexFrxEthFixture(
   const fixture = await oethDefaultFixture();
 
   const {
-    convexFrxEthWethStrategy,
     governor,
     oethHarvester,
     oethVault,
@@ -1698,6 +1688,14 @@ async function convexFrxEthFixture(
     frxETH,
     weth,
   } = fixture;
+
+  fixture.convexFrxEthWethStrategyProxy = await ethers.getContract(
+    "ConvexFrxEthWethStrategyProxy"
+  );
+  fixture.convexFrxEthWethStrategy = await ethers.getContractAt(
+    "ConvexTwoPoolStrategy",
+    fixture.convexFrxEthWethStrategyProxy.address
+  );
 
   if (isFork) {
     await setERC20TokenBalance(josh.address, frxETH, "10000000", hre);
@@ -1721,13 +1719,13 @@ async function convexFrxEthFixture(
     // Approve strategy for unit tests
     await oethVault
       .connect(governor)
-      .approveStrategy(convexFrxEthWethStrategy.address);
-    await convexFrxEthWethStrategy
+      .approveStrategy(fixture.convexFrxEthWethStrategy.address);
+    await fixture.convexFrxEthWethStrategy
       .connect(governor)
       .setHarvesterAddress(oethHarvester.address);
     await oethHarvester
       .connect(governor)
-      .setSupportedStrategy(convexFrxEthWethStrategy.address, true);
+      .setSupportedStrategy(fixture.convexFrxEthWethStrategy.address, true);
 
     const assetAddresses = await getAssetAddresses(deployments);
     fixture.curveFrxEthWethPool = await ethers.getContractAt(
@@ -1762,7 +1760,7 @@ async function convexFrxEthFixture(
       await oethVault
         .connect(strategist)
         .depositToStrategy(
-          convexFrxEthWethStrategy.address,
+          fixture.convexFrxEthWethStrategy.address,
           [weth.address],
           [wethAmount]
         );
@@ -1787,7 +1785,7 @@ async function convexFrxEthFixture(
       await oethVault
         .connect(strategist)
         .depositToStrategy(
-          convexFrxEthWethStrategy.address,
+          fixture.convexFrxEthWethStrategy.address,
           [frxETH.address],
           [frxEthAmount]
         );
