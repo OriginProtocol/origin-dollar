@@ -44,7 +44,7 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
 
       const supplyBeforeMint = await ousd.totalSupply();
       const strategyBalanceBeforeMint = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
 
       const amount = "10000";

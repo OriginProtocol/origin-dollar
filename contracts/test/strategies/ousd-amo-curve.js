@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
