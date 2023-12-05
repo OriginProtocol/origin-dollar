@@ -2321,7 +2321,6 @@ async function harvesterFixture() {
       dai,
       aaveStrategy,
       comp,
-      fxs,
       aaveToken,
       strategist,
       compoundStrategy,

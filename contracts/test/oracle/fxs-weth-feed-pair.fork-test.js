@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { hotDeployOption } = require("../_hot-deploy");
 const aggregatorInterfaceAbi = require("../abi/AggregatorInterfaceAbi.json");
@@ -10,8 +9,6 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
   this.timeout(0);
 
   let fixture;
-  let fxsUsdFeed;
-  let ethUsdFeed;
 
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
@@ -38,7 +35,6 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
     const { fxsWethPriceFeedPair, fxsUsdFeed, ethUsdFeed } = fixture;
     const decimals18 = BigNumber.from("1000000000000000000");
     const decimals8 = BigNumber.from("100000000");
-    const decimals2 = BigNumber.from("100");
 
     // denominated in 8 decimals
     const fxsUsdPrice = (await fxsUsdFeed.latestRoundData())[1];
@@ -74,7 +70,8 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
 
   it("should revert querying specific round data", async () => {
     const { fxsWethPriceFeedPair } = fixture;
-    expect(fxsWethPriceFeedPair.getRoundData(BigNumber.from("1")))
-      .to.be.revertedWith("No data present");
+    expect(
+      fxsWethPriceFeedPair.getRoundData(BigNumber.from("1"))
+    ).to.be.revertedWith("No data present");
   });
 });

@@ -9,13 +9,13 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @notice Price feed when the feed of 2 oracle prices need combining to achieve desired result.
- * 
+ *
  * @dev multiplying oracle pair prices has combining properties. E.g. price FXS/USD multiplied by
  * USD/ETH results effectively in FXS/ETH price. Since oracle prices express asset on the left priced
- * by the asset on the right, we sometimes need to reverse prices in order to achieve desired results. 
+ * by the asset on the right, we sometimes need to reverse prices in order to achieve desired results.
  * ETH/USD reversed is USD/ETH.
- * 
- * In our first usage of this contract we required FXS/ETH price. It can be derived using FXS/USD and 
+ *
+ * In our first usage of this contract we required FXS/ETH price. It can be derived using FXS/USD and
  * ETH/USD prices. Since we need the latter reversed to get the desired result we configure the contract
  * by using FXS/USD as feed 0 and USD/ETH (reversed from ETH/USD) as feed 1.
  */
@@ -99,9 +99,11 @@ contract PriceFeedPair is AggregatorV3Interface, Strategizable {
             uint80
         )
     {
+        // slither-disable-next-line unused-return
         (, int256 _price0, , uint256 updatedAt0, ) = AggregatorV3Interface(
             addressFeed0
         ).latestRoundData();
+        // slither-disable-next-line unused-return
         (, int256 _price1, , uint256 updatedAt1, ) = AggregatorV3Interface(
             addressFeed1
         ).latestRoundData();
@@ -115,7 +117,7 @@ contract PriceFeedPair is AggregatorV3Interface, Strategizable {
      * in sync and for that reason we can not query arbitrary oracle
      * round and combine it.
      **/
-    function getRoundData(uint80 _roundId)
+    function getRoundData(uint80)
         external
         view
         override
