@@ -6,7 +6,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { OracleRouterBase } from "../oracle/OracleRouter.sol";
+import { OracleRouterBase } from "../oracle/OracleRouterBase.sol";
 
 // @notice Oracle Router required for testing environment
 contract MockOracleRouter is OracleRouterBase {

@@ -51,7 +51,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
 
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10010";
+      const amount = "20020";
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
@@ -62,7 +62,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
 
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
+      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("60000"), 1);
 
       const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
@@ -183,7 +183,7 @@ describe("ForkTest: Morpho Compound Strategy", function () {
         }
       );
 
-      await expect(usdtBalanceDiff).to.be.gte(0);
+      expect(usdtBalanceDiff).to.be.gte(0);
     });
   });
 });

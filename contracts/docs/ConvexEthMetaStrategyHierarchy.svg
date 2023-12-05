@@ -16,13 +16,12 @@
 <text text-anchor="middle" x="117.43" y="-398.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 243 -->
+<!-- 156 -->
 <g id="node2" class="node">
-<title>243</title>
-<polygon fill="#f2f2f2" stroke="black" points="87.21,-174.5 87.21,-232.9 379.65,-232.9 379.65,-174.5 87.21,-174.5"/>
-<text text-anchor="middle" x="233.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
-<text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">BaseAMOStrategy</text>
-<text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/BaseAMOStrategy.sol</text>
+<title>156</title>
+<polygon fill="#f2f2f2" stroke="black" points="85.27,-0.5 85.27,-42.1 381.59,-42.1 381.59,-0.5 85.27,-0.5"/>
+<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexEthMetaStrategy</text>
+<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexEthMetaStrategy.sol</text>
 </g>
 <!-- 183 -->
 <g id="node6" class="node">
@@ -32,36 +31,9 @@
 <text text-anchor="middle" x="233.43" y="-294.9" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="233.43" y="-278.1" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 243&#45;&gt;183 -->
+<!-- 156&#45;&gt;195 -->
 <g id="edge1" class="edge">
-<title>243&#45;&gt;183</title>
-<path fill="none" stroke="black" d="M233.43,-232.98C233.43,-235.06 233.43,-237.2 233.43,-239.38"/>
-<polygon fill="none" stroke="black" points="222.93,-239.6 233.43,-269.6 243.93,-239.6 222.93,-239.6"/>
-</g>
-<!-- 247 -->
-<g id="node3" class="node">
-<title>247</title>
-<polygon fill="#f2f2f2" stroke="black" points="65.43,-79.1 65.43,-137.5 401.42,-137.5 401.42,-79.1 65.43,-79.1"/>
-<text text-anchor="middle" x="233.43" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
-<text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">BaseConvexAMOStrategy</text>
-<text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/BaseConvexAMOStrategy.sol</text>
-</g>
-<!-- 247&#45;&gt;243 -->
-<g id="edge2" class="edge">
-<title>247&#45;&gt;243</title>
-<path fill="none" stroke="black" d="M233.43,-137.58C233.43,-139.66 233.43,-141.8 233.43,-143.98"/>
-<polygon fill="none" stroke="black" points="222.93,-144.2 233.43,-174.2 243.93,-144.2 222.93,-144.2"/>
-</g>
-<!-- 249 -->
-<g id="node4" class="node">
-<title>249</title>
-<polygon fill="#f2f2f2" stroke="black" points="71.27,-0.5 71.27,-42.1 395.59,-42.1 395.59,-0.5 71.27,-0.5"/>
-<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexEthMetaStrategy</text>
-<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/ConvexEthMetaStrategy.sol</text>
-</g>
-<!-- 249&#45;&gt;247 -->
-<g id="edge3" class="edge">
-<title>249&#45;&gt;247</title>
+<title>156&#45;&gt;195</title>
 <path fill="none" stroke="black" d="M233.43,-42.44C233.43,-44.49 233.43,-46.63 233.43,-48.83"/>
 <polygon fill="none" stroke="black" points="222.93,-48.94 233.43,-78.94 243.93,-48.94 222.93,-48.94"/>
 </g>

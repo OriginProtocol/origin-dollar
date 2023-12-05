@@ -38,29 +38,29 @@
 <path fill="none" stroke="black" d="M233.43,-216.18C233.43,-218.26 233.43,-220.4 233.43,-222.58"/>
 <polygon fill="none" stroke="black" points="222.93,-222.8 233.43,-252.8 243.93,-222.8 222.93,-222.8"/>
 </g>
-<!-- 146 -->
+<!-- 155 -->
 <g id="node3" class="node">
-<title>146</title>
+<title>155</title>
 <polygon fill="#f2f2f2" stroke="black" points="100.03,-79.1 100.03,-120.7 366.82,-120.7 366.82,-79.1 100.03,-79.1"/>
 <text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">CompoundStrategy</text>
 <text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/CompoundStrategy.sol</text>
 </g>
-<!-- 146&#45;&gt;142 -->
+<!-- 155&#45;&gt;151 -->
 <g id="edge2" class="edge">
-<title>146&#45;&gt;142</title>
+<title>155&#45;&gt;151</title>
 <path fill="none" stroke="black" d="M233.43,-121.04C233.43,-123.09 233.43,-125.23 233.43,-127.43"/>
 <polygon fill="none" stroke="black" points="222.93,-127.54 233.43,-157.54 243.93,-127.54 222.93,-127.54"/>
 </g>
-<!-- 149 -->
+<!-- 161 -->
 <g id="node4" class="node">
-<title>149</title>
+<title>161</title>
 <polygon fill="#f2f2f2" stroke="black" points="118.31,-0.5 118.31,-42.1 348.55,-42.1 348.55,-0.5 118.31,-0.5"/>
 <text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">FluxStrategy</text>
 <text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/FluxStrategy.sol</text>
 </g>
-<!-- 149&#45;&gt;146 -->
+<!-- 161&#45;&gt;155 -->
 <g id="edge3" class="edge">
-<title>149&#45;&gt;146</title>
+<title>161&#45;&gt;155</title>
 <path fill="none" stroke="black" d="M233.43,-42.43C233.43,-44.45 233.43,-46.56 233.43,-48.73"/>
 <polygon fill="none" stroke="black" points="222.93,-48.91 233.43,-78.91 243.93,-48.91 222.93,-48.91"/>
 </g>

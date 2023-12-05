@@ -5,9 +5,9 @@
       "label": "rewardTokenConfigs",
       "offset": 0,
       "slot": "0",
-      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)4979_storage)",
+      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)7881_storage)",
       "contract": "BaseHarvester",
-      "src": "contracts/harvest/BaseHarvester.sol:53"
+      "src": "contracts/harvest/BaseHarvester.sol:95"
     },
     {
       "label": "supportedStrategies",
@@ -15,7 +15,7 @@
       "slot": "1",
       "type": "t_mapping(t_address,t_bool)",
       "contract": "BaseHarvester",
-      "src": "contracts/harvest/BaseHarvester.sol:54"
+      "src": "contracts/harvest/BaseHarvester.sol:96"
     },
     {
       "label": "rewardProceedsAddress",
@@ -23,7 +23,39 @@
       "slot": "2",
       "type": "t_address",
       "contract": "BaseHarvester",
-      "src": "contracts/harvest/BaseHarvester.sol:62"
+      "src": "contracts/harvest/BaseHarvester.sol:104"
+    },
+    {
+      "label": "uniswapV2Path",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:115"
+    },
+    {
+      "label": "uniswapV3Path",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_bytes_storage)",
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:117"
+    },
+    {
+      "label": "balancerPoolId",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_address,t_bytes32)",
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:119"
+    },
+    {
+      "label": "curvePoolIndices",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_mapping(t_address,t_struct(CurvePoolIndices)7918_storage)",
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:127"
     }
   ],
   "types": {
@@ -31,19 +63,75 @@
       "label": "address",
       "numberOfBytes": "20"
     },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
     "t_bool": {
       "label": "bool",
       "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_bytes_storage": {
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_enum(SwapPlatform)7776": {
+      "label": "enum BaseHarvester.SwapPlatform",
+      "members": [
+        "UniswapV2Compatible",
+        "UniswapV3",
+        "Balancer",
+        "Curve"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+      "label": "mapping(address => address[])",
+      "numberOfBytes": "32"
     },
     "t_mapping(t_address,t_bool)": {
       "label": "mapping(address => bool)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_struct(RewardTokenConfig)4979_storage)": {
+    "t_mapping(t_address,t_bytes32)": {
+      "label": "mapping(address => bytes32)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bytes_storage)": {
+      "label": "mapping(address => bytes)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(CurvePoolIndices)7918_storage)": {
+      "label": "mapping(address => struct BaseHarvester.CurvePoolIndices)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(RewardTokenConfig)7881_storage)": {
       "label": "mapping(address => struct BaseHarvester.RewardTokenConfig)",
       "numberOfBytes": "32"
     },
-    "t_struct(RewardTokenConfig)4979_storage": {
+    "t_struct(CurvePoolIndices)7918_storage": {
+      "label": "struct BaseHarvester.CurvePoolIndices",
+      "members": [
+        {
+          "label": "rewardTokenIndex",
+          "type": "t_uint128",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "baseTokenIndex",
+          "type": "t_uint128",
+          "offset": 16,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_struct(RewardTokenConfig)7881_storage": {
       "label": "struct BaseHarvester.RewardTokenConfig",
       "members": [
         {
@@ -59,7 +147,7 @@
           "slot": "0"
         },
         {
-          "label": "uniswapV2CompatibleAddr",
+          "label": "swapPlatformAddr",
           "type": "t_address",
           "offset": 4,
           "slot": "0"
@@ -71,6 +159,12 @@
           "slot": "0"
         },
         {
+          "label": "swapPlatform",
+          "type": "t_enum(SwapPlatform)7776",
+          "offset": 25,
+          "slot": "0"
+        },
+        {
           "label": "liquidationLimit",
           "type": "t_uint256",
           "offset": 0,
@@ -78,6 +172,10 @@
         }
       ],
       "numberOfBytes": "64"
+    },
+    "t_uint128": {
+      "label": "uint128",
+      "numberOfBytes": "16"
     },
     "t_uint16": {
       "label": "uint16",

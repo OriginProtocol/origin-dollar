@@ -104,6 +104,7 @@ jobs:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
+      ONEINCH_API_KEY: ${{ secrets.ONEINCH_API_KEY }}
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
     steps:
@@ -212,17 +213,16 @@ jobs:
 
   slither:
     name: "Slither"
-    # As long as we need Python 3.6 here in the test, we can only use up to Ubuntu 20.
-    # https://github.com/rwth-i6/returnn/issues/1226
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.6
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.6
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -230,6 +230,7 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install slither-analyzer
+          pip3 inspect
 
       - name: Use Node.js
         uses: actions/setup-node@v3

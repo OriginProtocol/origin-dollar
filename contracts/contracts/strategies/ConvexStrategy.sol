@@ -62,6 +62,7 @@ abstract contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorPoolId = _convexConfig.cvxDepositorPoolId;
 
         // Get the Convex Rewards contract for the Convex pool
+        // slither-disable-next-line unused-return
         (, , , cvxRewardStaker, , ) = IConvexDeposits(
             _convexConfig.cvxDepositor
         ).poolInfo(_convexConfig.cvxDepositorPoolId);

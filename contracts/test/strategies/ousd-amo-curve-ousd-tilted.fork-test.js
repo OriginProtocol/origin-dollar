@@ -24,24 +24,12 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
       await mintTest(fixture, josh, usdt, "100000");
     });
 
-    describe("Mint", function () {
-      it("Should stake USDT in Curve gauge via metapool", async function () {
-        const { josh, usdt } = fixture;
-        await mintTest(fixture, josh, usdt, "100000");
-      });
-
-      it("Should stake USDC in Curve gauge via metapool", async function () {
-        const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
-      });
-
-      it("Should stake DAI in Curve gauge via metapool", async function () {
-        const { anna, dai } = fixture;
-        await mintTest(fixture, anna, dai, "110000");
-      });
+    it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { matt, usdc } = fixture;
+      await mintTest(fixture, matt, usdc, "120000");
     });
 
-    it("Should NOT stake DAI in Curve gauge via metapool", async function () {
+    it("Should stake DAI in Curve gauge via metapool", async function () {
       const { anna, dai } = fixture;
       await mintTest(fixture, anna, dai, "110000");
     });
@@ -55,6 +43,9 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
       await vault.connect(anna).allocate();
 
       const supplyBeforeMint = await ousd.totalSupply();
+      const strategyBalanceBeforeMint = (
+        await convexOusdAMOStrategy.checkBalance(dai.address)
+      ).mul(3);
 
       const amount = "10000";
 
@@ -71,22 +62,25 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD", function (
       const strategyBalance = (
         await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
+      const strategyBalanceChange = strategyBalance.sub(
+        strategyBalanceBeforeMint
+      );
 
-      // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-      await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+      // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
+      expect(strategyBalanceChange).to.be.gte(ousdUnits("59500"));
 
-      // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
+      // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.be.gte(ousdUnits("49995"));
+      expect(supplyAdded).to.be.gte(ousdUnits("59500"));
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem the amount
-      const redeemAmount = ousdUnits("19000");
+      const redeemAmount = ousdUnits("10000");
       await vault.connect(anna).redeem(redeemAmount, 0);
 
-      // User balance should be down by 30k
+      // User balance should be down by 10k
       const newBalance = await ousd.connect(anna).balanceOf(anna.address);
       expect(newBalance).to.approxEqualTolerance(
         currentBalance.sub(redeemAmount),

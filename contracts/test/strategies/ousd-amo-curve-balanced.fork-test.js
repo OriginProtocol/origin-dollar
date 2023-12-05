@@ -27,21 +27,9 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced", function () {
       await mintTest(fixture, josh, usdt, "100000");
     });
 
-    describe("Mint", function () {
-      it("Should stake USDT in Curve gauge via metapool", async function () {
-        const { josh, usdt } = fixture;
-        await mintTest(fixture, josh, usdt, "100000");
-      });
-
-      it("Should stake USDC in Curve gauge via metapool", async function () {
-        const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
-      });
-
-      it("Should stake DAI in Curve gauge via metapool", async function () {
-        const { anna, dai } = fixture;
-        await mintTest(fixture, anna, dai, "110000");
-      });
+    it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { matt, usdc } = fixture;
+      await mintTest(fixture, matt, usdc, "120000");
     });
 
     describe("Redeem", function () {
@@ -126,6 +114,8 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced", function () {
 
       const amount = "10000";
 
+      const beforeMintBlock = await ethers.provider.getBlockNumber();
+
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
         await vault
@@ -135,13 +125,20 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced", function () {
 
       await vault.connect(anna).allocate();
 
+      log("After mints and allocate to strategy");
+      await run("amoStrat", {
+        pool: "OUSD",
+        output: false,
+        fromBlock: beforeMintBlock,
+      });
+
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
         await convexOusdAMOStrategy.checkBalance(dai.address)
       ).mul(3);
 
-      // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-      await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+      // 3x 10k assets + 3x 10k OUSD = 60k
+      await expect(strategyBalance).to.be.gte(ousdUnits("59990"));
 
       // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
       const currentSupply = await ousd.totalSupply();
@@ -151,7 +148,7 @@ describe("ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced", function () {
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem the amount
-      const redeemAmount = ousdUnits("22000");
+      const redeemAmount = ousdUnits("29990");
       await vault.connect(anna).redeem(redeemAmount, 0);
 
       // User balance should be down by 30k

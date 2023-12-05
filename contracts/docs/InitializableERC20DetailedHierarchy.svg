@@ -9,25 +9,25 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 158.8)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-158.8 408.11,-158.8 408.11,4 -4,4"/>
-<!-- 185 -->
+<!-- 197 -->
 <g id="node1" class="node">
-<title>185</title>
+<title>197</title>
 <polygon fill="#f2f2f2" stroke="black" points="59.73,-0.5 59.73,-58.9 344.38,-58.9 344.38,-0.5 59.73,-0.5"/>
 <text text-anchor="middle" x="202.06" y="-42.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="202.06" y="-25.5" font-family="Times,serif" font-size="14.00">InitializableERC20Detailed</text>
 <text text-anchor="middle" x="202.06" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableERC20Detailed.sol</text>
 </g>
-<!-- 381 -->
+<!-- 392 -->
 <g id="node2" class="node">
-<title>381</title>
+<title>392</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-95.9 0,-154.3 404.11,-154.3 404.11,-95.9 0,-95.9"/>
 <text text-anchor="middle" x="202.06" y="-137.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Interface&gt;&gt;</text>
 <text text-anchor="middle" x="202.06" y="-120.9" font-family="Times,serif" font-size="14.00">IERC20</text>
 <text text-anchor="middle" x="202.06" y="-104.1" font-family="Times,serif" font-size="14.00">../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol</text>
 </g>
-<!-- 185&#45;&gt;381 -->
+<!-- 197&#45;&gt;392 -->
 <g id="edge1" class="edge">
-<title>185&#45;&gt;381</title>
+<title>197&#45;&gt;392</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M202.06,-58.98C202.06,-61.06 202.06,-63.2 202.06,-65.38"/>
 <polygon fill="none" stroke="black" points="191.56,-65.6 202.06,-95.6 212.56,-65.6 191.56,-65.6"/>
 </g>

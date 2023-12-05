@@ -1,9 +1,9 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { shouldBehaveLikeAmo } = require("../behaviour/amo");
 const {
@@ -50,7 +50,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     strategy: fixture.convexOusdAMOStrategy,
   }));
 
-  shouldBehaveLikeHarvester(() => ({
+  shouldBehaveLikeHarvestable(() => ({
     ...fixture,
     strategy: fixture.convexOusdAMOStrategy,
     dripAsset: fixture.usdt,
@@ -249,49 +249,6 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
       await expect(
         convexOusdAMOStrategy.connect(anna).safeApproveAllTokens()
       ).to.be.revertedWith("Caller is not the Governor");
-    });
-  });
-
-  describe("Harvest", function () {
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
-      const { harvester, governor, convexOusdAMOStrategy } = fixture;
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](convexOusdAMOStrategy.address);
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      const { harvester, governor, crv, cvx } = fixture;
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
-    });
-
-    it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      const { convexOusdAMOStrategy, harvester, governor, crv, cvx } = fixture;
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-
-      await harvester.connect(governor)[
-        // eslint-disable-next-line
-        "harvest(address)"
-      ](convexOusdAMOStrategy.address);
-
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
     });
   });
 });

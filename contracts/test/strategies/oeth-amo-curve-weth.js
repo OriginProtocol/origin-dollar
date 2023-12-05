@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { shouldBehaveLikeAmo } = require("../behaviour/amo");
 const {
@@ -31,7 +31,7 @@ describe("Convex OETH/WETH AMO Strategy", function () {
     strategy: fixture.convexEthMetaStrategy,
   }));
 
-  shouldBehaveLikeHarvester(() => ({
+  shouldBehaveLikeHarvestable(() => ({
     ...fixture,
     strategy: fixture.convexEthMetaStrategy,
     harvester: fixture.oethHarvester,
