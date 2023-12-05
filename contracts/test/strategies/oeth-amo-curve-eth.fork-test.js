@@ -547,7 +547,7 @@ describe("ForkTest: OETH AMO Curve Strategy", function () {
     it("Strategist should fail to add too much OETH to the Curve pool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
 
-      const oethAmount = parseUnits("7000");
+      const oethAmount = parseUnits("9000");
       log(
         `Before mint of ${formatUnits(
           oethAmount
