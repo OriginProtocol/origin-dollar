@@ -388,7 +388,9 @@ uniRouter -> uniCvx : WETH
 note left : swap WETH for CVX\nusing CVX/WETH V3 pool
 uniCvx -> buyBack : CVX
 buyBack -> icvx : CVX
-note left : lock CVX for\nveCVX voting power
+note left : lock CVX for \ngauge voting power
+icvx o-> trust : vlCVX
+note over trust : Trustee delegates\nvoting power
 end
 
 end
