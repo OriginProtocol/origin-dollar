@@ -78,7 +78,7 @@ contract PriceFeedPair is AggregatorV3Interface {
     }
 
     /**
-     * @dev This function exists to make the contract compatible
+     * @notice This function exists to make the contract compatible
      * with AggregatorV3Interface (which OETHOracleRouter uses to
      * get the price).
      **/
@@ -107,14 +107,14 @@ contract PriceFeedPair is AggregatorV3Interface {
     }
 
     /**
-     * @dev This function exists to make the contract compatible
+     * @notice This function exists to make the contract compatible
      * with AggregatorV3Interface. The two oracles don't have rounds
      * in sync and for that reason we can not query arbitrary oracle
      * round and combine it.
      **/
     function getRoundData(uint80)
         external
-        view
+        pure
         override
         returns (
             uint80,
