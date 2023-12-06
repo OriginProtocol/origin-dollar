@@ -13,8 +13,7 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ ethers, deployWithConfirmation, getTxOpts, withConfirmation }) => {
-    const { deployerAddr, timelockAddr, strategistAddr } =
-      await getNamedAccounts();
+    const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current OETH Vault contracts
