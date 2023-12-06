@@ -160,7 +160,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setPriceProvider(address)",
           args: [dOETHRouter.address],
         },
-        // 5. Configure OETH Harvester to swap FXS with Curve
+        // 5. Configure OETH Harvester to swap FXS with Uniswap V3
         {
           contract: cHarvester,
           signature:
