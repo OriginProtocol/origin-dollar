@@ -14,16 +14,30 @@
 
 ![OETH Oracle Router Storage](../../docs/OETHOracleRouterStorage.svg)
 
-## Mix Oracle
+## AURA/WETH Price Feed
 
 ### Hierarchy
 
-![Mix Oracle Hierarchy](../../docs/MixOracleHierarchy.svg)
+![AURA/WETH Price Feed Hierarchy](../../docs/AuraWETHPriceFeedHierarchy.svg)
 
 ### Squashed
 
-![Mix Oracle Squashed](../../docs/MixOracleSquashed.svg)
+![AURA/WETH Price Feed Squashed](../../docs/AuraWETHPriceFeedSquashed.svg)
 
 ### Storage
 
-![Mix Oracle Storage](../../docs/MixOracleStorage.svg)
+![AURA/WETH Price Feed Storage](../../docs/AuraWETHPriceFeedStorage.svg)
+
+## Paired Price Feed
+
+### Hierarchy
+
+![Paired Price Feed Hierarchy](../../docs/PriceFeedPairHierarchy.svg)
+
+### Squashed
+
+![Paired Price Feed Squashed](../../docs/PriceFeedPairSquashed.svg)
+
+### Storage
+
+![Paired Price Feed Storage](../../docs/PriceFeedPairStorage.svg)

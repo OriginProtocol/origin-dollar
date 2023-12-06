@@ -61,6 +61,9 @@ addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
 // Frax
 addresses.mainnet.FXS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
+addresses.mainnet.Frax = "0x853d955acef822db058eb8505911ed77f175b99e";
+addresses.mainnet.FraxCommunityBags =
+  "0x63278bF9AcdFC9fA65CFa2940b89A34ADfbCb4A1";
 
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
@@ -108,6 +111,9 @@ addresses.mainnet.chainlinkCVX_USD =
   "0xd962fC30A72A84cE50161031391756Bf2876Af5D";
 addresses.mainnet.chainlinkOGN_ETH =
   "0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b";
+addresses.mainnet.chainlinkFXS_USD =
+  "0x6ebc52c8c1089be9eb3945c4350b68b8e4c2233f";
+
 // DEPRECATED Chainlink
 addresses.mainnet.chainlinkDAI_ETH =
   "0x773616E4d11A78F511299002da57A0a94577F1f4";
