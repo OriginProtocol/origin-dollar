@@ -35,11 +35,6 @@ participant "frxETH-WETH\nLocked Stake" as frxCvStkLck <<Frax>>
 participant "frxETH-WETH\nPool" as frxCvx <<Convex>>
 participant "frxETH-WETH\nRewards" as cvxFrxRewards <<Convex>>
 
-participant "rETH/WETH\nBalancer\nMetaStable\nStrategy" as balMetaStrat <<Origin>> #DeepSkyBlue
-participant "Balancer\nVault" as balVault <<Balancer>>
-participant "rETH\nMetaStable\nPool" as balMetaPool <<Balancer>>
-participant "rETH\nRewards\nPool" as auraRewards <<Aura>>
-
 participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
 participant "Morpho\nAave V2" as morpho <<Morpho>>
 participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
@@ -47,6 +42,7 @@ participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
 participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
 participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
+participant "FXS/ETH\nV3 Pool" as uniFxs <<Uniswap>>
 participant "Universal\nRouter" as uniRouter <<Uniswap>>
 participant "OETH/ETH\nV3 Pool" as uniOeth <<Uniswap>>
 participant "OGV/ETH\nV3 Pool" as uniOgv <<Uniswap>>
@@ -433,7 +429,14 @@ note left : 98% of WETH to Dripper
 harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 
-' TODO - add FXS swap
+' FXS swap
+harv -> uniFxs : FXS
+note left : swap FXS for WETH\nmax 1,500 FXS
+uniFxs -> harv : WETH
+harv -> drip : 98% WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : 2% WETH
+note left : 2% of WETH\nto Harvest caller
 
 end
 
