@@ -313,11 +313,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             if (poolAssetAmount > 0) {
                 strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
 
+                uint256 indexOfPoolAsset = poolAssetIndex[poolAsset];
                 /* This check is triggered when the _withdrawal is called with
                  * a duplicate asset in the _strategyAssets array
                  */
                 require(
-                    poolAssetsAmountsOut[poolAssetIndex[poolAsset]] == 0,
+                    poolAssetsAmountsOut[indexOfPoolAsset] == 0,
                     "No duplicate withdrawal assets"
                 );
 
@@ -330,9 +331,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                  * For that reason we `overshoot` the required tokens expected to
                  * circumvent the error
                  */
-                poolAssetsAmountsOut[poolAssetIndex[poolAsset]] =
-                    poolAssetAmount +
-                    2;
+                poolAssetsAmountsOut[indexOfPoolAsset] = poolAssetAmount + 2;
             }
         }
 
