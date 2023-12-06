@@ -18,6 +18,11 @@ pairs:
     \tfrxETH/ETH
     \tstETH/ETH
     \trETH/ETH
+    \tCRV/ETH
+    \tCVX/ETH
+    \tBAL/ETH
+    \tAURA/ETH
+    \tFXS/ETH
 }
 
 object "FrxEthFraxOracle" as fo <<Frax>> {
@@ -44,6 +49,18 @@ object "External\nAccess\nControlled\nAggregator" as clfrax <<Chainlink>> {
 pair: FRAX/USD
 }
 
+object "External\nAccess\nControlled\nAggregator" as clcrv <<Chainlink>> {
+pair: CRV/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as clcvx <<Chainlink>> {
+pair: CVX/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as clbal <<Chainlink>> {
+pair: BAL/ETH
+}
+
 object "frxETH/ETH Pool" as cp <<Curve>> {
 assets: frxETH, ETH
 }
@@ -55,16 +72,30 @@ object "frxETH/FRAX Pool" as up <<Uniswap>> {
     assets: frxETH, FRAX
 }
 
+object "AuraWETHPriceFeed" as ap <<Origin>> #DeepSkyBlue {
+pair: AURA/ETH
+}
+
+
+object "80 AURA\n20 WETH\nPool" as auraBalPool <<Balancer>> {
+pair: AURA/WETH
+}
+
 
 vault ..> router : price(asset)
 router ...> clrETH : latestRoundData()
 router ...> clstETH : latestRoundData()
+router ...> clcrv : latestRoundData()
+router ...> clcvx : latestRoundData()
+router ...> clbal : latestRoundData()
 router ..> fo : latestRoundData()
+router ..> ap : latestRoundData()
 fdo .> fo : addRoundData()
 fdo ....> cp : price_oracle()
 fdo ....> uso : quoteSpecificPoolsWithTimePeriod()
 uso .> up : observe()
 fdo ..> cleth : latestRoundData()
 fdo ..> clfrax : latestRoundData()
+ap ....> auraBalPool : getTimeWeightedAverage()
 
 @enduml
