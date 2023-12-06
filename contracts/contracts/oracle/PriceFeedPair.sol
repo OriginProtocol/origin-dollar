@@ -17,6 +17,12 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
  * In our first usage of this contract we required FXS/ETH price. It can be derived using FXS/USD and
  * ETH/USD prices. Since we need the latter reversed to get the desired result we configure the contract
  * by using FXS/USD as feed 0 and USD/ETH (reversed from ETH/USD) as feed 1.
+ * 
+ * IMPORTANT: It is important to consider that combining 2 Oracle price feeds increases their 
+ * error rate using addition. Meaning if feed 0 has error rate of X and feed 1 error rate of Y
+ * the resulting error rate is X + Y. E.g.
+ * - FXS/ETH combines FXS/USD (possible deviation 2%), ETH/USD (possible deviation 0.5%) resulting in 
+ *   FXS/USD having possible deviation of 2.5%
  */
 contract PriceFeedPair is AggregatorV3Interface {
     using SafeCast for uint256;
