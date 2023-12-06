@@ -2,6 +2,8 @@
 
 title "Origin Ether Contract Dependencies"
 
+skinparam tabSize 2
+
 object "OETHZapper" as zap <<Origin>> #DeepSkyBlue {
     assets: ETH, sfrxETH
 }
@@ -26,10 +28,10 @@ object "OETH" as oeth <<Origin>><<Proxy>> #DeepSkyBlue {
 
 object "OETH Vault" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
 assets:
-  WETH
-  frxETH
-  stETH
-  rETH
+\tWETH
+\tfrxETH
+\tstETH
+\trETH
 }
 
 object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
@@ -37,7 +39,12 @@ object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
 }
 
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX, BAL, AURA, FXS
+rewards:
+\tCRV
+\tCVX
+\tBAL
+\tAURA
+\tFXS
 }
 
 ' Strategies
@@ -77,14 +84,14 @@ object "FraxConvexStrategy" as fraxConvexFrxEthWethStrat <<Origin>><<Proxy>> #De
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
-    frxETH/ETH
-    stETH/ETH
-    rETH/ETH
-    CRV/ETH
-    CVX/ETH
-    BAL/ETH
-    AURA/ETH
-    FXS/ETH
+\tfrxETH/ETH
+\tstETH/ETH
+\trETH/ETH
+\tCRV/ETH
+\tCVX/ETH
+\tBAL/ETH
+\tAURA/ETH
+\tFXS/ETH
 }
 
 ' object "EACAggregatorProxy" as chain <<Chainlink>> {
@@ -193,6 +200,8 @@ woeth ..> oeth
 oeth <.> oethv
 oethv ..> oracle
 oethv .> swap
+' oracle <. harv
+harv .> oracle 
 ' oracle ...> chain
 
 

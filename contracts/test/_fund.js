@@ -215,7 +215,7 @@ const setERC20TokenBalance = async (account, token, amount = "10000") => {
     hre
   );
 
-  // // Print out mapped slots and add them to config above
+  // Print out mapped slots and add them to config above
   // console.log(balancesContractSlotCache);
 };
 

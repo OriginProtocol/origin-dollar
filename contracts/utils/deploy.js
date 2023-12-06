@@ -16,14 +16,14 @@ const {
   isSmokeTest,
   isForkTest,
   getBlockTimestamp,
-} = require("../test/helpers.js");
+} = require("../test/helpers");
 
 const {
   assertUpgradeIsSafe,
   storeStorageLayoutForContract,
 } = require("../tasks/storageSlots");
 
-const addresses = require("../utils/addresses.js");
+const addresses = require("../utils/addresses");
 const { getTxOpts } = require("../utils/tx");
 const {
   proposeArgs,
@@ -32,13 +32,13 @@ const {
 } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
-const { impersonateAndFund } = require("./signers.js");
-const { hardhatSetBalance } = require("../test/_fund.js");
+const { impersonateAndFund } = require("./signers");
+const { hardhatSetBalance } = require("../test/_fund");
 const {
   setStorageAt,
   getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
+const { keccak256, defaultAbiCoder } = require("ethers/lib/utils");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
