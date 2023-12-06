@@ -174,11 +174,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             }
         }
 
-        uint256 minBPT = _getBPTExpected(
+        uint256 minBpt = _getBPTExpected(
             strategyAssetsToPoolAssets,
             strategyAssetAmountsToPoolAssetAmounts
         );
-        uint256 minBPTwDeviation = minBPT.mulTruncate(
+        uint256 minBptWDeviation = minBpt.mulTruncate(
             1e18 - maxDepositDeviation
         );
 
@@ -192,7 +192,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         bytes memory userData = abi.encode(
             IBalancerVault.MetaStablePoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             _getUserDataEncodedAmounts(amountsIn),
-            minBPTwDeviation
+            minBptWDeviation
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
@@ -471,9 +471,15 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
         _lpWithdrawAll();
         // Get the BPTs withdrawn from Aura plus any that were already in this strategy contract
-        uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
+        uint256 bptToWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
+
+        // Do not proceed with withdrawal if there is nothing to withdraw
+        if (bptToWithdraw == 0) {
+            return;
+        }
+
         uint256[] memory minAmountsOut = new uint256[](_poolAssets.length);
 
         // STEP 2 - Withdraw the Balancer pool assets from the pool
@@ -495,7 +501,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             isRecoveryModeWithdrawal
                 ? RECOVERY_MODE_EXIT_KIND
                 : _exactBptInTokensOutIndex(),
-            BPTtoWithdraw
+            bptToWithdraw
         );
 
         if (isRecoveryModeWithdrawal) {

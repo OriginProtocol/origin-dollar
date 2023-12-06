@@ -1055,6 +1055,15 @@ describe("ForkTest: Balancer MetaStablePool wstETH/WETH Strategy", function () {
       expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
       expect(stEthBalanceDiff).to.be.gte(await units("15", stETH), 1);
     });
+
+    it("Should be able to call withdrawAll twice (second time musn't revert)", async function () {
+      const { oethVault, balancerWstEthStrategy } = fixture;
+
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
+      await balancerWstEthStrategy.connect(oethVaultSigner).withdrawAll();
+      await balancerWstEthStrategy.connect(oethVaultSigner).withdrawAll();
+    });
   });
 
   describe("Harvest rewards", function () {
