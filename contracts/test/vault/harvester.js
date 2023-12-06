@@ -11,7 +11,7 @@ describe("Harvester", function () {
   });
 
   shouldBehaveLikeHarvester(() => ({
-    fixture,
+    ...fixture,
     harvester: fixture.harvester,
     strategies: [
       {

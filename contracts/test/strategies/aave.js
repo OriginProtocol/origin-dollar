@@ -13,6 +13,7 @@ const {
   isFork,
 } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Aave Strategy", function () {
@@ -72,6 +73,12 @@ describe("Aave Strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
+    strategy: fixture.aaveStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    harvester: fixture.harvester,
     strategy: fixture.aaveStrategy,
   }));
 

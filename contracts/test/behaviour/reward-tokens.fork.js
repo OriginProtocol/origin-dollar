@@ -7,12 +7,35 @@ const { BigNumber } = require("ethers");
 /**
  *
  * @param {*} context a function that returns:
- *    - vault: OUSD Vault or OETH Vault
  *    - harvester: OUSD Harvester or OETH Harvester
+ *    - vault: OUSD Vault or OETH Vault
  *    - expectedConfigs: Expected Reward Token Config
  * @example
-    shouldBehaveLikeHarvester(() => ({
-        ...fixture
+    shouldHaveRewardTokensConfigured(() => ({
+        harvester: fixture.harvester,
+        vault: fixture.vault,
+        expectedConfigs: {
+          [fixture.cvx.address]: {
+            allowedSlippageBps: 300,
+            harvestRewardBps: 100,
+            swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+            doSwapRewardToken: true,
+            swapPlatform: 1,
+            liquidationLimit: ousdUnits("2500"),
+            uniswapV3Path:
+              "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+          },
+          [fixture.crv.address]: {
+            allowedSlippageBps: 300,
+            harvestRewardBps: 200,
+            swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+            doSwapRewardToken: true,
+            swapPlatform: 1,
+            liquidationLimit: ousdUnits("4000"),
+            uniswapV3Path:
+              "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+          },
+    },
     }));
  */
 const shouldHaveRewardTokensConfigured = (context) => {
