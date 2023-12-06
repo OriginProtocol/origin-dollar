@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const addresses = require("../../utils/addresses");
 const { hotDeployOption } = require("../_hot-deploy");
-const aggregatorInterfaceAbi = require("../abi/AggregatorInterfaceAbi.json");
 const { BigNumber } = ethers;
 
 describe("ForkTest: FXS/WETH Price Feed Pair", function () {
