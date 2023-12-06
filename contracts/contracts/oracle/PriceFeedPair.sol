@@ -35,6 +35,7 @@ contract PriceFeedPair is AggregatorV3Interface {
     uint8 internal immutable decimalsFeed1;
 
     error PriceFeedAddressError(address _address);
+    error PriceFeedsMatchError();
 
     constructor(
         address _addressFeed0,
@@ -47,6 +48,9 @@ contract PriceFeedPair is AggregatorV3Interface {
         }
         if (_addressFeed1 == address(0)) {
             revert PriceFeedAddressError(_addressFeed1);
+        }
+        if (_addressFeed0 == _addressFeed1) {
+            revert PriceFeedsMatchError();
         }
 
         decimalsFeed0 = AggregatorV3Interface(_addressFeed0).decimals();
