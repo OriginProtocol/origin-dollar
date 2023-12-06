@@ -22,11 +22,12 @@ describe("ForkTest: FXS/WETH Price Feed Pair", function () {
     );
 
     fixture.fxsUsdFeed = await ethers.getContractAt(
-      aggregatorInterfaceAbi,
+      "AggregatorV3Interface",
       addresses.mainnet.chainlinkFXS_USD
     );
+
     fixture.ethUsdFeed = await ethers.getContractAt(
-      aggregatorInterfaceAbi,
+      "AggregatorV3Interface",
       addresses.mainnet.chainlinkETH_USD
     );
   });
