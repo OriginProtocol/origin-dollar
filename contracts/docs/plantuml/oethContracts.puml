@@ -37,7 +37,12 @@ object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
 }
 
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX, BAL, AURA, FXS
+rewards:
+CRV
+CVX
+BAL
+AURA
+FXS
 }
 
 ' Strategies
@@ -193,6 +198,8 @@ woeth ..> oeth
 oeth <.> oethv
 oethv ..> oracle
 oethv .> swap
+' oracle <. harv
+harv .> oracle 
 ' oracle ...> chain
 
 
