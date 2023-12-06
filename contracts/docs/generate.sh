@@ -36,7 +36,7 @@ sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
 sol2uml storage .. -c Governor -o GovernorStorage.svg
 
 # contracts/oracles
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracleRouter -o OETHOracleRouterSquashed.svg
 sol2uml storage .. -c OETHOracleRouter -o OETHOracleRouterStorage.svg
 
@@ -44,13 +44,13 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
 sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
 sol2uml .. -s -d 0 -b AuraWETHPriceFeed -o AuraWETHPriceFeedSquashed.svg
-sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg
+sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg --hideExpand __gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
-sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
-sol2uml storage .. -c MixOracle -o MixOracleStorage.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b PriceFeedPair -o PriceFeedPairHierarchy.svg
+sol2uml .. -s -d 0 -b PriceFeedPair -o PriceFeedPairSquashed.svg
+sol2uml storage .. -c PriceFeedPair -o PriceFeedPairStorage.svg
 
 # contracts/proxies
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSDProxy -o OUSDProxyHierarchy.svg
