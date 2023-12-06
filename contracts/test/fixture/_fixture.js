@@ -966,6 +966,10 @@ async function balancerFrxETHwstETHeETHFixture(
   config = { defaultStrategy: true }
 ) {
   const fixture = await defaultFixture();
+  await hotDeployOption(fixture, "balancerFrxETHwstETHeETHFixture", {
+    isOethFixture: true,
+  });
+
   const {
     oethVault,
     timelock,

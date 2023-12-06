@@ -16,12 +16,38 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fixtures:hot-deploy");
 
-// based on a contract name create new implementation
-async function constructNewContract(fixture, implContractName) {
+/* based on a contract name create new implementation
+ */
+async function constructNewContract(
+  fixture,
+  implContractName,
+  fixtureStrategyVarName
+) {
   const { deploy } = deployments;
 
   const getConstructorArguments = () => {
     if (
+      implContractName === "BalancerComposablePoolStrategy" &&
+      fixtureStrategyVarName === "balancerSfrxWstRETHStrategy"
+    ) {
+      return [
+        [
+          addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
+          addresses.mainnet.OETHVaultProxy,
+        ],
+        [
+          addresses.mainnet.rETH,
+          addresses.mainnet.stETH,
+          addresses.mainnet.wstETH,
+          addresses.mainnet.frxETH,
+          addresses.mainnet.sfrxETH,
+          addresses.mainnet.balancerVault, // Address of the Balancer vault
+          balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
+        ],
+        addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+        0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
+      ];
+    } else if (
       ["BalancerMetaPoolTestStrategy", "BalancerMetaPoolStrategy"].includes(
         implContractName
       )
@@ -140,7 +166,6 @@ async function hotDeployOption(
     if (implAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D") {
       log(`Caching rate providers and pool assets`);
       await fixture[strategyVarName].connect(fixture.josh).cachePoolAssets();
-
       await fixture[strategyVarName].connect(fixture.josh).cacheRateProviders();
     } else {
       throw new Error(
@@ -184,6 +209,12 @@ async function hotDeployOption(
       );
 
       await cacheAssetsAndProviders("balancerREthStrategy");
+    } else if (fixtureName === "balancerFrxETHwstETHeETHFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
+        "BalancerComposablePoolStrategy" // implContractName
+      );
     } else if (
       fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture"
     ) {
@@ -380,7 +411,8 @@ async function hotDeployFixture(
 
   const newlyCompiledImplContract = await constructNewContract(
     fixture,
-    implContractName
+    implContractName,
+    fixtureStrategyVarName
   );
   log(`New contract deployed at ${newlyCompiledImplContract.address}`);
 
