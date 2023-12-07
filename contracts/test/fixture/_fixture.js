@@ -913,12 +913,14 @@ async function convexVaultFixture() {
 /**
  * Configure a Vault with the balancerREthStrategy
  */
-async function balancerREthFixture(config = { defaultStrategy: true }) {
+async function balancerREthFixture(config = { disableHotDeploy: false, defaultStrategy: true }) {
   const fixture = await defaultFixture();
 
-  await hotDeployOption(fixture, "balancerREthFixture", {
-    isOethFixture: true,
-  });
+  if (!config.disableHotDeploy) {
+    await hotDeployOption(fixture, "balancerREthFixture", {
+      isOethFixture: true,
+    });
+  }
 
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
@@ -1049,7 +1051,8 @@ async function balancerFrxETHwstETHeETHFixture(
  * replace the byte code with the one that exposes internal functions
  */
 async function balancerRethWETHExposeFunctionFixture() {
-  const fixture = await balancerREthFixture();
+  // don't hot deploy twice within the same fixture
+  const fixture = await balancerREthFixture({ disableHotDeploy: true });
   await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture", {
     forceDeployStrategy: true,
   });

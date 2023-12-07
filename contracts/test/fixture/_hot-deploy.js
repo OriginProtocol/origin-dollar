@@ -134,8 +134,12 @@ async function hotDeployOption(
   fixtureName,
   config = { isOethFixture: false, forceDeployStrategy: false }
 ) {
-  // Disable Hot Deploy on CI and for unit tests
-  if (!isFork || isCI) return;
+  /* Only enable hot deploys in fork tests. It is also important
+   * that hot-deploys are enabled on the CI since some fork tests
+   * rely on contract being replaced and their internal variables
+   * exposed. 
+   */
+  if (!isFork) return;
 
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
@@ -207,7 +211,6 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolTestStrategy" // implContractName
       );
-
       await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (fixtureName === "balancerFrxETHwstETHeETHFixture") {
       await hotDeployFixture(
