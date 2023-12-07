@@ -4,7 +4,7 @@
  */
 const { ethers } = hre;
 
-const { isFork, isCI } = require("../helpers");
+const { isFork } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
@@ -137,7 +137,7 @@ async function hotDeployOption(
   /* Only enable hot deploys in fork tests. It is also important
    * that hot-deploys are enabled on the CI since some fork tests
    * rely on contract being replaced and their internal variables
-   * exposed. 
+   * exposed.
    */
   if (!isFork) return;
 

@@ -913,7 +913,9 @@ async function convexVaultFixture() {
 /**
  * Configure a Vault with the balancerREthStrategy
  */
-async function balancerREthFixture(config = { disableHotDeploy: false, defaultStrategy: true }) {
+async function balancerREthFixture(
+  config = { disableHotDeploy: false, defaultStrategy: true }
+) {
   const fixture = await defaultFixture();
 
   if (!config.disableHotDeploy) {
