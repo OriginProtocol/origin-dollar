@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const hre = require("hardhat");
 const { utils } = require("ethers");
 
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const {
   ousdUnits,
   daiUnits,

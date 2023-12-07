@@ -10,6 +10,7 @@ import { IERC20, InitializableAbstractStrategy } from "../../utils/Initializable
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
+import { IBalancerPool } from "../../interfaces/balancer/IBalancerPool.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -18,6 +19,15 @@ import { StableMath } from "../../utils/StableMath.sol";
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    /*
+     * @dev When redeeming sfrxETH for frxETH there is usually a 1 WEI rounding
+     * error. To mitigate this issue we overshoot by 1 WEI when redeeming.
+     */
+    uint256 public constant FRX_ETH_REDEEM_CORRECTION = 1;
+    /// @dev A constant representing a rate provider with a fixed 1e18 rate
+    address public constant FIXED_RATE_PROVIDER =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public immutable rETH;
     address public immutable stETH;
@@ -30,12 +40,24 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /// @notice Balancer pool identifier
     bytes32 public immutable balancerPoolId;
 
-    // Max withdrawal deviation denominated in 1e18 (1e18 == 100%)
+    /// @notice Max withdrawal deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalDeviation;
-    // Max deposit deviation denominated in 1e18 (1e18 == 100%)
+    /// @notice Max deposit deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositDeviation;
+    /// @dev Cache of asset => rateProvider
+    mapping(address => address) public assetToRateProviderCache;
 
-    int256[48] private __reserved;
+    /// @dev all the pool assets as returned by the balancerVault.getPoolTokens() function
+    address[] public poolAssets;
+
+    /* @dev A mapping of pool asset address to asset index. With Balancer the
+     * configured order of the pool assets is important and never changes.
+     * For those reasons these assets are cached as they greatly simplify the
+     * code and make it more gas efficient.
+     */
+    mapping(address => uint256) public poolAssetIndex;
+
+    int256[45] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -101,18 +123,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
+        cachePoolAssets();
+        cacheRateProviders();
+
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
-        IERC20[] memory poolAssets = _getPoolAssets();
-        require(
-            poolAssets.length == _assets.length,
-            "Pool assets length mismatch"
-        );
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = _fromPoolAsset(address(poolAssets[i]));
-            require(_assets[i] == asset, "Pool assets mismatch");
-        }
+        _assetConfigVerification(_assets);
 
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -120,6 +137,23 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             _pTokens
         );
         _approveBase();
+    }
+
+    function _assetConfigVerification(address[] calldata _assets)
+        internal
+        view
+        virtual
+    {
+        require(
+            poolAssets.length == _assets.length,
+            "Pool assets length mismatch"
+        );
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            require(
+                _assets[i] == _fromPoolAsset(poolAssets[i]),
+                "Pool assets mismatch"
+            );
+        }
     }
 
     /**
@@ -242,8 +276,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move
      * to ensure the expected changes took place.
      *
-     * @param _asset Address of the Balancer pool asset
-     * @param _amount Amount of the Balancer pool asset
+     * @param _poolAssets Array of addresses of the Balancer pool assets
+     * @param _poolAmounts Array of amounts of the Balancer pool assets
      * @return bptExpected of BPT expected in exchange for the asset
      *
      * @dev
@@ -258,32 +292,25 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
-    function _getBPTExpected(address _asset, uint256 _amount)
-        internal
-        view
-        virtual
-        returns (uint256 bptExpected)
-    {
-        uint256 bptRate = IRateProvider(platformAddress).getRate();
-        uint256 poolAssetRate = _getRateProviderRate(_asset);
-        bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
-    }
-
     function _getBPTExpected(
-        address[] memory _assets,
-        uint256[] memory _amounts
+        address[] memory _poolAssets,
+        uint256[] memory _poolAmounts
     ) internal view virtual returns (uint256 bptExpected) {
-        require(_assets.length == _amounts.length, "Assets & amounts mismatch");
+        require(
+            _poolAssets.length == _poolAmounts.length,
+            "Assets & amounts mismatch"
+        );
 
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            uint256 poolAssetRate = _getRateProviderRate(_assets[i]);
+        uint256 ethAmount = 0;
+        for (uint256 i = 0; i < _poolAssets.length; ++i) {
+            uint256 poolAssetRate = _getRateProviderRate(_poolAssets[i]);
             // convert asset amount to ETH amount
-            bptExpected += _amounts[i].mulTruncate(poolAssetRate);
+            ethAmount += _poolAmounts[i].mulTruncate(poolAssetRate);
         }
 
         uint256 bptRate = IRateProvider(platformAddress).getRate();
         // Convert ETH amount to BPT amount
-        bptExpected = bptExpected.divPrecisely(bptRate);
+        bptExpected = ethAmount.divPrecisely(bptRate);
     }
 
     function _lpDepositAll() internal virtual;
@@ -291,15 +318,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _lpWithdraw(uint256 numBPTTokens) internal virtual;
 
     function _lpWithdrawAll() internal virtual;
-
-    /**
-     * @notice Balancer returns assets and rateProviders for corresponding assets ordered
-     * by numerical order.
-     */
-    function _getPoolAssets() internal view returns (IERC20[] memory assets) {
-        // slither-disable-next-line unused-return
-        (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
-    }
 
     /**
      * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
@@ -375,42 +393,23 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         internal
         returns (uint256 unwrappedAmount)
     {
-        if (asset == stETH) {
+        if (asset == stETH && amount > 0) {
+            // amount is amount of wstETH to be unwrapped as stETH
             unwrappedAmount = IWstETH(wstETH).unwrap(amount);
-        } else if (asset == frxETH) {
-            unwrappedAmount = IERC4626(sfrxETH).withdraw(
-                amount,
+        } else if (asset == frxETH && amount > 0) {
+            /* redeem takes amount parameter that are the number of
+             * shares (sfrxETH) to be exchanged for assets (frxETH)
+             */
+            unwrappedAmount = IERC4626(sfrxETH).redeem(
+                /* adding + 1 here since a rounding error can
+                 * return value that is off by 1 WEI
+                 */
+                amount + FRX_ETH_REDEEM_CORRECTION,
                 address(this),
                 address(this)
             );
         } else {
             unwrappedAmount = amount;
-        }
-    }
-
-    /**
-     * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
-     * that the strategy supports. This function converts the rebasing strategy asset
-     * and corresponding amount to wrapped(pool) asset.
-     */
-    function _fromPoolAsset(address poolAsset, uint256 poolAmount)
-        internal
-        view
-        returns (address asset, uint256 amount)
-    {
-        if (poolAsset == wstETH) {
-            asset = stETH;
-            if (poolAmount > 0) {
-                amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
-            }
-        } else if (poolAsset == sfrxETH) {
-            asset = frxETH;
-            if (poolAmount > 0) {
-                amount = IERC4626(sfrxETH).convertToAssets(poolAmount);
-            }
-        } else {
-            asset = poolAsset;
-            amount = poolAmount;
         }
     }
 
@@ -477,13 +476,78 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function _approveBase() internal virtual {
         IERC20 pToken = IERC20(platformAddress);
+
         // Balancer vault for BPT token (required for removing liquidity)
-        pToken.safeApprove(address(balancerVault), type(uint256).max);
+        // slither-disable-next-line unused-return
+        pToken.approve(address(balancerVault), type(uint256).max);
     }
 
+    /* @notice populate pool asset => rate provider mapping. If assets map
+     * to:
+     *  - zero address then the asset is not supported
+     *  - FIXED_RATE_PROVIDER address then this is a fixed rate provider (1e18)
+     *  - an address then it is an address of the rate provider for that asset
+     *
+     * This function is public since it needs to be called for pools that have already
+     * been deployed and not have this function ran in the initialize method. At the time
+     * of writing this is the rETH/WETH pool.
+     */
+    function cacheRateProviders() public {
+        IRateProvider[] memory providers = IBalancerPool(platformAddress)
+            .getRateProviders();
+        uint256 poolAssetsLength = poolAssets.length;
+
+        require(poolAssetsLength == providers.length, "Asset length mismatch");
+
+        for (uint256 i = 0; i < poolAssetsLength; ++i) {
+            if (address(providers[i]) == address(0)) {
+                assetToRateProviderCache[poolAssets[i]] = FIXED_RATE_PROVIDER;
+            } else {
+                assetToRateProviderCache[poolAssets[i]] = address(providers[i]);
+            }
+        }
+    }
+
+    /**
+     * @notice Returns the rate supplied by the Balancer configured rate
+     * provider. Rate is used to normalize the token to common underlying
+     * pool denominator. (ETH for ETH Liquid staking derivatives).
+     *
+     * @param _asset Address of the Balancer pool asset
+     * @return rate of the corresponding asset
+     */
     function _getRateProviderRate(address _asset)
         internal
         view
         virtual
-        returns (uint256);
+        returns (uint256)
+    {
+        address rateProvider = assetToRateProviderCache[_asset];
+        require(address(0) != rateProvider, "Asset unsupported");
+
+        if (rateProvider == FIXED_RATE_PROVIDER) {
+            return 1 ether;
+        }
+
+        return IRateProvider(rateProvider).getRate();
+    }
+
+    /**
+     * @notice Caches Pool Assets and their index. These will never change
+     * in a strategy. It's `public` because we already have one strategy
+     * initialized without this, would make it easier when upgrading it
+     */
+    function cachePoolAssets() public {
+        require(poolAssets.length == 0, "Assets already cached");
+
+        // slither-disable-next-line unused-return
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
+
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets.push(address(tokens[i]));
+            poolAssetIndex[address(tokens[i])] = i;
+        }
+    }
 }

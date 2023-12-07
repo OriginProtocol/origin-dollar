@@ -67,6 +67,7 @@ website/network.json
 
 todo.txt
 brownie/env-brownie/
+brownie/env-brownie_pandas/
 
 crytic-export
 contracts/echidna-corpus

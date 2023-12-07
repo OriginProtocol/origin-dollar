@@ -210,15 +210,20 @@ addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";
 addresses.mainnet.wstETH_WETH_AuraRewards =
   "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
+// wstETH/WETH Composable
+addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT =
+  "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd";
+addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards =
+  "0x2a14db8d09db0542f6a371c0cb308a768227d67d";
 // rETH/WETH
 addresses.mainnet.rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276";
 addresses.mainnet.rETH_WETH_AuraRewards =
   "0xDd1fE5AD401D4777cE89959b7fa587e569Bf125D";
 // wstETH/sfrxETH/rETH
 addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
-  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af7";
+  "0x42ED016F826165C2e5976fe5bC3df540C5aD0Af7";
 addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
-  "0xd26948E7a0223700e3C3cdEA21cA2471abCb8d47";
+  "0x032B676d5D55e8ECbAe88ebEE0AA10fB5f72F6CB";
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";

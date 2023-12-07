@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, defaultFixture } = require("../_fixture");
+const { createFixtureLoader, defaultFixture } = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

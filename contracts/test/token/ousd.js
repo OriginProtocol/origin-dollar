@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { utils } = require("ethers");
 
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");

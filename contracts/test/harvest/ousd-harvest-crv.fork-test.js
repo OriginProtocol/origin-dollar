@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
 
 const { usdtUnits } = require("../helpers");
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { MAX_UINT256 } = require("../../utils/constants");
 
 describe("ForkTest: Harvest OUSD", function () {

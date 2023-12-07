@@ -1,8 +1,8 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
-const { hotDeployOption } = require("../_hot-deploy");
+const { hotDeployOption } = require("../fixture/_hot-deploy");
 
 describe("ForkTest: Aura/WETH Price Feed", function () {
   this.timeout(0);

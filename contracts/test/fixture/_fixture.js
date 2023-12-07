@@ -1,25 +1,30 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 const mocha = require("mocha");
 
+const addresses = require("../../utils/addresses");
+const { setFraxOraclePrice } = require("../../utils/frax");
 require("./_global-hooks");
 
 const { hotDeployOption } = require("./_hot-deploy.js");
-const addresses = require("../utils/addresses");
-const { setFraxOraclePrice } = require("../utils/frax");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
+
+const {
+  deployBalancerFrxEethRethWstEThStrategyMissConfigured,
+} = require("./_custom-deploys");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
-} = require("../utils/constants");
+  balancer_stETH_WETH_COMPOSABLE_PID,
+  balancer_wstETH_sfrxETH_rETH_PID,
+} = require("../../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
-} = require("../utils/funding");
-const { replaceContractAt } = require("../utils/hardhat");
+} = require("../../utils/funding");
+const { replaceContractAt } = require("../../utils/hardhat");
 const {
   getAssetAddresses,
   daiUnits,
@@ -28,29 +33,31 @@ const {
   ousdUnits,
   units,
   isFork,
-} = require("./helpers");
-const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
+} = require("../helpers");
+const { hardhatSetBalance, setERC20TokenBalance } = require("../_fund");
 
-const daiAbi = require("./abi/dai.json").abi;
-const usdtAbi = require("./abi/usdt.json").abi;
-const erc20Abi = require("./abi/erc20.json");
-const morphoAbi = require("./abi/morpho.json");
-const morphoLensAbi = require("./abi/morphoLens.json");
-const crvMinterAbi = require("./abi/crvMinter.json");
-const sdaiAbi = require("./abi/sDAI.json");
+const daiAbi = require("../abi/dai.json").abi;
+const usdtAbi = require("../abi/usdt.json").abi;
+const erc20Abi = require("../abi/erc20.json");
+const morphoAbi = require("../abi/morpho.json");
+const morphoLensAbi = require("../abi/morphoLens.json");
+const crvMinterAbi = require("../abi/crvMinter.json");
+const sdaiAbi = require("../abi/sDAI.json");
 
-// const curveFactoryAbi = require("./abi/curveFactory.json")
-const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
-const oethMetapoolAbi = require("./abi/oethMetapool.json");
-const threepoolLPAbi = require("./abi/threepoolLP.json");
-const threepoolSwapAbi = require("./abi/threepoolSwap.json");
+// const curveFactoryAbi = require("../abi/curveFactory.json")
+const ousdMetapoolAbi = require("../abi/ousdMetapool.json");
+const oethMetapoolAbi = require("../abi/oethMetapool.json");
+const threepoolLPAbi = require("../abi/threepoolLP.json");
+const composableStablePoolBptAbi = require("../abi/composableStablePoolBpt.json");
+const threepoolSwapAbi = require("../abi/threepoolSwap.json");
+const sfrxETHAbi = require("../abi/sfrxETH.json");
 
-const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
-const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
-const { impersonateAndFund } = require("../utils/signers");
+const balancerStrategyDeployment = require("../../utils/balancerStrategyDeployment");
+const balancerComposableStrategyDeployment = require("../../utils/balancerComposableStrategyDeployment");
+const { impersonateAndFund } = require("../../utils/signers");
 
-const log = require("../utils/logger")("test:fixtures");
+const log = require("../../utils/logger")("test:fixtures");
 
 let snapshotId;
 
@@ -176,6 +183,7 @@ const defaultFixture = deployments.createFixture(async () => {
     aaveIncentivesController,
     reth,
     stETH,
+    wstETH,
     frxETH,
     sfrxETH,
     sDAI,
@@ -202,6 +210,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoCompoundStrategy,
     fraxEthStrategy,
     balancerREthStrategy,
+    balancerSfrxWstRETHStrategy,
     makerDsrStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
@@ -249,6 +258,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
+    wstETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.wstETH);
     sDAI = await ethers.getContractAt(sdaiAbi, addresses.mainnet.sDAI);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
@@ -319,12 +329,20 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const balancerRethStrategyProxy = await ethers.getContract(
+    const balancerREthStrategyProxy = await ethers.getContract(
       "OETHBalancerMetaPoolrEthStrategyProxy"
     );
     balancerREthStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
-      balancerRethStrategyProxy.address
+      balancerREthStrategyProxy.address
+    );
+
+    const balancerSfrxWstRETHStrategyProxy = await ethers.getContract(
+      "OETHBalancerCompPoolSfrxEthWstETHrETHStrategyProxy"
+    );
+    balancerSfrxWstRETHStrategy = await ethers.getContractAt(
+      "BalancerComposablePoolStrategy",
+      balancerSfrxWstRETHStrategyProxy.address
     );
 
     const convexEthMetaStrategyProxy = await ethers.getContract(
@@ -367,6 +385,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sfrxETH = await ethers.getContract("MocksfrxETH");
     sDAI = await ethers.getContract("MocksfrxETH");
     stETH = await ethers.getContract("MockstETH");
+    wstETH = await ethers.getContract("MockwstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -595,6 +614,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     fraxEthStrategy,
     balancerREthStrategy,
+    balancerSfrxWstRETHStrategy,
     oethMorphoAaveStrategy,
     woeth,
     convexEthMetaStrategy,
@@ -607,6 +627,7 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     aura,
     bal,
+    wstETH,
   };
 });
 
@@ -889,119 +910,19 @@ async function convexVaultFixture() {
   return fixture;
 }
 
-/* Deposit WETH liquidity in Balancer metaStable WETH pool to simulate
- * MEV attack.
- */
-async function tiltBalancerMetaStableWETHPool({
-  // how much of pool TVL should be deposited. 100 == 100%
-  percentageOfTVLDeposit = 100,
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-  reth,
-  weth,
-}) {
-  const amountsIn = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-  // calculate the amount of WETH that should be deposited in relation to pool TVL
-  amountsIn[wethIndex] = (await bptToken.totalSupply())
-    .mul(BigNumber.from(percentageOfTVLDeposit))
-    .div(BigNumber.from("100"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_TOKENS_IN_FOR_BPT_OUT:
-   * User sends precise quantities of tokens, and receives an
-   * estimated but unknown (computed at run time) quantity of BPT.
-   *
-   * ['uint256', 'uint256[]', 'uint256']
-   * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256[]", "uint256"],
-    [1, amountsIn, BigNumber.from("0")]
-  );
-
-  await reth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-  await weth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).joinPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //JoinPoolRequest
-      assetAddressArray, // assets
-      amountsIn, // maxAmountsIn
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
-}
-
-/* Withdraw WETH liquidity in Balancer metaStable WETH pool to simulate
- * second part of the MEV attack. All attacker WETH liquidity is withdrawn.
- */
-async function untiltBalancerMetaStableWETHPool({
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-}) {
-  const amountsOut = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
-   * User sends a precise quantity of BPT, and receives an estimated
-   * but unknown (computed at run time) quantity of a single token
-   *
-   * ['uint256', 'uint256', 'uint256']
-   * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256", "uint256"],
-    [
-      0,
-      await bptToken.balanceOf(attackerSigner.address),
-      BigNumber.from(wethIndex.toString()),
-    ]
-  );
-
-  await bptToken
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).exitPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //ExitPoolRequest
-      assetAddressArray, // assets
-      amountsOut, // minAmountsOut
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
-}
-
 /**
  * Configure a Vault with the balancerREthStrategy
  */
-async function balancerREthFixture(config = { defaultStrategy: true }) {
+async function balancerREthFixture(
+  config = { disableHotDeploy: false, defaultStrategy: true }
+) {
   const fixture = await defaultFixture();
-  await hotDeployOption(fixture, "balancerREthFixture", {
-    isOethFixture: true,
-  });
+
+  if (!config.disableHotDeploy) {
+    await hotDeployOption(fixture, "balancerREthFixture", {
+      isOethFixture: true,
+    });
+  }
 
   const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
     fixture;
@@ -1043,7 +964,221 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
 }
 
 /**
- * Configure a Vault with the balancer strategy for wstETH/WETH pool
+ * Configure a Vault with the balancerFrxETHwstETHeETHStrategy
+ */
+async function balancerFrxETHwstETHeETHFixture(
+  config = { defaultStrategy: true }
+) {
+  const fixture = await defaultFixture();
+  await hotDeployOption(fixture, "balancerFrxETHwstETHeETHFixture", {
+    isOethFixture: true,
+  });
+
+  const {
+    oethVault,
+    timelock,
+    frxETH,
+    stETH,
+    reth,
+    balancerSfrxWstRETHStrategy,
+    josh,
+  } = fixture;
+
+  if (config.defaultStrategy) {
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(
+        reth.address,
+        balancerSfrxWstRETHStrategy.address
+      );
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(
+        stETH.address,
+        balancerSfrxWstRETHStrategy.address
+      );
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(
+        frxETH.address,
+        balancerSfrxWstRETHStrategy.address
+      );
+  }
+
+  fixture.sfrxETHwstETHrEthBPT = await ethers.getContractAt(
+    composableStablePoolBptAbi,
+    addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
+    josh
+  );
+  fixture.sfrxETHwstETHrEthPID = balancer_wstETH_sfrxETH_rETH_PID;
+
+  fixture.sfrxETHwstETHrEthAuraPool = await ethers.getContractAt(
+    "IERC4626",
+    addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards
+  );
+
+  fixture.balancerVault = await ethers.getContractAt(
+    "IBalancerVault",
+    addresses.mainnet.balancerVault,
+    josh
+  );
+
+  /* balancer Gnosis safe authorized account
+   * Use this Dube query to get relevant transactions: 
+   - https://dune.com/queries/3184026
+   */
+  const authorizerAddress = "0xa29f61256e948f3fb707b4b3b138c5ccb9ef9888";
+  const recoveryModeSigner = await impersonateAndFund(authorizerAddress);
+
+  fixture.enableRecoveryMode = async () => {
+    await fixture.sfrxETHwstETHrEthBPT
+      .connect(recoveryModeSigner)
+      .enableRecoveryMode();
+  };
+
+  await setERC20TokenBalance(josh.address, reth, "1000000", hre);
+  await setERC20TokenBalance(josh.address, frxETH, "1000000", hre);
+  await setERC20TokenBalance(josh.address, stETH, "1000000", hre);
+
+  await hardhatSetBalance(josh.address, "1000000");
+
+  // set the price to an acceptable level so that fork tests don't fail
+  // even when it de-pegs.
+  await setFraxOraclePrice(parseUnits("0.999", 18));
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for rETH/WETH pool and
+ * replace the byte code with the one that exposes internal functions
+ */
+async function balancerRethWETHExposeFunctionFixture() {
+  // don't hot deploy twice within the same fixture
+  const fixture = await balancerREthFixture({ disableHotDeploy: true });
+  await hotDeployOption(fixture, "balancerRethWETHExposeFunctionFixture", {
+    forceDeployStrategy: true,
+  });
+  return fixture;
+}
+
+/**
+ * Deploy the Balancer Composable Stable pool with incorrect configuration
+ */
+async function balancerSfrxETHRETHWstETHMissConfiguredStrategy() {
+  return await deployBalancerFrxEethRethWstEThStrategyMissConfigured();
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that exposes internal functions
+ */
+async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  await hotDeployOption(
+    fixture,
+    "balancerSfrxETHRETHWstETHExposeFunctionFixture",
+    {
+      forceDeployStrategy: true,
+    }
+  );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that fails on a withdrawAll call
+ */
+async function balancerSfrxETHRETHWstETHBrokenWithdrawalFixture() {
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  await hotDeployOption(
+    fixture,
+    "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture",
+    {
+      isOethFixture: true,
+      /* force deploy strategy (+ vaultAdmin in this case) for test suite
+       * to be able to run a VaultAdmin test that hasn't been deployed yet.
+       */
+      forceDeployStrategy: true,
+    }
+  );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer Composable strategy for wstETH/WETH pool
+ */
+async function balancerWstEthComposableFixture() {
+  const fixture = await defaultFixture();
+
+  const d = balancerComposableStrategyDeployment({
+    deploymentOpts: {
+      deployName: "99998_balancer_composable_wstETH_WETH",
+      forceDeploy: true,
+      deployerIsProposer: true,
+      reduceQueueTime: true,
+    },
+    proxyContractName: "OETHBalancerComposablePoolwstEthStrategyProxy",
+
+    platformAddress: addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT,
+    poolId: balancer_stETH_WETH_COMPOSABLE_PID,
+
+    auraRewardsContractAddress:
+      addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards,
+    positionOfTheBPTToken: 1,
+    rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
+    assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
+  });
+
+  await d(hre);
+
+  const balancerWstEthComposableStrategyProxy = await ethers.getContract(
+    "OETHBalancerComposablePoolwstEthStrategyProxy"
+  );
+  const balancerWstEthComposableStrategy = await ethers.getContractAt(
+    "BalancerComposablePoolStrategy",
+    balancerWstEthComposableStrategyProxy.address
+  );
+
+  fixture.balancerWstEthComposableStrategy = balancerWstEthComposableStrategy;
+
+  const { oethVault, timelock, weth, stETH, josh } = fixture;
+
+  await oethVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(
+      stETH.address,
+      balancerWstEthComposableStrategy.address
+    );
+  await oethVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(
+      weth.address,
+      balancerWstEthComposableStrategy.address
+    );
+
+  fixture.stEthComposableBPT = await ethers.getContractAt(
+    "IERC20Metadata",
+    addresses.mainnet.wstETH_WETH_COMPOSABLE_BPT,
+    josh
+  );
+  fixture.balancerWstEthComposablePID = balancer_stETH_WETH_COMPOSABLE_PID;
+
+  fixture.auraPool = await ethers.getContractAt(
+    "IERC4626",
+    addresses.mainnet.wstETH_WETH_COMPOSABLE_AuraRewards
+  );
+
+  fixture.balancerVault = await ethers.getContractAt(
+    "IBalancerVault",
+    addresses.mainnet.balancerVault,
+    josh
+  );
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for wstETH/WETH pool
  */
 async function balancerWstEthFixture() {
   const fixture = await defaultFixture();
@@ -2058,7 +2193,7 @@ async function harvesterFixture() {
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
- * The returned `loadFixture` function is typically inlcuded in the beforeEach().
+ * The returned `loadFixture` function is typically included in the beforeEach().
  * @example
  *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
  *   beforeEach(async () => {
@@ -2124,14 +2259,18 @@ module.exports = {
   hackedVaultFixture,
   rebornFixture,
   balancerREthFixture,
+  balancerFrxETHwstETHeETHFixture,
   balancerWstEthFixture,
-  tiltBalancerMetaStableWETHPool,
-  untiltBalancerMetaStableWETHPool,
+  balancerWstEthComposableFixture,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
+  balancerRethWETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHMissConfiguredStrategy,
+  balancerSfrxETHRETHWstETHBrokenWithdrawalFixture,
   fluxStrategyFixture,
   buybackFixture,
   harvesterFixture,

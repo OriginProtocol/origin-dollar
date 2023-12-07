@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
-const { loadDefaultFixture } = require("./../_fixture");
+const { loadDefaultFixture } = require("./../fixture/_fixture");
 const {
   ousdUnits,
   usdtUnits,

@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  convexVaultFixture,
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

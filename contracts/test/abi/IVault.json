@@ -992,6 +992,13 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "faultTolerantWithdrawAllFromStrategies",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",

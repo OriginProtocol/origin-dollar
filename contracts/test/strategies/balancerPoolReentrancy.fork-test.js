@@ -2,7 +2,10 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { expect } = require("chai");
 const { isCI } = require("../helpers");
-const { balancerREthFixture, createFixtureLoader } = require("../_fixture");
+const {
+  balancerREthFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");

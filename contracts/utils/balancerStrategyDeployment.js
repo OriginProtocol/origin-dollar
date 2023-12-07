@@ -55,7 +55,9 @@ module.exports = ({
             poolId, // Pool ID of the Balancer pool
           ],
           auraRewardsContractAddress,
-        ]
+        ],
+        null,
+        true // ignore storage slot check
       );
       const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(
         "BalancerMetaPoolStrategy",

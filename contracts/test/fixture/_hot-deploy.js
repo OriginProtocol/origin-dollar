@@ -4,24 +4,50 @@
  */
 const { ethers } = hre;
 
-const { isFork, isCI } = require("./helpers");
-const addresses = require("../utils/addresses");
+const { isFork } = require("../helpers");
+const addresses = require("../../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
   oethPoolLpPID,
-} = require("../utils/constants");
-const { replaceContractAt } = require("../utils/hardhat");
-const { impersonateAndFund } = require("../utils/signers");
+} = require("../../utils/constants");
+const { replaceContractAt } = require("../../utils/hardhat");
+const { impersonateAndFund } = require("../../utils/signers");
 
-const log = require("../utils/logger")("test:fixtures:hot-deploy");
+const log = require("../../utils/logger")("test:fixtures:hot-deploy");
 
-// based on a contract name create new implementation
-async function constructNewContract(fixture, implContractName) {
+/* based on a contract name create new implementation
+ */
+async function constructNewContract(
+  fixture,
+  implContractName,
+  fixtureStrategyVarName
+) {
   const { deploy } = deployments;
 
   const getConstructorArguments = () => {
     if (
+      implContractName === "BalancerComposablePoolStrategy" &&
+      fixtureStrategyVarName === "balancerSfrxWstRETHStrategy"
+    ) {
+      return [
+        [
+          addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
+          addresses.mainnet.OETHVaultProxy,
+        ],
+        [
+          addresses.mainnet.rETH,
+          addresses.mainnet.stETH,
+          addresses.mainnet.wstETH,
+          addresses.mainnet.frxETH,
+          addresses.mainnet.sfrxETH,
+          addresses.mainnet.balancerVault, // Address of the Balancer vault
+          balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
+        ],
+        addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+        0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
+      ];
+    } else if (
       ["BalancerMetaPoolTestStrategy", "BalancerMetaPoolStrategy"].includes(
         implContractName
       )
@@ -39,7 +65,12 @@ async function constructNewContract(fixture, implContractName) {
         ],
         addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
       ];
-    } else if (implContractName === "BalancerComposablePoolTestStrategy") {
+    } else if (
+      [
+        "BalancerComposablePoolBrokenTestStrategy",
+        "BalancerComposablePoolTestStrategy",
+      ].includes(implContractName)
+    ) {
       return [
         [
           addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
@@ -55,6 +86,7 @@ async function constructNewContract(fixture, implContractName) {
           balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
         ],
         addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+        0, // position of BPT token within the sfrxETH-rETH-wstETH Balancer pool
       ];
     } else if (implContractName === "MorphoCompoundStrategy") {
       return [
@@ -100,26 +132,51 @@ async function constructNewContract(fixture, implContractName) {
 async function hotDeployOption(
   fixture,
   fixtureName,
-  config = { isOethFixture: false }
+  config = { isOethFixture: false, forceDeployStrategy: false }
 ) {
-  // Disable Hot Deploy on CI and for unit tests
-  if (!isFork || isCI) return;
+  /* Only enable hot deploys in fork tests. It is also important
+   * that hot-deploys are enabled on the CI since some fork tests
+   * rely on contract being replaced and their internal variables
+   * exposed.
+   */
+  if (!isFork) return;
 
   const hotDeployOptions = (process.env.HOT_DEPLOY || "")
     .split(",")
     .map((item) => item.trim());
 
-  if (!hotDeployOptions.length) return;
+  const { isOethFixture, forceDeployStrategy } = config;
 
-  const { isOethFixture } = config;
-  const deployStrat = hotDeployOptions.includes("strategy");
+  if (!hotDeployOptions.length) return;
+  const deployStrat =
+    hotDeployOptions.includes("strategy") || forceDeployStrategy;
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
   const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
 
-  log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
+  log(`Running fixture [${fixtureName}] hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
+
+  const cacheAssetsAndProviders = async (strategyVarName) => {
+    const proxy = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      fixture[strategyVarName].address
+    );
+
+    const implAddress = await proxy.implementation();
+    log(`Current impl address: ${implAddress}`);
+    // new version with cached rate providers / assets has not been deployed yet
+    if (implAddress === "0xAaA1d497fdff9a88048743Db31d3173a2E442A3D") {
+      log(`Caching rate providers and pool assets`);
+      await fixture[strategyVarName].connect(fixture.josh).cachePoolAssets();
+      await fixture[strategyVarName].connect(fixture.josh).cacheRateProviders();
+    } else {
+      throw new Error(
+        `New ${strategyVarName} deployed, removed manual caching!`
+      );
+    }
+  };
 
   if (deployStrat) {
     if (fixtureName === "balancerREthFixture") {
@@ -128,6 +185,8 @@ async function hotDeployOption(
         "balancerREthStrategy", // fixtureStrategyVarName
         "BalancerMetaPoolStrategy" // implContractName
       );
+
+      await cacheAssetsAndProviders("balancerREthStrategy");
     } else if (fixtureName === "morphoCompoundFixture") {
       await hotDeployFixture(
         fixture, // fixture
@@ -145,6 +204,67 @@ async function hotDeployOption(
         fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName
         "ConvexEthMetaStrategy" // implContractName
+      );
+    } else if (fixtureName === "balancerRethWETHExposeFunctionFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "balancerREthStrategy", // fixtureStrategyVarName
+        "BalancerMetaPoolTestStrategy" // implContractName
+      );
+      await cacheAssetsAndProviders("balancerREthStrategy");
+    } else if (fixtureName === "balancerFrxETHwstETHeETHFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
+        "BalancerComposablePoolStrategy" // implContractName
+      );
+    } else if (
+      fixtureName === "balancerSfrxETHRETHWstETHBrokenWithdrawalFixture"
+    ) {
+      await hotDeployFixture(
+        fixture, // fixture
+        "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
+        "BalancerComposablePoolBrokenTestStrategy" // implContractName
+      );
+
+      /*
+       * Delete this piece of code once the new VaultAdmin implementation is deployed.
+       */
+      const oethVaultAdminImplAddress =
+        "0x" +
+        (
+          await ethers.provider.send("eth_getStorageAt", [
+            fixture.oethVault.address,
+            "0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9", // Vault admin implementation position
+            "latest", // block
+          ])
+        ).substring(26);
+
+      if (
+        oethVaultAdminImplAddress !==
+        "0x31a91336414d3b955e494e7d485a6b06b55fc8fb"
+      ) {
+        throw Error(
+          "OETHVaultAdmin has been re-deployed. Hot-deploy shouldn't be re-deploying it anymore."
+        );
+      }
+
+      await hotDeployVaultAdmin(
+        fixture,
+        true, // deploy VaultAdmin
+        false, // deploy VaultCore
+        true // isOethFixture
+      );
+    } else if (
+      [
+        "balancerSfrxETHRETHWstETHExposeFunctionFixture",
+        "deployBalancerFrxEethRethWstEThStrategyMissConfigured",
+      ].includes(fixtureName)
+    ) {
+      await hotDeployFixture(
+        fixture, // fixture
+        "balancerSfrxWstRETHStrategy", // fixtureStrategyVarName
+        "BalancerComposablePoolTestStrategy" // implContractName
       );
     }
   }
@@ -294,7 +414,8 @@ async function hotDeployFixture(
 
   const newlyCompiledImplContract = await constructNewContract(
     fixture,
-    implContractName
+    implContractName,
+    fixtureStrategyVarName
   );
   log(`New contract deployed at ${newlyCompiledImplContract.address}`);
 
@@ -311,6 +432,11 @@ async function hotDeployFixture(
   );
   // replace current implementation
   await replaceContractAt(liveImplContractAddress, newlyCompiledImplContract);
+
+  fixture[fixtureStrategyVarName] = await ethers.getContractAt(
+    implContractName,
+    proxyContract.address
+  );
 
   return fixture;
 }

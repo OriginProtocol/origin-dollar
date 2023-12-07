@@ -8,7 +8,7 @@ const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-} = require("./../_fixture");
+} = require("./../fixture/_fixture");
 const { BigNumber } = require("ethers");
 const { impersonateAndFund } = require("../../utils/signers");
 

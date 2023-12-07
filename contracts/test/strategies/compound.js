@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
+const { createFixtureLoader, compoundFixture } = require("../fixture/_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
-const { createFixtureLoader, compoundFixture } = require("../_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");

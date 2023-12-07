@@ -1,9 +1,12 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
 const { isCI, oethUnits } = require("./../helpers");
-const { hotDeployOption } = require("../_hot-deploy");
+const {
+  createFixtureLoader,
+  harvesterFixture,
+} = require("./../fixture/_fixture");
+const { hotDeployOption } = require("../fixture/_hot-deploy");
 const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");
 const { parseUnits } = require("ethers").utils;

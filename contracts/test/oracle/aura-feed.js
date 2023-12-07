@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { oethUnits } = require("../helpers");
 
 describe("ForkTest: Aura/WETH Price Feed", function () {
