@@ -1,12 +1,14 @@
 const addresses = require("../../utils/addresses");
 const { balancer_wstETH_sfrxETH_rETH_PID } = require("../../utils/constants");
 const { ethers } = hre;
+const { impersonateAndFund } = require("../../utils/signers");
 const log = require("../../utils/logger")("test:fixtures:custom-deploy");
 
 const deployBalancerFrxEethRethWstEThStrategyMissConfigured = async () => {
   const { deploy } = deployments;
   const platformAddress = addresses.mainnet.wstETH_sfrxETH_rETH_BPT;
-  const sTimelock = await ethers.provider.getSigner(addresses.mainnet.Timelock);
+  // timelock needs some funds to be able to execute the transaction
+  const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
   log("Preparing to deploy a new BalancerComposablePoolStrategy");
 
   await deploy("BalancerComposablePoolStrategy", {
