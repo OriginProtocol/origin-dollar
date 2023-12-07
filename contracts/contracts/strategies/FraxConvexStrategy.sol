@@ -50,7 +50,6 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     /// @notice The number of seconds to lock Frax Staked Convex LP tokens for.
     /// 7 days is the minimum to get token rewards.
     uint256 public constant LOCK_DURATION = 7 days + 1;
-    uint256 public constant MIN_LOCK_AMOUNT = 1e17;
     /// @notice Value if not lock exists in the Frax Convex Locking contract.
     /// @dev Using a nonzero value to save gas when overriding with a real lock key
     bytes32 public constant NO_KEY =
@@ -188,7 +187,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     }
 
     /**
-     * @dev Extends an existing lock for 7 days regardless of whether it has expired or not.
+     * @dev Does not do anything if the locked balance is over the target locked balance.
+     * Else extends an existing lock for 7 days regardless of whether it has expired or not.
      * Create a new lock if one doesn't exist and there is a positive target locked balance.
      * Or add to the existing lock if the locked tokens is under the target locked balance.
      * @param unlockedBalance The balance of the Frax Staked Convex LP tokens that are NOT locked.
@@ -196,11 +196,53 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This includes any tokens in an expired lock.
      */
     function _lock(uint256 unlockedBalance, uint256 lockedBalance) internal {
+        // Do not extend lock time or add funds if already over the target locked balance
+        if (lockedBalance > targetLockedBalance) {
+            return;
+        }
+
         uint64 newUnlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
-        // If a lock exists and does not expire in seven days
-        if (lockKey != NO_KEY && unlockTimestamp < newUnlockTimestamp) {
-            // Update the unlockTimestamp before the external lockLonger call
-            unlockTimestamp = newUnlockTimestamp;
+        uint256 lockAmount = 0;
+
+        // Read targetLockedBalance into memory to save a second SLOAD
+        uint256 targetLockedBalanceMem = targetLockedBalance;
+
+        // If the locked balance is under the target lock balance
+        if (lockedBalance < targetLockedBalanceMem) {
+            // Calculate the amount of Frax Staked Convex LP tokens to lock.
+            // The target lock balance ignoring the unlocked balance
+            uint256 targetLockAmount = targetLockedBalanceMem - lockedBalance;
+            // Use the smaller of the target lock amount or the unlocked balance
+            lockAmount = targetLockAmount < unlockedBalance
+                ? targetLockAmount
+                : unlockedBalance;
+        }
+
+        // If no lock exists
+        if (lockKey == NO_KEY) {
+            // If no new lock is required
+            if (lockAmount == 0) {
+                // exit early so the unlockTimestamp is not updated or Lock event emitted
+                return;
+            }
+
+            // Lock the Frax Staked Convex LP tokens for the required duration
+            // eg lock stkcvxfrxeth-ng-f-frax for 7 days
+            // slither-disable-next-line reentrancy-no-eth
+            lockKey = IFraxConvexLocking(fraxLocking).stakeLocked(
+                lockAmount,
+                LOCK_DURATION
+            );
+        } else {
+            if (lockAmount > 0) {
+                // If a lock exists:
+                // Add Frax Staked Convex LP tokens to the existing lock.
+                // eg add stkcvxfrxeth-ng-f-frax to the existing lock
+                IFraxConvexLocking(fraxLocking).lockAdditional(
+                    lockKey,
+                    lockAmount
+                );
+            }
 
             // Extend the lock for another 7 days even if it has not yet expired
             IFraxConvexLocking(fraxLocking).lockLonger(
@@ -209,48 +251,10 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             );
         }
 
-        // If the locked balance is under the target lock balance
-        if (lockedBalance < targetLockedBalance) {
-            // Calculate the amount of Frax Staked Convex LP tokens to lock.
-            // The target lock balance ignoring the unlocked balance
-            uint256 targetLockAmount = targetLockedBalance - lockedBalance;
-            // Use the smaller of the target lock amount or the unlocked balance
-            uint256 lockAmount = targetLockAmount < unlockedBalance
-                ? targetLockAmount
-                : unlockedBalance;
+        // Write the new unlockTimestamp back to storage
+        unlockTimestamp = newUnlockTimestamp;
 
-            // Don't bother locking more if the amount is too small
-            if (lockAmount < MIN_LOCK_AMOUNT) return;
-
-            // If no lock exists
-            if (lockKey == NO_KEY) {
-                // Update the unlockTimestamp before the external stakeLocked or lockLonger calls
-                // slither-disable-next-line reentrancy-no-eth
-                unlockTimestamp = newUnlockTimestamp;
-
-                // Lock the Frax Staked Convex LP tokens for the required duration
-                // eg lock stkcvxfrxeth-ng-f-frax for 7 days
-                // slither-disable-next-line reentrancy-no-eth
-                lockKey = IFraxConvexLocking(fraxLocking).stakeLocked(
-                    lockAmount,
-                    LOCK_DURATION
-                );
-
-                emit Lock(lockKey, lockAmount, newUnlockTimestamp);
-            } else {
-                // If a lock exists:
-                // Add Frax Staked Convex LP tokens to the existing lock.
-                // eg add stkcvxfrxeth-ng-f-frax to the existing lock
-                IFraxConvexLocking(fraxLocking).lockAdditional(
-                    lockKey,
-                    lockAmount
-                );
-
-                emit Lock(lockKey, lockAmount, newUnlockTimestamp);
-            }
-        }
-        // else the target lock balance is not under the locked balance
-        // so we do NOT want to add more tokens
+        emit Lock(lockKey, lockAmount, newUnlockTimestamp);
     }
 
     /**

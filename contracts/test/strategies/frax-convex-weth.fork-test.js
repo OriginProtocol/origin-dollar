@@ -753,6 +753,9 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       expect(await fraxConvexWethStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
+      expect(await fraxConvexWethStrategy.LOCK_DURATION()).to.equal(
+        60 * 60 * 24 * 7 + 1
+      );
 
       // Immutables
       expect(await fraxConvexWethStrategy.platformAddress()).to.equal(
@@ -1207,14 +1210,18 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             .setTargetLockedBalance(parseUnits("1000"));
         });
         it("should not lock small staked amount", async () => {
-          const { fraxConvexWethStrategy } = fixture;
+          const { fraxConvexWethStrategy, fraxConvexStakingWeth } = fixture;
+
+          const stakedAmount = await fraxConvexStakingWeth.balanceOf(
+            fraxConvexWethStrategy.address
+          );
 
           const tx = await fraxConvexWethStrategy.updateLock();
 
           // no unlock
           await assertNoUnlock(tx);
-          // no lock as staked amount is too small
-          await assertNoLock(tx);
+          // lock even though the staked amount is tiny
+          await assertLock(stakedAmount);
         });
       });
     });
@@ -1548,12 +1555,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy } = fixture;
 
+            const unlockTimestampBefore =
+              await fraxConvexWethStrategy.unlockTimestamp();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // no unlock
             await assertNoUnlock(tx);
-            // lock exists, time extended but no funds added
-            await assertLock(unexpiredAmount);
+            // lock exists, no time or funds added
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
             await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
           });
           it("should deposit amount", async () => {
@@ -1593,12 +1603,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy } = fixture;
 
+            const unlockTimestampBefore =
+              await fraxConvexWethStrategy.unlockTimestamp();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // no unlock
             await assertNoUnlock(tx);
-            // lock exists, time extended but no funds added
-            await assertLock(unexpiredAmount);
+            // lock exists, no time or funds added
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
             await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
           });
           it("should deposit amount", async () => {
@@ -1645,7 +1658,9 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
 
             // lock exists, time extended but no funds added
             await assertLock(unexpiredAmount);
-            await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
+            await expect(tx)
+              .to.emit(fraxConvexWethStrategy, "Lock")
+              .withNamedArgs({ amount: 0 });
           });
           it("should deposit amount", async () => {
             // add to staked amount
@@ -1708,12 +1723,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock", async () => {
             const { fraxConvexWethStrategy } = fixture;
 
+            const unlockTimestampBefore =
+              await fraxConvexWethStrategy.unlockTimestamp();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // no unlock
             await assertNoUnlock(tx);
-            // lock exists, time extended but no funds added
-            await assertLock(unexpiredAmount);
+            // lock exists, no time or funds added
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
             await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
           });
           it("should deposit amount", async () => {
@@ -1878,13 +1896,15 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
           it("should update lock ", async () => {
             const { fraxConvexWethStrategy } = fixture;
 
+            const unlockTimestampBefore =
+              await fraxConvexWethStrategy.unlockTimestamp();
+
             const tx = await fraxConvexWethStrategy.updateLock();
 
             // no unlock
             await assertNoUnlock(tx);
-
-            // lock exists, time extended but no funds added
-            await assertLock(unexpiredAmount);
+            // lock exists, no time or funds added
+            await assertLock(unexpiredAmount, unlockTimestampBefore);
             await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
           });
           it("should deposit amount", async () => {
@@ -2101,7 +2121,9 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
             // add 7 days to existing lock
             // locked amount = expired locked amount
             await assertLock(expiredAmount);
-            await expect(tx).to.not.emit(fraxConvexWethStrategy, "Lock");
+            await expect(tx)
+              .to.emit(fraxConvexWethStrategy, "Lock")
+              .withNamedArgs({ amount: 0 });
 
             // staked amount = 0
             expect(
