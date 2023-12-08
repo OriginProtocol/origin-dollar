@@ -196,16 +196,16 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * This includes any tokens in an expired lock.
      */
     function _lock(uint256 unlockedBalance, uint256 lockedBalance) internal {
+        // Read targetLockedBalance into memory to save a second SLOAD
+        uint256 targetLockedBalanceMem = targetLockedBalance;
+
         // Do not extend lock time or add funds if already over the target locked balance
-        if (lockedBalance > targetLockedBalance) {
+        if (lockedBalance > targetLockedBalanceMem) {
             return;
         }
 
         uint64 newUnlockTimestamp = uint64(block.timestamp + LOCK_DURATION);
         uint256 lockAmount = 0;
-
-        // Read targetLockedBalance into memory to save a second SLOAD
-        uint256 targetLockedBalanceMem = targetLockedBalance;
 
         // If the locked balance is under the target lock balance
         if (lockedBalance < targetLockedBalanceMem) {
