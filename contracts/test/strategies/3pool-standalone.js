@@ -4,6 +4,7 @@ const { utils } = require("ethers");
 const { BigNumber } = require("ethers");
 const { createFixtureLoader, threepoolFixture } = require("../_fixture");
 const { units } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 describe("3Pool Strategy Standalone", function () {
   let governor,
@@ -17,19 +18,26 @@ describe("3Pool Strategy Standalone", function () {
     dai;
 
   const loadFixture = createFixtureLoader(threepoolFixture);
+  let fixture;
   beforeEach(async function () {
-    ({
-      governor,
-      threePool,
-      threePoolToken,
-      threePoolGauge,
-      tpStandalone,
-      usdt,
-      usdc,
-      dai,
-    } = await loadFixture());
+    (fixture = await loadFixture()),
+      ({
+        governor,
+        threePool,
+        threePoolToken,
+        threePoolGauge,
+        tpStandalone,
+        usdt,
+        usdc,
+        dai,
+      } = fixture);
     threePoolStrategy = tpStandalone.connect(governor);
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.threePoolStrategy,
+  }));
 
   const deposit = async (amount, asset) => {
     await asset

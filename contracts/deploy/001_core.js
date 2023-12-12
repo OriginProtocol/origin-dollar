@@ -10,8 +10,10 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
+  threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
+  frxEthWethPoolLpPID,
 } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:001_core");
@@ -116,59 +118,48 @@ const deployCompoundStrategy = async () => {
  */
 const deployThreePoolStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  await deployWithConfirmation("ThreePoolStrategyProxy");
+  await deployWithConfirmation("ThreePoolStrategyProxy", [], null, true);
   const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
   );
 
   const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
     [assetAddresses.ThreePool, cVaultProxy.address],
+    [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
   ]);
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
   );
 
+  const initData = cThreePoolStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[],address,address)",
+    [
+      [assetAddresses.CRV],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePool,
+      ],
+      assetAddresses.ThreePoolGauge,
+      assetAddresses.CRVMinter,
+    ]
+  );
+
   await withConfirmation(
     cThreePoolStrategyProxy["initialize(address,address,bytes)"](
       dThreePoolStrategy.address,
-      deployerAddr,
-      []
+      governorAddr,
+      initData
     )
   );
   log("Initialized ThreePoolStrategyProxy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],address,address)"
-    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
-  );
-  log("Initialized ThreePoolStrategy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`ThreePoolStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cThreePoolStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ThreePoolStrategy");
-  }
 
   return cThreePoolStrategy;
 };
@@ -178,70 +169,121 @@ const deployThreePoolStrategy = async () => {
  */
 const deployConvexStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(threeCRVPid, assetAddresses.ThreePoolToken);
 
-  await deployWithConfirmation("ConvexStrategyProxy");
+  await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
 
-  const dConvexStrategy = await deployWithConfirmation("ConvexStrategy", [
-    [assetAddresses.ThreePool, cVaultProxy.address],
-  ]);
+  const dConvexStrategy = await deployWithConfirmation(
+    "ConvexThreePoolStrategy",
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [
+        3, // Number of 3Pool assets
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePoolToken,
+      ],
+      [
+        mockBooster.address, // _cvxDepositorAddress,
+        threeCRVPid, // _cvxDepositorPTokenId
+      ],
+    ]
+  );
   const cConvexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
+    "ConvexThreePoolStrategy",
     cConvexStrategyProxy.address
+  );
+
+  // 4. Initialize the Convex strategy using the Curve 3Pool
+  // Construct initialize call data to init and configure the new strategy
+  const initData = cConvexStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.CRV, assetAddresses.CVX],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePool,
+      ],
+    ]
   );
 
   await withConfirmation(
     cConvexStrategyProxy["initialize(address,address,bytes)"](
       dConvexStrategy.address,
-      deployerAddr,
-      []
+      governorAddr,
+      initData
     )
   );
   log("Initialized ConvexStrategyProxy");
 
-  // Initialize Strategies
+  return cConvexStrategy;
+};
+
+/**
+ * Deploys a Convex Strategy for the Curve frxETH/WETH pool
+ */
+const deployConvexFrxEthWethStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
-  await withConfirmation(
-    cConvexStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],address,address,uint256)"
-    ](
-      [assetAddresses.CRV, assetAddresses.CVX],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      mockBooster.address, // _cvxDepositorAddress,
-      mockRewardPool.address, // _cvxRewardStakerAddress,
-      9 // _cvxDepositorPTokenId
-    )
+  await mockBooster.setPool(
+    frxEthWethPoolLpPID,
+    assetAddresses.CurveFrxEthWethPool
   );
-  log("Initialized ConvexStrategy");
+
+  await deployWithConfirmation("ConvexFrxEthWethStrategyProxy", [], null, true);
+  const cConvexFrxEthWethStrategyProxy = await ethers.getContract(
+    "ConvexFrxEthWethStrategyProxy"
+  );
+
+  const dConvexStrategy = await deployWithConfirmation(
+    "ConvexTwoPoolStrategy",
+    [
+      [assetAddresses.CurveFrxEthWethPool, cVaultProxy.address],
+      [
+        2, // Number of coins in the Curve pool
+        assetAddresses.CurveFrxEthWethPool,
+        assetAddresses.CurveFrxEthWethPool,
+      ],
+      [
+        mockBooster.address, // _cvxDepositorAddress,
+        frxEthWethPoolLpPID, // _cvxDepositorPTokenId
+      ],
+    ]
+  );
+  const cConvexStrategy = await ethers.getContractAt(
+    "ConvexTwoPoolStrategy",
+    cConvexFrxEthWethStrategyProxy.address
+  );
+
+  // 4. Initialize the new Curve frxETH/WETH strategy
+  // Construct initialize call data to init and configure the new strategy
+  const initData = cConvexStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.CRV, assetAddresses.CVX],
+      [assetAddresses.WETH, assetAddresses.frxETH],
+      [assetAddresses.CurveFrxEthWethPool, assetAddresses.CurveFrxEthWethPool],
+    ]
+  );
 
   await withConfirmation(
-    cConvexStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexFrxEthWethStrategyProxy["initialize(address,address,bytes)"](
+      dConvexStrategy.address,
+      governorAddr,
+      initData
+    )
   );
-  log(`ConvexStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cConvexStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ConvexStrategy");
-  }
+  log("Initialized ConvexFrxEthWethStrategyProxy");
+
   return cConvexStrategy;
 };
 
@@ -250,10 +292,7 @@ const deployConvexStrategy = async () => {
  */
 const deployConvexLUSDMetaStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -264,32 +303,25 @@ const deployConvexLUSDMetaStrategy = async () => {
 
   const dConvexLUSDMetaStrategy = await deployWithConfirmation(
     "ConvexGeneralizedMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+    ]
   );
   const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
     cConvexLUSDMetaStrategyProxy.address
   );
 
-  await withConfirmation(
-    cConvexLUSDMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexLUSDMetaStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ConvexLUSDMetaStrategyProxy");
-
   // Initialize Strategies
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
 
   const LUSD = await ethers.getContract("MockLUSD");
-  await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
-    ](
+
+  const initData = cConvexLUSDMetaStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[],(address,address,address,address,address,uint256))",
+    [
       [assetAddresses.CVX, assetAddresses.CRV],
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
@@ -304,26 +336,19 @@ const deployConvexLUSDMetaStrategy = async () => {
         mockRewardPool.address, // _cvxRewardStakerAddress,
         assetAddresses.LUSDMetapoolToken, // metapoolLpToken
         lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
-      ]
-    )
+      ],
+    ]
   );
-  log("Initialized ConvexLUSDMetaStrategy");
 
   await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexLUSDMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexLUSDMetaStrategy.address,
+      governorAddr,
+      initData
+    )
   );
-  log(`ConvexLUSDMetaStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cConvexLUSDMetaStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ConvexLUSDMetaStrategy");
-  }
+  log("Initialized ConvexLUSDMetaStrategyProxy");
+
   return cConvexLUSDMetaStrategy;
 };
 
@@ -332,46 +357,35 @@ const deployConvexLUSDMetaStrategy = async () => {
  */
 const deployConvexOUSDMetaStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  await deployWithConfirmation("ConvexOUSDMetaStrategyProxy");
+  await deployWithConfirmation("ConvexOUSDMetaStrategyProxy", [], null, true);
   const cConvexOUSDMetaStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
 
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
     "ConvexOUSDMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+    ]
   );
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     cConvexOUSDMetaStrategyProxy.address
   );
 
-  await withConfirmation(
-    cConvexOUSDMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexOUSDMetaStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ConvexOUSDMetaStrategyProxy");
-
   // Initialize Strategies
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
   const ousd = await ethers.getContract("OUSDProxy");
 
-  await withConfirmation(
-    cConvexOUSDMetaStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
-    ](
+  const initData = cConvexOUSDMetaStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[],(address,address,address,address,address,uint256))",
+    [
       [assetAddresses.CVX, assetAddresses.CRV],
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
@@ -386,26 +400,19 @@ const deployConvexOUSDMetaStrategy = async () => {
         mockRewardPool.address, // _cvxRewardStakerAddress,
         assetAddresses.ThreePoolOUSDMetapool, // metapoolLpToken (metapool address),
         metapoolLPCRVPid, // _cvxDepositorPTokenId
-      ]
-    )
+      ],
+    ]
   );
-  log("Initialized ConvexOUSDMetaStrategy");
 
   await withConfirmation(
-    cConvexOUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexOUSDMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexOUSDMetaStrategy.address,
+      governorAddr,
+      initData
+    )
   );
-  log(`ConvexOUSDMetaStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cConvexOUSDMetaStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ConvexOUSDMetaStrategy");
-  }
+  log("Initialized ConvexOUSDMetaStrategyProxy");
+
   return cConvexOUSDMetaStrategy;
 };
 
@@ -1216,6 +1223,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployConvexFrxEthWethStrategy();
   await deployFraxEthStrategy();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
   await configureVault();

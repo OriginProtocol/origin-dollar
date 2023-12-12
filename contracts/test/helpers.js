@@ -394,6 +394,7 @@ const getAssetAddresses = async (deployments) => {
       ThreePool: addresses.mainnet.ThreePool,
       ThreePoolToken: addresses.mainnet.ThreePoolToken,
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
+      CurveFrxEthWethPool: addresses.mainnet.CurveFrxEthWethPool,
       CRV: addresses.mainnet.CRV,
       CVX: addresses.mainnet.CVX,
       CVXLocker: addresses.mainnet.CVXLocker,
@@ -438,6 +439,8 @@ const getAssetAddresses = async (deployments) => {
       ThreePool: (await deployments.get("MockCurvePool")).address,
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
+      CurveFrxEthWethPool: (await deployments.get("MockCurveFrxEthWethPool"))
+        .address,
       CRV: (await deployments.get("MockCRV")).address,
       CVX: (await deployments.get("MockCVX")).address,
       CVXLocker: (await deployments.get("MockCVXLocker")).address,

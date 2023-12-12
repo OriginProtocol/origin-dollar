@@ -14,6 +14,28 @@
 
 ![Aave Strategy Storage](../../docs/AaveStrategyStorage.svg)
 
+## Convex Strategies
+
+### Hierarchy
+
+![Convex Strategies Hierarchy](../../docs/ConvexStrategiesHierarchy.svg)
+
+### Three Pool Squashed
+
+![Convex Three Pool Strategy Squashed](../../docs/ConvexThreePoolStrategySquashed.svg)
+
+### Three Pool Storage
+
+![Convex Three Pool Strategy Storage](../../docs/ConvexThreePoolStrategyStorage.svg)
+
+### Two Pool Squashed
+
+![Convex Two Pool Strategy Squashed](../../docs/ConvexTwoPoolStrategySquashed.svg)
+
+### Two Pool Storage
+
+![Convex Two Pool Strategy Storage](../../docs/ConvexTwoPoolStrategyStorage.svg)
+
 ## Convex ETH AMO Strategy
 
 ### Hierarchy

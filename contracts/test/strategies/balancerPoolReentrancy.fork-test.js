@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const { expect } = require("chai");
+
 const { isCI } = require("../helpers");
 const { balancerREthFixture, createFixtureLoader } = require("../_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");

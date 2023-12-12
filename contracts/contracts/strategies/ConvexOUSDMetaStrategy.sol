@@ -12,30 +12,47 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { ICurvePool } from "./ICurvePool.sol";
-import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
-import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
+import { ICurvePool } from "./curve/ICurvePool.sol";
+import { CurveThreeCoinFunctions } from "./curve/CurveThreeCoinFunctions.sol";
+import { CurveFunctions, IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { BaseConvexMetaStrategy, BaseCurveStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
-contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
+contract ConvexOUSDMetaStrategy is
+    CurveThreeCoinFunctions,
+    BaseConvexMetaStrategy
+{
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
+    constructor(
+        BaseStrategyConfig memory _stratConfig,
+        CurveConfig memory _curveConfig
+    )
         InitializableAbstractStrategy(_stratConfig)
+        BaseCurveStrategy(_curveConfig)
+        CurveThreeCoinFunctions(_curveConfig.curvePool)
     {}
+
+    function getCurveFunctions()
+        internal
+        pure
+        override(BaseCurveStrategy, CurveThreeCoinFunctions)
+        returns (CurveFunctions memory)
+    {
+        return CurveThreeCoinFunctions.getCurveFunctions();
+    }
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
-        ICurvePool curvePool = ICurvePool(platformAddress);
-
-        uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(
+        uint256 threePoolLpBalance = IERC20(CURVE_LP_TOKEN).balanceOf(
             address(this)
         );
-        uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();
+        uint256 curve3PoolVirtualPrice = ICurvePool(CURVE_POOL)
+            .get_virtual_price();
         uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(
             curve3PoolVirtualPrice
         );

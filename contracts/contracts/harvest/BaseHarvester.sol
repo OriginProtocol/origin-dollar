@@ -14,7 +14,7 @@ import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { IUniswapV3Router } from "../interfaces/uniswap/IUniswapV3Router.sol";
 import { IBalancerVault } from "../interfaces/balancer/IBalancerVault.sol";
-import { ICurvePool } from "../strategies/ICurvePool.sol";
+import { ICurvePool } from "../strategies/curve/ICurvePool.sol";
 import "../utils/Helpers.sol";
 
 abstract contract BaseHarvester is Governable {

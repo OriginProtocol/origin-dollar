@@ -3,9 +3,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OUSDBuyback -o OUSDBuybackHierarchy.svg
 sol2uml .. -s -d 0 -b OUSDBuyback -o OUSDBuybackSquashed.svg
 sol2uml storage .. -c OUSDBuyback -o OUSDBuybackStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHBuyback -o OETHBuybackHierarchy.svg
+# contracts/buyback
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OUSDBuyback,OETHBuyback -o BuybackHierarchy.svg
 sol2uml .. -s -d 0 -b OETHBuyback -o OETHBuybackSquashed.svg
-sol2uml storage .. -c OETHBuyback -o OETHBuybackStorage.svg
+sol2uml storage .. -c OETHBuyback -o OETHBuybackStorage.svg --hideExpand __gap,______gap
 
 # contracts/flipper
 sol2uml .. -v -hv -hf -he -hs -hl -b Flipper -o FlipperHierarchy.svg
@@ -61,6 +62,12 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.s
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy -o ConvexStrategiesHierarchy.svg
+sol2uml .. -s -d 0 -b ConvexThreePoolStrategy -o ConvexThreePoolStrategySquashed.svg
+sol2uml storage .. -c ConvexThreePoolStrategy -o ConvexThreePoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+sol2uml .. -s -d 0 -b ConvexTwoPoolStrategy -o ConvexTwoPoolStrategySquashed.svg
+sol2uml storage .. -c ConvexTwoPoolStrategy -o ConvexTwoPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
@@ -94,6 +101,10 @@ sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
 sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
+
+# contracts/strategies/curve
+sol2uml .. -hl -b CurveTwoCoinFunctions -o CurveTwoCoinFunctions.svg
+sol2uml .. -hl -b CurveThreeCoinFunctions -o CurveThreeCoinFunctions.svg
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg

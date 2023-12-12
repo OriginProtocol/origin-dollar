@@ -2,31 +2,33 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
-const {
-  daiUnits,
-  ousdUnits,
-  units,
-  expectApproxSupply,
-  isFork,
-} = require("../helpers");
+const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 
-describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
+describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
   if (isFork) {
     this.timeout(0);
   }
 
-  let anna,
-    ousd,
-    vault,
-    governor,
-    OUSDmetaStrategy,
-    metapoolToken,
-    cvxBooster,
-    usdt,
-    usdc,
-    dai;
+  const loadFixture = createFixtureLoader(convexMetaVaultFixture);
+  let fixture;
+  beforeEach(async function () {
+    fixture = await loadFixture();
+  });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.OUSDmetaStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    strategy: fixture.OUSDmetaStrategy,
+  }));
 
   const mint = async (amount, asset) => {
+    const { anna, vault } = fixture;
     await asset.connect(anna).mint(await units(amount, asset));
     await asset
       .connect(anna)
@@ -36,23 +38,9 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
-  const loadFixture = createFixtureLoader(convexMetaVaultFixture);
-  beforeEach(async function () {
-    const fixture = await loadFixture();
-    anna = fixture.anna;
-    vault = fixture.vault;
-    ousd = fixture.ousd;
-    governor = fixture.governor;
-    OUSDmetaStrategy = fixture.OUSDmetaStrategy;
-    metapoolToken = fixture.metapoolToken;
-    cvxBooster = fixture.cvxBooster;
-    usdt = fixture.usdt;
-    usdc = fixture.usdc;
-    dai = fixture.dai;
-  });
-
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via metapool", async function () {
+      const { anna, cvxBooster, ousd, metapoolToken, usdt } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("60200"));
@@ -61,6 +49,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { anna, cvxBooster, ousd, metapoolToken, usdc } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("50000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("100200"));
@@ -69,12 +58,14 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should use a minimum LP token amount when depositing USDT into metapool", async function () {
+      const { usdt } = fixture;
       await expect(mint("29000", usdt)).to.be.revertedWith(
         "Slippage ruined your day"
       );
     });
 
     it("Should use a minimum LP token amount when depositing USDC into metapool", async function () {
+      const { usdc } = fixture;
       await expect(mint("29000", usdc)).to.be.revertedWith(
         "Slippage ruined your day"
       );
@@ -83,6 +74,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
 
   describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
+      const { dai, usdc, usdt, ousd, anna, vault } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("10000.00", dai);
       await mint("10000.00", usdc);
@@ -94,33 +86,9 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
   });
 
-  describe("Utilities", function () {
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(OUSDmetaStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await OUSDmetaStrategy.connect(governor).transferToken(
-        ousd.address,
-        ousdUnits("8.0")
-      );
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
-      await expect(
-        OUSDmetaStrategy.connect(anna).transferToken(
-          ousd.address,
-          ousdUnits("8.0")
-        )
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
+  describe("AMO", function () {
     it("Should not allow too large mintForStrategy", async () => {
+      const { vault, governor, anna } = fixture;
       const MAX_UINT = BigNumber.from(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
@@ -139,6 +107,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should not allow too large burnForStrategy", async () => {
+      const { vault, governor, anna } = fixture;
       const MAX_UINT = BigNumber.from(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );

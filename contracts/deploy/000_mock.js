@@ -288,6 +288,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  const frxETH = await ethers.getContract("MockfrxETH");
+  await deploy("MockCurveFrxEthWethPool", {
+    from: deployerAddr,
+    args: [[addresses.mainnet.WETH, frxETH.address]],
+  });
+
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,
@@ -386,7 +392,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
-  const frxETH = await ethers.getContract("MockfrxETH");
   const sfrxETH = await ethers.getContract("MocksfrxETH");
   await deploy("MockFrxETHMinter", {
     from: deployerAddr,

@@ -100,7 +100,7 @@ contract MockUniswapRouter is IUniswapV2Router {
     }
 
     function WETH() external pure override returns (address) {
-        return address(0);
+        return 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     }
 
     // Universal router mock

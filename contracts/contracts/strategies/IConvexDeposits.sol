@@ -13,4 +13,16 @@ interface IConvexDeposits {
         bool _lock,
         address _stakeAddress
     ) external;
+
+    function poolInfo(uint256 _pid)
+        external
+        view
+        returns (
+            address lptoken,
+            address token,
+            address gauge,
+            address crvRewards,
+            address stash,
+            bool shutdown
+        );
 }
