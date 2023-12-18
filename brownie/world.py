@@ -85,7 +85,6 @@ governor_five = load_contract('governor_five', GOVERNOR_FIVE)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
-oeth = load_contract('ERC20', OETH)
 weth = load_contract('ERC20', WETH)
 reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
