@@ -28,7 +28,9 @@ This will create a `env-brownie` folder with all the dependencies installed.
 
 ## (Optional) Install brownie supporting returndata debug tx info
 
-The current release of brownie 1.19.3 has a bug where it doesn't include returndata transaction trace information. To install an alternate version with a fix: 
+The current release of brownie 1.19.3 has a bug where it doesn't include returndata transaction trace information. I've created a PR but there is no activity in the brownie repo and doesn't look like it will get reviewed: https://github.com/eth-brownie/brownie/pull/1715. 
+
+To install an alternate version with a fix: 
 
 ```
 // checkout fixed brownie and switch to the branch with a fix
@@ -43,6 +45,7 @@ source ./env-brownie/bin/activate
 pip install -e /path/to/github/repo/brownie
 
 ```
+
 
 ## Usage
 
