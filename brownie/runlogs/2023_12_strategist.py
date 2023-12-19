@@ -65,7 +65,7 @@ def main():
 
 
 # -------------------------------------
-# Dec 18, 2023 - OETH Reallocation
+# Dec 19, 2023 - OETH Reallocation
 # -------------------------------------
 from world import *
 from collateralSwap import *
@@ -124,6 +124,5 @@ def main():
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
-    
-main()
 
+main()
