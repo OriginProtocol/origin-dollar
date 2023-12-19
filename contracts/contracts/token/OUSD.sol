@@ -30,6 +30,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCredits,
         uint256 rebasingCreditsPerToken
     );
+    event RebaseOptIn(address account);
+    event RebaseOptOut(address account);
 
     enum RebaseOptions {
         NotSet,
@@ -489,31 +491,47 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
+     * @notice Enable rebasing for an account.
+     * @dev Add a contract address to the non-rebasing exception list. The
+     * address's balance will be part of rebases and the account will be exposed
+     * to upside and downside.
+     * @param _account Address of the account.
+     */
+    function governanceRebaseOptIn(address _account) public nonReentrant onlyGovernor {
+        _rebaseOptIn(_account);
+    }
+
+    /**
      * @dev Add a contract address to the non-rebasing exception list. The
      * address's balance will be part of rebases and the account will be exposed
      * to upside and downside.
      */
     function rebaseOptIn() public nonReentrant {
-        require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
+        _rebaseOptIn(msg.sender);
+    }
+
+    function _rebaseOptIn(address _account) internal {
+        require(_isNonRebasingAccount(_account), "Account has not opted out");
 
         // Convert balance into the same amount at the current exchange rate
-        uint256 newCreditBalance = _creditBalances[msg.sender]
+        uint256 newCreditBalance = _creditBalances[_account]
             .mul(_rebasingCreditsPerToken)
-            .div(_creditsPerToken(msg.sender));
+            .div(_creditsPerToken(_account));
 
         // Decreasing non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
+        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(_account));
 
-        _creditBalances[msg.sender] = newCreditBalance;
+        _creditBalances[_account] = newCreditBalance;
 
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
-        _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
+        _rebasingCredits = _rebasingCredits.add(_creditBalances[_account]);
 
-        rebaseState[msg.sender] = RebaseOptions.OptIn;
+        rebaseState[_account] = RebaseOptions.OptIn;
 
         // Delete any fixed credits per token
-        delete nonRebasingCreditsPerToken[msg.sender];
+        delete nonRebasingCreditsPerToken[_account];
+        emit RebaseOptIn(_account);
     }
 
     /**
@@ -533,6 +551,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Mark explicitly opted out of rebasing
         rebaseState[msg.sender] = RebaseOptions.OptOut;
+        emit RebaseOptOut(msg.sender);
     }
 
     /**

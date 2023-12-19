@@ -427,7 +427,12 @@ describe("Token", function () {
 
     const totalSupplyBefore = await ousd.totalSupply();
     await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
-    await mockNonRebasing.rebaseOptIn();
+
+    const rebaseTx = await mockNonRebasing.rebaseOptIn();
+    await expect(rebaseTx)
+        .to.emit(ousd, "RebaseOptIn")
+        .withArgs(mockNonRebasing.address);
+
     await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
 
@@ -470,7 +475,11 @@ describe("Token", function () {
     const initialrebasingCreditsPerTokenHighres =
       await ousd.rebasingCreditsPerTokenHighres();
 
-    await ousd.connect(matt).rebaseOptOut();
+    const rebaseTx = await ousd.connect(matt).rebaseOptOut();
+    await expect(rebaseTx)
+        .to.emit(ousd, "RebaseOptOut")
+        .withArgs(matt.address);
+
     // Received 100 from the rebase, the 200 simulated yield was split between
     // Matt and Josh
     await expect(matt).has.an.approxBalanceOf("200.00", ousd);
