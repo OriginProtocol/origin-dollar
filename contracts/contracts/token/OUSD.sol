@@ -30,8 +30,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCredits,
         uint256 rebasingCreditsPerToken
     );
-    event RebaseOptIn(address account);
-    event RebaseOptOut(address account);
+    event AccountRebasingEnabled(address account);
+    event AccountRebasingDisabled(address account);
 
     enum RebaseOptions {
         NotSet,
@@ -471,6 +471,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _ensureRebasingMigration(address _account) internal {
         if (nonRebasingCreditsPerToken[_account] == 0) {
+            emit AccountRebasingDisabled(_account);
             if (_creditBalances[_account] == 0) {
                 // Since there is no existing balance, we can directly set to
                 // high resolution, and do not have to do any other bookkeeping
@@ -497,7 +498,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * to upside and downside.
      * @param _account Address of the account.
      */
-    function governanceRebaseOptIn(address _account) public nonReentrant onlyGovernor {
+    function governanceRebaseOptIn(address _account)
+        public
+        nonReentrant
+        onlyGovernor
+    {
         _rebaseOptIn(_account);
     }
 
@@ -531,7 +536,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Delete any fixed credits per token
         delete nonRebasingCreditsPerToken[_account];
-        emit RebaseOptIn(_account);
+        emit AccountRebasingEnabled(_account);
     }
 
     /**
@@ -551,7 +556,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Mark explicitly opted out of rebasing
         rebaseState[msg.sender] = RebaseOptions.OptOut;
-        emit RebaseOptOut(msg.sender);
+        emit AccountRebasingDisabled(msg.sender);
     }
 
     /**

@@ -430,8 +430,8 @@ describe("Token", function () {
 
     const rebaseTx = await mockNonRebasing.rebaseOptIn();
     await expect(rebaseTx)
-        .to.emit(ousd, "RebaseOptIn")
-        .withArgs(mockNonRebasing.address);
+      .to.emit(ousd, "AccountRebasingEnabled")
+      .withArgs(mockNonRebasing.address);
 
     await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
@@ -477,8 +477,8 @@ describe("Token", function () {
 
     const rebaseTx = await ousd.connect(matt).rebaseOptOut();
     await expect(rebaseTx)
-        .to.emit(ousd, "RebaseOptOut")
-        .withArgs(matt.address);
+      .to.emit(ousd, "AccountRebasingDisabled")
+      .withArgs(matt.address);
 
     // Received 100 from the rebase, the 200 simulated yield was split between
     // Matt and Josh
@@ -682,7 +682,15 @@ describe("Token", function () {
       vault.address,
       daiUnits("100")
     );
-    await mockNonRebasing.mintOusd(vault.address, dai.address, daiUnits("50"));
+    const tx = await mockNonRebasing.mintOusd(
+      vault.address,
+      dai.address,
+      daiUnits("50")
+    );
+    await expect(tx)
+      .to.emit(ousd, "AccountRebasingDisabled")
+      .withArgs(mockNonRebasing.address);
+
     await expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
     );
