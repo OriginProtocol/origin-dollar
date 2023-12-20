@@ -5,22 +5,17 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "082_upgrade_oeth",
     forceDeploy: false,
     reduceQueueTime: true,
-    deployerIsProposer: true
+    deployerIsProposer: true,
   },
   async ({ ethers, deployWithConfirmation }) => {
     const cOETHProxy = await ethers.getContract("OETHProxy");
-    const eigenLayerStrategyContract = "0xa4c637e0f704745d182e4d38cab7e7485321d059";
+    const eigenLayerStrategyContract =
+      "0xa4c637e0f704745d182e4d38cab7e7485321d059";
 
     // Deploy new version of OETH contract
-    const dOETHImpl = await deployWithConfirmation(
-      "OETH",
-      []
-    );
+    const dOETHImpl = await deployWithConfirmation("OETH", []);
 
-    const cOETH = await ethers.getContractAt(
-      "OETH",
-      cOETHProxy.address
-    );
+    const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
 
     // Governance Actions
     // ----------------

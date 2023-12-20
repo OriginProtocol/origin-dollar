@@ -1,9 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("./../_fixture");
-const {
-  isCI,
-} = require("./../helpers");
+const { isCI } = require("./../helpers");
 
 /**
  * Regarding hardcoded addresses:
@@ -34,7 +32,8 @@ describe("ForkTest: OETH", function () {
     // These tests use a transaction to call a view function so the gas usage can be reported.
     it("Should get total value", async () => {
       const { oeth } = fixture;
-      const eigenLayerStrategyContract = "0xa4c637e0f704745d182e4d38cab7e7485321d059";
+      const eigenLayerStrategyContract =
+        "0xa4c637e0f704745d182e4d38cab7e7485321d059";
       // 2 equals OptIn
       expect(await oeth.rebaseState(eigenLayerStrategyContract)).to.be.equal(2);
     });
