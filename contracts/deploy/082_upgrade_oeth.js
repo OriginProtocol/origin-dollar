@@ -19,7 +19,13 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade the OETH AMO strategy with peg keeping functions.",
+      name: "Upgrade OETH token contract\n\
+      \n\
+      When contracts integrate with OETH protocol they can already opt-in to rebasing. This governance proposal enables OGV governance to enable rebasing for any 3rd party contract to better streamline integrations.\n\
+      \n\
+      This proposal also enables rebasing of EigenLayer contract.\n\
+      \n\
+      ",
       actions: [
         // Upgrade the OETH token proxy contract to the new implementation
         {
