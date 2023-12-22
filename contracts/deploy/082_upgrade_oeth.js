@@ -4,7 +4,9 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "082_upgrade_oeth",
     forceDeploy: false,
-    reduceQueueTime: true
+    reduceQueueTime: true,
+    proposalId:
+      "71383011691589635543710677825410966722324428905533481831290224502800746995692",
   },
   async ({ ethers, deployWithConfirmation }) => {
     const cOETHProxy = await ethers.getContract("OETHProxy");
