@@ -24,7 +24,7 @@ def get_1inch_quote(from_token, to_token, from_amount, retry_on_ratelimit=True):
     return get_1inch_quote(from_token, to_token, from_amount, False)
   elif res.status_code != 200:
     print(res.text)
-    raise Exception("Error accessing 1inch api")
+    raise Exception("Error accessing 1inch api, expected status 200 received: ", res.status_code)
 
   result = json.loads(res.text)
 
@@ -53,7 +53,7 @@ def get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_addres
     return get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_address, to_address, False)
   elif res.status_code != 200:
     print(res.text)
-    raise Exception("Error accessing 1inch api")
+    raise Exception("Error accessing 1inch api, expected status 200 received: ", res.status_code)
 
   result = json.loads(res.text)
 
