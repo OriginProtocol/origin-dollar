@@ -82,7 +82,7 @@ brownie run spell_apy --network hardhat
 ```
 
 ### For strategist runs (IMPORTANT!)
-Do not use brownie's mainnet fork (`brownie console --network mainnet-fork`) for running strategist scripts. Brownie internally uses a node engine that will produce faulty results. Rather run a hardhat node with null or latest (latest -30 blocks) BLOCK_NUMBER in `contracts/.env` file and attack a brownie console to it (brownie console --network hardhat).
+Do not use brownie's mainnet fork (`brownie console --network mainnet-fork`) for running strategist scripts. Brownie internally uses a node engine that will produce faulty results. Rather run a hardhat node with null or latest (latest -30 blocks) BLOCK_NUMBER in `contracts/.env` file and attach a brownie console to it (brownie console --network hardhat).
 
 ### (OUSD/Generalized) Metastrategy usage
 
