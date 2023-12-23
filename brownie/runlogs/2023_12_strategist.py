@@ -144,3 +144,37 @@ def main():
     print("-----")
 
 main()
+# Dec 22, 2023 - WETH <> stETH
+# -------------------------------------
+from collateralSwap import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(oeth_vault_core.rebase({'from':STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Swap 50 WETH for stETH with 0.1% tolerance
+    txs.append(
+      build_swap_tx(
+        WETH, 
+        STETH, 
+        1426.65 * 10**18, 
+        0.1, 
+        False, 
+        dry_run=False)
+    )
+
+    # After
+    vault_change = oeth_vault_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print(to_gnosis_json(txs))

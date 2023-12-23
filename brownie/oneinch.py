@@ -13,7 +13,7 @@ def get_1inch_quote(from_token, to_token, from_amount, retry_on_ratelimit=True):
   res = requests.get('https://api.1inch.dev/swap/v5.2/1/quote', params={
     'src': from_token,
     'dst': to_token,
-    'amount': str(from_amount)
+    'amount': "%.0f" % (from_amount)
   }, headers={
     'accept': 'application/json',
     'Authorization': 'Bearer {}'.format(ONEINCH_API_KEY)
@@ -23,6 +23,7 @@ def get_1inch_quote(from_token, to_token, from_amount, retry_on_ratelimit=True):
     time.sleep(2) # Wait for 2s and then try again
     return get_1inch_quote(from_token, to_token, from_amount, False)
   elif res.status_code != 200:
+    print(res.text)
     raise Exception("Error accessing 1inch api, expected status 200 received: ", res.status_code)
 
   result = json.loads(res.text)
@@ -38,7 +39,7 @@ def get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_addres
     'fromAddress': from_address,
     'receiver': to_address,
     'dst': to_token,
-    'amount': str(swap_amount),
+    'amount': "%.0f" % (swap_amount),
     'allowPartialFill': True,
     'disableEstimate': 'true',
     'slippage': slippage
@@ -51,6 +52,7 @@ def get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_addres
     time.sleep(2) # Wait for 2s and then try again
     return get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_address, to_address, False)
   elif res.status_code != 200:
+    print(res.text)
     raise Exception("Error accessing 1inch api, expected status 200 received: ", res.status_code)
 
   result = json.loads(res.text)
