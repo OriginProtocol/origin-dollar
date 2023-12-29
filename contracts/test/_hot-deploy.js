@@ -198,7 +198,7 @@ async function hotDeployVaultAdmin(
     await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
 
     fixture[vaultVariableName] = await ethers.getContractAt(
-      "IVault",
+      isOeth ? "IOETHVault" : "IVault",
       cVaultProxy.address
     );
   }

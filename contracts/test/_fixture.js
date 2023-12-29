@@ -87,7 +87,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const oethVault = await ethers.getContractAt(
-    "IVault",
+    "IOETHVault",
     OETHVaultProxy.address
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
@@ -614,6 +614,10 @@ async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
 
+  await hotDeployOption(fixture, "oethDefaultFixture", {
+    isOethFixture: true,
+  });
+  
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
   const { matt, josh, domen, daniel, franck, oethVault } = fixture;
 

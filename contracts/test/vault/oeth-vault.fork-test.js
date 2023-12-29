@@ -61,6 +61,29 @@ describe("ForkTest: OETH Vault", function () {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
 
+    it.only("should mint & redeem using WETH", async () => {
+      const { oethVault, weth, josh } =
+        fixture;
+
+      const amount = parseUnits("100", 18);
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      const tx = await oethVault
+        .connect(josh)["mint(uint256)"](amount);
+
+      await expect(tx)
+        .to.emit(oethVault, "Mint")
+        .withArgs(josh.address, amount);
+
+      const tx1 = await oethVault
+        .connect(josh)["redeem(uint256)"](amount);
+
+      await expect(tx1)
+        .to.emit(oethVault, "Redeem")
+        .withNamedArgs({ _addr: josh.address });
+    });
+
     it("should mint using each asset", async () => {
       const { oethVault, oethOracleRouter, weth, frxETH, stETH, reth, josh } =
         fixture;
@@ -110,6 +133,7 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
+
     it("OETH whale can not full redeem due to liquidity", async () => {
       const { oeth, oethVault } = fixture;
 

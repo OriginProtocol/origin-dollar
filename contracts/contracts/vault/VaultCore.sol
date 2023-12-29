@@ -62,7 +62,7 @@ contract VaultCore is VaultInitializer {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    ) external virtual whenNotCapitalPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -138,7 +138,7 @@ contract VaultCore is VaultInitializer {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        external
+        external virtual
         whenNotCapitalPaused
         nonReentrant
     {
@@ -173,7 +173,7 @@ contract VaultCore is VaultInitializer {
                     IStrategy strategy = IStrategy(strategyAddr);
                     strategy.withdraw(msg.sender, assetAddr, outputs[i]);
                 } else {
-                    // Cant find funds anywhere
+                    // Can't find funds anywhere
                     revert("Liquidity error");
                 }
             }
@@ -254,7 +254,7 @@ contract VaultCore is VaultInitializer {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeemAll(uint256 _minimumUnitAmount)
-        external
+        external virtual
         whenNotCapitalPaused
         nonReentrant
     {
