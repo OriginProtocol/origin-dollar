@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     // reduceQueueTime: true, // just to solve the issue of later active proposals failing
     //proposalId: ""
   },
-  async ({ deployWithConfirmation, ethers }) => {
+  async ({ ethers }) => {
     // Current contracts
     const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
     const cOETHDripper = await ethers.getContractAt(
