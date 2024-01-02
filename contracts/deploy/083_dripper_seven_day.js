@@ -12,12 +12,10 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
-    const cOETHDripper = await ethers.getContract(
+    const cOETHDripper = await ethers.getContractAt(
       "OETHDripper",
       cOETHDripperProxy.address
     );
-
-    // cOETHDripper.collectAndRebase();
 
     // Governance Actions
     // ----------------
