@@ -19,7 +19,7 @@ def main():
     print(to_gnosis_json(txs))
 
 # -------------------------------------
-# Jan 03, 2023 - OUSD Buyback
+# Jan 03, 2023 - CVX relock
 # -------------------------------------
 from buyback import *
 
@@ -35,7 +35,7 @@ def main():
 
 
 # -------------------------------------
-# Jan 04, 2023 - OUSD Buyback
+# Jan 03, 2023 - OUSD Buyback
 # -------------------------------------
 from buyback import *
 
