@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     // reduceQueueTime: true, // just to solve the issue of later active proposals failing
-    //proposalId: ""
+    proposalId: "42318318869999650358298082702932608052211233251042949042209002687040749779926"
   },
   async ({ ethers }) => {
     // Current contracts
