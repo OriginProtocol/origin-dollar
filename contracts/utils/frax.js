@@ -14,7 +14,7 @@ const log = require("./logger")("utils:fraxOracle");
  */
 const setFraxOraclePrice = async (price) => {
   const signer = await impersonateAndFund(
-    addresses.mainnet.FrxEthEthDualOracle
+    addresses.mainnet.FrxEthWethDualOracle
   );
 
   const timestamp = await getBlockTimestamp();
