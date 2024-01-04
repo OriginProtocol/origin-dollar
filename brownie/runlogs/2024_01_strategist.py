@@ -100,7 +100,7 @@ def main():
     vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
     supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
     profit = vault_change - supply_change
-    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), std))
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.25 * 10**18), vault_change, (0.25 * 10**18), std))
     print("-----")
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
