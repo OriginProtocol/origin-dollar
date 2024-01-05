@@ -9,4 +9,8 @@ pragma solidity ^0.8.0;
 import { VaultInitializer } from "./VaultInitializer.sol";
 import { VaultAdmin } from "./VaultAdmin.sol";
 
-contract Vault is VaultInitializer, VaultAdmin {}
+contract Vault is VaultInitializer, VaultAdmin {
+    constructor(address _mintRedeemOnlyAsset)
+        VaultAdmin(_mintRedeemOnlyAsset)
+    {}
+}

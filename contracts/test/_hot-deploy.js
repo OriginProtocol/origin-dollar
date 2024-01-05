@@ -186,6 +186,7 @@ async function hotDeployVaultAdmin(
     await deploy(vaultAdminName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
       contract: vaultAdminName,
+      args: isOeth ? [addresses.mainnet.WETH] : [],
     });
 
     const implementation = await ethers.getContract(vaultAdminName);
@@ -198,7 +199,7 @@ async function hotDeployVaultAdmin(
     await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
 
     fixture[vaultVariableName] = await ethers.getContractAt(
-      isOeth ? "IOETHVault" : "IVault",
+      "IVault",
       cVaultProxy.address
     );
   }
@@ -208,6 +209,7 @@ async function hotDeployVaultAdmin(
     await deploy(vaultCoreName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
       contract: vaultCoreName,
+      args: isOeth ? [addresses.mainnet.WETH] : [],
     });
     const implementation = await ethers.getContract(vaultCoreName);
 

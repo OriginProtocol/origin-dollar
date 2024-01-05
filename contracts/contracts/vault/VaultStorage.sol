@@ -17,7 +17,7 @@ import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 
-contract VaultStorage is Initializable, Governable {
+abstract contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
@@ -52,6 +52,8 @@ contract VaultStorage is Initializable, Governable {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
+
+    error AssetNotSupported();
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -146,6 +148,9 @@ contract VaultStorage is Initializable, Governable {
     /// @notice How much net total OTokens are allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
 
+    /// @notice If this property is set Vault is only able to mint & redeem using this asset
+    address public immutable mintRedeemOnlyAsset;
+
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
 
@@ -159,6 +164,10 @@ contract VaultStorage is Initializable, Governable {
         uint16 allowedUndervalueBps;
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    constructor(address _mintRedeemOnlyAsset) {
+        mintRedeemOnlyAsset = _mintRedeemOnlyAsset;
+    }
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

@@ -11,6 +11,8 @@ contract MockVault is VaultCore {
 
     uint256 storedTotalValue;
 
+    constructor(address _mintRedeemOnlyAsset) VaultCore(_mintRedeemOnlyAsset) {}
+
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
     }

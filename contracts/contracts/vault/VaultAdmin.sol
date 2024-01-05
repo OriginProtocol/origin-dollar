@@ -31,6 +31,10 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
+    constructor(address _mintRedeemOnlyAsset)
+        VaultStorage(_mintRedeemOnlyAsset)
+    {}
+
     /***************************************
                  Configuration
     ****************************************/

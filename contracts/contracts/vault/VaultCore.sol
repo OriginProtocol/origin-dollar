@@ -18,6 +18,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 
 import "./VaultInitializer.sol";
+import "./VaultStorage.sol";
 
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
@@ -52,6 +53,10 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
+    constructor(address _mintRedeemOnlyAsset)
+        VaultStorage(_mintRedeemOnlyAsset)
+    {}
+
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
@@ -62,8 +67,19 @@ contract VaultCore is VaultInitializer {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external virtual whenNotCapitalPaused nonReentrant {
-        require(assets[_asset].isSupported, "Asset is not supported");
+    ) external whenNotCapitalPaused nonReentrant {
+        // Vault supports minting with all supported assets
+        if (mintRedeemOnlyAsset == address(0)) {
+            if (!assets[_asset].isSupported) {
+                revert AssetNotSupported();
+            }
+        }
+        // Vault supports minting only with a single asset
+        else {
+            if (_asset != mintRedeemOnlyAsset) {
+                revert AssetNotSupported();
+            }
+        }
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
@@ -138,7 +154,7 @@ contract VaultCore is VaultInitializer {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        external virtual
+        external
         whenNotCapitalPaused
         nonReentrant
     {
@@ -156,12 +172,13 @@ contract VaultCore is VaultInitializer {
 
         emit Redeem(msg.sender, _amount);
 
+        address[] memory redeemAssets = _getRedeemAssets();
+
         // Send outputs
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
             if (outputs[i] == 0) continue;
 
-            address assetAddr = allAssets[i];
+            address assetAddr = redeemAssets[i];
 
             if (IERC20(assetAddr).balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
@@ -182,7 +199,7 @@ contract VaultCore is VaultInitializer {
         if (_minimumUnitAmount > 0) {
             uint256 unitTotal = 0;
             for (uint256 i = 0; i < outputs.length; ++i) {
-                unitTotal += _toUnits(outputs[i], allAssets[i]);
+                unitTotal += _toUnits(outputs[i], redeemAssets[i]);
             }
             require(
                 unitTotal >= _minimumUnitAmount,
@@ -254,7 +271,7 @@ contract VaultCore is VaultInitializer {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeemAll(uint256 _minimumUnitAmount)
-        external virtual
+        external
         whenNotCapitalPaused
         nonReentrant
     {
@@ -526,10 +543,11 @@ contract VaultCore is VaultInitializer {
         //
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
-        uint256 assetCount = allAssets.length;
-        uint256[] memory assetUnits = new uint256[](assetCount);
-        uint256[] memory assetBalances = new uint256[](assetCount);
-        outputs = new uint256[](assetCount);
+        address[] memory redeemAssets = _getRedeemAssets();
+
+        uint256[] memory assetUnits = new uint256[](redeemAssets.length);
+        uint256[] memory assetBalances = new uint256[](redeemAssets.length);
+        outputs = new uint256[](redeemAssets.length);
 
         // Calculate redeem fee
         if (redeemFeeBps > 0) {
@@ -540,7 +558,7 @@ contract VaultCore is VaultInitializer {
         // Calculate assets balances and decimals once,
         // for a large gas savings.
         uint256 totalUnits = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
             address assetAddr = allAssets[i];
             uint256 balance = _checkBalance(assetAddr);
             assetBalances[i] = balance;
@@ -549,15 +567,31 @@ contract VaultCore is VaultInitializer {
         }
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
             uint256 unitPrice = _toUnitPrice(allAssets[i], false);
             uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
             totalOutputRatio = totalOutputRatio + ratio;
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
             outputs[i] = (assetBalances[i] * factor) / totalUnits;
+        }
+    }
+
+    /**
+     * @dev Return array of assets the protocol exchanges for OTokens when redeeming
+     */
+    function _getRedeemAssets()
+        internal
+        view
+        returns (address[] memory redeemAssets)
+    {
+        if (mintRedeemOnlyAsset != address(0)) {
+            redeemAssets = new address[](1);
+            redeemAssets[0] = mintRedeemOnlyAsset;
+        } else {
+            redeemAssets = allAssets;
         }
     }
 

@@ -8,5 +8,5 @@ import { Vault } from "./Vault.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVault is Vault {
-
+    constructor(address _mintRedeemOnlyAsset) Vault(_mintRedeemOnlyAsset) {}
 }

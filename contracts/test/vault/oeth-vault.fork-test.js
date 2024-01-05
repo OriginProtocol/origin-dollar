@@ -61,23 +61,22 @@ describe("ForkTest: OETH Vault", function () {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
 
-    it.only("should mint & redeem using WETH", async () => {
-      const { oethVault, weth, josh } =
-        fixture;
+    it("should mint & redeem using WETH", async () => {
+      const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("100", 18);
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
       const tx = await oethVault
-        .connect(josh)["mint(uint256)"](amount);
+        .connect(josh)
+        .mint(weth.address, amount, amount);
 
       await expect(tx)
         .to.emit(oethVault, "Mint")
         .withArgs(josh.address, amount);
 
-      const tx1 = await oethVault
-        .connect(josh)["redeem(uint256)"](amount);
+      const tx1 = await oethVault.connect(josh).redeem(amount, amount);
 
       await expect(tx1)
         .to.emit(oethVault, "Redeem")
