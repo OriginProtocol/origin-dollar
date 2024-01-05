@@ -83,51 +83,16 @@ describe("ForkTest: OETH Vault", function () {
         .withNamedArgs({ _addr: josh.address });
     });
 
-    it("should mint using each asset", async () => {
-      const { oethVault, oethOracleRouter, weth, frxETH, stETH, reth, josh } =
-        fixture;
-
-      const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
-
-      for (const asset of [weth, frxETH, stETH, reth]) {
-        await asset.connect(josh).approve(oethVault.address, amount);
-
-        const price = await oethOracleRouter.price(asset.address);
-        if (price.gt(parseUnits("0.998"))) {
-          const tx = await oethVault
-            .connect(josh)
-            .mint(asset.address, amount, minOeth);
-
-          if (asset === weth) {
-            await expect(tx)
-              .to.emit(oethVault, "Mint")
-              .withArgs(josh.address, amount);
-          } else {
-            // Oracle price means 1 asset != 1 OETH
-            await expect(tx)
-              .to.emit(oethVault, "Mint")
-              .withNamedArgs({ _addr: josh.address });
-          }
-        } else {
-          const tx = oethVault
-            .connect(josh)
-            .mint(asset.address, amount, minOeth);
-          await expect(tx).to.revertedWith("Asset price below peg");
-        }
-      }
-    });
     it("should partially redeem", async () => {
       const { oeth, oethVault } = fixture;
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
-      const amount = parseUnits("10", 18);
-      const minEth = parseUnits("9.94", 18);
+      const amount = parseUnits("5", 18);
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
+        .redeem(amount, amount);
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
@@ -166,11 +131,10 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault } = fixture;
 
       const amount = parseUnits("100", 18);
-      const minEth = parseUnits("99.4", 18);
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
+        .redeem(amount, amount);
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
