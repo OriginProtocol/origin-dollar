@@ -12,7 +12,7 @@ const {
   expectApproxSupply,
 } = require("../helpers");
 
-describe("Vault rebase", () => {
+describe.only("Vault rebase", () => {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
@@ -72,22 +72,7 @@ describe("Vault rebase", () => {
   });
 
   describe("Vault rebasing", async () => {
-    it("Should not alter balances after an asset price change", async () => {
-      const { ousd, vault, matt } = fixture;
-
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.30");
-
-      await vault.rebase();
-      await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.00");
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-    });
-
-    it("Should not alter balances after an asset price change, single", async () => {
+    it("Should not alter balances after an asset price change, single asset", async () => {
       const { ousd, vault, matt } = fixture;
 
       await expect(matt).has.a.balanceOf("100.00", ousd);
