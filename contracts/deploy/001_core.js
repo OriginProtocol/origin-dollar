@@ -787,12 +787,24 @@ const deployCore = async () => {
 
   // Main contracts
   const dOUSD = await deployWithConfirmation("OUSD");
-  const dVault = await deployWithConfirmation("Vault");
-  const dVaultCore = await deployWithConfirmation("VaultCore");
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+  const dVault = await deployWithConfirmation("Vault", [addresses.zero]);
+  const dVaultCore = await deployWithConfirmation("VaultCore", [
+    addresses.zero,
+  ]);
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin", [
+    addresses.zero,
+  ]);
 
   const dOETH = await deployWithConfirmation("OETH");
-  const dOETHVault = await deployWithConfirmation("OETHVault");
+  const dOETHVault = await deployWithConfirmation("OETHVault", [
+    addresses.mainnet.WETH,
+  ]);
+  const dOETHVaultCore = await deployWithConfirmation("VaultCore", [
+    addresses.mainnet.WETH,
+  ]);
+  const dOETHVaultAdmin = await deployWithConfirmation("VaultAdmin", [
+    addresses.mainnet.WETH,
+  ]);
 
   await deployWithConfirmation("Governor", [governorAddr, 60]);
 
@@ -868,7 +880,7 @@ const deployCore = async () => {
     cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
   );
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
   );
   log("Upgraded VaultCore implementation");
 
@@ -876,7 +888,7 @@ const deployCore = async () => {
     cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   await withConfirmation(
-    cOETHVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cOETHVault.connect(sGovernor).setAdminImpl(dOETHVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
 

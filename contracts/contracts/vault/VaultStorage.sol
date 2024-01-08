@@ -98,9 +98,13 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 public redeemFeeBps;
     /// @notice Percentage of assets to keep in Vault to handle (most) withdrawals. 100% = 1e18.
     uint256 public vaultBuffer;
-    /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.
+    /** @notice OToken accumulated mints over this amount (since the last allocation)
+     * automatically allocate funds. 18 decimals.
+     */
     uint256 public autoAllocateThreshold;
-    /// @notice OToken mints over this amount automatically rebase. 18 decimals.
+    /** @notice OToken accumulated mints over this amount (since the last rebase)
+     *  automatically rebase. 18 decimals.
+     */
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
@@ -147,6 +151,20 @@ abstract contract VaultStorage is Initializable, Governable {
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
+
+    /** @notice How many OTokens have been minted and redeemed since the last allocation
+     *
+     * @dev until we can prove that redeems can subtract from this counter and only mints add
+     * to it both functions (mint & redeem) will add to the counter.
+     */
+    uint256 public allocationCounter;
+
+    /** @notice How many OTokens have been minted and redeemed since the last rebase
+     *
+     * @dev until we can prove that redeems can subtract from this counter and only mints add
+     * to it both functions (mint & redeem) will add to the counter.
+     */
+    uint256 public rebaseCounter;
 
     /// @notice If this property is set Vault is only able to mint & redeem using this asset
     address public immutable mintRedeemOnlyAsset;

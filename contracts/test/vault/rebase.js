@@ -1,6 +1,10 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  loadDefaultFixture,
+  oethDefaultFixture,
+  createFixtureLoader,
+} = require("../_fixture");
 const {
   ousdUnits,
   daiUnits,
@@ -11,8 +15,86 @@ const {
   setOracleTokenPriceUsd,
   expectApproxSupply,
 } = require("../helpers");
+const { parseUnits } = require("ethers/lib/utils");
+const loadOethFixture = createFixtureLoader(oethDefaultFixture);
 
-describe.only("Vault rebase", () => {
+describe("OETH Vault rebase", () => {
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadOethFixture();
+
+    // need to mint a tiny amount so OETH supply is not 0
+    const tinyAmount = parseUnits("0.000001", 18);
+    const { matt, weth, oethVault } = fixture;
+
+    await weth.connect(matt).approve(oethVault.address, tinyAmount);
+    const tx = await oethVault.connect(matt).mint(weth.address, tinyAmount, 0);
+    await oethVault.connect(matt).rebase();
+  });
+
+  it("Should rebase when rebase threshold counter reached", async function () {
+    const { anna, weth, governor, oethVault } = fixture;
+
+    const rebaseAmount = parseUnits("1", 18);
+    const amount = parseUnits("0.99", 18);
+
+    // rebase to reset counter
+    await oethVault.connect(anna).rebase();
+
+    // set rebase to 1ETH
+    await oethVault.connect(governor).setRebaseThreshold(rebaseAmount);
+
+    await weth.connect(anna).approve(oethVault.address, parseUnits("3", 18));
+
+    // send some funds to the vault so it distributes yield on a rebase call
+    await weth.connect(anna).transfer(oethVault.address, amount);
+
+    // should not trigger rebase as counter is at 0.9ETH
+    const tx = await oethVault.connect(anna).mint(weth.address, amount, amount);
+
+    // should trigger the rebase as counter passed 1 ETH
+    const tx1 = await oethVault
+      .connect(anna)
+      .mint(weth.address, amount, amount);
+
+    await expect(tx).to.not.emit(oethVault, "YieldDistribution");
+    await expect(tx1).to.emit(oethVault, "YieldDistribution");
+
+    // send some funds to the vault so it distributes yield on a rebase call
+    await weth.connect(anna).transfer(oethVault.address, amount);
+
+    // counter should be at 0 so another mint should not trigger a rebase
+    const tx2 = await oethVault
+      .connect(anna)
+      .mint(weth.address, amount, amount);
+    await expect(tx2).to.not.emit(oethVault, "YieldDistribution");
+  });
+
+  it("Should rebase when rebase threshold counter reached in 1 transaction", async function () {
+    const { anna, weth, governor, oethVault } = fixture;
+
+    const rebaseAmount = parseUnits("1", 18);
+    const amount = parseUnits("1.1", 18);
+
+    // rebase to reset counter
+    await oethVault.connect(anna).rebase();
+
+    // set rebase to 1ETH
+    await oethVault.connect(governor).setRebaseThreshold(rebaseAmount);
+
+    await weth.connect(anna).approve(oethVault.address, amount);
+
+    // send some funds to the vault so it distributes yield
+    await weth.connect(anna).transfer(oethVault.address, amount);
+
+    // should not trigger rebase as counter is at 0.9ETH
+    const tx = await oethVault.connect(anna).mint(weth.address, amount, amount);
+
+    await expect(tx).to.emit(oethVault, "YieldDistribution");
+  });
+});
+
+describe("Vault rebase", () => {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();

@@ -94,9 +94,12 @@ contract VaultCore is VaultInitializer {
         }
 
         emit Mint(msg.sender, priceAdjustedDeposit);
+        // store value to the stack for gas optimizations
+        uint256 _rebaseCounter = rebaseCounter + priceAdjustedDeposit;
+        rebaseCounter = _rebaseCounter;
 
         // Rebase must happen before any transfers occur.
-        if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
+        if (_rebaseCounter >= rebaseThreshold && !rebasePaused) {
             _rebase();
         }
 
@@ -107,7 +110,11 @@ contract VaultCore is VaultInitializer {
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        if (priceAdjustedDeposit >= autoAllocateThreshold) {
+        // store value to the stack for gas optimizations
+        uint256 _allocationCounter = allocationCounter + priceAdjustedDeposit;
+        allocationCounter = _allocationCounter;
+
+        if (_allocationCounter >= autoAllocateThreshold) {
             _allocate();
         }
     }
@@ -207,6 +214,10 @@ contract VaultCore is VaultInitializer {
             );
         }
 
+        uint256 _rebaseCounter = rebaseCounter + _amount;
+        rebaseCounter = _rebaseCounter;
+        allocationCounter += _amount;
+
         oUSD.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
@@ -214,7 +225,7 @@ contract VaultCore is VaultInitializer {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         uint256 totalUnits = 0;
-        if (_amount >= rebaseThreshold && !rebasePaused) {
+        if (_rebaseCounter >= rebaseThreshold && !rebasePaused) {
             totalUnits = _rebase();
         } else {
             totalUnits = _totalValue();
@@ -292,6 +303,9 @@ contract VaultCore is VaultInitializer {
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
+        // Reset allocation counter
+        allocationCounter = 0;
+
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
         uint256 calculatedTotalValue = vaultValue + strategiesValue;
@@ -391,6 +405,8 @@ contract VaultCore is VaultInitializer {
         if (vaultValue > ousdSupply) {
             oUSD.changeSupply(vaultValue);
         }
+        // reset rebase counter
+        rebaseCounter = 0;
         return vaultValue;
     }
 
