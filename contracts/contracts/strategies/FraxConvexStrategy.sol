@@ -200,7 +200,11 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
         uint256 targetLockedBalanceMem = targetLockedBalance;
 
         // Do not extend lock time or add funds if already over the target locked balance
-        if (lockedBalance > targetLockedBalanceMem) {
+        // or no locked tokens and target balance is zero
+        if (
+            lockedBalance > targetLockedBalanceMem ||
+            targetLockedBalanceMem == 0
+        ) {
             return;
         }
 
