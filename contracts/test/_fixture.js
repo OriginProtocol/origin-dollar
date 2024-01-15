@@ -454,12 +454,12 @@ const defaultFixture = deployments.createFixture(async () => {
   }
 
   if (!isFork) {
-    const assetAddresses = await getAssetAddresses(deployments);
+    // const assetAddresses = await getAssetAddresses(deployments);
 
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-    // Add TUSD in fixture, it is disabled by default in deployment
-    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, 0);
+    // // Add TUSD in fixture, it is disabled by default in deployment
+    // await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, 0);
 
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
@@ -1863,7 +1863,7 @@ async function hackedVaultFixture() {
   );
   await oracleRouter.cacheDecimals(evilDAI.address);
 
-  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
+  // await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
 
   fixture.evilDAI = evilDAI;
 

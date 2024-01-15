@@ -24,6 +24,7 @@ const {
   bytecode: QUOTER_BYTECODE,
 } = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
 const { withConfirmation } = require("../utils/deploy");
+const { isMainnetOrFork } = require("../test/helpers");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;

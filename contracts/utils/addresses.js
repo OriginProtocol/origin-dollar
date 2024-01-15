@@ -1,7 +1,3 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
- */
-
 const addresses = {};
 
 // Utility addresses

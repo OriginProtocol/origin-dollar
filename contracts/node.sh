@@ -8,13 +8,7 @@ NO_COLOR='\033[0m'
 
 
 main()
-{   
-    NETWORK_FILE="../dapp/network.json"
-
-    if [[ $APP_ID == "oeth-dapp" ]]; then
-      NETWORK_FILE="../dapp-oeth/network.json";
-    fi
-
+{ 
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
@@ -71,7 +65,7 @@ main()
 
 
     else
-        npx --no-install hardhat node --export ${NETWORK_FILE}
+        npx --no-install hardhat node
     fi
 }
 

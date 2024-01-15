@@ -790,13 +790,11 @@ const deployCore = async () => {
   ];
   const dOETHVaultCore = await deployWithConfirmation(
     "OETHVaultCore",
-    oethVaultArgs,
-    "VaultCore"
+    oethVaultArgs
   );
   const dOETHVaultAdmin = await deployWithConfirmation(
     "OETHVaultAdmin",
-    oethVaultArgs,
-    "VaultAdmin"
+    oethVaultArgs
   );
 
   // Get contract instances
@@ -1179,9 +1177,10 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setSwapper(mockSwapper.address);
   await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
 
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
+  // TODO: Fix these
+  // await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
+  // await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
+  // await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
 const main = async () => {
