@@ -47,6 +47,9 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
+    /// @dev The virtual price of the Curve LP token normalized to 1e18
+    uint256 internal constant CURVE_VIRTUAL_PRICE_SCALE = 1e18;
+
     /// @notice The number of seconds to lock Frax Staked Convex LP tokens for.
     /// 7 days is the minimum to get token rewards.
     uint256 public constant LOCK_DURATION = 7 days + 1;
@@ -424,7 +427,8 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
             // get_virtual_price is gas intensive, so only call it if we have LP tokens.
             // Convert the Curve LP tokens controlled by this strategy to a value in USD or ETH
             uint256 value = (curveLpTokens *
-                ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
+                ICurvePool(CURVE_POOL).get_virtual_price()) /
+                CURVE_VIRTUAL_PRICE_SCALE;
 
             // Divide by the number of assets in the Curve pool. eg 2 for the frxETH/WETH pool.
             // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
