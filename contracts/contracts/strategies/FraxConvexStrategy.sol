@@ -75,8 +75,16 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     uint128 public targetLockedBalance;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
-    event Lock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
-    event Unlock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
+    event Lock(
+        bytes32 indexed lockKey,
+        uint256 amount,
+        uint256 unlockTimestamp
+    );
+    event Unlock(
+        bytes32 indexed lockKey,
+        uint256 amount,
+        uint256 unlockTimestamp
+    );
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -399,12 +407,9 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(
+        address _asset
+    ) public view override returns (uint256 balance) {
         require(_curveSupportedCoin(_asset), "Unsupported asset");
 
         // Curve LP tokens in this contract. This should generally be nothing as we
@@ -467,10 +472,9 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * @notice Strategist sets the target locked Frax Staked Convex balance.
      * @param _targetLockedBalance the target Frax Staked Convex balance
      */
-    function setTargetLockedBalance(uint128 _targetLockedBalance)
-        external
-        onlyStrategist
-    {
+    function setTargetLockedBalance(
+        uint128 _targetLockedBalance
+    ) external onlyStrategist {
         targetLockedBalance = _targetLockedBalance;
         emit TargetLockedBalanceUpdated(_targetLockedBalance);
     }
