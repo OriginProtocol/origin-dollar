@@ -404,7 +404,7 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        public
+        external
         view
         override
         returns (uint256 balance)
