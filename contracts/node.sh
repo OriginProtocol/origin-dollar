@@ -61,7 +61,6 @@ main()
         printf "\n"
         echo "🟢 Node initialized"
 
-        FORK=true npm run copy-interface-artifacts
         FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         
         # wait for subprocesses to finish
