@@ -7,6 +7,9 @@ from world import *
 COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 
 def scale_amount(from_token, to_token, amount, decimals=0):
+    if from_token == to_token:
+        return amount
+
     decimalsMap = {
         WETH: 18,
         RETH: 18,
