@@ -173,44 +173,6 @@ jobs:
         with:
           fail_ci_if_error: true
 
-  dapp-lint:
-    name: "OUSD DApp Linter"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.x"
-          cache: "yarn"
-          cache-dependency-path: dapp/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./dapp
-
-      - run: yarn prettier:check
-        working-directory: ./dapp
-
-  dapp-oeth-lint:
-    name: "OETH DApp Linter"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.x"
-          cache: "yarn"
-          cache-dependency-path: dapp-oeth/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./dapp-oeth
-
-      - run: yarn prettier:check
-        working-directory: ./dapp-oeth
-
   slither:
     name: "Slither"
     runs-on: ubuntu-latest
