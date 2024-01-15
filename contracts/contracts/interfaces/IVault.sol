@@ -198,4 +198,10 @@ interface IVault {
     function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
 
     function netOusdMintedForStrategy() external view returns (int256);
+
+    function cacheSupportedAssets() external;
+
+    function initialize(address _oToken) external;
+
+    function setAdminImpl(address adminImpl) external;
 }

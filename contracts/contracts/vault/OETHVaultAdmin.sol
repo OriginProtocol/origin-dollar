@@ -8,5 +8,9 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVaultAdmin is VaultAdmin {
-
+    constructor(
+        address[] memory baseAssets,
+        uint8[] memory assetsUnitConversion,
+        address _priceProvider
+    ) VaultAdmin(baseAssets, assetsUnitConversion, _priceProvider) {}
 }

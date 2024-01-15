@@ -28,6 +28,12 @@ contract VaultCore is VaultInitializer {
     uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
+    constructor(
+        address[] memory baseAssets,
+        uint8[] memory assetsUnitConversion,
+        address _priceProvider
+    ) VaultInitializer(baseAssets, assetsUnitConversion, _priceProvider) {}
+
     /**
      * @dev Verifies that the rebasing is not paused.
      */
@@ -63,11 +69,13 @@ contract VaultCore is VaultInitializer {
         uint256 _amount,
         uint256 _minimumOusdAmount
     ) external whenNotCapitalPaused nonReentrant {
-        require(assets[_asset].isSupported, "Asset is not supported");
+        Asset memory assetConfig = assets[_asset];
+
+        require(assetConfig.isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 units = _toUnits(_amount, _asset);
-        uint256 unitPrice = _toUnitPrice(_asset, true);
+        uint256 units = _toUnits(_amount, _asset, assetConfig);
+        uint256 unitPrice = _toUnitPrice(_asset, true, assetConfig);
         uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
         if (_minimumOusdAmount > 0) {
@@ -79,9 +87,18 @@ contract VaultCore is VaultInitializer {
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
-        // Rebase must happen before any transfers occur.
-        if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            _rebase();
+        address[] memory allAssets;
+        Asset[] memory assetConfigs;
+        bool shouldRebase = priceAdjustedDeposit >= rebaseThreshold &&
+            !rebasePaused;
+        bool shouldAllocate = priceAdjustedDeposit >= autoAllocateThreshold;
+
+        if (shouldRebase) {
+            allAssets = getAllAssets();
+            assetConfigs = getAllAssetsConfig();
+
+            // Rebase must happen before any transfers occur.
+            _rebase(allAssets, assetConfigs);
         }
 
         // Mint matching amount of OTokens
@@ -91,8 +108,14 @@ contract VaultCore is VaultInitializer {
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        if (priceAdjustedDeposit >= autoAllocateThreshold) {
-            _allocate();
+        if (shouldAllocate) {
+            if (!shouldRebase) {
+                // If rebase happened, this is already fetched
+                allAssets = getAllAssets();
+                assetConfigs = getAllAssetsConfig();
+            }
+
+            _allocate(allAssets, assetConfigs);
         }
     }
 
@@ -151,14 +174,20 @@ contract VaultCore is VaultInitializer {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = getAllAssetsConfig();
+
         // Calculate redemption outputs
-        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
+        uint256[] memory outputs = _calculateRedeemOutputs(
+            _amount,
+            allAssets,
+            assetConfigs
+        );
 
         emit Redeem(msg.sender, _amount);
 
         // Send outputs
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < assetsCount; ++i) {
             if (outputs[i] == 0) continue;
 
             address assetAddr = allAssets[i];
@@ -182,7 +211,11 @@ contract VaultCore is VaultInitializer {
         if (_minimumUnitAmount > 0) {
             uint256 unitTotal = 0;
             for (uint256 i = 0; i < outputs.length; ++i) {
-                unitTotal += _toUnits(outputs[i], allAssets[i]);
+                unitTotal += _toUnits(
+                    outputs[i],
+                    allAssets[i],
+                    assetConfigs[i]
+                );
             }
             require(
                 unitTotal >= _minimumUnitAmount,
@@ -198,9 +231,9 @@ contract VaultCore is VaultInitializer {
         // a reward token sold for more or for less than anticipated.
         uint256 totalUnits = 0;
         if (_amount >= rebaseThreshold && !rebasePaused) {
-            totalUnits = _rebase();
+            totalUnits = _rebase(allAssets, assetConfigs);
         } else {
-            totalUnits = _totalValue();
+            totalUnits = _totalValue(allAssets, assetConfigs);
         }
 
         // Check that the OTokens are backed by enough assets
@@ -265,17 +298,25 @@ contract VaultCore is VaultInitializer {
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external whenNotCapitalPaused nonReentrant {
-        _allocate();
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = getAllAssetsConfig();
+
+        _allocate(allAssets, assetConfigs);
     }
 
     /**
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function _allocate() internal {
-        uint256 vaultValue = _totalValueInVault();
+    function _allocate(address[] memory allAssets, Asset[] memory assetConfigs)
+        internal
+    {
+        uint256 vaultValue = _totalValueInVault(allAssets, assetConfigs);
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
-        uint256 strategiesValue = _totalValueInStrategies();
+        uint256 strategiesValue = _totalValueInStrategies(
+            allAssets,
+            assetConfigs
+        );
         // We have a method that does the same as this, gas optimisation
         uint256 calculatedTotalValue = vaultValue + strategiesValue;
 
@@ -304,8 +345,7 @@ contract VaultCore is VaultInitializer {
 
         // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < assetsCount; ++i) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
             // No balance, nothing to do here
@@ -341,7 +381,10 @@ contract VaultCore is VaultInitializer {
      *      strategies and update the supply of OTokens.
      */
     function rebase() external virtual nonReentrant {
-        _rebase();
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = getAllAssetsConfig();
+
+        _rebase(allAssets, assetConfigs);
     }
 
     /**
@@ -350,9 +393,13 @@ contract VaultCore is VaultInitializer {
      *      portion of the yield to the trustee.
      * @return totalUnits Total balance of Vault in units
      */
-    function _rebase() internal whenNotRebasePaused returns (uint256) {
+    function _rebase(address[] memory allAssets, Asset[] memory assetConfigs)
+        internal
+        whenNotRebasePaused
+        returns (uint256)
+    {
         uint256 ousdSupply = oUSD.totalSupply();
-        uint256 vaultValue = _totalValue();
+        uint256 vaultValue = _totalValue(allAssets, assetConfigs);
         if (ousdSupply == 0) {
             return vaultValue;
         }
@@ -383,7 +430,10 @@ contract VaultCore is VaultInitializer {
      * @return value Total value in USD/ETH (1e18)
      */
     function totalValue() external view virtual returns (uint256 value) {
-        value = _totalValue();
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = getAllAssetsConfig();
+
+        value = _totalValue(allAssets, assetConfigs);
     }
 
     /**
@@ -391,21 +441,28 @@ contract VaultCore is VaultInitializer {
      *         vault and its strategies.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValue() internal view virtual returns (uint256 value) {
-        return _totalValueInVault() + _totalValueInStrategies();
+    function _totalValue(
+        address[] memory allAssets,
+        Asset[] memory assetConfigs
+    ) internal view virtual returns (uint256 value) {
+        return
+            _totalValueInVault(allAssets, assetConfigs) +
+            _totalValueInStrategies(allAssets, assetConfigs);
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValueInVault() internal view returns (uint256 value) {
-        uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+    function _totalValueInVault(
+        address[] memory allAssets,
+        Asset[] memory assetConfigs
+    ) internal view returns (uint256 value) {
+        for (uint256 y = 0; y < assetsCount; ++y) {
             address assetAddr = allAssets[y];
             uint256 balance = IERC20(assetAddr).balanceOf(address(this));
             if (balance > 0) {
-                value += _toUnits(balance, assetAddr);
+                value += _toUnits(balance, assetAddr, assetConfigs[y]);
             }
         }
     }
@@ -414,10 +471,19 @@ contract VaultCore is VaultInitializer {
      * @dev Internal to calculate total value of all assets held in Strategies.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValueInStrategies() internal view returns (uint256 value) {
+    function _totalValueInStrategies(
+        address[] memory allAssets,
+        Asset[] memory assetConfigs
+    ) internal view returns (uint256 value) {
         uint256 stratCount = allStrategies.length;
         for (uint256 i = 0; i < stratCount; ++i) {
-            value = value + _totalValueInStrategy(allStrategies[i]);
+            value =
+                value +
+                _totalValueInStrategy(
+                    allStrategies[i],
+                    allAssets,
+                    assetConfigs
+                );
         }
     }
 
@@ -426,19 +492,19 @@ contract VaultCore is VaultInitializer {
      * @param _strategyAddr Address of the strategy
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValueInStrategy(address _strategyAddr)
-        internal
-        view
-        returns (uint256 value)
-    {
+    function _totalValueInStrategy(
+        address _strategyAddr,
+        address[] memory allAssets,
+        Asset[] memory assetConfigs
+    ) internal view returns (uint256 value) {
         IStrategy strategy = IStrategy(_strategyAddr);
-        uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+
+        for (uint256 y = 0; y < assetsCount; ++y) {
             address assetAddr = allAssets[y];
-            if (strategy.supportsAsset(assetAddr)) {
+            if (strategySuportedAssets[address(strategy)][assetAddr]) {
                 uint256 balance = strategy.checkBalance(assetAddr);
                 if (balance > 0) {
-                    value += _toUnits(balance, assetAddr);
+                    value += _toUnits(balance, assetAddr, assetConfigs[y]);
                 }
             }
         }
@@ -467,9 +533,10 @@ contract VaultCore is VaultInitializer {
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
         uint256 stratCount = allStrategies.length;
+
         for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            if (strategy.supportsAsset(_asset)) {
+            if (strategySuportedAssets[address(strategy)][_asset]) {
                 balance = balance + strategy.checkBalance(_asset);
             }
         }
@@ -484,7 +551,10 @@ contract VaultCore is VaultInitializer {
         view
         returns (uint256[] memory)
     {
-        return _calculateRedeemOutputs(_amount);
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = getAllAssetsConfig();
+
+        return _calculateRedeemOutputs(_amount, allAssets, assetConfigs);
     }
 
     /**
@@ -492,11 +562,11 @@ contract VaultCore is VaultInitializer {
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
      */
-    function _calculateRedeemOutputs(uint256 _amount)
-        internal
-        view
-        returns (uint256[] memory outputs)
-    {
+    function _calculateRedeemOutputs(
+        uint256 _amount,
+        address[] memory allAssets,
+        Asset[] memory assetConfigs
+    ) internal view returns (uint256[] memory outputs) {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
         // just take the percentage of each coin, and multiply by the
@@ -526,10 +596,9 @@ contract VaultCore is VaultInitializer {
         //
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
-        uint256 assetCount = allAssets.length;
-        uint256[] memory assetUnits = new uint256[](assetCount);
-        uint256[] memory assetBalances = new uint256[](assetCount);
-        outputs = new uint256[](assetCount);
+        uint256[] memory assetUnits = new uint256[](assetsCount);
+        uint256[] memory assetBalances = new uint256[](assetsCount);
+        outputs = new uint256[](assetsCount);
 
         // Calculate redeem fee
         if (redeemFeeBps > 0) {
@@ -540,23 +609,27 @@ contract VaultCore is VaultInitializer {
         // Calculate assets balances and decimals once,
         // for a large gas savings.
         uint256 totalUnits = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < assetsCount; ++i) {
             address assetAddr = allAssets[i];
             uint256 balance = _checkBalance(assetAddr);
             assetBalances[i] = balance;
-            assetUnits[i] = _toUnits(balance, assetAddr);
+            assetUnits[i] = _toUnits(balance, assetAddr, assetConfigs[i]);
             totalUnits = totalUnits + assetUnits[i];
         }
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            uint256 unitPrice = _toUnitPrice(allAssets[i], false);
+        for (uint256 i = 0; i < assetsCount; ++i) {
+            uint256 unitPrice = _toUnitPrice(
+                allAssets[i],
+                false,
+                assetConfigs[i]
+            );
             uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
             totalOutputRatio = totalOutputRatio + ratio;
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i = 0; i < assetsCount; ++i) {
             outputs[i] = (assetBalances[i] * factor) / totalUnits;
         }
     }
@@ -576,15 +649,18 @@ contract VaultCore is VaultInitializer {
         view
         returns (uint256 price)
     {
+        Asset memory assetConfig = assets[asset];
+
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
          */
         uint256 units = _toUnits(
-            uint256(1e18).scaleBy(_getDecimals(asset), 18),
-            asset
+            uint256(1e18).scaleBy(assetConfig.decimals, 18),
+            asset,
+            assetConfig
         );
-        price = (_toUnitPrice(asset, true) * units) / 1e18;
+        price = (_toUnitPrice(asset, true, assetConfig) * units) / 1e18;
     }
 
     /**
@@ -598,15 +674,18 @@ contract VaultCore is VaultInitializer {
         view
         returns (uint256 price)
     {
+        Asset memory assetConfig = assets[asset];
+
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
          */
         uint256 units = _toUnits(
-            uint256(1e18).scaleBy(_getDecimals(asset), 18),
-            asset
+            uint256(1e18).scaleBy(assetConfig.decimals, 18),
+            asset,
+            assetConfig
         );
-        price = (_toUnitPrice(asset, false) * units) / 1e18;
+        price = (_toUnitPrice(asset, false, assetConfig) * units) / 1e18;
     }
 
     /***************************************
@@ -624,22 +703,24 @@ contract VaultCore is VaultInitializer {
      * - 1e6 USDC becomes 1e18 units (decimal conversion)
      * - 1e18 rETH becomes 1.2e18 units (exchange rate conversion)
      *
-     * @param _raw Quantity of asset
-     * @param _asset Core Asset address
+     * @param raw Quantity of asset
+     * @param asset Core Asset address
+     * @param assetConfig `Asset` config object
      * @return value 1e18 normalized quantity of units
      */
-    function _toUnits(uint256 _raw, address _asset)
-        internal
-        view
-        returns (uint256)
-    {
-        UnitConversion conversion = assets[_asset].unitConversion;
-        if (conversion == UnitConversion.DECIMALS) {
-            return _raw.scaleBy(18, _getDecimals(_asset));
-        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
-            uint256 exchangeRate = IGetExchangeRateToken(_asset)
+    function _toUnits(
+        uint256 raw,
+        address asset,
+        Asset memory assetConfig
+    ) internal view returns (uint256) {
+        if (assetConfig.unitConversion == UnitConversion.DECIMALS) {
+            return raw.scaleBy(18, assetConfig.decimals);
+        } else if (
+            assetConfig.unitConversion == UnitConversion.GETEXCHANGERATE
+        ) {
+            uint256 exchangeRate = IGetExchangeRateToken(asset)
                 .getExchangeRate();
-            return (_raw * exchangeRate) / 1e18;
+            return (raw * exchangeRate) / 1e18;
         } else {
             revert("Unsupported conversion type");
         }
@@ -659,19 +740,18 @@ contract VaultCore is VaultInitializer {
      * action would be unfavourable to the protocol.
      *
      */
-    function _toUnitPrice(address _asset, bool isMint)
-        internal
-        view
-        returns (uint256 price)
-    {
-        UnitConversion conversion = assets[_asset].unitConversion;
+    function _toUnitPrice(
+        address _asset,
+        bool isMint,
+        Asset memory assetConfig
+    ) internal view returns (uint256 price) {
         price = IOracle(priceProvider).price(_asset);
 
-        if (conversion == UnitConversion.GETEXCHANGERATE) {
+        if (assetConfig.unitConversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
             price = (price * 1e18) / exchangeRate;
-        } else if (conversion != UnitConversion.DECIMALS) {
+        } else if (assetConfig.unitConversion != UnitConversion.DECIMALS) {
             revert("Unsupported conversion type");
         }
 
@@ -700,20 +780,11 @@ contract VaultCore is VaultInitializer {
         }
     }
 
-    function _getDecimals(address _asset)
-        internal
-        view
-        returns (uint256 decimals)
-    {
-        decimals = assets[_asset].decimals;
-        require(decimals > 0, "Decimals not cached");
-    }
-
     /**
      * @notice Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
-        return allAssets.length;
+        return assetsCount;
     }
 
     /**
@@ -728,10 +799,16 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Return all vault asset addresses in order
+     * @notice Gets the vault configuration of all supported assets.
      */
-    function getAllAssets() external view returns (address[] memory) {
-        return allAssets;
+    function getAllAssetsConfig() public view returns (Asset[] memory config) {
+        address[] memory allAssets = getAllAssets();
+        Asset[] memory assetConfigs = new Asset[](assetsCount);
+        for (uint256 i = 0; i < assetsCount; ++i) {
+            assetConfigs[i] = assets[allAssets[i]];
+        }
+
+        return assetConfigs;
     }
 
     /**
@@ -800,4 +877,10 @@ contract VaultCore is VaultInitializer {
         require(x < int256(MAX_INT), "Amount too high");
         return x >= 0 ? uint256(x) : uint256(-x);
     }
+
+    /**
+     * Adding this to get rid of a warning. Since this is just the
+     * implementation, it shouldn't matter if this exists either way
+     */
+    receive() external payable {}
 }

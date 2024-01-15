@@ -8,5 +8,9 @@ import { VaultCore } from "./VaultCore.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVaultCore is VaultCore {
-
+    constructor(
+        address[] memory baseAssets,
+        uint8[] memory assetsUnitConversion,
+        address _priceProvider
+    ) VaultCore(baseAssets, assetsUnitConversion, _priceProvider) {}
 }

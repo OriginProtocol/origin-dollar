@@ -114,6 +114,7 @@ async function hotDeployOption(
   const { isOethFixture } = config;
   const deployStrat = hotDeployOptions.includes("strategy");
   const deployVaultCore = hotDeployOptions.includes("vaultCore");
+  const deployOToken = hotDeployOptions.includes("otoken");
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
   const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
@@ -149,6 +150,10 @@ async function hotDeployOption(
     }
   }
 
+  if (deployOToken) {
+    await hotDeployOToken(fixture, isOethFixture);
+  }
+
   if (deployVaultCore || deployVaultAdmin) {
     await hotDeployVaultAdmin(
       fixture,
@@ -165,19 +170,58 @@ async function hotDeployOption(
   }
 }
 
+async function hotDeployOToken(fixture, isOETH) {
+  const { deploy } = deployments;
+  const tokenName = isOETH ? "OETH" : "OUSD";
+  const proxyName = `${tokenName}Proxy`;
+  const vaultProxyName = `${isOETH ? "OETH" : ""}VaultProxy`;
+
+  const cVaultProxy = await ethers.getContract(vaultProxyName);
+  const cToken = await ethers.getContract(proxyName);
+
+  await deploy(tokenName, {
+    from: addresses.mainnet.Timelock,
+    args: [cVaultProxy.address],
+  });
+  const implementation = await ethers.getContract(tokenName);
+
+  const implAddr = await cToken.implementation();
+
+  await replaceContractAt(implAddr, implementation);
+
+  log(`Hot Deployed ${tokenName} contract`);
+
+  const newContract = await ethers.getContractAt(tokenName, cToken.address);
+  if (isOETH) {
+    fixture.oeth = newContract;
+  } else {
+    fixture.ousd = newContract;
+  }
+}
+
 async function hotDeployVaultAdmin(
   fixture,
   deployVaultAdmin,
   deployVaultCore,
-  isOeth
+  forOETH
 ) {
   const { deploy } = deployments;
-  const vaultProxyName = `${isOeth ? "OETH" : ""}VaultProxy`;
-  const vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
-  const vaultAdminName = `${isOeth ? "OETH" : ""}VaultAdmin`;
-  const vaultVariableName = `${isOeth ? "oethVault" : "vault"}`;
+  const vaultProxyName = `${forOETH ? "OETH" : ""}VaultProxy`;
+  const vaultCoreName = `${forOETH ? "OETH" : ""}VaultCore`;
+  const vaultAdminName = `${forOETH ? "OETH" : ""}VaultAdmin`;
+  const vaultVariableName = `${forOETH ? "oethVault" : "vault"}`;
+  const routerName = `${forOETH ? "OETH" : ""}OracleRouter`;
 
   const cVaultProxy = await ethers.getContract(vaultProxyName);
+  const cRouter = await ethers.getContract(routerName);
+
+  const { weth, reth, stETH, frxETH, dai, usdt, usdc } = fixture;
+
+  const supportedAssets = forOETH
+    ? [weth.address, reth.address, stETH.address, frxETH.address]
+    : [dai.address, usdt.address, usdc.address];
+
+  const unitConversions = forOETH ? [0, 1, 0, 0] : [0, 0, 0];
 
   if (deployVaultAdmin) {
     log(`Deploying new ${vaultAdminName} implementation`);
@@ -186,6 +230,7 @@ async function hotDeployVaultAdmin(
     await deploy(vaultAdminName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
       contract: vaultAdminName,
+      args: [supportedAssets, unitConversions, cRouter.address],
     });
 
     const implementation = await ethers.getContract(vaultAdminName);
@@ -197,10 +242,14 @@ async function hotDeployVaultAdmin(
     const signerTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
     await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
 
-    fixture[vaultVariableName] = await ethers.getContractAt(
+    const updatedVault = await ethers.getContractAt(
       "IVault",
       cVaultProxy.address
     );
+
+    await updatedVault.connect(signerTimelock).cacheSupportedAssets();
+
+    fixture[vaultVariableName] = updatedVault;
   }
   if (deployVaultCore) {
     log(`Deploying new ${vaultCoreName} implementation`);
@@ -208,6 +257,7 @@ async function hotDeployVaultAdmin(
     await deploy(vaultCoreName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
       contract: vaultCoreName,
+      args: [supportedAssets, unitConversions, cRouter.address],
     });
     const implementation = await ethers.getContract(vaultCoreName);
 

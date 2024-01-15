@@ -20,6 +20,12 @@ contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    constructor(
+        address[] memory baseAssets,
+        uint8[] memory assetsUnitConversion,
+        address _priceProvider
+    ) VaultStorage(baseAssets, assetsUnitConversion, _priceProvider) {}
+
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
      */
@@ -34,15 +40,6 @@ contract VaultAdmin is VaultStorage {
     /***************************************
                  Configuration
     ****************************************/
-
-    /**
-     * @notice Set address of price provider.
-     * @param _priceProvider Address of price provider
-     */
-    function setPriceProvider(address _priceProvider) external onlyGovernor {
-        priceProvider = _priceProvider;
-        emit PriceProviderUpdated(_priceProvider);
-    }
 
     /**
      * @notice Set a fee in basis points to be charged for a redeem.
@@ -116,10 +113,9 @@ contract VaultAdmin is VaultStorage {
         if (_strategy != address(0)) {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
-            IStrategy strategy = IStrategy(_strategy);
             require(assets[_asset].isSupported, "Asset is not supported");
             require(
-                strategy.supportsAsset(_asset),
+                strategySuportedAssets[_strategy][_asset],
                 "Asset not supported by Strategy"
             );
         }
@@ -312,47 +308,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /***************************************
-                Asset Config
-    ****************************************/
-
-    /**
-     * @notice Add a supported asset to the contract, i.e. one that can be
-     *         to mint OTokens.
-     * @param _asset Address of asset
-     */
-    function supportAsset(address _asset, uint8 _unitConversion)
-        external
-        onlyGovernor
-    {
-        require(!assets[_asset].isSupported, "Asset already supported");
-
-        assets[_asset] = Asset({
-            isSupported: true,
-            unitConversion: UnitConversion(_unitConversion),
-            decimals: 0, // will be overridden in _cacheDecimals
-            allowedOracleSlippageBps: 0 // 0% by default
-        });
-
-        _cacheDecimals(_asset);
-        allAssets.push(_asset);
-
-        // Verify that our oracle supports the asset
-        // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_asset);
-
-        emit AssetSupported(_asset);
-    }
-
-    /**
-     * @notice Cache decimals on OracleRouter for a particular asset. This action
-     *      is required before that asset's price can be accessed.
-     * @param _asset Address of asset token
-     */
-    function cacheDecimals(address _asset) external onlyGovernor {
-        _cacheDecimals(_asset);
-    }
-
-    /***************************************
                 Strategy Config
     ****************************************/
 
@@ -364,6 +319,10 @@ contract VaultAdmin is VaultStorage {
         require(!strategies[_addr].isSupported, "Strategy already approved");
         strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
+
+        address[] memory allAssets = getAllAssets();
+        _cacheStrategy(_addr, allAssets);
+
         emit StrategyApproved(_addr);
     }
 
@@ -375,8 +334,8 @@ contract VaultAdmin is VaultStorage {
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
 
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        address[] memory allAssets = getAllAssets();
+        for (uint256 i = 0; i < assetsCount; ++i) {
             require(
                 assetDefaultStrategies[allAssets[i]] != _addr,
                 "Strategy is default for an asset"
@@ -442,7 +401,7 @@ contract VaultAdmin is VaultStorage {
         for (uint256 i = 0; i < assetCount; ++i) {
             address assetAddr = _assets[i];
             require(
-                IStrategy(_strategyToAddress).supportsAsset(assetAddr),
+                strategySuportedAssets[_strategyToAddress][assetAddr],
                 "Asset unsupported"
             );
             // Send required amount of funds to the strategy
@@ -622,17 +581,25 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
-    /***************************************
-                    Utils
-    ****************************************/
+    // /***************************************
+    //                 Utils
+    // ****************************************/
 
-    function _cacheDecimals(address token) internal {
-        Asset storage tokenAsset = assets[token];
-        if (tokenAsset.decimals != 0) {
-            return;
+    function cacheSupportedAssets() external onlyGovernorOrStrategist {
+        uint256 stratCount = allStrategies.length;
+        address[] memory allAssets = getAllAssets();
+        for (uint256 i = 0; i < stratCount; ++i) {
+            _cacheStrategy(allStrategies[i], allAssets);
         }
-        uint8 decimals = IBasicToken(token).decimals();
-        require(decimals >= 6 && decimals <= 18, "Unexpected precision");
-        tokenAsset.decimals = decimals;
+    }
+
+    function _cacheStrategy(address _strategy, address[] memory assets)
+        internal
+    {
+        IStrategy strategy = IStrategy(_strategy);
+        for (uint256 j = 0; j < assetsCount; ++j) {
+            strategySuportedAssets[_strategy][assets[j]] = strategy
+                .supportsAsset(assets[j]);
+        }
     }
 }

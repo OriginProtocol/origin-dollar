@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../token/OUSD.sol";
 
 contract OUSDEchidna is OUSD {
-    constructor() OUSD() {}
+    constructor(address _vaultAddress) OUSD(_vaultAddress) {}
 
     function _isNonRebasingAccountEchidna(address _account)
         public

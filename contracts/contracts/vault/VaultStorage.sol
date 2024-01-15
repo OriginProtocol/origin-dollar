@@ -11,11 +11,13 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
+
+import { IOracle } from "../interfaces/IOracle.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
@@ -72,7 +74,7 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
-    address[] internal allAssets;
+    address[] internal __deprecated_allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
@@ -86,7 +88,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Address of the Oracle price provider contract
     // slither-disable-next-line uninitialized-state
-    address public priceProvider;
+    address public __deprecated_priceProvider;
     /// @notice pause rebasing if true
     bool public rebasePaused = false;
     /// @notice pause operations that change the OToken supply.
@@ -159,6 +161,88 @@ contract VaultStorage is Initializable, Governable {
         uint16 allowedUndervalueBps;
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    mapping(address => mapping(address => bool)) strategySuportedAssets;
+
+    address public immutable baseAsset0;
+    address public immutable baseAsset1;
+    address public immutable baseAsset2;
+    address public immutable baseAsset3;
+    uint256 public immutable assetsCount;
+
+    address public immutable priceProvider;
+
+    constructor(
+        address[] memory baseAssets,
+        uint8[] memory assetsUnitConversion,
+        address _priceProvider
+    ) {
+        // `_setGovernor` isn't intentionally called to avoid
+        // delpoyer owning the implementation
+
+        uint256 baseAssetsCount = baseAssets.length;
+        require(
+            baseAssetsCount == assetsUnitConversion.length,
+            "Length mismatch"
+        );
+        require(baseAssetsCount > 1, "Invalid number of base assets");
+
+        for (uint256 i = 0; i < baseAssetsCount; ++i) {
+            require(baseAssets[i] != address(0), "Invalid asset config");
+            require(
+                !assets[baseAssets[i]].isSupported,
+                "Duplicate asset found"
+            );
+
+            // Verify that our oracle supports the asset
+            // slither-disable-next-line unused-return
+            IOracle(_priceProvider).price(baseAssets[i]);
+
+            uint8 decimals = IBasicToken(baseAssets[i]).decimals();
+            require(decimals >= 6 && decimals <= 18, "Unexpected precision");
+
+            assets[baseAssets[i]] = Asset({
+                isSupported: true,
+                unitConversion: UnitConversion(assetsUnitConversion[i]),
+                decimals: decimals,
+                allowedOracleSlippageBps: 0 // 0% by default
+            });
+        }
+
+        baseAsset0 = baseAssets[0];
+        baseAsset1 = baseAssets[1];
+        baseAsset2 = baseAssetsCount > 2 ? baseAssets[2] : address(0);
+        baseAsset3 = baseAssetsCount > 3 ? baseAssets[3] : address(0);
+
+        assetsCount = baseAssetsCount;
+
+        require(_priceProvider != address(0), "PriceProvider address is zero");
+        priceProvider = _priceProvider;
+    }
+
+    /**
+     * @notice Return all vault asset addresses in order
+     */
+    function getAllAssets() public view returns (address[] memory) {
+        address[] memory _assets = new address[](assetsCount);
+
+        // TODO: Check if there's a more cleaner way to do this
+        _assets[0] = baseAsset0;
+        if (assetsCount == 3) {
+            // OUSD has 3 and OETH has 4, so by starting with 3,
+            // we do at most 2 checks.
+            _assets[1] = baseAsset1;
+            _assets[2] = baseAsset2;
+        } else if (assetsCount == 4) {
+            _assets[1] = baseAsset1;
+            _assets[2] = baseAsset2;
+            _assets[3] = baseAsset3;
+        } else {
+            _assets[1] = baseAsset1;
+        }
+
+        return _assets;
+    }
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

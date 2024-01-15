@@ -42,7 +42,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
-    address public vaultAddress = address(0);
+    address private __deprecated_vaultAddress = address(0);
     mapping(address => uint256) private _creditBalances;
     uint256 private _rebasingCredits;
     uint256 private _rebasingCreditsPerToken;
@@ -54,16 +54,19 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     mapping(address => uint256) public isUpgraded;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
+    address public immutable vaultAddress;
+
+    constructor(address _vaultAddress) {
+        vaultAddress = _vaultAddress;
+    }
 
     function initialize(
         string calldata _nameArg,
         string calldata _symbolArg,
-        address _vaultAddress,
         uint256 _initialCreditsPerToken
     ) external onlyGovernor initializer {
         InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
         _rebasingCreditsPerToken = _initialCreditsPerToken;
-        vaultAddress = _vaultAddress;
     }
 
     /**
@@ -443,12 +446,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _creditsPerToken(address _account)
         internal
         view
-        returns (uint256)
+        returns (uint256 creditsPerToken)
     {
-        if (nonRebasingCreditsPerToken[_account] != 0) {
-            return nonRebasingCreditsPerToken[_account];
-        } else {
-            return _rebasingCreditsPerToken;
+        creditsPerToken = nonRebasingCreditsPerToken[_account];
+        if (creditsPerToken == 0) {
+            creditsPerToken = _rebasingCreditsPerToken;
         }
     }
 
@@ -457,38 +459,49 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *      Also, ensure contracts are non-rebasing if they have not opted in.
      * @param _account Address of the account.
      */
-    function _isNonRebasingAccount(address _account) internal returns (bool) {
+    function _isNonRebasingAccount(address _account)
+        internal
+        returns (bool isNonRebasingAccount)
+    {
         bool isContract = Address.isContract(_account);
-        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
-            _ensureRebasingMigration(_account);
+        isNonRebasingAccount = nonRebasingCreditsPerToken[_account] > 0;
+
+        if (
+            isContract &&
+            !isNonRebasingAccount &&
+            rebaseState[_account] == RebaseOptions.NotSet
+        ) {
+            isNonRebasingAccount = _ensureRebasingMigration(_account) > 0;
         }
-        return nonRebasingCreditsPerToken[_account] > 0;
     }
 
     /**
      * @dev Ensures internal account for rebasing and non-rebasing credits and
      *      supply is updated following deployment of frozen yield change.
      */
-    function _ensureRebasingMigration(address _account) internal {
-        if (nonRebasingCreditsPerToken[_account] == 0) {
-            emit AccountRebasingDisabled(_account);
-            if (_creditBalances[_account] == 0) {
-                // Since there is no existing balance, we can directly set to
-                // high resolution, and do not have to do any other bookkeeping
-                nonRebasingCreditsPerToken[_account] = 1e27;
-            } else {
-                // Migrate an existing account:
+    function _ensureRebasingMigration(address _account)
+        internal
+        returns (uint256 nonRebasingCredits)
+    {
+        // NOTE: This function expects that `nonRebasingCreditsPerToken[_account] == 0`
+        // constraint is checked before being called
+        emit AccountRebasingDisabled(_account);
+        if (_creditBalances[_account] == 0) {
+            // Since there is no existing balance, we can directly set to
+            // high resolution, and do not have to do any other bookkeeping
+            nonRebasingCredits = 1e27;
+        } else {
+            // Migrate an existing account:
 
-                // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-                // Update non rebasing supply
-                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-                // Update credit tallies
-                _rebasingCredits = _rebasingCredits.sub(
-                    _creditBalances[_account]
-                );
-            }
+            // Set fixed credits per token for this account
+            nonRebasingCredits = _rebasingCreditsPerToken;
+            // Update non rebasing supply
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+            // Update credit tallies
+            _rebasingCredits = _rebasingCredits.sub(_creditBalances[_account]);
         }
+
+        nonRebasingCreditsPerToken[_account] = nonRebasingCredits;
     }
 
     /**

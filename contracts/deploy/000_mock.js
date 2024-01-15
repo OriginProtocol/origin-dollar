@@ -1,5 +1,4 @@
 const { parseUnits } = require("ethers").utils;
-const { isMainnetOrFork } = require("../test/helpers");
 const addresses = require("../utils/addresses");
 const { threeCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
@@ -24,10 +23,12 @@ const {
   abi: QUOTER_ABI,
   bytecode: QUOTER_BYTECODE,
 } = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
+const { withConfirmation } = require("../utils/deploy");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   console.log("Running 000_mock deployment...");
   console.log("Deployer address", deployerAddr);
@@ -115,14 +116,20 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
-  // Deploy a mock Vault with additional functions for tests
-  await deploy("MockVault", {
-    from: governorAddr,
-  });
-
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
+  const reth = await ethers.getContract("MockRETH");
+  const stETH = await ethers.getContract("MockstETH");
+  const frxETH = await ethers.getContract("MockfrxETH");
+  const sfrxETH = await ethers.getContract("MocksfrxETH");
+
+  // Deploy MockOracleRouter
+  await deploy("OracleRouter", {
+    from: deployerAddr,
+    contract: "MockOracleRouter",
+  });
+  const mockOracleRouter = await ethers.getContract("OracleRouter");
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
@@ -233,16 +240,50 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 18).toString(), 18], // 1 WETH = 1 ETH , 18 digits decimal.
   });
-  await deploy("MockChainlinkOracleFeedfrxETHETH", {
-    from: deployerAddr,
-    contract: "MockChainlinkOracleFeed",
-    args: [parseUnits("1", 18).toString(), 18], // 1 frxETH = 1 ETH , 18 digits decimal.
-  });
   await deploy("MockChainlinkOracleFeedBALETH", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("0.002", 18).toString(), 18], // 500 BAL = 1 ETH , 18 digits decimal.
   });
+
+  const oracleFeeds = [
+    [dai.address, "MockChainlinkOracleFeedDAI"],
+    [usdc.address, "MockChainlinkOracleFeedUSDC"],
+    [usdt.address, "MockChainlinkOracleFeedUSDT"],
+    [frxETH.address, "MockChainlinkOracleFeedfrxETHETH"],
+    [stETH.address, "MockChainlinkOracleFeedstETHETH"],
+    [reth.address, "MockChainlinkOracleFeedRETHETH"],
+  ];
+
+  for (const [asset, oracleName] of oracleFeeds) {
+    const oracle = await ethers.getContract(oracleName);
+    await withConfirmation(
+      mockOracleRouter
+        .connect(sDeployer)
+        .setFeed(asset, oracle.address, 24 * 60 * 60 * 365 * 100)
+    );
+  }
+
+  // Deploy a mock Vault with additional functions for tests
+  await deploy("MockVault", {
+    from: governorAddr,
+    args: [
+      [dai.address, usdc.address, usdt.address],
+      [0, 0, 0],
+      mockOracleRouter.address,
+    ],
+  });
+
+  // // Deploy a mock Vault with additional functions for tests
+  // await deploy("MockOETHVault", {
+  //   from: governorAddr,
+  //   contract: "MockVault",
+  //   args: [
+  //     [weth.address, stETH.address, frxETH.address, reth.address],
+  //     [0, 0, 0, 1],
+  //     mockOracleRouter.address
+  //   ]
+  // });
 
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
@@ -386,8 +427,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
-  const frxETH = await ethers.getContract("MockfrxETH");
-  const sfrxETH = await ethers.getContract("MocksfrxETH");
   await deploy("MockFrxETHMinter", {
     from: deployerAddr,
     args: [frxETH.address, sfrxETH.address],

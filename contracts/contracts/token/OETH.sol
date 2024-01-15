@@ -8,5 +8,5 @@ import { OUSD } from "./OUSD.sol";
  * @author Origin Protocol Inc
  */
 contract OETH is OUSD {
-
+    constructor(address _vaultAddress) OUSD(_vaultAddress) {}
 }

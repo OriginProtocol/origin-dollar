@@ -13,13 +13,13 @@ contract Dummy {}
  */
 contract EchidnaSetup is EchidnaConfig {
     IHevm hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-    OUSDEchidna ousd = new OUSDEchidna();
+    OUSDEchidna ousd = new OUSDEchidna(ADDRESS_VAULT);
 
     /**
      * @notice Deploy the OUSD contract and set up initial state
      */
     constructor() {
-        ousd.initialize("Origin Dollar", "OUSD", ADDRESS_VAULT, 1e18);
+        ousd.initialize("Origin Dollar", "OUSD", 1e18);
 
         // Deploy dummny contracts as users
         Dummy outsider = new Dummy();
