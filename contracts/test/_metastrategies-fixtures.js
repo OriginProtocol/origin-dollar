@@ -145,7 +145,9 @@ async function _balanceMetaPool(fixture, metapool) {
 async function withCRV3TitledOUSDMetapool() {
   const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
-  await tiltTo3CRV_OUSDMetapool(fixture);
+  fixture.metapool = fixture.ousdMetaPool;
+
+  await tiltTo3CRV_Metapool_automatic(fixture);
 
   return fixture;
 }

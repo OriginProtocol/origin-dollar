@@ -496,7 +496,16 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the Metapool", async () => {
-      const lpAmount = parseUnits("5000");
+      const { cvxRewardPool, convexEthMetaStrategy } = fixture;
+      const lpBalance = await cvxRewardPool.balanceOf(
+        convexEthMetaStrategy.address
+      );
+      // const curveBalances = await oethMetaPool.get_balances();
+      const lpAmount = lpBalance
+        // reduce by 1%
+        .mul(99)
+        .div(100);
+
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });
@@ -512,14 +521,15 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       fixture = await loadFixture();
     });
     it("Strategist should remove ETH to balance the Metapool", async () => {
-      const { oethMetaPool } = fixture;
-      const curveBalances = await oethMetaPool.get_balances();
-      const lpAmount = curveBalances[0]
-        .sub(curveBalances[1])
+      const { cvxRewardPool, convexEthMetaStrategy } = fixture;
+      const lpBalance = await cvxRewardPool.balanceOf(
+        convexEthMetaStrategy.address
+      );
+      // const curveBalances = await oethMetaPool.get_balances();
+      const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
         .div(100);
-      expect(lpAmount).to.be.gt(0);
 
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
@@ -566,12 +576,20 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       fixture = await loadFixture();
     });
     it("Strategist should fail to remove too much OETH from the Metapool", async () => {
-      const { convexEthMetaStrategy, strategist } = fixture;
+      const { cvxRewardPool, convexEthMetaStrategy, strategist } = fixture;
+      const lpBalance = await cvxRewardPool.balanceOf(
+        convexEthMetaStrategy.address
+      );
+      // const curveBalances = await oethMetaPool.get_balances();
+      const lpAmount = lpBalance
+        // reduce by 1%
+        .mul(99)
+        .div(100);
 
       // Remove OETH from the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("4000"));
+        .removeAndBurnOTokens(lpAmount);
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });

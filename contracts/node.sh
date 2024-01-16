@@ -8,13 +8,7 @@ NO_COLOR='\033[0m'
 
 
 main()
-{   
-    NETWORK_FILE="../dapp/network.json"
-
-    if [[ $APP_ID == "oeth-dapp" ]]; then
-      NETWORK_FILE="../dapp-oeth/network.json";
-    fi
-
+{
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
@@ -43,7 +37,7 @@ main()
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
-        FORK=true npx --no-install hardhat node --no-reset --export ${NETWORK_FILE} ${params[@]} > $nodeOutput 2>&1 &
+        FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
 
         tail -f $nodeOutput &
 
@@ -71,7 +65,7 @@ main()
 
 
     else
-        npx --no-install hardhat node --export ${NETWORK_FILE}
+        npx --no-install hardhat node
     fi
 }
 
