@@ -58,7 +58,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function 
       ).mul(3);
 
       // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-      await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+      expect(strategyBalance).to.be.gte(ousdUnits("40000"));
 
       // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
       const currentSupply = await ousd.totalSupply();

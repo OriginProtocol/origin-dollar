@@ -39,8 +39,9 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
   );
 
   // Also, mint some OUSD so that there's some in the pool
-  const amount = "20000";
+  const amount = "500000";
   for (const asset of [usdt, usdc, dai]) {
+    await setERC20TokenBalance(daniel.address, asset, amount);
     await vault
       .connect(daniel)
       .mint(asset.address, await units(amount, asset), 0);
@@ -145,7 +146,9 @@ async function _balanceMetaPool(fixture, metapool) {
 async function withCRV3TitledOUSDMetapool() {
   const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
-  await tiltTo3CRV_OUSDMetapool(fixture);
+  fixture.metapool = fixture.ousdMetaPool;
+
+  await tiltTo3CRV_Metapool_automatic(fixture);
 
   return fixture;
 }
@@ -237,6 +240,7 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
 async function withOUSDTitledMetapool() {
   const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
+  fixture.metapool = fixture.ousdMetaPool;
   await tiltToOUSD_OUSDMetapool(fixture);
 
   return fixture;
