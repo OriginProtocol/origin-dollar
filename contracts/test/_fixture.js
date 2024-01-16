@@ -614,6 +614,10 @@ async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
 
+  await hotDeployOption(fixture, "oethDefaultFixture", {
+    isOethFixture: true,
+  });
+
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
   const { matt, josh, domen, daniel, franck, oethVault } = fixture;
 

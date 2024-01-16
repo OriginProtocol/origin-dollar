@@ -8,5 +8,7 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVaultAdmin is VaultAdmin {
-
+    constructor(address _mintRedeemOnlyAsset)
+        VaultAdmin(_mintRedeemOnlyAsset)
+    {}
 }
