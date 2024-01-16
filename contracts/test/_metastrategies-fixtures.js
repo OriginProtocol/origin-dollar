@@ -187,6 +187,35 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
   }
 }
 
+/* Tilt towards OUSD by checking liquidity
+ */
+async function tiltToOUSD_Metapool_automatic(fixture) {
+  const { metapool, threePoolToken } = fixture;
+
+  const metapoolSigner = await impersonateAndFund(metapool.address);
+  await resetAllowance(threePoolToken, metapoolSigner, metapool.address);
+
+  // 90% of main coin pool liquidity
+  const shareOfThreePoolCoinBalance = (
+    await threePoolToken.balanceOf(metapool.address)
+  )
+    .mul(ousdUnits("0.9"))
+    .div(ousdUnits("1"));
+
+  let acc = ethers.BigNumber.from("0");
+  /* self deploy 90% of threepool coin liquidity until pool has at least five times
+   * the 3crvLP liquidity comparing to main coin.
+   */
+  while (acc.lt((await metapool.balances(0)).mul(5))) {
+    // Tilt to main token
+    await metapool.connect(metapoolSigner)[
+      // eslint-disable-next-line
+      "add_liquidity(uint256[2],uint256)"
+    ]([shareOfThreePoolCoinBalance, 0], 0);
+    acc = acc.add(shareOfThreePoolCoinBalance);
+  }
+}
+
 /* Just triple the main token liquidity in a flaky manner where the pool
  * re-deploys its own liquidity
  */
@@ -239,7 +268,8 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
 async function withOUSDTitledMetapool() {
   const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
-  await tiltToOUSD_OUSDMetapool(fixture);
+  fixture.metapool = fixture.ousdMetaPool;
+  await tiltToOUSD_Metapool_automatic(fixture);
 
   return fixture;
 }

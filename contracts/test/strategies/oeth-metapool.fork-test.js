@@ -438,7 +438,17 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OETH from the Metapool", async () => {
-      await assertRemoveAndBurn(parseUnits("3500"), fixture);
+      const { cvxRewardPool, convexEthMetaStrategy } = fixture;
+      const lpBalance = await cvxRewardPool.balanceOf(
+        convexEthMetaStrategy.address
+      );
+
+      const lpAmount = lpBalance
+        // reduce by 1%
+        .mul(99)
+        .div(100);
+
+      await assertRemoveAndBurn(lpAmount, fixture);
     });
     it("Strategist should fail to add even more OETH to the Metapool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
@@ -500,7 +510,6 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const lpBalance = await cvxRewardPool.balanceOf(
         convexEthMetaStrategy.address
       );
-      // const curveBalances = await oethMetaPool.get_balances();
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
@@ -512,8 +521,8 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
   describe("with a little more ETH in the Metapool", () => {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
-      wethMintAmount: 5000,
-      depositToStrategy: false,
+      wethMintAmount: 20000,
+      depositToStrategy: true,
       poolAddEthAmount: 8000,
       balancePool: true,
     });
@@ -525,7 +534,6 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const lpBalance = await cvxRewardPool.balanceOf(
         convexEthMetaStrategy.address
       );
-      // const curveBalances = await oethMetaPool.get_balances();
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
@@ -549,7 +557,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // Remove ETH from the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeOnlyAssets(parseUnits("10000"));
+        .removeOnlyAssets(parseUnits("8000"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -567,8 +575,8 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
   describe("with a little more OETH in the Metapool", () => {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
-      wethMintAmount: 5000,
-      depositToStrategy: false,
+      wethMintAmount: 20000,
+      depositToStrategy: true,
       poolAddOethAmount: 500,
       balancePool: true,
     });
@@ -580,7 +588,6 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const lpBalance = await cvxRewardPool.balanceOf(
         convexEthMetaStrategy.address
       );
-      // const curveBalances = await oethMetaPool.get_balances();
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
