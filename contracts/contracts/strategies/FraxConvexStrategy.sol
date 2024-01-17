@@ -75,8 +75,16 @@ contract FraxConvexStrategy is CurveTwoCoinFunctions, BaseCurveStrategy {
     uint128 public targetLockedBalance;
 
     event TargetLockedBalanceUpdated(uint256 _targetLockedBalance);
-    event Lock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
-    event Unlock(bytes32 lockKey, uint256 amount, uint256 unlockTimestamp);
+    event Lock(
+        bytes32 indexed lockKey,
+        uint256 amount,
+        uint256 unlockTimestamp
+    );
+    event Unlock(
+        bytes32 indexed lockKey,
+        uint256 amount,
+        uint256 unlockTimestamp
+    );
 
     /**
      * @dev Verifies that the caller is the Strategist.
