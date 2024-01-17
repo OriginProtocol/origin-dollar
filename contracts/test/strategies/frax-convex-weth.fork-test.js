@@ -1240,6 +1240,17 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       await mint(frxETH, "4000", josh, oethVault);
       await mint(weth, "5000", josh, oethVault);
     });
+    it("Should check balance for gas reporting", async () => {
+      const { fraxConvexWethStrategy, josh, frxETH, weth } = fixture;
+
+      for (const asset of [weth, frxETH]) {
+        const tx = await fraxConvexWethStrategy
+          .connect(josh)
+          .populateTransaction.checkBalance(asset.address);
+        const response = await josh.sendTransaction(tx);
+        await response.wait();
+      }
+    });
     it("Should not check balance of unsupported assets", async () => {
       const { fraxConvexWethStrategy, oeth, stETH, reth, dai, usdc } = fixture;
 
