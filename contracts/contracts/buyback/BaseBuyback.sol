@@ -242,14 +242,4 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     {
         IERC20(token).safeTransfer(_governor(), amount);
     }
-
-    /**
-     * @notice Returns the Swap path to use on Uniswap from oToken to `toToken`
-     * @param toToken Target token
-     */
-    function _getSwapPath(address toToken)
-        internal
-        view
-        virtual
-        returns (bytes memory);
 }
