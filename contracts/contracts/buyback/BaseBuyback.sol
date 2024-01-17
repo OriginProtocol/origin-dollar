@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IUniswapUniversalRouter } from "../interfaces/uniswap/IUniswapUniversalRouter.sol";
 import { ICVXLocker } from "../interfaces/ICVXLocker.sol";
+import { ISwapper } from "../interfaces/ISwapper.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 
@@ -144,7 +145,9 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     function swap(
         uint256 oTokenAmount,
         uint256 minOGV,
-        uint256 minCVX
+        uint256 minCVX,
+        bytes calldata ogvData,
+        bytes calldata cvxData
     ) external onlyGovernorOrStrategist nonReentrant {
         require(oTokenAmount > 0, "Invalid Swap Amount");
         require(universalRouter != address(0), "Uniswap Router not set");
@@ -152,58 +155,44 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         require(minOGV > 0, "Invalid minAmount for OGV");
         require(minCVX > 0, "Invalid minAmount for CVX");
 
-        uint256 ogvBalanceBefore = IERC20(ogv).balanceOf(rewardsSource);
-        uint256 cvxBalanceBefore = IERC20(cvx).balanceOf(address(this));
-
         uint256 amountInForOGV = oTokenAmount / 2;
         uint256 amountInForCVX = oTokenAmount - amountInForOGV;
-
-        // Build swap input
-        bytes[] memory inputs = new bytes[](2);
-
-        inputs[0] = abi.encode(
-            // Send swapped OGV directly to RewardsSource contract
-            rewardsSource,
-            amountInForOGV,
-            minOGV,
-            _getSwapPath(ogv),
-            false
-        );
-
-        inputs[1] = abi.encode(
-            // Buyback contract receives the CVX to lock it on
-            // behalf of Strategist after the swap
-            address(this),
-            amountInForCVX,
-            minCVX,
-            _getSwapPath(cvx),
-            false
-        );
 
         // Transfer OToken to UniversalRouter for swapping
         // slither-disable-next-line unchecked-transfer unused-return
         IERC20(oToken).transfer(universalRouter, oTokenAmount);
 
-        // Execute the swap
-        IUniswapUniversalRouter(universalRouter).execute(
-            swapCommand,
-            inputs,
-            block.timestamp
+        uint256 ogvReceived = ISwapper(universalRouter).swap(
+            oToken,
+            ogv,
+            amountInForOGV,
+            minOGV,
+            ogvData
         );
-
-        // Uniswap's Universal Router doesn't return the `amountOut` values/
-        // So, the events just calculate the tokens received by doing a balance diff
         emit OTokenBuyback(
             oToken,
             ogv,
             amountInForOGV,
-            IERC20(ogv).balanceOf(rewardsSource) - ogvBalanceBefore
+            ogvReceived
+        );
+
+        // Transfer OGV received to RewardsSource contract
+        // slither-disable-next-line unchecked-transfer unused-return
+        IERC20(ogv).transfer(rewardsSource, ogvReceived);
+
+
+        uint256 cvxReceived = ISwapper(universalRouter).swap(
+            oToken,
+            cvx,
+            amountInForCVX,
+            minCVX,
+            cvxData
         );
         emit OTokenBuyback(
             oToken,
             cvx,
             amountInForCVX,
-            IERC20(cvx).balanceOf(address(this)) - cvxBalanceBefore
+            cvxReceived
         );
 
         // Lock all CVX
