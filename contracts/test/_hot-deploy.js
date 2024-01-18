@@ -79,6 +79,24 @@ async function constructNewContract(fixture, implContractName) {
           addresses.mainnet.WETH,
         ],
       ];
+    } else if (implContractName === "FraxConvexStrategy") {
+      return [
+        [
+          addresses.mainnet.CurveFrxEthWethPool,
+          addresses.mainnet.OETHVaultProxy,
+        ],
+        [
+          2, //assets in the Curve pool
+          addresses.mainnet.CurveFrxEthWethPool, // Curve pool
+          addresses.mainnet.CurveFrxEthWethPool, // Curve LP token
+        ],
+        [
+          // stkcvxfrxeth-ng-f-frax
+          addresses.mainnet.FraxStakedConvexWeth,
+          // locked stkcvxfrxeth-ng-f-frax
+          addresses.mainnet.LockedFraxStakedConvexWeth,
+        ],
+      ];
     }
   };
 
@@ -145,6 +163,12 @@ async function hotDeployOption(
         fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName
         "ConvexEthMetaStrategy" // implContractName
+      );
+    } else if (fixtureName === "fraxConvexWethFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "fraxConvexWethStrategy", // fixtureStrategyVarName
+        "FraxConvexStrategy" // implContractName
       );
     }
   }

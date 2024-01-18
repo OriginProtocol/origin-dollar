@@ -28,8 +28,10 @@ participant "Balancer\nVault" as balVault <<Balancer>>
 participant "rETH\nMetaStable\nPool" as balMetaPool <<Balancer>>
 participant "rETH\nRewards\nPool" as auraRewards <<Aura>>
 
-participant "Convex\nfrxETH/WTH\nStrategy" as cvxFrxStrat <<Origin>> #DeepSkyBlue
+participant "frxETH/WETH\nConvex\nStrategy" as cvxFrxStrat <<Origin>> #DeepSkyBlue
 participant "frxETH-WETH\nPool" as frxCrv <<Curve>>
+participant "frxETH-WETH\nStaked Convex" as frxCvStk <<Frax>>
+participant "frxETH-WETH\nLocked Stake" as frxCvStkLck <<Frax>>
 participant "frxETH-WETH\nPool" as frxCvx <<Convex>>
 participant "frxETH-WETH\nRewards" as cvxFrxRewards <<Convex>>
 
@@ -40,6 +42,7 @@ participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
 participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
 participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
+participant "FXS/ETH\nV3 Pool" as uniFxs <<Uniswap>>
 participant "Universal\nRouter" as uniRouter <<Uniswap>>
 participant "OETH/ETH\nV3 Pool" as uniOeth <<Uniswap>>
 participant "OGV/ETH\nV3 Pool" as uniOgv <<Uniswap>>
@@ -153,35 +156,6 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
-' Convex strategy for the Curve frxETH/WETH pool
-group Deposit WETH to Convex frxETH/WETH Strategy [unallocated WETH in vault]
-vault -> cvxFrxStrat : WETH
-note left : Vault transfers\nWETH to strategy
-cvxFrxStrat -> frxCrv : WETH
-note left : add liquidity to the Curve pool
-frxCrv o-> cvxFrxStrat : frxeth-ng-f
-note left: strategy gets Curve pool LP tokens
-
-cvxFrxStrat -> frxCvx : frxeth-ng-f
-note left : deposit Curve pool LP to Convex
-frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
-note left : stake Convex LP tokens
-end
-
-' Convex strategy for the Curve frxETH/WETH pool
-group Deposit frxETH to Convex frxETH/WETH Strategy [unallocated frxETH in vault]
-vault -> cvxFrxStrat : frxETH
-note left : Vault transfers\nfrxETH to strategy
-cvxFrxStrat -> frxCrv : frxETH
-note left : add liquidity to the Curve pool
-frxCrv o-> cvxFrxStrat : frxeth-ng-f
-note left: strategy gets Curve pool LP tokens
-
-cvxFrxStrat -> frxCvx : frxeth-ng-f
-note left : deposit Curve pool LP to Convex
-frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
-note left : stake Convex LP tokens
-
 ' Balancer MetaPool Strategy
 group Deposit rETH and WETH to Balancer MetaStable Strategy [unallocated rETH and WETH in vault]
 vault -> balMetaStrat : rETH and WETH
@@ -192,6 +166,26 @@ balMetaPool o-> balMetaStrat : B-rETH-STABLE
 balMetaStrat -> auraRewards : B-rETH-STABLE
 note left : deposit BPT to Aura
 auraRewards o-> balMetaStrat : auraB-rETH-STABLE-vault
+
+end
+
+' Frax Convex strategy for the Curve frxETH/WETH pool
+group Deposit WETH or frxETH to Frax Convex Strategy using Curve frxETH/WETH pool [unallocated WETH or frxETH in vault]
+vault -> cvxFrxStrat : WETH or frxETH
+note left : Vault transfers\nasset to strategy
+cvxFrxStrat -> frxCrv : WETH or frxETH
+note left : add liquidity to the Curve pool
+frxCrv o-> cvxFrxStrat : frxeth-ng-f
+note left: strategy gets Curve pool LP tokens
+
+cvxFrxStrat -> frxCvStk : frxeth-ng-f
+note left : deposit to Frax Convex Staking
+frxCvStk -> frxCvx : frxeth-ng-f
+note left : deposit to Convex pool
+frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
+note left : stake Convex LP tokens
+frxCvStk o-> cvxFrxStrat : stkcvxfrxeth-ng-f-frax
+note left : mint Staked Frax Convex LP tokens
 
 end
 
@@ -212,6 +206,22 @@ end
 
 end
 
+group Update lock on Frax Convex Strategy [target lock balance < staked balance]
+
+cvxFrxStrat -> frxCvStkLck : stkcvxfrxeth-ng-f-frax
+note left : lock Staked Frax Convex LP tokens\n for 7 days by anyone
+note right : no locked LP token minted
+end
+
+
+group Update lock on Frax Convex Strategy [target lock balance > expired locked tokens]
+
+frxCvStkLck -> cvxFrxStrat : CRV, CVX & FXS
+note left : collects rewards
+frxCvStkLck -> cvxFrxStrat : stkcvxfrxeth-ng-f-frax
+note left : withdraw locked\nStaked Frax Convex LP tokens
+note right : no locked LP token burned
+end
 
 ' Redeem
 group User redeem OETH
@@ -373,16 +383,59 @@ note left : transfer rewards to Harvester
 harv -> balVault : BAL
 note left : swap BAL for WETH\nmax 1,000 BAL
 balVault -> harv : WETH
-harv -> drip : WETH
+harv -> drip : 98% WETH
 note left : 98% of WETH to Dripper
-harv -> anyone : WETH
+harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 harv -> balVault : AURA
 note left : swap AURA for WETH\nmax 4,000 BAL
 balVault -> harv : WETH
-harv -> drip : WETH
+harv -> drip : 98% WETH
 note left : 98% of WETH to Dripper
-harv -> anyone : WETH
+harv -> anyone : 2% WETH
+note left : 2% of WETH\nto Harvest caller
+
+end
+
+' Harvest and Swap
+group Harvest and swap Frax Convex rewards [can be called by anyone]
+
+frxCvStk -> cvxFrxStrat : CRV, CVX
+note left : collects staked rewards
+frxCvStkLck -> cvxFrxStrat : CRV, CVX & FXS
+note left : collects locked rewards
+cvxFrxStrat -> harv : CVX, CRV & FXS
+note left : transfer rewards to Harvester
+
+harv -> cvxeth : CVX
+note left : exchange CVX for ETH\nmax 2,500 CVX
+cvxeth -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> cvxeth : WETH
+cvxeth -> harv : WETH
+harv -> drip : 98% WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : 2% WETH
+note left : 2% of WETH\nto Harvest caller
+
+harv -> triCrv : CRV
+note left : exchange CRV for WETH\nmax 4,000 CRV
+triCrv -> weth : ETH
+note left : withdraw ETH from Wrapped ETH
+weth o-> triCrv : WETH
+triCrv -> harv : WETH
+harv -> drip : 98% WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : 2% WETH
+note left : 2% of WETH\nto Harvest caller
+
+' FXS swap
+harv -> uniFxs : FXS
+note left : swap FXS for WETH\nmax 1,500 FXS
+uniFxs -> harv : WETH
+harv -> drip : 98% WETH
+note left : 98% of WETH to Dripper
+harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 
 end
@@ -422,7 +475,9 @@ uniRouter -> uniCvx : WETH
 note left : swap WETH for CVX\nusing CVX/WETH V3 pool
 uniCvx -> buyBack : CVX
 buyBack -> icvx : CVX
-note left : lock CVX for\nveCVX voting power
+note left : lock CVX for\ngauge voting power
+icvx o-> trust : vlCVX
+note over trust : Trustee delegates\nvoting power
 end
 
 end

@@ -1,6 +1,6 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 const { BigNumber } = require("ethers");
-const { isMainnet } = require("../test/helpers.js");
+const { isMainnet } = require("../test/helpers");
 
 module.exports = ({
   deployName,

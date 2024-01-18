@@ -14,7 +14,7 @@ const { impersonateAndFund } = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
-describe("ForkTest: Convex frxETH/WETH Strategy", function () {
+describe.skip("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);

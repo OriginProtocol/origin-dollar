@@ -5,6 +5,15 @@ import { ICurveMetaPool } from "./ICurveMetaPool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import { CurveFunctions } from "../BaseCurveStrategy.sol";
 
+/**
+ * @notice Implemention of the abstract Curve functions for a next generation Curve pool with:
+ * 1. two coins
+ * 2. remove_liquidity_imbalance that includes a receiver
+ * 3. calc_token_amount that includes fees
+ *
+ * Examples of Curve pools that fit this description are:
+ * - WETH/frxETH (frxeth-ng-f)
+ */
 contract CurveTwoCoinFunctions {
     using StableMath for uint256;
 

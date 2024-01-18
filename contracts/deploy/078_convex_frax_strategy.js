@@ -6,7 +6,8 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "078_convex_frax_strategy",
     forceDeploy: false,
-    // forceSkip: true,
+    // No longer being used. The locked Frax Staked Convex strategy is now being used instead.
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
     // proposalId: "",
@@ -33,7 +34,7 @@ module.exports = deploymentWithGovernanceProposal(
       "ConvexFrxEthWethStrategyProxy"
     );
 
-    // 2. Deploy linking to the library and set the immutable variables
+    // 2. Deploy strategy implementation
     const dConvexFrxEthWethStrategy = await deployWithConfirmation(
       "ConvexTwoPoolStrategy",
       [
@@ -86,19 +87,19 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Deploy new Convex frxETH/WETH Strategy.",
       actions: [
-        // 1. Approve the new Curve frxETH/WETH strategy in the OETH Vault
+        // 1. Approve the new strategy in the OETH Vault
         {
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [cConvexFrxEthWethStrategy.address],
         },
-        // 2. Add the new Curve frxETH/WETH strategy to the OETH Harvester
+        // 2. Add the new strategy to the OETH Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cConvexFrxEthWethStrategy.address, true],
         },
-        // 3. Set the harvester address on the new Curve frxETH/WETH strategy
+        // 3. Set the harvester address on the new strategy
         {
           contract: cConvexFrxEthWethStrategy,
           signature: "setHarvesterAddress(address)",

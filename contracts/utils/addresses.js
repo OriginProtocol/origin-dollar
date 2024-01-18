@@ -1,7 +1,3 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
- */
-
 const addresses = {};
 
 // Utility addresses
@@ -21,7 +17,7 @@ addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 addresses.mainnet.BinanceAll =
   "0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be,0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf";
 addresses.mainnet.WhaleAddresses =
-  "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
+  "0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf";
 addresses.mainnet.oethWhaleAddress =
   "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
@@ -59,6 +55,11 @@ addresses.mainnet.CVX = "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
+// Frax
+addresses.mainnet.FXS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
+addresses.mainnet.Frax = "0x853d955acef822db058eb8505911ed77f175b99e";
+addresses.mainnet.FraxCommunityBags =
+  "0x63278bF9AcdFC9fA65CFa2940b89A34ADfbCb4A1";
 
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
@@ -106,6 +107,9 @@ addresses.mainnet.chainlinkCVX_USD =
   "0xd962fC30A72A84cE50161031391756Bf2876Af5D";
 addresses.mainnet.chainlinkOGN_ETH =
   "0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b";
+addresses.mainnet.chainlinkFXS_USD =
+  "0x6ebc52c8c1089be9eb3945c4350b68b8e4c2233f";
+
 // DEPRECATED Chainlink
 addresses.mainnet.chainlinkDAI_ETH =
   "0x773616E4d11A78F511299002da57A0a94577F1f4";
@@ -168,6 +172,10 @@ addresses.mainnet.CurveFrxEthWethGauge =
   "0x4e21418095d32d15c6e2b96a9910772613a50d50";
 addresses.mainnet.ConvexFrxEthWethRewardsPool =
   "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
+addresses.mainnet.FraxStakedConvexWeth =
+  "0x08061feC3FC09Aa2Eb4B4B72EA618034CBFD22b0";
+addresses.mainnet.LockedFraxStakedConvexWeth =
+  "0xB4fdD7444E1d86b2035c97124C46b1528802DA35";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

@@ -8,6 +8,15 @@ import { StableMath } from "../../utils/StableMath.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { CurveFunctions } from "../BaseCurveStrategy.sol";
 
+/**
+ * @notice Implemention of the abstract Curve functions for a old Curve pool with:
+ * 1. three coins
+ * 2. remove_liquidity_imbalance that does NOT include receiver
+ * 3. calc_token_amount that does NOT include fees
+ *
+ * Examples of Curve pools that fit this description are:
+ * - 3Pool DAI/USDC/USDT (3Crv)
+ */
 contract CurveThreeCoinFunctions {
     using SafeERC20 for IERC20;
     using StableMath for uint256;

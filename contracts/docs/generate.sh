@@ -36,7 +36,7 @@ sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
 sol2uml storage .. -c Governor -o GovernorStorage.svg
 
 # contracts/oracles
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHOracleRouter -o OETHOracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHOracleRouter -o OETHOracleRouterSquashed.svg
 sol2uml storage .. -c OETHOracleRouter -o OETHOracleRouterStorage.svg
 
@@ -44,13 +44,13 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
 sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
 sol2uml .. -s -d 0 -b AuraWETHPriceFeed -o AuraWETHPriceFeedSquashed.svg
-sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg
+sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg --hideExpand __gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
-sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
-sol2uml storage .. -c MixOracle -o MixOracleStorage.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b PriceFeedPair -o PriceFeedPairHierarchy.svg
+sol2uml .. -s -d 0 -b PriceFeedPair -o PriceFeedPairSquashed.svg
+sol2uml storage .. -c PriceFeedPair -o PriceFeedPairStorage.svg
 
 # contracts/proxies
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSDProxy -o OUSDProxyHierarchy.svg
@@ -62,11 +62,13 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.s
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy -o ConvexStrategiesHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexThreePoolStrategy,ConvexTwoPoolStrategy,FraxConvexStrategy -o ConvexStrategiesHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexThreePoolStrategy -o ConvexThreePoolStrategySquashed.svg
 sol2uml storage .. -c ConvexThreePoolStrategy -o ConvexThreePoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 sol2uml .. -s -d 0 -b ConvexTwoPoolStrategy -o ConvexTwoPoolStrategySquashed.svg
 sol2uml storage .. -c ConvexTwoPoolStrategy -o ConvexTwoPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+sol2uml .. -s -d 0 -b FraxConvexStrategy -o FraxConvexStrategySquashed.svg
+sol2uml storage .. -c FraxConvexStrategy -o FraxConvexStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
@@ -74,8 +76,7 @@ sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg 
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
-# Failed to find user defined type "IERC20" in attribute "metapoolMainToken" of type "1""
-# sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg
+sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,___reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b FluxStrategy -o FluxStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg

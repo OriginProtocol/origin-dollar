@@ -110,6 +110,43 @@ describe("ForkTest: Harvester", function () {
     });
   });
 
+  describe("with Frax", () => {
+    it("Should swap FXS for WETH", async () => {
+      const {
+        oethHarvester,
+        strategist,
+        fxs,
+        weth,
+        oethDripper,
+        fraxConvexWethStrategy,
+        josh,
+      } = fixture;
+
+      const wethBefore = await weth.balanceOf(oethDripper.address);
+
+      // Send some rewards to the strategy
+      await fxs
+        .connect(josh)
+        .transfer(fraxConvexWethStrategy.address, oethUnits("1000"));
+
+      // prettier-ignore
+      const tx = await oethHarvester
+        .connect(strategist)["harvestAndSwap(address)"](fraxConvexWethStrategy.address);
+
+      await expect(tx).to.emit(fraxConvexWethStrategy, "RewardTokenCollected");
+      await expect(tx).to.emit(oethHarvester, "RewardTokenSwapped");
+      await expect(tx).to.emit(oethHarvester, "RewardProceedsTransferred");
+
+      // Should've transferred everything to Harvester
+      expect(await fxs.balanceOf(fraxConvexWethStrategy.address)).to.equal("0");
+
+      // Should've transferred swapped WETH to Dripper
+      expect(await weth.balanceOf(oethDripper.address)).to.be.gt(
+        wethBefore.add(oethUnits("0.3"))
+      );
+    });
+  });
+
   describe("OUSD Rewards Config", () => {
     it("Should have correct reward token config for CRV", async () => {
       const { harvester, crv } = fixture;

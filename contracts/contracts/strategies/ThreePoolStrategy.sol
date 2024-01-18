@@ -143,7 +143,7 @@ contract ThreePoolStrategy is BaseCurveStrategy, CurveThreeCoinFunctions {
     }
 
     /**
-     * @dev Collect accumulated CRV and send to Vault.
+     * @dev Collect accumulated CRV rewards and send to the Harvester.
      */
     function collectRewardTokens() public override onlyHarvester nonReentrant {
         // Collect

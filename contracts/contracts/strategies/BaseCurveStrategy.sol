@@ -307,10 +307,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Remove all liquidity from the Curve pool
         CurveFunctions memory curveFunctions = getCurveFunctions();
-        curveFunctions.remove_liquidity(
-            IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
-            minWithdrawAmounts
-        );
+        uint256 curveLpTokens = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
+        if (curveLpTokens > 0) {
+            curveFunctions.remove_liquidity(curveLpTokens, minWithdrawAmounts);
+        }
 
         // Transfer each asset out of the strategy to the Vault.
         // Note that Curve will provide all of the assets in the pool even if
