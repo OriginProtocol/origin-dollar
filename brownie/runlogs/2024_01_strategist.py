@@ -1,5 +1,5 @@
 # -------------------------------------
-# Jan 03, 2023 - OETH Buyback
+# Jan 03, 2024 - OETH Buyback
 # -------------------------------------
 from buyback import *
 
@@ -19,7 +19,7 @@ def main():
     print(to_gnosis_json(txs))
 
 # -------------------------------------
-# Jan 03, 2023 - CVX relock
+# Jan 03, 2024 - CVX relock
 # -------------------------------------
 from buyback import *
 
@@ -35,7 +35,7 @@ def main():
 
 
 # -------------------------------------
-# Jan 03, 2023 - OUSD Buyback
+# Jan 03, 2024 - OUSD Buyback
 # -------------------------------------
 from buyback import *
 
@@ -55,7 +55,7 @@ def main():
     print(to_gnosis_json(txs))
 
 # -------------------------------------
-# Jan 03, 2023 - OETH Reallocation
+# Jan 03, 2024 - OETH Reallocation
 # -------------------------------------
 
 from world import *
@@ -106,3 +106,70 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# Jan 17, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+
+def main():
+  txs = []
+
+  with TemporaryFork():
+    txs.append(
+      build_buyback_tx(
+        OETH,
+        oeth.balanceOf(OETH_BUYBACK),
+        max_ogv_slippage=1.25,
+        max_cvx_slippage=5
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Jan 24, 2024 - OUSD Reallocation
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_COMP_STRAT, 
+        [USDT], 
+        [morpho_comp_strat.checkBalance(USDT)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      vault_admin.depositToStrategy(
+        MORPHO_AAVE_STRAT, 
+        [USDT], 
+        [usdt.balanceOf(VAULT_PROXY_ADDRESS)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      vault_admin.setAssetDefaultStrategy(
+        USDT, 
+        MORPHO_AAVE_STRAT, 
+        {'from': STRATEGIST}
+      )
+    )
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+
+    txs.append(vault_core.allocate({'from': STRATEGIST}))

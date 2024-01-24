@@ -106,7 +106,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
     })
     
     if req.status_code != 200:
-        print(req.json())
+        print(req.text())
         raise Exception("Error accessing CoinGecko API")
 
     result = req.json()
