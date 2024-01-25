@@ -1,4 +1,8 @@
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const {
+  deploymentWithGovernanceProposal,
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -74,9 +78,9 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "supportAsset(address,uint8)",
           args: [
             addresses.mainnet.ETHx,
-            0 // Decimal conversion 
+            0, // Decimal conversion
           ],
-        }
+        },
       ],
     };
   }
