@@ -105,6 +105,10 @@ contract OETHOracleRouter is OracleRouterBase {
             // AURA/ETH
             feedAddress = auraPriceFeed;
             maxStaleness = 0;
+        } else if (asset == 0xA35b1B31Ce002FBF2058D22F30f95D405200A15b) {
+            // ETHx/ETH
+            feedAddress = 0xFaBEb1474C2Ab34838081BFdDcE4132f640E7D2d;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else {
             revert("Asset not available");
         }

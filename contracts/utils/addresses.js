@@ -193,6 +193,7 @@ addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
 addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
 addresses.mainnet.wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0";
 addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
+addresses.mainnet.ETHx = "0xA35b1B31Ce002FBF2058D22F30f95D405200A15b"
 
 // 1Inch
 addresses.mainnet.oneInchRouterV5 =
