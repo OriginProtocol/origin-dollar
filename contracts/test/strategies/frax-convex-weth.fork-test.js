@@ -11,7 +11,10 @@ const {
   DAY,
   WEEK,
 } = require("../../utils/constants");
-const { impersonateAndFund } = require("../../utils/signers.js");
+const {
+  impersonateAndFund,
+  impersonateAccount,
+} = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
@@ -904,7 +907,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
         await expect(tx).to.be.revertedWith("Caller is not the Harvester");
       }
     });
-    it.skip("Should be able to harvest the rewards", async function () {
+    it("Should be able to harvest the rewards", async function () {
       const {
         josh,
         weth,
@@ -918,7 +921,7 @@ describe("ForkTest: Frax Convex Strategy for Curve frxETH/WETH pool", function (
       // send some CRV to the strategy to partly simulate reward harvesting
       await fxs
         .connect(josh)
-        .transfer(fraxConvexWethStrategy.address, parseUnits("10000"));
+        .transfer(fraxConvexWethStrategy.address, parseUnits("1000"));
 
       const wethBefore = await weth.balanceOf(oethDripper.address);
 

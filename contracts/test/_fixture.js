@@ -34,6 +34,7 @@ const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 const erc20Abi = require("./abi/erc20.json");
+const fxsAbi = require("./abi/fxs.json");
 const morphoAbi = require("./abi/morpho.json");
 const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
@@ -46,7 +47,7 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
-const { impersonateAndFund } = require("../utils/signers");
+const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -240,7 +241,7 @@ const defaultFixture = deployments.createFixture(async () => {
     crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
     cvx = await ethers.getContractAt(erc20Abi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
-    fxs = await ethers.getContractAt(erc20Abi, addresses.mainnet.FXS);
+    fxs = await ethers.getContractAt(fxsAbi, addresses.mainnet.FXS);
     LUSD = await ethers.getContractAt(erc20Abi, addresses.mainnet.LUSD);
     aave = await ethers.getContractAt(erc20Abi, addresses.mainnet.Aave);
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
@@ -1827,7 +1828,19 @@ async function fraxConvexWethFixture(
   if (isFork) {
     await setERC20TokenBalance(josh.address, frxETH, "10000000", hre);
     await setERC20TokenBalance(josh.address, weth, "10000000", hre);
-    await setERC20TokenBalance(josh.address, fxs, "10000000", hre);
+
+    /* FXS keeps track of the votes and with token transfer also creates
+     * a vote checkpoint. For that reason just setting token balances via storage
+     * slots doesn't work, since we would also need to alter the contract to 
+     * set the voting power.
+     * 
+     * For the current workaround we just transfer the tokens from the owner
+     * of FXS contract that seems to have a lot of tokens & votes. If this approach 
+     * becomes unstable we should look into how to also alter storage slots to 
+     * be able to set the voting power snapshots.
+     */
+    const fxsOwner = await impersonateAccount(await fxs.owner_address());
+    await fxs.connect(fxsOwner).transfer(josh.address, parseUnits("10000", 18));
 
     if (config.fundFXS) {
       // The Locked Frax Staked Convex contract needs FXS
