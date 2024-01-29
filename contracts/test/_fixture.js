@@ -1831,12 +1831,12 @@ async function fraxConvexWethFixture(
 
     /* FXS keeps track of the votes and with token transfer also creates
      * a vote checkpoint. For that reason just setting token balances via storage
-     * slots doesn't work, since we would also need to alter the contract to 
+     * slots doesn't work, since we would also need to alter the contract to
      * set the voting power.
-     * 
+     *
      * For the current workaround we just transfer the tokens from the owner
-     * of FXS contract that seems to have a lot of tokens & votes. If this approach 
-     * becomes unstable we should look into how to also alter storage slots to 
+     * of FXS contract that seems to have a lot of tokens & votes. If this approach
+     * becomes unstable we should look into how to also alter storage slots to
      * be able to set the voting power snapshots.
      */
     const fxsOwner = await impersonateAccount(await fxs.owner_address());

@@ -11,10 +11,7 @@ const {
   DAY,
   WEEK,
 } = require("../../utils/constants");
-const {
-  impersonateAndFund,
-  impersonateAccount,
-} = require("../../utils/signers.js");
+const { impersonateAndFund } = require("../../utils/signers.js");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH/WETH");
 
