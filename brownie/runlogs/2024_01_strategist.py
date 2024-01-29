@@ -57,7 +57,6 @@ def main():
 # -------------------------------------
 # Jan 03, 2023 - OETH Reallocation
 # -------------------------------------
-
 from world import *
 
 def main():
@@ -139,3 +138,46 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+
+# -------------------------------------
+# Jan 29, 2023 - OETH Reallocation
+# -------------------------------------
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase(std))
+  txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+  # withdraw 3,500 ETH from the AMO
+  txs.append(
+    vault_oeth_admin.withdrawFromStrategy(
+      OETH_MORPHO_AAVE_STRAT, 
+      [WETH], 
+      [2957.922 * 10**18],
+      std
+    )
+  )
+
+  # deposit 3,800 ETH into Morpho Aave
+  txs.append(
+    oeth_vault_admin.depositToStrategy(
+      OETH_CONVEX_OETH_ETH_STRAT, 
+      [WETH], 
+      [2957.922 * 10**18], 
+      std
+    )
+  )
+
+  # After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.25 * 10**18), vault_change, (0.25 * 10**18), std))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
