@@ -134,11 +134,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
                     address(this)
                 );
                 require(actual == balance, "Did not withdraw enough");
+
+                uint256 assetBalance = asset.balanceOf(address(this));
                 // Transfer entire balance to Vault
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+                asset.safeTransfer(vaultAddress, assetBalance);
+
+                emit Withdrawal(address(asset), aToken, assetBalance);
             }
         }
     }
@@ -163,12 +164,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -273,9 +269,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // Collect available rewards and restart the cooldown timer, if either of
         // those should be run.
         if (block.timestamp > windowStart || cooldown == 0) {
+            uint256 assetsLen = assetsMapped.length;
             // aToken addresses for incentives controller
-            address[] memory aTokens = new address[](assetsMapped.length);
-            for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address[] memory aTokens = new address[](assetsLen);
+            for (uint256 i = 0; i < assetsLen; ++i) {
                 aTokens[i] = _getATokenFor(assetsMapped[i]);
             }
 

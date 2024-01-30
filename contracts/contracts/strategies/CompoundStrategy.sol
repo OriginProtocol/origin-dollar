@@ -22,6 +22,24 @@ contract CompoundStrategy is BaseCompoundStrategy {
     {}
 
     /**
+     * @notice initialize function, to set up initial internal state
+     * @param _rewardTokenAddresses Address of reward token for platform
+     * @param _assets Addresses of initial supported assets
+     * @param _pTokens Platform Token corresponding addresses
+     */
+    function initialize(
+        address[] memory _rewardTokenAddresses,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) external onlyGovernor initializer {
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
+    }
+
+    /**
      * @notice Collect accumulated COMP and send to Harvester.
      */
     function collectRewardTokens()
@@ -150,11 +168,11 @@ contract CompoundStrategy is BaseCompoundStrategy {
             uint256 cTokenBalance = cToken.balanceOf(address(this));
             if (cTokenBalance > 0) {
                 require(cToken.redeem(cTokenBalance) == 0, "Redeem failed");
+                uint256 assetBalance = asset.balanceOf(address(this));
                 // Transfer entire balance to Vault
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+                asset.safeTransfer(vaultAddress, assetBalance);
+
+                emit Withdrawal(address(asset), address(cToken), assetBalance);
             }
         }
     }

@@ -1,7 +1,3 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
- */
-
 const addresses = {};
 
 // Utility addresses
@@ -21,7 +17,7 @@ addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 addresses.mainnet.BinanceAll =
   "0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be,0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf";
 addresses.mainnet.WhaleAddresses =
-  "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
+  "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
   "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
@@ -58,8 +54,8 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
-addresses.mainnet.CVXETHRewardsPool =
-  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
+
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
@@ -81,6 +77,11 @@ addresses.mainnet.uniswapV3Router =
   "0xe592427a0aece92de3edee1f18e0157c05861564";
 addresses.mainnet.sushiswapRouter =
   "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
+addresses.mainnet.uniswapV3Quoter =
+  "0x61fFE014bA17989E743c5F6cB21bF9697530B21e";
+addresses.mainnet.uniswapUniversalRouter =
+  "0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B";
+
 // Chainlink feeds
 // Source https://docs.chain.link/docs/ethereum-addresses
 addresses.mainnet.chainlinkETH_USD =
@@ -114,6 +115,8 @@ addresses.mainnet.chainlinkstETH_ETH =
   "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
 addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
+addresses.mainnet.chainlinkBAL_ETH =
+  "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
@@ -142,11 +145,17 @@ addresses.mainnet.CurveLUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+
+// Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
   "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
 addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
+addresses.mainnet.CVXETHRewardsPool =
+  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+
+// Morpho
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 addresses.mainnet.MorphoAaveStrategyProxy =
@@ -209,6 +218,8 @@ addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
+addresses.mainnet.AuraWeightedOraclePool =
+  "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
 // Flux Strategy
 addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
@@ -221,5 +232,12 @@ addresses.mainnet.FrxEthFraxOracle =
 // FrxEthEthDualOracle gets the oracle prices from the Curve and Uniswap pools
 addresses.mainnet.FrxEthEthDualOracle =
   "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
+// FrxEthWethDualOracle
+addresses.mainnet.FrxEthWethDualOracle =
+  "0x350a9841956D8B0212EAdF5E14a449CA85FAE1C0";
+
+// Curve Pools
+addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
+addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 
 module.exports = addresses;

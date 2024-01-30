@@ -252,12 +252,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -282,11 +277,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
      */
-    // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
+    function _abstractSetPToken(address _asset, address) internal override {
         _approveAsset(_asset);
     }
 

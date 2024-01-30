@@ -1,5 +1,9 @@
-const { parseEther, Wallet } = require("ethers").utils;
+const { Wallet } = require("ethers").utils;
+const { Defender } = require("@openzeppelin/defender-sdk");
+
 const { ethereumAddress, privateKey } = require("./regex");
+const { hardhatSetBalance } = require("../test/_fund");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("./logger")("utils:signers");
 
@@ -12,7 +16,7 @@ const log = require("./logger")("utils:signers");
  * @param {*} address optional address of the signer
  * @returns
  */
-async function getSigner(address) {
+async function getSigner(address = undefined) {
   if (address) {
     if (!address.match(ethereumAddress)) {
       throw Error(`Invalid format of address`);
@@ -42,12 +46,39 @@ async function getSigner(address) {
     return await impersonateAndFund(address);
   }
 
+  // If using Defender Relayer
+  if (process.env.DEFENDER_API_KEY && process.env.DEFENDER_API_SECRET) {
+    return await getDefenderSigner();
+  }
+
   const signers = await hre.ethers.getSigners();
   const signer = signers[0];
   log(`Using signer ${await signer.getAddress()}`);
 
   return signer;
 }
+
+const getDefenderSigner = async () => {
+  const speed = process.env.SPEED || "fast";
+  if (!["safeLow", "average", "fast", "fastest"].includes(speed)) {
+    console.error(
+      `Defender Relay Speed param must be either 'safeLow', 'average', 'fast' or 'fastest'. Not "${speed}"`
+    );
+    process.exit(2);
+  }
+  const credentials = {
+    relayerApiKey: process.env.DEFENDER_API_KEY,
+    relayerApiSecret: process.env.DEFENDER_API_SECRET,
+  };
+  const client = new Defender(credentials);
+  const provider = client.relaySigner.getProvider();
+
+  const signer = client.relaySigner.getSigner(provider, { speed });
+  log(
+    `Using Defender Relayer account ${await signer.getAddress()} from env vars DEFENDER_API_KEY and DEFENDER_API_SECRET`
+  );
+  return signer;
+};
 
 /**
  * Impersonate an account when connecting to a forked node.
@@ -57,25 +88,9 @@ async function getSigner(address) {
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [account],
-  });
+  await hhHelpers.impersonateAccount(account);
 
   return await ethers.provider.getSigner(account);
-}
-
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
 }
 
 /**
@@ -88,7 +103,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await _hardhatSetBalance(account, amount);
+  await hardhatSetBalance(account, amount);
 
   return signer;
 }

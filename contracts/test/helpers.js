@@ -1,11 +1,10 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const mocha = require("mocha");
 const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
-const { decimalsFor } = require("../utils/units");
+const { decimalsFor, units } = require("../utils/units");
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -74,7 +73,7 @@ chai.Assertion.addMethod(
   "balanceOf",
   async function (expected, contract, message) {
     const user = this._obj;
-    const address = user.address || user.getAddress(); // supports contracts too
+    const address = user.address || user.getAddress() || user; // supports contracts too
     const actual = await contract.balanceOf(address);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(contract));
@@ -151,15 +150,6 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
-
-/**
- * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.
- * @param {string} amount - The amount to convert, represented as a string in the base unit of the contract.
- * @param {Contract} contract - The token contract to get the decimal places for.
- */
-async function units(amount, contract) {
-  return parseUnits(amount, await decimalsFor(contract));
-}
 
 function ognUnits(amount) {
   return parseUnits(amount, 18);
@@ -345,6 +335,9 @@ const getOracleAddresses = async (deployments) => {
         OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
         RETH_ETH: addresses.mainnet.chainlinkRETH_ETH,
         stETH_ETH: addresses.mainnet.chainlinkstETH_ETH,
+        BAL_ETH: addresses.mainnet.chainlinkBAL_ETH,
+        // TODO: Update with deployed address
+        // AURA_ETH: addresses.mainnet.chainlinkAURA_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
     };
@@ -376,6 +369,8 @@ const getOracleAddresses = async (deployments) => {
           .address,
         WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
           .address,
+        BAL_ETH: (await deployments.get("MockChainlinkOracleFeedBALETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
@@ -401,6 +396,7 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
       CRV: addresses.mainnet.CRV,
       CVX: addresses.mainnet.CVX,
+      CVXLocker: addresses.mainnet.CVXLocker,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
       aDAI_v2: addresses.mainnet.aDAI_v2,
@@ -421,7 +417,11 @@ const getAssetAddresses = async (deployments) => {
       sfrxETH: addresses.mainnet.sfrxETH,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
+      uniswapUniversalRouter: addresses.mainnet.uniswapUniversalRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
+      auraWeightedOraclePool: addresses.mainnet.AuraWeightedOraclePool,
+      AURA: addresses.mainnet.AURA,
+      BAL: addresses.mainnet.BAL,
     };
   } else {
     const addressMap = {
@@ -433,13 +433,14 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
-      WETH: (await deployments.get("MockWETH")).address,
+      WETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
       ThreePool: (await deployments.get("MockCurvePool")).address,
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
       CRV: (await deployments.get("MockCRV")).address,
       CVX: (await deployments.get("MockCVX")).address,
+      CVXLocker: (await deployments.get("MockCVXLocker")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
       aDAI: (await deployments.get("MockADAI")).address,
       aUSDC: (await deployments.get("MockAUSDC")).address,
@@ -459,7 +460,13 @@ const getAssetAddresses = async (deployments) => {
       RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
+      uniswapUniversalRouter: (await deployments.get("MockUniswapRouter"))
+        .address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      auraWeightedOraclePool: (await deployments.get("MockOracleWeightedPool"))
+        .address,
+      AURA: (await deployments.get("MockAura")).address,
+      BAL: (await deployments.get("MockBAL")).address,
     };
 
     try {
@@ -524,6 +531,54 @@ async function changeInBalance(
     balanceChangeAccount
   );
   return balanceAfter - balanceBefore;
+}
+
+/**
+ * Calculates the change in balance after a function has been executed on a contract
+ * @param {Function} functionChangingBalance - The function that changes the balance
+ * @param {[Object]} tokens - The token contract
+ * @param {[string]} accounts - An array of addresses
+ **/
+async function changeInMultipleBalances(
+  functionChangingBalance,
+  tokens,
+  accounts
+) {
+  const _getBalances = async () => {
+    const out = {};
+
+    for (const account of accounts) {
+      out[account] = {};
+
+      const balances = await Promise.all(
+        tokens.map((t) => t.balanceOf(account))
+      );
+
+      for (let i = 0; i < balances.length; i++) {
+        out[account][tokens[i].address] = balances[i];
+      }
+    }
+
+    return out;
+  };
+
+  const balanceBefore = await _getBalances();
+
+  await functionChangingBalance();
+
+  const balanceAfter = await _getBalances();
+
+  const balanceDiff = {};
+  for (const account of accounts) {
+    balanceDiff[account] = {};
+    for (const token of tokens) {
+      const tokenAddr = token.address;
+      balanceDiff[account][tokenAddr] =
+        balanceAfter[account][tokenAddr] - balanceBefore[account][tokenAddr];
+    }
+  }
+
+  return balanceDiff;
 }
 
 /**
@@ -680,11 +735,6 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkOnlyDescribe = (title, fn) =>
-  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
-
 module.exports = {
   decimalsFor,
   ousdUnits,
@@ -729,7 +779,7 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
-  forkOnlyDescribe,
+  changeInMultipleBalances,
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,

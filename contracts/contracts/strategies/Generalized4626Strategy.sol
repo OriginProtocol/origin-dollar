@@ -129,12 +129,19 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         nonReentrant
     {
         uint256 shareBalance = shareToken.balanceOf(address(this));
-        uint256 assetAmount = IERC4626(platformAddress).redeem(
-            shareBalance,
-            vaultAddress,
-            address(this)
-        );
-        emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
+        uint256 assetAmount = 0;
+        if (shareBalance > 0) {
+            assetAmount = IERC4626(platformAddress).redeem(
+                shareBalance,
+                vaultAddress,
+                address(this)
+            );
+            emit Withdrawal(
+                address(assetToken),
+                address(shareToken),
+                assetAmount
+            );
+        }
     }
 
     /**
@@ -177,7 +184,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
-        external
+        public
         view
         virtual
         override

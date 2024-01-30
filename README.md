@@ -1,13 +1,13 @@
-# Origin Dollar
+# Origin DeFi's OTokens: Origin Dollar (OUSD) and Origin Ether (OETH)
+ 
+For more details about the product, checkout [our docs](https://docs.oeth.com).
 
-OUSD is a new kind of stablecoin that passively accrues yield while you are holding it.
-Checkout our [docs](https://docs.ousd.com) for more details about the product.
+---
 
 | Branch    | CI/CD Status                                                                                                                                                                                                      |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `master`  | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml)                                       |
-| `staging` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg?branch=staging)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml?query=branch%3Astaging) |
-| `stable`  | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg?branch=stable)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml?query=branch%3Astable)   |
+
 
 ## Requirements
 
@@ -31,18 +31,13 @@ cd origin-dollar
 
 ## Description
 
-The `origin-dollar` project is a mono repo that hosts both the `smart contracts` and `dapp` code bases. In order to run this project locally, you will need to run both the `Eth node` and the `dapp` in separate processes or terminals.
+The `origin-dollar` project is a repo that hosts the smart contracts of some Origin DeFi projects including OUSD and OETH. For Governance related contracts, head over to (origin-dollar-governance)[https://github.com/OriginProtocol/ousd-governance]. In order to run this project locally, you will need to run the `Eth node`.
 
 ### Eth Node
 
 The `smart contracts` and all of their associated code are located in the `<project-root>/contracts` directory. The Ethereum tests and the local Ethereum EVM node are managed by [Hardhat](https://hardhat.org/).
 
 A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
-<br/><br/>
-
-### dapp (Decentralized Application)
-
-The code for `dapp` is located under the `/dapp` directory.
 <br/><br/>
 
 ---
@@ -77,123 +72,6 @@ This is an option, but a simpler way is to use the `ACCOUNTS_TO_FUND` setting de
 npx hardhat fund --amount 1000 --network localhost
 ```
 
-##### Requirements
-
-- You will need your web3 wallet configured before you can interact with the dapp. Make sure that you have one - refer to [this section](#configure-web3-wallet) for `Metamask` instructions.
-- You will also need the dapp to be running. Refer to [this section](#running-the-dapp-locally) for instructions.
-
-### Configure Web3 Wallet
-
-You will need a web3 wallet to interact with the dapp and sign transactions. Below are the instructions to setup `Metamask` to interact with the dapp running locally.
-
-- Install `Metamask` Chrome extension [HERE](https://metamask.io/)
-- Create/Open `Metamask` wallet
-- Add a custom RPC endpoint
-  - Name: `origin` - just an example
-  - URL: `http://localhost:8545`
-  - Chain ID: `1337`
-    <br/><br/>
-
-#### Add Accounts to Metamask
-
-##### Forked mode
-
-Just use the account(s) you normally use on mainnet.
-
-##### Standalone mode
-
-You can get all the accounts for the locally running node and their associated private keys by running the command
-
-```bash
-# For Standalone mode
-npx hardhat accounts --network localhost
-```
-
-Choose a test account past index 3 (accounts 0-3 are reserved).
-Copy the private key and import it into Metamask as follows:
-
-- Click the current account icon in the upper right corner of `Metamask`
-- Select `Import Account` => paste private key => Click `Import`
-
-Make sure that you select your newly created RPC endpoint in the networks dropdown and use your newly imported account in `Metamask`. You should now be setup to use `Metamask` to interact with the dApp.
-
-Note:
-If you want to add all the accounts via a new `Metamask` wallet and import the `mnemonic` it is located in `contracts/hardhat.config.js`. Make sure that you use Account 4 and up for test accounts as 0-3 are reserved.
-<br/><br/>
-
-### Running the dapp
-
-Open a separate terminal to run the dapp in.
-
-```bash
-# Enter the smart dapp dir (or oeth-dapp)
-cd dapp
-
-# Install the dependencies
-yarn install
-
-# Start the dapp
-yarn run start
-```
-
-- Open http://localhost:3000 in your browser and connect your `Metamask` account. See [this section](#configure-web3-wallet) for instructions if you have not done that yet.
-- Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [this section](#minting-stablecoins-via-hardhat-task) for instructions if you don't see a balance.
-
-If you see a `Runtime Error: underlying network changed`, then rename `dapp/dev.env` to `.env` and restart `yarn`
-
-If you see an error resembling `digital envelope routines::unsupported`, you are likely using an incompatible Node.js version. At last check, v16.20.2 is good.
-
-### Troubleshooting
-
-When freshly starting a node it is usually necessary to also reset Metamask Account being used:
-
-- `Metamask` => `Settings` => `Advanced` => `Reset Account`
-  <br/><br/>
-  This will reset the nonce number that is incorrect if you have submitted any transactions in previous runs of the ethereum node. (Wallet has a too high nonce number comparing to the nonce state on the node)
-
-If you get an `error Command "husky-run" not found.` type of error:
-Go to root of the project and run `npx husky install`
-
----
-
-## (Core Contributors) Running dapp in Production/Staging Mode Locally
-
-There may be a time that you will need to run the dapp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet.
-
-### Requirements
-
-- `Google Cloud` CLI tool installed as explained [HERE](https://cloud.google.com/sdk/docs/quickstart)
-- Permission to the Origin GCP Account to decrypt `*.secrets.enc` and deploy infrastructure
-
-#### Login to Google Cloud
-
-```
-# Login to GCP
-gcloud auth login
-```
-
-#### Staging
-
-```
-# Decrypt staging secrets to local
-yarn run decrypt-secrets:staging
-
-# Start local dapp in Staging mode
-yarn run start:staging
-```
-
-#### Production
-
-```
-# Decrypt staging secrets to local
-yarn run decrypt-secrets:production
-
-# Start local dapp in Production mode
-yarn run start:production
-```
-
----
-
 ## Running Smoke Tests
 
 Smoke tests can be run in 2 modes:
@@ -221,3 +99,19 @@ Want to contribute to OUSD? Awesome!
 OUSD is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing to the code, and helping us improve our community.
 
 The best way to get involved is to join the Origin Protocol [discord server](https://discord.gg/jyxpUSe) and head over to the channel named ORIGIN DOLLAR & DEFI
+
+# Utils
+
+## Git pre-commit hooks (using Husky)
+
+### Setup
+```
+# install Husky
+npx install husky
+
+# from project root folder install Husky hooks
+npx husky install
+
+```
+
+If the script in .husky/pre-commit returns non 0 exit the pre-commit hook will fail. Currently the script prevents a commit if there is an ".only" in the test scripts. Use "git commit --no-verify" if you have the hook enabled and you'd like to skip pre-commit check.

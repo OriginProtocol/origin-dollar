@@ -1,94 +1,96 @@
 const { expect } = require("chai");
 
-const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, ousdUnits, isCI } = require("../helpers");
 const { createFixtureLoader } = require("../_fixture");
 const { withOUSDTitledMetapool } = require("../_metastrategies-fixtures");
 
-forkOnlyDescribe(
-  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
-  function () {
-    this.timeout(0);
+describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", function () {
+  this.timeout(0);
 
-    // Retry up to 3 times on CI
-    this.retries(isCI ? 3 : 0);
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
-    let fixture;
-    const loadFixture = createFixtureLoader(withOUSDTitledMetapool);
-    beforeEach(async () => {
-      fixture = await loadFixture();
+  let fixture;
+  const loadFixture = createFixtureLoader(withOUSDTitledMetapool);
+  beforeEach(async () => {
+    fixture = await loadFixture();
+  });
+
+  describe("Mint", function () {
+    it("Should stake USDT in Curve gauge via metapool", async function () {
+      const { josh, usdt } = fixture;
+      await mintTest(fixture, josh, usdt, "100000");
     });
 
-    describe("Mint", function () {
-      it("Should stake USDT in Curve gauge via metapool", async function () {
-        const { josh, usdt } = fixture;
-        await mintTest(fixture, josh, usdt, "100000");
-      });
-
-      it("Should stake USDC in Curve gauge via metapool", async function () {
-        const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
-      });
-
-      it("Should stake DAI in Curve gauge via metapool", async function () {
-        const { anna, dai } = fixture;
-        await mintTest(fixture, anna, dai, "110000");
-      });
+    it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { matt, usdc } = fixture;
+      await mintTest(fixture, matt, usdc, "120000");
     });
 
-    describe("Redeem", function () {
-      it("Should redeem", async () => {
-        const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          fixture;
-
-        await vault.connect(anna).allocate();
-
-        const supplyBeforeMint = await ousd.totalSupply();
-
-        const amount = "10000";
-
-        // Mint with all three assets
-        for (const asset of [usdt, usdc, dai]) {
-          await vault
-            .connect(anna)
-            .mint(asset.address, await units(amount, asset), 0);
-        }
-
-        await vault.connect(anna).allocate();
-
-        // we multiply it by 3 because 1/3 of balance is represented by each of the assets
-        const strategyBalance = (
-          await OUSDmetaStrategy.checkBalance(dai.address)
-        ).mul(3);
-
-        // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
-        await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
-
-        // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
-        const currentSupply = await ousd.totalSupply();
-        const supplyAdded = currentSupply.sub(supplyBeforeMint);
-        expect(supplyAdded).to.be.gte(ousdUnits("49995"));
-
-        const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
-
-        // Now try to redeem the amount
-        const redeemAmount = ousdUnits("19000");
-        await vault.connect(anna).redeem(redeemAmount, 0);
-
-        // User balance should be down by 30k
-        const newBalance = await ousd.connect(anna).balanceOf(anna.address);
-        expect(newBalance).to.approxEqualTolerance(
-          currentBalance.sub(redeemAmount),
-          1
-        );
-
-        const newSupply = await ousd.totalSupply();
-        const supplyDiff = currentSupply.sub(newSupply);
-
-        expect(supplyDiff).to.be.gte(redeemAmount);
-      });
+    it("Should stake DAI in Curve gauge via metapool", async function () {
+      const { anna, dai } = fixture;
+      await mintTest(fixture, anna, dai, "110000");
     });
-  }
-);
+  });
+
+  describe("Redeem", function () {
+    it("Should redeem", async () => {
+      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+
+      await vault.connect(anna).allocate();
+
+      const supplyBeforeMint = await ousd.totalSupply();
+      const strategyBalanceBeforeMint = (
+        await OUSDmetaStrategy.checkBalance(dai.address)
+      ).mul(3);
+
+      const amount = "10000";
+
+      // Mint with all three assets
+      for (const asset of [usdt, usdc, dai]) {
+        await vault
+          .connect(anna)
+          .mint(asset.address, await units(amount, asset), 0);
+      }
+
+      await vault.connect(anna).allocate();
+
+      // we multiply it by 3 because 1/3 of balance is represented by each of the assets
+      const strategyBalance = (
+        await OUSDmetaStrategy.checkBalance(dai.address)
+      ).mul(3);
+      const strategyBalanceChange = strategyBalance.sub(
+        strategyBalanceBeforeMint
+      );
+
+      // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
+      expect(strategyBalanceChange).to.be.gte(ousdUnits("59500"));
+
+      // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k
+      const currentSupply = await ousd.totalSupply();
+      const supplyAdded = currentSupply.sub(supplyBeforeMint);
+      expect(supplyAdded).to.be.gte(ousdUnits("59500"));
+
+      const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+
+      // Now try to redeem the amount
+      const redeemAmount = ousdUnits("10000");
+      await vault.connect(anna).redeem(redeemAmount, 0);
+
+      // User balance should be down by 10k
+      const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+      expect(newBalance).to.approxEqualTolerance(
+        currentBalance.sub(redeemAmount),
+        1
+      );
+
+      const newSupply = await ousd.totalSupply();
+      const supplyDiff = currentSupply.sub(newSupply);
+
+      expect(supplyDiff).to.be.gte(redeemAmount);
+    });
+  });
+});
 
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;

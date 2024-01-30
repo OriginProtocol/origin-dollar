@@ -3,18 +3,14 @@ const { expect } = require("chai");
 const {
   units,
   oethUnits,
-  forkOnlyDescribe,
   advanceBlocks,
   advanceTime,
   isCI,
 } = require("../helpers");
-const {
-  createFixtureLoader,
-  oethMorphoAaveFixture,
-  impersonateAndFundContract,
-} = require("../_fixture");
+const { createFixtureLoader, oethMorphoAaveFixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
-forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
+describe("ForkTest: Morpho Aave OETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -98,9 +94,7 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { weth, oethVault, oethMorphoAaveStrategy } = fixture;
-      const oethVaultSigner = await impersonateAndFundContract(
-        oethVault.address
-      );
+      const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
       // The strategy already has some funds allocated on Mainnet,
       // so the following lines are unnecessary
@@ -179,7 +173,7 @@ async function withdrawTest(fixture, user, asset, amount = "3.876") {
 
   const assetUnits = await units(amount, asset);
   const oethVaultAssetBalBefore = await asset.balanceOf(oethVault.address);
-  const oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+  const oethVaultSigner = await impersonateAndFund(oethVault.address);
 
   await oethMorphoAaveStrategy
     .connect(oethVaultSigner)

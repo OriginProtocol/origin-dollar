@@ -1,13 +1,16 @@
 const { expect } = require("chai");
 
 const { oethUnits, units } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const {
   createFixtureLoader,
   fraxETHStrategyFixture,
-  impersonateAndFundContract,
 } = require("./../_fixture");
 const { BigNumber } = require("ethers");
+const { impersonateAndFund } = require("../../utils/signers");
 
 describe("FraxETH Strategy", function () {
   let fixture;
@@ -15,6 +18,26 @@ describe("FraxETH Strategy", function () {
   beforeEach(async () => {
     fixture = await loadFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    harvester: fixture.oethHarvester,
+    strategy: fixture.fraxEthStrategy,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+    assets: [fixture.frxETH, fixture.weth],
+    valueAssets: [fixture.frxETH],
+    harvester: fixture.oethHarvester,
+    vault: fixture.oethVault,
+  }));
 
   describe("Mint", function () {
     it("Should allow minting with frxETH", async () => {
@@ -39,8 +62,7 @@ describe("FraxETH Strategy", function () {
   });
 
   describe("Redeem", function () {
-    // TODO: Debug and fix this test
-    it.skip("Should allow redeem", async () => {
+    it("Should allow redeem", async () => {
       const {
         daniel,
         domen,
@@ -58,9 +80,6 @@ describe("FraxETH Strategy", function () {
       const assets = [frxETH, weth, reth, stETH];
       const mintAmounts = ["10.2333", "20.45", "23.456", "15.3434"];
 
-      // Just assuming a 1:1 for all assets for simplicity of tests
-      await reth.connect(daniel).setExchangeRate(oethUnits("1"));
-
       // Rebase & Allocate
       await oethVault.connect(daniel).rebase();
       await oethVault.connect(daniel).allocate();
@@ -71,10 +90,6 @@ describe("FraxETH Strategy", function () {
           .connect(users[i])
           .mint(assets[i].address, oethUnits(mintAmounts[i]), "0");
       }
-
-      // Rebase & Allocate
-      await oethVault.connect(daniel).rebase();
-      await oethVault.connect(daniel).allocate();
 
       // Now try redeeming
       const supplyBeforeRedeem = await oeth.totalSupply();
@@ -108,8 +123,12 @@ describe("FraxETH Strategy", function () {
       // User should have got other assets
       let netGainedAssetValue = BigNumber.from(0);
       for (let i = 0; i < assets.length; i++) {
+        const redeemPrice = await oethVault.priceUnitRedeem(assets[i].address);
         netGainedAssetValue = netGainedAssetValue.add(
-          userAssetBalanceAfterRedeem[i].sub(userAssetBalanceBeforeRedeem[i])
+          userAssetBalanceAfterRedeem[i]
+            .sub(userAssetBalanceBeforeRedeem[i])
+            .mul(redeemPrice)
+            .div(oethUnits("1"))
         );
       }
       expect(netGainedAssetValue).to.approxEqualTolerance(
@@ -165,7 +184,7 @@ describe("FraxETH Strategy", function () {
   describe("Deposit", function () {
     it("Should deposit frxETH from Vault", async () => {
       const { frxETH, sfrxETH, daniel, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -186,7 +205,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should deposit WETH from Vault", async () => {
       const { weth, sfrxETH, domen, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -208,7 +227,7 @@ describe("FraxETH Strategy", function () {
     it("Should allow to deposit all supported assets", async () => {
       const { frxETH, weth, matt, sfrxETH, fraxEthStrategy, oethVault } =
         fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
 
@@ -232,7 +251,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should revert when depositing nothing", async () => {
       const { frxETH, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
       const tx = fraxEthStrategy
@@ -243,7 +262,7 @@ describe("FraxETH Strategy", function () {
 
     it("Should not deposit any unsupported asset", async () => {
       const { reth, oethVault, fraxEthStrategy } = fixture;
-      const impersonatedVaultSigner = await impersonateAndFundContract(
+      const impersonatedVaultSigner = await impersonateAndFund(
         oethVault.address
       );
       const tx = fraxEthStrategy
@@ -356,9 +375,9 @@ describe("FraxETH Strategy", function () {
     });
 
     it("Should not have pToken set for WETH", async () => {
-      const { fraxEthStrategy, weth } = fixture;
+      const { fraxEthStrategy, sfrxETH, weth } = fixture;
       expect(await fraxEthStrategy.assetToPToken(weth.address)).to.equal(
-        "0x0000000000000000000000000000000000000000"
+        sfrxETH.address
       );
     });
 

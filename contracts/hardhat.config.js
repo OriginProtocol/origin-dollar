@@ -104,6 +104,12 @@ module.exports = {
       },
     },
   },
+  tracer: {
+    nameTags: {
+      "0xba12222222228d8ba445958a75a0704d566bf2c8": "Balancer Vault",
+      "0xef1c6e67703c7bd7107eed8303fbe6ec2554bf6b": "Uniswap Universal Router",
+    },
+  },
   networks: {
     hardhat: {
       accounts: {
@@ -113,6 +119,7 @@ module.exports = {
         ? {
             chainId: 1,
             timeout: 0,
+            initialBaseFeePerGas: 0,
             forking: {
               enabled: true,
               url: providerUrl,
@@ -125,17 +132,6 @@ module.exports = {
             initialBaseFeePerGas: 0,
             gas: 7000000,
             gasPrice: 1000,
-            ...(process.env.FORKED_LOCAL_TEST
-              ? {
-                  timeout: 0,
-                  forking: {
-                    enabled: true,
-                    url: providerUrl,
-                    blockNumber: forkBlockNumber,
-                    timeout: 0,
-                  },
-                }
-              : {}),
           }),
     },
     localhost: {

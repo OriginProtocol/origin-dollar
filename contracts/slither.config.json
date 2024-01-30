@@ -1,0 +1,6 @@
+{
+  "filter_paths": "mocks|echidna|crytic|OUSDResolutionUpgrade.sol|MixOracle.sol|VaultInitializer.sol|StableMath.sol|openzeppelin|@openzeppelin",
+  "exclude_low": true,
+  "exclude_informational": true,
+  "detectors_to_exclude": "conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly,incorrect-equality"
+}

@@ -4,13 +4,11 @@ pragma solidity ^0.8.0;
 import "./MintableERC20.sol";
 
 contract MockFrxETHMinter {
-    address public sfrxETH;
+    address public immutable frxETH;
+    address public immutable sfrxETH;
 
-    constructor(address _sfrxETH) {
-        sfrxETH = _sfrxETH;
-    }
-
-    function setAssetAddress(address _sfrxETH) external {
+    constructor(address _frxETH, address _sfrxETH) {
+        frxETH = _frxETH;
         sfrxETH = _sfrxETH;
     }
 
@@ -19,6 +17,7 @@ contract MockFrxETHMinter {
         payable
         returns (uint256 shares)
     {
+        IMintableERC20(frxETH).mintTo(sfrxETH, msg.value);
         IMintableERC20(sfrxETH).mintTo(recipient, msg.value);
         shares = msg.value;
     }

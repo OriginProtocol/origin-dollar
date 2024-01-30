@@ -5,6 +5,8 @@ import re
 from eth_abi import abi
 from addresses import *
 import addresses # We want to be able to get to addresses as a dict
+from contextlib import redirect_stdout, contextmanager
+
 std = {'from': STRATEGIST}
 
 # ousd = Contract.from_explorer(OUSD, as_proxy_for=OUSD_IMPL)
@@ -43,8 +45,8 @@ frxeth = load_contract('ERC20', FRXETH)
 reth = load_contract('reth', RETH)
 
 flipper = load_contract('flipper', FLIPPER)
-#buyback = load_contract('buyback', BUYBACK)
-buyback = load_contract('buyback', BUYBACK_2)
+ousd_buyback = load_contract('buyback', OUSD_BUYBACK)
+oeth_buyback = load_contract('buyback', OETH_BUYBACK)
 ogn = load_contract('ogn', OGN)
 ogv = load_contract('ogv', OGV)
 veogv = load_contract('veogv', VEOGV)
@@ -55,6 +57,7 @@ vault_oeth_core = load_contract('vault_core', VAULT_OETH_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
 oeth_vault_value_checker = load_contract('vault_value_checker', OETH_VAULT_VALUE_CHECKER)
 dripper = load_contract('dripper', DRIPPER)
+oeth_dripper = load_contract('dripper', OETH_DRIPPER)
 harvester = load_contract('harvester', HARVESTER)
 ousd_usdt = load_contract('ousd_usdt', OUSD_USDT)
 v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
@@ -82,7 +85,6 @@ governor_five = load_contract('governor_five', GOVERNOR_FIVE)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
-oeth = load_contract('ERC20', OETH)
 weth = load_contract('ERC20', WETH)
 steth = load_contract('ERC20', STETH)
 frxeth = load_contract('ERC20', FRXETH)
@@ -92,6 +94,8 @@ oeth_vault_core = load_contract('vault_core', OETH_VAULT)
 
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)
+
+uniswap_v3_quoter = load_contract('uniswap_v3_quoter', UNISWAP_V3_QUOTER)
 
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
@@ -165,10 +169,16 @@ def mine_block():
 def leading_whitespace(s, desired = 16):
     return ' ' * (desired-len(s)) + s
 
-def commas(v, decimals = 18):
+def commas(v, decimals = 18, truncate=True):
     """Pretty format token amounts as floored, fixed size dollars"""
-    v = int(v / 10**decimals)
-    s = f'{v:,}'
+
+    if not truncate:
+        v = int(10**4 * v / 10**decimals) / 10**4
+        s = f'{v:,.2f}'
+    else:
+        v = int(v / 10**decimals)
+        s = f'{v:,}'
+
     return leading_whitespace(s, 16)
 
 # format BigNumber represented in 24 decimals
@@ -176,8 +186,8 @@ def c24(v):
     return commas(v, 24)
 
 # format BigNumber represented in 18 decimals
-def c18(v):
-    return commas(v, 18)
+def c18(v, truncate):
+    return commas(v, 18, truncate)
 
 # format BigNumber represented in 12 decimals
 def c12(v):
@@ -190,6 +200,9 @@ def c6(v):
 def prices(p, decimals = 18):
     p = float(p / 10**decimals)
     return leading_whitespace('{:0.4f}'.format(p), 16)
+
+def pcts (p):
+    return leading_whitespace('{:0.4f}%'.format(p), 16)
 
 # show complete vault holdings: stable coins & strategies
 def show_vault_holdings():
@@ -401,19 +414,40 @@ def nice_contract_address(address):
 
 
 def show_governance_action(i, to, sig, data):
-  print("{}) {}".format(i+1, nice_contract_address(to)))
-  print("     "+ORANGE+sig+ENDC)
-  # print("Post Sig Data: ", data)
-  if re.match(".*\(\)", sig):
-    return
-  stypes = re.split(",|\)|\(", sig)[1:-1]
-  decodes = abi.decode_abi(stypes, data)
-  for j in range(0, len(stypes)):
-    v = decodes[j]
-    if stypes[j] == "address":
-      print(" >> ", nice_contract_address(v))
-    else:
-      print(" >> ", ORANGE+str(v)+ENDC)
+    print("{}) {}".format(i+1, nice_contract_address(to)))
+    print("     "+ORANGE+sig+ENDC)
+    # print("Post Sig Data: ", data)
+    if re.match(".*\(\)", sig):
+        return
+
+    split_sig = re.split("^[^\(]*", sig)[1]
+    split_sig = re.split(",|\)$|^\(", split_sig)[1:-1]
+
+    stypes = []
+    nested_struct = []
+    nested = False
+    for s in split_sig:
+        if s.startswith("("):
+            stypes.append([s[1:]])
+            nested = True
+        elif s.endswith(")"):
+            stypes[len(stypes) - 1].append(s[:-1])
+            stypes[len(stypes) - 1] = "({})".format(",".join(stypes[len(stypes) - 1]))
+            nested = False
+        elif nested:
+            stypes[len(stypes) - 1].append(s)
+        else:
+            stypes.append(s)
+
+    decodes = abi.decode_abi(stypes, data)
+    for j in range(0, len(stypes)):
+        v = decodes[j]
+        if stypes[j] == "address":
+            print(" >> ", nice_contract_address(v))
+        elif stypes[j] == "bytes":
+            print(" >> ", v.hex())
+        else:
+            print(" >> ", ORANGE+str(v)+ENDC)
 
 def to_gnosis_json(txs):
     main = {
@@ -504,3 +538,14 @@ def sim_execute_governor_five(proposal_id):
         data = sighash + str(actions[3][i])[2:]
         # Send it
         timelock.transfer(to=actions[0][i], data=data, amount=actions[1][i])
+
+@contextmanager
+def silent_tx():
+    """
+    Hide std out transaction information printing.
+
+    ETH brownie does not currently have a way to silence transaction details.
+    """
+    f = io.StringIO()
+    with redirect_stdout(f):
+        yield

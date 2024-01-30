@@ -65,7 +65,11 @@ contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
         pTokenAddress = _pTokens[0];
 
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 

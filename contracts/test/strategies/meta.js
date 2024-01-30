@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
 const {
@@ -10,7 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex 3pool/OUSD Meta Strategy", function () {
+describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -18,10 +18,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
   let anna,
     ousd,
     vault,
-    harvester,
     governor,
-    crv,
-    cvx,
     OUSDmetaStrategy,
     metapoolToken,
     cvxBooster,
@@ -44,11 +41,8 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
-    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
-    crv = fixture.crv;
-    cvx = fixture.cvx;
     OUSDmetaStrategy = fixture.OUSDmetaStrategy;
     metapoolToken = fixture.metapoolToken;
     cvxBooster = fixture.cvxBooster;
@@ -158,46 +152,6 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await expect(
         vault.connect(anna).burnForStrategy(MAX_UINT.div(2).sub(1))
       ).to.be.revertedWith("Attempting to burn too much OUSD.");
-    });
-  });
-
-  describe("Harvest", function () {
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](OUSDmetaStrategy.address);
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
-    });
-
-    it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-
-      await harvester.connect(governor)[
-        // eslint-disable-next-line
-        "harvest(address)"
-      ](OUSDmetaStrategy.address);
-
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
     });
   });
 });

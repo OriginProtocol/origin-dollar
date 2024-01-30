@@ -3,19 +3,15 @@ const { expect } = require("chai");
 const {
   units,
   ousdUnits,
-  forkOnlyDescribe,
   differenceInErc20TokenBalance,
   advanceBlocks,
   advanceTime,
   isCI,
 } = require("../helpers");
-const {
-  createFixtureLoader,
-  morphoCompoundFixture,
-  impersonateAndFundContract,
-} = require("../_fixture");
+const { createFixtureLoader, morphoCompoundFixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
-forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
+describe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -52,7 +48,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10010";
+      const amount = "20020";
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
@@ -63,7 +59,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
+      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("60000"), 1);
 
       const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
@@ -92,7 +88,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const usdcUnits = await units(amount, usdc);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
 
       await morphoCompoundStrategy
         .connect(vaultSigner)
@@ -105,7 +101,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
-      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
       const usdcUnits = await units(amount, usdc);
@@ -184,7 +180,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
         }
       );
 
-      await expect(usdtBalanceDiff).to.be.gte(0);
+      expect(usdtBalanceDiff).to.be.gte(0);
     });
   });
 });

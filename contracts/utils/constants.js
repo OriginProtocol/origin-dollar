@@ -13,7 +13,7 @@ const aura_stETH_WETH_PID = 115;
 const balancer_stETH_WETH_PID =
   "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 
-// wstETH/sfrcETH/rETH
+// wstETH/sfrxETH/rETH
 const aura_wstETH_sfrxETH_rETH_PID = 50;
 const balancer_wstETH_sfrxETH_rETH_PID =
   "0x42ed016f826165c2e5976fe5bc3df540c5ad0af700000000000000000000058b";

@@ -8,7 +8,6 @@ pragma solidity ^0.8.0;
 
 import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";

@@ -11,7 +11,6 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
-import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -98,7 +97,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external override onlyGovernor initializer {
+    ) external onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
@@ -115,7 +114,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             require(_assets[i] == asset, "Pool assets mismatch");
         }
 
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 
@@ -123,12 +126,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -158,6 +156,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         whenNotInBalancerVaultContext
         returns (uint256 amount)
     {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+
         uint256 bptBalance = _getBalancerPoolTokens();
 
         /* To calculate the worth of queried asset:
@@ -297,6 +297,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * by numerical order.
      */
     function _getPoolAssets() internal view returns (IERC20[] memory assets) {
+        // slither-disable-next-line unused-return
         (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
     }
 
@@ -441,7 +442,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         external
         onlyVaultOrGovernorOrStrategist
     {
-        
+        require(
+            _maxWithdrawalDeviation <= 1e18,
+            "Withdrawal dev. out of bounds"
+        );
         emit MaxWithdrawalDeviationUpdated(
             maxWithdrawalDeviation,
             _maxWithdrawalDeviation
@@ -463,6 +467,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         external
         onlyVaultOrGovernorOrStrategist
     {
+        require(_maxDepositDeviation <= 1e18, "Deposit dev. out of bounds");
         emit MaxDepositDeviationUpdated(
             maxDepositDeviation,
             _maxDepositDeviation

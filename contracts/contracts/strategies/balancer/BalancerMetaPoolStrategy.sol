@@ -12,7 +12,6 @@ import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-import "hardhat/console.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
@@ -155,7 +154,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             amountsIn,
-            0
+            minBPTwDeviation
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
@@ -223,11 +222,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address[] memory _strategyAssets,
         uint256[] memory _strategyAmounts
     ) internal {
-        if (_strategyAmounts.length == 1 && _strategyAmounts[0] == 0) {
-            // nothing to do
-            return;
-        }
-
         require(
             _strategyAssets.length == _strategyAmounts.length,
             "Invalid input arrays"
@@ -264,10 +258,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
             // for each of the vault assets
             for (uint256 j = 0; j < _strategyAssets.length; ++j) {
-                if (_strategyAmounts[j] == 0) {
-                    continue;
-                }
-
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_strategyAssets[j] == strategyAsset) {
                     (, poolAssetsAmountsOut[i]) = _toPoolAsset(
@@ -326,10 +316,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * ['uint256', 'uint256[]', 'uint256']
          * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
          */
-        console.log("BPT TO WITHDRAW");
-        console.log(maxBPTtoWithdraw);
-        console.log(_strategyAmounts[0]);
-
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
             poolAssetsAmountsOut,

@@ -8,13 +8,7 @@ NO_COLOR='\033[0m'
 
 
 main()
-{   
-    NETWORK_FILE="../dapp/network.json"
-
-    if [[ $APP_ID == "oeth-dapp" ]]; then
-      NETWORK_FILE="../dapp-oeth/network.json";
-    fi
-
+{
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
@@ -28,6 +22,9 @@ main()
         fi
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         params=()
+        if [[ "$TRACE" == "true" ]]; then
+            params+=" --trace"
+        fi
         params+=(--fork ${PROVIDER_URL})
         if [ -z "$BLOCK_NUMBER" ]; then
             echo "It is recommended that BLOCK_NUMBER is set to a recent block to improve performance of the fork";
@@ -36,12 +33,11 @@ main()
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
         if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
-
         cp -r deployments/mainnet deployments/localhost
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
-        FORK=true npx --no-install hardhat node --no-reset --export ${NETWORK_FILE} ${params[@]} > $nodeOutput 2>&1 &
+        FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
 
         tail -f $nodeOutput &
 
@@ -59,7 +55,6 @@ main()
         printf "\n"
         echo "🟢 Node initialized"
 
-        FORK=true npm run copy-interface-artifacts
         FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         
         # wait for subprocesses to finish
@@ -70,7 +65,7 @@ main()
 
 
     else
-        npx --no-install hardhat node --export ${NETWORK_FILE}
+        npx --no-install hardhat node
     fi
 }
 

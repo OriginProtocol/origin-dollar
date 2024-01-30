@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { BigNumber, utils } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const {
   advanceTime,
@@ -15,6 +15,7 @@ const {
   getAssetAddresses,
   isSmokeTest,
   isForkTest,
+  getBlockTimestamp,
 } = require("../test/helpers.js");
 
 const {
@@ -24,9 +25,20 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
-const { proposeArgs, proposeGovernanceArgs } = require("../utils/governor");
+const {
+  proposeArgs,
+  proposeGovernanceArgs,
+  accountCanCreateProposal,
+} = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
+const { impersonateAndFund } = require("./signers.js");
+const { hardhatSetBalance } = require("../test/_fund.js");
+const {
+  setStorageAt,
+  getStorageAt,
+} = require("@nomicfoundation/hardhat-network-helpers");
+const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -49,7 +61,8 @@ const deployWithConfirmation = async (
   contractName,
   args,
   contract,
-  skipUpgradeSafety = false
+  skipUpgradeSafety = false,
+  libraries = {}
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
@@ -69,6 +82,7 @@ const deployWithConfirmation = async (
       args,
       contract,
       fieldsToCompare: null,
+      libraries,
       ...(await getTxOpts()),
     })
   );
@@ -132,43 +146,15 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
 
   // If an address is passed, use that otherwise default to
   // the guardian address from the default hardhat accounts.
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: guardianAddr,
-    value: utils.parseEther("100"),
-  });
+  impersonateAndFund(guardianAddr);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [guardianAddr],
-  });
   log(`Impersonated Guardian at ${guardianAddr}`);
-};
-
-const impersonateAccount = async (address) => {
-  if (!isFork) {
-    throw new Error("impersonateAccount only works on Fork");
-  }
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
-
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: address,
-    value: utils.parseEther("100"),
-  });
-
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
-  log(`Impersonated Account at ${address}`);
 };
 
 /**
@@ -215,34 +201,29 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   // only works on hardhat network that supports `hardhat_setStorageAt`
   if (opts.reduceQueueTime) {
     log(`Reducing required queue time to 60 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 seconds
-      ], // address, storageSlot, newValue
-    });
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+    );
   } else {
     log(`Setting queue time back to 172800 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 
   const txOpts = await getTxOpts();
@@ -370,14 +351,51 @@ const executeGovernanceProposalOnFork = async ({
       }
     }
 
-    const votingPeriod = Number((await governorFive.votingPeriod()).toString());
-    log(
-      `Advancing ${
-        votingPeriod + 1
-      } blocks to make transaction for from Active to Succeeded`
+    let slotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 1] // `_proposals` is in slot 1
+      )
     );
-    // advance to the end of voting period
-    await advanceBlocks(votingPeriod + 1);
+    const extendedDeadlineSlotKey = keccak256(
+      defaultAbiCoder.encode(
+        ["uint256", "uint256"],
+        [proposalIdBn, 12] // `_extendedDeadlines` is in slot 12
+      )
+    );
+
+    // Add one to get the `endTime` slot
+    slotKey = BigNumber.from(slotKey).add(1);
+
+    const deadline = BigNumber.from(
+      await getStorageAt(governorFive.address, slotKey)
+    ).toNumber();
+    const currentBlock = await hre.ethers.provider.getBlockNumber();
+    let blocksToMine = deadline - currentBlock;
+
+    if (blocksToMine > 0) {
+      if (reduceQueueTime) {
+        blocksToMine = 10;
+        await setStorageAt(
+          governorFive.address,
+          slotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + blocksToMine
+        );
+        await setStorageAt(
+          governorFive.address,
+          extendedDeadlineSlotKey,
+          // Make it queueable in 10 blocks
+          currentBlock + blocksToMine
+        );
+      }
+      log(
+        `Advancing ${blocksToMine} blocks to make transaction for from Active to Succeeded`
+      );
+
+      // Advance to the end of voting period
+      await advanceBlocks(blocksToMine + 1);
+    }
 
     proposalState = "Succeeded";
     let newState = await getProposalState(proposalIdBn);
@@ -406,13 +424,51 @@ const executeGovernanceProposalOnFork = async ({
    * In that case such proposalId should not be included in migration files
    */
   if (proposalState === "Queued") {
-    const queuePeriod = Number((await timelock.getMinDelay()).toString());
-    log(`Advancing queue period (minDelay on the timelock) to ${queuePeriod}`);
-    // advance to the end of queue period
-    await advanceTime(queuePeriod + 1);
+    const timelockId = await getStorageAt(
+      governorFive.address,
+      keccak256(
+        defaultAbiCoder.encode(
+          ["uint256", "uint256"],
+          [proposalIdBn, 10] // `_timelockIds` is in slot 10
+        )
+      )
+    );
+
+    const minDelaySlot = keccak256(
+      defaultAbiCoder.encode(
+        ["bytes32", "uint256"],
+        [timelockId, 1] // `_timestamps` is in slot 1
+      )
+    );
+
+    const timelockTimestamp = BigNumber.from(
+      await getStorageAt(timelock.address, minDelaySlot)
+    ).toNumber();
+
+    const tNow = await getBlockTimestamp();
+    let timeToAdvance = timelockTimestamp - tNow;
+
+    if (timeToAdvance > 0) {
+      if (reduceQueueTime) {
+        // Advance by 30s
+        timeToAdvance = 30;
+
+        // Make it executable now
+        await setStorageAt(timelock.address, minDelaySlot, tNow - 60);
+      }
+
+      log(
+        `Advancing to the end of the queue period (on the timelock): ${timeToAdvance}`
+      );
+      // advance to the end of queue period
+      await advanceTime(timeToAdvance + 1);
+      await advanceBlocks(2);
+    }
   }
 
-  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn);
+  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
+    gasLimit: executeGasLimit,
+  });
 
   const newProposalState = await getProposalState(proposalIdBn);
   if (newProposalState === "Executed") {
@@ -513,41 +569,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // 0 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000000000" // 0 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x0000000000000000000000000000000000000000000000000000000000000005", // 5 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x0000000000000000000000000000000000000000000000000000000000000005" // 5 seconds
+    );
   } else {
     log(
       `Setting back original values of required voting delay to 1 block and ` +
@@ -556,41 +600,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x0000000000000000000000000000000000000000000000000000000000004380", // 17280 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x0000000000000000000000000000000000000000000000000000000000003840" // 14400 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000002d00", // 11520 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 };
 
@@ -620,7 +652,10 @@ const submitProposalToOgvGovernance = async (
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
-  await configureGovernanceContractDurations(opts.reduceQueueTime);
+  // overridig storage slots needs to/can only run in forked environment
+  if (!isMainnet) {
+    await configureGovernanceContractDurations(opts.reduceQueueTime);
+  }
 
   let signer;
   // we are submitting proposal using the deployer
@@ -661,8 +696,19 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async () => {
+const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
   if (isMainnet) {
+    // only applicable when OGV governance is the governor
+    if (deployerIsProposer) {
+      const governorFive = await getGovernorFive();
+      const { deployerAddr } = await getNamedAccounts();
+      if (!(await accountCanCreateProposal(governorFive, deployerAddr))) {
+        throw new Error(
+          `Deployer ${deployerAddr} doesn't have enough voting power to create a proposal.`
+        );
+      }
+    }
+
     const VaultProxy = await ethers.getContract("VaultProxy");
     const VaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
@@ -694,7 +740,8 @@ const handlePossiblyActiveGovernanceProposal = async (
   proposalId,
   deployName,
   governorFive,
-  reduceQueueTime
+  reduceQueueTime,
+  executeGasLimit
 ) => {
   if (isFork && proposalId) {
     let proposalState;
@@ -731,6 +778,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         proposalIdBn,
         proposalState,
         reduceQueueTime,
+        executeGasLimit,
       });
 
       // proposal executed skip deployment
@@ -817,6 +865,19 @@ async function getGovernorFive() {
 
 async function getProposalState(proposalIdBn) {
   const governorFive = await getGovernorFive();
+  let state = -1;
+  /* Sometimes a bug happens where fetching the state will cause an exception. It doesn't happen
+   * if deploy is ran with "--trace" option. A workaround that doesn't fix the unknown underlying
+   * issue is to retry 3 times.
+   */
+  let tries = 3;
+  while (tries > 0) {
+    tries--;
+    try {
+      state = await governorFive.state(proposalIdBn);
+      tries = 0;
+    } catch (e) {}
+  }
 
   return [
     "Pending",
@@ -827,7 +888,7 @@ async function getProposalState(proposalIdBn) {
     "Queued",
     "Expired",
     "Executed",
-  ][await governorFive.state(proposalIdBn)];
+  ][state];
 }
 
 async function getTimelock() {
@@ -852,6 +913,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     proposalId,
     deployerIsProposer = false, // The deployer issues the propose to OGV Governor
     reduceQueueTime = false, // reduce governance queue times
+    executeGasLimit = null,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -877,13 +939,14 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalId,
         deployName,
         governorFive,
-        reduceQueueTime
+        reduceQueueTime,
+        executeGasLimit
       )
     ) {
       return;
     }
 
-    await sanityCheckOgvGovernance();
+    await sanityCheckOgvGovernance({ deployerIsProposer });
 
     const proposal = await fn(tools);
     const propDescription = proposal.name;
@@ -918,6 +981,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalIdBn,
         proposalState,
         reduceQueueTime,
+        executeGasLimit,
       });
       log("Proposal executed.");
     } else {
@@ -934,10 +998,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     }
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
-      await hre.network.provider.request({
-        method: "hardhat_setBalance",
-        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-      });
+      await hardhatSetBalance(deployerAddr, "1000000");
     }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
@@ -951,39 +1012,52 @@ function deploymentWithGovernanceProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
-    /** Just for context of fork env change the id of the deployment script. This is required
-     * in circumstances when:
-     * - the deployment script has already been run on the mainnet
-     * - proposal has been either "Queued" or is still "New"
-     * - all the deployment artifacts and migration information is already present in the repo
-     *
-     * Problem: as part of normal deployment procedure we want to be able to simulate the
-     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
-     * since deployment artifacts are already present and migration file has already been updated
-     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
-     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
-     *
-     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
-     * as a workaround so that Hardhat executes it. If proposal has already been executed the
-     * `runDeployment` function will exit without applying the deployment.
-     *
-     * And we can not package this inside of `skip` function since without this workaround it
-     * doesn't even get evaluated.
-     */
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isForkTest
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
     if (isFork && proposalId) {
-      main.id = `${deployName}_force`;
+      // Skip if proposal is older than 14 days
+      const olderProposal =
+        Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
+      /** Just for context of fork env change the id of the deployment script. This is required
+       * in circumstances when:
+       * - the deployment script has already been run on the mainnet
+       * - proposal has been either "Queued" or is still "New"
+       * - all the deployment artifacts and migration information is already present in the repo
+       *
+       * Problem: as part of normal deployment procedure we want to be able to simulate the
+       * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
+       * since deployment artifacts are already present and migration file has already been updated
+       * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
+       * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
+       *
+       * For that reason for any deployment ran on fork with proposalId we change the id of deployment
+       * as a workaround so that Hardhat executes it. If proposal has already been executed the
+       * `runDeployment` function will exit without applying the deployment.
+       *
+       * And we can not package this inside of `skip` function since without this workaround it
+       * doesn't even get evaluated.
+       */
+      if (!olderProposal) {
+        // We skip force running deployments that have been run
+        // more than 14 days ago on mainnet with a governance proposal.
+        // Any deployment without a proposal, which has not been run yet,
+        // will still be force run on fork.
+        main.id = `${deployName}_force`;
+      }
     }
 
     main.skip = async () => {
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
+      } else if (isFork) {
         /* running on fork, and proposal not yet submitted. This is usually during development
          * before kicking off deploy.
          */
-      } else if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
         return onlyOnFork ? true : !isMainnet || isSmokeTest;
@@ -1236,7 +1310,6 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,

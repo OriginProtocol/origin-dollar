@@ -34,7 +34,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
     function initialize(
         address _logic,
         address _initGovernor,
-        bytes memory _data
+        bytes calldata _data
     ) public payable onlyGovernor {
         require(_implementation() == address(0));
         assert(

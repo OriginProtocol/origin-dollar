@@ -2,12 +2,8 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
+const { loadDefaultFixture } = require("./../_fixture");
 const {
-  loadDefaultFixture,
-  impersonateAndFundContract,
-} = require("./../_fixture");
-const {
-  forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
   usdcUnits,
@@ -16,6 +12,10 @@ const {
   differenceInErc20TokenBalances,
   isCI,
 } = require("./../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
+const {
+  shouldHaveRewardTokensConfigured,
+} = require("../behaviour/reward-tokens.fork");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -33,7 +33,7 @@ const log = require("../../utils/logger")("test:fork:ousd:vault");
  * Still open to discussion.
  */
 
-forkOnlyDescribe("ForkTest: Vault", function () {
+describe("ForkTest: Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -186,7 +186,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
-      const strategistSigner = await impersonateAndFundContract(
+      const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );
 
@@ -412,4 +412,51 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       await vault.connect(timelock).withdrawAllFromStrategies();
     });
   });
+
+  shouldHaveRewardTokensConfigured(() => ({
+    vault: fixture.vault,
+    harvester: fixture.harvester,
+    expectedConfigs: {
+      [fixture.aave.address]: {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 100,
+        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        doSwapRewardToken: true,
+        swapPlatform: 1,
+        liquidationLimit: 0,
+        uniswapV3Path:
+          "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+      },
+      [fixture.cvx.address]: {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 100,
+        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        doSwapRewardToken: true,
+        swapPlatform: 1,
+        liquidationLimit: ousdUnits("2500"),
+        uniswapV3Path:
+          "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+      },
+      [fixture.crv.address]: {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 200,
+        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        doSwapRewardToken: true,
+        swapPlatform: 1,
+        liquidationLimit: ousdUnits("4000"),
+        uniswapV3Path:
+          "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+      },
+      [fixture.comp.address]: {
+        allowedSlippageBps: 300,
+        harvestRewardBps: 100,
+        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        doSwapRewardToken: true,
+        swapPlatform: 1,
+        liquidationLimit: 0,
+        uniswapV3Path:
+          "0xc00e94cb662c3520282e6f5717214004a7f26888000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+      },
+    },
+  }));
 });
