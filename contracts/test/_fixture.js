@@ -52,10 +52,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
-<<<<<<< HEAD
-=======
 const { impersonateAndFund } = require("../utils/signers");
->>>>>>> origin/master
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -268,10 +265,7 @@ const defaultFixture = deployments.createFixture(async () => {
     fusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDT);
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
-<<<<<<< HEAD
-=======
     ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
->>>>>>> origin/master
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -336,15 +330,12 @@ const defaultFixture = deployments.createFixture(async () => {
     balancerREthStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
       balancerRethStrategyProxy.address
-<<<<<<< HEAD
     );
 
     const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
     oethHarvester = await ethers.getContractAt(
       "OETHHarvester",
       oethHarvesterProxy.address
-=======
->>>>>>> origin/master
     );
 
     convexEthMetaStrategyProxy = await ethers.getContract(
@@ -363,21 +354,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-<<<<<<< HEAD
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
-=======
->>>>>>> origin/master
     swapper = await ethers.getContract("Swapper1InchV5");
 
     const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
@@ -1731,82 +1707,7 @@ async function nodeRevert(snapshotId) {
   return await hre.network.provider.request({
     method: "evm_revert",
     params: [snapshotId],
-<<<<<<< HEAD
-  });
-}
 
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
-}
-
-async function impersonateAndFundContract(address, amount = "100000") {
-  await impersonateAccount(address);
-
-  if (parseFloat(amount) > 0) {
-    await _hardhatSetBalance(address, amount);
-  }
-
-  const signer = await ethers.provider.getSigner(address);
-  signer.address = address;
-  return signer;
-}
-
-async function impersonateAndFundAddress(
-  tokenAddress,
-  contractAddresses,
-  toAddress,
-  balanceToUse = 30, // 30%
-  maxAmount = ethers.BigNumber.from(0)
-) {
-  if (!Array.isArray(contractAddresses)) {
-    contractAddresses = [contractAddresses];
-  }
-
-  let amountTransfered = ethers.BigNumber.from("0");
-  for (const contractAddress of contractAddresses) {
-    const impersonatedSigner = await impersonateAndFundContract(
-      contractAddress
-    );
-
-    const tokenContract = await ethers.getContractAt(daiAbi, tokenAddress);
-
-    const balance = await tokenContract
-      .connect(impersonatedSigner)
-      .balanceOf(contractAddress);
-
-    const amount = balance.mul(balanceToUse).div(100);
-    // consider max amount
-    if (maxAmount.gt(ethers.BigNumber.from("0"))) {
-      if (amountTransfered.add(amount).gt(maxAmount)) {
-        await tokenContract
-          .connect(impersonatedSigner)
-          .transfer(toAddress, maxAmount.sub(amountTransfered));
-
-        // max amount already transferred
-        return;
-      }
-
-      amountTransfered.add(amount);
-    }
-
-    await tokenContract.connect(impersonatedSigner).transfer(toAddress, amount);
-  }
-}
-
-=======
-  });
-}
-
->>>>>>> origin/master
 async function resetAllowance(
   tokenContract,
   signer,

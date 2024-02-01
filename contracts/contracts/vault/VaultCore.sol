@@ -395,10 +395,6 @@ contract VaultCore is VaultInitializer {
         return _totalValueInVault() + _totalValueInStrategies();
     }
 
-    function totalValueInVault() external view virtual returns (uint256 value) {
-        return _totalValueInVault();
-    }    
-
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
      * @return value Total value in USD/ETH (1e18)

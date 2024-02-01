@@ -251,7 +251,9 @@ async function humanBalance(user, contract) {
   return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
+// if any of the below 2 lines are changed, also change it in _hot-deploy.js file
 const isFork = process.env.FORK === "true";
+const isCI = process.env.GITHUB_ACTIONS;
 const isLocalhost = !isFork && hre.network.name === "localhost";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
@@ -259,7 +261,6 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
-const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
