@@ -2,9 +2,12 @@
  * used for fork-contract development process where the standalone (separate terminal) node
  * doesn't need to be restarted to pick up code and ABI changes.
  */
-const { ethers } = hre;
-
-const { isFork, isCI } = require("./helpers");
+const isFork = process.env.FORK === "true";
+const isCI = process.env.GITHUB_ACTIONS;
+/* can not import the above functionality from ./helpers since hardhat task jupyterFixture
+ * imports this file and hardhat isn't available as an import yet when tasks are setup.
+ */
+//const { isFork, isCI } = require("./helpers");
 const addresses = require("../utils/addresses");
 const {
   balancer_rETH_WETH_PID,
@@ -92,6 +95,7 @@ async function constructNewContract(fixture, implContractName) {
   });
 
   log(`Deployed`);
+  const { ethers } = (await import("hardhat")).default;
   return await ethers.getContract(implContractName);
 }
 
@@ -169,13 +173,19 @@ async function hotDeployVaultAdmin(
   fixture,
   deployVaultAdmin,
   deployVaultCore,
-  isOeth
+  isOeth,
+  isJupiterDeploy = false
 ) {
   const { deploy } = deployments;
   const vaultProxyName = `${isOeth ? "OETH" : ""}VaultProxy`;
-  const vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
+  let vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
+  if (isJupiterDeploy) {
+    vaultCoreName = `${isOeth ? "OETH" : ""}VaultCoreExposed`;
+  }
   const vaultAdminName = `${isOeth ? "OETH" : ""}VaultAdmin`;
   const vaultVariableName = `${isOeth ? "oethVault" : "vault"}`;
+
+  const { ethers } = (await import("hardhat")).default;
 
   const cVaultProxy = await ethers.getContract(vaultProxyName);
 
@@ -204,6 +214,7 @@ async function hotDeployVaultAdmin(
   }
   if (deployVaultCore) {
     log(`Deploying new ${vaultCoreName} implementation`);
+
     // deploy this contract that exposes internal function
     await deploy(vaultCoreName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
@@ -226,6 +237,7 @@ async function hotDeployVaultAdmin(
 }
 
 async function hotDeployHarvester(fixture, forOETH) {
+  const { ethers } = (await import("hardhat")).default;
   const { deploy } = deployments;
   const harvesterName = `${forOETH ? "OETH" : ""}Harvester`;
   const harvesterProxyName = `${forOETH ? "OETH" : ""}HarvesterProxy`;
@@ -249,6 +261,7 @@ async function hotDeployHarvester(fixture, forOETH) {
 }
 
 async function hotDeployOracleRouter(fixture, forOETH) {
+  const { ethers } = (await import("hardhat")).default;
   const { deploy } = deployments;
   const routerName = `${forOETH ? "OETH" : ""}OracleRouter`;
 
@@ -285,6 +298,7 @@ async function hotDeployFixture(
   fixtureStrategyVarName,
   implContractName
 ) {
+  const { ethers } = (await import("hardhat")).default;
   /* Because of the way hardhat fixture caching works it is vital that
    * the fixtures are loaded before the hot-deployment of contracts. If the
    * contracts are hot-deployed and fixture load happens afterwards the deployed
@@ -317,4 +331,5 @@ async function hotDeployFixture(
 
 module.exports = {
   hotDeployOption,
+  hotDeployVaultAdmin
 };

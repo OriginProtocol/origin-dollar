@@ -42,7 +42,7 @@ steth = load_contract('ERC20', STETH)
 wsteth = load_contract('wsteth', WSTETH)
 sfrxeth = load_contract('ERC20', SFRXETH)
 frxeth = load_contract('ERC20', FRXETH)
-reth = load_contract('ERC20', RETH)
+reth = load_contract('reth', RETH)
 
 flipper = load_contract('flipper', FLIPPER)
 ousd_buyback = load_contract('buyback', OUSD_BUYBACK)
@@ -86,7 +86,6 @@ rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
 weth = load_contract('ERC20', WETH)
-reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
 frxeth = load_contract('ERC20', FRXETH)
 sfrxeth = load_contract('ERC20', SFRXETH)

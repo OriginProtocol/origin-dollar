@@ -3,6 +3,7 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
+const { jupyterFixture } = require("./hotDeploy");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const {
@@ -70,6 +71,7 @@ task("fund", "Fund accounts on local or fork")
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
+task("jupyterFixture", "Run the jupyterFixture that sets up contracts for jupyter notebook data collection", jupyterFixture)
 
 // Token tasks.
 subtask("allowance", "Get the token allowance an owner has given to a spender")

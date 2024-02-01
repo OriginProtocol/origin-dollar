@@ -57,6 +57,10 @@ main()
 
         FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         
+        if [[ "$JUPYTER_FIXTURE" == "true" ]]; then
+            FORK=true npx hardhat jupyterFixture --network localhost &
+        fi
+
         # wait for subprocesses to finish
         for job in `jobs -p`
           do
