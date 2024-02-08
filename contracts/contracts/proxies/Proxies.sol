@@ -195,3 +195,10 @@ contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice BridgedWOETHProxy delegates calls to BridgedWOETH implementation
+ */
+contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
