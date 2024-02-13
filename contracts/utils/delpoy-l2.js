@@ -30,7 +30,7 @@ function deployOnArb(opts, fn) {
 
   main.tags = ["arbitrum"];
 
-  main.skip = () => hre.network.name !== "arbitrum";
+  main.skip = () => hre.network.name !== "arbitrumOne";
 
   return main;
 }
