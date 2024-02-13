@@ -145,7 +145,8 @@ jobs:
     continue-on-error: true
     env:
       HARDHAT_CACHE_DIR: ./cache
-      PROVIDER_URL: ${{ secrets.ARBITRUM_PROVIDER_URL }}
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      ARBITRUM_PROVIDER_URL: ${{ secrets.ARBITRUM_PROVIDER_URL }}
     steps:
       - uses: actions/checkout@v3
 
