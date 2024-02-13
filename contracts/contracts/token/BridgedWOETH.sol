@@ -36,6 +36,7 @@ contract BridgedWOETH is
     function mint(address account, uint256 amount)
         external
         onlyRole(MINTER_ROLE)
+        nonReentrant
     {
         _mint(account, amount);
     }
@@ -48,6 +49,7 @@ contract BridgedWOETH is
     function burn(address account, uint256 amount)
         external
         onlyRole(BURNER_ROLE)
+        nonReentrant
     {
         _burn(account, amount);
     }

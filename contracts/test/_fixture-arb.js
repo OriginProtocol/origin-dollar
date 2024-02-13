@@ -1,11 +1,16 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
-const { isFork, isArbFork } = require("./helpers");
+const { isFork, isArbFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 
 const log = require("../utils/logger")("test:fixtures-arb");
+
+const MINTER_ROLE =
+  "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+const BURNER_ROLE =
+  "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
 let snapshotId;
 const defaultArbitrumFixture = deployments.createFixture(async () => {
@@ -42,19 +47,12 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
     await impersonateAndFund(governor.address);
   }
 
-  await woeth
-    .connect(governor)
-    .grantRole(
-      "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
-      minter.address
-    );
+  await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
+  await woeth.connect(governor).grantRole(BURNER_ROLE, burner.address);
 
-  await woeth
-    .connect(governor)
-    .grantRole(
-      "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848",
-      burner.address
-    );
+  // Mint some WOETH
+  await woeth.connect(minter).mint(rafael.address, oethUnits("1"));
+  await woeth.connect(minter).mint(nick.address, oethUnits("1"));
 
   return {
     woeth,
@@ -77,4 +75,7 @@ mocha.after(async () => {
 
 module.exports = {
   defaultArbitrumFixture,
+
+  MINTER_ROLE,
+  BURNER_ROLE,
 };
