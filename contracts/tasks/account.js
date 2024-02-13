@@ -49,6 +49,11 @@ async function fund(taskArguments, hre) {
     throw new Error("Task can only be used on local or fork");
   }
 
+  if (hre.network.config.chainId !== 1) {
+    // Skip funding if it's not mainnet
+    return;
+  }
+
   if (!process.env.ACCOUNTS_TO_FUND) {
     // No need to fund accounts if no accounts to fund
     return;

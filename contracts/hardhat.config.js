@@ -48,25 +48,33 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 
 const isForkTest =
   process.env.FORK === "true" && process.env.IS_TEST === "true";
+const isArbForkTest =
+  isForkTest && process.env.FORK_NETWORK_NAME === "arbitrumOne";
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
 }`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
-let forkBlockNumber = Number(process.env.BLOCK_NUMBER) || undefined;
+let forkBlockNumber =
+  Number(
+    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : process.env.BLOCK_NUMBER
+  ) || undefined;
 if (isForkTest && standaloneLocalNodeRunning) {
-  const jsonResponse = fetch(providerUrl, {
-    method: "post",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "eth_blockNumber",
-      id: 1,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).json();
+  const jsonResponse = fetch(
+    isArbForkTest ? arbitrumProviderUrl : providerUrl,
+    {
+      method: "post",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_blockNumber",
+        id: 1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).json();
 
   /*
    * We source the block number from the hardhat context rather than from
@@ -80,7 +88,7 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
   // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(providerUrl, {
+  fetch(isArbForkTest ? arbitrumProviderUrl : providerUrl, {
     method: "post",
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -118,12 +126,12 @@ module.exports = {
       },
       ...(isForkTest
         ? {
-            chainId: 1,
+            chainId: isArbForkTest ? 42161 : 1,
             timeout: 0,
             initialBaseFeePerGas: 0,
             forking: {
               enabled: true,
-              url: providerUrl,
+              url: isArbForkTest ? arbitrumProviderUrl : providerUrl,
               blockNumber: forkBlockNumber,
               timeout: 0,
             },

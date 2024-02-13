@@ -30,7 +30,8 @@ function deployOnArb(opts, fn) {
 
   main.tags = ["arbitrum"];
 
-  main.skip = () => hre.network.name !== "arbitrumOne";
+  main.skip = () =>
+    hre.network.name !== "arbitrumOne" && hre.network.config.chainId !== 42161;
 
   return main;
 }

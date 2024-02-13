@@ -20,8 +20,20 @@ main()
             echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
             exit 1
         fi
-        if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
+
         params=()
+        if [ -z "$FORK_NETWORK_NAME" ]; then
+          FORK_NETWORK_NAME=mainnet
+        fi
+
+        if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
+          PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
+          BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
+          params+=("--no-deploy ");
+        fi
+        echo "Fork Network: $FORK_NETWORK_NAME"
+
+        if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         if [[ "$TRACE" == "true" ]]; then
             params+=" --trace"
         fi
@@ -30,10 +42,11 @@ main()
             echo "It is recommended that BLOCK_NUMBER is set to a recent block to improve performance of the fork";
         else
             echo "Forking from block $BLOCK_NUMBER";
-            params+=(--fork-block-number ${BLOCK_NUMBER})
+            params+=(--fork-block-number ${BLOCK_NUMBER});
         fi
         if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
-        cp -r deployments/mainnet deployments/localhost
+
+        cp -r deployments/$FORK_NETWORK_NAME deployments/localhost
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
