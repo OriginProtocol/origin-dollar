@@ -70,4 +70,4 @@ gitGraph
 
 ### Environment Variables used on CI
 - `MAX_CHUNKS` - The number of runners to use to run fork tests parallely on CI, hardcoded to 4 in defi.yml file
-- `CHUNK_ID` - Current runner ID (will be set by Github Actions), see defi.yml for the definition
+- `CHUNK_ID` - Current runner ID (will be set by Github Actions), see defi.yml for the definition 
