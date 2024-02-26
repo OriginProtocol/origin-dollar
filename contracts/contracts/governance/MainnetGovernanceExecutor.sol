@@ -42,6 +42,8 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
     error InsufficientBalanceForFees(uint256 feesRequired);
     error DuplicateChainConfig(uint64 chainSelector);
     error InvalidGovernanceCommand(bytes2 command);
+    error InvalidInitializationArgLength();
+    error InvalidGovernanceAddress();
 
     /***************************************
                     Storage
@@ -61,8 +63,17 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         ccipRouter = _ccipRouter;
     }
 
-    function initialize(address _governor) public onlyGovernor initializer {
-        _changeGovernor(_governor);
+    function initialize(
+        uint64[] calldata chainSelectors,
+        address[] calldata l2Governances
+    ) public initializer {
+        if (chainSelectors.length != l2Governances.length) {
+            revert InvalidInitializationArgLength();
+        }
+
+        for (uint256 i = 0; i < chainSelectors.length; ++i) {
+            _addChainConfig(chainSelectors[i], l2Governances[i]);
+        }
     }
 
     /***************************************
@@ -222,8 +233,18 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         external
         onlyGovernor
     {
+        _addChainConfig(chainSelector, l2Governance);
+    }
+
+    function _addChainConfig(uint64 chainSelector, address l2Governance)
+        internal
+    {
         if (chainConfig[chainSelector].isSupported) {
             revert DuplicateChainConfig(chainSelector);
+        }
+
+        if (l2Governance == address(0)) {
+            revert InvalidGovernanceAddress();
         }
 
         chainConfig[chainSelector] = ChainConfig({

@@ -4,6 +4,7 @@ const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { utils } = require("ethers");
 const { advanceBlocks } = require("../helpers");
+const { CCIPChainSelectors } = require("../../utils/constants");
 
 const arbFixture = createFixtureLoader(defaultArbitrumFixture);
 
@@ -69,7 +70,7 @@ describe("L2 Governance", function () {
       const tx = await l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -106,7 +107,7 @@ describe("L2 Governance", function () {
       const tx = await l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -149,7 +150,7 @@ describe("L2 Governance", function () {
       const tx = await l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -170,7 +171,7 @@ describe("L2 Governance", function () {
       await l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -193,7 +194,7 @@ describe("L2 Governance", function () {
       const tx = l2Governance.connect(rafael).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -227,7 +228,7 @@ describe("L2 Governance", function () {
       const tx = l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [nick.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
@@ -244,7 +245,7 @@ describe("L2 Governance", function () {
       const tx = l2Governance.connect(ccipRouterSigner).ccipReceive({
         messageId:
           "0xdeadfeed00000000000000000000000000000000000000000000000000000000",
-        sourceChainSelector: "5009297550715157269",
+        sourceChainSelector: CCIPChainSelectors.Mainnet,
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],

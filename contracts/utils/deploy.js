@@ -960,6 +960,12 @@ function deploymentWithGovernanceProposal(opts, fn) {
     await sanityCheckOgvGovernance({ deployerIsProposer });
 
     const proposal = await fn(tools);
+
+    if (proposal?.actions?.length == 0) {
+      // No proposal
+      return;
+    }
+
     const propDescription = proposal.name;
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};

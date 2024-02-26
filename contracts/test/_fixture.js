@@ -225,7 +225,8 @@ const defaultFixture = deployments.createFixture(async () => {
     convexEthMetaStrategy,
     fluxStrategy,
     vaultValueChecker,
-    oethVaultValueChecker;
+    oethVaultValueChecker,
+    mainnetGovernanceExecutor;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -353,6 +354,14 @@ const defaultFixture = deployments.createFixture(async () => {
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
+
+    const mainnetGovernanceExecutorProxy = await ethers.getContract(
+      "MainnetGovernanceExecutorProxy"
+    );
+    mainnetGovernanceExecutor = await ethers.getContractAt(
+      "MainnetGovernanceExecutor",
+      mainnetGovernanceExecutorProxy.address
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -607,6 +616,9 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     aura,
     bal,
+
+    // L2 Governance
+    mainnetGovernanceExecutor,
   };
 });
 

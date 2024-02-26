@@ -23,6 +23,11 @@ const aura_rETH_WETH_PID = 109;
 const balancer_rETH_WETH_PID =
   "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112";
 
+const CCIPChainSelectors = {
+  ArbitrumOne: "4949039107694359620",
+  Mainnet: "5009297550715157269",
+};
+
 module.exports = {
   threeCRVPid,
   metapoolLPCRVPid,
@@ -35,6 +40,7 @@ module.exports = {
   balancer_wstETH_sfrxETH_rETH_PID,
   aura_rETH_WETH_PID,
   balancer_rETH_WETH_PID,
+  CCIPChainSelectors,
 };
 
 // These are all the metapool ids. For easier future reference
