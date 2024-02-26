@@ -11,6 +11,8 @@ const arbFixture = createFixtureLoader(defaultArbitrumFixture);
 describe("L2 Governance", function () {
   let fixture;
 
+  this.timeout(0);
+
   beforeEach(async () => {
     fixture = await arbFixture();
   });

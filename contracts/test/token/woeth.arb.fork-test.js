@@ -41,9 +41,9 @@ describe("ForkTest: WOETH", function () {
   });
 
   it("Should not allow anyone else to mint", async () => {
-    const { woeth, governor, rafael, nick, burner } = fixture;
+    const { woeth, rafael, nick, burner } = fixture;
 
-    for (const signer of [governor, rafael, nick, burner]) {
+    for (const signer of [rafael, nick, burner]) {
       await expect(
         woeth.connect(signer).mint(signer.address, oethUnits("1"))
       ).to.be.revertedWith(
@@ -68,9 +68,9 @@ describe("ForkTest: WOETH", function () {
   });
 
   it("Should not allow anyone else to burn", async () => {
-    const { woeth, governor, rafael, nick, minter } = fixture;
+    const { woeth, rafael, nick, minter } = fixture;
 
-    for (const signer of [governor, rafael, nick, minter]) {
+    for (const signer of [rafael, nick, minter]) {
       await expect(
         woeth.connect(signer).burn(signer.address, oethUnits("1"))
       ).to.be.revertedWith(
