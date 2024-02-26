@@ -1,6 +1,8 @@
+const { isCI } = require("../test/helpers");
 const addresses = require("../utils/addresses");
 const { deployOnArb } = require("../utils/delpoy-l2");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const { impersonateAndFund } = require("../utils/signers");
 const { getTxOpts } = require("../utils/tx");
 
 module.exports = deployOnArb(
@@ -9,9 +11,13 @@ module.exports = deployOnArb(
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const governanceProxy = await ethers.getContract("L2GovernanceProxy");
+
+    let sDeployer = await ethers.provider.getSigner(deployerAddr);
+    if (isCI) {
+      sDeployer = await impersonateAndFund(await governanceProxy.governor())
+    }
 
     // Deploy L2Governor
     await deployWithConfirmation("L2Governor", [

@@ -1,3 +1,4 @@
+const { isCI } = require("../test/helpers");
 const addresses = require("../utils/addresses");
 const { CCIPChainSelectors } = require("../utils/constants");
 const {
@@ -17,12 +18,16 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ ethers }) => {
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const executorProxy = await ethers.getContract(
       "MainnetGovernanceExecutorProxy"
     );
 
+    let sDeployer = await ethers.provider.getSigner(deployerAddr);
+    if (isCI) {
+      sDeployer = await impersonateAndFund(await executorProxy.governor())
+    }
+    
     // Deploy MainnetGovernanceExecutor
     await deployWithConfirmation("MainnetGovernanceExecutor", [
       addresses.mainnet.CCIPRouter,
