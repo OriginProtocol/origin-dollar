@@ -145,6 +145,7 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         }
 
         // Forward to CCIP Router
+        // slither-disable-next-line arbitrary-send-eth
         bytes32 messageId = router.ccipSend{ value: fees }(
             chainSelector,
             message

@@ -26,9 +26,9 @@ module.exports = deploymentWithGovernanceProposal(
 
     let sDeployer = await ethers.provider.getSigner(deployerAddr);
     if (isCI) {
-      sDeployer = await impersonateAndFund(await executorProxy.governor())
+      sDeployer = await impersonateAndFund(await executorProxy.governor());
     }
-    
+
     // Deploy MainnetGovernanceExecutor
     await deployWithConfirmation("MainnetGovernanceExecutor", [
       addresses.mainnet.CCIPRouter,

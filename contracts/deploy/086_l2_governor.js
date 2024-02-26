@@ -16,7 +16,7 @@ module.exports = deployOnArb(
 
     let sDeployer = await ethers.provider.getSigner(deployerAddr);
     if (isCI) {
-      sDeployer = await impersonateAndFund(await governanceProxy.governor())
+      sDeployer = await impersonateAndFund(await governanceProxy.governor());
     }
 
     // Deploy L2Governor

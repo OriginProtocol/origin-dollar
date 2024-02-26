@@ -402,9 +402,10 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     function _cancel(uint256 proposalId) internal {
         TimelockController controller = TimelockController(payable(timelock));
 
-        controller.cancel(_getTimelockHash(proposalId));
+        bytes32 timelockHash = _getTimelockHash(proposalId);
 
         proposalDetails[proposalId].exists = false;
+        controller.cancel(timelockHash);
 
         emit ProposalCanceled(proposalId);
     }
