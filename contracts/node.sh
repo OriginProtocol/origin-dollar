@@ -66,6 +66,11 @@ main()
           fi
         done
         printf "\n"
+
+        # if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
+        #   FORK=true npx hardhat deploy --network localhost --tags arbitrum
+        # fi
+
         echo "🟢 Node initialized"
 
         FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
@@ -75,7 +80,6 @@ main()
           do
             wait $job || let "FAIL+=1"
           done
-
 
     else
         npx --no-install hardhat node

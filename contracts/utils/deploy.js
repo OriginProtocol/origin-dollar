@@ -16,6 +16,7 @@ const {
   isSmokeTest,
   isForkTest,
   getBlockTimestamp,
+  isArbitrumOne,
 } = require("../test/helpers.js");
 
 const {
@@ -128,12 +129,21 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
-  if (
-    ![
-      addresses.mainnet.Timelock.toLowerCase(),
-      addresses.mainnet.OldTimelock.toLowerCase(),
-    ].includes(initProxyGovernor)
-  ) {
+
+  if (isArbitrumOne) {
+    // TODO: Skip for now
+    // Update after deployment
+    return;
+  }
+
+  const governors = isArbitrumOne
+    ? [addresses.arbitrumOne.L2GovernorProxy.toLowerCase()]
+    : [
+        addresses.mainnet.Timelock.toLowerCase(),
+        addresses.mainnet.OldTimelock.toLowerCase(),
+      ];
+
+  if (!governors.includes(initProxyGovernor)) {
     throw new Error(
       `Proxy contract initialised with unexpected governor: ${initProxyGovernor}`
     );

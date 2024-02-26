@@ -259,7 +259,8 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
-const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
+const isArbitrumOne = process.env.FORK_NETWORK_NAME == "arbitrumOne";
+const isArbFork = isFork && isArbitrumOne;
 const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
@@ -768,6 +769,7 @@ module.exports = {
   isMainnetOrFork,
   isForkTest,
   isForkWithLocalNode,
+  isArbitrumOne,
   isArbFork,
   isCI,
   getOracleAddress,

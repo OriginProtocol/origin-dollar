@@ -202,3 +202,19 @@ contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice L2GovernanceProxy delegates calls to L2Governance implementation
+ */
+contract L2GovernanceProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice MainnetGovernanceExecutorProxy delegates calls to MainnetGovernanceExecutor implementation
+ */
+contract MainnetGovernanceExecutorProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
