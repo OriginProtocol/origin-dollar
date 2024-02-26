@@ -6,6 +6,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
+const { impersonateAndFund } = require("../utils/signers");
 const { getTxOpts } = require("../utils/tx");
 
 module.exports = deploymentWithGovernanceProposal(
