@@ -134,3 +134,23 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Feb 27, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+
+def main():
+  txs = []
+
+  with TemporaryFork():
+    txs.append(
+      build_buyback_tx(
+        OUSD,
+        ousd.balanceOf(OUSD_BUYBACK),
+        max_ogv_slippage=5,
+        max_cvx_slippage=5
+      )
+    )
+
+    print(to_gnosis_json(txs))
