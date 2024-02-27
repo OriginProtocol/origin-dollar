@@ -114,3 +114,23 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Feb 27, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+
+def main():
+  txs = []
+
+  with TemporaryFork():
+    txs.append(
+      build_buyback_tx(
+        OETH,
+        oeth.balanceOf(OETH_BUYBACK),
+        max_ogv_slippage=3,
+        max_cvx_slippage=6
+      )
+    )
+
+    print(to_gnosis_json(txs))
