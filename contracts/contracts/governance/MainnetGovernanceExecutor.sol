@@ -273,4 +273,7 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
 
         emit ChainConfigRemoved(chainSelector);
     }
+
+    // Accept ETH
+    receive() external payable {}
 }
