@@ -1,10 +1,15 @@
 const { isArbitrumOneOrFork, isMainnetOrFork } = require("../test/helpers");
 const { deployWithConfirmation } = require("../utils/deploy");
+const { impersonateAndFund } = require("../utils/signers");
 
 const deployName = "085_deploy_l2_governance_proxies";
 
 const main = async (hre) => {
   console.log(`Running ${deployName} deployment on ${hre.network.name}...`);
+
+  const { deployerAddr } = await getNamedAccounts();
+
+  await impersonateAndFund(deployerAddr)
 
   if (isArbitrumOneOrFork) {
     // Deploy L2 Governor on Arbitrum One
