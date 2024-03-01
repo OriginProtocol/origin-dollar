@@ -3,11 +3,13 @@ pragma solidity ^0.8.0;
 
 import { CCIPReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
+import { IARM } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IARM.sol";
 
 import { MAINNET_SELECTOR } from "../utils/CCIPChainSelectors.sol";
 import { Governable } from "./Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
+import { ITimelockController } from "../interfaces/ITimelockController.sol";
+import { ICCIPRouter } from "../interfaces/ICCIPRouter.sol";
 
 bytes2 constant QUEUE_PROPOSAL_COMMAND = hex"0001";
 bytes2 constant CANCEL_PROPOSAL_COMMAND = hex"0002";
@@ -73,6 +75,8 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     error InvalidGovernanceCommand(bytes2 command);
     error ProposalAlreadyQueued(uint256 proposalId, bytes32 timelockHash);
     error EmptyAddress();
+    error TokenTransfersNotAccepted();
+    error CCIPRouterIsCursed();
 
     /***************************************
                     Storage
@@ -143,6 +147,19 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
         _;
     }
 
+    /**
+     * @dev Reverts if CCIP's Risk Management contract (ARM) is cursed
+     */
+    modifier onlyIfNotCursed() {
+        IARM arm = IARM(ICCIPRouter(this.getRouter()).getArmProxy());
+
+        if (arm.isCursed()) {
+            revert CCIPRouterIsCursed();
+        }
+
+        _;
+    }
+
     /***************************************
                 Constructor
     ****************************************/
@@ -179,7 +196,12 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
             message.sourceChainSelector,
             abi.decode(message.sender, (address))
         )
+        onlyIfNotCursed
     {
+        if (message.destTokenAmounts.length > 0) {
+            revert TokenTransfersNotAccepted();
+        }
+
         // Decode the command & message
         (bytes2 cmd, bytes memory cmdData) = abi.decode(
             message.data,
@@ -205,7 +227,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     /**
      * @dev L2 Executor is always same as Timelock
      */
-    function executor() public view returns (address) {
+    function executor() external view returns (address) {
         return timelock;
     }
 
@@ -216,7 +238,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      */
     function state(uint256 proposalId) external view returns (ProposalState) {
         bytes32 timelockHash = _getTimelockHash(proposalId);
-        TimelockController controller = TimelockController(payable(timelock));
+        ITimelockController controller = ITimelockController(timelock);
 
         if (controller.isOperationDone(timelockHash)) {
             return ProposalState.Executed;
@@ -251,17 +273,17 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      * @dev Returns the actions of a proposal
      */
     function getActions(uint256 proposalId)
-        public
+        external
         view
         virtual
         returns (
-            address[] memory targets,
-            uint256[] memory values,
-            string[] memory signatures,
-            bytes[] memory calldatas
+            address[] memory,
+            uint256[] memory,
+            string[] memory,
+            bytes[] memory
         )
     {
-        ProposalDetails storage details = proposalDetails[proposalId];
+        ProposalDetails memory details = proposalDetails[proposalId];
         return (
             details.targets,
             details.values,
@@ -279,10 +301,11 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     ) private pure returns (bytes[] memory) {
         bytes[] memory fullcalldatas = new bytes[](calldatas.length);
 
-        for (uint256 i = 0; i < signatures.length; ++i) {
+        uint256 len = signatures.length;
+        for (uint256 i = 0; i < len; ++i) {
             fullcalldatas[i] = bytes(signatures[i]).length == 0
                 ? calldatas[i]
-                : abi.encodePacked(
+                : bytes.concat(
                     bytes4(keccak256(bytes(signatures[i]))),
                     calldatas[i]
                 );
@@ -376,7 +399,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      *      Private and only to be used by Mainnet Governance through CCIP Router
      */
     function _queue(uint256 proposalId) internal {
-        TimelockController controller = TimelockController(payable(timelock));
+        ITimelockController controller = ITimelockController(timelock);
         ProposalDetails memory details = proposalDetails[proposalId];
 
         if (!details.exists) {
@@ -400,7 +423,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      *      Private and only to be used by Mainnet Governance through CCIP Router
      */
     function _cancel(uint256 proposalId) internal {
-        TimelockController controller = TimelockController(payable(timelock));
+        ITimelockController controller = ITimelockController(timelock);
 
         bytes32 timelockHash = _getTimelockHash(proposalId);
 
@@ -418,7 +441,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
         view
         returns (bytes32 timelockHash)
     {
-        TimelockController controller = TimelockController(payable(timelock));
+        ITimelockController controller = ITimelockController(timelock);
 
         ProposalDetails memory details = proposalDetails[proposalId];
 
@@ -445,18 +468,19 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
 
     /**
      * @dev Executes an already queued proposal on the Timelock.
-     *      Can be called by anyone
+     *      Can be called by anyone. Reverts if CCIP bridge
+     *      status is cursed.
      * @param proposalId Proposal ID
      */
-    function execute(uint256 proposalId) external {
-        TimelockController controller = TimelockController(payable(timelock));
+    function execute(uint256 proposalId) external payable onlyIfNotCursed {
+        ITimelockController controller = ITimelockController(timelock);
         ProposalDetails memory details = proposalDetails[proposalId];
 
         if (!details.exists) {
             revert InvalidProposal();
         }
 
-        controller.executeBatch(
+        controller.executeBatch{ value: msg.value }(
             details.targets,
             details.values,
             _encodeCalldata(details.signatures, details.calldatas),

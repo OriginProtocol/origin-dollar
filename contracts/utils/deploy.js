@@ -16,7 +16,7 @@ const {
   isSmokeTest,
   isForkTest,
   getBlockTimestamp,
-  isArbitrumOne,
+  isArbitrumOneOrFork,
 } = require("../test/helpers.js");
 
 const {
@@ -130,14 +130,14 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
 
-  if (isArbitrumOne) {
+  if (isArbitrumOneOrFork) {
     // TODO: Skip for now
     // Update after deployment
     return;
   }
 
-  const governors = isArbitrumOne
-    ? [addresses.arbitrumOne.L2GovernorProxy.toLowerCase()]
+  const governors = isArbitrumOneOrFork
+    ? [addresses.arbitrumOne.L2Governor.toLowerCase()]
     : [
         addresses.mainnet.Timelock.toLowerCase(),
         addresses.mainnet.OldTimelock.toLowerCase(),

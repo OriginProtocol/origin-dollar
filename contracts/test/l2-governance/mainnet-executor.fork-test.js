@@ -23,16 +23,6 @@ describe("Mainnet Governance Executor", function () {
       .queueL2Proposal(CCIPChainSelectors.ArbitrumOne, 1, 0);
   });
 
-  it("Should revert on Invalid command selector", async () => {
-    const { mainnetGovernanceExecutor, timelock } = fixture;
-
-    const tx = mainnetGovernanceExecutor
-      .connect(timelock)
-      .sendCommandToL2("0x0100", CCIPChainSelectors.ArbitrumOne, 1, 0);
-
-    await expect(tx).to.be.revertedWith("InvalidGovernanceCommand");
-  });
-
   it("Should revert if sent to unconfigured chain", async () => {
     const { mainnetGovernanceExecutor, timelock } = fixture;
 

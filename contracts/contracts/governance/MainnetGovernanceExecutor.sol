@@ -21,7 +21,7 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         uint64 indexed chainSelector,
         bytes32 messageId,
         bytes2 commandSelector,
-        uint256 proposalId
+        uint256 indexed proposalId
     );
     /**
      * @dev Emitted when a Chain Config is added
@@ -41,7 +41,6 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
     error UnsupportedChain(uint64 chainSelector);
     error InsufficientBalanceForFees(uint256 feesRequired);
     error DuplicateChainConfig(uint64 chainSelector);
-    error InvalidGovernanceCommand(bytes2 command);
     error InvalidInitializationArgLength();
     error InvalidGovernanceAddress();
 
@@ -66,12 +65,13 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
     function initialize(
         uint64[] calldata chainSelectors,
         address[] calldata l2Governances
-    ) public initializer {
-        if (chainSelectors.length != l2Governances.length) {
+    ) external initializer {
+        uint256 len = chainSelectors.length;
+        if (len != l2Governances.length) {
             revert InvalidInitializationArgLength();
         }
 
-        for (uint256 i = 0; i < chainSelectors.length; ++i) {
+        for (uint256 i = 0; i < len; ++i) {
             _addChainConfig(chainSelectors[i], l2Governances[i]);
         }
     }
@@ -92,47 +92,13 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         uint256 proposalId,
         uint256 maxGasLimit
     ) internal {
-        // Ensure it's a valid command
-        if (
-            commandSelector != QUEUE_PROPOSAL_COMMAND &&
-            commandSelector != CANCEL_PROPOSAL_COMMAND
-        ) {
-            revert InvalidGovernanceCommand(commandSelector);
-        }
-
-        ChainConfig memory config = chainConfig[chainSelector];
-
-        // Ensure it's a supported chain
-        if (!config.isSupported) {
-            revert UnsupportedChain(chainSelector);
-        }
-
-        // Build the command data
-        bytes memory data = abi.encode(
-            // Command Selector
-            commandSelector,
-            // Encoded Command Data
-            abi.encode(proposalId)
-        );
-
-        bytes memory extraArgs = hex"";
-
-        // Set gas limit if needed
-        if (maxGasLimit > 0) {
-            extraArgs = Client._argsToBytes(
-                // Set gas limit
-                Client.EVMExtraArgsV1({ gasLimit: maxGasLimit })
-            );
-        }
-
         // Build the message
-        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(config.l2Governance),
-            data: data,
-            tokenAmounts: new Client.EVMTokenAmount[](0),
-            extraArgs: extraArgs,
-            feeToken: address(0)
-        });
+        Client.EVM2AnyMessage memory message = _buildCCIPMessage(
+            commandSelector,
+            chainSelector,
+            proposalId,
+            maxGasLimit
+        );
 
         IRouterClient router = IRouterClient(ccipRouter);
 
@@ -160,25 +126,75 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
     }
 
     /**
-     * @dev Send a command to queue/cancel a L2 Proposal through CCIP Router.
-     *      Has to come through Governance
+     * @dev Returns the CCIP fees that the contract needs to execute the command
      * @param commandSelector Command to send
      * @param chainSelector Destination chain
      * @param proposalId L2 Proposal ID
      * @param maxGasLimit Max Gas Limit to use
      */
-    function sendCommandToL2(
+    function getCCIPFees(
         bytes2 commandSelector,
         uint64 chainSelector,
         uint256 proposalId,
         uint256 maxGasLimit
-    ) external onlyGovernor {
-        _sendCommandToL2(
+    ) external view returns (uint256) {
+        // Build the message
+        Client.EVM2AnyMessage memory message = _buildCCIPMessage(
             commandSelector,
             chainSelector,
             proposalId,
             maxGasLimit
         );
+
+        return IRouterClient(ccipRouter).getFee(chainSelector, message);
+    }
+
+    /**
+     * @dev Builds the CCIP message for the given command
+     * @param commandSelector Command to send
+     * @param chainSelector Destination chain
+     * @param proposalId L2 Proposal ID
+     * @param maxGasLimit Max Gas Limit to use
+     */
+    function _buildCCIPMessage(
+        bytes2 commandSelector,
+        uint64 chainSelector,
+        uint256 proposalId,
+        uint256 maxGasLimit
+    ) internal view returns (Client.EVM2AnyMessage memory message) {
+        ChainConfig memory config = chainConfig[chainSelector];
+
+        // Ensure it's a supported chain
+        if (!config.isSupported) {
+            revert UnsupportedChain(chainSelector);
+        }
+
+        // Build the command data
+        bytes memory data = abi.encode(
+            // Command Selector
+            commandSelector,
+            // Encoded Command Data
+            abi.encode(proposalId)
+        );
+
+        bytes memory extraArgs = hex"";
+
+        // Set gas limit if needed
+        if (maxGasLimit > 0) {
+            extraArgs = Client._argsToBytes(
+                // Set gas limit
+                Client.EVMExtraArgsV1({ gasLimit: maxGasLimit })
+            );
+        }
+
+        // Build the message
+        message = Client.EVM2AnyMessage({
+            receiver: abi.encode(config.l2Governance),
+            data: data,
+            tokenAmounts: new Client.EVMTokenAmount[](0),
+            extraArgs: extraArgs,
+            feeToken: address(0)
+        });
     }
 
     /**

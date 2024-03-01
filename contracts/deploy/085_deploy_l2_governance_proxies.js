@@ -1,4 +1,4 @@
-const { isFork } = require("../test/helpers");
+const { isArbitrumOneOrFork, isMainnetOrFork } = require("../test/helpers");
 const { deployWithConfirmation } = require("../utils/deploy");
 
 const deployName = "085_deploy_l2_governance_proxies";
@@ -6,11 +6,11 @@ const deployName = "085_deploy_l2_governance_proxies";
 const main = async (hre) => {
   console.log(`Running ${deployName} deployment on ${hre.network.name}...`);
 
-  if (hre.network.name == "arbitrumOne") {
+  if (isArbitrumOneOrFork) {
     // Deploy L2 Governor on Arbitrum One
     const l2GovernanceProxy = await deployWithConfirmation("L2GovernanceProxy");
     console.log("L2GovernanceProxy address:", l2GovernanceProxy.address);
-  } else if (hre.network.name == "mainnet") {
+  } else if (isMainnetOrFork) {
     // Deploy Governance Executor on Mainnet
     const mainnetGovernanceExecutorProxy = await deployWithConfirmation(
       "MainnetGovernanceExecutorProxy"
@@ -25,7 +25,7 @@ const main = async (hre) => {
 };
 
 main.id = deployName;
-main.skip = !(isFork || ["arbitrumOne", "mainnet"].includes(hre.network.name));
+main.skip = !(isArbitrumOneOrFork || isMainnetOrFork);
 main.tags = ["arbitrum", "mainnet"];
 
 module.exports = main;
