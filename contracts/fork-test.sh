@@ -27,9 +27,20 @@ main()
         source .env
     fi
 
+    if [ -z "$FORK_NETWORK_NAME" ]; then
+        FORK_NETWORK_NAME=mainnet
+    fi
+    echo "Fork Network: $FORK_NETWORK_NAME"
+
     # There must be a provider URL in all cases
     if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
+    params=()
+    if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
+        PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
+        BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
+    fi
+
     if $is_local; then
         # Check if any node is running on port 8545
         defaultNodeUrl=http://localhost:8545
@@ -49,13 +60,12 @@ main()
     fi
 
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
-        cp -r deployments/mainnet deployments/hardhat
+        cp -r deployments/$FORK_NETWORK_NAME deployments/hardhat
         echo "No running node detected spinning up a fresh one"
     else
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    params=()
     if [ -z "$1" ]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
