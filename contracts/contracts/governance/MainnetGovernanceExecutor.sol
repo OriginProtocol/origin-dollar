@@ -208,7 +208,7 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         uint64 chainSelector,
         uint256 proposalId,
         uint256 maxGasLimit
-    ) external onlyGovernor {
+    ) external payable onlyGovernor {
         _sendCommandToL2(
             QUEUE_PROPOSAL_COMMAND,
             chainSelector,
@@ -228,7 +228,7 @@ contract MainnetGovernanceExecutor is Governable, Initializable {
         uint64 chainSelector,
         uint256 proposalId,
         uint256 maxGasLimit
-    ) external onlyGovernor {
+    ) external payable onlyGovernor {
         _sendCommandToL2(
             CANCEL_PROPOSAL_COMMAND,
             chainSelector,
