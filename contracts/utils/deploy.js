@@ -17,6 +17,7 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOneOrFork,
+  isArbitrumOne,
 } = require("../test/helpers.js");
 
 const {
@@ -90,7 +91,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet) {
+  if (isMainnet || isArbitrumOne) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -707,7 +708,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {

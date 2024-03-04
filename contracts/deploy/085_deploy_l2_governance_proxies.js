@@ -9,7 +9,7 @@ const main = async (hre) => {
 
   const { deployerAddr } = await getNamedAccounts();
 
-  await impersonateAndFund(deployerAddr)
+  await impersonateAndFund(deployerAddr);
 
   if (isArbitrumOneOrFork) {
     // Deploy L2 Governor on Arbitrum One
@@ -31,6 +31,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.skip = !(isArbitrumOneOrFork || isMainnetOrFork);
-main.tags = ["arbitrum", "mainnet"];
+main.tags = ["arbitrumOne", "mainnet"];
 
 module.exports = main;

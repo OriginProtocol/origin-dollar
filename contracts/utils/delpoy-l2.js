@@ -35,7 +35,7 @@ function deployOnArb(opts, fn) {
   main.id = deployName;
   main.dependencies = dependencies || [];
 
-  main.tags = ["arbitrum"];
+  main.tags = ["arbitrumOne"];
 
   main.skip = () =>
     !(
