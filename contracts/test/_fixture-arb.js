@@ -102,7 +102,7 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   const ccipRouterSigner = !isFork
     ? undefined
-    : await impersonateAndFund(addresses.mainnet.CCIPRouter);
+    : await impersonateAndFund(addresses.arbitrumOne.CCIPRouter);
 
   return {
     l2GovernanceProxy,
