@@ -28,6 +28,11 @@ const CCIPChainSelectors = {
   Mainnet: "5009297550715157269",
 };
 
+const L2GovernanceCommands = {
+  Queue: "0x0001",
+  Cancel: "0x0002",
+};
+
 module.exports = {
   threeCRVPid,
   metapoolLPCRVPid,
@@ -41,6 +46,7 @@ module.exports = {
   aura_rETH_WETH_PID,
   balancer_rETH_WETH_PID,
   CCIPChainSelectors,
+  L2GovernanceCommands,
 };
 
 // These are all the metapool ids. For easier future reference

@@ -4,7 +4,10 @@ const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { utils } = require("ethers");
 const { advanceBlocks } = require("../helpers");
-const { CCIPChainSelectors } = require("../../utils/constants");
+const {
+  CCIPChainSelectors,
+  L2GovernanceCommands,
+} = require("../../utils/constants");
 
 const arbFixture = createFixtureLoader(defaultArbitrumFixture);
 
@@ -76,7 +79,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [proposalId])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [proposalId]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -113,7 +119,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [proposalId])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [proposalId]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -156,7 +165,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [proposalId])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [proposalId]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -177,7 +189,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0002", utils.defaultAbiCoder.encode(["uint256"], [proposalId])]
+          [
+            L2GovernanceCommands.Cancel,
+            utils.defaultAbiCoder.encode(["uint256"], [proposalId]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -200,7 +215,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [1])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [1]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -217,7 +235,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [executor.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [1])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [1]),
+          ]
         ),
         destTokenAmounts: [],
       });
@@ -234,7 +255,10 @@ describe("L2 Governance", function () {
         sender: utils.defaultAbiCoder.encode(["address"], [nick.address]),
         data: utils.defaultAbiCoder.encode(
           ["bytes2", "bytes"],
-          ["0x0001", utils.defaultAbiCoder.encode(["uint256"], [1])]
+          [
+            L2GovernanceCommands.Queue,
+            utils.defaultAbiCoder.encode(["uint256"], [1]),
+          ]
         ),
         destTokenAmounts: [],
       });

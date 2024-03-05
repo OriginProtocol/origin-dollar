@@ -21,6 +21,7 @@ module.exports = deployOnArb(
 
     // Deploy L2Governor
     await deployWithConfirmation("L2Governor", [
+      86400, // 1d Timelock
       [governanceProxy.address], // Only L2Governance can propose
       [governanceProxy.address], // Only L2Governance can execute
     ]);

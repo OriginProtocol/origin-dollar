@@ -29,12 +29,12 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   log(
     `Before deployments with param "${
-      isFork ? ["arbitrumOne"] : ["unit_tests"]
+      isFork ? ["arbitrumOne"] : ["arb_unit_tests"]
     }"`
   );
 
   // Run the contract deployments
-  await deployments.fixture(isFork ? ["arbitrumOne"] : ["unit_tests"], {
+  await deployments.fixture(isFork ? ["arbitrumOne"] : ["arb_unit_tests"], {
     keepExistingDeployments: true,
     fallbackToGlobal: true,
   });
@@ -43,6 +43,8 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
 
   const signers = await hre.ethers.getSigners();
+
+  const mainnetGovernor = signers[1];
 
   const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
 
@@ -57,11 +59,9 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
   const l2Governor = await ethers.getContract("L2Governor");
 
   // Impersonated L2Governor contract's signer for tests
-  let governor;
+  const governor = await impersonateAndFund(l2Governor.address);
 
   if (isFork) {
-    governor = await impersonateAndFund(l2Governor.address);
-
     let woethGov = await woeth.governor();
     if (woethGov != governor.address) {
       woethGov = await impersonateAndFund(woethGov);
@@ -76,14 +76,16 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
       // Grant admin role
       await woeth.connect(woethGov).grantRole(ADMIN_ROLE, l2Governor.address);
     }
-  } else {
-    governor = await ethers.getSigner(await woeth.governor());
   }
 
   // Executor
   const executor = await ethers.getContractAt(
     "MainnetGovernanceExecutor",
-    addresses.mainnet.MainnetGovernanceExecutorProxy
+    isFork
+      ? addresses.mainnet.MainnetGovernanceExecutorProxy
+      : (
+          await ethers.getContract("MainnetGovernanceExecutorProxy")
+        ).address
   );
 
   await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
@@ -93,9 +95,14 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
   await woeth.connect(minter).mint(rafael.address, oethUnits("1"));
   await woeth.connect(minter).mint(nick.address, oethUnits("1"));
 
-  const ccipRouterSigner = await impersonateAndFund(
-    addresses.arbitrumOne.CCIPRouter
-  );
+  let mockCCIPRouter;
+  if (!isFork) {
+    mockCCIPRouter = await ethers.getContract("MockCCIPRouter");
+  }
+
+  const ccipRouterSigner = isFork
+    ? undefined
+    : await impersonateAndFund(addresses.mainnet.CCIPRouter);
 
   return {
     l2GovernanceProxy,
@@ -109,10 +116,12 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
     governor,
     minter,
     burner,
+    mainnetGovernor,
 
     rafael,
     nick,
     ccipRouterSigner,
+    mockCCIPRouter,
   };
 });
 

@@ -73,7 +73,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     error EmptyProposal();
     error InvalidProposalLength();
     error InvalidGovernanceCommand(bytes2 command);
-    error ProposalAlreadyQueued(uint256 proposalId, bytes32 timelockHash);
+    error InvalidProposalState();
     error EmptyAddress();
     error TokenTransfersNotAccepted();
     error CCIPRouterIsCursed();
@@ -163,11 +163,7 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
     /***************************************
                 Constructor
     ****************************************/
-    constructor(address l2Router_) CCIPReceiver(l2Router_) {
-        if (l2Router_ == address(0)) {
-            revert EmptyAddress();
-        }
-    }
+    constructor(address l2Router_) CCIPReceiver(l2Router_) {}
 
     function initialize(address timelock_, address mainnetExecutor_)
         external
@@ -237,6 +233,11 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      * @return ProposalState
      */
     function state(uint256 proposalId) external view returns (ProposalState) {
+        ProposalDetails memory details = proposalDetails[proposalId];
+        if (!details.exists) {
+            revert InvalidProposal();
+        }
+
         bytes32 timelockHash = _getTimelockHash(proposalId);
         ITimelockController controller = ITimelockController(timelock);
 
@@ -284,6 +285,11 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
         )
     {
         ProposalDetails memory details = proposalDetails[proposalId];
+
+        if (!details.exists) {
+            revert InvalidProposal();
+        }
+
         return (
             details.targets,
             details.values,
@@ -399,12 +405,12 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      *      Private and only to be used by Mainnet Governance through CCIP Router
      */
     function _queue(uint256 proposalId) internal {
+        if (this.state(proposalId) != ProposalState.Pending) {
+            revert InvalidProposalState();
+        }
+
         ITimelockController controller = ITimelockController(timelock);
         ProposalDetails memory details = proposalDetails[proposalId];
-
-        if (!details.exists) {
-            revert InvalidProposal();
-        }
 
         controller.scheduleBatch(
             details.targets,
@@ -423,6 +429,10 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      *      Private and only to be used by Mainnet Governance through CCIP Router
      */
     function _cancel(uint256 proposalId) internal {
+        if (this.state(proposalId) == ProposalState.Executed) {
+            revert InvalidProposalState();
+        }
+
         ITimelockController controller = ITimelockController(timelock);
 
         bytes32 timelockHash = _getTimelockHash(proposalId);
@@ -473,12 +483,12 @@ contract L2Governance is Governable, Initializable, CCIPReceiver {
      * @param proposalId Proposal ID
      */
     function execute(uint256 proposalId) external payable onlyIfNotCursed {
+        if (this.state(proposalId) != ProposalState.Ready) {
+            revert InvalidProposalState();
+        }
+
         ITimelockController controller = ITimelockController(timelock);
         ProposalDetails memory details = proposalDetails[proposalId];
-
-        if (!details.exists) {
-            revert InvalidProposal();
-        }
 
         controller.executeBatch{ value: msg.value }(
             details.targets,

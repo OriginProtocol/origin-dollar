@@ -12,6 +12,7 @@ const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
+  CCIPChainSelectors,
 } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:001_core");
@@ -1204,6 +1205,100 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
+const deployL2Contracts = async () => {
+  if (hre.network.name != "hardhat") {
+    // Only for unit tests
+    return;
+  }
+
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const mockRouter = await ethers.getContract("MockCCIPRouter");
+
+  // Deploy proxies
+  await deployWithConfirmation("MainnetGovernanceExecutorProxy");
+  await deployWithConfirmation("L2GovernanceProxy");
+
+  const executorProxy = await ethers.getContract(
+    "MainnetGovernanceExecutorProxy"
+  );
+  const l2GovernanceProxy = await ethers.getContract("L2GovernanceProxy");
+
+  // Deploy Implemenations
+  await deployWithConfirmation("MainnetGovernanceExecutor", [
+    mockRouter.address,
+  ]);
+  const executorImpl = await ethers.getContract("MainnetGovernanceExecutor");
+  await deployWithConfirmation("L2Governance", [mockRouter.address]);
+  const l2GovernanceImpl = await ethers.getContract("L2Governance");
+
+  // Deploy L2Governor
+  await deployWithConfirmation("L2Governor", [
+    60 * 5, // 5 min Timelock
+    [l2GovernanceProxy.address],
+    [l2GovernanceProxy.address],
+  ]);
+  const l2Governor = await ethers.getContract("L2Governor");
+
+  // Init L2GovernanceProxy
+  const l2GovernanceInitData = l2GovernanceImpl.interface.encodeFunctionData(
+    "initialize(address,address)",
+    [l2Governor.address, executorProxy.address]
+  );
+
+  await l2GovernanceProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](l2GovernanceImpl.address, l2Governor.address, l2GovernanceInitData);
+  log("Initialized L2GovernanceProxy");
+
+  // Init MainnetGovernanceExecutorProxy
+  const executorInitData = executorImpl.interface.encodeFunctionData(
+    "initialize(uint64[],address[])",
+    [[CCIPChainSelectors.ArbitrumOne], [l2GovernanceProxy.address]]
+  );
+
+  await executorProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](executorImpl.address, governorAddr, executorInitData);
+  log("Initialized MainnetGovernanceExecutorProxy");
+
+  // Deploy bridged WOETH
+  await deployWithConfirmation("BridgedWOETHProxy");
+  const woethProxy = await ethers.getContract("BridgedWOETHProxy");
+
+  await deployWithConfirmation("BridgedWOETH");
+  const woethImpl = await ethers.getContract("BridgedWOETH");
+
+  const woethInitData = woethImpl.interface.encodeFunctionData(
+    "initialize()",
+    []
+  );
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](woethImpl.address, l2Governor.address, woethInitData);
+  log("Initialized BridgedWOETHProxy");
+
+  // Grant roles to Governor
+  const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
+  await woeth
+    .connect(sDeployer)
+    .grantRole(
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      l2Governor.address
+    );
+
+  await woeth
+    .connect(sDeployer)
+    .revokeRole(
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      deployerAddr
+    );
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -1229,13 +1324,17 @@ const main = async () => {
   await deployWOusd();
   await deployOETHSwapper();
   await deployOUSDSwapper();
+
+  // Deploy only L2 contracts
+  await deployL2Contracts();
+
   console.log("001_core deploy done.");
   return true;
 };
 
 main.id = "001_core";
 main.dependencies = ["mocks"];
-main.tags = ["unit_tests"];
+main.tags = ["unit_tests", "arb_unit_tests"];
 main.skip = () => isFork;
 
 module.exports = main;
