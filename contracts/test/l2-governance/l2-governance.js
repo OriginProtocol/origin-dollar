@@ -652,10 +652,10 @@ describe("L2 Governance", function () {
     });
 
     it("Should not allow anyone else to update Timelock", async () => {
-      const { l2Governance, ccipRouterSigner } = fixture;
+      const { l2Governance, rafael } = fixture;
 
       await expect(
-        l2Governance.connect(ccipRouterSigner).setTimelock(addresses.zero)
+        l2Governance.connect(rafael).setTimelock(addresses.dead)
       ).to.be.revertedWith("NotL2Executor");
     });
 
@@ -677,12 +677,10 @@ describe("L2 Governance", function () {
     });
 
     it("Should not allow anyone else to update Executor", async () => {
-      const { l2Governance, ccipRouterSigner } = fixture;
+      const { l2Governance, rafael } = fixture;
 
       await expect(
-        l2Governance
-          .connect(ccipRouterSigner)
-          .setMainnetExecutor(addresses.zero)
+        l2Governance.connect(rafael).setMainnetExecutor(addresses.dead)
       ).to.be.revertedWith("NotL2Executor");
     });
 
