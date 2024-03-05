@@ -100,7 +100,7 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
     mockCCIPRouter = await ethers.getContract("MockCCIPRouter");
   }
 
-  const ccipRouterSigner = isFork
+  const ccipRouterSigner = !isFork
     ? undefined
     : await impersonateAndFund(addresses.mainnet.CCIPRouter);
 
