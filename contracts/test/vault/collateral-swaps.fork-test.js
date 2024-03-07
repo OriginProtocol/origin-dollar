@@ -150,8 +150,8 @@ describe("ForkTest: OETH Vault", function () {
       {
         from: "WETH",
         to: "frxETH",
-        fromAmount: 10,
-        minToAssetAmount: 9.7,
+        fromAmount: 1,
+        minToAssetAmount: 0.97,
         protocols: "UNISWAP_V3",
       },
       {
