@@ -8,7 +8,6 @@ const { balancer_rETH_WETH_PID } = require("../../utils/constants");
 const { units, oethUnits, isCI } = require("../helpers");
 const { balancerREthFixture, createFixtureLoader } = require("../_fixture");
 
-const temporaryFork = require("../../utils/temporaryFork");
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
 
@@ -721,55 +720,6 @@ async function depositTest(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
   ).to.approxEqualTolerance(after.strategyValues.sum, 0.01);
-}
-
-async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
-  const {
-    oethVault,
-    oeth,
-    balancerWstEthStrategy,
-    balancerVault,
-    balancerWstEthPID,
-    strategist,
-    reth,
-  } = fixture;
-  const logParams = {
-    oeth,
-    oethVault,
-    bpt,
-    balancerVault,
-    strategy: balancerWstEthStrategy,
-    allAssets,
-    pid: balancerWstEthPID,
-    reth,
-  };
-
-  const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
-  const ethAmounts = unitAmounts;
-  const sumEthAmounts = ethAmounts.reduce(
-    (a, b) => a.add(b),
-    BigNumber.from(0)
-  );
-
-  const before = await logBalances(logParams);
-
-  await oethVault.connect(strategist).depositToStrategy(
-    balancerWstEthStrategy.address,
-    allAssets.map((asset) => asset.address),
-    unitAmounts
-  );
-
-  const after = await logBalances(logParams);
-
-  // Should have liquidity in Balancer
-  const strategyValuesDiff = after.strategyValues.sum.sub(
-    before.strategyValues.sum
-  );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
-  expect(
-    after.strategyValues.value,
-    "strategy total value = sum of asset values"
-  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
 }
 
 async function logBalances({
