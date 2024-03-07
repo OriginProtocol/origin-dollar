@@ -360,7 +360,8 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     it("Should be able to withdraw with higher withdrawal deviation", async function () {});
   });
 
-  describe("Large withdraw", function () {
+  // Minting with rETH is unsupported
+  describe.skip("Large withdraw", function () {
     const depositAmount = 30000;
     let depositAmountUnits, oethVaultSigner;
     beforeEach(async () => {
