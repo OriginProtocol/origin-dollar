@@ -1,7 +1,6 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const { BigNumber } = ethers;
-const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 const mocha = require("mocha");
 
@@ -1641,10 +1640,29 @@ async function convexOETHMetaVaultFixture(
       config.poolAddOethAmount.toString()
     );
 
+    const { oethWhale } = fixture;
+
+    // Load with WETH
+    await setERC20TokenBalance(
+      oethWhaleAddress,
+      weth,
+      (config.poolAddOethAmount * 2).toString()
+    );
+
+    // Approve the Vault to transfer WETH
+    await weth
+      .connect(oethWhale)
+      .approve(oethVault.address, poolAddOethAmountUnits);
+
+    // Mint OETH with WETH
+    await oethVault
+      .connect(oethWhale)
+      .mint(weth.address, poolAddOethAmountUnits, 0);
+
     const oethAmount = await oeth.balanceOf(oethWhaleAddress);
     log(`OETH whale balance     : ${formatUnits(oethAmount)}`);
     log(`OETH to add to Metapool: ${formatUnits(poolAddOethAmountUnits)}`);
-    expect(oethAmount).to.be.gte(poolAddOethAmountUnits);
+
     await oeth
       .connect(fixture.oethWhale)
       .approve(fixture.oethMetaPool.address, poolAddOethAmountUnits);

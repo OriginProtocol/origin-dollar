@@ -208,6 +208,7 @@ async function hotDeployVaultAdmin(
     await deploy(vaultCoreName, {
       from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
       contract: vaultCoreName,
+      args: isOeth ? [fixture.weth.address] : [],
     });
     const implementation = await ethers.getContract(vaultCoreName);
 
