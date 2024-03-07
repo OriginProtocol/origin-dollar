@@ -655,8 +655,7 @@ async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
   // const { timelock, oethVault } = fixture;
-  const { weth, reth, stETH, frxETH, matt, strategist, timelock, oethVault } =
-    fixture;
+  const { weth, matt, strategist, timelock, oethVault } = fixture;
 
   const bufferBps = await oethVault.vaultBuffer();
   const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
@@ -671,7 +670,7 @@ async function oethCollateralSwapFixture() {
   // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
   await setFraxOraclePrice(parseUnits("0.999", 18));
 
-  for (const token of [weth, reth, stETH, frxETH]) {
+  for (const token of [weth]) {
     await token
       .connect(matt)
       .approve(
