@@ -40,7 +40,7 @@ describe("FraxETH Strategy", function () {
   }));
 
   describe("Mint", function () {
-    it.skip("Should allow minting with frxETH", async () => {
+    it("Should allow minting with frxETH", async () => {
       const { daniel, frxETH } = fixture;
       await mintTest(fixture, daniel, frxETH, "12.3887");
     });
@@ -50,12 +50,12 @@ describe("FraxETH Strategy", function () {
       await mintTest(fixture, domen, weth, "22.3008");
     });
 
-    it.skip("Should allow minting with RETH", async () => {
+    it("Should allow minting with RETH", async () => {
       const { josh, reth } = fixture;
       await mintTest(fixture, josh, reth, "42.6665");
     });
 
-    it.skip("Should allow minting with stETH", async () => {
+    it("Should allow minting with stETH", async () => {
       const { matt, stETH } = fixture;
       await mintTest(fixture, matt, stETH, "12.49993");
     });
@@ -391,9 +391,14 @@ describe("FraxETH Strategy", function () {
 });
 
 async function mintTest(fixture, user, asset, amount = "10") {
-  const { oeth, oethVault, frxETH, fraxEthStrategy } = fixture;
+  const { oeth, oethVault, frxETH, fraxEthStrategy, weth } = fixture;
 
   const unitAmount = await units(amount, asset);
+
+  if (asset.address != weth.address) {
+    const tx = oethVault.connect(user).mint(asset.address, unitAmount, "0");
+    await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+  }
 
   const supplyBeforeMint = await oeth.totalSupply();
   const userAssetBalanceBeforeMint = await asset.balanceOf(user.address);

@@ -149,6 +149,23 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
+    it("Vault should have the right WETH address", async () => {
+      const { oethVault } = fixture;
+
+      expect((await oethVault.weth()).toLowerCase()).to.equal(
+        addresses.mainnet.WETH.toLowerCase()
+      );
+
+      const amount = parseUnits("100", 18);
+      const minEth = parseUnits("99.4", 18);
+
+      const tx = await oethVault
+        .connect(oethWhaleSigner)
+        .redeem(amount, minEth);
+      await expect(tx)
+        .to.emit(oethVault, "Redeem")
+        .withNamedArgs({ _addr: oethWhaleAddress });
+    });
   });
 
   shouldHaveRewardTokensConfigured(() => ({
