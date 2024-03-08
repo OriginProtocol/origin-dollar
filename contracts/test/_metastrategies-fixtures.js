@@ -134,9 +134,11 @@ async function _balanceMetaPool(fixture, metapool) {
     const diffInDollars = coinTwo3CrvValue.sub(coinOne3CrvValue);
     const liquidityDiff = await get3CRVLiquidity(fixture, diffInDollars.div(2));
 
-    // Tilt to Main Token
-    log(`About to exchange ${formatUnits(liquidityDiff)} OUSD for 3CRV`);
-    await exchangeMethod(0, 1, liquidityDiff, 0);
+    if (liquidityDiff > 0) {
+      // Tilt to Main Token
+      log(`About to exchange ${formatUnits(liquidityDiff)} OUSD for 3CRV`);
+      await exchangeMethod(0, 1, liquidityDiff, 0);
+    }
   }
 
   await vault.connect(domen).allocate();
