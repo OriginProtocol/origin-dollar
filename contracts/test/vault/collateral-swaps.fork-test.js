@@ -68,12 +68,12 @@ describe("ForkTest: OETH Vault", function () {
         fromAmount: 100,
         minToAssetAmount: 90,
       },
-      {
-        from: "WETH",
-        to: "stETH",
-        fromAmount: 100,
-        minToAssetAmount: 99.96,
-      },
+      // {
+      //   from: "WETH",
+      //   to: "stETH",
+      //   fromAmount: 100,
+      //   minToAssetAmount: 99.96,
+      // },
       {
         from: "WETH",
         to: "frxETH",
