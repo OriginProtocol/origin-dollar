@@ -305,6 +305,14 @@ There's an example
 npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
 
+### Deployed contract code verification
+
+To verify the deployed contract against the locally compiled contracts sol2uml from Nick Addison is convenient: 
+```
+sol2uml diff [0x_address_of_the_deployed_contract] .,node_modules
+```
+
+
 ## Continuous Integration
 
 [GitHub Actions](https://github.com/features/actions) are used for the build. The configuration for GitHub Actions is in [.github/workflows/defi.yml](../.github/workflows/defi.yml). The action workflows can be found at https://github.com/OriginProtocol/origin-dollar/actions.

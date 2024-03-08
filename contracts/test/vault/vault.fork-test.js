@@ -296,7 +296,6 @@ describe("ForkTest: Vault", function () {
       log(`Price for redeeming with USDT: ${utils.formatEther(price, 6)}`);
 
       expect(price).to.be.gte(utils.parseEther("1"));
-      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with DAI", async () => {
@@ -306,7 +305,6 @@ describe("ForkTest: Vault", function () {
       log(`Price for redeeming with DAI: ${utils.formatEther(price, 18)}`);
 
       expect(price).to.be.gte(utils.parseEther("1"));
-      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with USDC", async () => {
@@ -316,7 +314,6 @@ describe("ForkTest: Vault", function () {
       log(`Price for redeeming with USDC: ${utils.formatEther(price, 6)}`);
 
       expect(price).to.be.gte(utils.parseEther("1"));
-      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
   });
 

@@ -62,7 +62,15 @@ contract VaultCore is VaultInitializer {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    ) external virtual whenNotCapitalPaused nonReentrant {
+        _mint(_asset, _amount, _minimumOusdAmount);
+    }
+
+    function _mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) internal {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -762,7 +770,7 @@ contract VaultCore is VaultInitializer {
      * @notice This is a catch all for all functions not declared in core
      */
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable {
+    fallback() external {
         bytes32 slot = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
