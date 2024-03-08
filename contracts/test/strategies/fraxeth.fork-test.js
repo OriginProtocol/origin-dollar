@@ -159,6 +159,7 @@ async function mintTest(fixture, user, asset, amount = "10.34") {
   if (asset.address != weth.address) {
     const tx = oethVault.connect(user).mint(asset.address, unitAmount, "0");
     await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+    return;
   }
 
   await oethVault.connect(user).allocate();

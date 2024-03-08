@@ -793,6 +793,9 @@ const deployCore = async () => {
 
   const dOETH = await deployWithConfirmation("OETH");
   const dOETHVault = await deployWithConfirmation("OETHVault");
+  const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
+    addresses.mainnet.WETH,
+  ]);
 
   await deployWithConfirmation("Governor", [governorAddr, 60]);
 
@@ -868,7 +871,7 @@ const deployCore = async () => {
     cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
   );
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
   );
   log("Upgraded VaultCore implementation");
 

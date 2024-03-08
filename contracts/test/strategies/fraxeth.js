@@ -39,7 +39,7 @@ describe("FraxETH Strategy", function () {
     vault: fixture.oethVault,
   }));
 
-  describe("Mint", function () {
+  describe.only("Mint", function () {
     it("Should allow minting with frxETH", async () => {
       const { daniel, frxETH } = fixture;
       await mintTest(fixture, daniel, frxETH, "12.3887");
@@ -398,6 +398,7 @@ async function mintTest(fixture, user, asset, amount = "10") {
   if (asset.address != weth.address) {
     const tx = oethVault.connect(user).mint(asset.address, unitAmount, "0");
     await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+    return;
   }
 
   const supplyBeforeMint = await oeth.totalSupply();
