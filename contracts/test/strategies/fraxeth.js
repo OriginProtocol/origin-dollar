@@ -39,8 +39,8 @@ describe("FraxETH Strategy", function () {
     vault: fixture.oethVault,
   }));
 
-  describe.only("Mint", function () {
-    it("Should allow minting with frxETH", async () => {
+  describe("Mint", function () {
+    it("Should not allow minting with frxETH", async () => {
       const { daniel, frxETH } = fixture;
       await mintTest(fixture, daniel, frxETH, "12.3887");
     });
@@ -50,12 +50,12 @@ describe("FraxETH Strategy", function () {
       await mintTest(fixture, domen, weth, "22.3008");
     });
 
-    it("Should allow minting with RETH", async () => {
+    it("Should not allow minting with RETH", async () => {
       const { josh, reth } = fixture;
       await mintTest(fixture, josh, reth, "42.6665");
     });
 
-    it("Should allow minting with stETH", async () => {
+    it("Should not allow minting with stETH", async () => {
       const { matt, stETH } = fixture;
       await mintTest(fixture, matt, stETH, "12.49993");
     });

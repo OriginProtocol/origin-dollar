@@ -24,7 +24,7 @@ describe("ForkTest: FraxETH Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should allow mint with frxETH", async () => {
+    it("Should not allow mint with frxETH", async () => {
       const { daniel, frxETH } = fixture;
 
       await mintTest(fixture, daniel, frxETH, "12.3");
