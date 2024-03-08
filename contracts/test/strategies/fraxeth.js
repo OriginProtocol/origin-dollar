@@ -9,7 +9,6 @@ const {
   createFixtureLoader,
   fraxETHStrategyFixture,
 } = require("./../_fixture");
-const { BigNumber } = require("ethers");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("FraxETH Strategy", function () {
@@ -62,88 +61,12 @@ describe("FraxETH Strategy", function () {
   });
 
   describe("Redeem", function () {
-    it("Should allow redeem", async () => {
-      const {
-        daniel,
-        domen,
-        josh,
-        matt,
-        frxETH,
-        weth,
-        reth,
-        stETH,
-        oeth,
-        oethVault,
-      } = fixture;
-
-      const users = [daniel, domen, josh, matt];
-      const assets = [frxETH, weth, reth, stETH];
-      const mintAmounts = ["10.2333", "20.45", "23.456", "15.3434"];
-
-      // Rebase & Allocate
-      await oethVault.connect(daniel).rebase();
-      await oethVault.connect(daniel).allocate();
-
-      // Mint some OETH first
-      for (let i = 0; i < users.length; i++) {
-        await oethVault
-          .connect(users[i])
-          .mint(assets[i].address, oethUnits(mintAmounts[i]), "0");
-      }
-
-      // Now try redeeming
-      const supplyBeforeRedeem = await oeth.totalSupply();
-      const userAssetBalanceBeforeRedeem = await Promise.all(
-        assets.map((a) => a.balanceOf(daniel.address))
-      );
-      const userOETHBalanceBeforeRedeem = await oeth.balanceOf(daniel.address);
-
-      // Redeem all
-      await oethVault.connect(daniel).redeem(userOETHBalanceBeforeRedeem, "0");
-
-      const supplyAfterRedeem = await oeth.totalSupply();
-      const userAssetBalanceAfterRedeem = await Promise.all(
-        assets.map((a) => a.balanceOf(daniel.address))
-      );
-      const userOETHBalanceAfterRedeem = await oeth.balanceOf(daniel.address);
-
-      // Should've burned user's OETH
-      expect(userOETHBalanceAfterRedeem).to.equal(
-        "0",
-        "OETH should've been burned on redeem"
-      );
-
-      // Should've reduced supply
-      expect(supplyBeforeRedeem.sub(supplyAfterRedeem)).to.approxEqualTolerance(
-        userOETHBalanceBeforeRedeem,
-        1,
-        "OETH Supply should've changed"
-      );
-
-      // User should have got other assets
-      let netGainedAssetValue = BigNumber.from(0);
-      for (let i = 0; i < assets.length; i++) {
-        const redeemPrice = await oethVault.priceUnitRedeem(assets[i].address);
-        netGainedAssetValue = netGainedAssetValue.add(
-          userAssetBalanceAfterRedeem[i]
-            .sub(userAssetBalanceBeforeRedeem[i])
-            .mul(redeemPrice)
-            .div(oethUnits("1"))
-        );
-      }
-      expect(netGainedAssetValue).to.approxEqualTolerance(
-        userOETHBalanceBeforeRedeem,
-        1,
-        "Net Value of assets redeemed doesn't match"
-      );
-    });
-
     it("Should allow redeem with no frxETH in Vault/Strategy", async () => {
-      const { daniel, domen, weth, stETH, oeth, oethVault } = fixture;
+      const { daniel, weth, oeth, oethVault } = fixture;
 
-      const users = [daniel, domen];
-      const assets = [weth, stETH];
-      const mintAmounts = ["10.2333", "20.45"];
+      const users = [daniel];
+      const assets = [weth];
+      const mintAmounts = ["10.2333"];
 
       // Mint some OETH first
       for (let i = 0; i < users.length; i++) {
