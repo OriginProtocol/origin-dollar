@@ -418,12 +418,6 @@ const configureVault = async () => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await ethers.getContractAt(
-    "VaultInitializer",
-    (
-      await ethers.getContract("VaultProxy")
-    ).address
-  );
   const cVault = await ethers.getContractAt(
     "VaultAdmin",
     (
@@ -461,14 +455,8 @@ const configureOETHVault = async () => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await ethers.getContractAt(
-    "VaultInitializer",
-    (
-      await ethers.getContract("OETHVaultProxy")
-    ).address
-  );
   const cVault = await ethers.getContractAt(
-    "VaultAdmin",
+    "IVault",
     (
       await ethers.getContract("OETHVaultProxy")
     ).address
@@ -487,6 +475,12 @@ const configureOETHVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
+
+  // Cache WETH asset address
+  await withConfirmation(cVault.connect(sGovernor).cacheWETHAssetIndex());
+
+  // Redeem fee to 0
+  await withConfirmation(cVault.connect(sGovernor).setRedeemFeeBps(0));
 };
 
 /**
@@ -804,7 +798,7 @@ const deployCore = async () => {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
-  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -813,7 +807,7 @@ const deployCore = async () => {
     ? await ethers.getContract("OETHOracleRouter")
     : cOracleRouter;
   const cOETHVault = await ethers.getContractAt(
-    "Vault",
+    "IVault",
     cOETHVaultProxy.address
   );
 

@@ -63,14 +63,6 @@ contract VaultCore is VaultInitializer {
         uint256 _amount,
         uint256 _minimumOusdAmount
     ) external virtual whenNotCapitalPaused nonReentrant {
-        _mint(_asset, _amount, _minimumOusdAmount);
-    }
-
-    function _mint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) internal {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -158,7 +150,10 @@ contract VaultCore is VaultInitializer {
      * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
+    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        internal
+        virtual
+    {
         // Calculate redemption outputs
         uint256[] memory outputs = _calculateRedeemOutputs(_amount);
 
@@ -503,6 +498,7 @@ contract VaultCore is VaultInitializer {
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
+        virtual
         returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
