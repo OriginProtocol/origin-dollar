@@ -72,6 +72,7 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
+    // slither-disable-next-line uninitialized-state
     address[] internal allAssets;
 
     // Strategies approved for use by the Vault
@@ -121,9 +122,11 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
+    // slither-disable-next-line uninitialized-state
     mapping(address => address) public assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
+    // slither-disable-next-line uninitialized-state
     uint256 public maxSupplyDiff;
 
     /// @notice Trustee contract that can collect a percentage of yield
