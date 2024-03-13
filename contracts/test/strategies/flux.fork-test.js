@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
 const { fluxStrategyFixture, createFixtureLoader } = require("../_fixture");
-const { units, ousdUnits, isCI } = require("../helpers");
+const { units, ousdUnits, isCI, usdtUnits, daiUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("Flux strategy", function () {
@@ -85,39 +85,47 @@ describe("Flux strategy", function () {
     });
 
     it("Should be able to withdrawAll from strategy", async function () {
-      const { matt, usdc, vault, usdt, fluxStrategy } = fixture;
+      const { matt, usdc, vault, usdt, dai, fluxStrategy } = fixture;
       const vaultSigner = await impersonateAndFund(vault.address);
       const amount = "110000";
 
-      const removeFundsFromVault = async () => {
-        await usdc
-          .connect(vaultSigner)
-          .transfer(matt.address, usdc.balanceOf(vault.address));
-        await usdt
-          .connect(vaultSigner)
-          .transfer(matt.address, usdt.balanceOf(vault.address));
-      };
+      const unitAmount = usdtUnits(amount);
+      const daiUnitAmount = daiUnits(amount);
+      await vault.connect(matt).mint(usdc.address, unitAmount, 0);
+      await vault.connect(matt).mint(usdt.address, unitAmount, 0);
+      await vault.connect(matt).mint(dai.address, daiUnitAmount, 0);
+      await vault.rebase();
+      await vault.allocate();
 
-      // remove funds so no residual funds get allocated
-      await removeFundsFromVault();
-
-      await mintTest(fixture, matt, usdc, amount);
-      await mintTest(fixture, matt, usdt, amount);
-
-      const usdcUnits = await units(amount, usdc);
-      const usdtUnits = await units(amount, usdt);
       const vaultUsdtBefore = await usdt.balanceOf(vault.address);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+      const vaultDaiBefore = await dai.balanceOf(vault.address);
+
+      const strategyUsdtBefore = await fluxStrategy.checkBalance(usdt.address);
+      const strategyUsdcBefore = await fluxStrategy.checkBalance(usdc.address);
+      const strategyDaiBefore = await fluxStrategy.checkBalance(dai.address);
 
       await fluxStrategy.connect(vaultSigner).withdrawAll();
 
-      const vaultUsdtDiff =
-        (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
-      const vaultUsdcDiff =
-        (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+      // Strategy shouldn't have any balance
+      expect(await fluxStrategy.checkBalance(dai.address)).to.equal(0);
+      expect(await fluxStrategy.checkBalance(usdt.address)).to.equal(0);
+      expect(await fluxStrategy.checkBalance(usdc.address)).to.equal(0);
 
-      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
-      expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+      // Vault should have it
+      const vaultUsdtDiff = (await usdt.balanceOf(vault.address)).sub(
+        vaultUsdtBefore
+      );
+      const vaultUsdcDiff = (await usdc.balanceOf(vault.address)).sub(
+        vaultUsdcBefore
+      );
+      const vaultDaiDiff = (await dai.balanceOf(vault.address)).sub(
+        vaultDaiBefore
+      );
+
+      expect(vaultUsdcDiff).to.approxEqualTolerance(strategyUsdcBefore, 1);
+      expect(vaultUsdtDiff).to.approxEqualTolerance(strategyUsdtBefore, 1);
+      expect(vaultDaiDiff).to.approxEqualTolerance(strategyDaiBefore, 1);
     });
   });
 
@@ -175,16 +183,20 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const newStrategyBalance = await fluxStrategy.checkBalance(asset.address);
 
   const balanceDiff = newBalance.sub(currentBalance);
+  console.log(balanceDiff.toString());
   // Ensure user has correct balance (w/ 1% slippage tolerance)
   expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
 
   // Supply checks
   const supplyDiff = newSupply.sub(currentSupply);
   const ousdUnitAmount = ousdUnits(amount);
+  console.log(supplyDiff.toString());
+  console.log(ousdUnitAmount.toString());
 
   expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
 
   const strategyLiquidityDiff = newStrategyBalance.sub(currentStrategyBalance);
+  console.log(strategyLiquidityDiff.toString());
 
   // Should have liquidity in the strategy
   expect(strategyLiquidityDiff).to.approxEqualTolerance(
