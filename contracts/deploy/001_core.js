@@ -481,6 +481,20 @@ const configureOETHVault = async () => {
 
   // Redeem fee to 0
   await withConfirmation(cVault.connect(sGovernor).setRedeemFeeBps(0));
+
+  // Allocate threshold
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .setAutoAllocateThreshold(ethers.utils.parseUnits("25", 18))
+  );
+
+  // Rebase threshold
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .setAutoAllocateThreshold(ethers.utils.parseUnits("5", 18))
+  );
 };
 
 /**
