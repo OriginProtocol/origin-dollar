@@ -99,6 +99,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         // to the vault so that it is not lost for balance tracking purposes.
         uint256 wethBalance = weth.balanceOf(address(this));
         if (wethBalance > 0) {
+            // slither-disable-next-line unchecked-transfer
             weth.transfer(vaultAddress, wethBalance);
         }
 
@@ -153,6 +154,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         );
         outstandingRedeems -= redeemedAmount;
         weth.deposit{ value: redeemedAmount }();
+        // slither-disable-next-line unchecked-transfer
         weth.transfer(vaultAddress, redeemedAmount);
     }
 
@@ -171,10 +173,12 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         }
         uint256 wethBalance = weth.balanceOf(address(this));
         if (wethBalance > 0) {
+            // slither-disable-next-line unchecked-transfer
             weth.transfer(vaultAddress, wethBalance);
         }
         uint256 fraxEthBalance = frxETH.balanceOf(address(this));
         if (fraxEthBalance > 0) {
+            // slither-disable-next-line unchecked-transfer
             frxETH.transfer(vaultAddress, fraxEthBalance);
         }
     }
@@ -204,6 +208,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() public override {
+        // slither-disable-next-line unused-return
         frxETH.approve(address(redemptionQueue), type(uint256).max);
     }
 
