@@ -1,6 +1,4 @@
 const { expect } = require("chai");
-const ethers = require("ethers");
-const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const {
   createFixtureLoader,
   frxEthRedeemStrategyFixture,
@@ -47,7 +45,7 @@ describe.only("ForkTest: FraxETH Redeem Strategy", function () {
           [frxETH.address],
           [ousdUnits("1003.45")]
         );
-      tickets = await getTickets(tx, frxEthRedeemStrategy);
+      const tickets = await getTickets(tx, frxEthRedeemStrategy);
       await advanceTime(16 * 60 * 60 * 24);
       await frxEthRedeemStrategy
         .connect(strategist)
