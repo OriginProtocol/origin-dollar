@@ -171,7 +171,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
     });
-    it.only("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
+    it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
       const { reth, rEthBPT, weth } = fixture;
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
     });
