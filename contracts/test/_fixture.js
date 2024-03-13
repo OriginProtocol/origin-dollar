@@ -722,8 +722,14 @@ async function ousdCollateralSwapFixture() {
     await vault.connect(strategist).setVaultBuffer(bufferBps);
   }
 
-  // Withdraw all from strategies so we have assets to swap
-  await vault.connect(timelock).withdrawAllFromStrategies();
+  for (const asset of [usdt, dai, usdc]) {
+    // Withdraw funds from default strategy to fund it for tests
+    await vault
+      .connect(timelock)
+      .withdrawAllFromStrategy(
+        await vault.assetDefaultStrategies(asset.address)
+      );
+  }
 
   return fixture;
 }
@@ -1933,20 +1939,19 @@ async function fluxStrategyFixture() {
 
   const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
 
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
+  for (const asset of [usdt, dai, usdc]) {
+    // Withdraw funds from default strategy to fund it for tests
+    await vault
+      .connect(timelock)
+      .withdrawAllFromStrategy(
+        await vault.assetDefaultStrategies(asset.address)
+      );
 
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
-
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
-
-  // Withdraw all from strategies and deposit it to Flux
-  await vault.connect(timelock).withdrawAllFromStrategies();
+    // Set Flux as default strategy
+    await vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(asset.address, fluxStrategy.address);
+  }
 
   await vault.connect(timelock).rebase();
 
