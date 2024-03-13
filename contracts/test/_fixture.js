@@ -1716,8 +1716,12 @@ async function aaveVaultFixture() {
 async function frxEthRedeemStrategyFixture() {
   const fixture = await oethDefaultFixture();
 
-  // Give fraxETH to the vault
+  // Give weth and fraxETH to the vault
+
   await fixture.frxETH
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2000"));
+  await fixture.weth
     .connect(fixture.daniel)
     .transfer(fixture.oethVault.address, parseUnits("2000"));
 

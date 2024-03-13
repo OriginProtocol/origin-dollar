@@ -135,6 +135,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
             msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Strategist"
         );
+        uint256 startingBalance = payable(address(this)).balance;
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 nftId = _nftIds[i];
             redemptionQueue.burnRedemptionTicketNft(
@@ -144,15 +145,16 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
             emit RedeemNFTBurned(nftId);
         }
 
-        uint256 redeemedAmount = payable(address(this)).balance;
+        uint256 currentBalance = payable(address(this)).balance;
+        uint256 redeemedAmount = currentBalance - startingBalance;
         require(
             expectedAmount == redeemedAmount,
             "Redeemed amount does not match expected amount"
         );
         outstandingRedeems -= redeemedAmount;
-        weth.deposit{ value: redeemedAmount }();
+        weth.deposit{ value: currentBalance }();
         // slither-disable-next-line unchecked-transfer
-        weth.transfer(vaultAddress, redeemedAmount);
+        weth.transfer(vaultAddress, currentBalance);
     }
 
     function _abstractSetPToken(address _asset, address _pToken)
