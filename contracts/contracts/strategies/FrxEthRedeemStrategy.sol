@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import { BaseCompoundStrategy, InitializableAbstractStrategy } from "./BaseCompoundStrategy.sol";
-import { IComptroller } from "../interfaces/IComptroller.sol";
-import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
