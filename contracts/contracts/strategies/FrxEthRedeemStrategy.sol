@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @title Compound Strategy
- * @notice Investment strategy for Compound like lending platforms. eg Compound and Flux
- * @author Origin Protocol Inc
- */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
@@ -27,6 +22,7 @@ interface IFraxEtherRedemptionQueue {
 /**
  * @title Frax ETH Redeem Strategy
  * @notice This strategy redeems Frax ETH for ETH via the Frax Eth Redemption Queue contract
+ * @author Origin Protocol Inc
  */
 contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
     IWETH9 private constant weth =
