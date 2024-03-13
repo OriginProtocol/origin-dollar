@@ -116,11 +116,14 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of assets to withdraw
      */
     function withdraw(
+        // solhint-disable-next-line no-unused-vars
         address _recipient,
+        // solhint-disable-next-line no-unused-vars
         address _asset,
+        // solhint-disable-next-line no-unused-vars
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        // Does nothing - all redeems need to be called manually by the 
+        // Does nothing - all redeems need to be called manually by the
         // strategist via redeemTickets
         require(false, "use redeemTickets() instead");
     }
@@ -213,9 +216,13 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
     }
 
     function onERC721Received(
+        // solhint-disable-next-line no-unused-vars
         address operator,
+        // solhint-disable-next-line no-unused-vars
         address from,
+        // solhint-disable-next-line no-unused-vars
         uint256 tokenId,
+        // solhint-disable-next-line no-unused-vars
         bytes calldata data
     ) external returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
