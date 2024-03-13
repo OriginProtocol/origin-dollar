@@ -59,6 +59,9 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         safeApproveAllTokens();
     }
 
+    /**
+     * @notice deposit() function not used for this strategy. Use depositAll() instead.
+     */
     function deposit(address, uint256) public override onlyVault nonReentrant {
         // This method no longer used by the VaultAdmin, and we don't want it
         // to be used by VaultCore.
@@ -66,7 +69,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Takes all frxETH and creates new redeem tickets
+     * @notice Takes all given frxETH and creates new redeem tickets
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 frxETHStart = frxETH.balanceOf(address(this));
@@ -211,7 +214,13 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         frxETH.approve(address(redemptionQueue), type(uint256).max);
     }
 
+     /**
+     * @notice Check if an asset is supported.
+     * @param _asset    Address of the asset
+     * @return bool     Whether asset is supported
+     */
     function supportsAsset(address _asset) public view override returns (bool) {
+        // frxETH can be deposited by the vault and balances are reported in weth
         return _asset == address(frxETH) || _asset == address(weth);
     }
 
