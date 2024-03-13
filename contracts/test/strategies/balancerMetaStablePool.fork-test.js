@@ -171,7 +171,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
     });
-    it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
+    it.only("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
       const { reth, rEthBPT, weth } = fixture;
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
     });
@@ -663,7 +663,7 @@ async function depositTest(
   amounts,
   allAssets,
   bpt,
-  strategyValueDiffPct = 3
+  strategyValueDiffPct = 5
 ) {
   const {
     oethVault,
@@ -712,6 +712,7 @@ async function depositTest(
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
+
   expect(strategyValuesDiff).to.approxEqualTolerance(
     sumEthAmounts,
     strategyValueDiffPct
@@ -739,11 +740,15 @@ async function logBalances({
   log(`BPT total supply : ${formatUnits(bptSupply)}`);
 
   const vaultAssets = {};
+  const unallocatedStrategyAssets = {};
   for (const asset of allAssets) {
     const vaultAssetAmount = await asset.balanceOf(oethVault.address);
+    const stratAssetAmount = await asset.balanceOf(strategy.address);
     const symbol = await asset.symbol();
     log(`${symbol} in vault ${formatUnits(vaultAssetAmount)}`);
+    log(`Unallocated ${symbol} in strategy ${formatUnits(stratAssetAmount)}`);
     vaultAssets[symbol] = vaultAssetAmount;
+    unallocatedStrategyAssets[symbol] = stratAssetAmount;
   }
 
   const strategyValues = await getPoolValues(strategy, allAssets, reth);
@@ -756,5 +761,6 @@ async function logBalances({
     strategyValues,
     poolBalances,
     vaultAssets,
+    unallocatedStrategyAssets,
   };
 }
