@@ -455,13 +455,7 @@ const defaultFixture = deployments.createFixture(async () => {
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
-    const frxEthRedeemStrategyProxy = await ethers.getContract(
-      "FrxEthRedeemStrategyProxy"
-    );
-    frxEthRedeemStrategy = await ethers.getContractAt(
-      "FrxEthRedeemStrategy",
-      frxEthRedeemStrategyProxy.address
-    );
+
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
     swapper1Inch = await ethers.getContract("Swapper1InchV5");
