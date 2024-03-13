@@ -172,10 +172,10 @@ describe("OETH Vault", function () {
     });
 
     it("should revert on liquidity error", async () => {
-      const { oethVault, weth, daniel } = fixture;
+      const { oethVault, daniel } = fixture;
       const tx = oethVault
         .connect(daniel)
-        .redeem(weth.address, oethUnits("1023232323232"), "0");
+        .redeem(oethUnits("1023232323232"), "0");
       await expect(tx).to.be.revertedWith("Liquidity error");
     });
   });
