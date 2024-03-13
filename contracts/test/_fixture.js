@@ -492,7 +492,19 @@ const defaultFixture = deployments.createFixture(async () => {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
       await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
     }
+  } else {
+    // On Fork, Make sure flux tokens aren't at 100% utilization
+    for (const asset of [dai, usdt, usdc]) {
+      const fToken = await ethers.getContractAt(
+        "ICERC20",
+        await fluxStrategy.assetToPToken(asset.address)
+      );
+      const unitAmount = await units("100000", asset);
+      await asset.connect(josh).approve(fToken.address, unitAmount);
+      await fToken.connect(josh).mint(unitAmount);
+    }
   }
+
   return {
     // Accounts
     matt,
@@ -723,12 +735,20 @@ async function ousdCollateralSwapFixture() {
   }
 
   for (const asset of [usdt, dai, usdc]) {
-    // Withdraw funds from default strategy to fund it for tests
-    await vault
-      .connect(timelock)
-      .withdrawAllFromStrategy(
-        await vault.assetDefaultStrategies(asset.address)
-      );
+    if (isFork) {
+      // Withdraw funds from default strategy to fund it for tests
+      const strat = await vault.assetDefaultStrategies(asset.address);
+
+      if (strat != addresses.zero) {
+        await vault
+          .connect(timelock)
+          .withdrawAllFromStrategy(
+            await vault.assetDefaultStrategies(asset.address)
+          );
+      }
+    } else {
+      await vault.connect(timelock).withdrawAllFromStrategies();
+    }
   }
 
   return fixture;
