@@ -6,7 +6,7 @@ const {
 
 const { ousdUnits, advanceTime, isCI } = require("../helpers");
 
-describe.only("ForkTest: FraxETH Redeem Strategy", function () {
+describe("ForkTest: FraxETH Redeem Strategy", function () {
   this.timeout(360 * 1000);
 
   // Retry up to 3 times on CI
