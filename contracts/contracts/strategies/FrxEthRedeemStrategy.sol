@@ -168,7 +168,9 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override
-    {}
+    {
+        revert("No pTokens are used");
+    }
 
     /**
      * @notice Withdraw all assets from this strategy, and transfer to the Vault.
