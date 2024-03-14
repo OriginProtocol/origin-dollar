@@ -228,7 +228,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
      */
-    function supportsAsset(address _asset) public view override returns (bool) {
+    function supportsAsset(address _asset) public pure override returns (bool) {
         // frxETH can be deposited by the vault and balances are reported in weth
         return _asset == address(frxETH) || _asset == address(weth);
     }
