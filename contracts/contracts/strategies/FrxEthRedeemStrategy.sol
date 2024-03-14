@@ -158,6 +158,11 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         weth.deposit{ value: currentBalance }();
         // slither-disable-next-line unchecked-transfer
         weth.transfer(vaultAddress, currentBalance);
+        emit Withdrawal(
+            address(weth),
+            address(redemptionQueue),
+            currentBalance
+        );
     }
 
     function _abstractSetPToken(address _asset, address _pToken)
@@ -177,11 +182,13 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         if (wethBalance > 0) {
             // slither-disable-next-line unchecked-transfer
             weth.transfer(vaultAddress, wethBalance);
+            emit Withdrawal(address(weth), address(0), wethBalance);
         }
         uint256 fraxEthBalance = frxETH.balanceOf(address(this));
         if (fraxEthBalance > 0) {
             // slither-disable-next-line unchecked-transfer
             frxETH.transfer(vaultAddress, fraxEthBalance);
+            emit Withdrawal(address(frxETH), address(0), fraxEthBalance);
         }
     }
 
@@ -214,7 +221,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         frxETH.approve(address(redemptionQueue), type(uint256).max);
     }
 
-     /**
+    /**
      * @notice Check if an asset is supported.
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
