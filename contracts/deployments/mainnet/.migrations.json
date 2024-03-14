@@ -76,5 +76,6 @@
   "081_upgrade_harvester": 1701171179,
   "082_upgrade_oeth": 1703201183,
   "083_dripper_seven_day": 1704284231,
-  "085_upgrade_oeth_vault": 1709827637
+  "085_upgrade_oeth_vault": 1709827637,
+  "086_frxeth_redeem_strat": 1710446747
 }
