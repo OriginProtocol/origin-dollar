@@ -207,8 +207,10 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
     {
         if (_asset == address(weth)) {
             return outstandingRedeems;
-        } else {
+        } else if (_asset == address(frxETH)) {
             return 0;
+        } else {
+            revert("Unexpected asset address");
         }
     }
 
