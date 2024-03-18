@@ -119,3 +119,23 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# Mar 18, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+
+def main():
+  txs = []
+
+  with TemporaryFork():
+    txs.append(
+      build_buyback_tx(
+        OUSD,
+        ousd.balanceOf(OUSD_BUYBACK),
+        max_ogv_slippage=3,
+        max_cvx_slippage=6
+      )
+    )
+
+    print(to_gnosis_json(txs))
