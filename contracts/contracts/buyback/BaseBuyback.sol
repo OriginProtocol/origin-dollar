@@ -170,8 +170,8 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         if (unsplitBalance > 0) {
             // If not, split unaccounted balance 50:50
             uint256 halfBalance = unsplitBalance / 2;
-            _ogvShare = _ogvShare + halfBalance;
-            _cvxShare = _cvxShare + (unsplitBalance - halfBalance);
+            _cvxShare = _cvxShare + halfBalance;
+            _ogvShare = _ogvShare + unsplitBalance - halfBalance;
 
             // Update storage
             ogvShare = _ogvShare;
@@ -191,8 +191,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         bytes calldata swapData
     ) internal returns (uint256 amountOut) {
         require(oTokenAmount > 0, "Invalid Swap Amount");
-        require(swapRouter != address(0), "Uniswap Router not set");
-        require(rewardsSource != address(0), "RewardsSource contract not set");
+        require(swapRouter != address(0), "Swap Router not set");
         require(minAmountOut > 0, "Invalid minAmount");
 
         // Transfer OToken to Swapper for swapping
@@ -207,6 +206,8 @@ abstract contract BaseBuyback is Initializable, Strategizable {
             minAmountOut,
             swapData
         );
+
+        require(amountOut >= minAmountOut, "Higher Slippage");
 
         emit OTokenBuyback(oToken, tokenOut, minAmountOut, amountOut);
     }
@@ -224,6 +225,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     ) external onlyGovernorOrStrategist nonReentrant {
         (uint256 _ogvAmount, ) = _updateBuybackSplits();
         require(_ogvAmount >= oTokenAmount, "Balance underflow");
+        require(rewardsSource != address(0), "RewardsSource contract not set");
 
         // Subtract the amount to swap from net balance
         ogvShare = _ogvAmount - oTokenAmount;

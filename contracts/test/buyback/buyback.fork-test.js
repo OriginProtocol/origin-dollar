@@ -142,8 +142,7 @@ describe("ForkTest: OUSD Buyback", function () {
   });
 
   it("Should swap OUSD for CVX and lock it", async () => {
-    const { ousdBuyback, ousd, vault, cvx, cvxLocker, strategist } =
-      fixture;
+    const { ousdBuyback, ousd, vault, cvx, cvxLocker, strategist } = fixture;
 
     const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
     const ogvShareBefore = await ousdBuyback.ogvShare();

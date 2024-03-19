@@ -1956,7 +1956,7 @@ async function fluxStrategyFixture() {
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
-  const { cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh, timelock } =
+  const { ousd, oeth, oethVault, vault, weth, dai, josh, governor, timelock } =
     fixture;
 
   const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
@@ -2004,7 +2004,7 @@ async function buybackFixture() {
     await oethBuyback.connect(timelock).updateBuybackSplits();
     await ousdBuyback.connect(timelock).updateBuybackSplits();
   } else {
-    fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
+    fixture.mockSwapper = await ethers.getContract("MockSwapper");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
 
     // Mint some OUSD
@@ -2021,12 +2021,9 @@ async function buybackFixture() {
     await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
     await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
 
-    // Mint some CVX and OGV for the Uniswap Rotuer
-    const routerSigner = await impersonateAndFund(
-      fixture.uniswapRouter.address
-    );
-    await ogv.connect(routerSigner).mint(ousdUnits("10000000000"));
-    await cvx.connect(routerSigner).mint(ousdUnits("10000000000"));
+    // Compute splits
+    await oethBuyback.connect(governor).updateBuybackSplits();
+    await ousdBuyback.connect(governor).updateBuybackSplits();
   }
 
   return fixture;
