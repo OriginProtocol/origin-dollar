@@ -1956,7 +1956,8 @@ async function fluxStrategyFixture() {
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
-  const { cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh } = fixture;
+  const { cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh, timelock } =
+    fixture;
 
   const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
   const ousdBuyback = await ethers.getContractAt(
@@ -1986,16 +1987,22 @@ async function buybackFixture() {
       addresses.mainnet.uniswapUniversalRouter
     );
 
-    await setERC20TokenBalance(
-      oethBuyback.address,
-      oeth,
-      oethUnits("99999999999")
-    );
-    await setERC20TokenBalance(
-      ousdBuyback.address,
-      ousd,
-      ousdUnits("99999999999999")
-    );
+    // Load with funds to test swaps
+    await setERC20TokenBalance(josh.address, weth, "10000");
+    await setERC20TokenBalance(josh.address, dai, "10000");
+    await weth.connect(josh).approve(oethVault.address, oethUnits("10000"));
+    await dai.connect(josh).approve(vault.address, ousdUnits("10000"));
+
+    // Mint & transfer oToken
+    await oethVault.connect(josh).mint(weth.address, oethUnits("1.23"), "0");
+    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("1.1"));
+
+    await vault.connect(josh).mint(dai.address, oethUnits("1231"), "0");
+    await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
+
+    // Compute splits
+    await oethBuyback.connect(timelock).updateBuybackSplits();
+    await ousdBuyback.connect(timelock).updateBuybackSplits();
   } else {
     fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");

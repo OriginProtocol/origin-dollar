@@ -12,7 +12,7 @@ describe("ForkTest: Aura/WETH Price Feed", function () {
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
 
-    hotDeployOption(fixture, null, {
+    await hotDeployOption(fixture, null, {
       isOethFixture: true,
     });
 

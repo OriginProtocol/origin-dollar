@@ -10,13 +10,4 @@ contract MockBuyback is BaseBuyback {
         address _cvx,
         address _cvxLocker
     ) BaseBuyback(_oToken, _ogv, _cvx, _cvxLocker) {}
-
-    function _getSwapPath(address toToken)
-        internal
-        view
-        override
-        returns (bytes memory path)
-    {
-        return abi.encodePacked(oToken, uint24(500), toToken);
-    }
 }
