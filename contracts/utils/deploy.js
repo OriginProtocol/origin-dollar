@@ -16,6 +16,7 @@ const {
   isSmokeTest,
   isForkTest,
   getBlockTimestamp,
+  isArbitrumOne,
 } = require("../test/helpers.js");
 
 const {
@@ -77,6 +78,7 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
+  const feeData = await hre.ethers.provider.getFeeData();
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -84,12 +86,14 @@ const deployWithConfirmation = async (
       contract,
       fieldsToCompare: null,
       libraries,
+      maxFeePerGas: feeData.maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
       ...(await getTxOpts(gasLimit)),
     })
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet) {
+  if (isMainnet || isArbitrumOne) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 

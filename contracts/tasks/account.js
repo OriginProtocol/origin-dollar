@@ -22,7 +22,9 @@ async function accounts(taskArguments, hre, privateKeys) {
   const roles = ["Deployer", "Governor"];
 
   const isMainnet = hre.network.name == "mainnet";
-  if (isMainnet) {
+  const isArbitrum = hre.network.name == "arbitrumOne";
+
+  if (isMainnet || isArbitrum) {
     privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK];
   }
 

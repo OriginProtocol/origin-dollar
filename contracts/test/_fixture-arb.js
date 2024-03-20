@@ -25,12 +25,12 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   log(
     `Before deployments with param "${
-      isFork ? ["arbitrum"] : ["arbitrum_unit_tests"]
+      isFork ? ["arbitrumOne"] : ["arb_unit_tests"]
     }"`
   );
 
   // Run the contract deployments
-  await deployments.fixture(isFork ? ["arbitrum"] : ["unit_tests"], {
+  await deployments.fixture(isFork ? ["arbitrumOne"] : ["arb_unit_tests"], {
     keepExistingDeployments: true,
     fallbackToGlobal: true,
   });
