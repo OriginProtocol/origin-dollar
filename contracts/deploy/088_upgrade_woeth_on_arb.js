@@ -1,4 +1,4 @@
-const { isFork, fundAccount } = require("../test/helpers");
+const { isFork } = require("../test/helpers");
 const { deployOnArb } = require("../utils/delpoy-l2");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { impersonateAndFund } = require("../utils/signers");
@@ -8,11 +8,6 @@ module.exports = deployOnArb(
     deployName: "088_upgrade_woeth_on_arb",
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
-    // const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    await fundAccount(deployerAddr);
-
     const cWOETHProxy = await ethers.getContract("BridgedWOETHProxy");
 
     // Deploy Bridged WOETH Token implementation
