@@ -45,6 +45,13 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   if (isArbFork) {
     await impersonateAndFund(governor.address);
+
+    const woethImplAddr = await woethProxy.implementation();
+    const latestImplAddr = (await ethers.getContract("BridgedWOETH")).address;
+
+    if (woethImplAddr != latestImplAddr) {
+      await woethProxy.connect(governor).upgradeTo(latestImplAddr);
+    }
   }
 
   await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
