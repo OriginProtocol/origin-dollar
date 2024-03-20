@@ -67,6 +67,25 @@ describe("ForkTest: WOETH", function () {
     expect(balanceDiff).to.equal(oethUnits("0.787"));
   });
 
+  it("Should allow burner to burn using sugar method", async () => {
+    const { woeth, burner, nick } = fixture;
+
+    await woeth.connect(nick).transfer(burner.address, oethUnits("0.787"));
+
+    const totalSupplyBefore = await woeth.totalSupply();
+    const balanceBefore = await woeth.balanceOf(burner.address);
+
+    await woeth.connect(burner).burn(oethUnits("0.787"));
+
+    const totalSupplyDiff = totalSupplyBefore.sub(await woeth.totalSupply());
+    const balanceDiff = balanceBefore.sub(
+      await woeth.balanceOf(burner.address)
+    );
+
+    expect(totalSupplyDiff).to.equal(oethUnits("0.787"));
+    expect(balanceDiff).to.equal(oethUnits("0.787"));
+  });
+
   it("Should not allow anyone else to burn", async () => {
     const { woeth, governor, rafael, nick, minter } = fixture;
 
