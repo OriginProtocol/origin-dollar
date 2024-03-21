@@ -409,6 +409,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("MockCCIPRouter", {
+    from: deployerAddr,
+  });
+
   console.log("000_mock deploy done.");
 
   return true;
