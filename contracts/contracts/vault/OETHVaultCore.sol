@@ -40,13 +40,17 @@ contract OETHVaultCore is VaultCore {
     }
 
     // @inheritdoc VaultCore
-    function mint(
+    function _mint(
         address _asset,
         uint256 _amount,
-        uint256
-    ) external virtual override whenNotCapitalPaused nonReentrant {
+        uint256 _minimumOusdAmount
+    ) internal virtual override {
         require(_asset == weth, "Unsupported asset for minting");
         require(_amount > 0, "Amount must be greater than 0");
+        require(
+            _amount >= _minimumOusdAmount,
+            "Mint amount lower than minimum"
+        );
 
         emit Mint(msg.sender, _amount);
 
@@ -76,8 +80,14 @@ contract OETHVaultCore is VaultCore {
         returns (uint256[] memory outputs)
     {
         // Overrides `VaultCore._calculateRedeemOutputs` to redeem with only
-        // WETH instead of LST-mix and gets rid of fee. Doesn't change the
-        // function signature for backward compatibility
+        // WETH instead of LST-mix. Doesn't change the function signature
+        // for backward compatibility
+
+        // Calculate redeem fee
+        if (redeemFeeBps > 0) {
+            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
+            _amount = _amount - redeemFee;
+        }
 
         // Ensure that the WETH index is cached
         uint256 wethIndex = wethAssetIndex;
@@ -88,50 +98,48 @@ contract OETHVaultCore is VaultCore {
     }
 
     // @inheritdoc VaultCore
-    function _redeem(uint256 _amount, uint256) internal virtual override {
+    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        internal
+        virtual
+        override
+    {
         // Override `VaultCore._redeem` to simplify it. Gets rid of oracle
         // usage and looping through all assets for LST-mix redeem. Instead
-        // does a simple WETH-only redeem with zero fee.
+        // does a simple WETH-only redeem.
         emit Redeem(msg.sender, _amount);
 
-        if (IERC20(weth).balanceOf(address(this)) >= _amount) {
+        require(_amount > 0, "Amount must be greater than 0");
+
+        // Amount excluding fees
+        uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[
+            wethAssetIndex
+        ];
+
+        if (_minimumUnitAmount > 0) {
+            require(
+                amountMinusFee >= _minimumUnitAmount,
+                "Redeem amount lower than minimum"
+            );
+        }
+
+        if (IERC20(weth).balanceOf(address(this)) >= amountMinusFee) {
             // Use Vault funds first if sufficient
-            IERC20(weth).safeTransfer(msg.sender, _amount);
+            IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
         } else {
             address strategyAddr = assetDefaultStrategies[weth];
             if (strategyAddr != address(0)) {
                 // Nothing in Vault, but something in Strategy, send from there
                 IStrategy strategy = IStrategy(strategyAddr);
-                strategy.withdraw(msg.sender, weth, _amount);
+                strategy.withdraw(msg.sender, weth, amountMinusFee);
             } else {
                 // Cant find funds anywhere
                 revert("Liquidity error");
             }
         }
 
-        // Burn OETH from user
+        // Burn OETH from user (including fees)
         oUSD.burn(msg.sender, _amount);
 
-        // Until we can prove that we won't affect the prices of our assets
-        // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on its asset total, perhaps
-        // a reward token sold for more or for less than anticipated.
-        uint256 totalUnits = 0;
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            totalUnits = _rebase();
-        } else {
-            totalUnits = _totalValue();
-        }
-
-        // Check that the OTokens are backed by enough assets
-        if (maxSupplyDiff > 0) {
-            // Allow a max difference of maxSupplyDiff% between
-            // backing assets value and OETH total supply
-            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
-            require(
-                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
-                "Backing supply liquidity error"
-            );
-        }
+        _postRedeem(_amount);
     }
 }

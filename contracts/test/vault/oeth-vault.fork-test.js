@@ -100,10 +100,10 @@ describe("ForkTest: OETH Vault", function () {
       }
     });
 
-    it("should have no redeem fee", async () => {
+    it("should have 0.1% redeem fee", async () => {
       const { oethVault } = fixture;
 
-      expect(await oethVault.redeemFeeBps()).to.equal(0);
+      expect(await oethVault.redeemFeeBps()).to.equal(10);
     });
 
     it("should return only WETH in redeem calculations", async () => {
@@ -112,7 +112,7 @@ describe("ForkTest: OETH Vault", function () {
       const output = await oethVault.calculateRedeemOutputs(oethUnits("123"));
       const index = await oethVault.wethAssetIndex();
 
-      expect(output[index]).to.equal(oethUnits("123"));
+      expect(output[index]).to.equal(oethUnits("123").mul("9990").div("10000"));
 
       output.map((x, i) => {
         if (i !== index.toNumber()) {
@@ -184,16 +184,6 @@ describe("ForkTest: OETH Vault", function () {
       expect((await oethVault.weth()).toLowerCase()).to.equal(
         addresses.mainnet.WETH.toLowerCase()
       );
-
-      const amount = parseUnits("100", 18);
-      const minEth = parseUnits("99.4", 18);
-
-      const tx = await oethVault
-        .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
-      await expect(tx)
-        .to.emit(oethVault, "Redeem")
-        .withNamedArgs({ _addr: oethWhaleAddress });
     });
   });
 

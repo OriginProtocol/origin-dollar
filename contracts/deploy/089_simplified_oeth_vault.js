@@ -6,7 +6,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "086_simplified_oeth_vault",
+    deployName: "089_simplified_oeth_vault",
     forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
@@ -35,11 +35,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultImpl.address],
-        },
-        {
-          contract: cOETHVault,
-          signature: "setRedeemFeeBps(uint256)",
-          args: [0],
         },
         {
           contract: cOETHVault,
