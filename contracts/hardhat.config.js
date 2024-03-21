@@ -46,10 +46,10 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-const isForkTest =
-  process.env.FORK === "true" && process.env.IS_TEST === "true";
-const isArbForkTest =
-  isForkTest && process.env.FORK_NETWORK_NAME === "arbitrumOne";
+const isFork = process.env.FORK === "true";
+const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
+const isForkTest = isFork && process.env.IS_TEST === "true";
+const isArbForkTest = isForkTest && isArbitrumFork;
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
 }`;
@@ -124,9 +124,10 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      chainId: isFork ? (isArbitrumFork ? 42161 : 1) : 1337,
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
       ...(isForkTest
         ? {
-            chainId: isArbForkTest ? 42161 : 1,
             timeout: 0,
             initialBaseFeePerGas: 0,
             forking: {
@@ -137,7 +138,6 @@ module.exports = {
             },
           }
         : {
-            chainId: 1337,
             initialBaseFeePerGas: 0,
             gas: 7000000,
             gasPrice: 1000,
@@ -145,6 +145,7 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -160,6 +161,9 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
       chainId: 42161,
+      tags: ["arbitrumOne"],
+      live: true,
+      saveDeployments: true,
       // Fails if gas limit is anything less than 20M on Arbitrum One
       gas: 20000000,
       // initialBaseFeePerGas: 0,

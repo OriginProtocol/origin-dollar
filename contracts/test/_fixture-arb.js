@@ -25,12 +25,12 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   log(
     `Before deployments with param "${
-      isFork ? ["arbitrum"] : ["arbitrum_unit_tests"]
+      isFork ? ["arbitrumOne"] : ["arb_unit_tests"]
     }"`
   );
 
   // Run the contract deployments
-  await deployments.fixture(isFork ? ["arbitrum"] : ["unit_tests"], {
+  await deployments.fixture(isFork ? ["arbitrumOne"] : ["arb_unit_tests"], {
     keepExistingDeployments: true,
     fallbackToGlobal: true,
   });
@@ -45,6 +45,13 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   if (isArbFork) {
     await impersonateAndFund(governor.address);
+
+    const woethImplAddr = await woethProxy.implementation();
+    const latestImplAddr = (await ethers.getContract("BridgedWOETH")).address;
+
+    if (woethImplAddr != latestImplAddr) {
+      await woethProxy.connect(governor).upgradeTo(latestImplAddr);
+    }
   }
 
   await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
