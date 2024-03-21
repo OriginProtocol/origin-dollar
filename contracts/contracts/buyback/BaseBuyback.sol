@@ -110,12 +110,12 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         if (oldRouter != address(0)) {
             // Remove allowance of old router, if any
 
-            if (IERC20(ogv).allowance(address(this), oldRouter) > 0) {
+            if (IERC20(ogv).allowance(address(this), oldRouter) != 0) {
                 // slither-disable-next-line unused-return
                 IERC20(ogv).safeApprove(oldRouter, 0);
             }
 
-            if (IERC20(cvx).allowance(address(this), oldRouter) > 0) {
+            if (IERC20(cvx).allowance(address(this), oldRouter) != 0) {
                 // slither-disable-next-line unused-return
                 IERC20(cvx).safeApprove(oldRouter, 0);
             }
@@ -167,7 +167,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         uint256 unsplitBalance = totalBalance - _ogvShare - _cvxShare;
 
         // Check if all balance is accounted for
-        if (unsplitBalance > 0) {
+        if (unsplitBalance != 0) {
             // If not, split unaccounted balance 50:50
             uint256 halfBalance = unsplitBalance / 2;
             _cvxShare = _cvxShare + halfBalance;
@@ -227,8 +227,10 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         require(_ogvAmount >= oTokenAmount, "Balance underflow");
         require(rewardsSource != address(0), "RewardsSource contract not set");
 
-        // Subtract the amount to swap from net balance
-        ogvShare = _ogvAmount - oTokenAmount;
+        unchecked {
+            // Subtract the amount to swap from net balance
+            ogvShare = _ogvAmount - oTokenAmount;
+        }
 
         uint256 ogvReceived = _swapToken(ogv, oTokenAmount, minOGV, swapData);
 
@@ -251,8 +253,10 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         (, uint256 _cvxAmount) = _updateBuybackSplits();
         require(_cvxAmount >= oTokenAmount, "Balance underflow");
 
-        // Subtract the amount to swap from net balance
-        cvxShare = _cvxAmount - oTokenAmount;
+        unchecked {
+            // Subtract the amount to swap from net balance
+            cvxShare = _cvxAmount - oTokenAmount;
+        }
 
         uint256 cvxReceived = _swapToken(cvx, oTokenAmount, minCVX, swapData);
 
