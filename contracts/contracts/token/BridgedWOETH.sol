@@ -55,6 +55,14 @@ contract BridgedWOETH is
     }
 
     /**
+     * @dev Burns tokens from `msg.sender`
+     * @param amount Amount of tokens to burn
+     */
+    function burn(uint256 amount) external onlyRole(BURNER_ROLE) nonReentrant {
+        _burn(msg.sender, amount);
+    }
+
+    /**
      * @dev Returns the name of the token.
      */
     function name() public view virtual override returns (string memory) {
