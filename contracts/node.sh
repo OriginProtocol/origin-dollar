@@ -29,7 +29,7 @@ main()
         if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
           PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
           BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
-          params+=("--no-deploy ");
+          params+=" --tags arbitrumOne";
         fi
         echo "Fork Network: $FORK_NETWORK_NAME"
 
@@ -50,7 +50,7 @@ main()
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
-        FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
+        FORK_NETWORK_NAME=$FORK_NETWORK_NAME FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
 
         tail -f $nodeOutput &
 
@@ -68,7 +68,7 @@ main()
         printf "\n"
         echo "🟢 Node initialized"
 
-        FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
+        FORK_NETWORK_NAME=$FORK_NETWORK_NAME FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         
         # wait for subprocesses to finish
         for job in `jobs -p`

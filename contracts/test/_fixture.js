@@ -200,6 +200,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morpho,
     morphoCompoundStrategy,
     fraxEthStrategy,
+    frxEthRedeemStrategy,
     balancerREthStrategy,
     makerDsrStrategy,
     morphoAaveStrategy,
@@ -316,6 +317,14 @@ const defaultFixture = deployments.createFixture(async () => {
     fraxEthStrategy = await ethers.getContractAt(
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
+    );
+
+    const frxEthRedeemStrategyProxy = await ethers.getContract(
+      "FrxEthRedeemStrategyProxy"
+    );
+    frxEthRedeemStrategy = await ethers.getContractAt(
+      "FrxEthRedeemStrategy",
+      frxEthRedeemStrategyProxy.address
     );
 
     const balancerRethStrategyProxy = await ethers.getContract(
@@ -446,6 +455,7 @@ const defaultFixture = deployments.createFixture(async () => {
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
+
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
     swapper1Inch = await ethers.getContract("Swapper1InchV5");
@@ -593,6 +603,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sfrxETH,
     sDAI,
     fraxEthStrategy,
+    frxEthRedeemStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
     woeth,
@@ -1700,6 +1711,24 @@ async function aaveVaultFixture() {
 }
 
 /**
+ * Configure a Vault hold frxEth to be redeeemed by the frxEthRedeemStrategy
+ */
+async function frxEthRedeemStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+
+  // Give weth and fraxETH to the vault
+
+  await fixture.frxETH
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2000"));
+  await fixture.weth
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2000"));
+
+  return fixture;
+}
+
+/**
  * Configure a compound fixture with a false vault for testing
  */
 async function compoundFixture() {
@@ -2145,6 +2174,7 @@ module.exports = {
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
+  frxEthRedeemStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,

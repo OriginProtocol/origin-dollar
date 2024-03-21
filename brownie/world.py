@@ -70,6 +70,7 @@ morpho_aave_strat = load_contract('morpho_aave_strat', MORPHO_AAVE_STRAT)
 lusd_3pool_strat = load_contract('lusd_3pool_strat', LUSD_3POOL_STRAT)
 oeth_morpho_aave_strat = load_contract('morpho_aave_strat', OETH_MORPHO_AAVE_STRAT)
 oeth_meta_strat = load_contract('oeth_meta_strat', OETH_CONVEX_OETH_ETH_STRAT)
+flux_strat = load_contract('comp_strat', FLUX_STRAT)
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
 threepool = load_contract("threepool_swap", THREEPOOL)

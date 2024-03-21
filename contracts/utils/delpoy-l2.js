@@ -1,4 +1,6 @@
+const { isFork, isArbFork } = require("../test/helpers");
 const { deployWithConfirmation, withConfirmation } = require("./deploy");
+const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
 
 function deployOnArb(opts, fn) {
@@ -11,6 +13,11 @@ function deployOnArb(opts, fn) {
       getTxOpts: getTxOpts,
       withConfirmation,
     };
+
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await impersonateAndFund(deployerAddr);
+    }
 
     await fn(tools);
   };
@@ -28,10 +35,14 @@ function deployOnArb(opts, fn) {
   main.id = deployName;
   main.dependencies = dependencies || [];
 
-  main.tags = ["arbitrum"];
+  main.tags = ["arbitrumOne"];
 
   main.skip = () =>
-    hre.network.name !== "arbitrumOne" && hre.network.config.chainId !== 42161;
+    !(
+      isArbFork ||
+      hre.network.name == "arbitrumOne" ||
+      hre.network.config.chainId == 42161
+    );
 
   return main;
 }
