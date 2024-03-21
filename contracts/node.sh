@@ -29,7 +29,7 @@ main()
         if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
           PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
           BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
-          params+=" --tags arbitrumOne"
+          params+=" --tags arbitrumOne";
         fi
         echo "Fork Network: $FORK_NETWORK_NAME"
 

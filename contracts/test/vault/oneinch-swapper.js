@@ -134,10 +134,8 @@ describe("1Inch Swapper", () => {
 
       const fromAmount = utils.parseEther("20");
 
-      for (const fromAsset of [weth, reth, stETH, frxETH]) {
-        for (const toAsset of [weth, reth, stETH, frxETH]) {
-          if (fromAsset.address === toAsset.address) continue;
-
+      for (const fromAsset of [weth]) {
+        for (const toAsset of [reth, stETH, frxETH]) {
           const toAmount = utils.parseEther("24");
           log(
             `swapping 20 ${await fromAsset.symbol()} to ${await toAsset.symbol()}`

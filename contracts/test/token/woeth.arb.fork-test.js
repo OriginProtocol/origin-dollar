@@ -58,10 +58,32 @@ describe("ForkTest: WOETH", function () {
     const totalSupplyBefore = await woeth.totalSupply();
     const balanceBefore = await woeth.balanceOf(nick.address);
 
-    await woeth.connect(burner).burn(nick.address, oethUnits("0.787"));
+    // prettier-ignore
+    await woeth
+      .connect(burner)["burn(address,uint256)"](nick.address, oethUnits("0.787"));
 
     const totalSupplyDiff = totalSupplyBefore.sub(await woeth.totalSupply());
     const balanceDiff = balanceBefore.sub(await woeth.balanceOf(nick.address));
+
+    expect(totalSupplyDiff).to.equal(oethUnits("0.787"));
+    expect(balanceDiff).to.equal(oethUnits("0.787"));
+  });
+
+  it("Should allow burner to burn using sugar method", async () => {
+    const { woeth, burner, nick } = fixture;
+
+    await woeth.connect(nick).transfer(burner.address, oethUnits("0.787"));
+
+    const totalSupplyBefore = await woeth.totalSupply();
+    const balanceBefore = await woeth.balanceOf(burner.address);
+
+    // prettier-ignore
+    await woeth.connect(burner)["burn(uint256)"](oethUnits("0.787"));
+
+    const totalSupplyDiff = totalSupplyBefore.sub(await woeth.totalSupply());
+    const balanceDiff = balanceBefore.sub(
+      await woeth.balanceOf(burner.address)
+    );
 
     expect(totalSupplyDiff).to.equal(oethUnits("0.787"));
     expect(balanceDiff).to.equal(oethUnits("0.787"));
@@ -71,8 +93,10 @@ describe("ForkTest: WOETH", function () {
     const { woeth, rafael, nick, minter } = fixture;
 
     for (const signer of [rafael, nick, minter]) {
+      // prettier-ignore
       await expect(
-        woeth.connect(signer).burn(signer.address, oethUnits("1"))
+        woeth
+          .connect(signer)["burn(address,uint256)"](signer.address, oethUnits("1"))
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848`
       );
