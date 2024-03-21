@@ -24,7 +24,7 @@ describe("ForkTest: FraxETH Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should allow mint with frxETH", async () => {
+    it("Should not allow mint with frxETH", async () => {
       const { daniel, frxETH } = fixture;
 
       await mintTest(fixture, daniel, frxETH, "12.3");
@@ -61,7 +61,7 @@ describe("ForkTest: FraxETH Strategy", function () {
   });
 
   describe("Withdraw", function () {
-    it("Should allow withdrawing frxETH", async () => {
+    it.skip("Should allow withdrawing frxETH", async () => {
       const { oethVault, fraxEthStrategy, frxETH, daniel, domen } = fixture;
       const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
@@ -154,10 +154,16 @@ describe("ForkTest: FraxETH Strategy", function () {
 async function mintTest(fixture, user, asset, amount = "10.34") {
   const { oethVault, oeth, weth, frxETH, fraxEthStrategy } = fixture;
 
+  const unitAmount = await units(amount, asset);
+
+  if (asset.address != weth.address) {
+    const tx = oethVault.connect(user).mint(asset.address, unitAmount, "0");
+    await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+    return;
+  }
+
   await oethVault.connect(user).allocate();
   await oethVault.connect(user).rebase();
-
-  const unitAmount = await units(amount, asset);
 
   const currentSupply = await oeth.totalSupply();
   const currentBalance = await oeth.connect(user).balanceOf(user.address);

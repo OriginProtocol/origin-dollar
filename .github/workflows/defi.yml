@@ -104,6 +104,7 @@ jobs:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
+      ONEINCH_API_KEY: ${{ secrets.ONEINCH_API_KEY }}
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
     steps:
@@ -138,12 +139,53 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
+  contracts-arb-forktest:
+    name: "Arbitrum Fork Tests"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      HARDHAT_CACHE_DIR: ./cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      ARBITRUM_PROVIDER_URL: ${{ secrets.ARBITRUM_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - uses: actions/cache@v3
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - run: yarn run test:coverage:arb-fork
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fork-test-arb-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
   coverage-uploader:
     name: "Upload Coverage Reports"
     runs-on: ubuntu-latest
     needs:
       - contracts-unit-coverage
       - contracts-forktest
+      - contracts-arb-forktest
     steps:
       - uses: actions/checkout@v3
 
@@ -171,44 +213,6 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
-
-  dapp-lint:
-    name: "OUSD DApp Linter"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.x"
-          cache: "yarn"
-          cache-dependency-path: dapp/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./dapp
-
-      - run: yarn prettier:check
-        working-directory: ./dapp
-
-  dapp-oeth-lint:
-    name: "OETH DApp Linter"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.x"
-          cache: "yarn"
-          cache-dependency-path: dapp-oeth/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./dapp-oeth
-
-      - run: yarn prettier:check
-        working-directory: ./dapp-oeth
 
   slither:
     name: "Slither"

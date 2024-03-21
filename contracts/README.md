@@ -46,6 +46,22 @@ yarn lint
 
 If you use the slither documented "pip3 install slither-analyzer" there might be problems with package collisions. Just use pipx that installs any package and all dependencies in sandbox to circumvent the issue: `pipx install slither-analyzer`
 
+#### Troubleshooting
+
+Run `slither --version` and make sure it is >= 0.10.0. If the version is lower it is possible that pipx has used an older version of the python to create a virtual environment and install the slither package. E.g. Slither 0.10.0 requires python >= 3.8.0 and if lower one is available a lower version of slither shall be installed. To mitigate: 
+
+```
+# uninstall slither analyzer (which also uninstalls virtual environment)
+pipx uninstall slither-analyzer
+
+# make sure your python3 version is above 3.8.0 (if not update it)
+python3 --version
+
+# using python3 install slither-analyzer again - this will also create a new python virtual environment with the forced python version. Verbose flat can provide useful information
+pipx install slither-analyzer --python [/usr/local/bin/python3 - adjust if required] --verbose
+```
+
+
 [Slither](https://github.com/crytic/slither#slither-the-solidity-source-analyzer) is used to for Solidity static analysis.
 
 The [Slither installation](https://github.com/crytic/slither#how-to-install) instruction.
@@ -288,6 +304,14 @@ There's an example
 ```
 npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
+
+### Deployed contract code verification
+
+To verify the deployed contract against the locally compiled contracts sol2uml from Nick Addison is convenient: 
+```
+sol2uml diff [0x_address_of_the_deployed_contract] .,node_modules
+```
+
 
 ## Continuous Integration
 

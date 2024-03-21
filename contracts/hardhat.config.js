@@ -46,26 +46,35 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-const isForkTest =
-  process.env.FORK === "true" && process.env.IS_TEST === "true";
+const isFork = process.env.FORK === "true";
+const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
+const isForkTest = isFork && process.env.IS_TEST === "true";
+const isArbForkTest = isForkTest && isArbitrumFork;
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
 }`;
+const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
-let forkBlockNumber = Number(process.env.BLOCK_NUMBER) || undefined;
+let forkBlockNumber =
+  Number(
+    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : process.env.BLOCK_NUMBER
+  ) || undefined;
 if (isForkTest && standaloneLocalNodeRunning) {
-  const jsonResponse = fetch(providerUrl, {
-    method: "post",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "eth_blockNumber",
-      id: 1,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).json();
+  const jsonResponse = fetch(
+    isArbForkTest ? arbitrumProviderUrl : providerUrl,
+    {
+      method: "post",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_blockNumber",
+        id: 1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).json();
 
   /*
    * We source the block number from the hardhat context rather than from
@@ -79,7 +88,7 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
   // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(providerUrl, {
+  fetch(isArbForkTest ? arbitrumProviderUrl : providerUrl, {
     method: "post",
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -115,20 +124,20 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      chainId: isFork ? (isArbitrumFork ? 42161 : 1) : 1337,
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
       ...(isForkTest
         ? {
-            chainId: 1,
             timeout: 0,
             initialBaseFeePerGas: 0,
             forking: {
               enabled: true,
-              url: providerUrl,
+              url: isArbForkTest ? arbitrumProviderUrl : providerUrl,
               blockNumber: forkBlockNumber,
               timeout: 0,
             },
           }
         : {
-            chainId: 1337,
             initialBaseFeePerGas: 0,
             gas: 7000000,
             gasPrice: 1000,
@@ -136,6 +145,7 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -143,6 +153,25 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
+    },
+    arbitrumOne: {
+      url: arbitrumProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 42161,
+      tags: ["arbitrumOne"],
+      live: true,
+      saveDeployments: true,
+      // Fails if gas limit is anything less than 20M on Arbitrum One
+      gas: 20000000,
+      // initialBaseFeePerGas: 0,
+      // forking: {
+      //   enabled: true,
+      //   url: arbitrumProviderUrl,
+      //   timeout: 0
+      // }
     },
   },
   mocha: {
@@ -156,6 +185,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       mainnet: MAINNET_DEPLOYER,
+      arbitrumOne: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -223,7 +253,10 @@ module.exports = {
     runOnCompile: process.env.CONTRACT_SIZE ? true : false,
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      arbitrumOne: process.env.ARBISCAN_API_KEY,
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,

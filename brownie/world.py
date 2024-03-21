@@ -57,6 +57,7 @@ vault_oeth_core = load_contract('vault_core', VAULT_OETH_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
 oeth_vault_value_checker = load_contract('vault_value_checker', OETH_VAULT_VALUE_CHECKER)
 dripper = load_contract('dripper', DRIPPER)
+oeth_dripper = load_contract('dripper', OETH_DRIPPER)
 harvester = load_contract('harvester', HARVESTER)
 ousd_usdt = load_contract('ousd_usdt', OUSD_USDT)
 v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
@@ -69,6 +70,7 @@ morpho_aave_strat = load_contract('morpho_aave_strat', MORPHO_AAVE_STRAT)
 lusd_3pool_strat = load_contract('lusd_3pool_strat', LUSD_3POOL_STRAT)
 oeth_morpho_aave_strat = load_contract('morpho_aave_strat', OETH_MORPHO_AAVE_STRAT)
 oeth_meta_strat = load_contract('oeth_meta_strat', OETH_CONVEX_OETH_ETH_STRAT)
+flux_strat = load_contract('comp_strat', FLUX_STRAT)
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
 threepool = load_contract("threepool_swap", THREEPOOL)
@@ -84,7 +86,6 @@ governor_five = load_contract('governor_five', GOVERNOR_FIVE)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
-oeth = load_contract('ERC20', OETH)
 weth = load_contract('ERC20', WETH)
 reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
@@ -415,19 +416,40 @@ def nice_contract_address(address):
 
 
 def show_governance_action(i, to, sig, data):
-  print("{}) {}".format(i+1, nice_contract_address(to)))
-  print("     "+ORANGE+sig+ENDC)
-  # print("Post Sig Data: ", data)
-  if re.match(".*\(\)", sig):
-    return
-  stypes = re.split(",|\)|\(", sig)[1:-1]
-  decodes = abi.decode_abi(stypes, data)
-  for j in range(0, len(stypes)):
-    v = decodes[j]
-    if stypes[j] == "address":
-      print(" >> ", nice_contract_address(v))
-    else:
-      print(" >> ", ORANGE+str(v)+ENDC)
+    print("{}) {}".format(i+1, nice_contract_address(to)))
+    print("     "+ORANGE+sig+ENDC)
+    # print("Post Sig Data: ", data)
+    if re.match(".*\(\)", sig):
+        return
+
+    split_sig = re.split("^[^\(]*", sig)[1]
+    split_sig = re.split(",|\)$|^\(", split_sig)[1:-1]
+
+    stypes = []
+    nested_struct = []
+    nested = False
+    for s in split_sig:
+        if s.startswith("("):
+            stypes.append([s[1:]])
+            nested = True
+        elif s.endswith(")"):
+            stypes[len(stypes) - 1].append(s[:-1])
+            stypes[len(stypes) - 1] = "({})".format(",".join(stypes[len(stypes) - 1]))
+            nested = False
+        elif nested:
+            stypes[len(stypes) - 1].append(s)
+        else:
+            stypes.append(s)
+
+    decodes = abi.decode_abi(stypes, data)
+    for j in range(0, len(stypes)):
+        v = decodes[j]
+        if stypes[j] == "address":
+            print(" >> ", nice_contract_address(v))
+        elif stypes[j] == "bytes":
+            print(" >> ", v.hex())
+        else:
+            print(" >> ", ORANGE+str(v)+ENDC)
 
 def to_gnosis_json(txs):
     main = {

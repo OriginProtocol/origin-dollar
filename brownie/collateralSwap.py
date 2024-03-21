@@ -63,7 +63,7 @@ def get_1inch_swap(
     swap_collateral_data = c_vault_core.swapCollateral.encode_input(
         from_token.lower(),
         to_token.lower(),
-        str(from_amount),
+        "%.0f" % from_amount,
         min_expected_amount,
         data
     )

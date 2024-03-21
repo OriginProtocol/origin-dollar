@@ -62,7 +62,15 @@ contract VaultCore is VaultInitializer {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    ) external virtual whenNotCapitalPaused nonReentrant {
+        _mint(_asset, _amount, _minimumOusdAmount);
+    }
+
+    function _mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) internal {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -380,7 +388,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @notice Determine the total value of assets held by the vault and its
      *         strategies.
-     * @return value Total value in USD (1e18)
+     * @return value Total value in USD/ETH (1e18)
      */
     function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
@@ -389,7 +397,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @dev Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return value Total value in USD (1e18)
+     * @return value Total value in USD/ETH (1e18)
      */
     function _totalValue() internal view virtual returns (uint256 value) {
         return _totalValueInVault() + _totalValueInStrategies();
@@ -397,7 +405,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD/ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         uint256 assetCount = allAssets.length;
@@ -412,7 +420,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD/ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         uint256 stratCount = allStrategies.length;
@@ -424,7 +432,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD/ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
@@ -762,7 +770,7 @@ contract VaultCore is VaultInitializer {
      * @notice This is a catch all for all functions not declared in core
      */
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable {
+    fallback() external {
         bytes32 slot = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {

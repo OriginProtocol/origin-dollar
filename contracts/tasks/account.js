@@ -22,7 +22,9 @@ async function accounts(taskArguments, hre, privateKeys) {
   const roles = ["Deployer", "Governor"];
 
   const isMainnet = hre.network.name == "mainnet";
-  if (isMainnet) {
+  const isArbitrum = hre.network.name == "arbitrumOne";
+
+  if (isMainnet || isArbitrum) {
     privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK];
   }
 
@@ -47,6 +49,11 @@ async function fund(taskArguments, hre) {
 
   if (!isFork && !isLocalhost) {
     throw new Error("Task can only be used on local or fork");
+  }
+
+  if (hre.network.config.chainId !== 1) {
+    // Skip funding if it's not mainnet
+    return;
   }
 
   if (!process.env.ACCOUNTS_TO_FUND) {

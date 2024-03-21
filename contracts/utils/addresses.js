@@ -1,7 +1,3 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
- */
-
 const addresses = {};
 
 // Utility addresses
@@ -236,9 +232,16 @@ addresses.mainnet.FrxEthFraxOracle =
 // FrxEthEthDualOracle gets the oracle prices from the Curve and Uniswap pools
 addresses.mainnet.FrxEthEthDualOracle =
   "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
+// FrxEthWethDualOracle
+addresses.mainnet.FrxEthWethDualOracle =
+  "0x350a9841956D8B0212EAdF5E14a449CA85FAE1C0";
 
 // Curve Pools
 addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
+
+// Arbitrum One
+addresses.arbitrumOne = {};
+addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
 module.exports = addresses;

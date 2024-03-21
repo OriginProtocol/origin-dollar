@@ -190,8 +190,22 @@ contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice FrxEthRedeemStrategyProxy delegates calls to a FrxEthRedeemStrategy implementation
+ */
+contract FrxEthRedeemStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice OETHBuybackProxy delegates calls to Buyback implementation
  */
 contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BridgedWOETHProxy delegates calls to BridgedWOETH implementation
+ */
+contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

@@ -72,5 +72,10 @@
   "074_upgrade_oeth_oracle_router": 1693458035,
   "075_oeth_amo_upgrade": 1694089115,
   "077_balancer_rETH_WETH": 1695843949,
-  "080_upgrade_buyback": 1698732191
+  "080_upgrade_buyback": 1698732191,
+  "081_upgrade_harvester": 1701171179,
+  "082_upgrade_oeth": 1703201183,
+  "083_dripper_seven_day": 1704284231,
+  "085_upgrade_oeth_vault": 1709827637,
+  "087_reduce_redeem_fee": 1710470610
 }

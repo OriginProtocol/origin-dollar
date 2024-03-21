@@ -59,11 +59,6 @@ contracts/coverage/
 contracts/coverage.json
 contracts/build/
 contracts/dist/
-dapp/network.json
-dapp/keys/
-dapp/ganache-network.json
-website/network.json
-/playground/public/build/
 
 todo.txt
 brownie/env-brownie/
