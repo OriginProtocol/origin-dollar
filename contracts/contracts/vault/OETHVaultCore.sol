@@ -108,7 +108,9 @@ contract OETHVaultCore is VaultCore {
         // does a simple WETH-only redeem.
         emit Redeem(msg.sender, _amount);
 
-        require(_amount > 0, "Amount must be greater than 0");
+        if (_amount == 0) {
+            return;
+        }
 
         // Amount excluding fees
         uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[
