@@ -5,7 +5,7 @@ const ethers = require("ethers");
  * Calculates an above average gas price.
  * Can be used to submit a transaction for faster than average mining time.
  *
- * @param {Number} mutliplier: Multiplier applied to the current gas price. For ex 1.15 gives an extra 15%.
+ * @param {Number} multiplier: Multiplier applied to the current gas price. For ex 1.15 gives an extra 15%.
  * @returns {Promise<BigNumber>}
  */
 async function premiumGasPrice(multiplier) {
