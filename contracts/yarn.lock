@@ -1147,6 +1147,11 @@
     proper-lockfile "^4.1.1"
     solidity-ast "^0.4.15"
 
+"@perimetersec/fuzzlib@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@perimetersec/fuzzlib/-/fuzzlib-0.2.0.tgz#bbf56975aa64430dd219c1322f70c4f2ab4456ae"
+  integrity sha512-XVXUO37r72oIMx+Nhg1xtRbr82oT8IAmwjLZDXeXTg99tbFFsCxgq4m0nEIv4mUet1ZZw4uQcC4e+xmI0bvGTw==
+
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"
