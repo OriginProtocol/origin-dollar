@@ -147,6 +147,7 @@ describe("ForkTest: OETH Vault", function () {
         minToAssetAmount: 0.9,
         protocols: "UNISWAP_V2",
       },
+      // Commenting out due to low liquidity
       // {
       //   from: "WETH",
       //   to: "frxETH",
