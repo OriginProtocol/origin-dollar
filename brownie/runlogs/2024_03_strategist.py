@@ -139,3 +139,91 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -----------------------------------
+# Mar 22, 2024 - Swap out of stETH
+# -----------------------------------
+from collateralSwap import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(oeth_vault_core.rebase({'from':STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Swap 691 stETH for WETH with 0.1% tolerance
+    _, swap_data = build_swap_tx(STETH, WETH, 691.0238 * 10**18, 0.1, False)
+    decoded_input = oeth_vault_core.swapCollateral.decode_input(swap_data)
+    txs.append(
+      oeth_vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    )
+
+    # Deposit it to Morpho Aave
+    txs.append(vault_oeth_admin.depositToStrategy(OETH_MORPHO_AAVE_STRAT, [WETH], [691.0238 * 10**18], {'from': STRATEGIST}))
+
+    # After
+    vault_change = oeth_vault_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    print(to_gnosis_json(txs))
+
+# -----------------------------------
+# Mar 23, 2024 - Swap some rETH
+# -----------------------------------
+from collateralSwap import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(oeth_vault_core.rebase({'from':STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw WETH & rETH from Balancer AMO
+    txs.append(
+      oeth_vault_admin.withdrawFromStrategy(
+        BALANCER_RETH_STRATEGY, 
+        [weth, reth], 
+        [966.034 * 10**18, 920.591 * 10**18], 
+        std
+      )
+    )
+    # Swap 920.591 RETH for WETH with 0.1% tolerance
+    _, swap_data = build_swap_tx(RETH, WETH, 920.591 * 10**18, 0.1, False)
+    decoded_input = oeth_vault_core.swapCollateral.decode_input(swap_data)
+    txs.append(
+      oeth_vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    )
+
+    # Deposit to Morpho Aave
+    txs.append(
+      oeth_vault_admin.depositToStrategy(
+        OETH_MORPHO_AAVE_STRAT, 
+        [weth], 
+        [1980.2655 * 10**18], 
+        std
+      )
+    )
+
+    # After
+    vault_change = oeth_vault_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    print(to_gnosis_json(txs))
