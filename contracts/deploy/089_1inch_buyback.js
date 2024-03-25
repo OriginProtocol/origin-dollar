@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     // reduceQueueTime: true, // just to solve the issue of later active proposals failing
-    // proposalId: ""
+    proposalId:
+      "19953986745691218316817489613719564552439805381746724170485904355958039770871",
   },
   async ({ ethers }) => {
     const cOETHBuybackProxy = await ethers.getContract("OETHBuybackProxy");
