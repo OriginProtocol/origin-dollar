@@ -17,6 +17,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
 
     event RewardsSourceUpdated(address indexed _address);
     event TreasuryManagerUpdated(address indexed _address);
+    event CVXShareBpsUpdated(uint256 bps);
 
     // Emitted whenever OUSD/OETH is swapped for OGV/CVX or any other token
     event OTokenBuyback(
@@ -52,11 +53,14 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     address public immutable cvx;
     address public immutable cvxLocker;
 
-    // Amount of `oTokens` to use for OGV buyback
-    uint256 public ogvShare;
+    // Amount of `oToken` balance to use for OGV buyback
+    uint256 public balanceForOGV;
 
-    // Amount of `oTokens` to use for CVX buyback
-    uint256 public cvxShare;
+    // Amount of `oToken` balance to use for CVX buyback
+    uint256 public balanceForCVX;
+
+    // Percentage of `oToken` balance to be used for CVX
+    uint256 public cvxShareBps; // 10000 = 100%
 
     constructor(
         address _oToken,
@@ -78,12 +82,14 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      * @param _strategistAddr Address of Strategist multi-sig wallet
      * @param _treasuryManagerAddr Address that receives the treasury's share of OUSD
      * @param _rewardsSource Address of RewardsSource contract
+     * @param _cvxShareBps Percentage of balance to use for CVX
      */
     function initialize(
         address _swapRouter,
         address _strategistAddr,
         address _treasuryManagerAddr,
-        address _rewardsSource
+        address _rewardsSource,
+        uint256 _cvxShareBps
     ) external onlyGovernor initializer {
         _setStrategistAddr(_strategistAddr);
 
@@ -91,6 +97,8 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         _setRewardsSource(_rewardsSource);
 
         _setTreasuryManager(_treasuryManagerAddr);
+
+        _setCVXShareBps(_cvxShareBps);
     }
 
     /**
@@ -153,29 +161,43 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     }
 
     /**
+     * @dev Sets the percentage of oToken to use for Flywheel tokens
+     * @param _bps BPS, 10000 to 100%
+     */
+    function setCVXShareBps(uint256 _bps) external onlyGovernor {
+        _setCVXShareBps(_bps);
+    }
+
+    function _setCVXShareBps(uint256 _bps) internal {
+        require(_bps <= 10000, "Invalid bps value");
+        cvxShareBps = _bps;
+        emit CVXShareBpsUpdated(_bps);
+    }
+
+    /**
      * @dev Computes the split of oToken balance that can be
      *      used for OGV and CVX buybacks.
      */
     function _updateBuybackSplits()
         internal
-        returns (uint256 _ogvShare, uint256 _cvxShare)
+        returns (uint256 _balanceForOGV, uint256 _balanceForCVX)
     {
-        _ogvShare = ogvShare;
-        _cvxShare = cvxShare;
+        _balanceForOGV = balanceForOGV;
+        _balanceForCVX = balanceForCVX;
 
         uint256 totalBalance = IERC20(oToken).balanceOf(address(this));
-        uint256 unsplitBalance = totalBalance - _ogvShare - _cvxShare;
+        uint256 unsplitBalance = totalBalance - _balanceForOGV - _balanceForCVX;
 
         // Check if all balance is accounted for
         if (unsplitBalance != 0) {
-            // If not, split unaccounted balance 50:50
-            uint256 halfBalance = unsplitBalance / 2;
-            _cvxShare = _cvxShare + halfBalance;
-            _ogvShare = _ogvShare + unsplitBalance - halfBalance;
+            // If not, split unaccounted balance based on `cvxShareBps`
+            uint256 addToCVX = (unsplitBalance * cvxShareBps) / 10000;
+            _balanceForCVX = _balanceForCVX + addToCVX;
+            _balanceForOGV = _balanceForOGV + unsplitBalance - addToCVX;
 
             // Update storage
-            ogvShare = _ogvShare;
-            cvxShare = _cvxShare;
+            balanceForOGV = _balanceForOGV;
+            balanceForCVX = _balanceForCVX;
         }
     }
 
@@ -223,13 +245,13 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         uint256 minOGV,
         bytes calldata swapData
     ) external onlyGovernorOrStrategist nonReentrant {
-        (uint256 _ogvAmount, ) = _updateBuybackSplits();
-        require(_ogvAmount >= oTokenAmount, "Balance underflow");
+        (uint256 _amountForOGV, ) = _updateBuybackSplits();
+        require(_amountForOGV >= oTokenAmount, "Balance underflow");
         require(rewardsSource != address(0), "RewardsSource contract not set");
 
         unchecked {
             // Subtract the amount to swap from net balance
-            ogvShare = _ogvAmount - oTokenAmount;
+            balanceForOGV = _amountForOGV - oTokenAmount;
         }
 
         uint256 ogvReceived = _swapToken(ogv, oTokenAmount, minOGV, swapData);
@@ -250,12 +272,12 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         uint256 minCVX,
         bytes calldata swapData
     ) external onlyGovernorOrStrategist nonReentrant {
-        (, uint256 _cvxAmount) = _updateBuybackSplits();
-        require(_cvxAmount >= oTokenAmount, "Balance underflow");
+        (, uint256 _amountForCVX) = _updateBuybackSplits();
+        require(_amountForCVX >= oTokenAmount, "Balance underflow");
 
         unchecked {
             // Subtract the amount to swap from net balance
-            cvxShare = _cvxAmount - oTokenAmount;
+            balanceForCVX = _amountForCVX - oTokenAmount;
         }
 
         uint256 cvxReceived = _swapToken(cvx, oTokenAmount, minCVX, swapData);

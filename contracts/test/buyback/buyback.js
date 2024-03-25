@@ -25,8 +25,8 @@ describe("Buyback", function () {
     // Check balance after swap
     await expect(oethBuyback).to.have.a.balanceOf(oethUnits("2"), oeth);
 
-    expect(await oethBuyback.ogvShare()).to.equal(oethUnits("0.5"));
-    expect(await oethBuyback.cvxShare()).to.equal(oethUnits("1.5"));
+    expect(await oethBuyback.balanceForOGV()).to.equal(oethUnits("0.5"));
+    expect(await oethBuyback.balanceForCVX()).to.equal(oethUnits("1.5"));
 
     // Ensure OGV went to RewardsSource contract
     await expect(rewardsSource).to.have.balanceOf(oethUnits("100000"), ogv);
@@ -42,9 +42,9 @@ describe("Buyback", function () {
     // Check balance after swap
     await expect(oethBuyback).to.have.a.balanceOf(oethUnits("2"), oeth);
 
-    expect(await oethBuyback.ogvShare()).to.equal(oethUnits("1.5"));
+    expect(await oethBuyback.balanceForOGV()).to.equal(oethUnits("1.5"));
 
-    expect(await oethBuyback.cvxShare()).to.equal(oethUnits("0.5"));
+    expect(await oethBuyback.balanceForCVX()).to.equal(oethUnits("0.5"));
 
     // Ensure it locked CVX
     expect(await cvxLocker.lockedBalanceOf(strategist.address)).to.equal(
@@ -63,8 +63,8 @@ describe("Buyback", function () {
     // Check balance after swap
     await expect(ousdBuyback).to.have.a.balanceOf(ousdUnits("1750"), ousd);
 
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("250"));
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("250"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
 
     // Ensure OGV went to RewardsSource contract
     await expect(rewardsSource).to.have.balanceOf(ousdUnits("100000"), ogv);
@@ -80,9 +80,9 @@ describe("Buyback", function () {
     // Check balance after swap
     await expect(ousdBuyback).to.have.a.balanceOf(ousdUnits("2250"), ousd);
 
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("1500"));
 
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("750"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("750"));
 
     // Ensure it locked CVX
     expect(await cvxLocker.lockedBalanceOf(strategist.address)).to.equal(
@@ -384,12 +384,38 @@ describe("Buyback", function () {
     );
   });
 
-  it("Should handle splits correctly", async () => {
+  it("Should allow governance to update CVX bps", async () => {
+    const { ousdBuyback, governor } = fixture;
+
+    await ousdBuyback.connect(governor).setCVXShareBps(1000);
+
+    expect(await ousdBuyback.cvxShareBps()).to.equal(1000);
+  });
+
+  it("Should not allow anyone else to update CVX bps", async () => {
+    const { ousdBuyback, matt, josh, domen } = fixture;
+
+    for (const signer of [matt, josh, domen]) {
+      await expect(
+        ousdBuyback.connect(signer).setCVXShareBps(3000)
+      ).to.be.revertedWith("Caller is not the Governor");
+    }
+  });
+
+  it("Should not allow invalid value", async () => {
+    const { ousdBuyback, governor } = fixture;
+
+    await expect(
+      ousdBuyback.connect(governor).setCVXShareBps(10001)
+    ).to.be.revertedWith("Invalid bps value");
+  });
+
+  it("Should handle splits correctly (with 50% for CVX)", async () => {
     const { ousdBuyback, ousd, josh, governor } = fixture;
 
     // Should have equal shares
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("1500"));
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
 
     // Set OGV share to zero
     await setStorageAt(
@@ -402,22 +428,85 @@ describe("Buyback", function () {
     await ousdBuyback.connect(governor).updateBuybackSplits();
 
     // Ensure distribution
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("750"));
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("2250"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("750"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("2250"));
 
     // When there's no unsplit balance, let it do its thing
     await ousdBuyback.connect(governor).updateBuybackSplits();
 
     // Ensure no change distribution
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("750"));
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("2250"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("750"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("2250"));
 
     // When there's only one wei extra
     await ousd.connect(josh).transfer(ousdBuyback.address, 1);
     await ousdBuyback.connect(governor).updateBuybackSplits();
 
     // Ensure OGV raised by 1 wei
-    expect(await ousdBuyback.ogvShare()).to.equal(ousdUnits("750").add("1"));
-    expect(await ousdBuyback.cvxShare()).to.equal(ousdUnits("2250"));
+    expect(await ousdBuyback.balanceForOGV()).to.equal(
+      ousdUnits("750").add("1")
+    );
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("2250"));
+  });
+
+  it("Should handle splits correctly (with 0% for CVX)", async () => {
+    const { ousdBuyback, ousd, josh, governor } = fixture;
+
+    // Should have equal shares
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
+
+    expect(
+      await ousdBuyback.connect(governor).setCVXShareBps(0) // 0% for CVX
+    );
+
+    // Set OGV share to zero (to mimic some unaccounted balance)
+    await setStorageAt(
+      ousdBuyback.address,
+      "0x6e",
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    );
+
+    // Now contract has 1500 unaccounted oToken
+    // and should allocate it all to OGV
+    await ousdBuyback.connect(governor).updateBuybackSplits();
+
+    // Ensure distribution
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
+
+    // When there's no unsplit balance, let it do its thing
+    await ousdBuyback.connect(governor).updateBuybackSplits();
+
+    // Ensure no change distribution
+    expect(await ousdBuyback.balanceForOGV()).to.equal(ousdUnits("1500"));
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
+
+    // When there's only one wei extra
+    await ousd.connect(josh).transfer(ousdBuyback.address, 1);
+    await ousdBuyback.connect(governor).updateBuybackSplits();
+
+    // Ensure OGV raised by 1 wei
+    expect(await ousdBuyback.balanceForOGV()).to.equal(
+      ousdUnits("1500").add("1")
+    );
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("1500"));
+
+    // Set CVX share to zero (to mimic some unaccounted balance)
+    await setStorageAt(
+      ousdBuyback.address,
+      "0x6f",
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    );
+
+    // Now contract has 1500 unaccounted oToken
+    // and should allocate it all to OGV
+    await ousdBuyback.connect(governor).updateBuybackSplits();
+
+    // Ensure distribution
+    expect(await ousdBuyback.balanceForOGV()).to.equal(
+      ousdUnits("3000").add("1")
+    );
+    expect(await ousdBuyback.balanceForCVX()).to.equal(ousdUnits("0"));
   });
 });

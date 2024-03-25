@@ -23,8 +23,8 @@ describe("ForkTest: OETH Buyback", function () {
       fixture;
 
     const oethBalanceBefore = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareBefore = await oethBuyback.ogvShare();
-    const cvxShareBefore = await oethBuyback.cvxShare();
+    const ogvShareBefore = await oethBuyback.balanceForOGV();
+    const cvxShareBefore = await oethBuyback.balanceForCVX();
     const rewardsBalanceBefore = await ogv.balanceOf(rewardsSource.address);
 
     let data = await getIInchSwapData({
@@ -43,8 +43,8 @@ describe("ForkTest: OETH Buyback", function () {
       .swapForOGV(ogvShareBefore, oethUnits("100"), data);
 
     const oethBalanceAfter = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareAfter = await oethBuyback.ogvShare();
-    const cvxShareAfter = await oethBuyback.cvxShare();
+    const ogvShareAfter = await oethBuyback.balanceForOGV();
+    const cvxShareAfter = await oethBuyback.balanceForCVX();
     const rewardsBalanceAfter = await ogv.balanceOf(rewardsSource.address);
 
     expect(ogvShareAfter).to.eq(0);
@@ -58,8 +58,8 @@ describe("ForkTest: OETH Buyback", function () {
       fixture;
 
     const oethBalanceBefore = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareBefore = await oethBuyback.ogvShare();
-    const cvxShareBefore = await oethBuyback.cvxShare();
+    const ogvShareBefore = await oethBuyback.balanceForOGV();
+    const cvxShareBefore = await oethBuyback.balanceForCVX();
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
       strategistAddr
@@ -81,8 +81,8 @@ describe("ForkTest: OETH Buyback", function () {
       .swapForCVX(cvxShareBefore, oethUnits("1"), data);
 
     const oethBalanceAfter = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareAfter = await oethBuyback.ogvShare();
-    const cvxShareAfter = await oethBuyback.cvxShare();
+    const ogvShareAfter = await oethBuyback.balanceForOGV();
+    const cvxShareAfter = await oethBuyback.balanceForCVX();
 
     expect(cvxShareAfter).to.eq(0);
     expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(cvxShareBefore));
@@ -111,8 +111,8 @@ describe("ForkTest: OUSD Buyback", function () {
       fixture;
 
     const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareBefore = await ousdBuyback.ogvShare();
-    const cvxShareBefore = await ousdBuyback.cvxShare();
+    const ogvShareBefore = await ousdBuyback.balanceForOGV();
+    const cvxShareBefore = await ousdBuyback.balanceForCVX();
     const rewardsBalanceBefore = await ogv.balanceOf(rewardsSource.address);
 
     let data = await getIInchSwapData({
@@ -131,8 +131,8 @@ describe("ForkTest: OUSD Buyback", function () {
       .swapForOGV(ogvShareBefore, ousdUnits("1"), data);
 
     const ousdBalanceAfter = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareAfter = await ousdBuyback.ogvShare();
-    const cvxShareAfter = await ousdBuyback.cvxShare();
+    const ogvShareAfter = await ousdBuyback.balanceForOGV();
+    const cvxShareAfter = await ousdBuyback.balanceForCVX();
     const rewardsBalanceAfter = await ogv.balanceOf(rewardsSource.address);
 
     expect(ogvShareAfter).to.eq(0);
@@ -145,8 +145,8 @@ describe("ForkTest: OUSD Buyback", function () {
     const { ousdBuyback, ousd, vault, cvx, cvxLocker, strategist } = fixture;
 
     const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareBefore = await ousdBuyback.ogvShare();
-    const cvxShareBefore = await ousdBuyback.cvxShare();
+    const ogvShareBefore = await ousdBuyback.balanceForOGV();
+    const cvxShareBefore = await ousdBuyback.balanceForCVX();
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
       strategistAddr
@@ -168,8 +168,8 @@ describe("ForkTest: OUSD Buyback", function () {
       .swapForCVX(cvxShareBefore, ousdUnits("0.01"), data);
 
     const ousdBalanceAfter = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareAfter = await ousdBuyback.ogvShare();
-    const cvxShareAfter = await ousdBuyback.cvxShare();
+    const ogvShareAfter = await ousdBuyback.balanceForOGV();
+    const cvxShareAfter = await ousdBuyback.balanceForCVX();
 
     expect(cvxShareAfter).to.eq(0);
     expect(ousdBalanceAfter).to.eq(ousdBalanceBefore.sub(cvxShareBefore));

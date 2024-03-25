@@ -6,7 +6,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "088_1inch_buyback",
+    deployName: "089_1inch_buyback",
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     // reduceQueueTime: true, // just to solve the issue of later active proposals failing
@@ -75,25 +75,37 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setSwapRouter(address)",
           args: [cSwapper.address],
         },
-        // 3. Update universal router address on OUSD Buyback
+        // 3. Set splits for CVX
+        {
+          contract: cOUSDBuyback,
+          signature: "setCVXShareBps(uint256)",
+          args: [5000], // 50%
+        },
+        // 4. Update universal router address on OUSD Buyback
         {
           contract: cOUSDBuyback,
           signature: "updateBuybackSplits()",
           args: [],
         },
-        // 4. Upgrade OETH Buyback to new implementation
+        // 5. Upgrade OETH Buyback to new implementation
         {
           contract: cOETHBuybackProxy,
           signature: "upgradeTo(address)",
           args: [dOETHBuybackImpl.address],
         },
-        // 5. Update universal router address on OETH Buyback
+        // 6. Update universal router address on OETH Buyback
         {
           contract: cOETHBuyback,
           signature: "setSwapRouter(address)",
           args: [cSwapper.address],
         },
-        // 6. Update universal router address on OUSD Buyback
+        // 7. Set splits for CVX
+        {
+          contract: cOETHBuyback,
+          signature: "setCVXShareBps(uint256)",
+          args: [5000], // 50%
+        },
+        // 8. Update universal router address on OUSD Buyback
         {
           contract: cOETHBuyback,
           signature: "updateBuybackSplits()",
