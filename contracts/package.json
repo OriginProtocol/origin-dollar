@@ -47,7 +47,7 @@
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/defender-sdk": "^1.3.0",
     "@openzeppelin/hardhat-upgrades": "^1.10.0",
-    "@perimetersec/fuzzlib": "^0.2.0",
+    "@perimetersec/fuzzlib": "0.2.1",
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.1.1",
     "axios": "^1.4.0",
