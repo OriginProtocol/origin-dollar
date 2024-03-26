@@ -70,7 +70,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dOUSDBuybackImpl.address],
         },
-        // 2. Update universal router address on OUSD Buyback
+        // 2. Update swap router address on OUSD Buyback
         {
           contract: cOUSDBuyback,
           signature: "setSwapRouter(address)",
@@ -82,7 +82,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setCVXShareBps(uint256)",
           args: [5000], // 50%
         },
-        // 4. Update universal router address on OUSD Buyback
+        // 4. Compute buyback splits
         {
           contract: cOUSDBuyback,
           signature: "updateBuybackSplits()",
@@ -94,7 +94,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dOETHBuybackImpl.address],
         },
-        // 6. Update universal router address on OETH Buyback
+        // 6. Update swap router address on OETH Buyback
         {
           contract: cOETHBuyback,
           signature: "setSwapRouter(address)",
@@ -106,7 +106,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setCVXShareBps(uint256)",
           args: [5000], // 50%
         },
-        // 8. Update universal router address on OUSD Buyback
+        // 8. Compute buyback splits
         {
           contract: cOETHBuyback,
           signature: "updateBuybackSplits()",
