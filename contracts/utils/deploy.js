@@ -64,7 +64,8 @@ const deployWithConfirmation = async (
   contract,
   skipUpgradeSafety = false,
   libraries = {},
-  gasLimit
+  gasLimit,
+  useFeeData
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
@@ -86,9 +87,12 @@ const deployWithConfirmation = async (
       contract,
       fieldsToCompare: null,
       libraries,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
-      ...(await getTxOpts(gasLimit)),
+      ...(useFeeData
+        ? {
+            maxFeePerGas: feeData.maxFeePerGas,
+            maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+          }
+        : await getTxOpts(gasLimit)),
     })
   );
 
