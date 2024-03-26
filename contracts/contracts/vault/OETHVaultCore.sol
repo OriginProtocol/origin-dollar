@@ -90,11 +90,14 @@ contract OETHVaultCore is VaultCore {
         }
 
         // Ensure that the WETH index is cached
-        uint256 wethIndex = wethAssetIndex;
-        require(allAssets[wethIndex] == weth, "WETH Asset index not cached");
+        uint256 _wethAssetIndex = wethAssetIndex;
+        require(
+            allAssets[_wethAssetIndex] == weth,
+            "WETH Asset index not cached"
+        );
 
         outputs = new uint256[](allAssets.length);
-        outputs[wethIndex] = _amount;
+        outputs[_wethAssetIndex] = _amount;
     }
 
     // @inheritdoc VaultCore
@@ -117,12 +120,10 @@ contract OETHVaultCore is VaultCore {
             wethAssetIndex
         ];
 
-        if (_minimumUnitAmount > 0) {
-            require(
-                amountMinusFee >= _minimumUnitAmount,
-                "Redeem amount lower than minimum"
-            );
-        }
+        require(
+            amountMinusFee >= _minimumUnitAmount,
+            "Redeem amount lower than minimum"
+        );
 
         if (IERC20(weth).balanceOf(address(this)) >= amountMinusFee) {
             // Use Vault funds first if sufficient

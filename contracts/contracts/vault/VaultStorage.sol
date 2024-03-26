@@ -60,6 +60,8 @@ contract VaultStorage is Initializable, Governable {
     }
     // Changed to fit into a single storage slot so the decimals needs to be recached
     struct Asset {
+        // Note: OETHVaultCore doesn't use `isSupported` when minting,
+        // redeeming or checking balance of assets.
         bool isSupported;
         UnitConversion unitConversion;
         uint8 decimals;
