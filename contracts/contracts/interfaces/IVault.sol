@@ -200,4 +200,12 @@ interface IVault {
     function netOusdMintedForStrategy() external view returns (int256);
 
     function weth() external view returns (address);
+
+    function cacheWETHAssetIndex() external;
+
+    function wethAssetIndex() external view returns (uint256);
+
+    function initialize(address, address) external;
+
+    function setAdminImpl(address) external;
 }

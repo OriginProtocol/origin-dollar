@@ -60,6 +60,8 @@ contract VaultStorage is Initializable, Governable {
     }
     // Changed to fit into a single storage slot so the decimals needs to be recached
     struct Asset {
+        // Note: OETHVaultCore doesn't use `isSupported` when minting,
+        // redeeming or checking balance of assets.
         bool isSupported;
         UnitConversion unitConversion;
         uint8 decimals;
@@ -72,6 +74,7 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
+    // slither-disable-next-line uninitialized-state
     address[] internal allAssets;
 
     // Strategies approved for use by the Vault
@@ -121,9 +124,11 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
+    // slither-disable-next-line uninitialized-state
     mapping(address => address) public assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
+    // slither-disable-next-line uninitialized-state
     uint256 public maxSupplyDiff;
 
     /// @notice Trustee contract that can collect a percentage of yield
@@ -159,6 +164,9 @@ contract VaultStorage is Initializable, Governable {
         uint16 allowedUndervalueBps;
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    // For future use
+    uint256[50] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

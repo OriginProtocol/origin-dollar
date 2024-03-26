@@ -165,10 +165,7 @@ contract FrxEthRedeemStrategy is InitializableAbstractStrategy {
         );
     }
 
-    function _abstractSetPToken(address, address)
-        internal
-        override
-    {
+    function _abstractSetPToken(address, address) internal override {
         revert("No pTokens are used");
     }
 
