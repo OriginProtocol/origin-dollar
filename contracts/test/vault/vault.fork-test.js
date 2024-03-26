@@ -183,7 +183,7 @@ describe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
+      const { vault, josh, usdc, dai, morphoAaveStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
       const strategistSigner = await impersonateAndFund(
@@ -198,12 +198,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [morphoCompoundStrategy, morphoCompoundStrategy],
+            [morphoAaveStrategy, morphoAaveStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  morphoCompoundStrategy.address,
+                  morphoAaveStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -224,12 +224,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [morphoCompoundStrategy, morphoCompoundStrategy],
+            [morphoAaveStrategy, morphoAaveStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  morphoCompoundStrategy.address,
+                  morphoAaveStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -439,16 +439,6 @@ describe("ForkTest: Vault", function () {
         liquidationLimit: ousdUnits("4000"),
         uniswapV3Path:
           "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.comp.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: 0,
-        uniswapV3Path:
-          "0xc00e94cb662c3520282e6f5717214004a7f26888000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
     },
   }));
