@@ -42,12 +42,12 @@
       "src": "contracts/governance/Strategizable.sol:13"
     },
     {
-      "label": "universalRouter",
+      "label": "swapRouter",
       "offset": 0,
       "slot": "102",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:30"
+      "src": "contracts/buyback/BaseBuyback.sol:31"
     },
     {
       "label": "__deprecated_ousd",
@@ -55,7 +55,7 @@
       "slot": "103",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:33"
+      "src": "contracts/buyback/BaseBuyback.sol:34"
     },
     {
       "label": "__deprecated_ogv",
@@ -63,7 +63,7 @@
       "slot": "104",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:35"
+      "src": "contracts/buyback/BaseBuyback.sol:36"
     },
     {
       "label": "__deprecated_usdt",
@@ -71,7 +71,7 @@
       "slot": "105",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:37"
+      "src": "contracts/buyback/BaseBuyback.sol:38"
     },
     {
       "label": "__deprecated_weth9",
@@ -79,7 +79,7 @@
       "slot": "106",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:39"
+      "src": "contracts/buyback/BaseBuyback.sol:40"
     },
     {
       "label": "rewardsSource",
@@ -87,7 +87,7 @@
       "slot": "107",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:42"
+      "src": "contracts/buyback/BaseBuyback.sol:43"
     },
     {
       "label": "treasuryManager",
@@ -95,7 +95,7 @@
       "slot": "108",
       "type": "t_address",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:45"
+      "src": "contracts/buyback/BaseBuyback.sol:46"
     },
     {
       "label": "__deprecated_treasuryBps",
@@ -103,7 +103,31 @@
       "slot": "109",
       "type": "t_uint256",
       "contract": "BaseBuyback",
-      "src": "contracts/buyback/BaseBuyback.sol:48"
+      "src": "contracts/buyback/BaseBuyback.sol:49"
+    },
+    {
+      "label": "balanceForOGV",
+      "offset": 0,
+      "slot": "110",
+      "type": "t_uint256",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:57"
+    },
+    {
+      "label": "balanceForCVX",
+      "offset": 0,
+      "slot": "111",
+      "type": "t_uint256",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:60"
+    },
+    {
+      "label": "cvxShareBps",
+      "offset": 0,
+      "slot": "112",
+      "type": "t_uint256",
+      "contract": "BaseBuyback",
+      "src": "contracts/buyback/BaseBuyback.sol:63"
     }
   ],
   "types": {

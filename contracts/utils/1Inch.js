@@ -118,7 +118,7 @@ const getIInchSwapData = async ({
 
       log("swap API toAmount: ", formatUnits(response.data.toAmount));
       log("swap API swap paths: ", JSON.stringify(response.data.protocols));
-      // log("swap API tx.data: ", response.data.tx.data);
+      // log("swap API data.protocols: ", response.data.protocols[0]);
 
       return response.data.tx.data;
     } catch (err) {

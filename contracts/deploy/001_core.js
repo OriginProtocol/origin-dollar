@@ -1045,6 +1045,8 @@ const deployBuyback = async () => {
     dOETHBuybackProxy.address
   );
 
+  const mockSwapper = await ethers.getContract("MockSwapper");
+
   // Init proxy to implementation
   await withConfirmation(
     cOUSDBuybackProxy.connect(sDeployer)[
@@ -1069,21 +1071,23 @@ const deployBuyback = async () => {
   );
 
   // Initialize implementation contract
-  const initFunction = "initialize(address,address,address,address)";
+  const initFunction = "initialize(address,address,address,address,uint256)";
   await withConfirmation(
     cOUSDBuyback.connect(sDeployer)[initFunction](
-      assetAddresses.uniswapUniversalRouter,
+      mockSwapper.address,
       strategistAddr,
       strategistAddr, // Treasury manager
-      assetAddresses.RewardsSource
+      assetAddresses.RewardsSource,
+      5000 // 50%
     )
   );
   await withConfirmation(
     cOETHBuyback.connect(sDeployer)[initFunction](
-      assetAddresses.uniswapUniversalRouter,
+      mockSwapper.address,
       strategistAddr,
       strategistAddr, // Treasury manager
-      assetAddresses.RewardsSource
+      assetAddresses.RewardsSource,
+      5000 // 50%
     )
   );
 

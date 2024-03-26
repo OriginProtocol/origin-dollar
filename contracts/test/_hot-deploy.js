@@ -117,6 +117,7 @@ async function hotDeployOption(
   const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
   const deployHarvester = hotDeployOptions.includes("harvester");
   const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
+  const deployBuyback = hotDeployOptions.includes("buyback");
 
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
@@ -162,6 +163,10 @@ async function hotDeployOption(
   }
   if (deployOracleRouter) {
     await hotDeployOracleRouter(fixture, isOethFixture);
+  }
+
+  if (deployBuyback) {
+    await hotDeployBuyback(fixture, isOethFixture);
   }
 }
 
@@ -276,6 +281,31 @@ async function hotDeployOracleRouter(fixture, forOETH) {
   const implementation = await ethers.getContract(routerName);
   log(`Replacing implementation at ${cRouter.address} with the fresh bytecode`);
   await replaceContractAt(cRouter.address, implementation);
+}
+
+async function hotDeployBuyback(fixture, forOETH) {
+  const { deploy } = deployments;
+  const proxyName = `${forOETH ? "OETH" : ""}BuybackProxy`;
+  const contractName = `${forOETH ? "OETH" : "OUSD"}Buyback`;
+
+  const proxy = await ethers.getContract(proxyName);
+  const oldImplAddr = await proxy.implementation();
+
+  await deploy(contractName, {
+    from: await fixture.strategist.getAddress(),
+    args: [
+      forOETH ? addresses.mainnet.OETHProxy : addresses.mainnet.OUSDProxy,
+      addresses.mainnet.OGV,
+      addresses.mainnet.CVX,
+      addresses.mainnet.CVXLocker,
+    ],
+  });
+
+  const newImpl = await ethers.getContract(contractName);
+  log(
+    `Replacing ${proxyName} implementation at ${oldImplAddr} with the fresh bytecode`
+  );
+  await replaceContractAt(oldImplAddr, newImpl);
 }
 
 /* Run the fixture and replace the main strategy contract(s) of the fixture
