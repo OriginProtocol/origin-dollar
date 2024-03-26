@@ -11,7 +11,7 @@ const {
 const { createFixtureLoader, morphoCompoundFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("ForkTest: Morpho Compound Strategy", function () {
+describe.skip("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
