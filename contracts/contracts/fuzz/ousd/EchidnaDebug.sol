@@ -6,7 +6,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import "./EchidnaHelper.sol";
 import "./Debugger.sol";
 
-import "../token/OUSD.sol";
+import "../../token/OUSD.sol";
 
 /**
  * @title Room for random debugging functions
