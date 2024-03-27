@@ -1,0 +1,30 @@
+# multi-abi: true
+
+workers: 1
+# workers: 2
+symExec: true
+
+testMode: assertion
+# testMode: optimization
+
+prefix: echidna_
+corpusDir: echidna-corpus
+
+testLimit: 100000000000
+# testLimit: 10000 # 10K
+# testLimit: 10000000 # 10M
+# testLimit: 100000000 # 100M
+
+# shrinkLimit: 100000000000
+# shrinkLimit: 100000 # 100K
+
+# seqLen: 30
+# seqLen: 250
+
+balanceContract: 0xffffffffffffffffffffffffffffffffffffffffffffffff
+
+codeSize: 0x8000
+
+deployer: "0xfffff"
+sender: ["0x10000", "0x20000", "0x30000", "0x40000"]
+deployContracts: [["0x30000", "Dummy"],["0x40000", "Dummy"]]
