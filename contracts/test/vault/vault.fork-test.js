@@ -183,7 +183,7 @@ describe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
+      const { vault, josh, usdc, dai, morphoAaveStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
       const strategistSigner = await impersonateAndFund(
@@ -198,12 +198,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [morphoCompoundStrategy, morphoCompoundStrategy],
+            [morphoAaveStrategy, morphoAaveStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  morphoCompoundStrategy.address,
+                  morphoAaveStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -224,12 +224,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [morphoCompoundStrategy, morphoCompoundStrategy],
+            [morphoAaveStrategy, morphoAaveStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  morphoCompoundStrategy.address,
+                  morphoAaveStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -346,7 +346,6 @@ describe("ForkTest: Vault", function () {
         // Update this every time a new strategy is added. Below are mainnet addresses
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
@@ -374,7 +373,6 @@ describe("ForkTest: Vault", function () {
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
@@ -386,7 +384,6 @@ describe("ForkTest: Vault", function () {
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
@@ -398,7 +395,6 @@ describe("ForkTest: Vault", function () {
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
@@ -443,16 +439,6 @@ describe("ForkTest: Vault", function () {
         liquidationLimit: ousdUnits("4000"),
         uniswapV3Path:
           "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.comp.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: 0,
-        uniswapV3Path:
-          "0xc00e94cb662c3520282e6f5717214004a7f26888000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
       },
     },
   }));

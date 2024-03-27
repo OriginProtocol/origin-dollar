@@ -155,7 +155,7 @@ describe("ForkTest: FraxETH Redeem Strategy", function () {
       );
     const tickets = await _getTickets(tx, frxEthRedeemStrategy);
     expect(await frxEthRedeemStrategy.outstandingRedeems()).to.equal(
-      initialOutstanding + amount
+      initialOutstanding.add(amount)
     );
     expect(await frxEthRedeemStrategy.checkBalance(weth.address)).to.equal(
       await frxEthRedeemStrategy.outstandingRedeems()
