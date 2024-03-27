@@ -585,7 +585,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Since we are unwrapping WETH before depositing it to Curve
-     *      there is no need to to set an approval for WETH on the Curve
+     *      there is no need to set an approval for WETH on the Curve
      *      pool
      * @param _asset Address of the asset
      * @param _pToken Address of the Curve LP token

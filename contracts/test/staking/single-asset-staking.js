@@ -446,7 +446,7 @@ describe.skip("Single Asset Staking", function () {
   it("Stake, transfer then exit and then stake again", async () => {
     const { ogn, anna, matt, governor, ognStaking } = fixture;
 
-    // use signer 8 as the the agent
+    // use signer 8 as the agent
     const transferAgent = await ethers.getSigner(8);
 
     await expect(
@@ -498,7 +498,7 @@ describe.skip("Single Asset Staking", function () {
 
     const s = utils.splitSignature(sig);
 
-    // "rescue the wallet" by transfering to another address
+    // "rescue the wallet" by transferring to another address
     await ognStaking
       .connect(transferAgent)
       .transferStakes(anna.address, matt.address, s.r, s.s, s.v);
