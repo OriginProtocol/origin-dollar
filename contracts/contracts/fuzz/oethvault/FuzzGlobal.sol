@@ -33,7 +33,7 @@ contract FuzzGlobal is FuzzHelper {
             lte(
                 diff,
                 YIELD_TOLERANCE,
-                "GLOBAL-01: total WETH should never exceed total WETH starting balance"
+                "GLOBAL-01: The sum of WETH held by all actors should never exceed the sum of their WETH starting balances"
             );
         }
     }
@@ -48,7 +48,7 @@ contract FuzzGlobal is FuzzHelper {
         lte(
             totalOeth,
             totalStarting,
-            "GLOBAL-02: total OETH should never exceed total WETH starting balance"
+            "GLOBAL-02: The sum of OETH held by all actors should never exceed the sum of their WETH starting balances"
         );
     }
 
@@ -61,7 +61,7 @@ contract FuzzGlobal is FuzzHelper {
         lte(
             diff,
             DONATE_VS_YIELD_TOLERANCE,
-            "GLOBAL-03: total yield should be equal to total donated"
+            "GLOBAL-03: The total amount of generated yield should equal the total amount of WETH donated to the Vault"
         );
     }
 
@@ -85,7 +85,7 @@ contract FuzzGlobal is FuzzHelper {
         lte(
             diff,
             ACCOUNTING_TOLERANCE,
-            "GLOBAL-04: totalStarting - totalDonated = totalWeth + totalOeth - totalYield"
+            "GLOBAL-04: The sum of all starting balances minus the total amount of WETH donated should equal the sum of all WETH and OETH balances minus the total amount of yield generated"
         );
     }
 
@@ -99,7 +99,7 @@ contract FuzzGlobal is FuzzHelper {
         lte(
             oethTotalSupply,
             wethTotalSupply,
-            "GLOBAL-05: OETH total supply should never exceed WETH total supply"
+            "GLOBAL-05: The total supply of OETH should never exceed the total supply of WETH"
         );
     }
 
@@ -115,7 +115,7 @@ contract FuzzGlobal is FuzzHelper {
         lte(
             diff,
             VAULT_BALANCE_VS_TOTAL_OETH_TOLERANCE,
-            "GLOBAL-06: vault balance should never exceed total OETH balance"
+            "GLOBAL-06: The Vault WETH balance should never exceed total the amount of OETH held by all actors and outsiders"
         );
     }
 }

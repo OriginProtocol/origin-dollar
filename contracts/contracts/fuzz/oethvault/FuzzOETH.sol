@@ -24,7 +24,7 @@ contract FuzzOETH is FuzzSetup {
 
         vm.prank(currentActor);
         try oeth.transfer(to, amount) {} catch {
-            t(false, "OETH-01: No unwanted reverts in transfer");
+            t(false, "OETH-01: No unwanted reverts when transfering OETH");
         }
     }
 
@@ -41,7 +41,7 @@ contract FuzzOETH is FuzzSetup {
 
         vm.prank(currentActor);
         try oeth.rebaseOptIn() {} catch {
-            t(false, "OETH-02: No unwanted reverts in optIn");
+            t(false, "OETH-02: No unwanted reverts when opting in to rebase");
         }
     }
 
@@ -58,7 +58,7 @@ contract FuzzOETH is FuzzSetup {
 
         vm.prank(currentActor);
         try oeth.rebaseOptOut() {} catch {
-            t(false, "OETH-03: No unwanted reverts in optOut");
+            t(false, "OETH-03: No unwanted reverts when opting out of rebase");
         }
     }
 }

@@ -40,20 +40,20 @@ contract FuzzVault is FuzzHelper {
             lte(
                 wethBalDiff,
                 MINT_TOLERANCE,
-                "VAULT-01: User WETH balance should decrease by mint amount"
+                "VMINT-01: Actor WETH balance should decrease by amount minted"
             );
             lte(
                 oethBalDiff,
                 MINT_TOLERANCE,
-                "VAULT-02: User OETH balance should increase by mint amount"
+                "VMINT-02: Actor OETH balance should increase by amount minted"
             );
             lte(
                 vaultBalDiff,
                 MINT_TOLERANCE,
-                "VAULT-03: Vault WETH balance should increase by mint amount"
+                "VMINT-03: Vault WETH balance should increase by amount minted"
             );
         } catch {
-            t(false, "VAULT-04: No unwanted reverts in mint");
+            t(false, "VMINT-04: No unwanted reverts when minting OETH");
         }
     }
 
@@ -91,20 +91,20 @@ contract FuzzVault is FuzzHelper {
             lte(
                 wethBalDiff,
                 REDEEM_TOLERANCE,
-                "VAULT-05: User WETH balance should increase by redeem amount"
+                "VREDEEM-01: Actor WETH balance should increase by amount redeemed"
             );
             lte(
                 oethBalDiff,
                 REDEEM_TOLERANCE,
-                "VAULT-06: User OETH balance should decrease by redeem amount"
+                "VREDEEM-02: Actor OETH balance should decrease by amount redeemed"
             );
             lte(
                 vaultBalDiff,
                 REDEEM_TOLERANCE,
-                "VAULT-07: Vault WETH balance should decrease by redeem amount"
+                "VREDEEM-03: Vault WETH balance should decrease by amount redeemed"
             );
         } catch {
-            t(false, "VAULT-08: No unwanted reverts in redeem");
+            t(false, "VREDEEM-04: No unwanted reverts when redeeming OETH");
         }
     }
 
@@ -119,8 +119,59 @@ contract FuzzVault is FuzzHelper {
         lte(
             balanceAfter,
             REDEEM_TOLERANCE,
-            "VAULT-09: User OETH balance should be 0 after redeemAll"
+            "VREDEEM-05: After redeeming all, actor OETH balance should be zero"
         );
+    }
+
+    /**
+     * @notice Donate WETH to the vault and rebase
+     * @param amount Amount of WETH to donate
+     * @dev This simulated yield generated from strategies
+     */
+    function donateAndRebase(uint256 amount) public setCurrentActor {
+        if (weth.balanceOf(currentActor) == 0) revert FuzzRequireError();
+        amount = clampBetween(amount, 1, weth.balanceOf(currentActor));
+        vm.prank(currentActor);
+
+        try weth.transfer(address(vault), amount) {
+            totalDonated += amount;
+        } catch {
+            t(
+                false,
+                "VREBASE-01: No unwanted reverts when donating WETH to Vault"
+            );
+        }
+
+        uint totalOethBefore = getTotalOethBalanceInclOutsiders();
+
+        uint256[] memory balancesBefore = new uint256[](ACTORS.length);
+        for (uint256 i = 0; i < ACTORS.length; i++) {
+            balancesBefore[i] = oeth.balanceOf(ACTORS[i]);
+        }
+
+        try vault.rebase() {
+            uint totalOethAfter = getTotalOethBalanceInclOutsiders();
+
+            for (uint256 i = 0; i < ACTORS.length; i++) {
+                uint256 balanceAfter = oeth.balanceOf(ACTORS[i]);
+
+                if (balanceAfter < balancesBefore[i]) {
+                    uint256 diff = diff(balanceAfter, balancesBefore[i]);
+
+                    lte(
+                        diff,
+                        BALANCE_AFTER_REBASE_TOLERANCE,
+                        "VREBASE-02: Rebasing should never decrease OETH balance for any actor"
+                    );
+                }
+            }
+
+            if (totalOethAfter > totalOethBefore) {
+                totalYield += totalOethAfter - totalOethBefore;
+            }
+        } catch {
+            t(false, "VREBASE-03: No unwanted reverts when rebasing Vault");
+        }
     }
 
     /**
@@ -153,69 +204,30 @@ contract FuzzVault is FuzzHelper {
 
         vm.prank(ADDRESS_OUTSIDER_NONREBASING);
         try vault.redeemAll(0) {} catch {
-            t(false, "GLOBAL: redeemAll should never revert");
+            t(
+                false,
+                "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+            );
         }
 
         vm.prank(ADDRESS_OUTSIDER_REBASING);
         try vault.redeemAll(0) {} catch {
-            t(false, "GLOBAL: redeemAll should never revert");
+            t(
+                false,
+                "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+            );
         }
 
         for (uint i = 0; i < ACTORS.length; i++) {
             vm.prank(ACTORS[i]);
             try vault.redeemAll(0) {} catch {
-                t(false, "GLOBAL: redeemAll should never revert");
+                t(
+                    false,
+                    "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+                );
             }
         }
 
         vm.selectFork(0);
-    }
-
-    /**
-     * @notice Donate WETH to the vault and rebase
-     * @param amount Amount of WETH to donate
-     * @dev This simulated yield generated from strategies
-     */
-    function donateAndRebase(uint256 amount) public setCurrentActor {
-        if (weth.balanceOf(currentActor) == 0) revert FuzzRequireError();
-        amount = clampBetween(amount, 1, weth.balanceOf(currentActor));
-        vm.prank(currentActor);
-
-        try weth.transfer(address(vault), amount) {
-            totalDonated += amount;
-        } catch {
-            t(false, "VAULT-10: Donating WETH to Vault should never revert");
-        }
-
-        uint totalOethBefore = getTotalOethBalanceInclOutsiders();
-
-        uint256[] memory balancesBefore = new uint256[](ACTORS.length);
-        for (uint256 i = 0; i < ACTORS.length; i++) {
-            balancesBefore[i] = oeth.balanceOf(ACTORS[i]);
-        }
-
-        try vault.rebase() {
-            uint totalOethAfter = getTotalOethBalanceInclOutsiders();
-
-            for (uint256 i = 0; i < ACTORS.length; i++) {
-                uint256 balanceAfter = oeth.balanceOf(ACTORS[i]);
-
-                if (balanceAfter < balancesBefore[i]) {
-                    uint256 diff = diff(balanceAfter, balancesBefore[i]);
-
-                    lte(
-                        diff,
-                        BALANCE_AFTER_REBASE_TOLERANCE,
-                        "VAULT-11: Rebase should never decrease OETH balance for users"
-                    );
-                }
-            }
-
-            if (totalOethAfter > totalOethBefore) {
-                totalYield += totalOethAfter - totalOethBefore;
-            }
-        } catch {
-            t(false, "VAULT-12: Rebase should never revert");
-        }
     }
 }
