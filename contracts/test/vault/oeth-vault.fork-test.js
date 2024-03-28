@@ -187,6 +187,48 @@ describe("ForkTest: OETH Vault", function () {
     });
   });
 
+  describe("Remove asset", () => {
+    it("should remove all LSTs from the Vault", async function () {
+      const { oethVault, frxETH, reth, stETH, timelock } = fixture;
+
+      if (!(await oethVault.isSupportedAsset(frxETH.address))) {
+        this.skip();
+      }
+
+      // Remove all assets from strategies
+      await oethVault.connect(timelock).withdrawAllFromStrategies();
+
+      const lstAssets = [frxETH, reth, stETH];
+
+      // Just draining out every asset to make
+      // sure `checkBalance(asset)` returns 0
+      const mockedVaultSigner = await impersonateAndFund(oethVault.address);
+      for (const asset of lstAssets) {
+        const balance = await asset.balanceOf(oethVault.address);
+        // stETH has rounding issues, so transferring 1 wei more than the balance
+        await asset
+          .connect(mockedVaultSigner)
+          .transfer(
+            addresses.dead,
+            asset.address == stETH.address ? balance.add(1) : balance
+          );
+      }
+
+      // Now remove all LSTs
+      await oethVault
+        .connect(timelock)
+        .removeAssets(lstAssets.map((x) => x.address));
+
+      for (const asset of lstAssets) {
+        expect(await oethVault.checkBalance(asset.address)).to.equal(0);
+        expect(await oethVault.isSupportedAsset(asset.address)).to.be.false;
+        expect(await oethVault.assetDefaultStrategies(asset.address)).to.equal(
+          addresses.zero
+        );
+      }
+    });
+  });
+
   shouldHaveRewardTokensConfigured(() => ({
     vault: fixture.oethVault,
     harvester: fixture.oethHarvester,

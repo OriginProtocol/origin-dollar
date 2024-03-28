@@ -343,6 +343,59 @@ contract VaultAdmin is VaultStorage {
         emit AssetSupported(_asset);
     }
 
+    function _removeAsset(address _asset) internal {
+        require(assets[_asset].isSupported, "Asset not supported");
+        require(
+            IVault(address(this)).checkBalance(_asset) == 0,
+            "Vault still holds asset"
+        );
+
+        uint256 assetsCount = allAssets.length;
+        uint256 assetIndex = assetsCount;
+        for (uint256 i = 0; i < assetsCount; ++i) {
+            if (allAssets[i] == _asset) {
+                assetIndex = i;
+                break;
+            }
+        }
+
+        // Note: If asset is not present in `allAssets`, the following line
+        // will revert with an out-of-bound error. Right now, there's no
+        // reason why an asset would have `Asset.isSupported = true` but
+        // not exist in `allAssets`.
+
+        // Update allAssets array
+        allAssets[assetIndex] = allAssets[assetsCount - 1];
+        allAssets.pop();
+
+        // Reset default strategy
+        assetDefaultStrategies[_asset] = address(0);
+        emit AssetDefaultStrategyUpdated(_asset, address(0));
+
+        // Mark as unsupported
+        assets[_asset].isSupported = false;
+
+        emit AssetRemoved(_asset);
+    }
+
+    /**
+     * @notice Remove a supported asset from the Vault
+     * @param _asset Address of asset
+     */
+    function removeAsset(address _asset) external onlyGovernor {
+        _removeAsset(_asset);
+    }
+
+    /**
+     * @notice Remove multiple supported assets from the Vault
+     * @param _assets Addresses of assets
+     */
+    function removeAssets(address[] calldata _assets) external onlyGovernor {
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            _removeAsset(_assets[i]);
+        }
+    }
+
     /**
      * @notice Cache decimals on OracleRouter for a particular asset. This action
      *      is required before that asset's price can be accessed.

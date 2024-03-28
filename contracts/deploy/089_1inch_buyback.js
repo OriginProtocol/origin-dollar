@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "089_1inch_buyback",
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
-    // reduceQueueTime: true, // just to solve the issue of later active proposals failing
+    reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId:
       "19953986745691218316817489613719564552439805381746724170485904355958039770871",
   },

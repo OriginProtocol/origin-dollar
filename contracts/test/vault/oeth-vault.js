@@ -5,6 +5,7 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { oethUnits } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 const oethFixture = createFixtureLoader(oethDefaultFixture);
 
@@ -212,6 +213,107 @@ describe("OETH Vault", function () {
 
       const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
+    });
+  });
+
+  describe("Remove Asset", () => {
+    it("should allow removing a single asset", async () => {
+      const { oethVault, frxETH, governor } = fixture;
+
+      const vaultAdmin = await ethers.getContractAt(
+        "OETHVaultAdmin",
+        oethVault.address
+      );
+      const assetCount = (await oethVault.getAssetCount()).toNumber();
+
+      const tx = await oethVault.connect(governor).removeAsset(frxETH.address);
+
+      await expect(tx)
+        .to.emit(vaultAdmin, "AssetRemoved")
+        .withArgs(frxETH.address);
+      await expect(tx)
+        .to.emit(vaultAdmin, "AssetDefaultStrategyUpdated")
+        .withArgs(frxETH.address, addresses.zero);
+
+      expect(await oethVault.isSupportedAsset(frxETH.address)).to.be.false;
+      expect(await oethVault.checkBalance(frxETH.address)).to.equal(0);
+      expect(await oethVault.assetDefaultStrategies(frxETH.address)).to.equal(
+        addresses.zero
+      );
+
+      const allAssets = await oethVault.getAllAssets();
+      expect(allAssets.length).to.equal(assetCount - 1);
+
+      expect(allAssets).to.not.contain(frxETH.address);
+
+      const config = await oethVault.getAssetConfig(frxETH.address);
+      expect(config.isSupported).to.be.false;
+    });
+
+    it("should allow removing multiple assets", async () => {
+      const { oethVault, frxETH, reth, governor } = fixture;
+
+      const vaultAdmin = await ethers.getContractAt(
+        "OETHVaultAdmin",
+        oethVault.address
+      );
+      const assetCount = (await oethVault.getAssetCount()).toNumber();
+
+      const tx = await oethVault
+        .connect(governor)
+        .removeAssets([frxETH.address, reth.address]);
+
+      const allAssets = await oethVault.getAllAssets();
+      expect(allAssets.length).to.equal(assetCount - 2);
+
+      for (const asset of [frxETH, reth]) {
+        await expect(tx)
+          .to.emit(vaultAdmin, "AssetRemoved")
+          .withArgs(asset.address);
+        await expect(tx)
+          .to.emit(vaultAdmin, "AssetDefaultStrategyUpdated")
+          .withArgs(asset.address, addresses.zero);
+
+        expect(await oethVault.isSupportedAsset(asset.address)).to.be.false;
+        expect(await oethVault.checkBalance(asset.address)).to.equal(0);
+        expect(await oethVault.assetDefaultStrategies(asset.address)).to.equal(
+          addresses.zero
+        );
+
+        expect(allAssets).to.not.contain(asset.address);
+
+        const config = await oethVault.getAssetConfig(asset.address);
+        expect(config.isSupported).to.be.false;
+      }
+    });
+
+    it("should only allow governance to remove assets", async () => {
+      const { oethVault, weth, strategist, josh } = fixture;
+
+      for (const signer of [strategist, josh]) {
+        let tx = oethVault.connect(signer).removeAsset(weth.address);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+
+        tx = oethVault.connect(signer).removeAssets([weth.address]);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+
+    it("should revert if asset is not supported", async () => {
+      const { oethVault, dai, governor } = fixture;
+      const tx = oethVault.connect(governor).removeAsset(dai.address);
+
+      await expect(tx).to.be.revertedWith("Asset not supported");
+    });
+
+    it("should revert if vault still holds the asset", async () => {
+      const { oethVault, weth, governor, daniel } = fixture;
+
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("1"), "0");
+
+      const tx = oethVault.connect(governor).removeAsset(weth.address);
+
+      await expect(tx).to.be.revertedWith("Vault still holds asset");
     });
   });
 });

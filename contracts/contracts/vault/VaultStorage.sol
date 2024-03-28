@@ -21,6 +21,7 @@ contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
+    event AssetRemoved(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
