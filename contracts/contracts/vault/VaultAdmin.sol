@@ -343,7 +343,11 @@ contract VaultAdmin is VaultStorage {
         emit AssetSupported(_asset);
     }
 
-    function _removeAsset(address _asset) internal {
+    /**
+     * @notice Remove a supported asset from the Vault
+     * @param _asset Address of asset
+     */
+    function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
         require(
             IVault(address(this)).checkBalance(_asset) == 0,
@@ -376,24 +380,6 @@ contract VaultAdmin is VaultStorage {
         assets[_asset].isSupported = false;
 
         emit AssetRemoved(_asset);
-    }
-
-    /**
-     * @notice Remove a supported asset from the Vault
-     * @param _asset Address of asset
-     */
-    function removeAsset(address _asset) external onlyGovernor {
-        _removeAsset(_asset);
-    }
-
-    /**
-     * @notice Remove multiple supported assets from the Vault
-     * @param _assets Addresses of assets
-     */
-    function removeAssets(address[] calldata _assets) external onlyGovernor {
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            _removeAsset(_assets[i]);
-        }
     }
 
     /**

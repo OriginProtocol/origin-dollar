@@ -210,6 +210,4 @@ interface IVault {
     function setAdminImpl(address) external;
 
     function removeAsset(address _asset) external;
-
-    function removeAssets(address[] calldata _asset) external;
 }

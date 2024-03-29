@@ -215,11 +215,9 @@ describe("ForkTest: OETH Vault", function () {
       }
 
       // Now remove all LSTs
-      await oethVault
-        .connect(timelock)
-        .removeAssets(lstAssets.map((x) => x.address));
-
       for (const asset of lstAssets) {
+        await oethVault.connect(timelock).removeAsset(asset.address);
+
         expect(await oethVault.checkBalance(asset.address)).to.equal(0);
         expect(await oethVault.isSupportedAsset(asset.address)).to.be.false;
         expect(await oethVault.assetDefaultStrategies(asset.address)).to.equal(
