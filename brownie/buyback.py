@@ -29,7 +29,8 @@ def get_balance_splits(otoken_address):
         cvx_balance += cvx_share
         ogv_balance += (available_balance - cvx_share)
 
-    return ogv_balance, cvx_balance
+    # Subtracts 0.01 to account for any rounding issues
+    return ogv_balance - 10**16, cvx_balance - 10**16
 
 def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1.0):
     buyback = oeth_buyback if otoken_address == OETH else ousd_buyback
