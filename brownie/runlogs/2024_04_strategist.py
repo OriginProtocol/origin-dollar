@@ -49,9 +49,10 @@ def main():
     )
     # remove the 6288 OETH that was previously minted from the Curve pool and burn
     metapool_virtual_price = 1001356965186134816
+    lp_amount = 6288 * 10**18 * 10**18 / metapool_virtual_price
     txs.append(
         oeth_meta_strat.removeAndBurnOTokens(
-        6288 * 10**18 * 10**18 / metapool_virtual_price, 
+        lp_amount, 
         std
         )
     )
@@ -67,5 +68,6 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+    print("burn LP amount",  "{:.6f}".format(lp_amount / 10**18), lp_amount)
     print("ETH from Curve swap of 3788 OETH before", "{:.6f}".format(eth_out_before / 10**18), eth_out_before)
     print("ETH from Curve swap of 3788 OETH after", "{:.6f}".format(eth_out_after / 10**18), eth_out_after)
