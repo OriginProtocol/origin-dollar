@@ -93,6 +93,7 @@ frxeth = load_contract('ERC20', FRXETH)
 sfrxeth = load_contract('ERC20', SFRXETH)
 oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
 oeth_vault_core = load_contract('vault_core', OETH_VAULT)
+oeth_metapool = load_contract('oeth_metapool', OETH_METAPOOL)
 
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)

@@ -36,6 +36,8 @@ def main():
         )
     )
 
+    eth_out_before = oeth_metapool.get_dy(1, 0, 3788 * 10**18)
+
     # deposit 6,288 WETH to the AMO
     txs.append(
       vault_oeth_admin.depositToStrategy(
@@ -53,6 +55,7 @@ def main():
         std
         )
     )
+    eth_out_after = oeth_metapool.get_dy(1, 0, 3788 * 10**18)
 
     # After
     vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
@@ -64,3 +67,5 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+    print("ETH from Curve swap of 3788 OETH before", "{:.6f}".format(eth_out_before / 10**18), eth_out_before)
+    print("ETH from Curve swap of 3788 OETH after", "{:.6f}".format(eth_out_after / 10**18), eth_out_after)
