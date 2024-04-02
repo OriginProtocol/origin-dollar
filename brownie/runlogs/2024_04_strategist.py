@@ -45,6 +45,14 @@ def main():
         std
       )
     )
+    # remove the 6288 OETH that was previously minted from the Curve pool and burn
+    metapool_virtual_price = 1001356965186134816
+    txs.append(
+        oeth_meta_strat.removeAndBurnOTokens(
+        6288 * 10**18 * 10**18 / metapool_virtual_price, 
+        std
+        )
+    )
 
     # After
     vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
