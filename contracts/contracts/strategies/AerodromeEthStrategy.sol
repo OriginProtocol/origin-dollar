@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IRouter} from "./../interfaces/aerodrome/IRouter.sol";
 import {IGauge} from "./../interfaces/aerodrome/IGauge.sol";
+import {IPool} from "./../interfaces/aerodrome/IPool.sol";
 import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
 import {StableMath} from "../utils/StableMath.sol";
 import {IVault} from "../interfaces/IVault.sol";
@@ -27,7 +28,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     IRouter public immutable aeroRouterAddress;
     address public immutable aeroFactoryAddress;
 
-    IERC20 public immutable lpTokenAddress;
+    IPool public immutable lpTokenAddress;
     IERC20 public immutable oeth;
     IWETH9 public immutable weth;
 
@@ -52,14 +53,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         _;
     }
 
-    modifier improvePoolBalance() {
-        _; // TODO
-    }
-
     constructor(BaseStrategyConfig memory _baseConfig, AerodromeEthConfig memory _aeroConfig)
         InitializableAbstractStrategy(_baseConfig)
     {
-        lpTokenAddress = IERC20(_baseConfig.platformAddress);
+        lpTokenAddress = IPool(_baseConfig.platformAddress);
         aeroRouterAddress = IRouter(_baseConfig.platformAddress);
         aeroFactoryAddress = IRouter(_baseConfig.platformAddress).defaultFactory();
         aeroGaugeAddress = IGauge(_aeroConfig.aeroGaugeAddress);
@@ -161,51 +158,112 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Withdraw ETH and OETH from the Aerodrome pool, burn the OETH,
+     * @notice Withdraw ETH and OETH from the Curve pool, burn the OETH,
      * convert the ETH to WETH and transfer to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _weth Address of the Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to withdraw.
      */
     function withdraw(address _recipient, address _weth, uint256 _amount) external override onlyVault nonReentrant {
-        // TODO
+        require(_amount > 0, "Invalid amount");
+        require(_weth == address(weth), "Can only withdraw WETH");
+
+        emit Withdrawal(_weth, address(lpTokenAddress), _amount);
+
+        uint256 requiredLpTokens = calcTokenToBurn(_amount);
+
+        _lpWithdraw(requiredLpTokens);
+
+        /* math in requiredLpTokens should correctly calculate the amount of LP to remove
+         * in that the strategy receives enough WETH on balanced removal
+         */
+        // slither-disable-next-line unused-return
+        aeroRouterAddress.removeLiquidity(
+            address(weth), address(oeth), true, requiredLpTokens, 0, 0, address(this), block.timestamp
+        );
+
+        // Burn all the removed OETH and any that was left in the strategy
+        uint256 oethToBurn = oeth.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
+
+        emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
+
+        // Transfer WETH to the recipient
+        weth.deposit{value: _amount}();
+        require(weth.transfer(_recipient, _amount), "Transfer of WETH not successful");
     }
 
     function calcTokenToBurn(uint256 _wethAmount) internal view returns (uint256 lpToBurn) {
-        // TODO
+        /* The rate between coins in the pool determines the rate at which pool returns
+         * tokens when doing balanced removal (removeLiquidity call). And by knowing how much WETH
+         * we want we can determine how much of OETH we receive by removing liquidity.
+         *
+         * Because we are doing balanced removal we should be making profit when removing liquidity in a
+         * pool tilted to either side.
+         *
+         * Important: A downside is that the Strategist / Governor needs to be
+         * cognisant of not removing too much liquidity. And while the proposal to remove liquidity
+         * is being voted on the pool tilt might change so much that the proposal that has been valid while
+         * created is no longer valid.
+         */
+
+        uint256 poolWETHBalance = lpTokenAddress.reserve0(); // reserve0 should be WETH
+        /* K is multiplied by 1e36 which is used for higher precision calculation of required
+         * pool LP tokens. Without it the end value can have rounding errors up to precision of
+         * 10 digits. This way we move the decimal point by 36 places when doing the calculation
+         * and again by 36 places when we are done with it.
+         */
+        uint256 k = (1e36 * IERC20(address(lpTokenAddress)).totalSupply()) / poolWETHBalance;
+        // prettier-ignore
+        // slither-disable-next-line divide-before-multiply
+        uint256 diff = (_wethAmount + 1) * k;
+        lpToBurn = diff / 1e36;
     }
 
     /**
-     * @notice Remove all ETH and OETH from the Aero pool, burn the OETH,
+     * @notice Remove all ETH and OETH from the Curve pool, burn the OETH,
      * convert the ETH to WETH and transfer to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        // TODO
-    }
+        uint256 gaugeTokens = aeroGaugeAddress.balanceOf(address(this));
+        _lpWithdraw(gaugeTokens);
 
-    function mintAndAddOTokens(uint256 _oTokens) external onlyStrategist nonReentrant improvePoolBalance {
-        // TODO
-    }
+        // Remove liquidity
+        // slither-disable-next-line unused-return
+        aeroRouterAddress.removeLiquidity(
+            address(weth), address(oeth), true, gaugeTokens, 0, 0, address(this), block.timestamp
+        );
+        // Burn all OETH
+        uint256 oethToBurn = oeth.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
 
-    function removeAndBurnOTokens(uint256 _lpTokens) external onlyStrategist nonReentrant improvePoolBalance {
-        // TODO
-    }
+        // Get the strategy contract's ether balance.
+        // This includes all that was removed from the Curve pool and
+        // any ether that was sitting in the strategy contract before the removal.
+        uint256 ethBalance = address(this).balance;
+        // Convert all the strategy contract's ether to WETH and transfer to the vault.
+        weth.deposit{value: ethBalance}();
+        require(weth.transfer(vaultAddress, ethBalance), "Transfer of WETH not successful");
 
-    function removeOnlyAssets(uint256 _lpTokens) external onlyStrategist nonReentrant improvePoolBalance {
-        // TODO
+        emit Withdrawal(address(weth), address(lpTokenAddress), ethBalance);
+        emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
     }
-
     /**
      * @notice Collect accumulated AERO rewards and send to the Harvester.
      */
+
     function collectRewardTokens() external override onlyHarvester nonReentrant {
         // Collect AERO
         aeroGaugeAddress.getReward(address(this));
         _collectRewardTokens();
     }
 
-    function _lpWithdraw(uint256 _wethAmount) internal {
-        // TODO
+    function _lpWithdraw(uint256 _lpTokensAmount) internal {
+        // Claim remaining rwards before withdrawing LP Tokens
+        aeroGaugeAddress.getReward(address(this));
+
+        // Withdraw LP tokens from the gauge
+        aeroGaugeAddress.withdraw(_lpTokensAmount);
     }
 
     /**
@@ -259,7 +317,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         // Approve Aerodrome Gauge contract to transfer Aero LP tokens
         // slither-disable-next-line unused-return
-        lpTokenAddress.approve(address(aeroGaugeAddress), type(uint256).max);
+        IERC20(address(lpTokenAddress)).approve(address(aeroGaugeAddress), type(uint256).max);
     }
 
     /**
