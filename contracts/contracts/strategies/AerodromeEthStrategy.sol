@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Convex Automated Market Maker (AMO) Strategy
- * @notice AMO strategy for the Curve OETH/ETH pool
+ * @title Aerodrome Automated Market Maker (AMO) Strategy
+ * @notice AMO strategy for the Aero OETH/ETH pool
  * @author Origin Protocol Inc
  */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";

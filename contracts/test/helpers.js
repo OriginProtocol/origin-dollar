@@ -262,6 +262,7 @@ const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
+const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
@@ -773,6 +774,7 @@ module.exports = {
   isArbitrumOne,
   isArbitrumOneOrFork,
   isArbFork,
+  isBaseFork,
   isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,
