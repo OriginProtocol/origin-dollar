@@ -100,11 +100,12 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     console.log("Native Staking SSV Strategy address: ", cStrategyProxy.address);
+    console.log("Fee accumulator address: ", cFeeAccumulator.address);
 
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new OETH FrxEth Redeem Strategy\n\nThis proposal adds a new FrxEth Redeem Strategy to the OETH vault. The strategy will be used to convert FrxEth tokens to Eth during transition from a multi-asset OETH to simplifed OETH backed only by ETH.",
+      name: "Deploy new OETH Native Staking Strategy\n\nThis is going to become the main strategy to power the reward accrual of OETH by staking ETH into SSV validators.",
       actions: [
         // 1. Add new strategy to vault
         {
