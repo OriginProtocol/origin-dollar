@@ -48,21 +48,24 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 
 const isFork = process.env.FORK === "true";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
+const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
-const providerUrl = `${
-  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-}`;
+const isBaseForkTest = isForkTest && isBaseFork;
+const providerUrl = `${process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+  }`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
+const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 let forkBlockNumber =
   Number(
-    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : process.env.BLOCK_NUMBER
+    // TODO: Remove nesting of conditional operators; et al
+    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : isBaseForkTest ? process.env.BASE_BLOCK_NUMBER : process.env.BLOCK_NUMBER
   ) || undefined;
 if (isForkTest && standaloneLocalNodeRunning) {
   const jsonResponse = fetch(
-    isArbForkTest ? arbitrumProviderUrl : providerUrl,
+    isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl,
     {
       method: "post",
       body: JSON.stringify({
@@ -88,7 +91,7 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
   // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(isArbForkTest ? arbitrumProviderUrl : providerUrl, {
+  fetch(isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl, {
     method: "post",
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -124,28 +127,28 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: isFork ? (isArbitrumFork ? 42161 : 1) : 1337,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      chainId: isFork ? (isArbitrumFork ? 42161 : isBaseFork ? 8453 : 1) : 1337,
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : isBaseFork ? { tags: ["base"] } : {}),
       ...(isForkTest
         ? {
+          timeout: 0,
+          initialBaseFeePerGas: 0,
+          forking: {
+            enabled: true,
+            url: isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl,
+            blockNumber: forkBlockNumber,
             timeout: 0,
-            initialBaseFeePerGas: 0,
-            forking: {
-              enabled: true,
-              url: isArbForkTest ? arbitrumProviderUrl : providerUrl,
-              blockNumber: forkBlockNumber,
-              timeout: 0,
-            },
-          }
+          },
+        }
         : {
-            initialBaseFeePerGas: 0,
-            gas: 7000000,
-            gasPrice: 1000,
-          }),
+          initialBaseFeePerGas: 0,
+          gas: 7000000,
+          gasPrice: 1000,
+        }),
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : isBaseFork ? { tags: ["base"] } : {}),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -173,6 +176,19 @@ module.exports = {
       //   timeout: 0
       // }
     },
+    base: {
+      url: baseProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 8453,
+      tags: ["base"],
+      live: true,
+      saveDeployments: true,
+      // Fails if gas limit is anything less than 20M on Base 
+      gas: 20000000,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -186,6 +202,7 @@ module.exports = {
       hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
+      base: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -256,6 +273,7 @@ module.exports = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
+      base: process.env.BASESCAN_API_KEY,
     },
   },
   gasReporter: {
@@ -263,7 +281,7 @@ module.exports = {
   },
   paths: process.env.HARDHAT_CACHE_DIR
     ? {
-        cache: process.env.HARDHAT_CACHE_DIR,
-      }
+      cache: process.env.HARDHAT_CACHE_DIR,
+    }
     : {},
 };

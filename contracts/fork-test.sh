@@ -41,6 +41,11 @@ main()
         BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
     fi
 
+    if [[ $FORK_NETWORK_NAME == "base" ]]; then
+        PROVIDER_URL=$BASE_PROVIDER_URL;
+        BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
+    fi
+
     if $is_local; then
         # Check if any node is running on port 8545
         defaultNodeUrl=http://localhost:8545

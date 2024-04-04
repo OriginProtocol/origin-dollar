@@ -22,6 +22,7 @@
     "test": "IS_TEST=true npx hardhat test",
     "test:fork": "./fork-test.sh",
     "test:arb-fork": "FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
+    "test:base-fork": "FORK_NETWORK_NAME=base ./fork-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "echidna": "yarn run clean && rm -rf echidna-corpus && echidna . --contract Echidna --config echidna-config.yaml",
