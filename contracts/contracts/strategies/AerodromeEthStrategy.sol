@@ -16,6 +16,7 @@ import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstr
 import {StableMath} from "../utils/StableMath.sol";
 import {IVault} from "../interfaces/IVault.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
+import {FixedPointMathLib} from "solady/src/utils/FixedPointMathLib.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -265,14 +266,21 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // Withdraw LP tokens from the gauge
         aeroGaugeAddress.withdraw(_lpTokensAmount);
     }
-
     /**
      * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
+
     function checkBalance(address _asset) public view override returns (uint256 balance) {
-        // TODO
+        require(_asset == address(weth), "Unsupported asset");
+
+        // Eth balance needed here for the balance check that happens from vault during depositing.
+        balance = address(this).balance;
+        uint256 lpTokens = aeroGaugeAddress.balanceOf(address(this));
+        if (lpTokens > 0) {
+            balance += (lpTokens * getLPTokenPrice()) / 1e18;
+        }
     }
 
     /**
@@ -325,5 +333,40 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      */
     function _max(int256 a, int256 b) internal pure returns (int256) {
         return a >= b ? a : b;
+    }
+
+    /**
+     * @dev Returns the price of a LP token of the sAMM pool.
+     */
+    function getLPTokenPrice() internal view returns (uint256) {
+        uint256 r0 = lpTokenAddress.reserve0();
+        uint256 r1 = lpTokenAddress.reserve1();
+
+        // Calculate K
+        uint256 K = getK(r0, r1);
+
+        // Calculate fourth root of K/2 then multiply it by 2.
+        uint256 lpPrice = 2
+            * (
+                FixedPointMathLib.sqrt(
+                    FixedPointMathLib.sqrt(K.divPrecisely(2) * FixedPointMathLib.WAD) * FixedPointMathLib.WAD
+                ) / FixedPointMathLib.WAD
+            );
+
+        return lpPrice;
+    }
+
+    /**
+     * @dev Calculates the constant K for the sAMM pool based on the reserves r1 and r2.
+     * The formula for K is: K = (r1^3 * r2) + (r2^3 * r1)
+     * @param r1 The reserve of wETH.
+     * @param r2 The reserve of OETH.
+     * @return The calculated constant K.
+     */
+    function getK(uint256 r1, uint256 r2) internal pure returns (uint256) {
+        uint256 r1Cube = FixedPointMathLib.rpow(r1, 3, 1e18);
+        uint256 r2Cube = FixedPointMathLib.rpow(r2, 3, 1e18);
+
+        return FixedPointMathLib.mulWad(r1Cube, r2) + FixedPointMathLib.mulWad(r2Cube, r1);
     }
 }

@@ -80,6 +80,7 @@
     }
   },
   "dependencies": {
-    "@chainlink/contracts-ccip": "^1.2.1"
+    "@chainlink/contracts-ccip": "^1.2.1",
+    "solady": "^0.0.181"
   }
 }
