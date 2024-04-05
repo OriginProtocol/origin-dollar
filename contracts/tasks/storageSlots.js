@@ -14,15 +14,19 @@ const isFork = process.env.FORK === "true";
 const getStorageFileLocation = (hre, contractName) => {
   const isMainnet = hre.network.name === "mainnet";
   const isArbitrum = hre.network.name === "arbitrumOne";
+  const isBase = hre.network.name === "base";
   const forkNetworkName = process.env.FORK_NETWORK_NAME;
   const isArbitrumFork = isFork && forkNetworkName == "arbitrumOne";
   const isMainnetFork = isFork && forkNetworkName == "mainnet";
+  const isBaseFork = isFork && forkNetworkName == "base";
 
   let folder = "localhost";
   if (isMainnetFork || isMainnet) {
     folder = "mainnet";
   } else if (isArbitrumFork || isArbitrum) {
     folder = "arbitrumOne";
+  } else if (isBaseFork || isBase) {
+    folder = "base";
   }
 
   const layoutFolder = `./storageLayout/${folder}/`;

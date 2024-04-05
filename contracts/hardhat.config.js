@@ -52,8 +52,9 @@ const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
 const isBaseForkTest = isForkTest && isBaseFork;
-const providerUrl = `${process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-  }`;
+const providerUrl = `${
+  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+}`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
@@ -61,11 +62,19 @@ const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 let forkBlockNumber =
   Number(
     // TODO: Remove nesting of conditional operators; et al
-    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : isBaseForkTest ? process.env.BASE_BLOCK_NUMBER : process.env.BLOCK_NUMBER
+    isArbForkTest
+      ? process.env.ARBITRUM_BLOCK_NUMBER
+      : isBaseForkTest
+      ? process.env.BASE_BLOCK_NUMBER
+      : process.env.BLOCK_NUMBER
   ) || undefined;
 if (isForkTest && standaloneLocalNodeRunning) {
   const jsonResponse = fetch(
-    isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl,
+    isArbForkTest
+      ? arbitrumProviderUrl
+      : isBaseForkTest
+      ? baseProviderUrl
+      : providerUrl,
     {
       method: "post",
       body: JSON.stringify({
@@ -91,18 +100,25 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
   // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl, {
-    method: "post",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "hardhat_mine",
-      params: ["0x28"], // 40
-      id: 1,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).json();
+  fetch(
+    isArbForkTest
+      ? arbitrumProviderUrl
+      : isBaseForkTest
+      ? baseProviderUrl
+      : providerUrl,
+    {
+      method: "post",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "hardhat_mine",
+        params: ["0x28"], // 40
+        id: 1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).json();
 } else if (isForkTest) {
   console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
 }
@@ -128,27 +144,39 @@ module.exports = {
         mnemonic,
       },
       chainId: isFork ? (isArbitrumFork ? 42161 : isBaseFork ? 8453 : 1) : 1337,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : isBaseFork ? { tags: ["base"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
       ...(isForkTest
         ? {
-          timeout: 0,
-          initialBaseFeePerGas: 0,
-          forking: {
-            enabled: true,
-            url: isArbForkTest ? arbitrumProviderUrl : isBaseForkTest ? baseProviderUrl : providerUrl,
-            blockNumber: forkBlockNumber,
             timeout: 0,
-          },
-        }
+            initialBaseFeePerGas: 0,
+            forking: {
+              enabled: true,
+              url: isArbForkTest
+                ? arbitrumProviderUrl
+                : isBaseForkTest
+                ? baseProviderUrl
+                : providerUrl,
+              blockNumber: forkBlockNumber,
+              timeout: 0,
+            },
+          }
         : {
-          initialBaseFeePerGas: 0,
-          gas: 7000000,
-          gasPrice: 1000,
-        }),
+            initialBaseFeePerGas: 0,
+            gas: 7000000,
+            gasPrice: 1000,
+          }),
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : isBaseFork ? { tags: ["base"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -186,8 +214,6 @@ module.exports = {
       tags: ["base"],
       live: true,
       saveDeployments: true,
-      // Fails if gas limit is anything less than 20M on Base 
-      gas: 20000000,
     },
   },
   mocha: {
@@ -281,7 +307,7 @@ module.exports = {
   },
   paths: process.env.HARDHAT_CACHE_DIR
     ? {
-      cache: process.env.HARDHAT_CACHE_DIR,
-    }
+        cache: process.env.HARDHAT_CACHE_DIR,
+      }
     : {},
 };
