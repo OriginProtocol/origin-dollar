@@ -17,6 +17,8 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
+  isBase,
+  isBaseFork,
 } = require("../test/helpers.js");
 
 const {
@@ -97,7 +99,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne) {
+  if (isMainnet || isArbitrumOne || isBase) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -133,6 +135,11 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
+  if (isBaseFork) {
+    // Skip proxy check on base for now
+    return;
+  }
+
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();

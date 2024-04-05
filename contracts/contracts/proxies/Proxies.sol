@@ -209,3 +209,10 @@ contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice BridgedBaseWOETHProxy delegates calls to BridgedWOETH implementation
+ */
+contract BridgedBaseWOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

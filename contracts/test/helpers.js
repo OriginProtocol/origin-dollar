@@ -262,6 +262,7 @@ const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
+const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isCI = process.env.GITHUB_ACTIONS;
 
@@ -774,6 +775,7 @@ module.exports = {
   isArbitrumOne,
   isArbitrumOneOrFork,
   isArbFork,
+  isBase,
   isBaseFork,
   isCI,
   getOracleAddress,
