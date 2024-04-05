@@ -19,7 +19,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   }
 
   if (!isBaseFork && isFork) {
-    // Only works for Base One fork
+    // Only works for Base fork
     return;
   }
 

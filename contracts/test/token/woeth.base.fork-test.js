@@ -57,8 +57,8 @@ describe("ForkTest: WOETH", function () {
     const totalSupplyBefore = await woeth.totalSupply();
     const balanceBefore = await woeth.balanceOf(nick.address);
 
-    // Mint something
-    await woeth.connect(burner).burn(nick.address, oethUnits("0.787"));
+    // prettier-ignore
+    await woeth.connect(burner)["burn(address,uint256)"](nick.address, oethUnits("0.787"));
 
     const totalSupplyDiff = totalSupplyBefore.sub(await woeth.totalSupply());
     const balanceDiff = balanceBefore.sub(await woeth.balanceOf(nick.address));
@@ -71,8 +71,9 @@ describe("ForkTest: WOETH", function () {
     const { woeth, governor, rafael, nick, minter } = fixture;
 
     for (const signer of [governor, rafael, nick, minter]) {
+      // prettier-ignore
       await expect(
-        woeth.connect(signer).burn(signer.address, oethUnits("1"))
+        woeth.connect(signer)["burn(address,uint256)"](signer.address, oethUnits("1"))
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848`
       );
