@@ -34,7 +34,8 @@
     "cache-clean:light": "rm -rf cache/hardhat-network-fork/network-1337/",
     "test:coverage": "IS_TEST=true npx hardhat coverage",
     "test:coverage:fork": "REPORT_COVERAGE=true ./fork-test.sh",
-    "test:coverage:arb-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh"
+    "test:coverage:arb-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
+    "test:coverage:base-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=base ./fork-test.sh"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
