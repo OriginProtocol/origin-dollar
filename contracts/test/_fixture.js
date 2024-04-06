@@ -1690,7 +1690,8 @@ async function convexOETHMetaVaultFixture(
 
 
 /**
- * Configure a Vault with only the WOETH/WETH Aero Metastrategy.
+ * Configure a Vault with only the WOETH/WETH Aero Metastrategy
+ * TODO:Revisit and Improve the fixture, currently it mocks stuff
  */
 async function aeroOETHAMOFixture(
   config = {
@@ -1701,6 +1702,7 @@ async function aeroOETHAMOFixture(
     balancePool: false,
   }
 ) {
+
   let fixture = {};
   const MockWETH = await ethers.getContractFactory("MockWETH");
   const MockWOETH = await ethers.getContractFactory("MockWOETH");
@@ -1717,7 +1719,7 @@ async function aeroOETHAMOFixture(
   log(`wETH mock token address: ${wETH.address}`);
   log(`woETH mock token address: ${woETH.address}`);
 
-  const [deployer, josh] = await ethers.getSigners();
+  const [deployer, josh, mockVault] = await ethers.getSigners();
 
   // Minting  tokens to Josh's wallet
   await setERC20TokenBalance(josh.address, wETH, "1000");
@@ -1730,7 +1732,7 @@ async function aeroOETHAMOFixture(
   await wETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
   await woETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
 
-  // Add initial liquidity
+  // Add initial liquidity (100 * 1e18 on each side)
   await aeroRouter.connect(josh).addLiquidity(
     wETH.address,
     woETH.address,
@@ -1752,6 +1754,7 @@ async function aeroOETHAMOFixture(
 
   // Create gauge for weth/woeth LP 
   let governor = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress, "2");
+
   // Do a static call to fetch the gauge address first
   const gaugeAddress = await aeroVoter.connect(governor).callStatic.createGauge(addresses.base.aeroFactoryAddress, poolAddress);
 
@@ -1762,7 +1765,21 @@ async function aeroOETHAMOFixture(
   fixture.routerAddress = addresses.base.aeroRouterAddress;
   fixture.poolAddress = poolAddress;
 
-  log("AeroAMO Fixture:", fixture);
+  log("Deploying AerodromeEthStrategy with a mock vault");
+
+  const AerodromeEthStrategy = await ethers.getContractFactory("AerodromeEthStrategy");
+
+  // TODO: replace mockVault with actual vault address.
+  const aerodromeEthStrategy = await AerodromeEthStrategy.deploy([poolAddress, mockVault.address], [addresses.base.aeroRouterAddress, gaugeAddress, addresses.base.aeroFactoryAddress, poolAddress, woETH.address, wETH.address]);
+  await aerodromeEthStrategy.deployed();
+  log("wOETH/wETH Pool address", await aerodromeEthStrategy.lpTokenAddress());
+
+  await aerodromeEthStrategy.initialize(
+    [addresses.base.aeroTokenAddress], [wETH.address]
+  );
+
+  fixture.aerodromeEthStrategy = aerodromeEthStrategy;
+  fixture.vault = mockVault;
 
   return fixture;
 }

@@ -246,6 +246,7 @@ addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
 // Base
 addresses.base = {};
+addresses.base.aeroTokenAddress = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 addresses.base.aeroRouterAddress = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
 addresses.base.aeroVoterAddress = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5";
 addresses.base.aeroFactoryAddress = "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";

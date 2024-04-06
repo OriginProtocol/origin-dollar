@@ -11,7 +11,7 @@ const {
 
 const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
-describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
+describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
     this.timeout(0);
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
@@ -22,8 +22,20 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         beforeEach(async () => {
             fixture = await aeroOETHAMOFixture();
         });
-        it("Should work", async () => {
-            expect(2).to.equal(2);
+        it("Should have constants and immutables set", async () => {
+            const { aerodromeEthStrategy } = fixture;
+
+            expect(await aerodromeEthStrategy.MAX_SLIPPAGE()).to.equal(
+                parseUnits("0.01", 18)
+            );
+            expect(await aerodromeEthStrategy.ETH_ADDRESS()).to.equal(addresses.ETH);
+
+            expect(await aerodromeEthStrategy.aeroRouterAddress()).to.equal(
+                addresses.base.aeroRouterAddress
+            );
+            expect(await aerodromeEthStrategy.aeroFactoryAddress()).to.equal(
+                addresses.base.aeroFactoryAddress
+            );
         });
     })
 });
