@@ -1713,13 +1713,15 @@ async function aeroOETHAMOFixture(
   const woETH = await MockWOETH.deploy();
   await woETH.deployed();
 
-  fixture.wETH = wETH.address;
-  fixture.woETH = woETH.address;
+  fixture.weth = wETH;
+  fixture.woeth = woETH;
 
   log(`wETH mock token address: ${wETH.address}`);
   log(`woETH mock token address: ${woETH.address}`);
 
   const [deployer, josh, mockVault] = await ethers.getSigners();
+
+  fixture.josh = josh;
 
   // Minting  tokens to Josh's wallet
   await setERC20TokenBalance(josh.address, wETH, "1000");
@@ -1746,20 +1748,27 @@ async function aeroOETHAMOFixture(
     parseInt((Date.now() / 1000)) + 5 * 360
   );
 
-  // Create gauge
-  const aeroVoter = await ethers.getContractAt("IVoter", addresses.base.aeroVoterAddress);
+
 
   // Fetch wETH/wOETH pool address
   let poolAddress = await aeroRouter.poolFor(wETH.address, woETH.address, true, addresses.base.aeroFactoryAddress);
+  const pool = await ethers.getContractAt("IERC20", poolAddress, josh);
+  const lpBalance = (await pool.balanceOf(josh.address)).toString();
 
+  log("Received LP tokens: ", formatUnits(lpBalance, 18));
+
+  // Create gauge
+  const aeroVoter = await ethers.getContractAt("IVoter", addresses.base.aeroVoterAddress);
   // Create gauge for weth/woeth LP 
   let governor = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress, "2");
 
   // Do a static call to fetch the gauge address first
   const gaugeAddress = await aeroVoter.connect(governor).callStatic.createGauge(addresses.base.aeroFactoryAddress, poolAddress);
 
-  const gauge = await aeroVoter.connect(governor).createGauge(addresses.base.aeroFactoryAddress, poolAddress);
-  log(`Aero Gauge created for wETH/woETH pool at address: ${gauge}`);
+  await aeroVoter.connect(governor).createGauge(addresses.base.aeroFactoryAddress, poolAddress);
+  log(`Aero Gauge created for wETH/woETH pool at address: ${gaugeAddress}`);
+
+
 
   fixture.gaugeAddress = gaugeAddress;
   fixture.routerAddress = addresses.base.aeroRouterAddress;
@@ -1781,6 +1790,11 @@ async function aeroOETHAMOFixture(
   fixture.aerodromeEthStrategy = aerodromeEthStrategy;
   fixture.vault = mockVault;
 
+  // Deposit LP Tokens to the Gauge onbehalf of the strategy contract
+  const gauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
+  await pool.approve(gaugeAddress, parseEther(lpBalance));
+  await gauge["deposit(uint256,address)"](lpBalance, aerodromeEthStrategy.address);
+  log(`LP Tokens added to the gauge`);
   return fixture;
 }
 
