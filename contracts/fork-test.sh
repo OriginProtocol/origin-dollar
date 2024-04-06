@@ -66,7 +66,7 @@ main()
 
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/$FORK_NETWORK_NAME deployments/hardhat
-        echo "No running node detected spinning up a fresh one"
+        echo "No running node detected spinning up a fresh one with ${PROVIDER_URL}"
     else
         cp -r deployments/localhost deployments/hardhat
     fi

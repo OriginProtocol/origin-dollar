@@ -27,6 +27,8 @@ const {
   ousdUnits,
   units,
   isFork,
+  getBlockTimestamp,
+  fundAccount,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -1686,6 +1688,86 @@ async function convexOETHMetaVaultFixture(
   return fixture;
 }
 
+
+/**
+ * Configure a Vault with only the WOETH/WETH Aero Metastrategy.
+ */
+async function aeroOETHAMOFixture(
+  config = {
+    wethMintAmount: 0,
+    depositToStrategy: false,
+    poolAddEthAmount: 0,
+    poolAddOethAmount: 0,
+    balancePool: false,
+  }
+) {
+  let fixture = {};
+  const MockWETH = await ethers.getContractFactory("MockWETH");
+  const MockWOETH = await ethers.getContractFactory("MockWOETH");
+
+  const wETH = await MockWETH.deploy();
+  await wETH.deployed();
+
+  const woETH = await MockWOETH.deploy();
+  await woETH.deployed();
+
+  fixture.wETH = wETH.address;
+  fixture.woETH = woETH.address;
+
+  log(`wETH mock token address: ${wETH.address}`);
+  log(`woETH mock token address: ${woETH.address}`);
+
+  const [deployer, josh] = await ethers.getSigners();
+
+  // Minting  tokens to Josh's wallet
+  await setERC20TokenBalance(josh.address, wETH, "1000");
+  await setERC20TokenBalance(josh.address, woETH, "1000");
+
+  // Loading the AeroRouter instance
+  const aeroRouter = await ethers.getContractAt("IRouter", addresses.base.aeroRouterAddress);
+
+  // // Approve the router to spend the tokens
+  await wETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
+  await woETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
+
+  // Add initial liquidity
+  await aeroRouter.connect(josh).addLiquidity(
+    wETH.address,
+    woETH.address,
+    true,
+    ethers.utils.parseEther("100"),
+    ethers.utils.parseEther("100"),
+    // Slippage adjusted amounts
+    ethers.utils.parseEther("99"),
+    ethers.utils.parseEther("99"),
+    josh.address,
+    parseInt((Date.now() / 1000)) + 5 * 360
+  );
+
+  // Create gauge
+  const aeroVoter = await ethers.getContractAt("IVoter", addresses.base.aeroVoterAddress);
+
+  // Fetch wETH/wOETH pool address
+  let poolAddress = await aeroRouter.poolFor(wETH.address, woETH.address, true, addresses.base.aeroFactoryAddress);
+
+  // Create gauge for weth/woeth LP 
+  let governor = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress, "2");
+  // Do a static call to fetch the gauge address first
+  const gaugeAddress = await aeroVoter.connect(governor).callStatic.createGauge(addresses.base.aeroFactoryAddress, poolAddress);
+
+  const gauge = await aeroVoter.connect(governor).createGauge(addresses.base.aeroFactoryAddress, poolAddress);
+  log(`Aero Gauge created for wETH/woETH pool at address: ${gauge}`);
+
+  fixture.gaugeAddress = gaugeAddress;
+  fixture.routerAddress = addresses.base.aeroRouterAddress;
+  fixture.poolAddress = poolAddress;
+
+  log("AeroAMO Fixture:", fixture);
+
+  return fixture;
+}
+
+
 /**
  * Configure a Vault with only the Aave strategy.
  */
@@ -2162,6 +2244,7 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  aeroOETHAMOFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,

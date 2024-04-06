@@ -244,7 +244,11 @@ addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
-// Arbitrum One
+// Base
 addresses.base = {};
+addresses.base.aeroRouterAddress = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
+addresses.base.aeroVoterAddress = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5";
+addresses.base.aeroFactoryAddress = "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";
+addresses.base.aeroGaugeGovernorAddress = "0xE6A41fE61E7a1996B59d508661e3f524d6A32075";
 
 module.exports = addresses;
