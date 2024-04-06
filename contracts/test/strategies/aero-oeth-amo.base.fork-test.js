@@ -9,9 +9,9 @@ const {
     aeroOETHAMOFixture,
 } = require("../_fixture");
 
-const log = require("../../utils/logger")("test:fork:oeth:metapool");
+const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
-describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
+describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
     this.timeout(0);
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
@@ -36,6 +36,19 @@ describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
             expect(await aerodromeEthStrategy.aeroFactoryAddress()).to.equal(
                 addresses.base.aeroFactoryAddress
             );
+        });
+        it("Should be able to check balance", async () => {
+            const { weth, josh, aerodromeEthStrategy } = fixture;
+
+            const balance = await aerodromeEthStrategy.checkBalance(weth.address);
+            log(`check balance ${balance}`);
+            expect(balance).gt(0);
+
+            // This uses a transaction to call a view function so the gas usage can be reported.
+            const tx = await aerodromeEthStrategy
+                .connect(josh)
+                .populateTransaction.checkBalance(weth.address);
+            await josh.sendTransaction(tx);
         });
     })
 });
