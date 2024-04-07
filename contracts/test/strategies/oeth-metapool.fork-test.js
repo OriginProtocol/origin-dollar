@@ -820,9 +820,9 @@ async function calcOethMintAmount(fixture, wethDepositAmount) {
 
   let oethMintAmount = balanceDiff.lte(0)
     ? // If more OETH than ETH then mint same amount of OETH as ETH
-      wethDepositAmount
+    wethDepositAmount
     : // If less OETH than ETH then mint the difference
-      balanceDiff.add(wethDepositAmount);
+    balanceDiff.add(wethDepositAmount);
   // Cap the minting to twice the ETH deposit amount
   const doubleWethDepositAmount = wethDepositAmount.mul(2);
   oethMintAmount = oethMintAmount.lte(doubleWethDepositAmount)

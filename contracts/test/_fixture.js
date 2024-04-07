@@ -1719,40 +1719,54 @@ async function aeroOETHAMOFixture(
   log(`wETH mock token address: ${wETH.address}`);
   log(`woETH mock token address: ${woETH.address}`);
 
+  // const MockVault = await ethers.getContractFactory("MockVault");
+  // const vault = await MockVault.deploy();
+  // await vault.deployed();
+
+  // await vault.unpauseCapital();
+  // log("Capital unpaused in Vault contract");
   const [deployer, josh, mockVault] = await ethers.getSigners();
+
+  const OETHVault = await ethers.getContractFactory("OETHVault");
+  const vault = await OETHVault.deploy();
+  await vault.deployed();
+
+  // Mock pricefeed for now
+  await vault.initialize(josh.address, woETH.address);
+  await vault.unpauseCapital();
+  log("OETHVault deployed and initialized");
+
 
   fixture.josh = josh;
 
   // Minting  tokens to Josh's wallet
-  await setERC20TokenBalance(josh.address, wETH, "1000");
-  await setERC20TokenBalance(josh.address, woETH, "1000");
+  await setERC20TokenBalance(josh.address, wETH, "15000");
+  await setERC20TokenBalance(josh.address, woETH, "15000");
 
   // Loading the AeroRouter instance
   const aeroRouter = await ethers.getContractAt("IRouter", addresses.base.aeroRouterAddress);
 
   // // Approve the router to spend the tokens
-  await wETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
-  await woETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("100"));
+  await wETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("5000"));
+  await woETH.connect(josh).approve(aeroRouter.address, ethers.utils.parseEther("5000"));
 
   // Add initial liquidity (100 * 1e18 on each side)
   await aeroRouter.connect(josh).addLiquidity(
     wETH.address,
     woETH.address,
     true,
-    ethers.utils.parseEther("100"),
-    ethers.utils.parseEther("100"),
+    ethers.utils.parseEther("5000"),
+    ethers.utils.parseEther("5000"),
     // Slippage adjusted amounts
-    ethers.utils.parseEther("99"),
-    ethers.utils.parseEther("99"),
+    ethers.utils.parseEther("4999"),
+    ethers.utils.parseEther("4999"),
     josh.address,
     parseInt((Date.now() / 1000)) + 5 * 360
   );
 
-
-
   // Fetch wETH/wOETH pool address
   let poolAddress = await aeroRouter.poolFor(wETH.address, woETH.address, true, addresses.base.aeroFactoryAddress);
-  const pool = await ethers.getContractAt("IERC20", poolAddress, josh);
+  let pool = await ethers.getContractAt("IERC20", poolAddress, josh);
   const lpBalance = (await pool.balanceOf(josh.address)).toString();
 
   log("Received LP tokens: ", formatUnits(lpBalance, 18));
@@ -1769,32 +1783,38 @@ async function aeroOETHAMOFixture(
   log(`Aero Gauge created for wETH/woETH pool at address: ${gaugeAddress}`);
 
 
-
   fixture.gaugeAddress = gaugeAddress;
   fixture.routerAddress = addresses.base.aeroRouterAddress;
-  fixture.poolAddress = poolAddress;
+
 
   log("Deploying AerodromeEthStrategy with a mock vault");
 
   const AerodromeEthStrategy = await ethers.getContractFactory("AerodromeEthStrategy");
 
   // TODO: replace mockVault with actual vault address.
-  const aerodromeEthStrategy = await AerodromeEthStrategy.deploy([poolAddress, mockVault.address], [addresses.base.aeroRouterAddress, gaugeAddress, addresses.base.aeroFactoryAddress, poolAddress, woETH.address, wETH.address]);
+  const aerodromeEthStrategy = await AerodromeEthStrategy.deploy([poolAddress, vault.address], [addresses.base.aeroRouterAddress, gaugeAddress, addresses.base.aeroFactoryAddress, poolAddress, woETH.address, wETH.address]);
   await aerodromeEthStrategy.deployed();
   log("wOETH/wETH Pool address", await aerodromeEthStrategy.lpTokenAddress());
 
   await aerodromeEthStrategy.initialize(
     [addresses.base.aeroTokenAddress], [wETH.address]
   );
+  await vault.approveStrategy(aerodromeEthStrategy.address);
+
+  log("AerodromeEthStrategy strategy approved in OETHVault");
 
   fixture.aerodromeEthStrategy = aerodromeEthStrategy;
-  fixture.vault = mockVault;
+  fixture.vault = vault;
 
   // Deposit LP Tokens to the Gauge onbehalf of the strategy contract
   const gauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
   await pool.approve(gaugeAddress, parseEther(lpBalance));
   await gauge["deposit(uint256,address)"](lpBalance, aerodromeEthStrategy.address);
   log(`LP Tokens added to the gauge`);
+
+  pool = await ethers.getContractAt("IPool", poolAddress);
+  fixture.pool = pool;
+
   return fixture;
 }
 
