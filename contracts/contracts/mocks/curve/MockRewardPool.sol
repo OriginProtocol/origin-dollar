@@ -1,35 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IMintableERC20 } from "../MintableERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IMintableERC20} from "../MintableERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 interface IDeposit {
-    function poolInfo(uint256)
-        external
-        view
-        returns (
-            address,
-            address,
-            address,
-            address,
-            address,
-            bool
-        );
+    function poolInfo(uint256) external view returns (address, address, address, address, address, bool);
 
-    function rewardClaimed(
-        uint256,
-        address,
-        uint256
-    ) external;
+    function rewardClaimed(uint256, address, uint256) external;
 
-    function withdrawTo(
-        uint256,
-        uint256,
-        address
-    ) external;
+    function withdrawTo(uint256, uint256, address) external;
 }
 
 contract MockRewardPool {
@@ -47,13 +29,9 @@ contract MockRewardPool {
     mapping(address => uint256) private _balances;
     mapping(address => uint256) public rewards;
 
-    constructor(
-        uint256 _pid,
-        address _stakingToken,
-        address _rewardTokenA,
-        address _rewardTokenB,
-        address _operator
-    ) public {
+    constructor(uint256 _pid, address _stakingToken, address _rewardTokenA, address _rewardTokenB, address _operator)
+        public
+    {
         pid = _pid;
         stakingToken = _stakingToken;
         rewardTokenA = _rewardTokenA;
@@ -77,19 +55,12 @@ contract MockRewardPool {
         _balances[_for] = _balances[_for].add(_amount);
 
         //take away from sender
-        IERC20(stakingToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _amount);
 
         return true;
     }
 
-    function withdrawAndUnwrap(uint256 amount, bool claim)
-        public
-        returns (bool)
-    {
+    function withdrawAndUnwrap(uint256 amount, bool claim) public returns (bool) {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
 
@@ -108,10 +79,7 @@ contract MockRewardPool {
     }
 
     // solhint-disable-next-line no-unused-vars
-    function getReward(address _account, bool _claimExtras)
-        public
-        returns (bool)
-    {
+    function getReward(address _account, bool _claimExtras) public returns (bool) {
         IMintableERC20(rewardTokenA).mint(2 * 1e18);
         IERC20(rewardTokenA).transfer(_account, 2 * 1e18);
 

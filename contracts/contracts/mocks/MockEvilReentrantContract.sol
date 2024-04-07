@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IVault } from "../interfaces/IVault.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
-import { IRateProvider } from "../interfaces/balancer/IRateProvider.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
+import {IRateProvider} from "../interfaces/balancer/IRateProvider.sol";
 
-import { IBalancerVault } from "../interfaces/balancer/IBalancerVault.sol";
-import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
+import {IBalancerVault} from "../interfaces/balancer/IBalancerVault.sol";
+import {IERC20} from "../utils/InitializableAbstractStrategy.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
+import {StableMath} from "../utils/StableMath.sol";
 
 contract MockEvilReentrantContract {
     using StableMath for uint256;
@@ -49,47 +49,29 @@ contract MockEvilReentrantContract {
         assets[0] = address(reth);
         assets[1] = address(weth);
 
-        uint256 minBPT = getBPTExpected(assets, amounts).mulTruncate(
-            0.99 ether
-        );
+        uint256 minBPT = getBPTExpected(assets, amounts).mulTruncate(0.99 ether);
 
-        bytes memory joinUserData = abi.encode(
-            IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
-            amounts,
-            minBPT
-        );
+        bytes memory joinUserData =
+            abi.encode(IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT, amounts, minBPT);
 
-        IBalancerVault.JoinPoolRequest memory joinRequest = IBalancerVault
-            .JoinPoolRequest(assets, amounts, joinUserData, false);
+        IBalancerVault.JoinPoolRequest memory joinRequest =
+            IBalancerVault.JoinPoolRequest(assets, amounts, joinUserData, false);
 
-        balancerVault.joinPool(
-            balancerPoolId,
-            address(this),
-            address(this),
-            joinRequest
-        );
+        balancerVault.joinPool(balancerPoolId, address(this), address(this), joinRequest);
 
         uint256 bptTokenBalance = IERC20(poolAddress).balanceOf(address(this));
 
         // 2. Redeem as ETH
-        bytes memory exitUserData = abi.encode(
-            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-            bptTokenBalance,
-            1
-        );
+        bytes memory exitUserData =
+            abi.encode(IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptTokenBalance, 1);
 
         assets[1] = address(0); // Receive ETH instead of WETH
         uint256[] memory exitAmounts = new uint256[](2);
         exitAmounts[1] = 15 ether;
-        IBalancerVault.ExitPoolRequest memory exitRequest = IBalancerVault
-            .ExitPoolRequest(assets, exitAmounts, exitUserData, false);
+        IBalancerVault.ExitPoolRequest memory exitRequest =
+            IBalancerVault.ExitPoolRequest(assets, exitAmounts, exitUserData, false);
 
-        balancerVault.exitPool(
-            balancerPoolId,
-            address(this),
-            payable(address(this)),
-            exitRequest
-        );
+        balancerVault.exitPool(balancerPoolId, address(this), payable(address(this)), exitRequest);
         bptTokenBalance = IERC20(poolAddress).balanceOf(address(this));
     }
 
@@ -103,13 +85,9 @@ contract MockEvilReentrantContract {
         address priceProvider = oethVault.priceProvider();
 
         for (uint256 i = 0; i < _assets.length; ++i) {
-            uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(
-                _assets[i]
-            );
+            uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(_assets[i]);
             // convert asset amount to ETH amount
-            bptExpected =
-                bptExpected +
-                _amounts[i].mulTruncate(strategyAssetMarketPrice);
+            bptExpected = bptExpected + _amounts[i].mulTruncate(strategyAssetMarketPrice);
         }
 
         uint256 bptRate = IRateProvider(poolAddress).getRate();

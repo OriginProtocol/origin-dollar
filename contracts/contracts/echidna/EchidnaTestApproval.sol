@@ -16,12 +16,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
      * @param toAcc The account that is receiving
      * @param amount The amount to transfer
      */
-    function testTransferFromShouldNotRevert(
-        uint8 authorizedAcc,
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferFromShouldNotRevert(uint8 authorizedAcc, uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address authorized = getAccount(authorizedAcc);
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
@@ -45,21 +40,13 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
      * @param toAcc The account that is receiving
      * @param amount The amount to transfer
      */
-    function testTransferFromShouldRevert(
-        uint8 authorizedAcc,
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferFromShouldRevert(uint8 authorizedAcc, uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address authorized = getAccount(authorizedAcc);
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
         require(amount > 0);
-        require(
-            !(amount <= ousd.balanceOf(from) &&
-                amount <= ousd.allowance(from, authorized))
-        );
+        require(!(amount <= ousd.balanceOf(from) && amount <= ousd.allowance(from, authorized)));
 
         hevm.prank(authorized);
         // slither-disable-next-line unchecked-transfer
@@ -76,11 +63,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
      * @param spenderAcc The account that is being approved
      * @param amount The amount to approve
      */
-    function testApprove(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
+    function testApprove(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
 
@@ -101,11 +84,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
      * @param spenderAcc The account that is being approved
      * @param amount The amount to approve
      */
-    function testIncreaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
+    function testIncreaseAllowance(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
 
@@ -122,11 +101,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
      * @param spenderAcc The account that is being approved
      * @param amount The amount to approve
      */
-    function testDecreaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
+    function testDecreaseAllowance(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
 

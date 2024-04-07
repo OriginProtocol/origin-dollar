@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import { Governable } from "../governance/Governable.sol";
-import { Initializable } from "../utils/Initializable.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import {Governable} from "../governance/Governable.sol";
+import {Initializable} from "../utils/Initializable.sol";
 
-contract BridgedWOETH is
-    Governable,
-    AccessControlEnumerable,
-    Initializable,
-    ERC20
-{
+contract BridgedWOETH is Governable, AccessControlEnumerable, Initializable, ERC20 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -33,11 +28,7 @@ contract BridgedWOETH is
      * @param account Address to mint tokens for
      * @param amount Amount of tokens to mint
      */
-    function mint(address account, uint256 amount)
-        external
-        onlyRole(MINTER_ROLE)
-        nonReentrant
-    {
+    function mint(address account, uint256 amount) external onlyRole(MINTER_ROLE) nonReentrant {
         _mint(account, amount);
     }
 
@@ -46,11 +37,7 @@ contract BridgedWOETH is
      * @param account Address to burn tokens from
      * @param amount Amount of tokens to burn
      */
-    function burn(address account, uint256 amount)
-        external
-        onlyRole(BURNER_ROLE)
-        nonReentrant
-    {
+    function burn(address account, uint256 amount) external onlyRole(BURNER_ROLE) nonReentrant {
         _burn(account, amount);
     }
 

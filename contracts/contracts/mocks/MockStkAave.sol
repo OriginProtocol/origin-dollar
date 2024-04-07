@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./MintableERC20.sol";
 
 contract MockStkAave is MintableERC20 {
@@ -31,20 +31,16 @@ contract MockStkAave is MintableERC20 {
      * @dev Redeems staked tokens, and stop earning rewards
      * @param to Address to redeem to
      * @param amount Amount to redeem
-     **/
+     *
+     */
     function redeem(address to, uint256 amount) external {
         uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
         uint256 windowStart = cooldownStartTimestamp + COOLDOWN_SECONDS;
         require(amount != 0, "INVALID_ZERO_AMOUNT");
         require(block.timestamp > windowStart, "INSUFFICIENT_COOLDOWN");
-        require(
-            block.timestamp - windowStart <= UNSTAKE_WINDOW,
-            "UNSTAKE_WINDOW_FINISHED"
-        );
+        require(block.timestamp - windowStart <= UNSTAKE_WINDOW, "UNSTAKE_WINDOW_FINISHED");
         uint256 balanceOfMessageSender = balanceOf(msg.sender);
-        uint256 amountToRedeem = (amount > balanceOfMessageSender)
-            ? balanceOfMessageSender
-            : amount;
+        uint256 amountToRedeem = (amount > balanceOfMessageSender) ? balanceOfMessageSender : amount;
 
         stakersCooldowns[msg.sender] = 0;
         _burn(msg.sender, amountToRedeem);
@@ -54,7 +50,8 @@ contract MockStkAave is MintableERC20 {
     /**
      * @dev Activates the cooldown period to unstake
      * - It can't be called if the user is not staking
-     **/
+     *
+     */
     function cooldown() external {
         require(balanceOf(msg.sender) != 0, "INVALID_BALANCE_ON_COOLDOWN");
         stakersCooldowns[msg.sender] = block.timestamp;
@@ -62,7 +59,8 @@ contract MockStkAave is MintableERC20 {
 
     /**
      * @dev Test helper function to allow changing the cooldown
-     **/
+     *
+     */
     function setCooldown(address account, uint256 _cooldown) external {
         stakersCooldowns[account] = _cooldown;
     }

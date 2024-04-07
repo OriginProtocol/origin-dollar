@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IVault } from "../interfaces/IVault.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // solhint-disable-next-line no-console
 import "hardhat/console.sol";
 
@@ -19,10 +19,7 @@ contract Sanctum {
         vault = _vault;
     }
 
-    function deploy(uint256 salt, bytes memory bytecode)
-        public
-        returns (address addr)
-    {
+    function deploy(uint256 salt, bytes memory bytecode) public returns (address addr) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
@@ -30,20 +27,9 @@ contract Sanctum {
         require(addr != address(0), "Create2: Failed on deploy");
     }
 
-    function computeAddress(uint256 salt, bytes memory bytecode)
-        public
-        view
-        returns (address)
-    {
+    function computeAddress(uint256 salt, bytes memory bytecode) public view returns (address) {
         bytes32 bytecodeHashHash = keccak256(bytecode);
-        bytes32 _data = keccak256(
-            abi.encodePacked(
-                bytes1(0xff),
-                address(this),
-                salt,
-                bytecodeHashHash
-            )
-        );
+        bytes32 _data = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, bytecodeHashHash));
         return address(bytes20(_data << 96));
     }
 

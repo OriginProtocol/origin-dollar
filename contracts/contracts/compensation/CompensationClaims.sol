@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import { Initializable } from "../utils/Initializable.sol";
-import { Governable } from "../governance/Governable.sol";
+import {Initializable} from "../utils/Initializable.sol";
+import {Governable} from "../governance/Governable.sol";
 
 /**
  * @title Compensation Claims
@@ -83,14 +83,12 @@ contract CompensationClaims is Governable {
 
     /* -- Adjustor -- */
 
-    function setClaims(
-        address[] calldata _addresses,
-        uint256[] calldata _amounts
-    ) external notInClaimPeriod onlyUnlockedAdjuster {
-        require(
-            _addresses.length == _amounts.length,
-            "Addresses and amounts must match"
-        );
+    function setClaims(address[] calldata _addresses, uint256[] calldata _amounts)
+        external
+        notInClaimPeriod
+        onlyUnlockedAdjuster
+    {
+        require(_addresses.length == _amounts.length, "Addresses and amounts must match");
         uint256 len = _addresses.length;
         for (uint256 i = 0; i < len; i++) {
             address recipient = _addresses[i];
@@ -118,12 +116,7 @@ contract CompensationClaims is Governable {
         emit Unlock();
     }
 
-    function start(uint256 _seconds)
-        external
-        onlyGovernor
-        notInClaimPeriod
-        nonReentrant
-    {
+    function start(uint256 _seconds) external onlyGovernor notInClaimPeriod nonReentrant {
         require(totalClaims > 0, "No claims");
         uint256 funding = IERC20(token).balanceOf(address(this));
         require(funding >= totalClaims, "Insufficient funds for all claims");
@@ -133,12 +126,7 @@ contract CompensationClaims is Governable {
         emit Start(end);
     }
 
-    function collect(address _coin)
-        external
-        onlyGovernor
-        notInClaimPeriod
-        nonReentrant
-    {
+    function collect(address _coin) external onlyGovernor notInClaimPeriod nonReentrant {
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         SafeERC20.safeTransfer(IERC20(_coin), address(governor()), amount);
         emit Collect(_coin, amount);

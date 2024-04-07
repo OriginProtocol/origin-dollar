@@ -6,12 +6,12 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ICurvePool } from "./ICurvePool.sol";
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
+import {ICurvePool} from "./ICurvePool.sol";
+import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {Helpers} from "../utils/Helpers.sol";
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -29,12 +29,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, pTokenAddress, _amount);
 
@@ -46,12 +41,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _amounts[poolCoinIndex] = _amount;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 depositValue = _amount.scaleBy(18, assetDecimals).divPrecisely(
-            curvePool.get_virtual_price()
-        );
-        uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        uint256 depositValue = _amount.scaleBy(18, assetDecimals).divPrecisely(curvePool.get_virtual_price());
+        uint256 minMintAmount = depositValue.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
@@ -78,18 +69,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
                 uint256 assetDecimals = Helpers.getDecimals(assetAddress);
                 // Get value of deposit in Curve LP token to later determine
                 // the minMintAmount argument for add_liquidity
-                depositValue =
-                    depositValue +
-                    balance.scaleBy(18, assetDecimals).divPrecisely(
-                        curveVirtualPrice
-                    );
+                depositValue = depositValue + balance.scaleBy(18, assetDecimals).divPrecisely(curveVirtualPrice);
                 emit Deposit(assetAddress, pTokenAddress, balance);
             }
         }
 
-        uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        uint256 minMintAmount = depositValue.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
 
@@ -110,18 +95,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, pTokenAddress, _amount);
 
-        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(
-            address(this)
-        );
+        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(address(this));
 
         uint256 coinIndex = _getCoinIndex(_asset);
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -161,10 +140,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      *  - since we know exactly how much asset we require take the rate of LP required for asset
      *    withdrawn to get the exact amount of LP.
      */
-    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _amount)
-        internal
-        returns (uint256 required3Crv)
-    {
+    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _amount) internal returns (uint256 required3Crv) {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
@@ -176,23 +152,16 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
          *
          * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
          */
-        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + curvePool.fee(),
-            1e10
-        );
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(1e10 + curvePool.fee(), 1e10);
 
         /* asset received when withdrawing full fee applicable LP accounting for
          * slippage and fees
          */
-        uint256 assetReceivedForFullLPFees = curvePool.calc_withdraw_one_coin(
-            lpRequiredFullFees,
-            int128(uint128(_coinIndex))
-        );
+        uint256 assetReceivedForFullLPFees =
+            curvePool.calc_withdraw_one_coin(lpRequiredFullFees, int128(uint128(_coinIndex)));
 
         // exact amount of LP required
-        required3Crv =
-            (lpRequiredFullFees * _amount) /
-            assetReceivedForFullLPFees;
+        required3Crv = (lpRequiredFullFees * _amount) / assetReceivedForFullLPFees;
     }
 
     /**
@@ -201,18 +170,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
         // Withdraws are proportional to assets held by 3Pool
-        uint256[3] memory minWithdrawAmounts = [
-            uint256(0),
-            uint256(0),
-            uint256(0)
-        ];
+        uint256[3] memory minWithdrawAmounts = [uint256(0), uint256(0), uint256(0)];
 
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
-        threePool.remove_liquidity(
-            IERC20(pTokenAddress).balanceOf(address(this)),
-            minWithdrawAmounts
-        );
+        threePool.remove_liquidity(IERC20(pTokenAddress).balanceOf(address(this)), minWithdrawAmounts);
         // Transfer assets out of Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
@@ -227,13 +189,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset)
-        public
-        view
-        virtual
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) public view virtual override returns (uint256 balance) {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
@@ -260,12 +216,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
+    function safeApproveAllTokens() external override onlyGovernor nonReentrant {
         _approveBase();
         // This strategy is a special case since it only supports one asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {

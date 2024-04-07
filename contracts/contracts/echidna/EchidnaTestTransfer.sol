@@ -25,11 +25,11 @@ contract EchidnaTestTransfer is EchidnaDebug {
      *     Debug(«toBalBefore», 0)
      *     Debug(«toBalAfter», 0)
      */
-    function testTransferBalanceReceivedLess(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public hasKnownIssue hasKnownIssueWithinLimits {
+    function testTransferBalanceReceivedLess(uint8 fromAcc, uint8 toAcc, uint256 amount)
+        public
+        hasKnownIssue
+        hasKnownIssueWithinLimits
+    {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -53,11 +53,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function testTransferBalanceReceivedMore(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferBalanceReceivedMore(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -90,11 +86,11 @@ contract EchidnaTestTransfer is EchidnaDebug {
      *     Debug(«fromBalBefore», 1)
      *     Debug(«fromBalAfter», 1)
      */
-    function testTransferBalanceSentLess(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public hasKnownIssue hasKnownIssueWithinLimits {
+    function testTransferBalanceSentLess(uint8 fromAcc, uint8 toAcc, uint256 amount)
+        public
+        hasKnownIssue
+        hasKnownIssueWithinLimits
+    {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -118,11 +114,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function testTransferBalanceSentMore(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferBalanceSentMore(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -146,11 +138,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function testTransferBalanceReceivedLessRounding(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferBalanceReceivedLessRounding(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -184,11 +172,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function testTransferBalanceSentLessRounding(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferBalanceSentLessRounding(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -232,11 +216,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      *   Event sequence:
      *       error Revert Panic(17): SafeMath over-/under-flows
      */
-    function testTransferWithinBalanceDoesNotRevert(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public hasKnownIssue {
+    function testTransferWithinBalanceDoesNotRevert(uint8 fromAcc, uint8 toAcc, uint256 amount) public hasKnownIssue {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 
@@ -261,11 +241,7 @@ contract EchidnaTestTransfer is EchidnaDebug {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function testTransferExceedingBalanceReverts(
-        uint8 fromAcc,
-        uint8 toAcc,
-        uint256 amount
-    ) public {
+    function testTransferExceedingBalanceReverts(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
 

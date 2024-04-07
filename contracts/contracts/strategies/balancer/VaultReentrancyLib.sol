@@ -15,7 +15,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import "../../utils/BalancerErrors.sol";
-import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
+import {IBalancerVault} from "../../interfaces/balancer/IBalancerVault.sol";
 
 library VaultReentrancyLib {
     /**
@@ -75,9 +75,8 @@ library VaultReentrancyLib {
         // `manageUserBalance` even gets called), any other error would generate non-zero revertData, so checking for
         // empty data guards against this case too.
 
-        (, bytes memory revertData) = address(vault).staticcall{ gas: 10_000 }(
-            abi.encodeWithSelector(vault.manageUserBalance.selector, 0)
-        );
+        (, bytes memory revertData) =
+            address(vault).staticcall{gas: 10_000}(abi.encodeWithSelector(vault.manageUserBalance.selector, 0));
 
         _require(revertData.length == 0, Errors.REENTRANCY);
     }

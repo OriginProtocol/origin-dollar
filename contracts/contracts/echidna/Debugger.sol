@@ -24,11 +24,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        string memory data
-    ) internal {
+    function log(string memory prefix, string memory description, string memory data) internal {
         emit Debug(prefix, description, data);
     }
 
@@ -36,11 +32,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        bytes32 data
-    ) internal {
+    function log(string memory prefix, string memory description, bytes32 data) internal {
         emit Debug(prefix, description, data);
     }
 
@@ -48,11 +40,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        uint256 data
-    ) internal {
+    function log(string memory prefix, string memory description, uint256 data) internal {
         emit Debug(prefix, description, data);
     }
 
@@ -60,11 +48,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        int256 data
-    ) internal {
+    function log(string memory prefix, string memory description, int256 data) internal {
         emit Debug(prefix, description, data);
     }
 
@@ -72,11 +56,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        address data
-    ) internal {
+    function log(string memory prefix, string memory description, address data) internal {
         emit Debug(prefix, description, data);
     }
 
@@ -84,11 +64,7 @@ library Debugger {
         emit Debug(description, data);
     }
 
-    function log(
-        string memory prefix,
-        string memory description,
-        bool data
-    ) internal {
+    function log(string memory prefix, string memory description, bool data) internal {
         emit Debug(prefix, description, data);
     }
 }

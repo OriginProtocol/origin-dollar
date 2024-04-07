@@ -8,6 +8,4 @@ import "./EchidnaTestApproval.sol";
  * @notice Target contract to be tested, containing all mixins
  * @author Rappie
  */
-contract Echidna is EchidnaTestApproval {
-
-}
+contract Echidna is EchidnaTestApproval {}

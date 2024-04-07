@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Governable } from "../governance/Governable.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Governable} from "../governance/Governable.sol";
+import {IVault} from "../interfaces/IVault.sol";
 
 /**
  * @title OUSD Dripper
@@ -43,7 +43,6 @@ import { IVault } from "../interfaces/IVault.sol";
  * longer curve the more collect() is called without incoming yield.
  *
  */
-
 contract Dripper is Governable {
     using SafeERC20 for IERC20;
 
@@ -95,10 +94,7 @@ contract Dripper is Governable {
     /// @dev Transfer out ERC20 tokens held by the contract. Governor only.
     /// @param _asset ERC20 token address
     /// @param _amount amount to transfer
-    function transferToken(address _asset, uint256 _amount)
-        external
-        onlyGovernor
-    {
+    function transferToken(address _asset, uint256 _amount) external onlyGovernor {
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -107,11 +103,7 @@ contract Dripper is Governable {
     ///  Uses passed in parameters to calculate with for gas savings.
     /// @param _balance current balance in contract
     /// @param _drip current drip parameters
-    function _availableFunds(uint256 _balance, Drip memory _drip)
-        internal
-        view
-        returns (uint256)
-    {
+    function _availableFunds(uint256 _balance, Drip memory _drip) internal view returns (uint256) {
         uint256 elapsed = block.timestamp - _drip.lastCollect;
         uint256 allowed = (elapsed * _drip.perBlock);
         return (allowed > _balance) ? _balance : allowed;
@@ -126,10 +118,7 @@ contract Dripper is Governable {
         uint256 remaining = balance - amountToSend;
         // Calculate new drip perBlock
         //   Gas savings by setting entire struct at one time
-        drip = Drip({
-            perBlock: uint192(remaining / dripDuration),
-            lastCollect: uint64(block.timestamp)
-        });
+        drip = Drip({perBlock: uint192(remaining / dripDuration), lastCollect: uint64(block.timestamp)});
         // Send funds
         IERC20(token).safeTransfer(vault, amountToSend);
     }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { Initializable } from "../utils/Initializable.sol";
-import { Governable } from "../governance/Governable.sol";
-import { StableMath } from "../utils/StableMath.sol";
+import {Initializable} from "../utils/Initializable.sol";
+import {Governable} from "../governance/Governable.sol";
+import {StableMath} from "../utils/StableMath.sol";
 
 contract SingleAssetStaking is Initializable, Governable {
     using SafeMath for uint256;
@@ -58,11 +58,11 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _rates Array of rates(0.3 is 30%) that correspond to the allowed
      *               durations in 1e18 precision
      */
-    function initialize(
-        address _stakingToken,
-        uint256[] calldata _durations,
-        uint256[] calldata _rates
-    ) external onlyGovernor initializer {
+    function initialize(address _stakingToken, uint256[] calldata _durations, uint256[] calldata _rates)
+        external
+        onlyGovernor
+        initializer
+    {
         stakingToken = IERC20(_stakingToken);
         _setDurationRates(_durations, _rates);
     }
@@ -73,14 +73,8 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Validate and set the duration and corresponding rates, will emit
      *      events NewRate and NewDurations
      */
-    function _setDurationRates(
-        uint256[] memory _durations,
-        uint256[] memory _rates
-    ) internal {
-        require(
-            _rates.length == _durations.length,
-            "Mismatch durations and rates"
-        );
+    function _setDurationRates(uint256[] memory _durations, uint256[] memory _rates) internal {
+        require(_rates.length == _durations.length, "Mismatch durations and rates");
 
         for (uint256 i = 0; i < _rates.length; i++) {
             require(_rates[i] < type(uint240).max, "Max rate exceeded");
@@ -93,11 +87,7 @@ contract SingleAssetStaking is Initializable, Governable {
         emit NewDurations(msg.sender, durations);
     }
 
-    function _totalExpectedRewards(Stake[] storage stakes)
-        internal
-        view
-        returns (uint256 total)
-    {
+    function _totalExpectedRewards(Stake[] storage stakes) internal view returns (uint256 total) {
         for (uint256 i = 0; i < stakes.length; i++) {
             Stake storage stake = stakes[i];
             if (!stake.paid) {
@@ -106,19 +96,11 @@ contract SingleAssetStaking is Initializable, Governable {
         }
     }
 
-    function _totalExpected(Stake storage _stake)
-        internal
-        view
-        returns (uint256)
-    {
+    function _totalExpected(Stake storage _stake) internal view returns (uint256) {
         return _stake.amount.add(_stake.amount.mulTruncate(_stake.rate));
     }
 
-    function _airDroppedStakeClaimed(address account, uint8 stakeType)
-        internal
-        view
-        returns (bool)
-    {
+    function _airDroppedStakeClaimed(address account, uint8 stakeType) internal view returns (bool) {
         Stake[] storage stakes = userStakes[account];
         for (uint256 i = 0; i < stakes.length; i++) {
             if (stakes[i].stakeType == stakeType) {
@@ -128,11 +110,7 @@ contract SingleAssetStaking is Initializable, Governable {
         return false;
     }
 
-    function _findDurationRate(uint256 duration)
-        internal
-        view
-        returns (uint240)
-    {
+    function _findDurationRate(uint256 duration) internal view returns (uint240) {
         for (uint256 i = 0; i < durations.length; i++) {
             if (duration == durations[i]) {
                 return uint240(rates[i]);
@@ -153,13 +131,7 @@ contract SingleAssetStaking is Initializable, Governable {
      *             to fit the bool and type in struct Stake
      * @param amount Number of tokens to stake in 1e18
      */
-    function _stake(
-        address staker,
-        uint8 stakeType,
-        uint256 duration,
-        uint240 rate,
-        uint256 amount
-    ) internal {
+    function _stake(address staker, uint8 stakeType, uint256 duration, uint240 rate, uint256 amount) internal {
         require(!paused, "Staking paused");
 
         Stake[] storage stakes = userStakes[staker];
@@ -192,11 +164,7 @@ contract SingleAssetStaking is Initializable, Governable {
         emit Staked(staker, amount, duration, rate);
     }
 
-    function _stakeWithChecks(
-        address staker,
-        uint256 amount,
-        uint256 duration
-    ) internal {
+    function _stakeWithChecks(address staker, uint256 amount, uint256 duration) internal {
         require(amount > 0, "Cannot stake 0");
 
         uint240 rewardRate = _findDurationRate(duration);
@@ -210,10 +178,7 @@ contract SingleAssetStaking is Initializable, Governable {
     modifier requireLiquidity() {
         // we need to have enough balance to cover the rewards after the operation is complete
         _;
-        require(
-            stakingToken.balanceOf(address(this)) >= totalOutstanding,
-            "Insufficient rewards"
-        );
+        require(stakingToken.balanceOf(address(this)) >= totalOutstanding, "Insufficient rewards");
     }
 
     /* ========== VIEWS ========== */
@@ -230,11 +195,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Return all the stakes paid and unpaid for a given user
      * @param account Address of the account that we want to look up
      */
-    function getAllStakes(address account)
-        external
-        view
-        returns (Stake[] memory)
-    {
+    function getAllStakes(address account) external view returns (Stake[] memory) {
         return userStakes[account];
     }
 
@@ -242,22 +203,14 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Find the rate that corresponds to a given duration
      * @param _duration Number of seconds
      */
-    function durationRewardRate(uint256 _duration)
-        external
-        view
-        returns (uint256)
-    {
+    function durationRewardRate(uint256 _duration) external view returns (uint256) {
         return _findDurationRate(_duration);
     }
 
     /**
      * @dev Has the airdropped stake already been claimed
      */
-    function airDroppedStakeClaimed(address account, uint8 stakeType)
-        external
-        view
-        returns (bool)
-    {
+    function airDroppedStakeClaimed(address account, uint8 stakeType) external view returns (bool) {
         return _airDroppedStakeClaimed(account, stakeType);
     }
 
@@ -266,11 +219,7 @@ contract SingleAssetStaking is Initializable, Governable {
      *      rewards not included
      * @param account Address of the account that we want to look up
      */
-    function totalStaked(address account)
-        external
-        view
-        returns (uint256 total)
-    {
+    function totalStaked(address account) external view returns (uint256 total) {
         Stake[] storage stakes = userStakes[account];
 
         for (uint256 i = 0; i < stakes.length; i++) {
@@ -284,11 +233,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Calculate all the rewards a user can expect to receive.
      * @param account Address of the account that we want to look up
      */
-    function totalExpectedRewards(address account)
-        external
-        view
-        returns (uint256)
-    {
+    function totalExpectedRewards(address account) external view returns (uint256) {
         return _totalExpectedRewards(userStakes[account]);
     }
 
@@ -296,11 +241,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Calculate all current holdings of a user: staked value + prorated rewards
      * @param account Address of the account that we want to look up
      */
-    function totalCurrentHoldings(address account)
-        external
-        view
-        returns (uint256 total)
-    {
+    function totalCurrentHoldings(address account) external view returns (uint256 total) {
         Stake[] storage stakes = userStakes[account];
 
         for (uint256 i = 0; i < stakes.length; i++) {
@@ -314,10 +255,7 @@ contract SingleAssetStaking is Initializable, Governable {
                 total = total.add(
                     stake.amount.add(
                         stake.amount.mulTruncate(stake.rate).mulTruncate(
-                            stake
-                                .duration
-                                .sub(stake.end.sub(block.timestamp))
-                                .divPrecisely(stake.duration)
+                            stake.duration.sub(stake.end.sub(block.timestamp)).divPrecisely(stake.duration)
                         )
                     )
                 );
@@ -348,22 +286,12 @@ contract SingleAssetStaking is Initializable, Governable {
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
         require(rate < type(uint240).max, "Max rate exceeded");
-        require(index < 2**merkleProof.length, "Invalid index");
+        require(index < 2 ** merkleProof.length, "Invalid index");
         DropRoot storage dropRoot = dropRoots[stakeType];
         require(merkleProof.length == dropRoot.depth, "Invalid proof");
 
         // Compute the merkle root
-        bytes32 node = keccak256(
-            abi.encodePacked(
-                index,
-                stakeType,
-                address(this),
-                msg.sender,
-                duration,
-                rate,
-                amount
-            )
-        );
+        bytes32 node = keccak256(abi.encodePacked(index, stakeType, address(this), msg.sender, duration, rate, amount));
         uint256 path = index;
         for (uint16 i = 0; i < merkleProof.length; i++) {
             if ((path & 0x01) == 1) {
@@ -378,10 +306,7 @@ contract SingleAssetStaking is Initializable, Governable {
         require(node == dropRoot.hash, "Stake not approved");
 
         // verify that we haven't already staked
-        require(
-            !_airDroppedStakeClaimed(msg.sender, stakeType),
-            "Already staked"
-        );
+        require(!_airDroppedStakeClaimed(msg.sender, stakeType), "Already staked");
 
         _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }
@@ -404,15 +329,12 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param amount Number of tokens to stake in 1e18
      * @param duration Number of seconds this stake will be held for
      */
-    function stakeWithSender(
-        address staker,
-        uint256 amount,
-        uint256 duration
-    ) external requireLiquidity returns (bool) {
-        require(
-            msg.sender == address(stakingToken),
-            "Only token contract can make this call"
-        );
+    function stakeWithSender(address staker, uint256 amount, uint256 duration)
+        external
+        requireLiquidity
+        returns (bool)
+    {
+        require(msg.sender == address(stakingToken), "Only token contract can make this call");
 
         _stakeWithChecks(staker, amount, duration);
         return true;
@@ -459,13 +381,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param s s portion of the signature
      * @param v v portion of the signature
      */
-    function transferStakes(
-        address _frmAccount,
-        address _dstAccount,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
-    ) external {
+    function transferStakes(address _frmAccount, address _dstAccount, bytes32 r, bytes32 s, uint8 v) external {
         require(transferAgent == msg.sender, "must be transfer agent");
         Stake[] storage dstStakes = userStakes[_dstAccount];
         require(dstStakes.length == 0, "Dest stakes must be empty");
@@ -476,13 +392,7 @@ contract SingleAssetStaking is Initializable, Governable {
         // matches ethers.signMsg(ethers.utils.solidityPack([string(4), address, adddress, address]))
         bytes32 hash = keccak256(
             abi.encodePacked(
-                "\x19Ethereum Signed Message:\n64",
-                abi.encodePacked(
-                    "tran",
-                    address(this),
-                    _frmAccount,
-                    _dstAccount
-                )
+                "\x19Ethereum Signed Message:\n64", abi.encodePacked("tran", address(this), _frmAccount, _dstAccount)
             )
         );
         require(ecrecover(hash, v, r, s) == _frmAccount, "Transfer not authed");
@@ -505,10 +415,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _durations Array of durations in seconds
      * @param _rates Array of rates that corresponds to the durations (0.01 is 1%) in 1e18
      */
-    function setDurationRates(
-        uint256[] calldata _durations,
-        uint256[] calldata _rates
-    ) external onlyGovernor {
+    function setDurationRates(uint256[] calldata _durations, uint256[] calldata _rates) external onlyGovernor {
         _setDurationRates(_durations, _rates);
     }
 
@@ -526,11 +433,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _rootHash Root hash of the Merkle Tree
      * @param _proofDepth Depth of the Merklke Tree
      */
-    function setAirDropRoot(
-        uint8 _stakeType,
-        bytes32 _rootHash,
-        uint256 _proofDepth
-    ) external onlyGovernor {
+    function setAirDropRoot(uint8 _stakeType, bytes32 _rootHash, uint256 _proofDepth) external onlyGovernor {
         require(_stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
         dropRoots[_stakeType].hash = _rootHash;
         dropRoots[_stakeType].depth = _proofDepth;
@@ -539,24 +442,11 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /* ========== EVENTS ========== */
 
-    event Staked(
-        address indexed user,
-        uint256 amount,
-        uint256 duration,
-        uint256 rate
-    );
+    event Staked(address indexed user, uint256 amount, uint256 duration, uint256 rate);
     event Withdrawn(address indexed user, uint256 amount, uint256 stakedAmount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);
-    event NewAirDropRootHash(
-        uint8 stakeType,
-        bytes32 rootHash,
-        uint256 proofDepth
-    );
-    event StakesTransfered(
-        address indexed fromUser,
-        address toUser,
-        uint256 numStakes
-    );
+    event NewAirDropRootHash(uint8 stakeType, bytes32 rootHash, uint256 proofDepth);
+    event StakesTransfered(address indexed fromUser, address toUser, uint256 numStakes);
 }

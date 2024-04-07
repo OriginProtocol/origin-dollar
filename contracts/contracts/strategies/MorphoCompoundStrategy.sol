@@ -6,22 +6,21 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Morpho (Compound)
  * @author Origin Protocol Inc
  */
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, BaseCompoundStrategy, InitializableAbstractStrategy } from "./BaseCompoundStrategy.sol";
-import { IMorpho } from "../interfaces/morpho/IMorpho.sol";
-import { ILens } from "../interfaces/morpho/ILens.sol";
-import { StableMath } from "../utils/StableMath.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20, BaseCompoundStrategy, InitializableAbstractStrategy} from "./BaseCompoundStrategy.sol";
+import {IMorpho} from "../interfaces/morpho/IMorpho.sol";
+import {ILens} from "../interfaces/morpho/ILens.sol";
+import {StableMath} from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
 contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant MORPHO = 0x8888882f8f843896699869179fB6E4f7e3B58888;
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
+
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+    constructor(BaseStrategyConfig memory _stratConfig) InitializableAbstractStrategy(_stratConfig) {}
 
     /**
      * @dev Initialize function, to set up initial internal state
@@ -34,23 +33,14 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
     }
 
     /**
      * @dev Approve the spending of all assets by main Morpho contract,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
+    function safeApproveAllTokens() external override onlyGovernor nonReentrant {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
@@ -68,10 +58,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      * @param _pToken The pToken for the approval
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
+    function _abstractSetPToken(address _asset, address _pToken) internal override {
         IERC20(_asset).safeApprove(MORPHO, 0);
         IERC20(_asset).safeApprove(MORPHO, type(uint256).max);
     }
@@ -79,12 +66,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     /**
      * @dev Collect accumulated rewards and send them to Harvester.
      */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
+    function collectRewardTokens() external override onlyHarvester nonReentrant {
         /**
          * Gas considerations. We could query Morpho LENS's `getUserUnclaimedRewards` for each
          * cToken separately and only claimRewards where it is economically feasible. Each call
@@ -103,7 +85,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
          *
          * For the above reasoning such "optimization" is not implemented
          */
-
         address[] memory poolTokens = new address[](assetsMapped.length);
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             poolTokens[i] = assetToPToken[assetsMapped[i]];
@@ -118,11 +99,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         // Transfer COMP to Harvester
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(
-            harvesterAddress,
-            rewardTokenAddresses[0],
-            balance
-        );
+        emit RewardTokenCollected(harvesterAddress, rewardTokenAddresses[0], balance);
         rewardToken.safeTransfer(harvesterAddress, balance);
     }
 
@@ -143,12 +120,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         _deposit(_asset, _amount);
     }
 
@@ -186,19 +158,11 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
         _withdraw(_recipient, _asset, _amount);
     }
 
-    function _withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) internal {
+    function _withdraw(address _recipient, address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -226,26 +190,14 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) external view override returns (uint256 balance) {
         return _checkBalance(_asset);
     }
 
-    function _checkBalance(address _asset)
-        internal
-        view
-        returns (uint256 balance)
-    {
+    function _checkBalance(address _asset) internal view returns (uint256 balance) {
         address pToken = assetToPToken[_asset];
 
         // Total value represented by decimal position of underlying token
-        (, , balance) = ILens(LENS).getCurrentSupplyBalanceInOf(
-            pToken,
-            address(this)
-        );
+        (,, balance) = ILens(LENS).getCurrentSupplyBalanceInOf(pToken, address(this));
     }
 }

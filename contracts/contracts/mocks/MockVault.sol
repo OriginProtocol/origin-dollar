@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { VaultCore } from "../vault/VaultCore.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { VaultInitializer } from "../vault/VaultInitializer.sol";
+import {VaultCore} from "../vault/VaultCore.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {VaultInitializer} from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
 contract MockVault is VaultCore {
@@ -23,12 +23,7 @@ contract MockVault is VaultCore {
         return storedTotalValue;
     }
 
-    function _checkBalance(address _asset)
-        internal
-        view
-        override
-        returns (uint256 balance)
-    {
+    function _checkBalance(address _asset) internal view override returns (uint256 balance) {
         // Avoids rounding errors by returning the total value
         // in a single currency
         if (allAssets[0] == _asset) {
@@ -41,5 +36,9 @@ contract MockVault is VaultCore {
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
+    }
+
+    function unpauseCapital() external onlyGovernor {
+        capitalPaused = false;
     }
 }

@@ -14,10 +14,7 @@ contract MocksfrxETH is MintableERC20 {
         frxETH = _frxETH;
     }
 
-    function deposit(uint256 assets, address receiver)
-        external
-        returns (uint256 shares)
-    {
+    function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
         ERC20(frxETH).transferFrom(msg.sender, address(this), assets);
 
         _mint(receiver, assets);
@@ -29,9 +26,7 @@ contract MocksfrxETH is MintableERC20 {
         return balanceOf(owner);
     }
 
-    function setMaxWithdrawableBalance(address owner, uint256 balance)
-        external
-    {
+    function setMaxWithdrawableBalance(address owner, uint256 balance) external {
         uint256 currentBalance = balanceOf(owner);
         if (currentBalance > balance) {
             _burn(owner, currentBalance - balance);
@@ -40,11 +35,7 @@ contract MocksfrxETH is MintableERC20 {
         }
     }
 
-    function redeem(
-        uint256 shares,
-        address receiver,
-        address owner
-    ) external returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets) {
         _burn(owner, shares);
 
         ERC20(frxETH).transfer(receiver, shares);
@@ -52,11 +43,7 @@ contract MocksfrxETH is MintableERC20 {
         assets = shares;
     }
 
-    function withdraw(
-        uint256 assets,
-        address receiver,
-        address owner
-    ) external returns (uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares) {
         _burn(owner, assets);
 
         ERC20(frxETH).transfer(receiver, assets);
@@ -64,11 +51,7 @@ contract MocksfrxETH is MintableERC20 {
         shares = assets;
     }
 
-    function submitAndDeposit(address recipient)
-        external
-        payable
-        returns (uint256 shares)
-    {
+    function submitAndDeposit(address recipient) external payable returns (uint256 shares) {
         _mint(recipient, msg.value);
         shares = msg.value;
     }

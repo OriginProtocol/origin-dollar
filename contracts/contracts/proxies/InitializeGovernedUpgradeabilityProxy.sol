@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-import { Governable } from "../governance/Governable.sol";
+import {Governable} from "../governance/Governable.sol";
 
 /**
  * @title BaseGovernedUpgradeabilityProxy
@@ -31,19 +31,12 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * This parameter is optional, if no data is given the initialization call
      * to proxied contract will be skipped.
      */
-    function initialize(
-        address _logic,
-        address _initGovernor,
-        bytes calldata _data
-    ) public payable onlyGovernor {
+    function initialize(address _logic, address _initGovernor, bytes calldata _data) public payable onlyGovernor {
         require(_implementation() == address(0));
-        assert(
-            IMPLEMENTATION_SLOT ==
-                bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
-        );
+        assert(IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
         _setImplementation(_logic);
         if (_data.length > 0) {
-            (bool success, ) = _logic.delegatecall(_data);
+            (bool success,) = _logic.delegatecall(_data);
             require(success);
         }
         _changeGovernor(_initGovernor);
@@ -81,13 +74,9 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * It should include the signature and the parameters of the function to be called, as described in
      * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
      */
-    function upgradeToAndCall(address newImplementation, bytes calldata data)
-        external
-        payable
-        onlyGovernor
-    {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable onlyGovernor {
         _upgradeTo(newImplementation);
-        (bool success, ) = newImplementation.delegatecall(data);
+        (bool success,) = newImplementation.delegatecall(data);
         require(success);
     }
 
@@ -122,12 +111,8 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
 
             switch result
             // delegatecall returns 0 on error.
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
@@ -152,8 +137,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
      * validated in the constructor.
      */
-    bytes32 internal constant IMPLEMENTATION_SLOT =
-        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /**
      * @dev Returns the current implementation.
@@ -181,10 +165,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * @param newImplementation Address of the new implementation.
      */
     function _setImplementation(address newImplementation) internal {
-        require(
-            Address.isContract(newImplementation),
-            "Cannot set a proxy implementation to a non-contract address"
-        );
+        require(Address.isContract(newImplementation), "Cannot set a proxy implementation to a non-contract address");
 
         bytes32 slot = IMPLEMENTATION_SLOT;
 

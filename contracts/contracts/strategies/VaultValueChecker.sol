@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IOUSD } from "../interfaces/IOUSD.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import {IOUSD} from "../interfaces/IOUSD.sol";
+import {IVault} from "../interfaces/IVault.sol";
 
 contract VaultValueChecker {
     IVault public immutable vault;
@@ -29,11 +29,8 @@ contract VaultValueChecker {
     }
 
     function takeSnapshot() external {
-        snapshots[msg.sender] = Snapshot({
-            vaultValue: vault.totalValue(),
-            totalSupply: ousd.totalSupply(),
-            time: block.timestamp
-        });
+        snapshots[msg.sender] =
+            Snapshot({vaultValue: vault.totalValue(), totalSupply: ousd.totalSupply(), time: block.timestamp});
     }
 
     function checkDelta(
@@ -44,42 +41,26 @@ contract VaultValueChecker {
     ) external {
         // Intentionaly not view so that this method shows up in TX builders
         Snapshot memory snapshot = snapshots[msg.sender];
-        int256 vaultChange = toInt256(vault.totalValue()) -
-            toInt256(snapshot.vaultValue);
-        int256 supplyChange = toInt256(ousd.totalSupply()) -
-            toInt256(snapshot.totalSupply);
+        int256 vaultChange = toInt256(vault.totalValue()) - toInt256(snapshot.vaultValue);
+        int256 supplyChange = toInt256(ousd.totalSupply()) - toInt256(snapshot.totalSupply);
         int256 profit = vaultChange - supplyChange;
 
-        require(
-            snapshot.time >= block.timestamp - SNAPSHOT_EXPIRES,
-            "Snapshot too old"
-        );
+        require(snapshot.time >= block.timestamp - SNAPSHOT_EXPIRES, "Snapshot too old");
         require(snapshot.time <= block.timestamp, "Snapshot too new");
         require(profit >= expectedProfit - profitVariance, "Profit too low");
         require(profit <= expectedProfit + profitVariance, "Profit too high");
-        require(
-            vaultChange >= expectedVaultChange - vaultChangeVariance,
-            "Vault value change too low"
-        );
-        require(
-            vaultChange <= expectedVaultChange + vaultChangeVariance,
-            "Vault value change too high"
-        );
+        require(vaultChange >= expectedVaultChange - vaultChangeVariance, "Vault value change too low");
+        require(vaultChange <= expectedVaultChange + vaultChangeVariance, "Vault value change too high");
     }
 
     function toInt256(uint256 value) internal pure returns (int256) {
         // From openzeppelin math/SafeCast.sol
         // Note: Unsafe cast below is okay because `type(int256).max` is guaranteed to be positive
-        require(
-            value <= uint256(type(int256).max),
-            "SafeCast: value doesn't fit in an int256"
-        );
+        require(value <= uint256(type(int256).max), "SafeCast: value doesn't fit in an int256");
         return int256(value);
     }
 }
 
 contract OETHVaultValueChecker is VaultValueChecker {
-    constructor(address _vault, address _ousd)
-        VaultValueChecker(_vault, _ousd)
-    {}
+    constructor(address _vault, address _ousd) VaultValueChecker(_vault, _ousd) {}
 }

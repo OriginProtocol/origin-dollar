@@ -6,14 +6,14 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ICurvePool } from "./ICurvePool.sol";
-import { IRewardStaking } from "./IRewardStaking.sol";
-import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
+import {ICurvePool} from "./ICurvePool.sol";
+import {IRewardStaking} from "./IRewardStaking.sol";
+import {IConvexDeposits} from "./IConvexDeposits.sol";
+import {IERC20, BaseCurveStrategy, InitializableAbstractStrategy} from "./BaseCurveStrategy.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {Helpers} from "../utils/Helpers.sol";
 
 /*
  * IMPORTANT(!) If ConvexStrategy needs to be re-deployed, it requires new
@@ -32,9 +32,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     address private _deprecated_cvxRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+    constructor(BaseStrategyConfig memory _stratConfig) InitializableAbstractStrategy(_stratConfig) {}
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -65,45 +63,32 @@ contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
         pTokenAddress = _pTokens[0];
 
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
         _approveBase();
     }
 
     function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit with staking
-        bool success = IConvexDeposits(cvxDepositorAddress).deposit(
-            cvxDepositorPTokenId,
-            pToken.balanceOf(address(this)),
-            true
-        );
+        bool success =
+            IConvexDeposits(cvxDepositorAddress).deposit(cvxDepositorPTokenId, pToken.balanceOf(address(this)), true);
         require(success, "Failed to deposit to Convex");
     }
 
     function _lpWithdraw(uint256 numCrvTokens) internal override {
-        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        );
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
 
         // Not enough in this contract or in the Gauge, can't proceed
         require(numCrvTokens > gaugePTokens, "Insufficient 3CRV balance");
 
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
-        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            numCrvTokens,
-            true
-        );
+        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(numCrvTokens, true);
     }
 
     function _lpWithdrawAll() internal override {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)),
-            true
+            IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)), true
         );
     }
 
@@ -122,22 +107,13 @@ contract ConvexStrategy is BaseCurveStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) public view override returns (uint256 balance) {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
-            address(this)
-        );
-        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        );
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
         uint256 totalPTokens = contractPTokens + gaugePTokens;
 
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -152,12 +128,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and CVX and send to Vault.
      */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
+    function collectRewardTokens() external override onlyHarvester nonReentrant {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         _collectRewardTokens();

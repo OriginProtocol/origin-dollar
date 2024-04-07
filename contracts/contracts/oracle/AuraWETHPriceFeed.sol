@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Variable, OracleAverageQuery, IOracleWeightedPool } from "../interfaces/balancer/IOracleWeightedPool.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
-import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {Variable, OracleAverageQuery, IOracleWeightedPool} from "../interfaces/balancer/IOracleWeightedPool.sol";
+import {Strategizable} from "../governance/Strategizable.sol";
+import {AggregatorV3Interface} from "../interfaces/chainlink/AggregatorV3Interface.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
     using SafeCast for uint256;
@@ -41,7 +41,8 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * TWAP price.
      *
      * @return price The price scaled to 18 decimals
-     **/
+     *
+     */
     function price() external view returns (int256) {
         return _price();
     }
@@ -63,14 +64,11 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
             ago: 0 // From now
         });
 
-        uint256[] memory prices = auraOracleWeightedPool.getTimeWeightedAverage(
-            queries
-        );
+        uint256[] memory prices = auraOracleWeightedPool.getTimeWeightedAverage(queries);
         int256 price_1h = prices[0].toInt256();
         int256 price_5m = prices[1].toInt256();
 
-        int256 diff = (1e18 * (price_1h - price_5m)) /
-            ((price_1h + price_5m) / 2);
+        int256 diff = (1e18 * (price_1h - price_5m)) / ((price_1h + price_5m) / 2);
         uint256 absDiff = diff >= 0 ? diff.toUint256() : (-diff).toUint256();
 
         // Ensure the price hasn't moved too much (2% tolerance)
@@ -85,7 +83,8 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
 
     /**
      * Pauses the price feed. Callable by Strategist as well.
-     **/
+     *
+     */
     function pause() external onlyGovernorOrStrategist {
         if (paused) {
             revert PriceFeedPausedError();
@@ -96,7 +95,8 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
 
     /**
      * Unpauses the price feed. Only Governor can call it
-     **/
+     *
+     */
     function unpause() external onlyGovernor {
         if (!paused) {
             revert PriceFeedUnpausedError();
@@ -110,7 +110,8 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * two different price points.
      *
      * @param _tolerance New tolerance value
-     **/
+     *
+     */
     function setTolerance(uint256 _tolerance) external onlyGovernor {
         if (_tolerance > 0.1 ether) {
             revert InvalidToleranceBps();
@@ -127,18 +128,13 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * The `answer` returned by this is same as what `price()` would return.
      *
      * It doesn't return any data about rounds (since those doesn't exist).
-     **/
+     *
+     */
     function latestRoundData()
         external
         view
         override
-        returns (
-            uint80,
-            int256 answer,
-            uint256,
-            uint256 updatedAt,
-            uint80
-        )
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
         answer = _price();
         updatedAt = block.timestamp;
@@ -149,19 +145,9 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * with AggregatorV3Interface.
      *
      * Always reverts since there're no round data in this contract.
-     **/
-    function getRoundData(uint80)
-        external
-        pure
-        override
-        returns (
-            uint80,
-            int256,
-            uint256,
-            uint256,
-            uint80
-        )
-    {
+     *
+     */
+    function getRoundData(uint80) external pure override returns (uint80, int256, uint256, uint256, uint80) {
         revert("No data present");
     }
 }

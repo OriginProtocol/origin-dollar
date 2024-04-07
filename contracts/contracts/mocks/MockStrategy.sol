@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract MockStrategy {
     address[] public assets;
@@ -12,11 +12,7 @@ contract MockStrategy {
 
     function depositAll() external {}
 
-    function withdraw(
-        address recipient,
-        address asset,
-        uint256 amount
-    ) external {
+    function withdraw(address recipient, address asset, uint256 amount) external {
         IERC20(asset).transfer(recipient, amount);
     }
 
@@ -24,11 +20,7 @@ contract MockStrategy {
         require(false, "Not implemented");
     }
 
-    function checkBalance(address asset)
-        external
-        view
-        returns (uint256 balance)
-    {
+    function checkBalance(address asset) external view returns (uint256 balance) {
         balance = IERC20(asset).balanceOf(address(this));
     }
 
@@ -38,11 +30,7 @@ contract MockStrategy {
 
     function collectRewardTokens() external {}
 
-    function getRewardTokenAddresses()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getRewardTokenAddresses() external view returns (address[] memory) {
         return new address[](0);
     }
 }

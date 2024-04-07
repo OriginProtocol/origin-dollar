@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Strategizable } from "../governance/Strategizable.sol";
+import {Strategizable} from "../governance/Strategizable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ICVXLocker } from "../interfaces/ICVXLocker.sol";
-import { ISwapper } from "../interfaces/ISwapper.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ICVXLocker} from "../interfaces/ICVXLocker.sol";
+import {ISwapper} from "../interfaces/ISwapper.sol";
 
-import { Initializable } from "../utils/Initializable.sol";
+import {Initializable} from "../utils/Initializable.sol";
 
 abstract contract BaseBuyback is Initializable, Strategizable {
     using SafeERC20 for IERC20;
@@ -20,12 +20,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     event CVXShareBpsUpdated(uint256 bps);
 
     // Emitted whenever OUSD/OETH is swapped for OGV/CVX or any other token
-    event OTokenBuyback(
-        address indexed oToken,
-        address indexed swappedFor,
-        uint256 swapAmountIn,
-        uint256 minExpected
-    );
+    event OTokenBuyback(address indexed oToken, address indexed swappedFor, uint256 swapAmountIn, uint256 minExpected);
 
     // Address of 1-inch Swap Router
     address public swapRouter;
@@ -62,12 +57,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     // Percentage of `oToken` balance to be used for CVX
     uint256 public cvxShareBps; // 10000 = 100%
 
-    constructor(
-        address _oToken,
-        address _ogv,
-        address _cvx,
-        address _cvxLocker
-    ) {
+    constructor(address _oToken, address _ogv, address _cvx, address _cvxLocker) {
         // Make sure nobody owns the implementation contract
         _setGovernor(address(0));
 
@@ -178,10 +168,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      * @dev Computes the split of oToken balance that can be
      *      used for OGV and CVX buybacks.
      */
-    function _updateBuybackSplits()
-        internal
-        returns (uint256 _balanceForOGV, uint256 _balanceForCVX)
-    {
+    function _updateBuybackSplits() internal returns (uint256 _balanceForOGV, uint256 _balanceForCVX) {
         _balanceForOGV = balanceForOGV;
         _balanceForCVX = balanceForCVX;
 
@@ -206,12 +193,10 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         _updateBuybackSplits();
     }
 
-    function _swapToken(
-        address tokenOut,
-        uint256 oTokenAmount,
-        uint256 minAmountOut,
-        bytes calldata swapData
-    ) internal returns (uint256 amountOut) {
+    function _swapToken(address tokenOut, uint256 oTokenAmount, uint256 minAmountOut, bytes calldata swapData)
+        internal
+        returns (uint256 amountOut)
+    {
         require(oTokenAmount > 0, "Invalid Swap Amount");
         require(swapRouter != address(0), "Swap Router not set");
         require(minAmountOut > 0, "Invalid minAmount");
@@ -221,13 +206,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         IERC20(oToken).transfer(swapRouter, oTokenAmount);
 
         // Swap
-        amountOut = ISwapper(swapRouter).swap(
-            oToken,
-            tokenOut,
-            oTokenAmount,
-            minAmountOut,
-            swapData
-        );
+        amountOut = ISwapper(swapRouter).swap(oToken, tokenOut, oTokenAmount, minAmountOut, swapData);
 
         require(amountOut >= minAmountOut, "Higher Slippage");
 
@@ -240,12 +219,12 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      * @param minOGV Minimum OGV to receive for oTokenAmount
      * @param swapData 1inch Swap Data
      */
-    function swapForOGV(
-        uint256 oTokenAmount,
-        uint256 minOGV,
-        bytes calldata swapData
-    ) external onlyGovernorOrStrategist nonReentrant {
-        (uint256 _amountForOGV, ) = _updateBuybackSplits();
+    function swapForOGV(uint256 oTokenAmount, uint256 minOGV, bytes calldata swapData)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
+        (uint256 _amountForOGV,) = _updateBuybackSplits();
         require(_amountForOGV >= oTokenAmount, "Balance underflow");
         require(rewardsSource != address(0), "RewardsSource contract not set");
 
@@ -267,11 +246,11 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      * @param minCVX Minimum CVX to receive for oTokenAmount
      * @param swapData 1inch Swap Data
      */
-    function swapForCVX(
-        uint256 oTokenAmount,
-        uint256 minCVX,
-        bytes calldata swapData
-    ) external onlyGovernorOrStrategist nonReentrant {
+    function swapForCVX(uint256 oTokenAmount, uint256 minCVX, bytes calldata swapData)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         (, uint256 _amountForCVX) = _updateBuybackSplits();
         require(_amountForCVX >= oTokenAmount, "Balance underflow");
 
@@ -294,10 +273,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     }
 
     function _lockAllCVX(uint256 cvxAmount) internal {
-        require(
-            treasuryManager != address(0),
-            "Treasury manager address not set"
-        );
+        require(treasuryManager != address(0), "Treasury manager address not set");
 
         // Lock all available CVX on behalf of `treasuryManager`
         ICVXLocker(cvxLocker).lock(treasuryManager, cvxAmount, 0);
@@ -315,11 +291,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
      * @param token token to be transferered
      * @param amount amount of the token to be transferred
      */
-    function transferToken(address token, uint256 amount)
-        external
-        onlyGovernor
-        nonReentrant
-    {
+    function transferToken(address token, uint256 amount) external onlyGovernor nonReentrant {
         IERC20(token).safeTransfer(_governor(), amount);
     }
 }

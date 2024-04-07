@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
-import { Helpers } from "../utils/Helpers.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { OracleRouterBase } from "../oracle/OracleRouterBase.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
+import {Helpers} from "../utils/Helpers.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {OracleRouterBase} from "../oracle/OracleRouterBase.sol";
 
 // @notice Oracle Router required for testing environment
 contract MockOracleRouter is OracleRouterBase {
@@ -22,11 +22,7 @@ contract MockOracleRouter is OracleRouterBase {
      * @param _feed new feed
      * @param _maxStaleness new maximum time allowed for feed data to be stale
      */
-    function setFeed(
-        address _asset,
-        address _feed,
-        uint256 _maxStaleness
-    ) external {
+    function setFeed(address _asset, address _feed, uint256 _maxStaleness) external {
         assetToFeedMetadata[_asset] = FeedMetadata(_feed, _maxStaleness);
     }
 
@@ -47,12 +43,7 @@ contract MockOracleRouter is OracleRouterBase {
      * @return feedAddress address of the price feed for the asset
      * @return maxStaleness maximum acceptable data staleness duration
      */
-    function feedMetadata(address asset)
-        internal
-        view
-        override
-        returns (address feedAddress, uint256 maxStaleness)
-    {
+    function feedMetadata(address asset) internal view override returns (address feedAddress, uint256 maxStaleness) {
         FeedMetadata storage fm = assetToFeedMetadata[asset];
         feedAddress = fm.feedAddress;
         maxStaleness = fm.maxStaleness;

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { MockRewardPool } from "./MockRewardPool.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {MockRewardPool} from "./MockRewardPool.sol";
 
-import { IRewardStaking } from "../../strategies/IRewardStaking.sol";
-import { IMintableERC20, MintableERC20, ERC20 } from "../MintableERC20.sol";
-import { IBurnableERC20, BurnableERC20 } from "../BurnableERC20.sol";
+import {IRewardStaking} from "../../strategies/IRewardStaking.sol";
+import {IMintableERC20, MintableERC20, ERC20} from "../MintableERC20.sol";
+import {IBurnableERC20, BurnableERC20} from "../BurnableERC20.sol";
 
 contract MockDepositToken is MintableERC20, BurnableERC20 {
     constructor() ERC20("DCVX", "CVX Deposit Token") {}
@@ -27,38 +27,21 @@ contract MockBooster {
     address public cvx; // Convex rewards token
     mapping(uint256 => PoolInfo) public poolInfo;
 
-    constructor(
-        address _rewardsMinter,
-        address _crv,
-        address _cvx
-    ) public {
+    constructor(address _rewardsMinter, address _crv, address _cvx) public {
         minter = _rewardsMinter;
         crv = _crv;
         cvx = _cvx;
     }
 
-    function setPool(uint256 pid, address _lpToken)
-        external
-        returns (address rewards)
-    {
+    function setPool(uint256 pid, address _lpToken) external returns (address rewards) {
         address token = address(new MockDepositToken());
         // Deploy a new Convex Rewards Pool
-        rewards = address(
-            new MockRewardPool(pid, token, crv, cvx, address(this))
-        );
+        rewards = address(new MockRewardPool(pid, token, crv, cvx, address(this)));
 
-        poolInfo[pid] = PoolInfo({
-            lptoken: _lpToken,
-            token: token,
-            crvRewards: rewards
-        });
+        poolInfo[pid] = PoolInfo({lptoken: _lpToken, token: token, crvRewards: rewards});
     }
 
-    function deposit(
-        uint256 _pid,
-        uint256 _amount,
-        bool _stake
-    ) public returns (bool) {
+    function deposit(uint256 _pid, uint256 _amount, bool _stake) public returns (bool) {
         PoolInfo storage pool = poolInfo[_pid];
 
         address lptoken = pool.lptoken;
@@ -91,12 +74,7 @@ contract MockBooster {
     }
 
     // withdraw Curve LP tokens
-    function _withdraw(
-        uint256 _pid,
-        uint256 _amount,
-        address _from,
-        address _to
-    ) internal {
+    function _withdraw(uint256 _pid, uint256 _amount, address _from, address _to) internal {
         PoolInfo storage pool = poolInfo[_pid];
 
         // burn the Convex pool LP tokens
@@ -121,11 +99,7 @@ contract MockBooster {
     }
 
     // allow reward contracts to send here and withdraw to user
-    function withdrawTo(
-        uint256 _pid,
-        uint256 _amount,
-        address _to
-    ) external returns (bool) {
+    function withdrawTo(uint256 _pid, uint256 _amount, address _to) external returns (bool) {
         address rewardContract = poolInfo[_pid].crvRewards;
         require(msg.sender == rewardContract, "!auth");
 

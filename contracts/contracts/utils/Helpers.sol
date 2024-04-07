@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IBasicToken } from "../interfaces/IBasicToken.sol";
+import {IBasicToken} from "../interfaces/IBasicToken.sol";
 
 library Helpers {
     /**
@@ -24,10 +24,7 @@ library Helpers {
      */
     function getDecimals(address _token) internal view returns (uint256) {
         uint256 decimals = IBasicToken(_token).decimals();
-        require(
-            decimals >= 4 && decimals <= 18,
-            "Token must have sufficient decimal places"
-        );
+        require(decimals >= 4 && decimals <= 18, "Token must have sufficient decimal places");
 
         return decimals;
     }
