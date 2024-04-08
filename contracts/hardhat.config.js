@@ -236,6 +236,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
+      base: MAINNET_GOVERNOR, // TODO: change this
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -270,6 +271,7 @@ module.exports = {
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
+      base: MAINNET_TIMELOCK, // TODO: change this
     },
     guardianAddr: {
       default: 1,
@@ -289,6 +291,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       mainnet: MAINNET_STRATEGIST,
+      base: MAINNET_STRATEGIST, // TODO: Change this
     },
   },
   contractSizer: {

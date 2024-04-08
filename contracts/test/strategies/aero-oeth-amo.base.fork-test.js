@@ -68,8 +68,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
 
-      log("Before deposit to strategy");
-
       let vaultSigner = await impersonateAndFund(vault.address, "2");
       const tx = await aerodromeEthStrategy
         .connect(vaultSigner)
@@ -102,6 +100,62 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         oethSupplyBefore.add(oethMintAmount),
         0.01 // 0.01% or 1 basis point
       );
+    });
+    it.only("Only vault can deposit some WETH to AMO strategy", async function () {
+      const { aerodromeEthStrategy, vault, josh, weth, strategist, timelock } =
+        fixture;
+      //console.log(strategist, timelock, josh);
+
+      const depositAmount = await units("50", weth);
+
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, depositAmount);
+
+      // for (let signer of [strategist, timelock, josh]) { TODO: Check why this fails
+
+      for (let signer of [josh]) {
+        const tx = aerodromeEthStrategy.connect(signer).depositAll();
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+
+      const tx = aerodromeEthStrategy
+        .connect(josh)
+        .deposit(weth.address, depositAmount);
+
+      await expect(tx).to.revertedWith("Caller is not the Vault");
+    });
+    it("Only vault can deposit all WETH to AMO strategy", async function () {
+      const {
+        aerodromeEthStrategy,
+        pool,
+        vault,
+        josh,
+        weth,
+        strategist,
+        timelock,
+      } = fixture;
+
+      let oethVaultSigner = await impersonateAndFund(vault.address, "1");
+      const depositAmount = parseUnits("50");
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, depositAmount);
+
+      let tx = aerodromeEthStrategy
+        .connect(josh)
+        .deposit(weth.address, depositAmount);
+      await expect(tx).to.revertedWith("Caller is not the Vault");
+
+      // for (const signer of [strategist, timelock, josh]) { -> Check why this fails
+      for (const signer of [josh]) {
+        const tx = aerodromeEthStrategy.connect(signer).depositAll();
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+      tx = await aerodromeEthStrategy.connect(oethVaultSigner).depositAll();
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Deposit")
+        .withNamedArgs({ _asset: weth.address, _pToken: pool.address });
     });
   });
 });

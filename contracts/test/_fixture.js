@@ -1715,6 +1715,10 @@ async function aeroOETHAMOFixture(
   fixture.weth = wETH;
   fixture.oeth = oETH;
   const [deployer, josh] = await ethers.getSigners();
+  const { strategistAddr, timelockAddr } = await getNamedAccounts();
+
+  fixture.strategist = ethers.provider.getSigner(strategistAddr);
+  fixture.timelock = ethers.provider.getSigner(timelockAddr);
 
   log(`wETH mock token address: ${wETH.address}`);
   log(`oETH mock token address: ${oETH.address}`);
@@ -1727,22 +1731,6 @@ async function aeroOETHAMOFixture(
   const mockVault = await MockVaultForBase.deploy(josh.address, oETH.address);
   await mockVault.deployed();
   log(`Mock Vault deployed: ${mockVault.address}`);
-
-  // // const MockVault = await ethers.getContractFactory("MockVault");
-  // // const vault = await MockVault.deploy();
-  // // await vault.deployed();
-
-  // // await vault.unpauseCapital();
-  // // log("Capital unpaused in Vault contract");
-
-  // const OETHVault = await ethers.getContractFactory("OETHVault");
-  // const vault = await OETHVault.deploy();
-  // await vault.deployed();
-
-  // // Mock pricefeed for now
-  // await vault.initialize(josh.address, oETH.address);
-  // await vault.unpauseCapital();
-  // log("OETHVault deployed and initialized");
 
   fixture.josh = josh;
 
