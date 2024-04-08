@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+interface IERC20MintableBurnable {
+    function mintTo(address to, uint256 value) external;
+
+    function burnFrom(address account, uint256 value) external;
+}
+
 contract MockVaultForBase {
     address public immutable strategistAddr;
     address public immutable oTokenAddr;
@@ -11,10 +17,10 @@ contract MockVaultForBase {
     }
 
     function mintForStrategy(uint256 _amount) external {
-        // TODO: Mint some OETH and transfer it to the caller
+        IERC20MintableBurnable(oTokenAddr).mintTo(msg.sender, _amount);
     }
 
     function burnForStrategy(uint256 _amount) external {
-        // TODO: Burn OETH from the caller address
+        IERC20MintableBurnable(oTokenAddr).burnFrom(msg.sender, _amount);
     }
 }

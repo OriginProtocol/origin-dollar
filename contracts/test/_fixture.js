@@ -1690,7 +1690,7 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
- * Configure a Vault with only the WOETH/WETH Aero Metastrategy
+ * Configure a Vault with only the oETH/WETH Aero Metastrategy
  * TODO:Revisit and Improve the fixture, currently it mocks stuff
  */
 async function aeroOETHAMOFixture(
@@ -1704,29 +1704,29 @@ async function aeroOETHAMOFixture(
 ) {
   let fixture = {};
   const MockWETH = await ethers.getContractFactory("MockWETH");
-  const MockWOETH = await ethers.getContractFactory("MockWOETH");
+  const MockOETH = await ethers.getContractFactory("MockOETH");
 
   const wETH = await MockWETH.deploy();
   await wETH.deployed();
 
-  const woETH = await MockWOETH.deploy();
-  await woETH.deployed();
+  const oETH = await MockOETH.deploy();
+  await oETH.deployed();
 
   fixture.weth = wETH;
-  fixture.woeth = woETH;
-
+  fixture.oeth = oETH;
   const [deployer, josh] = await ethers.getSigners();
 
   log(`wETH mock token address: ${wETH.address}`);
-  log(`woETH mock token address: ${woETH.address}`);
+  log(`oETH mock token address: ${oETH.address}`);
+
+  log("Getting signers...");
 
   // Deploy mock vault
-  await deployWithConfirmation("MockVaultForBase", [
-    josh.address,
-    woETH.address, // Should this be OETH?
-  ]);
+  const MockVaultForBase = await ethers.getContractFactory("MockVaultForBase");
 
-  const mockVault = await ethers.getContract("MockVaultForBase");
+  const mockVault = await MockVaultForBase.deploy(josh.address, oETH.address);
+  await mockVault.deployed();
+  log(`Mock Vault deployed: ${mockVault.address}`);
 
   // // const MockVault = await ethers.getContractFactory("MockVault");
   // // const vault = await MockVault.deploy();
@@ -1740,7 +1740,7 @@ async function aeroOETHAMOFixture(
   // await vault.deployed();
 
   // // Mock pricefeed for now
-  // await vault.initialize(josh.address, woETH.address);
+  // await vault.initialize(josh.address, oETH.address);
   // await vault.unpauseCapital();
   // log("OETHVault deployed and initialized");
 
@@ -1748,7 +1748,7 @@ async function aeroOETHAMOFixture(
 
   // Minting  tokens to Josh's wallet
   await setERC20TokenBalance(josh.address, wETH, "15000");
-  await setERC20TokenBalance(josh.address, woETH, "15000");
+  await setERC20TokenBalance(josh.address, oETH, "15000");
 
   // Loading the AeroRouter instance
   const aeroRouter = await ethers.getContractAt(
@@ -1760,14 +1760,14 @@ async function aeroOETHAMOFixture(
   await wETH
     .connect(josh)
     .approve(aeroRouter.address, ethers.utils.parseEther("5000"));
-  await woETH
+  await oETH
     .connect(josh)
     .approve(aeroRouter.address, ethers.utils.parseEther("5000"));
 
   // Add initial liquidity (100 * 1e18 on each side)
   await aeroRouter.connect(josh).addLiquidity(
     wETH.address,
-    woETH.address,
+    oETH.address,
     true,
     ethers.utils.parseEther("5000"),
     ethers.utils.parseEther("5000"),
@@ -1778,10 +1778,10 @@ async function aeroOETHAMOFixture(
     parseInt(Date.now() / 1000) + 5 * 360
   );
 
-  // Fetch wETH/wOETH pool address
+  // Fetch wETH/oETH pool address
   let poolAddress = await aeroRouter.poolFor(
     wETH.address,
-    woETH.address,
+    oETH.address,
     true,
     addresses.base.aeroFactoryAddress
   );
@@ -1795,7 +1795,7 @@ async function aeroOETHAMOFixture(
     "IVoter",
     addresses.base.aeroVoterAddress
   );
-  // Create gauge for weth/woeth LP
+  // Create gauge for weth/oETH LP
   let governor = await impersonateAndFund(
     addresses.base.aeroGaugeGovernorAddress,
     "2"
@@ -1809,7 +1809,7 @@ async function aeroOETHAMOFixture(
   await aeroVoter
     .connect(governor)
     .createGauge(addresses.base.aeroFactoryAddress, poolAddress);
-  log(`Aero Gauge created for wETH/woETH pool at address: ${gaugeAddress}`);
+  log(`Aero Gauge created for wETH/oETH pool at address: ${gaugeAddress}`);
 
   fixture.gaugeAddress = gaugeAddress;
   fixture.routerAddress = addresses.base.aeroRouterAddress;
@@ -1828,12 +1828,12 @@ async function aeroOETHAMOFixture(
       gaugeAddress,
       addresses.base.aeroFactoryAddress,
       poolAddress,
-      woETH.address,
+      oETH.address,
       wETH.address,
     ]
   );
   await aerodromeEthStrategy.deployed();
-  log("wOETH/wETH Pool address", await aerodromeEthStrategy.lpTokenAddress());
+  log("oETH/wETH Pool address", await aerodromeEthStrategy.lpTokenAddress());
 
   await aerodromeEthStrategy.initialize(
     [addresses.base.aeroTokenAddress],

@@ -17,7 +17,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
   let fixture;
 
-  describe("wip", () => {
+  describe("", () => {
     beforeEach(async () => {
       fixture = await aeroOETHAMOFixture();
     });
@@ -50,12 +50,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       await josh.sendTransaction(tx);
     });
   });
-  describe.only("with some WETH in the vault", () => {
+  describe("with some WETH in the vault", () => {
     beforeEach(async () => {
       fixture = await aeroOETHAMOFixture();
     });
     it("Vault should deposit some WETH to AMO strategy", async function () {
-      const { aerodromeEthStrategy, woeth, pool, weth, josh, vault } = fixture;
+      const { aerodromeEthStrategy, oeth, pool, weth, josh, vault } = fixture;
 
       const wethDepositAmount = await units("1000", weth);
 
@@ -64,17 +64,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         .connect(josh)
         .transfer(aerodromeEthStrategy.address, wethDepositAmount);
 
-      const { oethMintAmount, aeroBalances } = await calcWoethMintAmount(
-        fixture,
-        wethDepositAmount
-      );
-      const woethSupplyBefore = await woeth.totalSupply();
+      const { oethMintAmount: oethMintAmount, aeroBalances } =
+        await calcOethMintAmount(fixture, wethDepositAmount);
+      const oethSupplyBefore = await oeth.totalSupply();
 
       log("Before deposit to strategy");
-      // await run("amoStrat", {
-      //     pool: "OETH",
-      //     output: false,
-      // });
+
       let vaultSigner = await impersonateAndFund(vault.address, "2");
       const tx = await aerodromeEthStrategy
         .connect(vaultSigner)
@@ -82,44 +77,37 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       const receipt = await tx.wait();
 
-      // log("After deposit to strategy");
-      // await run("amoStrat", {
-      //     pool: "OETH",
-      //     output: false,
-      //     fromBlock: receipt.blockNumber - 1,
-      // });
+      // Check emitted events
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Deposit")
+        .withArgs(weth.address, pool.address, wethDepositAmount);
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Deposit")
+        .withArgs(oeth.address, pool.address, oethMintAmount);
 
-      // // Check emitted events
-      // await expect(tx)
-      //     .to.emit(convexEthMetaStrategy, "Deposit")
-      //     .withArgs(weth.address, oethMetaPool.address, wethDepositAmount);
-      // await expect(tx)
-      //     .to.emit(convexEthMetaStrategy, "Deposit")
-      //     .withArgs(oeth.address, oethMetaPool.address, oethMintAmount);
+      // Check the ETH and OETH balances in the Curve Metapool
+      const aeroBalancesAfter = await pool.getReserves();
+      expect(aeroBalancesAfter._reserve0.toString()).to.approxEqualTolerance(
+        aeroBalances._reserve0.add(wethDepositAmount),
+        0.01 // 0.01% or 1 basis point
+      );
+      expect(aeroBalancesAfter._reserve1.toString()).to.approxEqualTolerance(
+        aeroBalances._reserve1.add(oethMintAmount),
+        0.01 // 0.01% or 1 basis point
+      );
 
-      // // Check the ETH and OETH balances in the Curve Metapool
-      // const curveBalancesAfter = await oethMetaPool.get_balances();
-      // expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-      //     curveBalancesBefore[0].add(wethDepositAmount),
-      //     0.01 // 0.01% or 1 basis point
-      // );
-      // expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-      //     curveBalancesBefore[1].add(oethMintAmount),
-      //     0.01 // 0.01% or 1 basis point
-      // );
-
-      // // Check the OETH total supply increase
-      // const oethSupplyAfter = await oeth.totalSupply();
-      // expect(oethSupplyAfter).to.approxEqualTolerance(
-      //     oethSupplyBefore.add(oethMintAmount),
-      //     0.01 // 0.01% or 1 basis point
-      // );
+      // Check the OETH total supply increase
+      const oethSupplyAfter = await oeth.totalSupply();
+      expect(oethSupplyAfter).to.approxEqualTolerance(
+        oethSupplyBefore.add(oethMintAmount),
+        0.01 // 0.01% or 1 basis point
+      );
     });
   });
 });
 
 // Calculate the minted OETH amount for a deposit
-async function calcWoethMintAmount(fixture, wethDepositAmount) {
+async function calcOethMintAmount(fixture, wethDepositAmount) {
   const { pool } = fixture;
 
   // Get the WETH and WOETH balances in the Aero sAMM pool

@@ -396,11 +396,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     function _approveBase() internal {
         // Approve Aero router for OETH (required for adding liquidity)
         // slither-disable-next-line unused-return
-        oeth.approve(platformAddress, type(uint256).max);
+        oeth.approve(address(aeroRouterAddress), type(uint256).max);
 
         // Approve Aero router for WETH (required for adding liquidity)
         // slither-disable-next-line unused-return
-        weth.approve(platformAddress, type(uint256).max);
+        weth.approve(address(aeroRouterAddress), type(uint256).max);
 
         // Approve Aerodrome Gauge contract to transfer Aero LP tokens
         // slither-disable-next-line unused-return

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./MintableERC20.sol";
 
-contract MockWOETH is MintableERC20 {
+contract MockOETH is MintableERC20 {
     constructor() ERC20("WOETH", "WOETH") {}
 
     function deposit() external payable {
