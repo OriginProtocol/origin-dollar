@@ -5,15 +5,15 @@ pragma solidity ^0.8.0;
  * @title OETH Base Balancer Abstract Strategy
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20, InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
-import {IBalancerVault} from "../../interfaces/balancer/IBalancerVault.sol";
-import {IRateProvider} from "../../interfaces/balancer/IRateProvider.sol";
-import {VaultReentrancyLib} from "./VaultReentrancyLib.sol";
-import {IOracle} from "../../interfaces/IOracle.sol";
-import {IWstETH} from "../../interfaces/IWstETH.sol";
-import {IERC4626} from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
-import {StableMath} from "../../utils/StableMath.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
+import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
+import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
+import { IOracle } from "../../interfaces/IOracle.sol";
+import { IWstETH } from "../../interfaces/IWstETH.sol";
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -47,8 +47,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         bytes32 balancerPoolId; // Balancer pool identifier
     }
 
-    event MaxWithdrawalDeviationUpdated(uint256 _prevMaxDeviationPercentage, uint256 _newMaxDeviationPercentage);
-    event MaxDepositDeviationUpdated(uint256 _prevMaxDeviationPercentage, uint256 _newMaxDeviationPercentage);
+    event MaxWithdrawalDeviationUpdated(
+        uint256 _prevMaxDeviationPercentage,
+        uint256 _newMaxDeviationPercentage
+    );
+    event MaxDepositDeviationUpdated(
+        uint256 _prevMaxDeviationPercentage,
+        uint256 _newMaxDeviationPercentage
+    );
 
     /**
      * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
@@ -99,13 +105,20 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
         IERC20[] memory poolAssets = _getPoolAssets();
-        require(poolAssets.length == _assets.length, "Pool assets length mismatch");
+        require(
+            poolAssets.length == _assets.length,
+            "Pool assets length mismatch"
+        );
         for (uint256 i = 0; i < _assets.length; ++i) {
             address asset = _fromPoolAsset(address(poolAssets[i]));
             require(_assets[i] == asset, "Pool assets mismatch");
         }
 
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 
@@ -160,7 +173,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          *    that asset. TBD: changes to other functions still required if we ever decide to
          *    go with such configuration.
          */
-        amount = (bptBalance.mulTruncate(IRateProvider(platformAddress).getRate()) / assetsMapped.length);
+        amount = (bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        ) / assetsMapped.length);
 
         /* If the pool asset is equal to (strategy )_asset it means that a rate
          * provider for that asset exists and that asset is not necessarily
@@ -183,15 +198,28 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * IMPORTANT if this function is overridden it needs to have a whenNotInBalancerVaultContext
      * modifier on it or it is susceptible to read-only re-entrancy attack
      */
-    function checkBalance() external view virtual whenNotInBalancerVaultContext returns (uint256 value) {
+    function checkBalance()
+        external
+        view
+        virtual
+        whenNotInBalancerVaultContext
+        returns (uint256 value)
+    {
         uint256 bptBalance = _getBalancerPoolTokens();
 
         // Convert BPT to ETH value
-        value = bptBalance.mulTruncate(IRateProvider(platformAddress).getRate());
+        value = bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        );
     }
 
     /// @notice Balancer Pool Tokens (BPT) in the Balancer pool.
-    function _getBalancerPoolTokens() internal view virtual returns (uint256 balancerPoolTokens) {
+    function _getBalancerPoolTokens()
+        internal
+        view
+        virtual
+        returns (uint256 balancerPoolTokens)
+    {
         balancerPoolTokens = IERC20(platformAddress).balanceOf(address(this));
     }
 
@@ -230,18 +258,21 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
-    function _getBPTExpected(address _asset, uint256 _amount) internal view virtual returns (uint256 bptExpected) {
-        uint256 bptRate = IRateProvider(platformAddress).getRate();
-        uint256 poolAssetRate = _getRateProviderRate(_asset);
-        bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
-    }
-
-    function _getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
+    function _getBPTExpected(address _asset, uint256 _amount)
         internal
         view
         virtual
         returns (uint256 bptExpected)
     {
+        uint256 bptRate = IRateProvider(platformAddress).getRate();
+        uint256 poolAssetRate = _getRateProviderRate(_asset);
+        bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
+    }
+
+    function _getBPTExpected(
+        address[] memory _assets,
+        uint256[] memory _amounts
+    ) internal view virtual returns (uint256 bptExpected) {
         require(_assets.length == _amounts.length, "Assets & amounts mismatch");
 
         for (uint256 i = 0; i < _assets.length; ++i) {
@@ -267,7 +298,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      */
     function _getPoolAssets() internal view returns (IERC20[] memory assets) {
         // slither-disable-next-line unused-return
-        (assets,,) = balancerVault.getPoolTokens(balancerPoolId);
+        (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
     }
 
     /**
@@ -326,7 +357,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         } else if (asset == frxETH) {
             wrappedAsset = sfrxETH;
             if (amount > 0) {
-                wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
+                wrappedAmount = IERC4626(sfrxETH).deposit(
+                    amount,
+                    address(this)
+                );
             }
         } else {
             wrappedAsset = asset;
@@ -337,11 +371,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /**
      * @dev Converts wrapped asset to its rebasing counterpart.
      */
-    function _unwrapPoolAsset(address asset, uint256 amount) internal returns (uint256 unwrappedAmount) {
+    function _unwrapPoolAsset(address asset, uint256 amount)
+        internal
+        returns (uint256 unwrappedAmount)
+    {
         if (asset == stETH) {
             unwrappedAmount = IWstETH(wstETH).unwrap(amount);
         } else if (asset == frxETH) {
-            unwrappedAmount = IERC4626(sfrxETH).withdraw(amount, address(this), address(this));
+            unwrappedAmount = IERC4626(sfrxETH).withdraw(
+                amount,
+                address(this),
+                address(this)
+            );
         } else {
             unwrappedAmount = amount;
         }
@@ -373,7 +414,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
-    function _fromPoolAsset(address poolAsset) internal view returns (address asset) {
+    function _fromPoolAsset(address poolAsset)
+        internal
+        view
+        returns (address asset)
+    {
         if (poolAsset == wstETH) {
             asset = stETH;
         } else if (poolAsset == sfrxETH) {
@@ -393,9 +438,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * usage. Vault value checker in combination with checkBalance will
      * catch any unexpected manipulation.
      */
-    function setMaxWithdrawalDeviation(uint256 _maxWithdrawalDeviation) external onlyVaultOrGovernorOrStrategist {
-        require(_maxWithdrawalDeviation <= 1e18, "Withdrawal dev. out of bounds");
-        emit MaxWithdrawalDeviationUpdated(maxWithdrawalDeviation, _maxWithdrawalDeviation);
+    function setMaxWithdrawalDeviation(uint256 _maxWithdrawalDeviation)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        require(
+            _maxWithdrawalDeviation <= 1e18,
+            "Withdrawal dev. out of bounds"
+        );
+        emit MaxWithdrawalDeviationUpdated(
+            maxWithdrawalDeviation,
+            _maxWithdrawalDeviation
+        );
         maxWithdrawalDeviation = _maxWithdrawalDeviation;
     }
 
@@ -409,9 +463,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * for production usage. Vault value checker in combination with
      * checkBalance will catch any unexpected manipulation.
      */
-    function setMaxDepositDeviation(uint256 _maxDepositDeviation) external onlyVaultOrGovernorOrStrategist {
+    function setMaxDepositDeviation(uint256 _maxDepositDeviation)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
         require(_maxDepositDeviation <= 1e18, "Deposit dev. out of bounds");
-        emit MaxDepositDeviationUpdated(maxDepositDeviation, _maxDepositDeviation);
+        emit MaxDepositDeviationUpdated(
+            maxDepositDeviation,
+            _maxDepositDeviation
+        );
         maxDepositDeviation = _maxDepositDeviation;
     }
 
@@ -421,5 +481,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         pToken.safeApprove(address(balancerVault), type(uint256).max);
     }
 
-    function _getRateProviderRate(address _asset) internal view virtual returns (uint256);
+    function _getRateProviderRate(address _asset)
+        internal
+        view
+        virtual
+        returns (uint256);
 }

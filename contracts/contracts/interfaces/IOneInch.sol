@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// 1Inch swap data
 struct SwapDescription {
@@ -39,8 +39,10 @@ interface IOneInchRouter {
     ) external payable returns (uint256 returnAmount);
 
     /// @notice Performs swap using Uniswap V3 exchange. Wraps and unwraps ETH if required.
-    function uniswapV3SwapTo(address payable recipient, uint256 amount, uint256 minReturn, uint256[] calldata pools)
-        external
-        payable
-        returns (uint256 returnAmount);
+    function uniswapV3SwapTo(
+        address payable recipient,
+        uint256 amount,
+        uint256 minReturn,
+        uint256[] calldata pools
+    ) external payable returns (uint256 returnAmount);
 }

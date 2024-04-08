@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Variable, OracleAverageQuery, IOracleWeightedPool} from "../interfaces/balancer/IOracleWeightedPool.sol";
+import { Variable, OracleAverageQuery, IOracleWeightedPool } from "../interfaces/balancer/IOracleWeightedPool.sol";
 
 contract MockOracleWeightedPool is IOracleWeightedPool {
     uint256[] public nextResults;

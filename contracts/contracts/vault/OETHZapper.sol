@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IVault} from "../interfaces/IVault.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {ISfrxETH} from "../interfaces/ISfrxETH.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { ISfrxETH } from "../interfaces/ISfrxETH.sol";
 
 contract OETHZapper {
     IERC20 public immutable oeth;
     IVault public immutable vault;
 
-    IWETH9 public constant weth = IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-    IERC20 public constant frxeth = IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);
-    ISfrxETH public constant sfrxeth = ISfrxETH(0xac3E018457B222d93114458476f3E3416Abbe38F);
-    address private constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    IWETH9 public constant weth =
+        IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    IERC20 public constant frxeth =
+        IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);
+    ISfrxETH public constant sfrxeth =
+        ISfrxETH(0xac3E018457B222d93114458476f3E3416Abbe38F);
+    address private constant ETH_MARKER =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     event Zap(address indexed minter, address indexed asset, uint256 amount);
 
@@ -40,7 +44,7 @@ contract OETHZapper {
      */
     function deposit() public payable returns (uint256) {
         uint256 balance = address(this).balance;
-        weth.deposit{value: balance}();
+        weth.deposit{ value: balance }();
         emit Zap(msg.sender, ETH_MARKER, balance);
         return _mint(address(weth), balance);
     }
@@ -51,7 +55,10 @@ contract OETHZapper {
      * @param minOETH Minimum amount of OETH to receive
      * @return Amount of OETH sent to user
      */
-    function depositSFRXETH(uint256 amount, uint256 minOETH) external returns (uint256) {
+    function depositSFRXETH(uint256 amount, uint256 minOETH)
+        external
+        returns (uint256)
+    {
         sfrxeth.redeem(amount, address(this), msg.sender);
         emit Zap(msg.sender, address(sfrxeth), amount);
         return _mint(address(frxeth), minOETH);

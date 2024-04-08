@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {MockStkAave} from "./MockStkAave.sol";
+import { MockStkAave } from "./MockStkAave.sol";
 
 contract MockAaveIncentivesController {
     mapping(address => uint256) private rewards;
@@ -22,7 +22,11 @@ contract MockAaveIncentivesController {
      *
      */
     // solhint-disable-next-line no-unused-vars
-    function getRewardsBalance(address[] calldata assets, address user) external view returns (uint256) {
+    function getRewardsBalance(address[] calldata assets, address user)
+        external
+        view
+        returns (uint256)
+    {
         return rewards[user];
     }
 

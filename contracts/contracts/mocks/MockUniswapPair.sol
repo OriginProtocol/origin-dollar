@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IUniswapV2Pair} from "../interfaces/uniswap/IUniswapV2Pair.sol";
+import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 
 contract MockUniswapPair is IUniswapV2Pair {
     address tok0;
@@ -12,7 +12,12 @@ contract MockUniswapPair is IUniswapV2Pair {
 
     bool public hasSynced = false;
 
-    constructor(address _token0, address _token1, uint112 _reserve0, uint112 _reserve1) {
+    constructor(
+        address _token0,
+        address _token1,
+        uint112 _reserve0,
+        uint112 _reserve1
+    ) {
         tok0 = _token0;
         tok1 = _token1;
         reserve0 = _reserve0;
@@ -28,7 +33,16 @@ contract MockUniswapPair is IUniswapV2Pair {
         return tok1;
     }
 
-    function getReserves() external view override returns (uint112, uint112, uint32) {
+    function getReserves()
+        external
+        view
+        override
+        returns (
+            uint112,
+            uint112,
+            uint32
+        )
+    {
         return (reserve0, reserve1, uint32(blockTimestampLast));
     }
 
@@ -43,11 +57,15 @@ contract MockUniswapPair is IUniswapV2Pair {
     // reserve factor over that blockTimestamp, this assumes an even reserve
     // ratio all the way through
     function price0CumulativeLast() external view override returns (uint256) {
-        return uint256(FixedPoint.fraction(reserve1, reserve0)._x) * blockTimestampLast;
+        return
+            uint256(FixedPoint.fraction(reserve1, reserve0)._x) *
+            blockTimestampLast;
     }
 
     function price1CumulativeLast() external view override returns (uint256) {
-        return uint256(FixedPoint.fraction(reserve0, reserve1)._x) * blockTimestampLast;
+        return
+            uint256(FixedPoint.fraction(reserve0, reserve1)._x) *
+            blockTimestampLast;
     }
 
     function sync() external override {
@@ -69,7 +87,11 @@ library FixedPoint {
 
     // returns a uq112x112 which represents the ratio of the numerator to the denominator
     // equivalent to encode(numerator).div(denominator)
-    function fraction(uint112 numerator, uint112 denominator) internal pure returns (uq112x112 memory) {
+    function fraction(uint112 numerator, uint112 denominator)
+        internal
+        pure
+        returns (uq112x112 memory)
+    {
         require(denominator > 0, "FixedPoint: DIV_BY_ZERO");
         return uq112x112((uint224(numerator) << 112) / denominator);
     }

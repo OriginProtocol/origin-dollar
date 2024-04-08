@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockCVXLocker {
     address public immutable cvx;
@@ -11,7 +11,11 @@ contract MockCVXLocker {
         cvx = _cvx;
     }
 
-    function lock(address _account, uint256 _amount, uint256) external {
+    function lock(
+        address _account,
+        uint256 _amount,
+        uint256
+    ) external {
         lockedBalanceOf[_account] += _amount;
         ERC20(cvx).transferFrom(msg.sender, address(this), _amount);
     }

@@ -18,7 +18,12 @@ interface IAaveLendingPool {
      *   0 if the action is executed directly by the user, without any middle-man
      *
      */
-    function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+    function deposit(
+        address asset,
+        uint256 amount,
+        address onBehalfOf,
+        uint16 referralCode
+    ) external;
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
@@ -32,7 +37,11 @@ interface IAaveLendingPool {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+    function withdraw(
+        address asset,
+        uint256 amount,
+        address to
+    ) external returns (uint256);
 }
 
 /**

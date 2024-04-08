@@ -6,24 +6,25 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the Aero OETH/ETH pool
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {IRouter} from "./../interfaces/aerodrome/IRouter.sol";
-import {IGauge} from "./../interfaces/aerodrome/IGauge.sol";
-import {IPool} from "./../interfaces/aerodrome/IPool.sol";
-import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
-import {StableMath} from "../utils/StableMath.sol";
-import {IVault} from "../interfaces/IVault.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {FixedPointMathLib} from "solady/src/utils/FixedPointMathLib.sol";
+import { IRouter } from "./../interfaces/aerodrome/IRouter.sol";
+import { IGauge } from "./../interfaces/aerodrome/IGauge.sol";
+import { IPool } from "./../interfaces/aerodrome/IPool.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%
-    address public constant ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address public constant ETH_ADDRESS =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     IGauge public immutable aeroGaugeAddress;
     IRouter public immutable aeroRouterAddress;
@@ -51,13 +52,17 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @dev Verifies that the caller is the Strategist.
      */
     modifier onlyStrategist() {
-        require(msg.sender == IVault(vaultAddress).strategistAddr(), "Caller is not the Strategist");
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
         _;
     }
 
-    constructor(BaseStrategyConfig memory _baseConfig, AerodromeEthConfig memory _aeroConfig)
-        InitializableAbstractStrategy(_baseConfig)
-    {
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        AerodromeEthConfig memory _aeroConfig
+    ) InitializableAbstractStrategy(_baseConfig) {
         lpTokenAddress = IPool(_baseConfig.platformAddress);
         aeroRouterAddress = IRouter(_aeroConfig.aeroRouterAddress);
         aeroFactoryAddress = _aeroConfig.aeroFactoryAddress;
@@ -83,7 +88,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(lpTokenAddress);
 
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            pTokens
+        );
 
         _approveBase();
     }
@@ -93,7 +102,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param _weth Address of Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to deposit.
      */
-    function deposit(address _weth, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _weth, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_weth, _amount);
     }
 
@@ -104,12 +118,25 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         emit Deposit(_weth, address(lpTokenAddress), _wethAmount);
 
         // Get the asset and OToken balances in the Aero's LP
-        (uint256 reserveWethAmount, uint256 reserveOEthAmount) =
-            aeroRouterAddress.getReserves(address(weth), address(oeth), true, aeroFactoryAddress);
+        (
+            uint256 reserveWethAmount,
+            uint256 reserveOEthAmount
+        ) = aeroRouterAddress.getReserves(
+                address(weth),
+                address(oeth),
+                true,
+                aeroFactoryAddress
+            );
 
         // safe to cast since min value is at least 0
-        uint256 oethToAdd =
-            uint256(_max(0, int256(reserveWethAmount) + int256(_wethAmount) - int256(reserveOEthAmount)));
+        uint256 oethToAdd = uint256(
+            _max(
+                0,
+                int256(reserveWethAmount) +
+                    int256(_wethAmount) -
+                    int256(reserveOEthAmount)
+            )
+        );
 
         /* Add so much OETH so that the pool ends up being balanced. And at minimum
          * add as much OETH as WETH and at maximum twice as much OETH.
@@ -128,12 +155,16 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         emit Deposit(address(oeth), address(lpTokenAddress), oethToAdd);
 
-        uint256 minOethToAdd = oethToAdd.mulTruncate(uint256(1e18) - MAX_SLIPPAGE); // adjust for slippage
-        uint256 minWethToAdd = _wethAmount.mulTruncate(uint256(1e18) - MAX_SLIPPAGE); // adjust for slippage
+        uint256 minOethToAdd = oethToAdd.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        ); // adjust for slippage
+        uint256 minWethToAdd = _wethAmount.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        ); // adjust for slippage
 
         // Do the deposit to the Aerodrome pool
         // slither-disable-next-line arbitrary-send
-        (,, uint256 lpReceived) = aeroRouterAddress.addLiquidity(
+        (, , uint256 lpReceived) = aeroRouterAddress.addLiquidity(
             address(weth),
             address(oeth),
             true,
@@ -166,7 +197,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param _weth Address of the Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to withdraw.
      */
-    function withdraw(address _recipient, address _weth, uint256 _amount) external override onlyVault nonReentrant {
+    function withdraw(
+        address _recipient,
+        address _weth,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
         require(_weth == address(weth), "Can only withdraw WETH");
 
@@ -181,7 +216,14 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
          */
         // slither-disable-next-line unused-return
         aeroRouterAddress.removeLiquidity(
-            address(weth), address(oeth), true, requiredLpTokens, 0, 0, address(this), block.timestamp
+            address(weth),
+            address(oeth),
+            true,
+            requiredLpTokens,
+            0,
+            0,
+            address(this),
+            block.timestamp
         );
 
         // Burn all the removed OETH and any that was left in the strategy
@@ -191,11 +233,18 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
 
         // Transfer WETH to the recipient
-        weth.deposit{value: _amount}();
-        require(weth.transfer(_recipient, _amount), "Transfer of WETH not successful");
+        weth.deposit{ value: _amount }();
+        require(
+            weth.transfer(_recipient, _amount),
+            "Transfer of WETH not successful"
+        );
     }
 
-    function calcTokenToBurn(uint256 _wethAmount) internal view returns (uint256 lpToBurn) {
+    function calcTokenToBurn(uint256 _wethAmount)
+        internal
+        view
+        returns (uint256 lpToBurn)
+    {
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (removeLiquidity call). And by knowing how much WETH
          * we want we can determine how much of OETH we receive by removing liquidity.
@@ -215,7 +264,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
          * and again by 36 places when we are done with it.
          */
-        uint256 k = (1e36 * IERC20(address(lpTokenAddress)).totalSupply()) / poolWETHBalance;
+        uint256 k = (1e36 * IERC20(address(lpTokenAddress)).totalSupply()) /
+            poolWETHBalance;
         // prettier-ignore
         // slither-disable-next-line divide-before-multiply
         uint256 diff = (_wethAmount + 1) * k;
@@ -233,7 +283,14 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // Remove liquidity
         // slither-disable-next-line unused-return
         aeroRouterAddress.removeLiquidity(
-            address(weth), address(oeth), true, gaugeTokens, 0, 0, address(this), block.timestamp
+            address(weth),
+            address(oeth),
+            true,
+            gaugeTokens,
+            0,
+            0,
+            address(this),
+            block.timestamp
         );
         // Burn all OETH
         uint256 oethToBurn = oeth.balanceOf(address(this));
@@ -244,8 +301,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // any ether that was sitting in the strategy contract before the removal.
         uint256 ethBalance = address(this).balance;
         // Convert all the strategy contract's ether to WETH and transfer to the vault.
-        weth.deposit{value: ethBalance}();
-        require(weth.transfer(vaultAddress, ethBalance), "Transfer of WETH not successful");
+        weth.deposit{ value: ethBalance }();
+        require(
+            weth.transfer(vaultAddress, ethBalance),
+            "Transfer of WETH not successful"
+        );
 
         emit Withdrawal(address(weth), address(lpTokenAddress), ethBalance);
         emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
@@ -254,7 +314,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     /**
      * @notice Collect accumulated AERO rewards and send to the Harvester.
      */
-    function collectRewardTokens() external override onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         // Collect AERO
         aeroGaugeAddress.getReward(address(this));
         _collectRewardTokens();
@@ -273,7 +338,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(weth), "Unsupported asset");
 
         // Eth balance needed here for the balance check that happens from vault during depositing.
@@ -296,7 +366,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external override onlyGovernor nonReentrant {
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
         _approveBase();
     }
 
@@ -313,7 +388,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken) internal override {}
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {}
 
     function _approveBase() internal {
         // Approve Aero router for OETH (required for adding liquidity)
@@ -326,7 +404,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         // Approve Aerodrome Gauge contract to transfer Aero LP tokens
         // slither-disable-next-line unused-return
-        IERC20(address(lpTokenAddress)).approve(address(aeroGaugeAddress), type(uint256).max);
+        IERC20(address(lpTokenAddress)).approve(
+            address(aeroGaugeAddress),
+            type(uint256).max
+        );
     }
 
     /**
@@ -347,12 +428,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 K = getK(r0, r1);
 
         // Calculate fourth root of K/2 then multiply it by 2.
-        uint256 lpPrice = 2
-            * (
+        uint256 lpPrice = 2 *
+            (FixedPointMathLib.sqrt(
                 FixedPointMathLib.sqrt(
-                    FixedPointMathLib.sqrt(K.divPrecisely(2) * FixedPointMathLib.WAD) * FixedPointMathLib.WAD
-                ) / FixedPointMathLib.WAD
-            );
+                    K.divPrecisely(2) * FixedPointMathLib.WAD
+                ) * FixedPointMathLib.WAD
+            ) / FixedPointMathLib.WAD);
 
         return lpPrice;
     }
@@ -368,6 +449,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 r1Cube = FixedPointMathLib.rpow(r1, 3, 1e18);
         uint256 r2Cube = FixedPointMathLib.rpow(r2, 3, 1e18);
 
-        return FixedPointMathLib.mulWad(r1Cube, r2) + FixedPointMathLib.mulWad(r2Cube, r1);
+        return
+            FixedPointMathLib.mulWad(r1Cube, r2) +
+            FixedPointMathLib.mulWad(r2Cube, r1);
     }
 }

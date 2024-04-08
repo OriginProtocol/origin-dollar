@@ -6,12 +6,12 @@ pragma solidity ^0.8.0;
  * @notice The VaultAdmin contract makes configuration and admin calls on the vault.
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IOracle} from "../interfaces/IOracle.sol";
-import {ISwapper} from "../interfaces/ISwapper.sol";
-import {IVault} from "../interfaces/IVault.sol";
-import {StableMath} from "../utils/StableMath.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
+import { ISwapper } from "../interfaces/ISwapper.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 import "./VaultStorage.sol";
 
@@ -23,7 +23,10 @@ contract VaultAdmin is VaultStorage {
      * @dev Verifies that the caller is the Governor or Strategist.
      */
     modifier onlyGovernorOrStrategist() {
-        require(msg.sender == strategistAddr || isGovernor(), "Caller is not the Strategist or Governor");
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
         _;
     }
 
@@ -57,7 +60,10 @@ contract VaultAdmin is VaultStorage {
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernorOrStrategist {
+    function setVaultBuffer(uint256 _vaultBuffer)
+        external
+        onlyGovernorOrStrategist
+    {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -68,7 +74,10 @@ contract VaultAdmin is VaultStorage {
      * automatic allocation of funds afterwords.
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setAutoAllocateThreshold(uint256 _threshold) external onlyGovernor {
+    function setAutoAllocateThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
         autoAllocateThreshold = _threshold;
         emit AllocateThresholdUpdated(_threshold);
     }
@@ -98,7 +107,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of the asset
      * @param _strategy Address of the Strategy
      */
-    function setAssetDefaultStrategy(address _asset, address _strategy) external onlyGovernorOrStrategist {
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external
+        onlyGovernorOrStrategist
+    {
         emit AssetDefaultStrategyUpdated(_asset, _strategy);
         // If its a zero address being passed for the strategy we are removing
         // the default strategy
@@ -107,7 +119,10 @@ contract VaultAdmin is VaultStorage {
             require(strategies[_strategy].isSupported, "Strategy not approved");
             IStrategy strategy = IStrategy(_strategy);
             require(assets[_asset].isSupported, "Asset is not supported");
-            require(strategy.supportsAsset(_asset), "Asset not supported by Strategy");
+            require(
+                strategy.supportsAsset(_asset),
+                "Asset not supported by Strategy"
+            );
         }
         assetDefaultStrategies[_asset] = _strategy;
     }
@@ -117,7 +132,10 @@ contract VaultAdmin is VaultStorage {
      * to strategy (used only by ConvexOUSDMetaStrategy for now).
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external onlyGovernor {
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
         /**
          * Because `netOusdMintedForStrategy` check in vault core works both ways
          * (positive and negative) the actual impact of the amount of OToken minted
@@ -158,7 +176,12 @@ contract VaultAdmin is VaultStorage {
         uint256 _fromAssetAmount,
         uint256 _minToAssetAmount,
         bytes calldata _data
-    ) external nonReentrant onlyGovernorOrStrategist returns (uint256 toAssetAmount) {
+    )
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+        returns (uint256 toAssetAmount)
+    {
         // Check fromAsset and toAsset are valid
         Asset memory fromAssetConfig = assets[address(_fromAsset)];
         Asset memory toAssetConfig = assets[_toAsset];
@@ -171,7 +194,9 @@ contract VaultAdmin is VaultStorage {
         // Scope a new block to remove toAssetBalBefore from the scope of swapCollateral.
         // This avoids a stack too deep error.
         {
-            uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(address(this));
+            uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(
+                address(this)
+            );
 
             // Transfer from assets to the swapper contract
             IERC20(_fromAsset).safeTransfer(config.swapper, _fromAssetAmount);
@@ -179,29 +204,44 @@ contract VaultAdmin is VaultStorage {
             // Call to the Swapper contract to do the actual swap
             // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
             // slither-disable-next-line unused-return
-            ISwapper(config.swapper).swap(_fromAsset, _toAsset, _fromAssetAmount - 1, _minToAssetAmount, _data);
+            ISwapper(config.swapper).swap(
+                _fromAsset,
+                _toAsset,
+                _fromAssetAmount - 1,
+                _minToAssetAmount,
+                _data
+            );
 
             // Compute the change in asset balance held by the Vault
-            toAssetAmount = IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore;
+            toAssetAmount =
+                IERC20(_toAsset).balanceOf(address(this)) -
+                toAssetBalBefore;
         }
 
         // Check the to assets returned is above slippage amount specified by the strategist
-        require(toAssetAmount >= _minToAssetAmount, "Strategist slippage limit");
+        require(
+            toAssetAmount >= _minToAssetAmount,
+            "Strategist slippage limit"
+        );
 
         // Scope a new block to remove minOracleToAssetAmount from the scope of swapCollateral.
         // This avoids a stack too deep error.
         {
             // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
             // to asset amount = from asset amount * from asset price / to asset price
-            uint256 minOracleToAssetAmount = (
-                _fromAssetAmount * (1e4 - fromAssetConfig.allowedOracleSlippageBps)
-                    * IOracle(priceProvider).price(_fromAsset)
-            ) / (IOracle(priceProvider).price(_toAsset) * (1e4 + toAssetConfig.allowedOracleSlippageBps));
+            uint256 minOracleToAssetAmount = (_fromAssetAmount *
+                (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
+                IOracle(priceProvider).price(_fromAsset)) /
+                (IOracle(priceProvider).price(_toAsset) *
+                    (1e4 + toAssetConfig.allowedOracleSlippageBps));
 
             // Scale both sides up to 18 decimals to compare
             require(
-                toAssetAmount.scaleBy(18, toAssetConfig.decimals)
-                    >= minOracleToAssetAmount.scaleBy(18, fromAssetConfig.decimals),
+                toAssetAmount.scaleBy(18, toAssetConfig.decimals) >=
+                    minOracleToAssetAmount.scaleBy(
+                        18,
+                        fromAssetConfig.decimals
+                    ),
                 "Oracle slippage limit exceeded"
             );
         }
@@ -209,7 +249,9 @@ contract VaultAdmin is VaultStorage {
         // Check the vault's total value hasn't gone below the OToken total supply
         // by more than the allowed percentage.
         require(
-            IVault(address(this)).totalValue() >= (oUSD.totalSupply() * ((1e4 - config.allowedUndervalueBps))) / 1e4,
+            IVault(address(this)).totalValue() >=
+                (oUSD.totalSupply() * ((1e4 - config.allowedUndervalueBps))) /
+                    1e4,
             "Allowed value < supply"
         );
 
@@ -262,7 +304,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of the asset token.
      * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
      */
-    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps) external onlyGovernor {
+    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
+        external
+        onlyGovernor
+    {
         require(assets[_asset].isSupported, "Asset not supported");
         require(_allowedOracleSlippageBps < 1000, "Slippage too high");
 
@@ -282,7 +327,10 @@ contract VaultAdmin is VaultStorage {
      *         to mint OTokens.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset, uint8 _unitConversion) external onlyGovernor {
+    function supportAsset(address _asset, uint8 _unitConversion)
+        external
+        onlyGovernor
+    {
         require(!assets[_asset].isSupported, "Asset already supported");
 
         assets[_asset] = Asset({
@@ -323,7 +371,7 @@ contract VaultAdmin is VaultStorage {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({isSupported: true, _deprecated: 0});
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }
@@ -337,7 +385,10 @@ contract VaultAdmin is VaultStorage {
 
         uint256 assetCount = allAssets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
-            require(assetDefaultStrategies[allAssets[i]] != _addr, "Strategy is default for an asset");
+            require(
+                assetDefaultStrategies[allAssets[i]] != _addr,
+                "Strategy is default for an asset"
+            );
         }
 
         // Initialize strategyIndex with out of bounds result so function will
@@ -378,24 +429,32 @@ contract VaultAdmin is VaultStorage {
      * @param _assets Array of asset address that will be deposited into the strategy.
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
-    function depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
-        external
-        onlyGovernorOrStrategist
-        nonReentrant
-    {
+    function depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist nonReentrant {
         _depositToStrategy(_strategyToAddress, _assets, _amounts);
     }
 
-    function _depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
-        internal
-    {
-        require(strategies[_strategyToAddress].isSupported, "Invalid to Strategy");
+    function _depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) internal {
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
             address assetAddr = _assets[i];
-            require(IStrategy(_strategyToAddress).supportsAsset(assetAddr), "Asset unsupported");
+            require(
+                IStrategy(_strategyToAddress).supportsAsset(assetAddr),
+                "Asset unsupported"
+            );
             // Send required amount of funds to the strategy
             IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
         }
@@ -410,12 +469,17 @@ contract VaultAdmin is VaultStorage {
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
-    function withdrawFromStrategy(address _strategyFromAddress, address[] calldata _assets, uint256[] calldata _amounts)
-        external
-        onlyGovernorOrStrategist
-        nonReentrant
-    {
-        _withdrawFromStrategy(address(this), _strategyFromAddress, _assets, _amounts);
+    function withdrawFromStrategy(
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist nonReentrant {
+        _withdrawFromStrategy(
+            address(this),
+            _strategyFromAddress,
+            _assets,
+            _amounts
+        );
     }
 
     /**
@@ -427,13 +491,20 @@ contract VaultAdmin is VaultStorage {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) internal {
-        require(strategies[_strategyFromAddress].isSupported, "Invalid from Strategy");
+        require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
             // Withdraw from Strategy to the recipient
-            IStrategy(_strategyFromAddress).withdraw(_recipient, _assets[i], _amounts[i]);
+            IStrategy(_strategyFromAddress).withdraw(
+                _recipient,
+                _assets[i],
+                _amounts[i]
+            );
         }
     }
 
@@ -469,7 +540,10 @@ contract VaultAdmin is VaultStorage {
      * @notice Set OToken Metapool strategy
      * @param _ousdMetaStrategy Address of OToken metapool strategy
      */
-    function setOusdMetaStrategy(address _ousdMetaStrategy) external onlyGovernor {
+    function setOusdMetaStrategy(address _ousdMetaStrategy)
+        external
+        onlyGovernor
+    {
         ousdMetaStrategy = _ousdMetaStrategy;
         emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
@@ -524,7 +598,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount) external onlyGovernor {
+    function transferToken(address _asset, uint256 _amount)
+        external
+        onlyGovernor
+    {
         require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
@@ -539,8 +616,14 @@ contract VaultAdmin is VaultStorage {
      * @notice Withdraws all assets from the strategy and sends assets to the Vault.
      * @param _strategyAddr Strategy address.
      */
-    function withdrawAllFromStrategy(address _strategyAddr) external onlyGovernorOrStrategist {
-        require(strategies[_strategyAddr].isSupported, "Strategy is not supported");
+    function withdrawAllFromStrategy(address _strategyAddr)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
     }

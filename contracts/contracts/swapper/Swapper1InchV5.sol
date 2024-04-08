@@ -8,17 +8,18 @@ pragma solidity ^0.8.0;
  * This can happen with some tokens that don't send the full transfer amount.
  * These dust amounts can build up over time and be used by anyone who calls the `swap` function.
  */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IAggregationExecutor, IOneInchRouter, SwapDescription} from "../interfaces/IOneInch.sol";
-import {ISwapper} from "../interfaces/ISwapper.sol";
+import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
+import { ISwapper } from "../interfaces/ISwapper.sol";
 
 contract Swapper1InchV5 is ISwapper {
     using SafeERC20 for IERC20;
 
     /// @notice 1Inch router contract to give allowance to perform swaps
-    address public constant SWAP_ROUTER = 0x1111111254EEB25477B68fb85Ed929f73A960582;
+    address public constant SWAP_ROUTER =
+        0x1111111254EEB25477B68fb85Ed929f73A960582;
 
     // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
     bytes4 internal constant SWAP_SELECTOR = 0x12aa3caf;
@@ -47,7 +48,10 @@ contract Swapper1InchV5 is ISwapper {
 
         if (swapSelector == SWAP_SELECTOR) {
             // Decode the executer address and data from the RLP encoded _data param
-            (, address executer, bytes memory executerData) = abi.decode(_data, (bytes4, address, bytes));
+            (, address executer, bytes memory executerData) = abi.decode(
+                _data,
+                (bytes4, address, bytes)
+            );
             SwapDescription memory swapDesc = SwapDescription({
                 srcToken: IERC20(_fromAsset),
                 dstToken: IERC20(_toAsset),
@@ -57,20 +61,31 @@ contract Swapper1InchV5 is ISwapper {
                 minReturnAmount: _minToAssetAmount,
                 flags: 4 // 1st bit _PARTIAL_FILL, 2nd bit _REQUIRES_EXTRA_ETH, 3rd bit _SHOULD_CLAIM
             });
-            (toAssetAmount,) =
-                IOneInchRouter(SWAP_ROUTER).swap(IAggregationExecutor(executer), swapDesc, hex"", executerData);
+            (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
+                IAggregationExecutor(executer),
+                swapDesc,
+                hex"",
+                executerData
+            );
         } else if (swapSelector == UNISWAP_SELECTOR) {
             // Need to get the Uniswap pools data from the _data param
             (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
             toAssetAmount = IOneInchRouter(SWAP_ROUTER).unoswapTo(
-                payable(msg.sender), IERC20(_fromAsset), _fromAssetAmount, _minToAssetAmount, pools
+                payable(msg.sender),
+                IERC20(_fromAsset),
+                _fromAssetAmount,
+                _minToAssetAmount,
+                pools
             );
         } else if (swapSelector == UNISWAPV3_SELECTOR) {
             // Need to get the Uniswap pools data from the _data param
             // slither-disable-next-line uninitialized-storage
             (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
             toAssetAmount = IOneInchRouter(SWAP_ROUTER).uniswapV3SwapTo(
-                payable(msg.sender), _fromAssetAmount, _minToAssetAmount, pools
+                payable(msg.sender),
+                _fromAssetAmount,
+                _minToAssetAmount,
+                pools
             );
         } else {
             revert("Unsupported swap function");

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {SwapDescription} from "../interfaces/IOneInch.sol";
+import { SwapDescription } from "../interfaces/IOneInch.sol";
 
 contract Mock1InchSwapRouter {
     using SafeERC20 for IERC20;
@@ -21,9 +21,20 @@ contract Mock1InchSwapRouter {
         uint256 flags
     );
 
-    event MockUnoswapTo(address recipient, address srcToken, uint256 amount, uint256 minReturn, uint256[] pools);
+    event MockUnoswapTo(
+        address recipient,
+        address srcToken,
+        uint256 amount,
+        uint256 minReturn,
+        uint256[] pools
+    );
 
-    event MockUniswapV3SwapTo(address recipient, uint256 amount, uint256 minReturn, uint256[] pools);
+    event MockUniswapV3SwapTo(
+        address recipient,
+        uint256 amount,
+        uint256 minReturn,
+        uint256[] pools
+    );
 
     /**
      * @dev transfers the shource asset and returns the minReturnAmount of the destination asset.
@@ -35,10 +46,17 @@ contract Mock1InchSwapRouter {
         bytes calldata executorData
     ) public returns (uint256 returnAmount, uint256 spentAmount) {
         // Transfer the source tokens to the receiver contract
-        IERC20(desc.srcToken).safeTransferFrom(msg.sender, desc.srcReceiver, desc.amount);
+        IERC20(desc.srcToken).safeTransferFrom(
+            msg.sender,
+            desc.srcReceiver,
+            desc.amount
+        );
 
         // Transfer the destination tokens to the recipient
-        IERC20(desc.dstToken).safeTransfer(desc.dstReceiver, desc.minReturnAmount);
+        IERC20(desc.dstToken).safeTransfer(
+            desc.dstReceiver,
+            desc.minReturnAmount
+        );
 
         emit MockSwap(executor, permitData, executorData);
         _swapDesc(desc);
@@ -79,10 +97,12 @@ contract Mock1InchSwapRouter {
     /**
      * @dev does not do any transfers. Just emits MockUniswapV3SwapTo.
      */
-    function uniswapV3SwapTo(address payable recipient, uint256 amount, uint256 minReturn, uint256[] calldata pools)
-        public
-        returns (uint256 returnAmount)
-    {
+    function uniswapV3SwapTo(
+        address payable recipient,
+        uint256 amount,
+        uint256 minReturn,
+        uint256[] calldata pools
+    ) public returns (uint256 returnAmount) {
         emit MockUniswapV3SwapTo(recipient, amount, minReturn, pools);
         returnAmount = 0;
     }

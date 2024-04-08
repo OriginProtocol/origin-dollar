@@ -45,7 +45,9 @@ contract EchidnaHelper is EchidnaSetup {
      */
     function changeSupply(uint256 amount) public {
         if (TOGGLE_CHANGESUPPLY_LIMIT) {
-            amount = ousd.totalSupply() + (amount % (ousd.totalSupply() / CHANGESUPPLY_DIVISOR));
+            amount =
+                ousd.totalSupply() +
+                (amount % (ousd.totalSupply() / CHANGESUPPLY_DIVISOR));
         }
 
         hevm.prank(ADDRESS_VAULT);
@@ -58,7 +60,11 @@ contract EchidnaHelper is EchidnaSetup {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function transfer(uint8 fromAcc, uint8 toAcc, uint256 amount) public {
+    function transfer(
+        uint8 fromAcc,
+        uint8 toAcc,
+        uint256 amount
+    ) public {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
         hevm.prank(from);
@@ -73,7 +79,12 @@ contract EchidnaHelper is EchidnaSetup {
      * @param toAcc Account to transfer to
      * @param amount Amount to transfer
      */
-    function transferFrom(uint8 authorizedAcc, uint8 fromAcc, uint8 toAcc, uint256 amount) public {
+    function transferFrom(
+        uint8 authorizedAcc,
+        uint8 fromAcc,
+        uint8 toAcc,
+        uint256 amount
+    ) public {
         address authorized = getAccount(authorizedAcc);
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
@@ -108,7 +119,11 @@ contract EchidnaHelper is EchidnaSetup {
      * @param spenderAcc Account that is approved to spend the OUSD
      * @param amount Amount to approve
      */
-    function approve(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
+    function approve(
+        uint8 ownerAcc,
+        uint8 spenderAcc,
+        uint256 amount
+    ) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
@@ -122,7 +137,11 @@ contract EchidnaHelper is EchidnaSetup {
      * @param spenderAcc Account that is approved to spend the OUSD
      * @param amount Amount to increase the allowance by
      */
-    function increaseAllowance(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
+    function increaseAllowance(
+        uint8 ownerAcc,
+        uint8 spenderAcc,
+        uint256 amount
+    ) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
@@ -136,7 +155,11 @@ contract EchidnaHelper is EchidnaSetup {
      * @param spenderAcc Account that is approved to spend the OUSD
      * @param amount Amount to decrease the allowance by
      */
-    function decreaseAllowance(uint8 ownerAcc, uint8 spenderAcc, uint256 amount) public {
+    function decreaseAllowance(
+        uint8 ownerAcc,
+        uint8 spenderAcc,
+        uint256 amount
+    ) public {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
@@ -163,13 +186,26 @@ contract EchidnaHelper is EchidnaSetup {
      * @return total Total balance
      */
     function getTotalNonRebasingBalance() public returns (uint256 total) {
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_VAULT) ? ousd.balanceOf(ADDRESS_VAULT) : 0;
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_OUTSIDER_USER) ? ousd.balanceOf(ADDRESS_OUTSIDER_USER) : 0;
-        total +=
-            ousd._isNonRebasingAccountEchidna(ADDRESS_OUTSIDER_CONTRACT) ? ousd.balanceOf(ADDRESS_OUTSIDER_CONTRACT) : 0;
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_USER0) ? ousd.balanceOf(ADDRESS_USER0) : 0;
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_USER1) ? ousd.balanceOf(ADDRESS_USER1) : 0;
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_CONTRACT0) ? ousd.balanceOf(ADDRESS_CONTRACT0) : 0;
-        total += ousd._isNonRebasingAccountEchidna(ADDRESS_CONTRACT1) ? ousd.balanceOf(ADDRESS_CONTRACT1) : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_VAULT)
+            ? ousd.balanceOf(ADDRESS_VAULT)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_OUTSIDER_USER)
+            ? ousd.balanceOf(ADDRESS_OUTSIDER_USER)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_OUTSIDER_CONTRACT)
+            ? ousd.balanceOf(ADDRESS_OUTSIDER_CONTRACT)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_USER0)
+            ? ousd.balanceOf(ADDRESS_USER0)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_USER1)
+            ? ousd.balanceOf(ADDRESS_USER1)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_CONTRACT0)
+            ? ousd.balanceOf(ADDRESS_CONTRACT0)
+            : 0;
+        total += ousd._isNonRebasingAccountEchidna(ADDRESS_CONTRACT1)
+            ? ousd.balanceOf(ADDRESS_CONTRACT1)
+            : 0;
     }
 }

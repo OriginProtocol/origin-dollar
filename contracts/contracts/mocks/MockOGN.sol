@@ -70,19 +70,24 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     // @param _value The amount of tokens to be spent.
     // @param _selector Function selector for function to be called.
     // @param _callParams Packed, encoded parameters, omitting the first parameter which is always msg.sender
-    function approveAndCallWithSender(address _spender, uint256 _value, bytes4 _selector, bytes memory _callParams)
-        public
-        payable
-        returns (bool)
-    {
+    function approveAndCallWithSender(
+        address _spender,
+        uint256 _value,
+        bytes4 _selector,
+        bytes memory _callParams
+    ) public payable returns (bool) {
         require(_spender != address(this), "token contract can't be approved");
         require(callSpenderWhitelist[_spender], "spender not in whitelist");
 
         require(super.approve(_spender, _value), "approve failed");
 
-        bytes memory callData = abi.encodePacked(_selector, uint256(uint160(msg.sender)), _callParams);
+        bytes memory callData = abi.encodePacked(
+            _selector,
+            uint256(uint160(msg.sender)),
+            _callParams
+        );
         // solium-disable-next-line security/no-call-value
-        (bool success,) = _spender.call{value: msg.value}(callData);
+        (bool success, ) = _spender.call{ value: msg.value }(callData);
         require(success, "proxied call failed");
         return true;
     }
@@ -98,7 +103,9 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     modifier allowedTransfer(address _from, address _to) {
         require(
             // solium-disable-next-line operator-whitespace
-            !whitelistActive() || allowedTransactors[_from] || allowedTransactors[_to],
+            !whitelistActive() ||
+                allowedTransactors[_from] ||
+                allowedTransactors[_to],
             "neither sender nor recipient are allowed"
         );
         _;
@@ -125,9 +132,15 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     function setWhitelistExpiration(uint256 _expiration) public onlyOwner {
         // allow only if whitelist expiration hasn't yet been set, or if the
         // whitelist expiration hasn't passed yet
-        require(whitelistExpiration == 0 || whitelistActive(), "an expired whitelist cannot be extended");
+        require(
+            whitelistExpiration == 0 || whitelistActive(),
+            "an expired whitelist cannot be extended"
+        );
         // prevent possible mistakes in calling this function
-        require(_expiration >= block.timestamp + 1 days, "whitelist expiration not far enough into the future");
+        require(
+            _expiration >= block.timestamp + 1 days,
+            "whitelist expiration not far enough into the future"
+        );
         emit SetWhitelistExpiration(_expiration);
         whitelistExpiration = _expiration;
     }
@@ -136,16 +149,20 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     // ERC20 transfer functions that have been overridden to enforce the
     // whitelist.
     //
-    function transfer(address _to, uint256 _value) public override allowedTransfer(msg.sender, _to) returns (bool) {
+    function transfer(address _to, uint256 _value)
+        public
+        override
+        allowedTransfer(msg.sender, _to)
+        returns (bool)
+    {
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value)
-        public
-        override
-        allowedTransfer(_from, _to)
-        returns (bool)
-    {
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public override allowedTransfer(_from, _to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 }

@@ -6,20 +6,23 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IRewardStaking} from "./IRewardStaking.sol";
-import {ICurvePool} from "./ICurvePool.sol";
-import {ICurveMetaPool} from "./ICurveMetaPool.sol";
-import {IERC20, BaseCurveStrategy, InitializableAbstractStrategy} from "./BaseCurveStrategy.sol";
-import {StableMath} from "../utils/StableMath.sol";
-import {Helpers} from "../utils/Helpers.sol";
+import { IRewardStaking } from "./IRewardStaking.sol";
+import { ICurvePool } from "./ICurvePool.sol";
+import { ICurveMetaPool } from "./ICurveMetaPool.sol";
+import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import { Helpers } from "../utils/Helpers.sol";
 
 abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    event MaxWithdrawalSlippageUpdated(uint256 _prevMaxSlippagePercentage, uint256 _newMaxSlippagePercentage);
+    event MaxWithdrawalSlippageUpdated(
+        uint256 _prevMaxSlippagePercentage,
+        uint256 _newMaxSlippagePercentage
+    );
 
     // used to circumvent the stack too deep issue
     struct InitConfig {
@@ -78,7 +81,11 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
         mainCoinIndex = _getMetapoolCoinIndex(initConfig.metapoolMainToken);
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 
@@ -87,14 +94,22 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) public view virtual override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        virtual
+        override
+        returns (uint256 balance)
+    {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         balance = 0;
 
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (contractPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
@@ -108,10 +123,13 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
          * could be tokens sent to it by a 3rd party and we decide to actively ignore
          * those.
          */
-        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
+        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
+            .balanceOf(address(this));
 
         if (metapoolGaugePTokens > 0) {
-            uint256 value = metapoolGaugePTokens.mulTruncate(metapool.get_virtual_price());
+            uint256 value = metapoolGaugePTokens.mulTruncate(
+                metapool.get_virtual_price()
+            );
             balance += value;
         }
 
@@ -136,15 +154,23 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
          *
          * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
          */
-        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(1e10 + metapool.fee(), 1e10);
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
+            1e10 + metapool.fee(),
+            1e10
+        );
 
         /* asset received when withdrawing full fee applicable LP accounting for
          * slippage and fees
          */
-        uint256 assetReceivedForFullLPFees = metapool.calc_withdraw_one_coin(lpRequiredFullFees, int128(_coinIndex));
+        uint256 assetReceivedForFullLPFees = metapool.calc_withdraw_one_coin(
+            lpRequiredFullFees,
+            int128(_coinIndex)
+        );
 
         // exact amount of LP required
-        requiredMetapoolLP = (lpRequiredFullFees * _amount) / assetReceivedForFullLPFees;
+        requiredMetapoolLP =
+            (lpRequiredFullFees * _amount) /
+            assetReceivedForFullLPFees;
     }
 
     function _approveBase() internal override {
@@ -166,7 +192,11 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     /**
      * @dev Get the index of the coin
      */
-    function _getMetapoolCoinIndex(address _asset) internal view returns (uint128) {
+    function _getMetapoolCoinIndex(address _asset)
+        internal
+        view
+        returns (uint128)
+    {
         for (uint128 i = 0; i < 2; i++) {
             if (metapoolAssets[i] == _asset) return i;
         }
@@ -183,16 +213,30 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      * for production usage. Contract allows as low value as 0% for confirming
      * correct behavior in test suite.
      */
-    function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage) external onlyVaultOrGovernorOrStrategist {
-        require(_maxWithdrawalSlippage <= 1e18, "Max withdrawal slippage needs to be between 0% - 100%");
-        emit MaxWithdrawalSlippageUpdated(maxWithdrawalSlippage, _maxWithdrawalSlippage);
+    function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        require(
+            _maxWithdrawalSlippage <= 1e18,
+            "Max withdrawal slippage needs to be between 0% - 100%"
+        );
+        emit MaxWithdrawalSlippageUpdated(
+            maxWithdrawalSlippage,
+            _maxWithdrawalSlippage
+        );
         maxWithdrawalSlippage = _maxWithdrawalSlippage;
     }
 
     /**
      * @dev Collect accumulated CRV and CVX and send to Harvester.
      */
-    function collectRewardTokens() external override onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         _collectRewardTokens();

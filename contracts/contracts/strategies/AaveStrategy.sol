@@ -6,13 +6,13 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Aave
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./IAave.sol";
-import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
-import {IAaveStakedToken} from "./IAaveStakeToken.sol";
-import {IAaveIncentivesController} from "./IAaveIncentivesController.sol";
+import { IAaveStakedToken } from "./IAaveStakeToken.sol";
+import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
 
 contract AaveStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -25,7 +25,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @param _stratConfig The platform and OToken vault addresses
      */
-    constructor(BaseStrategyConfig memory _stratConfig) InitializableAbstractStrategy(_stratConfig) {}
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -46,7 +48,11 @@ contract AaveStrategy is InitializableAbstractStrategy {
     ) external onlyGovernor initializer {
         incentivesController = IAaveIncentivesController(_incentivesAddress);
         stkAave = IAaveStakedToken(_stkAaveAddress);
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
     }
 
     /**
@@ -54,7 +60,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_asset, _amount);
     }
 
@@ -89,12 +100,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
         emit Withdrawal(_asset, _getATokenFor(_asset), _amount);
-        uint256 actual = _getLendingPool().withdraw(_asset, _amount, address(this));
+        uint256 actual = _getLendingPool().withdraw(
+            _asset,
+            _amount,
+            address(this)
+        );
         require(actual == _amount, "Did not withdraw enough");
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
@@ -109,7 +128,11 @@ contract AaveStrategy is InitializableAbstractStrategy {
             address aToken = _getATokenFor(assetsMapped[i]);
             uint256 balance = IERC20(aToken).balanceOf(address(this));
             if (balance > 0) {
-                uint256 actual = _getLendingPool().withdraw(address(asset), balance, address(this));
+                uint256 actual = _getLendingPool().withdraw(
+                    address(asset),
+                    balance,
+                    address(this)
+                );
                 require(actual == balance, "Did not withdraw enough");
 
                 uint256 assetBalance = asset.balanceOf(address(this));
@@ -126,7 +149,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256 balance)
+    {
         // Balance is always with token aToken decimals
         address aToken = _getATokenFor(_asset);
         balance = IERC20(aToken).balanceOf(address(this));
@@ -144,7 +172,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding aToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external override onlyGovernor nonReentrant {
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
         address lendingPool = address(_getLendingPool());
         // approve the pool to spend the Asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -163,7 +196,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _aToken Address of the aToken
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _aToken) internal override {
+    function _abstractSetPToken(address _asset, address _aToken)
+        internal
+        override
+    {
         address lendingPool = address(_getLendingPool());
         IERC20(_asset).safeApprove(lendingPool, 0);
         IERC20(_asset).safeApprove(lendingPool, type(uint256).max);
@@ -187,7 +223,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @return Current lending pool implementation
      */
     function _getLendingPool() internal view returns (IAaveLendingPool) {
-        address lendingPool = ILendingPoolAddressesProvider(platformAddress).getLendingPool();
+        address lendingPool = ILendingPoolAddressesProvider(platformAddress)
+            .getLendingPool();
         require(lendingPool != address(0), "Lending pool does not exist");
         return IAaveLendingPool(lendingPool);
     }
@@ -195,7 +232,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect stkAave, convert it to AAVE send to Vault.
      */
-    function collectRewardTokens() external override onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         if (address(stkAave) == address(0)) {
             return;
         }
@@ -213,9 +255,14 @@ contract AaveStrategy is InitializableAbstractStrategy {
             stkAave.redeem(address(this), stkAaveBalance);
 
             // Transfer AAVE to harvesterAddress
-            uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(address(this));
+            uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(
+                address(this)
+            );
             if (aaveBalance > 0) {
-                IERC20(rewardTokenAddresses[0]).safeTransfer(harvesterAddress, aaveBalance);
+                IERC20(rewardTokenAddresses[0]).safeTransfer(
+                    harvesterAddress,
+                    aaveBalance
+                );
             }
         }
 
@@ -230,13 +277,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
             }
 
             // 1. If we have rewards availabile, collect them
-            uint256 pendingRewards = incentivesController.getRewardsBalance(aTokens, address(this));
+            uint256 pendingRewards = incentivesController.getRewardsBalance(
+                aTokens,
+                address(this)
+            );
             if (pendingRewards > 0) {
                 // Because getting more stkAAVE from the incentives controller
                 // with claimRewards() may push the stkAAVE cooldown time
                 // forward, it is called after stakedAAVE has been turned into
                 // AAVE.
-                uint256 collected = incentivesController.claimRewards(aTokens, pendingRewards, address(this));
+                uint256 collected = incentivesController.claimRewards(
+                    aTokens,
+                    pendingRewards,
+                    address(this)
+                );
                 require(collected == pendingRewards, "AAVE reward difference");
             }
 

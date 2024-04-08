@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {StableMath} from "../utils/StableMath.sol";
-import {VaultCore} from "./VaultCore.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import { VaultCore } from "./VaultCore.sol";
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IStrategy} from "../interfaces/IStrategy.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 /**
  * @title OETH VaultCore Contract
@@ -40,10 +40,17 @@ contract OETHVaultCore is VaultCore {
     }
 
     // @inheritdoc VaultCore
-    function _mint(address _asset, uint256 _amount, uint256 _minimumOusdAmount) internal virtual override {
+    function _mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) internal virtual override {
         require(_asset == weth, "Unsupported asset for minting");
         require(_amount > 0, "Amount must be greater than 0");
-        require(_amount >= _minimumOusdAmount, "Mint amount lower than minimum");
+        require(
+            _amount >= _minimumOusdAmount,
+            "Mint amount lower than minimum"
+        );
 
         emit Mint(msg.sender, _amount);
 
@@ -84,14 +91,21 @@ contract OETHVaultCore is VaultCore {
 
         // Ensure that the WETH index is cached
         uint256 _wethAssetIndex = wethAssetIndex;
-        require(allAssets[_wethAssetIndex] == weth, "WETH Asset index not cached");
+        require(
+            allAssets[_wethAssetIndex] == weth,
+            "WETH Asset index not cached"
+        );
 
         outputs = new uint256[](allAssets.length);
         outputs[_wethAssetIndex] = _amount;
     }
 
     // @inheritdoc VaultCore
-    function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal virtual override {
+    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        internal
+        virtual
+        override
+    {
         // Override `VaultCore._redeem` to simplify it. Gets rid of oracle
         // usage and looping through all assets for LST-mix redeem. Instead
         // does a simple WETH-only redeem.
@@ -102,9 +116,14 @@ contract OETHVaultCore is VaultCore {
         }
 
         // Amount excluding fees
-        uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[wethAssetIndex];
+        uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[
+            wethAssetIndex
+        ];
 
-        require(amountMinusFee >= _minimumUnitAmount, "Redeem amount lower than minimum");
+        require(
+            amountMinusFee >= _minimumUnitAmount,
+            "Redeem amount lower than minimum"
+        );
 
         if (IERC20(weth).balanceOf(address(this)) >= amountMinusFee) {
             // Use Vault funds first if sufficient

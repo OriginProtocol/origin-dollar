@@ -32,7 +32,12 @@ contract Governor is Timelock {
 
     // @notice An event emitted when a new proposal is created
     event ProposalCreated(
-        uint256 id, address proposer, address[] targets, string[] signatures, bytes[] calldatas, string description
+        uint256 id,
+        address proposer,
+        address[] targets,
+        string[] signatures,
+        bytes[] calldatas,
+        string description
     );
 
     // @notice An event emitted when a proposal has been queued in the Timelock
@@ -73,11 +78,15 @@ contract Governor is Timelock {
         // Allow anyone to propose for now, since only admin can queue the
         // transaction it should be harmless, you just need to pay the gas
         require(
-            targets.length == signatures.length && targets.length == calldatas.length,
+            targets.length == signatures.length &&
+                targets.length == calldatas.length,
             "Governor::propose: proposal function information arity mismatch"
         );
         require(targets.length != 0, "Governor::propose: must provide actions");
-        require(targets.length <= MAX_OPERATIONS, "Governor::propose: too many actions");
+        require(
+            targets.length <= MAX_OPERATIONS,
+            "Governor::propose: too many actions"
+        );
 
         proposalCount++;
         Proposal memory newProposal = Proposal({
@@ -92,7 +101,14 @@ contract Governor is Timelock {
 
         proposals[newProposal.id] = newProposal;
 
-        emit ProposalCreated(newProposal.id, msg.sender, targets, signatures, calldatas, description);
+        emit ProposalCreated(
+            newProposal.id,
+            msg.sender,
+            targets,
+            signatures,
+            calldatas,
+            description
+        );
         return newProposal.id;
     }
 
@@ -102,13 +118,19 @@ contract Governor is Timelock {
      */
     function queue(uint256 proposalId) public onlyAdmin {
         require(
-            state(proposalId) == ProposalState.Pending, "Governor::queue: proposal can only be queued if it is pending"
+            state(proposalId) == ProposalState.Pending,
+            "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
         proposal.eta = block.timestamp + delay;
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            _queueOrRevert(proposal.targets[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta);
+            _queueOrRevert(
+                proposal.targets[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
+            );
         }
 
         emit ProposalQueued(proposal.id, proposal.eta);
@@ -120,7 +142,10 @@ contract Governor is Timelock {
      * @return ProposalState
      */
     function state(uint256 proposalId) public view returns (ProposalState) {
-        require(proposalCount >= proposalId && proposalId > 0, "Governor::state: invalid proposal id");
+        require(
+            proposalCount >= proposalId && proposalId > 0,
+            "Governor::state: invalid proposal id"
+        );
         Proposal storage proposal = proposals[proposalId];
         if (proposal.executed) {
             return ProposalState.Executed;
@@ -133,9 +158,16 @@ contract Governor is Timelock {
         }
     }
 
-    function _queueOrRevert(address target, string memory signature, bytes memory data, uint256 eta) internal {
+    function _queueOrRevert(
+        address target,
+        string memory signature,
+        bytes memory data,
+        uint256 eta
+    ) internal {
         require(
-            !queuedTransactions[keccak256(abi.encode(target, signature, keccak256(data), eta))],
+            !queuedTransactions[
+                keccak256(abi.encode(target, signature, keccak256(data), eta))
+            ],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
         require(
@@ -156,7 +188,12 @@ contract Governor is Timelock {
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            executeTransaction(proposal.targets[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta);
+            executeTransaction(
+                proposal.targets[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
+            );
         }
         emit ProposalExecuted(proposalId);
     }
@@ -169,13 +206,19 @@ contract Governor is Timelock {
         ProposalState proposalState = state(proposalId);
 
         require(
-            proposalState == ProposalState.Queued || proposalState == ProposalState.Pending,
+            proposalState == ProposalState.Queued ||
+                proposalState == ProposalState.Pending,
             "Governor::execute: proposal can only be cancelled if it is queued or pending"
         );
         Proposal storage proposal = proposals[proposalId];
         proposal.eta = 1; // To mark the proposal as `Expired`
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            cancelTransaction(proposal.targets[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta);
+            cancelTransaction(
+                proposal.targets[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
+            );
         }
         emit ProposalCancelled(proposalId);
     }
@@ -187,7 +230,11 @@ contract Governor is Timelock {
     function getActions(uint256 proposalId)
         public
         view
-        returns (address[] memory targets, string[] memory signatures, bytes[] memory calldatas)
+        returns (
+            address[] memory targets,
+            string[] memory signatures,
+            bytes[] memory calldatas
+        )
     {
         Proposal storage p = proposals[proposalId];
         return (p.targets, p.signatures, p.calldatas);

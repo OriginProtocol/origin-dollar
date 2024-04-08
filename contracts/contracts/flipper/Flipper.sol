@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../governance/Governable.sol";
 import "../token/OUSD.sol";
 import "../interfaces/Tether.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Contract to exchange usdt, usdc, dai from and to ousd.
 //   - 1 to 1. No slippage
@@ -26,7 +26,12 @@ contract Flipper is Governable {
     // ---------------------
     // Dev constructor
     // ---------------------
-    constructor(address _dai, address _ousd, address _usdc, address _usdt) {
+    constructor(
+        address _dai,
+        address _ousd,
+        address _usdc,
+        address _usdt
+    ) {
         require(address(_dai) != address(0));
         require(address(_ousd) != address(0));
         require(address(_usdc) != address(0));
@@ -45,7 +50,10 @@ contract Flipper is Governable {
     /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(dai.transferFrom(msg.sender, address(this), amount), "DAI transfer failed");
+        require(
+            dai.transferFrom(msg.sender, address(this), amount),
+            "DAI transfer failed"
+        );
         require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
@@ -54,7 +62,10 @@ contract Flipper is Governable {
     function sellOusdForDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(dai.transfer(msg.sender, amount), "DAI transfer failed");
-        require(ousd.transferFrom(msg.sender, address(this), amount), "OUSD transfer failed");
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Purchase OUSD with USDC
@@ -62,7 +73,10 @@ contract Flipper is Governable {
     function buyOusdWithUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         // Potential rounding error is an intentional trade off
-        require(usdc.transferFrom(msg.sender, address(this), amount / 1e12), "USDC transfer failed");
+        require(
+            usdc.transferFrom(msg.sender, address(this), amount / 1e12),
+            "USDC transfer failed"
+        );
         require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
@@ -70,8 +84,14 @@ contract Flipper is Governable {
     /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(usdc.transfer(msg.sender, amount / 1e12), "USDC transfer failed");
-        require(ousd.transferFrom(msg.sender, address(this), amount), "OUSD transfer failed");
+        require(
+            usdc.transfer(msg.sender, amount / 1e12),
+            "USDC transfer failed"
+        );
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Purchase OUSD with USDT
@@ -92,7 +112,10 @@ contract Flipper is Governable {
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transfer(msg.sender, amount / 1e12);
-        require(ousd.transferFrom(msg.sender, address(this), amount), "OUSD transfer failed");
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     // --------------------
@@ -106,7 +129,11 @@ contract Flipper is Governable {
     }
 
     /// @notice Owner function to withdraw a specific amount of a token
-    function withdraw(address token, uint256 amount) external onlyGovernor nonReentrant {
+    function withdraw(address token, uint256 amount)
+        external
+        onlyGovernor
+        nonReentrant
+    {
         IERC20(token).safeTransfer(_governor(), amount);
     }
 
@@ -116,7 +143,10 @@ contract Flipper is Governable {
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
         IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));
-        IERC20(address(usdt)).safeTransfer(_governor(), usdt.balanceOf(address(this)));
+        IERC20(address(usdt)).safeTransfer(
+            _governor(),
+            usdt.balanceOf(address(this))
+        );
         IERC20(usdc).safeTransfer(_governor(), usdc.balanceOf(address(this)));
     }
 }

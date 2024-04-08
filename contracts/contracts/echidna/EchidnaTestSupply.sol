@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./EchidnaDebug.sol";
 import "./EchidnaTestTransfer.sol";
 
-import {StableMath} from "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 /**
  * @title Mixin for testing supply related functions
@@ -26,7 +26,11 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
      *   Event sequence:
      *       TotalSupplyUpdatedHighres(1044505275072865171610, 1000000000000000000000000, 957391048054055578595)
      */
-    function testChangeSupply(uint256 supply) public hasKnownIssue hasKnownIssueWithinLimits {
+    function testChangeSupply(uint256 supply)
+        public
+        hasKnownIssue
+        hasKnownIssueWithinLimits
+    {
         hevm.prank(ADDRESS_VAULT);
         ousd.changeSupply(supply);
 
@@ -47,7 +51,11 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
      *     Debug(«totalSupply», 1000000000000000001000001)
      *     Debug(«totalBalance», 1000000000000000001000002)
      */
-    function testTotalSupplyLessThanTotalBalance() public hasKnownIssue hasKnownIssueWithinLimits {
+    function testTotalSupplyLessThanTotalBalance()
+        public
+        hasKnownIssue
+        hasKnownIssueWithinLimits
+    {
         uint256 totalSupply = ousd.totalSupply();
         uint256 totalBalance = getTotalBalance();
 
@@ -83,9 +91,13 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
      *     testRebasingCreditsPerTokenNotIncreased()
      */
     function testRebasingCreditsPerTokenNotIncreased() public hasKnownIssue {
-        uint256 curRebasingCreditsPerToken = ousd.rebasingCreditsPerTokenHighres();
+        uint256 curRebasingCreditsPerToken = ousd
+            .rebasingCreditsPerTokenHighres();
 
-        Debugger.log("prevRebasingCreditsPerToken", prevRebasingCreditsPerToken);
+        Debugger.log(
+            "prevRebasingCreditsPerToken",
+            prevRebasingCreditsPerToken
+        );
         Debugger.log("curRebasingCreditsPerToken", curRebasingCreditsPerToken);
 
         assert(curRebasingCreditsPerToken <= prevRebasingCreditsPerToken);
@@ -114,7 +126,11 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
      *     Debug(«totalNonRebasingSupply», 500000000000000000000001)
      *     Debug(«totalNonRebasingBalance», 500000000000000000000002)
      */
-    function testTotalNonRebasingSupplyLessThanTotalBalance() public hasKnownIssue hasKnownIssueWithinLimits {
+    function testTotalNonRebasingSupplyLessThanTotalBalance()
+        public
+        hasKnownIssue
+        hasKnownIssueWithinLimits
+    {
         uint256 totalNonRebasingSupply = ousd.nonRebasingSupply();
         uint256 totalNonRebasingBalance = getTotalNonRebasingBalance();
 
@@ -131,7 +147,8 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
     function testCreditsPerTokenVsBalance(uint8 targetAcc) public {
         address target = getAccount(targetAcc);
 
-        (uint256 credits, uint256 creditsPerToken,) = ousd.creditsBalanceOfHighres(target);
+        (uint256 credits, uint256 creditsPerToken, ) = ousd
+            .creditsBalanceOfHighres(target);
         uint256 expectedBalance = credits.divPrecisely(creditsPerToken);
 
         uint256 balance = ousd.balanceOf(target);

@@ -6,19 +6,21 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for Compound like lending platforms. eg Compound and Flux
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ICERC20} from "./ICompound.sol";
-import {BaseCompoundStrategy, InitializableAbstractStrategy} from "./BaseCompoundStrategy.sol";
-import {IComptroller} from "../interfaces/IComptroller.sol";
-import {IERC20} from "../utils/InitializableAbstractStrategy.sol";
+import { ICERC20 } from "./ICompound.sol";
+import { BaseCompoundStrategy, InitializableAbstractStrategy } from "./BaseCompoundStrategy.sol";
+import { IComptroller } from "../interfaces/IComptroller.sol";
+import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is BaseCompoundStrategy {
     using SafeERC20 for IERC20;
 
     event SkippedWithdrawal(address asset, uint256 amount);
 
-    constructor(BaseStrategyConfig memory _stratConfig) InitializableAbstractStrategy(_stratConfig) {}
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /**
      * @notice initialize function, to set up initial internal state
@@ -26,18 +28,28 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
-    function initialize(address[] memory _rewardTokenAddresses, address[] memory _assets, address[] memory _pTokens)
-        external
-        onlyGovernor
-        initializer
-    {
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
+    function initialize(
+        address[] memory _rewardTokenAddresses,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) external onlyGovernor initializer {
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
     }
 
     /**
      * @notice Collect accumulated COMP and send to Harvester.
      */
-    function collectRewardTokens() external virtual override onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        virtual
+        override
+        onlyHarvester
+        nonReentrant
+    {
         // Claim COMP from Comptroller
         ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
         IComptroller comptroller = IComptroller(cToken.comptroller());
@@ -55,7 +67,11 @@ contract CompoundStrategy is BaseCompoundStrategy {
         // Transfer COMP to Harvester
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(harvesterAddress, rewardTokenAddresses[0], balance);
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
         rewardToken.safeTransfer(harvesterAddress, balance);
     }
 
@@ -64,7 +80,12 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of assets to deposit
      */
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_asset, _amount);
     }
 
@@ -100,7 +121,11 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _asset Address of the asset to withdraw
      * @param _amount Amount of assets to withdraw
      */
-    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -123,7 +148,10 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _asset Address of the asset to approve. eg DAI
      * @param _pToken The pToken for the approval. eg cDAI or fDAI
      */
-    function _abstractSetPToken(address _asset, address _pToken) internal override {
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {
         // Safe approval
         IERC20(_asset).safeApprove(_pToken, 0);
         IERC20(_asset).safeApprove(_pToken, type(uint256).max);
@@ -158,7 +186,12 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256 balance)
+    {
         // Balance is always with token cToken decimals
         ICERC20 cToken = _getCTokenFor(_asset);
         balance = _checkBalance(cToken);
@@ -170,9 +203,15 @@ contract CompoundStrategy is BaseCompoundStrategy {
      * @param _cToken     cToken for which to check balance
      * @return balance    Total value of the asset in the platform
      */
-    function _checkBalance(ICERC20 _cToken) internal view returns (uint256 balance) {
+    function _checkBalance(ICERC20 _cToken)
+        internal
+        view
+        returns (uint256 balance)
+    {
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = (_cToken.balanceOf(address(this)) * _cToken.exchangeRateStored()) / 1e18;
+        balance =
+            (_cToken.balanceOf(address(this)) * _cToken.exchangeRateStored()) /
+            1e18;
     }
 
     /**

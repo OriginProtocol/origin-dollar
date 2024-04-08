@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {VaultStorage} from "../vault/VaultStorage.sol";
+import { VaultStorage } from "../vault/VaultStorage.sol";
 
 interface IVault {
     event AssetSupported(address _asset);
@@ -29,7 +29,10 @@ interface IVault {
     event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
-        address indexed _fromAsset, address indexed _toAsset, uint256 _fromAssetAmount, uint256 _toAssetAmount
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
     );
 
     // Governable.sol
@@ -82,7 +85,8 @@ interface IVault {
 
     function setSwapAllowedUndervalue(uint16 _percentageBps) external;
 
-    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps) external;
+    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
+        external;
 
     function supportAsset(address _asset, uint8 _supportsAsset) external;
 
@@ -90,9 +94,13 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
-    function setAssetDefaultStrategy(address _asset, address _strategy) external;
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external;
 
-    function assetDefaultStrategies(address _asset) external view returns (address);
+    function assetDefaultStrategies(address _asset)
+        external
+        view
+        returns (address);
 
     function pauseRebase() external;
 
@@ -116,14 +124,24 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
-    function withdrawFromStrategy(address _strategyFromAddress, address[] calldata _assets, uint256[] calldata _amounts)
-        external;
+    function withdrawFromStrategy(
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
 
-    function depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
-        external;
+    function depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
 
     // VaultCore.sol
-    function mint(address _asset, uint256 _amount, uint256 _minimumOusdAmount) external;
+    function mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) external;
 
     function mintForStrategy(uint256 _amount) external;
 
@@ -149,11 +167,17 @@ interface IVault {
 
     function checkBalance(address _asset) external view returns (uint256);
 
-    function calculateRedeemOutputs(uint256 _amount) external view returns (uint256[] memory);
+    function calculateRedeemOutputs(uint256 _amount)
+        external
+        view
+        returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);
 
-    function getAssetConfig(address _asset) external view returns (VaultStorage.Asset memory config);
+    function getAssetConfig(address _asset)
+        external
+        view
+        returns (VaultStorage.Asset memory config);
 
     function getAllAssets() external view returns (address[] memory);
 

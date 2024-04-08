@@ -6,14 +6,14 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ICurveGauge} from "./ICurveGauge.sol";
-import {ICurvePool} from "./ICurvePool.sol";
-import {ICRVMinter} from "./ICRVMinter.sol";
-import {IERC20, BaseCurveStrategy, InitializableAbstractStrategy} from "./BaseCurveStrategy.sol";
-import {StableMath} from "../utils/StableMath.sol";
-import {Helpers} from "../utils/Helpers.sol";
+import { ICurveGauge } from "./ICurveGauge.sol";
+import { ICurvePool } from "./ICurvePool.sol";
+import { ICRVMinter } from "./ICRVMinter.sol";
+import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import { Helpers } from "../utils/Helpers.sol";
 
 /*
  * IMPORTANT(!) If ThreePoolStrategy needs to be re-deployed, it requires new
@@ -29,7 +29,9 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
 
-    constructor(BaseStrategyConfig memory _stratConfig) InitializableAbstractStrategy(_stratConfig) {}
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -56,14 +58,21 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
         pTokenAddress = _pTokens[0];
-        InitializableAbstractStrategy._initialize(_rewardTokenAddress, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddress,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 
     function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit into Gauge
-        ICurveGauge(crvGaugeAddress).deposit(pToken.balanceOf(address(this)), address(this));
+        ICurveGauge(crvGaugeAddress).deposit(
+            pToken.balanceOf(address(this)),
+            address(this)
+        );
     }
 
     function _lpWithdraw(uint256 numPTokens) internal override {
@@ -82,13 +91,20 @@ contract ThreePoolStrategy is BaseCurveStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
 
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
         uint256 gaugePTokens = gauge.balanceOf(address(this));
         uint256 totalPTokens = contractPTokens + gaugePTokens;
@@ -121,7 +137,11 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         // Send
         IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = crvToken.balanceOf(address(this));
-        emit RewardTokenCollected(harvesterAddress, rewardTokenAddresses[0], balance);
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
         crvToken.safeTransfer(harvesterAddress, balance);
     }
 }

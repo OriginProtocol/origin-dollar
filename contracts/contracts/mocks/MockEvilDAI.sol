@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./MintableERC20.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 contract MockEvilDAI is MintableERC20 {
     address host;

@@ -6,9 +6,9 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for ERC-4626 Tokenized Vaults
  * @author Origin Protocol Inc
  */
-import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract Generalized4626Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -46,7 +46,11 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         assets[0] = address(assetToken);
         pTokens[0] = address(platformAddress);
 
-        InitializableAbstractStrategy._initialize(rewardTokens, assets, pTokens);
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
     }
 
     /**
@@ -54,7 +58,12 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_asset, _amount);
     }
 
@@ -88,13 +97,11 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function withdraw(address _recipient, address _asset, uint256 _amount)
-        external
-        virtual
-        override
-        onlyVault
-        nonReentrant
-    {
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external virtual override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
@@ -114,12 +121,26 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external virtual override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         uint256 shareBalance = shareToken.balanceOf(address(this));
         uint256 assetAmount = 0;
         if (shareBalance > 0) {
-            assetAmount = IERC4626(platformAddress).redeem(shareBalance, vaultAddress, address(this));
-            emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
+            assetAmount = IERC4626(platformAddress).redeem(
+                shareBalance,
+                vaultAddress,
+                address(this)
+            );
+            emit Withdrawal(
+                address(assetToken),
+                address(shareToken),
+                assetAmount
+            );
         }
     }
 
@@ -128,7 +149,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view virtual override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(assetToken), "Unexpected asset address");
         /* We are intentionally not counting the amount of assetToken parked on the
          * contract toward the checkBalance. The deposit and withdraw functions
@@ -156,7 +183,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) public view virtual override returns (bool) {
+    function supportsAsset(address _asset)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _asset == address(assetToken);
     }
 

@@ -17,7 +17,12 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev returns the asset price in USD, 6 decimal digits.
      * Compatible with the Open Price Feed.
      */
-    function price(string calldata symbol) external view override returns (uint256) {
+    function price(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return prices[keccak256(abi.encodePacked(symbol))];
     }
 
@@ -42,15 +47,26 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev sets the prices Min Max for a specific symbol in ETH, 8 decimal digits
      *
      */
-    function setTokPriceMinMax(string calldata symbol, uint256 _min, uint256 _max) external {
+    function setTokPriceMinMax(
+        string calldata symbol,
+        uint256 _min,
+        uint256 _max
+    ) external {
         pricesMinMax[keccak256(abi.encodePacked(symbol))] = [_min, _max];
     }
 
     /**
      * @dev get the price of asset in ETH, 8 decimal digits.
      */
-    function priceMin(string calldata symbol) external view override returns (uint256) {
-        uint256[] storage pMinMax = pricesMinMax[keccak256(abi.encodePacked(symbol))];
+    function priceMin(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        uint256[] storage pMinMax = pricesMinMax[
+            keccak256(abi.encodePacked(symbol))
+        ];
         return (pMinMax[0] * ethMin) / 1e6;
     }
 
@@ -58,8 +74,15 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev get the price of asset in USD, 8 decimal digits.
      * Not needed for now
      */
-    function priceMax(string calldata symbol) external view override returns (uint256) {
-        uint256[] storage pMinMax = pricesMinMax[keccak256(abi.encodePacked(symbol))];
+    function priceMax(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        uint256[] storage pMinMax = pricesMinMax[
+            keccak256(abi.encodePacked(symbol))
+        ];
         return (pMinMax[1] * ethMax) / 1e6;
     }
 }

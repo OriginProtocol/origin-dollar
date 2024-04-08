@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./MintableERC20.sol";
 
 contract MockStkAave is MintableERC20 {
@@ -38,9 +38,14 @@ contract MockStkAave is MintableERC20 {
         uint256 windowStart = cooldownStartTimestamp + COOLDOWN_SECONDS;
         require(amount != 0, "INVALID_ZERO_AMOUNT");
         require(block.timestamp > windowStart, "INSUFFICIENT_COOLDOWN");
-        require(block.timestamp - windowStart <= UNSTAKE_WINDOW, "UNSTAKE_WINDOW_FINISHED");
+        require(
+            block.timestamp - windowStart <= UNSTAKE_WINDOW,
+            "UNSTAKE_WINDOW_FINISHED"
+        );
         uint256 balanceOfMessageSender = balanceOf(msg.sender);
-        uint256 amountToRedeem = (amount > balanceOfMessageSender) ? balanceOfMessageSender : amount;
+        uint256 amountToRedeem = (amount > balanceOfMessageSender)
+            ? balanceOfMessageSender
+            : amount;
 
         stakersCooldowns[msg.sender] = 0;
         _burn(msg.sender, amountToRedeem);

@@ -5,12 +5,12 @@ pragma solidity ^0.8.0;
  * @title OETH Base Balancer Abstract Strategy
  * @author Origin Protocol Inc
  */
-import {BaseBalancerStrategy} from "./BaseBalancerStrategy.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "../../utils/InitializableAbstractStrategy.sol";
-import {IERC4626} from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
-import {StableMath} from "../../utils/StableMath.sol";
-import {IRewardStaking} from "../IRewardStaking.sol";
+import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+import { IRewardStaking } from "../IRewardStaking.sol";
 
 abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     using SafeERC20 for IERC20;
@@ -32,7 +32,10 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      */
     function _lpDepositAll() internal virtual override {
         uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this));
-        uint256 auraLp = IERC4626(auraRewardPoolAddress).deposit(bptBalance, address(this));
+        uint256 auraLp = IERC4626(auraRewardPoolAddress).deposit(
+            bptBalance,
+            address(this)
+        );
         require(bptBalance == auraLp, "Aura LP != BPT");
     }
 
@@ -55,7 +58,9 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     function _lpWithdrawAll() internal virtual override {
         // Get all the strategy's BPTs in Aura
         // maxRedeem is implemented as balanceOf(address) in Aura
-        uint256 bptBalance = IERC4626(auraRewardPoolAddress).maxRedeem(address(this));
+        uint256 bptBalance = IERC4626(auraRewardPoolAddress).maxRedeem(
+            address(this)
+        );
 
         IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
             bptBalance,
@@ -66,7 +71,13 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     /**
      * @notice Collects BAL and AURA tokens from the rewards pool.
      */
-    function collectRewardTokens() external virtual override onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        virtual
+        override
+        onlyHarvester
+        nonReentrant
+    {
         /* Similar to Convex, calling this function collects both of the
          * accrued BAL and AURA tokens.
          */
@@ -75,10 +86,16 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     }
 
     /// @notice Balancer Pool Tokens (BPT) in the Balancer pool and the Aura rewards pool.
-    function _getBalancerPoolTokens() internal view override returns (uint256 balancerPoolTokens) {
-        balancerPoolTokens = IERC20(platformAddress).balanceOf(address(this))
-        // maxRedeem is implemented as balanceOf(address) in Aura
-        + IERC4626(auraRewardPoolAddress).maxRedeem(address(this));
+    function _getBalancerPoolTokens()
+        internal
+        view
+        override
+        returns (uint256 balancerPoolTokens)
+    {
+        balancerPoolTokens =
+            IERC20(platformAddress).balanceOf(address(this)) +
+            // maxRedeem is implemented as balanceOf(address) in Aura
+            IERC4626(auraRewardPoolAddress).maxRedeem(address(this));
     }
 
     function _approveBase() internal virtual override {

@@ -6,14 +6,14 @@ pragma solidity ^0.8.0;
  * @notice The VaultStorage contract defines the storage for the Vault contracts
  * @author Origin Protocol Inc
  */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import {IStrategy} from "../interfaces/IStrategy.sol";
-import {Governable} from "../governance/Governable.sol";
-import {OUSD} from "../token/OUSD.sol";
-import {Initializable} from "../utils/Initializable.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import { Governable } from "../governance/Governable.sol";
+import { OUSD } from "../token/OUSD.sol";
+import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 
 contract VaultStorage is Initializable, Governable {
@@ -46,7 +46,10 @@ contract VaultStorage is Initializable, Governable {
     event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
-        address indexed _fromAsset, address indexed _toAsset, uint256 _fromAssetAmount, uint256 _toAssetAmount
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
     );
 
     // Assets supported by the Vault, i.e. Stablecoins
@@ -107,7 +110,8 @@ contract VaultStorage is Initializable, Governable {
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
-    bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
+    bytes32 constant adminImplPosition =
+        0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     // Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
@@ -171,7 +175,10 @@ contract VaultStorage is Initializable, Governable {
      * @param newImpl address of the implementation
      */
     function setAdminImpl(address newImpl) external onlyGovernor {
-        require(Address.isContract(newImpl), "new implementation is not a contract");
+        require(
+            Address.isContract(newImpl),
+            "new implementation is not a contract"
+        );
         bytes32 position = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {

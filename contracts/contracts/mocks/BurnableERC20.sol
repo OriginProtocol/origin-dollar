@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 interface IBurnableERC20 {
     function burn(uint256 value) external returns (bool);
@@ -30,7 +30,11 @@ abstract contract BurnableERC20 is IBurnableERC20, ERC20 {
      * @param value The amount of tokens to burn.
      * @return A boolean that indicates if the operation was successful.
      */
-    function burnFrom(address account, uint256 value) public override returns (bool) {
+    function burnFrom(address account, uint256 value)
+        public
+        override
+        returns (bool)
+    {
         _burn(account, value);
         return true;
     }

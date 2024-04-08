@@ -12,7 +12,11 @@ contract MockFrxETHMinter {
         sfrxETH = _sfrxETH;
     }
 
-    function submitAndDeposit(address recipient) external payable returns (uint256 shares) {
+    function submitAndDeposit(address recipient)
+        external
+        payable
+        returns (uint256 shares)
+    {
         IMintableERC20(frxETH).mintTo(sfrxETH, msg.value);
         IMintableERC20(sfrxETH).mintTo(recipient, msg.value);
         shares = msg.value;

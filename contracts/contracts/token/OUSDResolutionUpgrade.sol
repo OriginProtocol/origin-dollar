@@ -64,10 +64,15 @@ contract OUSDResolutionUpgrade {
     function upgradeGlobals() external {
         require(isUpgraded[address(0)] == 0, "Globals already upgraded");
         require(_rebasingCredits > 0, "Sanity _rebasingCredits");
-        require(_rebasingCreditsPerToken > 0, "Sanity _rebasingCreditsPerToken");
+        require(
+            _rebasingCreditsPerToken > 0,
+            "Sanity _rebasingCreditsPerToken"
+        );
         isUpgraded[address(0)] = 1;
         _rebasingCredits = _rebasingCredits * RESOLUTION_INCREASE;
-        _rebasingCreditsPerToken = _rebasingCreditsPerToken * RESOLUTION_INCREASE;
+        _rebasingCreditsPerToken =
+            _rebasingCreditsPerToken *
+            RESOLUTION_INCREASE;
     }
 
     function upgradeAccounts(address[] calldata accounts) external {
@@ -90,8 +95,20 @@ contract OUSDResolutionUpgrade {
         }
     }
 
-    function creditsBalanceOfHighres(address _account) public view returns (uint256, uint256, bool) {
-        return (_creditBalances[_account], _creditsPerToken(_account), isUpgraded[_account] == 1);
+    function creditsBalanceOfHighres(address _account)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        return (
+            _creditBalances[_account],
+            _creditsPerToken(_account),
+            isUpgraded[_account] == 1
+        );
     }
 
     /**
@@ -99,7 +116,11 @@ contract OUSDResolutionUpgrade {
      *      if the account is non-rebasing.
      * @param _account Address of the account.
      */
-    function _creditsPerToken(address _account) internal view returns (uint256) {
+    function _creditsPerToken(address _account)
+        internal
+        view
+        returns (uint256)
+    {
         if (nonRebasingCreditsPerToken[_account] != 0) {
             return nonRebasingCreditsPerToken[_account];
         } else {
