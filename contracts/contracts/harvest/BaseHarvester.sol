@@ -511,9 +511,9 @@ abstract contract BaseHarvester is Governable {
         uint256 minExpected = (balance *
             (1e4 - tokenConfig.allowedSlippageBps) *
             oraclePrice).scaleBy( // max allowed slippage
-                baseTokenDecimals,
-                Helpers.getDecimals(_swapToken)
-            ) /
+            baseTokenDecimals,
+            Helpers.getDecimals(_swapToken)
+        ) /
             1e4 / // fix the max slippage decimal position
             1e18; // and oracle price decimals position
 

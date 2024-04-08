@@ -50,6 +50,7 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
+const { deployWithConfirmation } = require("../utils/deploy.js");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -1714,25 +1715,34 @@ async function aeroOETHAMOFixture(
   fixture.weth = wETH;
   fixture.woeth = woETH;
 
+  const [deployer, josh] = await ethers.getSigners();
+
   log(`wETH mock token address: ${wETH.address}`);
   log(`woETH mock token address: ${woETH.address}`);
 
-  // const MockVault = await ethers.getContractFactory("MockVault");
-  // const vault = await MockVault.deploy();
+  // Deploy mock vault
+  await deployWithConfirmation("MockVaultForBase", [
+    josh.address,
+    woETH.address, // Should this be OETH?
+  ]);
+
+  const mockVault = await ethers.getContract("MockVaultForBase");
+
+  // // const MockVault = await ethers.getContractFactory("MockVault");
+  // // const vault = await MockVault.deploy();
+  // // await vault.deployed();
+
+  // // await vault.unpauseCapital();
+  // // log("Capital unpaused in Vault contract");
+
+  // const OETHVault = await ethers.getContractFactory("OETHVault");
+  // const vault = await OETHVault.deploy();
   // await vault.deployed();
 
+  // // Mock pricefeed for now
+  // await vault.initialize(josh.address, woETH.address);
   // await vault.unpauseCapital();
-  // log("Capital unpaused in Vault contract");
-  const [deployer, josh, mockVault] = await ethers.getSigners();
-
-  const OETHVault = await ethers.getContractFactory("OETHVault");
-  const vault = await OETHVault.deploy();
-  await vault.deployed();
-
-  // Mock pricefeed for now
-  await vault.initialize(josh.address, woETH.address);
-  await vault.unpauseCapital();
-  log("OETHVault deployed and initialized");
+  // log("OETHVault deployed and initialized");
 
   fixture.josh = josh;
 
@@ -1812,7 +1822,7 @@ async function aeroOETHAMOFixture(
 
   // TODO: replace mockVault with actual vault address.
   const aerodromeEthStrategy = await AerodromeEthStrategy.deploy(
-    [poolAddress, vault.address],
+    [poolAddress, mockVault.address],
     [
       addresses.base.aeroRouterAddress,
       gaugeAddress,
@@ -1829,12 +1839,11 @@ async function aeroOETHAMOFixture(
     [addresses.base.aeroTokenAddress],
     [wETH.address]
   );
-  await vault.approveStrategy(aerodromeEthStrategy.address);
-
-  log("AerodromeEthStrategy strategy approved in OETHVault");
+  // await vault.approveStrategy(aerodromeEthStrategy.address);
+  // log("AerodromeEthStrategy strategy approved in OETHVault");
 
   fixture.aerodromeEthStrategy = aerodromeEthStrategy;
-  fixture.vault = vault;
+  fixture.vault = mockVault;
 
   // Deposit LP Tokens to the Gauge onbehalf of the strategy contract
   const gauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
