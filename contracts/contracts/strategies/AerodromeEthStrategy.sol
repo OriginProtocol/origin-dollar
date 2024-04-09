@@ -428,10 +428,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // Calculate fourth root of K/2 then multiply it by 2.
         uint256 lpPrice = 2 *
             (FixedPointMathLib.sqrt(
-                FixedPointMathLib.sqrt(
-                    K.divPrecisely(2) * FixedPointMathLib.WAD
-                ) * FixedPointMathLib.WAD
-            ) / FixedPointMathLib.WAD);
+                FixedPointMathLib.sqrt(K.divPrecisely(2) * 1e18) * 1e18
+            ) / 1e18);
 
         return lpPrice;
     }
