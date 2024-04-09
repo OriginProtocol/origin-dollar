@@ -249,4 +249,11 @@ interface IPool {
         address _token1,
         bool _stable
     ) external;
+
+    /// @dev Added functions to make it ERC20 compatible
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address) external view returns (uint256);
+
+    function approve(address, uint256) external;
 }

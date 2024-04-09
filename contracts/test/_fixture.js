@@ -1714,7 +1714,7 @@ async function aeroOETHAMOFixture(
 
   fixture.weth = wETH;
   fixture.oeth = oETH;
-  const [deployer, josh] = await ethers.getSigners();
+  const [deployer, josh, governorAddr] = await ethers.getSigners();
   const { strategistAddr, timelockAddr } = await getNamedAccounts();
 
   fixture.strategist = ethers.provider.getSigner(strategistAddr);
@@ -1732,11 +1732,13 @@ async function aeroOETHAMOFixture(
   await mockVault.deployed();
   log(`Mock Vault deployed: ${mockVault.address}`);
 
-  fixture.josh = josh;
+  fixture.oethVaultSigner = await impersonateAndFund(mockVault.address);
 
+  fixture.josh = josh;
+  fixture.governor = governorAddr;
   // Minting  tokens to Josh's wallet
-  await setERC20TokenBalance(josh.address, wETH, "15000");
-  await setERC20TokenBalance(josh.address, oETH, "15000");
+  await oETH.mintTo(josh.address, parseEther("15000"));
+  await wETH.mintTo(josh.address, parseEther("15000"));
 
   // Loading the AeroRouter instance
   const aeroRouter = await ethers.getContractAt(
@@ -1773,10 +1775,11 @@ async function aeroOETHAMOFixture(
     true,
     addresses.base.aeroFactoryAddress
   );
-  let pool = await ethers.getContractAt("IERC20", poolAddress, josh);
+  let pool = await ethers.getContractAt("IPool", poolAddress, josh);
   const lpBalance = (await pool.balanceOf(josh.address)).toString();
-
   log("Received LP tokens: ", formatUnits(lpBalance, 18));
+
+  fixture.pool = pool;
 
   // Create gauge
   const aeroVoter = await ethers.getContractAt(
@@ -1799,7 +1802,6 @@ async function aeroOETHAMOFixture(
     .createGauge(addresses.base.aeroFactoryAddress, poolAddress);
   log(`Aero Gauge created for wETH/oETH pool at address: ${gaugeAddress}`);
 
-  fixture.gaugeAddress = gaugeAddress;
   fixture.routerAddress = addresses.base.aeroRouterAddress;
 
   log("Deploying AerodromeEthStrategy with a mock vault");
@@ -1809,7 +1811,9 @@ async function aeroOETHAMOFixture(
   );
 
   // TODO: replace mockVault with actual vault address.
-  const aerodromeEthStrategy = await AerodromeEthStrategy.deploy(
+  const aerodromeEthStrategy = await AerodromeEthStrategy.connect(
+    governorAddr
+  ).deploy(
     [poolAddress, mockVault.address],
     [
       addresses.base.aeroRouterAddress,
@@ -1831,7 +1835,7 @@ async function aeroOETHAMOFixture(
   // log("AerodromeEthStrategy strategy approved in OETHVault");
 
   fixture.aerodromeEthStrategy = aerodromeEthStrategy;
-  fixture.vault = mockVault;
+  fixture.oethVault = mockVault;
 
   // Deposit LP Tokens to the Gauge onbehalf of the strategy contract
   const gauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
@@ -1842,8 +1846,29 @@ async function aeroOETHAMOFixture(
   );
   log(`LP Tokens added to the gauge`);
 
-  pool = await ethers.getContractAt("IPool", poolAddress);
-  fixture.pool = pool;
+  fixture.aeroGauge = gauge;
+  // Conditional actions based on input params
+  // mint some OETH using WETH is configured
+  if (config?.wethMintAmount > 0) {
+    const wethAmount = parseUnits(config.wethMintAmount.toString());
+
+    // Set vault balance. This will sit in the vault, not the strategy
+    await setERC20TokenBalance(mockVault.address, wETH, wethAmount);
+
+    log(`MockVault weth balance set to: ${wethAmount}`);
+    // Add ETH to the pool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the AMO strategy
+      await mockVault
+        .connect(josh)
+        .depositToStrategy(
+          aerodromeEthStrategy.address,
+          [wETH.address],
+          [wethAmount]
+        );
+      log(`Deposited ${wethAmount} WETH to the strategy contract`);
+    }
+  }
 
   return fixture;
 }

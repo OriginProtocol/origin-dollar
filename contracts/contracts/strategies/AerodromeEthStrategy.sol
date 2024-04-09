@@ -210,7 +210,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
         _lpWithdraw(requiredLpTokens);
-
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
          * in that the strategy receives enough WETH on balanced removal
          */
@@ -232,8 +231,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
 
-        // Transfer WETH to the recipient
-        weth.deposit{ value: _amount }();
         require(
             weth.transfer(_recipient, _amount),
             "Transfer of WETH not successful"
@@ -292,22 +289,22 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(this),
             block.timestamp
         );
+
         // Burn all OETH
         uint256 oethToBurn = oeth.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethToBurn);
 
-        // Get the strategy contract's ether balance.
-        // This includes all that was removed from the Curve pool and
+        // Get the strategy contract's wrapped ether balance and transfer to the vault.
+        // This includes all that was removed from the AERO pool and
         // any ether that was sitting in the strategy contract before the removal.
-        uint256 ethBalance = address(this).balance;
-        // Convert all the strategy contract's ether to WETH and transfer to the vault.
-        weth.deposit{ value: ethBalance }();
+        uint256 wethBalance = weth.balanceOf(address(this));
+        // Convert all the strategy contract's ether to WETH
         require(
-            weth.transfer(vaultAddress, ethBalance),
+            weth.transfer(vaultAddress, wethBalance),
             "Transfer of WETH not successful"
         );
 
-        emit Withdrawal(address(weth), address(lpTokenAddress), ethBalance);
+        emit Withdrawal(address(weth), address(lpTokenAddress), wethBalance);
         emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
     }
 
@@ -402,12 +399,13 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // slither-disable-next-line unused-return
         weth.approve(address(aeroRouterAddress), type(uint256).max);
 
+        // Approve Aero router for LPTokens (required for removing liquidity)
+        // slither-disable-next-line unused-return
+        lpTokenAddress.approve(address(aeroRouterAddress), type(uint256).max);
+
         // Approve Aerodrome Gauge contract to transfer Aero LP tokens
         // slither-disable-next-line unused-return
-        IERC20(address(lpTokenAddress)).approve(
-            address(aeroGaugeAddress),
-            type(uint256).max
-        );
+        lpTokenAddress.approve(address(aeroGaugeAddress), type(uint256).max);
     }
 
     /**

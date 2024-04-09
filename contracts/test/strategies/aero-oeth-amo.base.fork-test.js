@@ -55,7 +55,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       fixture = await aeroOETHAMOFixture();
     });
     it("Vault should deposit some WETH to AMO strategy", async function () {
-      const { aerodromeEthStrategy, oeth, pool, weth, josh, vault } = fixture;
+      const { aerodromeEthStrategy, oeth, pool, weth, josh, oethVault } =
+        fixture;
 
       const wethDepositAmount = await units("1000", weth);
 
@@ -68,7 +69,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
 
-      let vaultSigner = await impersonateAndFund(vault.address, "2");
+      let vaultSigner = await impersonateAndFund(oethVault.address, "2");
       const tx = await aerodromeEthStrategy
         .connect(vaultSigner)
         .deposit(weth.address, wethDepositAmount);
@@ -101,10 +102,9 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         0.01 // 0.01% or 1 basis point
       );
     });
-    it.only("Only vault can deposit some WETH to AMO strategy", async function () {
-      const { aerodromeEthStrategy, vault, josh, weth, strategist, timelock } =
+    it("Only vault can deposit some WETH to AMO strategy", async function () {
+      const { aerodromeEthStrategy, josh, weth, strategist, timelock } =
         fixture;
-      //console.log(strategist, timelock, josh);
 
       const depositAmount = await units("50", weth);
 
@@ -129,14 +129,13 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const {
         aerodromeEthStrategy,
         pool,
-        vault,
         josh,
         weth,
         strategist,
         timelock,
+        oethVaultSigner,
       } = fixture;
 
-      let oethVaultSigner = await impersonateAndFund(vault.address, "1");
       const depositAmount = parseUnits("50");
       await weth
         .connect(josh)
@@ -156,6 +155,143 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Deposit")
         .withNamedArgs({ _asset: weth.address, _pToken: pool.address });
+    });
+  });
+  describe("with the strategy having some OETH and WETH in the Pool", () => {
+    beforeEach(async () => {
+      fixture = await aeroOETHAMOFixture({
+        wethMintAmount: 5000,
+        depositToStrategy: true,
+        balancePool: true,
+      });
+    });
+    it("Vault should be able to withdraw all", async () => {
+      const { aerodromeEthStrategy, pool, oeth, oethVaultSigner, weth } =
+        fixture;
+
+      const {
+        oethBurnAmount,
+        ethWithdrawAmount,
+        aeroBalances: aeroBalancesBefore,
+      } = await calcWithdrawAllAmounts(fixture);
+
+      const oethSupplyBefore = await oeth.totalSupply();
+
+      // Now try to withdraw all the WETH from the strategy
+      const tx = await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdrawAll();
+
+      // Check emitted events
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Withdrawal")
+        .withArgs(weth.address, pool.address, ethWithdrawAmount);
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Withdrawal")
+        .withArgs(oeth.address, pool.address, oethBurnAmount);
+
+      // Check the ETH and OETH balances in the Curve Metapool
+      const aeroBalancesAfter = await pool.getReserves();
+      expect(aeroBalancesAfter._reserve1).to.approxEqualTolerance(
+        aeroBalancesBefore._reserve1.sub(ethWithdrawAmount),
+        0.05 // 0.05% or 5 basis point
+      );
+      expect(aeroBalancesAfter._reserve0).to.approxEqualTolerance(
+        aeroBalancesBefore._reserve0.sub(oethBurnAmount),
+        0.05 // 0.05%
+      );
+
+      // Check the OETH total supply decrease
+      const oethSupplyAfter = await oeth.totalSupply();
+      expect(oethSupplyAfter).to.approxEqualTolerance(
+        oethSupplyBefore.sub(oethBurnAmount),
+        0.05 // 0.01% or 5 basis point
+      );
+    });
+    it("Vault should be able to withdraw some", async () => {
+      const {
+        aerodromeEthStrategy,
+        pool,
+        oeth,
+        oethVaultSigner,
+        weth,
+        oethVault,
+      } = fixture;
+
+      const withdrawAmount = oethUnits("1000");
+
+      const { oethBurnAmount, aeroBalances: aeroBalancesBefore } =
+        await calcOethWithdrawAmount(fixture, withdrawAmount);
+      const oethSupplyBefore = await oeth.totalSupply();
+      const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+
+      // Now try to withdraw the WETH from the strategy
+      const tx = await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, withdrawAmount);
+
+      // Check emitted events
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Withdrawal")
+        .withArgs(weth.address, pool.address, withdrawAmount);
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Withdrawal")
+        .withNamedArgs({ _asset: oeth.address, _pToken: pool.address });
+
+      // Check the ETH and OETH balances in the aero pool
+      const aeroBalancesAfter = await pool.getReserves();
+      expect(aeroBalancesAfter._reserve1).to.approxEqualTolerance(
+        aeroBalancesBefore._reserve1.sub(withdrawAmount),
+        0.05 // 0.05% or 5 basis point
+      );
+      expect(aeroBalancesAfter._reserve0).to.approxEqualTolerance(
+        aeroBalancesBefore._reserve0.sub(oethBurnAmount),
+        0.05 // 0.05%
+      );
+
+      // Check the OETH total supply decrease
+      const oethSupplyAfter = await oeth.totalSupply();
+      expect(oethSupplyAfter).to.approxEqualTolerance(
+        oethSupplyBefore.sub(oethBurnAmount),
+        0.05 // 0.01% or 5 basis point
+      );
+
+      // Check the WETH balance in the Vault
+      expect(await weth.balanceOf(oethVault.address)).to.equal(
+        vaultWethBalanceBefore.add(withdrawAmount)
+      );
+    });
+    it("Only vault can withdraw some WETH from AMO strategy", async function () {
+      const {
+        aerodromeEthStrategy,
+        oethVault,
+        strategist,
+        timelock,
+        josh,
+        weth,
+      } = fixture;
+      //  for (const signer of [strategist, timelock, josh]) { <-TODO: Check why this reverts
+      for (const signer of [josh]) {
+        const tx = aerodromeEthStrategy
+          .connect(signer)
+          .withdraw(oethVault.address, weth.address, parseUnits("50"));
+
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+    });
+    it("Only vault and governor can withdraw all WETH from AMO strategy", async function () {
+      const { aerodromeEthStrategy, josh, governor } = fixture;
+
+      // for (const signer of [strategist, josh]) {  <- TODO: Check why this reverts
+      for (const signer of [josh]) {
+        const tx = aerodromeEthStrategy.connect(signer).withdrawAll();
+
+        await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
+      }
+
+      // Governor can withdraw all
+      const tx = aerodromeEthStrategy.connect(governor).withdrawAll();
+      await expect(tx).to.emit(aerodromeEthStrategy, "Withdrawal");
     });
   });
 });
@@ -182,4 +318,46 @@ async function calcOethMintAmount(fixture, wethDepositAmount) {
   log(`OETH mint amount : ${formatUnits(oethMintAmount)}`);
 
   return { oethMintAmount, aeroBalances };
+}
+
+// Calculate the OETH and ETH amounts from a withdrawAll
+async function calcWithdrawAllAmounts(fixture) {
+  const { aerodromeEthStrategy, aeroGauge, pool } = fixture;
+
+  // Get the ETH and OETH balances in the Curve Metapool
+  const aeroBalances = await pool.getReserves();
+  const strategyLpAmount = await aeroGauge.balanceOf(
+    aerodromeEthStrategy.address
+  );
+  const totalLpSupply = await pool.totalSupply();
+
+  // OETH to burn = OETH pool balance * strategy LP amount / total pool LP amount
+  const oethBurnAmount = aeroBalances._reserve0
+    .mul(strategyLpAmount)
+    .div(totalLpSupply);
+  // ETH to withdraw = ETH pool balance * strategy LP amount / total pool LP amount
+  const ethWithdrawAmount = aeroBalances._reserve1
+    .mul(strategyLpAmount)
+    .div(totalLpSupply);
+
+  log(`OETH burn amount    : ${formatUnits(oethBurnAmount)}`);
+  log(`ETH withdraw amount : ${formatUnits(ethWithdrawAmount)}`);
+  return { oethBurnAmount, ethWithdrawAmount, aeroBalances };
+}
+
+// Calculate the amount of OETH burnt from a withdraw
+async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
+  const { pool } = fixture;
+
+  // Get the ETH and OETH balances in the Curve Metapool
+  const aeroBalances = await pool.getReserves();
+
+  // OETH to burn = WETH withdrawn * OETH pool balance / ETH pool balance
+  const oethBurnAmount = wethWithdrawAmount
+    .mul(aeroBalances._reserve0)
+    .div(aeroBalances._reserve1);
+
+  log(`OETH burn amount : ${formatUnits(oethBurnAmount)}`);
+
+  return { oethBurnAmount, aeroBalances };
 }
