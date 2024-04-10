@@ -10,7 +10,7 @@ const { BigNumber, ethers } = require("ethers");
 
 const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
-describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
+describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
@@ -37,10 +37,10 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       );
     });
     it("Should calculate the correct LP Price", async () => {
-        const { aerodromeEthStrategy } = fixture;
+      const { aerodromeEthStrategy } = fixture;
 
       const lpPrice = await calcLPTokenPrice(fixture);
-       
+
       expect(await aerodromeEthStrategy.getLPTokenPrice()).to.equal(
         BigNumber.from(ethers.constants.WeiPerEther.mul(lpPrice))
       );
@@ -64,8 +64,16 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       fixture = await aeroOETHAMOFixture();
     });
     it("Vault should deposit some WETH to AMO strategy", async function () {
-      const { aerodromeEthStrategy, oeth, pool, weth, josh, oethVault } =
-        fixture;
+      const {
+        aerodromeEthStrategy,
+        oeth,
+        pool,
+        weth,
+        josh,
+        oethVault,
+        oethReserveIndex,
+        wethReserveIndex,
+      } = fixture;
 
       const wethDepositAmount = await units("1000", weth);
 
@@ -95,12 +103,16 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       // Check the ETH and OETH balances in the Curve Metapool
       const aeroBalancesAfter = await pool.getReserves();
-      expect(aeroBalancesAfter._reserve0.toString()).to.approxEqualTolerance(
-        aeroBalances._reserve0.add(wethDepositAmount),
+      expect(
+        aeroBalancesAfter[wethReserveIndex].toString()
+      ).to.approxEqualTolerance(
+        aeroBalances[wethReserveIndex].add(wethDepositAmount),
         0.01 // 0.01% or 1 basis point
       );
-      expect(aeroBalancesAfter._reserve1.toString()).to.approxEqualTolerance(
-        aeroBalances._reserve1.add(oethMintAmount),
+      expect(
+        aeroBalancesAfter[oethReserveIndex].toString()
+      ).to.approxEqualTolerance(
+        aeroBalances[oethReserveIndex].add(oethMintAmount),
         0.01 // 0.01% or 1 basis point
       );
 
@@ -175,8 +187,15 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       });
     });
     it("Vault should be able to withdraw all", async () => {
-      const { aerodromeEthStrategy, pool, oeth, oethVaultSigner, weth } =
-        fixture;
+      const {
+        aerodromeEthStrategy,
+        pool,
+        oeth,
+        oethVaultSigner,
+        weth,
+        oethReserveIndex,
+        wethReserveIndex,
+      } = fixture;
 
       const {
         oethBurnAmount,
@@ -199,14 +218,14 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         .to.emit(aerodromeEthStrategy, "Withdrawal")
         .withArgs(oeth.address, pool.address, oethBurnAmount);
 
-      // Check the ETH and OETH balances in the Curve Metapool
+      // Check the ETH and OETH balances in the Aero sAMM Metapool
       const aeroBalancesAfter = await pool.getReserves();
-      expect(aeroBalancesAfter._reserve1).to.approxEqualTolerance(
-        aeroBalancesBefore._reserve1.sub(ethWithdrawAmount),
+      expect(aeroBalancesAfter[wethReserveIndex]).to.approxEqualTolerance(
+        aeroBalancesBefore[wethReserveIndex].sub(ethWithdrawAmount),
         0.05 // 0.05% or 5 basis point
       );
-      expect(aeroBalancesAfter._reserve0).to.approxEqualTolerance(
-        aeroBalancesBefore._reserve0.sub(oethBurnAmount),
+      expect(aeroBalancesAfter[oethReserveIndex]).to.approxEqualTolerance(
+        aeroBalancesBefore[oethReserveIndex].sub(oethBurnAmount),
         0.05 // 0.05%
       );
 
@@ -225,6 +244,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         oethVaultSigner,
         weth,
         oethVault,
+        oethReserveIndex,
+        wethReserveIndex,
       } = fixture;
 
       const withdrawAmount = oethUnits("1000");
@@ -249,12 +270,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       // Check the ETH and OETH balances in the aero pool
       const aeroBalancesAfter = await pool.getReserves();
-      expect(aeroBalancesAfter._reserve1).to.approxEqualTolerance(
-        aeroBalancesBefore._reserve1.sub(withdrawAmount),
+      expect(aeroBalancesAfter[wethReserveIndex]).to.approxEqualTolerance(
+        aeroBalancesBefore[wethReserveIndex].sub(withdrawAmount),
         0.05 // 0.05% or 5 basis point
       );
-      expect(aeroBalancesAfter._reserve0).to.approxEqualTolerance(
-        aeroBalancesBefore._reserve0.sub(oethBurnAmount),
+      expect(aeroBalancesAfter[oethReserveIndex]).to.approxEqualTolerance(
+        aeroBalancesBefore[oethReserveIndex].sub(oethBurnAmount),
         0.05 // 0.05%
       );
 
@@ -307,12 +328,14 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
 // Calculate the minted OETH amount for a deposit
 async function calcOethMintAmount(fixture, wethDepositAmount) {
-  const { pool } = fixture;
+  const { pool, oethReserveIndex, wethReserveIndex } = fixture;
 
   // Get the WETH and WOETH balances in the Aero sAMM pool
   const aeroBalances = await pool.getReserves();
-  // WETH balance - WOETH balance
-  const balanceDiff = aeroBalances._reserve1.sub(aeroBalances._reserve0);
+  // WETH balance - OETH balance
+  const balanceDiff = aeroBalances[wethReserveIndex].sub(
+    aeroBalances[oethReserveIndex]
+  );
 
   let oethMintAmount = balanceDiff.lte(0)
     ? // If more OETH than ETH then mint same amount of WOETH as WETH
@@ -331,7 +354,13 @@ async function calcOethMintAmount(fixture, wethDepositAmount) {
 
 // Calculate the OETH and ETH amounts from a withdrawAll
 async function calcWithdrawAllAmounts(fixture) {
-  const { aerodromeEthStrategy, aeroGauge, pool } = fixture;
+  const {
+    aerodromeEthStrategy,
+    aeroGauge,
+    pool,
+    oethReserveIndex,
+    wethReserveIndex,
+  } = fixture;
 
   // Get the ETH and OETH balances in the Curve Metapool
   const aeroBalances = await pool.getReserves();
@@ -341,11 +370,11 @@ async function calcWithdrawAllAmounts(fixture) {
   const totalLpSupply = await pool.totalSupply();
 
   // OETH to burn = OETH pool balance * strategy LP amount / total pool LP amount
-  const oethBurnAmount = aeroBalances._reserve0
+  const oethBurnAmount = aeroBalances[oethReserveIndex]
     .mul(strategyLpAmount)
     .div(totalLpSupply);
   // ETH to withdraw = ETH pool balance * strategy LP amount / total pool LP amount
-  const ethWithdrawAmount = aeroBalances._reserve1
+  const ethWithdrawAmount = aeroBalances[wethReserveIndex]
     .mul(strategyLpAmount)
     .div(totalLpSupply);
 
@@ -356,15 +385,15 @@ async function calcWithdrawAllAmounts(fixture) {
 
 // Calculate the amount of OETH burnt from a withdraw
 async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
-  const { pool } = fixture;
+  const { pool, oethReserveIndex, wethReserveIndex } = fixture;
 
   // Get the ETH and OETH balances in the Curve Metapool
   const aeroBalances = await pool.getReserves();
 
   // OETH to burn = WETH withdrawn * OETH pool balance / ETH pool balance
   const oethBurnAmount = wethWithdrawAmount
-    .mul(aeroBalances._reserve0)
-    .div(aeroBalances._reserve1);
+    .mul(aeroBalances[oethReserveIndex])
+    .div(aeroBalances[wethReserveIndex]);
 
   log(`OETH burn amount : ${formatUnits(oethBurnAmount)}`);
 
@@ -386,14 +415,14 @@ function sqrt(value) {
 
 // Calculate the LPToken price of the given sAMM pool
 async function calcLPTokenPrice(fixture) {
-  const { pool, aerodromeEthStrategy } = fixture;
+  const { pool } = fixture;
 
   // Get the ETH and OETH balances in the Aero sAMM Pool
   const aeroBalances = await pool.getReserves();
   const x = aeroBalances._reserve0;
   const y = aeroBalances._reserve1;
 
-   // invariant = (x^3 * y) + (y^3 * x)
+  // invariant = (x^3 * y) + (y^3 * x)
   const invariant = x
     .pow(3)
     .mul(y)

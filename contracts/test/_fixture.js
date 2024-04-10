@@ -1779,7 +1779,15 @@ async function aeroOETHAMOFixture(
   const lpBalance = (await pool.balanceOf(josh.address)).toString();
   log("Received LP tokens: ", formatUnits(lpBalance, 18));
 
+  // We need to do this as the order will be different for each run.
+  const wethReserveIndex =
+    wETH.address === (await pool.token0()) ? "_reserve0" : "_reserve1";
+  const oethReserveIndex =
+    wethReserveIndex === "_reserve1" ? "_reserve0" : "_reserve1";
+
   fixture.pool = pool;
+  fixture.wethReserveIndex = wethReserveIndex;
+  fixture.oethReserveIndex = oethReserveIndex;
 
   // Create gauge
   const aeroVoter = await ethers.getContractAt(
