@@ -80,8 +80,9 @@ async function aeroPool({
   );
 
   // Pool balances
-  const poolBalancesBefore = diffBlocks && (await pool.getReserves());
-  const poolBalances = await pool.getReserves();
+  const poolBalancesBefore =
+    diffBlocks && (await pool.getReserves({ blockTag: fromBlockTag }));
+  const poolBalances = await pool.getReserves({ blockTag });
 
   const amountOutBefore = await router.getAmountsOut(parseUnits("1"), [
     [
@@ -329,10 +330,7 @@ async function calcLPTokenPrice(fixture) {
   const lpPrice = sqrt(
     sqrt(invariant.div(ethers.constants.WeiPerEther).div(2))
   ).mul(2);
-
-  log(`LP Price :  ${lpPrice} `);
-
-  return lpPrice;
+  return BigNumber.from(lpPrice).mul(ethers.constants.WeiPerEther);
 }
 
 module.exports = {

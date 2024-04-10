@@ -63,7 +63,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
     beforeEach(async () => {
       fixture = await aeroOETHAMOFixture();
     });
-    it.only("Vault should deposit some WETH to AMO strategy", async function () {
+    it("Vault should deposit some WETH to AMO strategy", async function () {
       const {
         aerodromeEthStrategy,
         oeth,
@@ -220,10 +220,27 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       const oethSupplyBefore = await oeth.totalSupply();
 
+      log("Before withdraw all from strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        output: false,
+        fixture: JSON.stringify(fixture),
+      });
+
       // Now try to withdraw all the WETH from the strategy
       const tx = await aerodromeEthStrategy
         .connect(oethVaultSigner)
         .withdrawAll();
+
+      const receipt = await tx.wait();
+
+      log("After withdraw all from strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+        fixture: JSON.stringify(fixture),
+      });
 
       // Check emitted events
       await expect(tx)
@@ -270,11 +287,27 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const oethSupplyBefore = await oeth.totalSupply();
       const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
 
+      log("Before withdraw from strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        output: false,
+        fixture: JSON.stringify(fixture),
+      });
+
       // Now try to withdraw the WETH from the strategy
       const tx = await aerodromeEthStrategy
         .connect(oethVaultSigner)
         .withdraw(oethVault.address, weth.address, withdrawAmount);
 
+      const receipt = await tx.wait();
+
+      log("After withdraw from strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+        fixture: JSON.stringify(fixture),
+      });
       // Check emitted events
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Withdrawal")
