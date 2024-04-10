@@ -10,7 +10,7 @@ const { BigNumber, ethers } = require("ethers");
 
 const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
-describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
+describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
@@ -63,7 +63,7 @@ describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
     beforeEach(async () => {
       fixture = await aeroOETHAMOFixture();
     });
-    it("Vault should deposit some WETH to AMO strategy", async function () {
+    it.only("Vault should deposit some WETH to AMO strategy", async function () {
       const {
         aerodromeEthStrategy,
         oeth,
@@ -87,11 +87,26 @@ describe.only("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const oethSupplyBefore = await oeth.totalSupply();
 
       let vaultSigner = await impersonateAndFund(oethVault.address, "2");
+
+      log("Before deposit to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        output: false,
+        fixture: JSON.stringify(fixture),
+      });
       const tx = await aerodromeEthStrategy
         .connect(vaultSigner)
         .deposit(weth.address, wethDepositAmount);
 
       const receipt = await tx.wait();
+
+      log("After deposit to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: fixture,
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+       });
 
       // Check emitted events
       await expect(tx)
@@ -428,11 +443,13 @@ async function calcLPTokenPrice(fixture) {
     .mul(y)
     .div(ethers.constants.WeiPerEther.pow(3))
     .add(y.pow(3).mul(x).div(ethers.constants.WeiPerEther.pow(3)));
-
   // price = 2 * fourthroot of (invariant/2)
   const lpPrice =
     2 * sqrt(sqrt(invariant.div(ethers.constants.WeiPerEther).div(2)));
+
   log(`LP Price :  ${lpPrice} `);
 
   return lpPrice;
 }
+
+ 

@@ -53,6 +53,7 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const { aeroAmoStrategyTask } = require("./aeroAmoStrategy");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -739,3 +740,30 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
     types.int
   )
   .setAction(proxyUpgrades);
+
+// Aero AMO
+subtask("aeroAmoStrat", "Dumps the current state of a Aero AMO strategy")
+  .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "fromBlock",
+    "Block number to compare back to. (default: no diff)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
+  .addOptionalParam("fixture", "Deployed contracts")
+  .setAction(aeroAmoStrategyTask);
+task("aeroAmoStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
