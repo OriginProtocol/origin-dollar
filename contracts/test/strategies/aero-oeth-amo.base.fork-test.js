@@ -3,10 +3,10 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
-const { oethPoolLpPID } = require("../../utils/constants");
 const { units, oethUnits, isCI } = require("../helpers");
 const { aeroOETHAMOFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
+const { BigNumber, ethers } = require("ethers");
 
 const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
@@ -34,6 +34,15 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       );
       expect(await aerodromeEthStrategy.aeroFactoryAddress()).to.equal(
         addresses.base.aeroFactoryAddress
+      );
+    });
+    it("Should calculate the correct LP Price", async () => {
+        const { aerodromeEthStrategy } = fixture;
+
+      const lpPrice = await calcLPTokenPrice(fixture);
+       
+      expect(await aerodromeEthStrategy.getLPTokenPrice()).to.equal(
+        BigNumber.from(ethers.constants.WeiPerEther.mul(lpPrice))
       );
     });
     it("Should be able to check balance", async () => {
@@ -360,4 +369,41 @@ async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
   log(`OETH burn amount : ${formatUnits(oethBurnAmount)}`);
 
   return { oethBurnAmount, aeroBalances };
+}
+
+function sqrt(value) {
+  const ONE = ethers.BigNumber.from(1);
+  const TWO = ethers.BigNumber.from(2);
+  x = ethers.BigNumber.from(value);
+  let z = x.add(ONE).div(TWO);
+  let y = x;
+  while (z.sub(y).isNegative()) {
+    y = z;
+    z = x.div(z).add(z).div(TWO);
+  }
+  return y;
+}
+
+// Calculate the LPToken price of the given sAMM pool
+async function calcLPTokenPrice(fixture) {
+  const { pool, aerodromeEthStrategy } = fixture;
+
+  // Get the ETH and OETH balances in the Aero sAMM Pool
+  const aeroBalances = await pool.getReserves();
+  const x = aeroBalances._reserve0;
+  const y = aeroBalances._reserve1;
+
+   // invariant = (x^3 * y) + (y^3 * x)
+  const invariant = x
+    .pow(3)
+    .mul(y)
+    .div(ethers.constants.WeiPerEther.pow(3))
+    .add(y.pow(3).mul(x).div(ethers.constants.WeiPerEther.pow(3)));
+
+  // price = 2 * fourthroot of (invariant/2)
+  const lpPrice =
+    2 * sqrt(sqrt(invariant.div(ethers.constants.WeiPerEther).div(2)));
+  log(`LP Price :  ${lpPrice} `);
+
+  return lpPrice;
 }
