@@ -40,20 +40,20 @@ contract FuzzVault is FuzzHelper {
             lte(
                 wethBalDiff,
                 MINT_TOLERANCE,
-                "VMINT-01: Actor WETH balance should decrease by amount minted"
+                "VMINT-01: Actor WETH balance decreases by amount minted after successful mint"
             );
             lte(
                 oethBalDiff,
                 MINT_TOLERANCE,
-                "VMINT-02: Actor OETH balance should increase by amount minted"
+                "VMINT-02: Actor OETH balance increases by amount minted after successful mint"
             );
             lte(
                 vaultBalDiff,
                 MINT_TOLERANCE,
-                "VMINT-03: Vault WETH balance should increase by amount minted"
+                "VMINT-03: Vault WETH balance increases by amount minted after successful mint"
             );
         } catch {
-            t(false, "VMINT-04: No unwanted reverts when minting OETH");
+            t(false, "VMINT-04: Minting OETH does not unexpectedly revert");
         }
     }
 
@@ -91,20 +91,20 @@ contract FuzzVault is FuzzHelper {
             lte(
                 wethBalDiff,
                 REDEEM_TOLERANCE,
-                "VREDEEM-01: Actor WETH balance should increase by amount redeemed"
+                "VREDEEM-01: Actor WETH balance increases by amount redeemed after successful redeem"
             );
             lte(
                 oethBalDiff,
                 REDEEM_TOLERANCE,
-                "VREDEEM-02: Actor OETH balance should decrease by amount redeemed"
+                "VREDEEM-02: Actor OETH balance decreases by amount redeemed after successful redeem"
             );
             lte(
                 vaultBalDiff,
                 REDEEM_TOLERANCE,
-                "VREDEEM-03: Vault WETH balance should decrease by amount redeemed"
+                "VREDEEM-03: Vault WETH balance decreases by amount redeemed after successful redeem"
             );
         } catch {
-            t(false, "VREDEEM-04: No unwanted reverts when redeeming OETH");
+            t(false, "VREDEEM-04: Redeeming OETH does not unexpectedly revert");
         }
     }
 
@@ -119,7 +119,7 @@ contract FuzzVault is FuzzHelper {
         lte(
             balanceAfter,
             REDEEM_TOLERANCE,
-            "VREDEEM-05: After redeeming all, actor OETH balance should be zero"
+            "VREDEEM-05: Actor OETH balance is zero after successfully redeeming all"
         );
     }
 
@@ -138,7 +138,7 @@ contract FuzzVault is FuzzHelper {
         } catch {
             t(
                 false,
-                "VREBASE-01: No unwanted reverts when donating WETH to Vault"
+                "VREBASE-01: Donating WETH to the Vault does not unexpectedly revert"
             );
         }
 
@@ -161,7 +161,7 @@ contract FuzzVault is FuzzHelper {
                     lte(
                         diff,
                         BALANCE_AFTER_REBASE_TOLERANCE,
-                        "VREBASE-02: Rebasing should never decrease OETH balance for any actor"
+                        "VREBASE-02: Rebasing never decreases OETH balance for any actor"
                     );
                 }
             }
@@ -170,7 +170,7 @@ contract FuzzVault is FuzzHelper {
                 totalYield += totalOethAfter - totalOethBefore;
             }
         } catch {
-            t(false, "VREBASE-03: No unwanted reverts when rebasing Vault");
+            t(false, "VREBASE-03: Rebasing vault does not unexpectedly revert");
         }
     }
 
@@ -206,7 +206,7 @@ contract FuzzVault is FuzzHelper {
         try vault.redeemAll(0) {} catch {
             t(
                 false,
-                "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+                "GLOBAL-07: Any actor can always redeem all OETH"
             );
         }
 
@@ -214,7 +214,7 @@ contract FuzzVault is FuzzHelper {
         try vault.redeemAll(0) {} catch {
             t(
                 false,
-                "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+                "GLOBAL-07: Any actor can always redeem all OETH"
             );
         }
 
@@ -223,7 +223,7 @@ contract FuzzVault is FuzzHelper {
             try vault.redeemAll(0) {} catch {
                 t(
                     false,
-                    "GLOBAL-07: Any actor should always be enable to redeem all OETH"
+                    "GLOBAL-07: Any actor can always redeem all OETH"
                 );
             }
         }
