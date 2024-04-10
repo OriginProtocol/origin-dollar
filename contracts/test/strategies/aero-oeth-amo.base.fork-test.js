@@ -91,8 +91,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       log("Before deposit to strategy");
       await run("aeroAmoStrat", {
         pool: "OETH",
-        output: false,
         fixture: JSON.stringify(fixture),
+        output: false,
       });
       const tx = await aerodromeEthStrategy
         .connect(vaultSigner)

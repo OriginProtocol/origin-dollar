@@ -40,7 +40,7 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
       fromBlockTag,
       output,
     });
-  return;
+
   // Get symbols and contracts
   const {
     oTokenSymbol,
@@ -48,18 +48,18 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
     poolLPSymbol,
     assets,
     oToken,
-    cvxRewardPool,
+    gauge,
     amoStrategy,
     vault,
-  } = await aeroContracts(poolOTokenSymbol);
+  } = await aeroContracts(poolOTokenSymbol, fixture);
 
-  // Strategy's Metapool LPs in the Convex pool
+  // Strategy's Metapool LPs in the Gauge
   const vaultLPsBefore =
     diffBlocks &&
-    (await cvxRewardPool.balanceOf(amoStrategy.address, {
+    (await gauge.balanceOf(amoStrategy.address, {
       blockTag: fromBlockTag,
     }));
-  const vaultLPs = await cvxRewardPool.balanceOf(amoStrategy.address, {
+  const vaultLPs = await gauge.balanceOf(amoStrategy.address, {
     blockTag,
   });
   // total vault value
@@ -72,13 +72,23 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
   const oTokenSupply = await oToken.totalSupply({ blockTag });
   // Assets in the pool
   const strategyAssetsInPoolBefore =
-    diffBlocks && poolBalancesBefore[0].mul(vaultLPsBefore).div(totalLPsBefore);
-  const strategyAssetsInPool = poolBalances[0].mul(vaultLPs).div(totalLPs);
+    diffBlocks &&
+    poolBalancesBefore[fixture.wethReserveIndex]
+      .mul(vaultLPsBefore)
+      .div(totalLPsBefore);
+  const strategyAssetsInPool = poolBalances[fixture.wethReserveIndex]
+    .mul(vaultLPs)
+    .div(totalLPs);
   // OTokens in the pool
   const strategyOTokensInPoolBefore =
-    diffBlocks && poolBalancesBefore[1].mul(vaultLPsBefore).div(totalLPsBefore);
-  const strategyOTokensInPool = poolBalances[1].mul(vaultLPs).div(totalLPs);
-  // Adjusted total vault value
+    diffBlocks &&
+    poolBalancesBefore[fixture.oethReserveIndex]
+      .mul(vaultLPsBefore)
+      .div(totalLPsBefore);
+  const strategyOTokensInPool = poolBalances[fixture.oethReserveIndex]
+    .mul(vaultLPs)
+    .div(totalLPs);
+  //  Adjusted total vault value
   const vaultAdjustedTotalValueBefore =
     diffBlocks && vaultTotalValueBefore.sub(strategyOTokensInPoolBefore);
   const vaultAdjustedTotalValue = vaultTotalValue.sub(strategyOTokensInPool);
@@ -129,8 +139,9 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
   // Strategy asset values
   let totalStrategyAssetsValueBefore = BigNumber.from(0);
   let totalStrategyAssetsValue = BigNumber.from(0);
+
   for (const asset of assets) {
-    const symbol = await asset.symbol();
+    const symbol = "WETH";
     const strategyAssetsValueBefore =
       diffBlocks &&
       (await amoStrategy["checkBalance(address)"](asset.address, {
@@ -147,6 +158,11 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
         blockTag,
       }
     );
+
+    asset.decimals = () => {
+      return 18;
+    };
+
     const strategyAssetsValueScaled = await scaleAmount(
       strategyAssetsValue,
       asset
@@ -220,7 +236,7 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
       diffBlocks && (await scaleAmount(assetsInVaultBefore, asset));
     const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
     const assetsInVaultScaled = await scaleAmount(assetsInVault, asset);
-    const symbol = await asset.symbol();
+    const symbol = "WETH";
     output(
       displayProperty(
         `${symbol.padEnd(4)} in vault`,
@@ -255,7 +271,7 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
       oTokenSupplyBefore
     )}`
   );
-  // Adjusted total value v total supply
+  //  Adjusted total value v total supply
   output(
     displayProperty(
       "OToken adjust supply",
@@ -285,10 +301,10 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
   const netMintedForStrategy = await vault.netOusdMintedForStrategy({
     blockTag,
   });
-  const netMintedForStrategyThreshold =
-    await vault.netOusdMintForStrategyThreshold({ blockTag });
-  const netMintedForStrategyDiff =
-    netMintedForStrategyThreshold.sub(netMintedForStrategy);
+  //   const netMintedForStrategyThreshold =
+  //     await vault.netOusdMintForStrategyThreshold({ blockTag });
+  //   const netMintedForStrategyDiff =
+  //     netMintedForStrategyThreshold.sub(netMintedForStrategy);
 
   output(
     displayProperty(
@@ -297,20 +313,20 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
       netMintedForStrategy
     )
   );
-  output(
-    displayProperty(
-      "Net minted threshold",
-      assetSymbol,
-      netMintedForStrategyThreshold
-    )
-  );
-  output(
-    displayProperty(
-      "Net minted for strat diff",
-      assetSymbol,
-      netMintedForStrategyDiff
-    )
-  );
+  //   output(
+  //     displayProperty(
+  //       "Net minted threshold",
+  //       assetSymbol,
+  //       netMintedForStrategyThreshold
+  //     )
+  //   );
+  //   output(
+  //     displayProperty(
+  //       "Net minted for strat diff",
+  //       assetSymbol,
+  //       netMintedForStrategyDiff
+  //     )
+  // );
 }
 
 module.exports = {

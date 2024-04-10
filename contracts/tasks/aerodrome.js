@@ -197,7 +197,7 @@ async function aeroContracts(oTokenSymbol, fixture) {
   // Load all the contracts
   const assets =
     oTokenSymbol === "OETH"
-      ? [await resolveAsset("WETH")]
+      ? [await ethers.getContractAt("IERC20", fixture.weth.address)]
       : [
           await resolveAsset("DAI"),
           await resolveAsset("USDC"),
@@ -334,6 +334,7 @@ async function calcLPTokenPrice(fixture) {
 }
 
 module.exports = {
+  aeroContracts,
   aeroPool,
   aeroPoolTask,
   displayDiff,

@@ -1728,9 +1728,17 @@ async function aeroOETHAMOFixture(
   // Deploy mock vault
   const MockVaultForBase = await ethers.getContractFactory("MockVaultForBase");
 
-  const mockVault = await MockVaultForBase.deploy(josh.address, oETH.address);
+  const mockVault = await MockVaultForBase.deploy(
+    josh.address,
+    oETH.address,
+    wETH.address
+  );
   await mockVault.deployed();
   log(`Mock Vault deployed: ${mockVault.address}`);
+
+  // Mint one token each to the vault for the task
+  await oETH.mintTo(mockVault.address, parseUnits("1"));
+  await wETH.mintTo(mockVault.address, parseUnits("1"));
 
   fixture.oethVaultSigner = await impersonateAndFund(mockVault.address);
 
