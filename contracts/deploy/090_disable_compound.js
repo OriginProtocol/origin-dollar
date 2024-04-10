@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
-    // reduceQueueTime: true, // just to solve the issue of later active proposals failing
+    reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId:
       "540302155888465131843465904203767906417865895567367577074989857543481682425",
   },
