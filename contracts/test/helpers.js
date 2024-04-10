@@ -425,6 +425,8 @@ const getAssetAddresses = async (deployments) => {
       auraWeightedOraclePool: addresses.mainnet.AuraWeightedOraclePool,
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
+      SSV: addresses.mainnet.SSV,
+      SSVNetwork: addresses.mainnet.SSVNetwork,
     };
   } else {
     const addressMap = {
@@ -470,6 +472,8 @@ const getAssetAddresses = async (deployments) => {
         .address,
       AURA: (await deployments.get("MockAura")).address,
       BAL: (await deployments.get("MockBAL")).address,
+      SSV: (await deployments.get("MockSSV")).address,
+      SSVNetwork: (await deployments.get("MockSSVNetwork")).address
     };
 
     try {

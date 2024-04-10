@@ -17,8 +17,14 @@ module.exports = deploymentWithGovernanceProposal(
     // Current contracts
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
-      "VaultAdmin",
+      "OETHVaultAdmin",
       cVaultProxy.address
+    );
+
+    const cHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "OETHHarvester",
+      cHarvesterProxy.address
     );
 
     // Deployer Actions
@@ -47,12 +53,16 @@ module.exports = deploymentWithGovernanceProposal(
       [addresses.zero, cVaultProxy.address], //_baseConfig
       addresses.mainnet.WETH, // wethAddress
       addresses.mainnet.SSV, // ssvToken
-      addresses.mainnet.SsvNetwork, // ssvNetwork
+      addresses.mainnet.SSVNetwork, // ssvNetwork
       dFeeAccumulatorProxy.address // feeAccumulator
     ]);
     const cStrategyImpl = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       dStrategyImpl.address
+    );
+    const cStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      dStrategyProxy.address
     );
 
     // 3. Initialize Proxy with new implementation and strategy initialization
@@ -99,6 +109,9 @@ module.exports = deploymentWithGovernanceProposal(
       )
     );
 
+    // 7. Safe approve SSV token spending
+    await cStrategy.connect(sDeployer).safeApproveAllTokens();
+
     console.log("Native Staking SSV Strategy address: ", cStrategyProxy.address);
     console.log("Fee accumulator address: ", cFeeAccumulator.address);
 
@@ -112,6 +125,16 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cStrategyProxy.address],
+        },
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cStrategyProxy.address, true],
+        },
+        {
+          contract: cStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };

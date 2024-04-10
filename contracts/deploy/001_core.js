@@ -646,6 +646,18 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
       .connect(sGovernor)
       .setHarvesterAddress(oethHarvesterProxy.address)
   );
+
+  const nativeStakingSSVStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+  const nativeStakingSSVStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    nativeStakingSSVStrategyProxy.address
+  );
+
+  await withConfirmation(
+    nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(oethHarvesterProxy.address)
+  );
 };
 
 const deployDripper = async () => {
@@ -711,6 +723,101 @@ const deployFraxEthStrategy = async () => {
     )
   );
   return cFraxETHStrategy;
+};
+
+/**
+ * Deploy NativeStakingSSVStrategy
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
+ */
+const deployNativeStakingSSVStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  log("Deploy NativeStakingSSVStrategyProxy");
+  const dNativeStakingSSVStrategyProxy = await deployWithConfirmation(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const cNativeStakingSSVStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+
+  log("Deploy FeeAccumulator proxy");
+  const dFeeAccumulatorProxy = await deployWithConfirmation(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+  const cFeeAccumulatorProxy = await ethers.getContractAt(
+    "NativeStakingFeeAccumulatorProxy",
+    dFeeAccumulatorProxy.address
+  );
+
+
+  log("Deploy NativeStakingSSVStrategy");
+  const dStrategyImpl = await deployWithConfirmation("NativeStakingSSVStrategy", [
+    [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+    assetAddresses.WETH, // wethAddress
+    assetAddresses.SSV, // ssvToken
+    assetAddresses.SSVNetwork, // ssvNetwork
+    dFeeAccumulatorProxy.address // feeAccumulator
+  ]);
+  const cStrategyImpl = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    dStrategyImpl.address
+  );
+  const cStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    dNativeStakingSSVStrategyProxy.address
+  );
+
+  log("Deploy encode initialize function of the strategy contract");
+  const initData = cStrategyImpl.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.WETH, assetAddresses.SSV], // reward token addresses
+      /* no need to specify WETH as an asset, since we have that overriden in the "supportsAsset"
+       * function on the strategy
+       */
+      [], // asset token addresses
+      [], // platform tokens addresses
+    ]
+  );
+
+  log("Initialize the proxy and execute the initialize strategy function");
+  await withConfirmation(
+    cNativeStakingSSVStrategyProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      cStrategyImpl.address, // implementation address
+      governorAddr, // governance
+      initData, // data for call to the initialize function on the strategy
+    )
+  );
+
+  log("Approve spending of the SSV token");
+  await cStrategy
+    .connect(sDeployer)
+    .safeApproveAllTokens();
+
+  log("Deploy fee accumulator implementation");
+  const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
+    cNativeStakingSSVStrategyProxy.address, // _collector
+    assetAddresses.WETH // _weth
+  ]);
+  const cFeeAccumulator = await ethers.getContractAt(
+    "FeeAccumulator",
+    dFeeAccumulator.address
+  );
+
+  log("Init fee accumulator proxy");
+  await withConfirmation(
+    cFeeAccumulatorProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      cFeeAccumulator.address, // implementation address
+      governorAddr, // governance
+      "0x", // do not call any initialize functions
+    )
+  );
+
+  return cStrategy;
 };
 
 /**
@@ -1231,6 +1338,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployNativeStakingSSVStrategy();
   await deployFraxEthStrategy();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
   await configureVault();

@@ -242,7 +242,7 @@ addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
-addresses.mainnet.SsvNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
 
 // Arbitrum One
 addresses.arbitrumOne = {};

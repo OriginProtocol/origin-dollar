@@ -120,6 +120,16 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
+  // Mock SSV token
+  await deploy("MockSSV", {
+    from: deployerAddr,
+  });
+
+  // Mock SSV Network
+  await deploy("MockSSVNetwork", {
+    from: deployerAddr,
+  });
+
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");

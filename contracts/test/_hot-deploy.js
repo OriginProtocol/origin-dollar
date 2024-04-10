@@ -17,10 +17,10 @@ const { impersonateAndFund } = require("../utils/signers");
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
 // based on a contract name create new implementation
-async function constructNewContract(fixture, implContractName) {
+async function constructNewContract(fixture, fixtureStrategyVarName, implContractName) {
   const { deploy } = deployments;
 
-  const getConstructorArguments = () => {
+  const getConstructorArguments = async () => {
     if (
       ["BalancerMetaPoolTestStrategy", "BalancerMetaPoolStrategy"].includes(
         implContractName
@@ -79,6 +79,17 @@ async function constructNewContract(fixture, implContractName) {
           addresses.mainnet.WETH,
         ],
       ];
+    } else if (implContractName === "NativeStakingSSVStrategy") {
+      const feeAccumulatorAddress = await fixture[fixtureStrategyVarName].FEE_ACCUMULATOR_ADDRESS();
+      return [
+        [addresses.zero, addresses.mainnet.OETHVaultProxy],
+        [
+          addresses.mainnet.WETH,
+          addresses.mainnet.SSV,
+          addresses.mainnet.SSVNetwork,
+          addresses.mainnet.feeAccumulatorAddress
+        ],
+      ];
     }
   };
 
@@ -88,7 +99,7 @@ async function constructNewContract(fixture, implContractName) {
   await deploy(implContractName, {
     from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
     contract: implContractName,
-    args: getConstructorArguments(),
+    args: await getConstructorArguments(),
   });
 
   log(`Deployed`);
@@ -146,6 +157,12 @@ async function hotDeployOption(
         fixture, // fixture
         "convexEthMetaStrategy", // fixtureStrategyVarName
         "ConvexEthMetaStrategy" // implContractName
+      );
+    } else if (fixtureName === "nativeStakingSSVStrategyFixture") {
+      await hotDeployFixture(
+        fixture, // fixture
+        "nativeStakingStrategy", // fixtureStrategyVarName
+        "NativeStakingSSVStrategy" // implContractName
       );
     }
   }
@@ -325,6 +342,7 @@ async function hotDeployFixture(
 
   const newlyCompiledImplContract = await constructNewContract(
     fixture,
+    fixtureStrategyVarName,
     implContractName
   );
   log(`New contract deployed at ${newlyCompiledImplContract.address}`);

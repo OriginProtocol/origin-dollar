@@ -2,15 +2,16 @@ const hre = require("hardhat");
 const { expect } = require("chai");
 
 const { units, oethUnits, isCI } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 const {
   createFixtureLoader,
-  //fraxETHStrategyFixture,
+  nativeStakingSSVStrategyFixture,
 } = require("./../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
 
-//const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
+const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
 describe("ForkTest: Native SSV Staking Strategy", function () {
   this.timeout(0);
@@ -24,6 +25,22 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
   });
 
   describe("Initial setup", function () {
+    it("Should verify the initial state", async () => {
+      const { weth, nativeStakingSSVStrategy } = fixture;
+      await expect(await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()).to.equal(
+        addresses.mainnet.WETH,
+        "Incorrect WETH address set"
+      );
+      await expect(await nativeStakingSSVStrategy.SSV_TOKEN_ADDRESS()).to.equal(
+        addresses.mainnet.SSV,
+        "Incorrect SSV Token address"
+      );
+      await expect(await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS()).to.equal(
+        addresses.mainnet.SSVNetwork,
+        "Incorrect SSV Network address"
+      );
+    });
+
     // this needs to be a unit test
     it.skip("Should not allow sending of ETH to the strategy via a transaction", async () => {
 

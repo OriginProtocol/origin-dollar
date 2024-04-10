@@ -183,6 +183,7 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSD,
     fdai,
     fusdt,
+    ssv,
     fusdc;
 
   let chainlinkOracleFeedDAI,
@@ -224,6 +225,7 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     convexEthMetaStrategy,
     fluxStrategy,
+    nativeStakingSSVStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -261,6 +263,7 @@ const defaultFixture = deployments.createFixture(async () => {
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
     ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
+    ssv = await ethers.getContractAt(erc20Abi, addresses.mainnet.SSV);
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -359,6 +362,12 @@ const defaultFixture = deployments.createFixture(async () => {
       fluxStrategyProxy.address
     );
 
+    const nativeStakingStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
+
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
   } else {
@@ -376,6 +385,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI = await ethers.getContract("MocksfrxETH");
     stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+    ssv = await ethers.getContract("MockSSV");
 
     cdai = await ethers.getContract("MockCDAI");
     cusdt = await ethers.getContract("MockCUSDT");
@@ -456,6 +466,11 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
+    const nativeStakingStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
     swapper1Inch = await ethers.getContract("Swapper1InchV5");
@@ -540,6 +555,7 @@ const defaultFixture = deployments.createFixture(async () => {
     tusd,
     usdc,
     ogn,
+    ssv,
     LUSD,
     weth,
     ogv,
@@ -603,6 +619,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sfrxETH,
     sDAI,
     fraxEthStrategy,
+    nativeStakingSSVStrategy,
     frxEthRedeemStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -1380,6 +1397,39 @@ async function fraxETHStrategyFixture() {
     await oethVault
       .connect(sGovernor)
       .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+  }
+
+  return fixture;
+}
+
+/**
+ * NativeStakingSSVStrategy fixture
+ */
+async function nativeStakingSSVStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "nativeStakingSSVStrategyFixture", {
+    isOethFixture: true,
+  });
+
+  if (isFork) {
+    const { oethVault, weth, nativeStakingSSVStrategy, timelock } = fixture;
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+  } else {
+    const { governorAddr } = await getNamedAccounts();
+    const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    // Approve Strategy
+    await oethVault.connect(sGovernor).approveStrategy(nativeStakingSSVStrategy.address);
+
+    console.log("nativeStakingSSVStrategy.address", nativeStakingSSVStrategy.address)
+
+    // Set as default
+    await oethVault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
   }
 
   return fixture;
@@ -2179,6 +2229,7 @@ module.exports = {
   untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   frxEthRedeemStrategyFixture,
+  nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
