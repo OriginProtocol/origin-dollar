@@ -21,7 +21,7 @@ const log = require("../utils/logger")("task:aero");
  */
 async function aeroAmoStrategyTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
-  
+
   const fixture = JSON.parse(taskArguments.fixture);
   taskArguments.fixture = fixture;
   const output = taskArguments.output ? console.log : log;

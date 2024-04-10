@@ -103,10 +103,10 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       log("After deposit to strategy");
       await run("aeroAmoStrat", {
         pool: "OETH",
-        fixture: fixture,
+        fixture: JSON.stringify(fixture),
         output: false,
         fromBlock: receipt.blockNumber - 1,
-       });
+      });
 
       // Check emitted events
       await expect(tx)
@@ -451,5 +451,3 @@ async function calcLPTokenPrice(fixture) {
 
   return lpPrice;
 }
-
- 

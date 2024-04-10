@@ -1,10 +1,10 @@
 const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
- const addresses = require("../utils/addresses");
+const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
 const { getDiffBlocks } = require("./block");
 const { getSigner } = require("../utils/signers");
-  
+
 const log = require("../utils/logger")("task:aerodrome");
 
 const advanceTime = async (seconds) => {
@@ -17,7 +17,7 @@ const advanceTime = async (seconds) => {
  */
 async function aeroPoolTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
-  const fixture =taskArguments.fixture;
+  const fixture = taskArguments.fixture;
   const output = taskArguments.output ? console.log : log;
 
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
@@ -44,12 +44,9 @@ async function aeroPool({
   output = console.log,
 }) {
   // Get symbols and contracts
-  const { oTokenSymbol, assetSymbol, poolLPSymbol, pool,router } = await aeroContracts(
-    poolOTokenSymbol,
-    fixture
-  );
+  const { oTokenSymbol, assetSymbol, poolLPSymbol, pool, router } =
+    await aeroContracts(poolOTokenSymbol, fixture);
 
- 
   // Get Metapool data
   const totalLPsBefore =
     diffBlocks && (await pool.totalSupply({ blockTag: fromBlockTag }));
@@ -81,25 +78,35 @@ async function aeroPool({
       6
     )
   );
-  
-   console.log(blockTag, fromBlockTag, diffBlocks);
 
   // Pool balances
-  const poolBalancesBefore =
-    diffBlocks &&
-    (await pool.getReserves());
+  const poolBalancesBefore = diffBlocks && (await pool.getReserves());
   const poolBalances = await pool.getReserves();
- 
-  const amountOutBefore = await router.getAmountsOut(parseUnits("1"),[[fixture.oeth.address,fixture.weth.address,true,addresses.base.aeroFactoryAddress]]);
+
+  const amountOutBefore = await router.getAmountsOut(parseUnits("1"), [
+    [
+      fixture.oeth.address,
+      fixture.weth.address,
+      true,
+      addresses.base.aeroFactoryAddress,
+    ],
+  ]);
 
   // swap 1 OETH for ETH (OETH/ETH)
-  const price1Before =
-    diffBlocks &&
-    amountOutBefore[1];
-    
-    const price1 = await router.getAmountsOut(parseUnits("1"),[[fixture.oeth.address,fixture.weth.address,true,addresses.base.aeroFactoryAddress]])[1];
+  const price1Before = diffBlocks && amountOutBefore[1];
 
-   output(
+  const price1 = (
+    await router.getAmountsOut(parseUnits("1"), [
+      [
+        fixture.oeth.address,
+        fixture.weth.address,
+        true,
+        addresses.base.aeroFactoryAddress,
+      ],
+    ])
+  )[1];
+
+  output(
     displayProperty(
       `${oTokenSymbol} price`,
       `${oTokenSymbol}/${assetSymbol}`,
@@ -112,11 +119,26 @@ async function aeroPool({
   // swap 1 ETH for OETH (ETH/OETH)
   const price2Before =
     diffBlocks &&
-    (await router.getAmountsOut(parseUnits("1"),[[fixture.weth.address,fixture.oeth.address,true,addresses.base.aeroFactoryAddress]],{
-      blockTag: fromBlockTag,
-    }))[1];
-  const price2 = await router.getAmountsOut(parseUnits("1"),[[fixture.weth.address,fixture.oeth.address,true,addresses.base.aeroFactoryAddress]])[1]
-  console.log("HII");
+    (
+      await router.getAmountsOut(parseUnits("1"), [
+        [
+          fixture.weth.address,
+          fixture.oeth.address,
+          true,
+          addresses.base.aeroFactoryAddress,
+        ],
+      ])
+    )[1];
+  const price2 = (
+    await router.getAmountsOut(parseUnits("1"), [
+      [
+        fixture.weth.address,
+        fixture.oeth.address,
+        true,
+        addresses.base.aeroFactoryAddress,
+      ],
+    ])
+  )[1];
   output(
     displayProperty(
       `${assetSymbol} price`,
@@ -166,7 +188,7 @@ async function aeroPool({
 }
 
 async function aeroContracts(oTokenSymbol, fixture) {
-    // Get symbols of tokens in the pool
+  // Get symbols of tokens in the pool
   const assetSymbol = oTokenSymbol === "OETH" ? "WETH " : "USD";
 
   const poolLPSymbol = "Stable AMM - WETH/OETH";
@@ -180,26 +202,36 @@ async function aeroContracts(oTokenSymbol, fixture) {
           await resolveAsset("USDC"),
           await resolveAsset("USDT"),
         ];
-  fixture.pool = await ethers.getContractAt("IPool",fixture.pool.address);
-  fixture.gauge = await ethers.getContractAt("IGauge",fixture.aeroGauge.address);
-  fixture.aerodromeEthStrategy = await ethers.getContractAt("AerodromeEthStrategy",fixture.aerodromeEthStrategy.address);
-  fixture.oeth = await ethers.getContractAt("IERC20",fixture.oeth.address);
-  fixture.oethVault = await ethers.getContractAt("MockVaultForBase",fixture.oethVault.address);
-  fixture.aeroRouter = await ethers.getContractAt("IRouter",addresses.base.aeroRouterAddress);
+  fixture.pool = await ethers.getContractAt("IPool", fixture.pool.address);
+  fixture.gauge = await ethers.getContractAt(
+    "IGauge",
+    fixture.aeroGauge.address
+  );
+  fixture.aerodromeEthStrategy = await ethers.getContractAt(
+    "AerodromeEthStrategy",
+    fixture.aerodromeEthStrategy.address
+  );
+  fixture.oeth = await ethers.getContractAt("IERC20", fixture.oeth.address);
+  fixture.oethVault = await ethers.getContractAt(
+    "MockVaultForBase",
+    fixture.oethVault.address
+  );
+  fixture.aeroRouter = await ethers.getContractAt(
+    "IRouter",
+    addresses.base.aeroRouterAddress
+  );
 
- 
- 
   return {
     oTokenSymbol,
     assetSymbol,
     poolLPSymbol,
-    pool:fixture.pool,
-    gauge:fixture.gauge,
-    amoStrategy:fixture.aerodromeEthStrategy,
-    oToken:fixture.oeth,
+    pool: fixture.pool,
+    gauge: fixture.gauge,
+    amoStrategy: fixture.aerodromeEthStrategy,
+    oToken: fixture.oeth,
     assets,
-    vault:fixture.oethVault,
-    router:fixture.aeroRouter 
+    vault: fixture.oethVault,
+    router: fixture.aeroRouter,
   };
 }
 
@@ -278,7 +310,6 @@ function sqrt(value) {
   return y;
 }
 
-
 // Calculate the LPToken price of the given sAMM pool
 async function calcLPTokenPrice(fixture) {
   const { pool } = fixture;
@@ -295,8 +326,9 @@ async function calcLPTokenPrice(fixture) {
     .div(ethers.constants.WeiPerEther.pow(3))
     .add(y.pow(3).mul(x).div(ethers.constants.WeiPerEther.pow(3)));
   // price = 2 * fourthroot of (invariant/2)
-  const lpPrice =
-      sqrt(sqrt(invariant.div(ethers.constants.WeiPerEther).div(2))).mul(2);
+  const lpPrice = sqrt(
+    sqrt(invariant.div(ethers.constants.WeiPerEther).div(2))
+  ).mul(2);
 
   log(`LP Price :  ${lpPrice} `);
 
