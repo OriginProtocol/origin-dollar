@@ -343,8 +343,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     {
         require(_asset == address(weth), "Unsupported asset");
 
-        // Eth balance needed here for the balance check that happens from vault during depositing.
-        balance = address(this).balance;
+        // WEth balance needed here for the balance check that happens from vault during depositing.
+        balance = weth.balanceOf(address(this));
         uint256 lpTokens = aeroGaugeAddress.balanceOf(address(this));
         if (lpTokens > 0) {
             balance += (lpTokens * getLPTokenPrice()) / 1e18;
@@ -418,7 +418,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     /**
      * @dev Returns the price of a LP token of the sAMM pool.
      */
-    function getLPTokenPrice() internal view returns (uint256) {
+    function getLPTokenPrice() public view returns (uint256) {
         uint256 r0 = lpTokenAddress.reserve0();
         uint256 r1 = lpTokenAddress.reserve1();
 
@@ -427,9 +427,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         // Calculate fourth root of K/2 then multiply it by 2.
         uint256 lpPrice = 2 *
-            (FixedPointMathLib.sqrt(
-                FixedPointMathLib.sqrt(K.divPrecisely(2) * 1e18) * 1e18
-            ) / 1e18);
+            (
+                FixedPointMathLib.sqrt(
+                    FixedPointMathLib.sqrt(K.divPrecisely(2)) * 1e18
+                )
+            );
 
         return lpPrice;
     }
