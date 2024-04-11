@@ -41,8 +41,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
       );
     });
 
-    // this needs to be a unit test
-    it.skip("Should not allow sending of ETH to the strategy via a transaction", async () => {
+    it.skip("Should check that the fuse interval is configured correctly", async () => {
 
     });
   });

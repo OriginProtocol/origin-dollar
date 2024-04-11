@@ -73,7 +73,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe.only("Configuring the strategy", function () {
+  describe("Configuring the strategy", function () {
     it("Governor should be able to change the registrator address", async () => {
       const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
@@ -138,17 +138,22 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     it("Governor should be able to change the registrator address", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      const tx = nativeStakingSSVStrategy
+      const fuseStartBn = utils.parseEther("21.6");
+      const fuseEndBn = utils.parseEther("25.6");
+
+      const tx = await nativeStakingSSVStrategy
         .connect(governor)
-        .setFuseInterval(utils.parseEther("32.1"), utils.parseEther("32.1"));
+        .setFuseInterval(fuseStartBn, fuseEndBn);
 
       const events = (await tx.wait()).events || [];
       const FuseIntervalUpdated = events.find((e) => e.event === "FuseIntervalUpdated");
 
       expect(FuseIntervalUpdated).to.not.be.undefined;
       expect(FuseIntervalUpdated.event).to.equal("FuseIntervalUpdated");
-      expect(FuseIntervalUpdated.args[0]).to.equal(addresses.zero);
-      expect(FuseIntervalUpdated.args[1]).to.equal(strategist.address);
+      expect(FuseIntervalUpdated.args[0]).to.equal(addresses.zero); // prev fuse start
+      expect(FuseIntervalUpdated.args[1]).to.equal(addresses.zero); // prev fuse end
+      expect(FuseIntervalUpdated.args[2]).to.equal(fuseStartBn); // fuse start
+      expect(FuseIntervalUpdated.args[3]).to.equal(fuseEndBn); // fuse end
     });
   });
 

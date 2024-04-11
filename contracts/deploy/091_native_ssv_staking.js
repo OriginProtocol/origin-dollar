@@ -126,15 +126,23 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [cStrategyProxy.address],
         },
+        // 2. configure Harvester to support the strategy
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cStrategyProxy.address, true],
         },
+        // 3. set harvester to the strategy
         {
           contract: cStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
+        },
+        // 4. configure the fuse interval
+        {
+          contract: cStrategy,
+          signature: "setFuseInterval(uint256, uint256)",
+          args: [ethers.utils.parseEther("21.6"), ethers.utils.parseEther("25.6")],
         },
       ],
     };
