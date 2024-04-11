@@ -35,8 +35,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     IWETH9 public immutable weth;
 
     // Ordered list of pool assets
-    uint128 public constant ethCoinIndex = 1;
-    uint128 public constant oethCoinIndex = 0;
+    uint128 public immutable wethCoinIndex;
+    uint128 public immutable oethCoinIndex;
+
+    // Maximum allowed imbalance percentage.
+    // Initially set as 5%, meaning the allowed range is 0.475 < ratio < 0.525
+    uint256 public poolImbalanceThreshold = 5_000; // 5%
 
     // Used to circumvent the stack too deep issue
     struct AerodromeEthConfig {
@@ -59,6 +63,47 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         _;
     }
 
+    /**
+     * @dev Checks the Aero sAMM pool's balances have improved and the balances
+     * have not gone beyond the threshold.
+     * The standard deposit function adds to both sides of the pool in a way that
+     * the pool's balance is not worsened.
+     * Withdrawals are proportional so doesn't change the pools asset balance.
+     */
+    modifier improvePoolBalance() {
+        _;
+
+        // weth/oeth reserve ratio
+        uint256 ratio1 = aeroRouterAddress.quoteStableLiquidityRatio(
+            address(weth),
+            address(oeth),
+            address(aeroFactoryAddress)
+        );
+
+        // oeth/weth reserve ratio
+        uint256 ratio2 = aeroRouterAddress.quoteStableLiquidityRatio(
+            address(oeth),
+            address(weth),
+            address(aeroFactoryAddress)
+        );
+
+        uint256 difference;
+        if (ratio1 > ratio2) {
+            difference = ratio1 - ratio2;
+        } else {
+            difference = ratio2 - ratio1;
+        }
+
+        // scale to basis points precision
+        uint256 scaledDifference = (difference * 100_000) / 1e18;
+
+        // Check that the scaled difference does not exceed the threshold
+        require(
+            scaledDifference <= poolImbalanceThreshold,
+            "Pool Imbalance exceeds threshold"
+        );
+    }
+
     constructor(
         BaseStrategyConfig memory _baseConfig,
         AerodromeEthConfig memory _aeroConfig
@@ -69,6 +114,16 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         aeroGaugeAddress = IGauge(_aeroConfig.aeroGaugeAddress);
         oeth = IERC20(_aeroConfig.oethAddress);
         weth = IWETH9(_aeroConfig.wethAddress);
+
+        // Determine token indexes
+        wethCoinIndex = IPool(_baseConfig.platformAddress).token0() ==
+            address(_aeroConfig.wethAddress)
+            ? 0
+            : 1;
+        oethCoinIndex = IPool(_baseConfig.platformAddress).token0() ==
+            address(_aeroConfig.oethAddress)
+            ? 0
+            : 1;
     }
 
     /**
@@ -308,6 +363,73 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oeth), address(lpTokenAddress), oethToBurn);
     }
 
+    // Pool Peg keeping
+
+    /**
+     * @notice Mints and swaps the given oeth token amount for weth to maintain pool balance.
+     * @param _amountIn Amount of tokens to swap for.
+     * @param _minAmountOut Minimum amount of expected output amount (slippage adjusted)
+     * @param _tokenIn Address of the input token.
+     * @param _recipient Address of the recipient of weth tokens if we swap oeth for weth.
+     */
+    function swapAndRebalancePool(
+        uint256 _amountIn,
+        uint256 _minAmountOut,
+        address _tokenIn,
+        address _recipient
+    ) external onlyStrategist improvePoolBalance nonReentrant {
+        // tokenIn should be either oeth or weth.
+        require(
+            _tokenIn == address(weth) || _tokenIn == address(oeth),
+            "Invalid tokenIn"
+        );
+
+        IRouter.Route[] memory routes = new IRouter.Route[](1);
+
+        uint256 oethBalanceBefore;
+
+        if (_tokenIn == address(oeth)) {
+            IVault(vaultAddress).mintForStrategy(_amountIn);
+
+            IRouter.Route memory oethToWethRoute = IRouter.Route({
+                from: address(oeth),
+                to: address(weth),
+                stable: true,
+                factory: address(aeroFactoryAddress)
+            });
+
+            routes[0] = oethToWethRoute;
+        } else {
+            // Override recipient address so that the oeth can be burnt.
+            _recipient = address(this);
+            oethBalanceBefore = oeth.balanceOf(address(this));
+            IRouter.Route memory wethToOethRoute = IRouter.Route({
+                from: address(weth),
+                to: address(oeth),
+                stable: true,
+                factory: address(aeroFactoryAddress)
+            });
+
+            routes[0] = wethToOethRoute;
+        }
+
+        // Perform a swap to rebalance the pool
+        aeroRouterAddress.swapExactTokensForTokens(
+            _amountIn,
+            _minAmountOut,
+            routes,
+            _recipient,
+            block.timestamp
+        );
+
+        // If weth was swapped for oeth, burn the receieved oeth tokens.
+        if (_tokenIn == address(weth)) {
+            uint256 oethReceived = oeth.balanceOf(address(this)) -
+                oethBalanceBefore;
+            IVault(vaultAddress).burnForStrategy(oethReceived);
+        }
+    }
+
     /**
      * @notice Collect accumulated AERO rewards and send to the Harvester.
      */
@@ -370,6 +492,17 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         _approveBase();
+    }
+
+    /**
+     * @notice Update the pool imbalance threshold percentage.
+     * @param newThreshold New imbalance threshold. Eg: 10% should be passed as 10000
+     */
+    function setPoolImbalanceThreshold(uint256 newThreshold)
+        external
+        onlyGovernor
+    {
+        poolImbalanceThreshold = newThreshold;
     }
 
     /**
