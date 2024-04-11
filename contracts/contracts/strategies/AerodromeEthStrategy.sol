@@ -128,7 +128,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Curve strategies don't fit
+     * InitializableAbstractStrategy initializer as Aero strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of AERO
      * @param _assets Addresses of supported assets. eg WETH
@@ -153,7 +153,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit WETH into the Curve pool
+     * @notice Deposit WETH into the Aero pool
      * @param _weth Address of Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to deposit.
      */
@@ -161,6 +161,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
+        improvePoolBalance
         nonReentrant
     {
         _deposit(_weth, _amount);
@@ -169,8 +170,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
-
-        emit Deposit(_weth, address(lpTokenAddress), _wethAmount);
 
         // Get the asset and OToken balances in the Aero's LP
         (
@@ -184,7 +183,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             );
 
         // safe to cast since min value is at least 0
-        uint256 oethToAdd = uint256(
+        uint256 oethDesired = uint256(
             _max(
                 0,
                 int256(reserveWethAmount) +
@@ -196,26 +195,26 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         /* Add so much OETH so that the pool ends up being balanced. And at minimum
          * add as much OETH as WETH and at maximum twice as much OETH.
          */
-        oethToAdd = Math.max(oethToAdd, _wethAmount);
-        oethToAdd = Math.min(oethToAdd, _wethAmount * 2);
+        oethDesired = Math.max(oethDesired, _wethAmount);
+        oethDesired = Math.min(oethDesired, _wethAmount * 2);
 
-        /* Mint OETH with a strategy that attempts to contribute to stability of OETH/WETH pool. Try
-         * to mint so much OETH that after deployment of liquidity pool ends up being balanced.
-         *
-         * To manage unpredictability minimal OETH minted will always be at least equal or greater
-         * to WETH amount deployed. And never larger than twice the WETH amount deployed even if
-         * it would have a further beneficial effect on pool stability.
-         */
+        // Query the amount to be added to the pool
+        (uint256 wethToAdd, uint256 oethToAdd, ) = aeroRouterAddress
+            .quoteAddLiquidity(
+                address(weth),
+                address(oeth),
+                true,
+                address(aeroFactoryAddress),
+                _wethAmount,
+                oethDesired
+            );
+
+        // Mint the required OETH amount
         IVault(vaultAddress).mintForStrategy(oethToAdd);
 
-        emit Deposit(address(oeth), address(lpTokenAddress), oethToAdd);
-
-        uint256 minOethToAdd = oethToAdd.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        ); // adjust for slippage
-        uint256 minWethToAdd = _wethAmount.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        ); // adjust for slippage
+        // adjust for slippage
+        oethToAdd = oethToAdd.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+        wethToAdd = wethToAdd.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
 
         // Do the deposit to the Aerodrome pool
         // slither-disable-next-line arbitrary-send
@@ -223,20 +222,23 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(weth),
             address(oeth),
             true,
-            _wethAmount,
+            wethToAdd,
             oethToAdd,
-            minWethToAdd,
-            minOethToAdd,
+            0,
+            0,
             address(this),
             block.timestamp
         );
+
+        emit Deposit(address(oeth), address(lpTokenAddress), oethToAdd);
+        emit Deposit(_weth, address(lpTokenAddress), wethToAdd);
 
         // Deposit the Aero pool's LP tokens into the Gauge
         aeroGaugeAddress.deposit(lpReceived);
     }
 
     /**
-     * @notice Deposit the strategy's entire balance of WETH into the Curve pool
+     * @notice Deposit the strategy's entire balance of WETH into the Aero pool
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = weth.balanceOf(address(this));
@@ -246,7 +248,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Withdraw ETH and OETH from the Curve pool, burn the OETH,
+     * @notice Withdraw ETH and OETH from the Aero pool, burn the OETH,
      * convert the ETH to WETH and transfer to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _weth Address of the Wrapped ETH (WETH) contract.
@@ -325,7 +327,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Remove all ETH and OETH from the Curve pool, burn the OETH,
+     * @notice Remove all ETH and OETH from the Aero pool, burn the OETH,
      * convert the ETH to WETH and transfer to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
@@ -511,11 +513,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     receive() external payable {}
 
     /**
-     * @dev Since we are unwrapping WETH before depositing it to Curve
-     *      there is no need to to set an approval for WETH on the Curve
+     * @dev Since we are unwrapping WETH before depositing it to Aero
+     *      there is no need to to set an approval for WETH on the Aero
      *      pool
      * @param _asset Address of the asset
-     * @param _pToken Address of the Curve LP token
+     * @param _pToken Address of the Aero LP token
      */
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)

@@ -22,7 +22,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       fixture = await aeroOETHAMOFixture();
     });
     it("Should have constants and immutables set", async () => {
-      const { aerodromeEthStrategy } = fixture;
+      const { aerodromeEthStrategy, oethReserveIndex, wethReserveIndex } =
+        fixture;
 
       expect(await aerodromeEthStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
@@ -34,6 +35,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       );
       expect(await aerodromeEthStrategy.aeroFactoryAddress()).to.equal(
         addresses.base.aeroFactoryAddress
+      );
+      expect((await aerodromeEthStrategy.wethCoinIndex()).toString()).to.equal(
+        wethReserveIndex == "_reserve1" ? "1" : "0"
+      );
+      expect((await aerodromeEthStrategy.oethCoinIndex()).toString()).to.equal(
+        oethReserveIndex == "_reserve1" ? "1" : "0"
       );
     });
     it("Should calculate the correct LP Price", async () => {
@@ -82,8 +89,11 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         .connect(josh)
         .transfer(aerodromeEthStrategy.address, wethDepositAmount);
 
-      const { oethMintAmount: oethMintAmount, aeroBalances } =
-        await calcOethMintAmount(fixture, wethDepositAmount);
+      const {
+        oethMintAmount: oethMintAmount,
+        wethDeposited,
+        aeroBalances,
+      } = await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
 
       let vaultSigner = await impersonateAndFund(oethVault.address, "2");
@@ -111,7 +121,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       // Check emitted events
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Deposit")
-        .withArgs(weth.address, pool.address, wethDepositAmount);
+        .withArgs(weth.address, pool.address, wethDeposited);
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Deposit")
         .withArgs(oeth.address, pool.address, oethMintAmount);
@@ -121,7 +131,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       expect(
         aeroBalancesAfter[wethReserveIndex].toString()
       ).to.approxEqualTolerance(
-        aeroBalances[wethReserveIndex].add(wethDepositAmount),
+        aeroBalances[wethReserveIndex].add(wethDeposited),
         0.01 // 0.01% or 1 basis point
       );
       expect(
@@ -372,11 +382,151 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       await expect(tx).to.emit(aerodromeEthStrategy, "Withdrawal");
     });
   });
+  describe("with pool rebalance", () => {
+    beforeEach(async () => {
+      fixture = await aeroOETHAMOFixture();
+    });
+    it("Should be able to rebalance if pool is there is more OETH", async function () {
+      const {
+        aerodromeEthStrategy,
+        oeth,
+        pool,
+        weth,
+        josh,
+        oethVault,
+        oethReserveIndex,
+        wethReserveIndex,
+        aeroRouter,
+      } = fixture;
+
+      const oethToSwap = parseUnits("100");
+      await oeth.connect(josh).approve(aeroRouter.address, oethToSwap);
+
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          oethToSwap,
+          0,
+          [
+            [
+              oeth.address,
+              weth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+
+      const wethDepositAmount = await units("100", weth);
+
+      // Vault transfers WETH to strategy
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, wethDepositAmount);
+      let vaultSigner = await impersonateAndFund(oethVault.address, "2");
+
+      const { tokenIn, amountIn } = await getParamsForPoolRebalance(fixture);
+
+      // Rebalance pool
+      await aerodromeEthStrategy
+        .connect(josh)
+        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
+
+      const {
+        oethMintAmount: oethMintAmount,
+        wethDeposited,
+        aeroBalances,
+      } = await calcOethMintAmount(fixture, wethDepositAmount);
+      const oethSupplyBefore = await oeth.totalSupply();
+
+      log("Before deposit to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+      });
+
+      tx = await aerodromeEthStrategy
+        .connect(vaultSigner)
+        .deposit(weth.address, wethDepositAmount);
+
+      const receipt = await tx.wait();
+
+      log("After deposit to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+      });
+
+      // Check emitted events
+      await expect(tx).to.emit(aerodromeEthStrategy, "Deposit");
+      await expect(tx).to.emit(aerodromeEthStrategy, "Deposit");
+
+      // Check the OETH total supply increase
+      const oethSupplyAfter = await oeth.totalSupply();
+      expect(oethSupplyAfter).to.approxEqualTolerance(
+        oethSupplyBefore.add(oethMintAmount),
+        0.01 // 0.01% or 1 basis point
+      );
+    });
+
+    it("Vault should be able to deposit all WETH to AMO strategy after rebalancing", async function () {
+      const {
+        aerodromeEthStrategy,
+        pool,
+        josh,
+        weth,
+        strategist,
+        timelock,
+        oethVaultSigner,
+      } = fixture;
+
+      const depositAmount = parseUnits("50");
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, depositAmount);
+
+      const { tokenIn, amountIn } = await getParamsForPoolRebalance(fixture);
+
+      // Rebalance pool
+      await aerodromeEthStrategy
+        .connect(josh)
+        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
+
+      log("Before depositAll to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+      });
+
+      tx = await aerodromeEthStrategy.connect(oethVaultSigner).depositAll();
+
+      const receipt = await tx.wait();
+
+      log("After depositAll to strategy");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+      });
+
+      await expect(tx)
+        .to.emit(aerodromeEthStrategy, "Deposit")
+        .withNamedArgs({ _asset: weth.address, _pToken: pool.address });
+    });
+  });
 });
 
 // Calculate the minted OETH amount for a deposit
 async function calcOethMintAmount(fixture, wethDepositAmount) {
-  const { pool, oethReserveIndex, wethReserveIndex } = fixture;
+  const { weth, oeth, pool, oethReserveIndex, wethReserveIndex, aeroRouter } =
+    fixture;
 
   // Get the WETH and WOETH balances in the Aero sAMM pool
   const aeroBalances = await pool.getReserves();
@@ -395,9 +545,22 @@ async function calcOethMintAmount(fixture, wethDepositAmount) {
   oethMintAmount = oethMintAmount.lte(doubleWethDepositAmount)
     ? oethMintAmount
     : doubleWethDepositAmount;
-  log(`OETH mint amount : ${formatUnits(oethMintAmount)}`);
 
-  return { oethMintAmount, aeroBalances };
+  let result = await aeroRouter.quoteAddLiquidity(
+    weth.address,
+    oeth.address,
+    true,
+    addresses.base.aeroFactoryAddress,
+    wethDepositAmount,
+    oethMintAmount
+  );
+  log(`OETH mint amount : ${formatUnits(result.amountB)}`);
+
+  return {
+    oethMintAmount: result.amountB,
+    wethDeposited: result.amountA,
+    aeroBalances,
+  };
 }
 
 // Calculate the OETH and ETH amounts from a withdrawAll
@@ -483,4 +646,120 @@ async function calcLPTokenPrice(fixture) {
   log(`LP Price :  ${lpPrice} `);
 
   return lpPrice;
+}
+
+async function getParamsForPoolRebalance(
+  fixture,
+  desiredOethReservePct = 51,
+  desiredWethReservePct = 49
+) {
+  const ONE_PERCENT = 100000;
+  const {
+    oeth,
+    weth,
+    aeroRouter,
+    pool,
+    josh,
+    oethReserveIndex,
+    wethReserveIndex,
+  } = fixture;
+  await oeth
+    .connect(josh)
+    .approve(aeroRouter.address, ethers.utils.parseUnits("1000"));
+
+  await weth
+    .connect(josh)
+    .approve(aeroRouter.address, ethers.utils.parseUnits("1000"));
+
+  log(
+    "Stable liq ratio before",
+    formatUnits(
+      await aeroRouter.quoteStableLiquidityRatio(
+        weth.address,
+        oeth.address,
+        addresses.base.aeroFactoryAddress
+      )
+    )
+  );
+
+  let reserves = await pool.getReserves();
+
+  let oethReserve = reserves[oethReserveIndex];
+  let wethReserve = reserves[wethReserveIndex];
+
+  let oethPriceInWeth = await pool.getAmountOut(parseUnits("1"), oeth.address);
+  let wethPriceInOeth = await pool.getAmountOut(parseUnits("1"), weth.address);
+
+  // Calculate total value of the pool in WETH equivalent
+  const totalValueInWeth = wethReserve.add(
+    oethReserve.mul(oethPriceInWeth).div(ethers.utils.parseUnits("1", 18))
+  );
+
+  // Calculate current size of each token in the pool as a percentage of total value
+  const currentWethSizeInPool = wethReserve
+    .mul(ONE_PERCENT)
+    .div(totalValueInWeth);
+
+  const currentOethSizeInPool = oethReserve
+    .mul(oethPriceInWeth)
+    .mul(ONE_PERCENT)
+    .div(totalValueInWeth)
+    .div(ethers.utils.parseUnits("1", 18));
+
+  log(`Current WETH size in pool: ${currentWethSizeInPool / 1000}%`);
+  log(`Current OETH size in pool: ${currentOethSizeInPool / 1000}%`);
+
+  // Desired percentages
+  const desiredOethPercentage = BigNumber.from(desiredOethReservePct * 1000);
+  const desiredWethPercentage = BigNumber.from(desiredWethReservePct * 1000);
+
+  const desiredOethValueInWeth = totalValueInWeth
+    .mul(desiredOethPercentage)
+    .div(ONE_PERCENT);
+
+  const desiredWethValueInWeth = totalValueInWeth
+    .mul(desiredWethPercentage)
+    .div(ONE_PERCENT);
+
+  // Calculate current OETH and WETH values in WETH equivalent
+  const currentOethValueInWeth = oethReserve
+    .mul(oethPriceInWeth)
+    .div(ethers.utils.parseUnits("1", 18));
+
+  const currentWethValueInWeth = wethReserve;
+
+  // Difference needed to achieve the balance in WETH equivalent
+  const oethAdjustmentInWeth = desiredOethValueInWeth.sub(
+    currentOethValueInWeth
+  );
+  const wethAdjustmentInWeth = desiredWethValueInWeth.sub(
+    currentWethValueInWeth
+  );
+
+  // Convert OETH adjustment back to OETH units from WETH equivalent
+  const oethAdjustment = oethAdjustmentInWeth
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(oethPriceInWeth);
+
+  const wethAdjustment = wethAdjustmentInWeth
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(wethPriceInOeth);
+
+  let amountIn, tokenIn, assetSymbol;
+  if (oethAdjustment > 0) {
+    amountIn = oethAdjustment;
+    tokenIn = oeth.address;
+    assetSymbol = "OETH";
+  } else {
+    amountIn = wethAdjustment;
+    tokenIn = weth.address;
+    assetSymbol = "WETH";
+  }
+  log(
+    `Pool needs to be adjusted by: ${ethers.utils.formatUnits(
+      amountIn,
+      18
+    )} ${assetSymbol}`
+  );
+  return { amountIn, tokenIn };
 }

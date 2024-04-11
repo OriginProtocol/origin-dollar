@@ -1770,11 +1770,12 @@ async function aeroOETHAMOFixture(
     ethers.utils.parseEther("5000"),
     ethers.utils.parseEther("5000"),
     // Slippage adjusted amounts
-    ethers.utils.parseEther("4999"),
-    ethers.utils.parseEther("4999"),
+    ethers.utils.parseEther("5000"),
+    ethers.utils.parseEther("5000"),
     josh.address,
     parseInt(Date.now() / 1000) + 5 * 360
   );
+  //await aeroRouter.connect(josh).swapExactTokenForTokens(parseUnits("100"),0,[[oeth.address,weth.address,true,addresses.base.aeroFactoryAddress]],josh.address,parseInt(Date.now() / 1000) + 5 * 360);
 
   // Fetch wETH/oETH pool address
   let poolAddress = await aeroRouter.poolFor(
@@ -1794,6 +1795,7 @@ async function aeroOETHAMOFixture(
     wethReserveIndex === "_reserve1" ? "_reserve0" : "_reserve1";
 
   fixture.pool = pool;
+  fixture.aeroRouter = aeroRouter;
   fixture.wethReserveIndex = wethReserveIndex;
   fixture.oethReserveIndex = oethReserveIndex;
 

@@ -307,11 +307,7 @@ async function aeroAmoStrategyTask(taskArguments, hre) {
   //     netMintedForStrategyThreshold.sub(netMintedForStrategy);
 
   output(
-    displayProperty(
-      "\nNet minted for strategy",
-      assetSymbol,
-      netMintedForStrategy
-    )
+    displayProperty("\nNet minted for strategy", "OETH", netMintedForStrategy)
   );
   //   output(
   //     displayProperty(
