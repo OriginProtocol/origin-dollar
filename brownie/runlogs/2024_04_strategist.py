@@ -71,3 +71,67 @@ def main():
     print("burn LP amount",  "{:.6f}".format(lp_amount / 10**18), lp_amount)
     print("ETH from Curve swap of 3788 OETH before", "{:.6f}".format(eth_out_before / 10**18), eth_out_before)
     print("ETH from Curve swap of 3788 OETH after", "{:.6f}".format(eth_out_after / 10**18), eth_out_after)
+
+# -------------------------------------
+# Apr 11, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogv, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGV,
+        oeth_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        1
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Apr 11, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogv, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGV,
+        ousd_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        1
+      )
+    )
+
+    print(to_gnosis_json(txs))
