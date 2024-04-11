@@ -22,8 +22,6 @@ struct ValidatorStakeData {
 contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
-    /// @notice The Wrapped ETH (WETH) contract address
-    address public immutable WETH_TOKEN_ADDRESS;
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN_ADDRESS;
     /// @notice SSV Network contract used to interface with 
@@ -35,6 +33,7 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     uint256[50] private __gap;
 
     error EmptyRecipient();
+    error InsuffiscientWethBalance(uint256 requiredBalance, uint256 availableBalance);
     
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -43,8 +42,8 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// @param _ssvNetwork Address of the SSV Network contract
     constructor(BaseStrategyConfig memory _baseConfig, address _wethAddress, address _ssvToken, address _ssvNetwork, address _feeAccumulator)
         InitializableAbstractStrategy(_baseConfig)
+        ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress)
     {
-        WETH_TOKEN_ADDRESS = _wethAddress;
         SSV_TOKEN_ADDRESS = _ssvToken;
         SSV_NETWORK_ADDRESS = _ssvNetwork;
         FEE_ACCUMULATOR_ADDRESS = _feeAccumulator;
@@ -86,7 +85,38 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
         // collect ETH from fee collector and wrap it into WETH
         uint256 ethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS).collect();
         IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethCollected }();
+
         _collectRewardTokens();
+    }
+
+    /// @dev Need to override this function since the strategy doesn't allow for all the WETH
+    /// to be collected. Some might be there as a result of deposit and is waiting for the Registrar
+    /// to be deposited to the validators.
+    function _collectRewardTokens() internal override {
+        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        for (uint256 i = 0; i < rewardTokenCount; ++i) {
+            IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
+            uint256 balance = rewardToken.balanceOf(address(this));
+            if (balance > 0) {
+                if(address(rewardToken) == WETH_TOKEN_ADDRESS) {
+                    if (beaconChainRewardWETH < balance) {
+                        revert InsuffiscientWethBalance(beaconChainRewardWETH, balance);
+                    }
+
+                    // only allow for the WETH that is part of beacon chain rewards to be harvested
+                    balance = beaconChainRewardWETH;
+                    // reset the counter keeping track of beacon chain WETH rewards
+                    beaconChainRewardWETH = 0;
+                }
+
+                emit RewardTokenCollected(
+                    harvesterAddress,
+                    address(rewardToken),
+                    balance
+                );
+                rewardToken.safeTransfer(harvesterAddress, balance);
+            }
+        }
     }
 
     /// @notice Deposit asset into the underlying platform
