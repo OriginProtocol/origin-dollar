@@ -20,17 +20,13 @@ abstract contract ValidatorRegistrator is Governable {
 
     event RegistratorAddressChanged(address oldAddress, address newAddress);
 
-    /**
-     * @dev Throws if called by any account other than the Registrator
-     */
+    /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         require(msg.sender == validatorRegistrator, "Caller is not the Registrator");
         _;
     }
 
-    /**
-     * @notice Set the address of the registrator
-     */
+    /// @notice Set the address of the registrator
     function setRegistratorAddress(address _address) external onlyGovernor {
         emit RegistratorAddressChanged(validatorRegistrator, _address);
         validatorRegistrator = _address;
@@ -38,7 +34,7 @@ abstract contract ValidatorRegistrator is Governable {
 
     /// @notice return the WETH balance on the contract that can be used to for beacon chain
     /// staking - staking on the validators
-    function getWETHBalanceEligibleForStaking() public virtual returns(uint256 _amount);
+    function getWETHBalanceEligibleForStaking() public virtual view returns(uint256 _amount);
 
     // /// @notice Stakes WETH to the NDC to the Node validators
     // /// @param validators A list of validator data needed to stake.
