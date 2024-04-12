@@ -17,6 +17,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import "hardhat/console.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -100,7 +101,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // Check that the scaled difference does not exceed the threshold
         require(
             scaledDifference <= poolImbalanceThreshold,
-            "Pool Imbalance exceeds threshold"
+            "Pool imbalance exceeds threshold"
         );
     }
 
@@ -267,6 +268,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
         _lpWithdraw(requiredLpTokens);
+
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
          * in that the strategy receives enough WETH on balanced removal
          */
@@ -276,7 +278,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             true,
             requiredLpTokens,
-            0,
+            _amount,
             0,
             address(this),
             block.timestamp
@@ -312,7 +314,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        uint256 poolWETHBalance = lpTokenAddress.reserve0(); // reserve0 should be WETH
+        uint256 poolWETHBalance = wethCoinIndex == 0
+            ? lpTokenAddress.reserve0()
+            : lpTokenAddress.reserve1();
+
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
