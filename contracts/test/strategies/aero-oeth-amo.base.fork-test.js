@@ -118,7 +118,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         fromBlock: receipt.blockNumber - 1,
       });
 
-      //   // Check the ETH and OETH balances in the Curve Metapool
+      //   // Check the ETH and OETH balances in the Aero sAMM Pool
       //   const aeroBalancesAfter = await pool.getReserves();
       //   expect(
       //     aeroBalancesAfter[wethReserveIndex].toString()
@@ -384,7 +384,82 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
     beforeEach(async () => {
       fixture = await aeroOETHAMOFixture();
     });
-    it.only("Should not rebalance pool more than allowed threshold", async function () {
+    it("Should be able to mint OETH and send received weth to recipient", async function () {
+      const { oeth, weth, josh, aeroRouter, aerodromeEthStrategy, oethVault } =
+        fixture;
+
+      let joshWethBalanceBefore = await weth.balanceOf(josh.address);
+      let netOEthMintedBefore = await oethVault.netOusdMintedForStrategy();
+
+      const wethToSwap = parseUnits("1000");
+      await weth.connect(josh).approve(aeroRouter.address, wethToSwap);
+
+      // Perform swap to imbalance the pool
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          wethToSwap,
+          0,
+          [
+            [
+              weth.address,
+              oeth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+
+      // Rebalance the pool
+      const { tokenIn, amountIn } = await getParamsForPoolRebalance(fixture);
+
+      if (tokenIn == weth.address) {
+        await weth
+          .connect(josh)
+          .transfer(aerodromeEthStrategy.address, amountIn);
+      }
+      log("Before rebalancing pool");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+      });
+      // Rebalance pool
+      tx = await aerodromeEthStrategy
+        .connect(josh)
+        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
+
+      const receipt = await tx.wait();
+
+      log("After rebalancing pool");
+      await run("aeroAmoStrat", {
+        pool: "OETH",
+        fixture: JSON.stringify(fixture),
+        output: false,
+        fromBlock: receipt.blockNumber - 1,
+      });
+
+      let joshWethBalanceAfter = await weth.balanceOf(josh.address);
+      let netOEthMintedAfter = await oethVault.netOusdMintedForStrategy();
+
+      expect(joshWethBalanceAfter).to.gt(joshWethBalanceBefore);
+      expect(netOEthMintedAfter).to.gt(netOEthMintedBefore);
+    });
+    it("Should be able to burn OETH when rebalancing", async function () {
+      const { oethVault } = fixture;
+
+      let netOEthMintedBefore = await oethVault.netOusdMintedForStrategy();
+
+      await rebalancePool(fixture);
+
+      let netOEthMintedAfter = await oethVault.netOusdMintedForStrategy();
+
+      expect(netOEthMintedAfter).to.lt(netOEthMintedBefore);
+    });
+
+    it("Should not rebalance pool more than allowed threshold", async function () {
       const { oeth, weth, josh, aeroRouter, aerodromeEthStrategy } = fixture;
       const oethToSwap = parseUnits("1000");
       await oeth.connect(josh).approve(aeroRouter.address, oethToSwap);
@@ -726,7 +801,7 @@ async function calcWithdrawAllAmounts(fixture) {
     oeth,
   } = fixture;
 
-  // Get the ETH and OETH balances in the Curve Metapool
+  // Get the ETH and OETH balances in the Aero sAMM Pool
   const aeroBalances = await pool.getReserves();
   const strategyLpAmount = await aeroGauge.balanceOf(
     aerodromeEthStrategy.address
