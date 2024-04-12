@@ -355,7 +355,7 @@ contract VaultAdmin is VaultStorage {
         );
 
         uint256 assetsCount = allAssets.length;
-        uint256 assetIndex = assetsCount;
+        uint256 assetIndex = assetsCount; // initialize at invaid index
         for (uint256 i = 0; i < assetsCount; ++i) {
             if (allAssets[i] == _asset) {
                 assetIndex = i;
@@ -363,8 +363,8 @@ contract VaultAdmin is VaultStorage {
             }
         }
 
-        // Note: If asset is not present in `allAssets`, the following line
-        // will revert with an out-of-bound error. Right now, there's no
+        // Note: If asset is not found in `allAssets`, the following line
+        // will revert with an out-of-bound error. However, there's no
         // reason why an asset would have `Asset.isSupported = true` but
         // not exist in `allAssets`.
 
