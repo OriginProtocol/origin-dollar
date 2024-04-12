@@ -135,3 +135,52 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Apr 12, 2024 - FraxETH Redeem
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(vault_oeth_core.rebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+    
+    print("Outstanding redeems before:", frxeth_redeem_strat.outstandingRedeems())
+
+    txs.append(
+      frxeth_redeem_strat.redeemTickets(
+        [
+          205, 212, 213, 214, 215, 220, 221, 222, 223, 224, 225, 226, 
+          227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 
+          239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 
+          251, 252, 253, 254, 255, 256, 257, 258, 259,
+        ],
+        11010 * 10**18,
+        std
+      )
+    )
+
+    print("Outstanding redeems after:", frxeth_redeem_strat.outstandingRedeems())
+
+    # Deposit WETH to Morpho Aave
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_MORPHO_AAVE_STRAT, 
+        [WETH], 
+        [11010 * 10**18],
+        std
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
