@@ -473,7 +473,7 @@ const getAssetAddresses = async (deployments) => {
       AURA: (await deployments.get("MockAura")).address,
       BAL: (await deployments.get("MockBAL")).address,
       SSV: (await deployments.get("MockSSV")).address,
-      SSVNetwork: (await deployments.get("MockSSVNetwork")).address
+      SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
     };
 
     try {

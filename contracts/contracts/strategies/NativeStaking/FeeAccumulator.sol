@@ -24,8 +24,7 @@ contract FeeAccumulator is Governable {
     /**
      * @param _collector Address of the contract that collects the fees
      */
-    constructor(address _collector, address _weth)
-    {
+    constructor(address _collector, address _weth) {
         COLLECTOR = _collector;
         WETH_TOKEN_ADDRESS = _weth;
     }
@@ -34,7 +33,7 @@ contract FeeAccumulator is Governable {
      * @notice Asserts that the caller is the collector
      */
     function _assertIsCollector() internal view {
-        if(msg.sender != COLLECTOR) {
+        if (msg.sender != COLLECTOR) {
             revert CallerNotCollector(msg.sender, COLLECTOR);
         }
     }
@@ -45,7 +44,7 @@ contract FeeAccumulator is Governable {
     function collect() external returns (uint256 wethReturned) {
         _assertIsCollector();
         wethReturned = address(this).balance;
-        IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethReturned}();
+        IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethReturned }();
         IWETH9(WETH_TOKEN_ADDRESS).transfer(COLLECTOR, wethReturned);
     }
 }

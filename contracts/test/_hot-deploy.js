@@ -17,7 +17,11 @@ const { impersonateAndFund } = require("../utils/signers");
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
 // based on a contract name create new implementation
-async function constructNewContract(fixture, fixtureStrategyVarName, implContractName) {
+async function constructNewContract(
+  fixture,
+  fixtureStrategyVarName,
+  implContractName
+) {
   const { deploy } = deployments;
 
   const getConstructorArguments = async () => {
@@ -80,14 +84,16 @@ async function constructNewContract(fixture, fixtureStrategyVarName, implContrac
         ],
       ];
     } else if (implContractName === "NativeStakingSSVStrategy") {
-      const feeAccumulatorAddress = await fixture[fixtureStrategyVarName].FEE_ACCUMULATOR_ADDRESS();
+      const feeAccumulatorAddress = await fixture[
+        fixtureStrategyVarName
+      ].FEE_ACCUMULATOR_ADDRESS();
       return [
         [addresses.zero, addresses.mainnet.OETHVaultProxy],
         [
           addresses.mainnet.WETH,
           addresses.mainnet.SSV,
           addresses.mainnet.SSVNetwork,
-          addresses.mainnet.feeAccumulatorAddress
+          addresses.mainnet.feeAccumulatorAddress,
         ],
       ];
     }

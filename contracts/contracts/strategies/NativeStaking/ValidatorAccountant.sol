@@ -17,9 +17,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
     /// @dev The WETH present on this contract will come from 2 sources:
     ///  - as a result of deposits from the VaultAdmin
     ///  - accounting function converting beaconChain rewards from ETH to WETH
-    /// 
-    /// We need to be able to keep a separate accounting of the WETH so we understand how much we can pass oh to 
-    /// the harvester as a consequence of rewards harvesting and how much registrator can pick up as a result of WETH 
+    ///
+    /// We need to be able to keep a separate accounting of the WETH so we understand how much we can pass oh to
+    /// the harvester as a consequence of rewards harvesting and how much registrator can pick up as a result of WETH
     /// deposit into the strategy contract.
     /// To achieve this the beacon chain rewards are accounted for using below variable, all other WETH is assumed to be
     /// present as a result of a deposit.
@@ -31,25 +31,56 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
     uint256 public fuseIntervalEnd = 0;
     /// @dev Governor that can manually correct the accounting
     address public accountingGovernor;
+    /// @dev Strategist that can pause the accounting
+    address public strategist;
 
     uint256[50] private __gap;
 
-    event FuseIntervalUpdated(uint256 oldStart, uint256 oldEnd, uint256 start, uint256 end);
-    event AccuntingFullyWithdrawnValidator(uint256 noOfValidators, uint256 remainingValidators, uint256 wethSentToVault);
-    event AccountingGovernorAddressChanged(address oldAddress, address newAddress);
+    event FuseIntervalUpdated(
+        uint256 oldStart,
+        uint256 oldEnd,
+        uint256 start,
+        uint256 end
+    );
+    event AccuntingFullyWithdrawnValidator(
+        uint256 noOfValidators,
+        uint256 remainingValidators,
+        uint256 wethSentToVault
+    );
+    event AccuntingValidatorSlashed(
+        uint256 remainingValidators,
+        uint256 wethSentToVault
+    );
+    event AccountingGovernorAddressChanged(
+        address oldAddress,
+        address newAddress
+    );
+    event StrategistAddressChanged(
+        address oldStrategist,
+        address newStrategist
+    );
+    event AccountingBeaconChainRewards(uint256 amount);
 
     error FuseIntervalValuesIncorrect();
     error UnexpectedEthAccountingInterval(uint256 errorneousEthAmount);
 
     /// @dev Throws if called by any account other than the Accounting Governor
     modifier onlyAccountingGovernor() {
-        require(msg.sender == accountingGovernor, "Caller is not the Accounting Governor");
+        require(
+            msg.sender == accountingGovernor,
+            "Caller is not the Accounting Governor"
+        );
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Strategist
+    modifier onlyStrategist() {
+        require(msg.sender == strategist, "Caller is not the Strategist");
         _;
     }
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
-    constructor(address _wethAddress, address _vaultAddress)
-    {
+    constructor(address _wethAddress, address _vaultAddress) {
         WETH_TOKEN_ADDRESS = _wethAddress;
         VAULT_ADDRESS = _vaultAddress;
     }
@@ -59,19 +90,31 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
         accountingGovernor = _address;
     }
 
+    function setStrategist(address _address) external onlyGovernor {
+        emit StrategistAddressChanged(strategist, _address);
+        strategist = _address;
+    }
+
     /// @notice set fuse interval values
-    function setFuseInterval(uint256 _fuseIntervalStart, uint256 _fuseIntervalEnd) external onlyGovernor {
+    function setFuseInterval(
+        uint256 _fuseIntervalStart,
+        uint256 _fuseIntervalEnd
+    ) external onlyGovernor {
         if (
             _fuseIntervalStart > _fuseIntervalEnd ||
-            _fuseIntervalStart >= 32 ether || 
-            _fuseIntervalEnd >= 32 ether || 
+            _fuseIntervalStart >= 32 ether ||
+            _fuseIntervalEnd >= 32 ether ||
             _fuseIntervalEnd - _fuseIntervalStart < 4 ether
-
         ) {
             revert FuseIntervalValuesIncorrect();
         }
 
-        emit FuseIntervalUpdated(fuseIntervalStart, fuseIntervalEnd, _fuseIntervalStart, _fuseIntervalEnd);
+        emit FuseIntervalUpdated(
+            fuseIntervalStart,
+            fuseIntervalEnd,
+            _fuseIntervalStart,
+            _fuseIntervalEnd
+        );
 
         fuseIntervalStart = _fuseIntervalStart;
         fuseIntervalEnd = _fuseIntervalEnd;
@@ -81,9 +124,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
     /// https://www.notion.so/originprotocol/Limited-simplified-native-staking-accounting-67a217c8420d40678eb943b9da0ee77d
     /// In short after dividing by 32 if the ETH remaining on the contract falls between 0 and fuseIntervalStart the accounting
     /// function will treat that ETH as a Beacon Chain Reward ETH.
-    /// On the contrary if after dividing by 32 the ETH remaining on the contract falls between fuseIntervalEnd and 32 the 
+    /// On the contrary if after dividing by 32 the ETH remaining on the contract falls between fuseIntervalEnd and 32 the
     /// accounting function will treat that as a validator slashing.
-    /// @notice Perform the accounting attributing beacon chain ETH to either full or partial withdrawals. Returns true when 
+    /// @notice Perform the accounting attributing beacon chain ETH to either full or partial withdrawals. Returns true when
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
     /// for now
@@ -91,6 +134,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
         uint256 ethBalance = address(this).balance;
         uint256 MAX_STAKE = 32 ether;
 
+        // send the WETH that is from fully withdrawn validators to the Vault
         if (ethBalance >= MAX_STAKE) {
             uint256 fullyWithdrawnValidators = ethBalance / MAX_STAKE;
             activeDepositedValidators -= fullyWithdrawnValidators;
@@ -99,7 +143,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
 
-            emit AccuntingFullyWithdrawnValidator(fullyWithdrawnValidators, activeDepositedValidators, wethToVault);
+            emit AccuntingFullyWithdrawnValidator(
+                fullyWithdrawnValidators,
+                activeDepositedValidators,
+                wethToVault
+            );
         }
 
         uint256 ethRemaining = address(this).balance;
@@ -108,23 +156,47 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
             revert UnexpectedEthAccountingInterval(ethRemaining);
         }
 
-        // Beacon chain rewards swept
+        // Beacon chain rewards swept (partial validator withdrawals)
         if (ethRemaining <= fuseIntervalStart) {
-
-        } 
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+            beaconChainRewardWETH += ethRemaining;
+            emit AccountingBeaconChainRewards(ethRemaining);
+        }
         // Beacon chain rewards swept but also a slashed validator fully exited
-        else if (fuseIntervalEnd >= fuseIntervalEnd) {
+        else if (ethRemaining >= fuseIntervalEnd) {
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+            IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
+            activeDepositedValidators -= 1;
 
-        } 
-        // Oh no... Fuse is blown. The governor (Multisig not OGV Governor) needs to set the 
+            emit AccuntingValidatorSlashed(
+                activeDepositedValidators,
+                ethRemaining
+            );
+        }
+        // Oh no... Fuse is blown. The governor (Multisig not OGV Governor) needs to set the
         // record straight by manually set the accounting values.
         else {
+            // will emit a paused event
             _pause();
         }
-
     }
 
-    function manuallyFixAccounting() external onlyAccountingGovernor {
+    function manuallyFixAccounting(
+        uint256 _activeDepositedValidators,
+        uint256 _ethToWeth,
+        uint256 _WethToBeSentToVault
+    ) external onlyAccountingGovernor {
+        activeDepositedValidators = _activeDepositedValidators;
+        if (_ethToWeth > 0) {
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToWeth }();
+        }
+        if (_WethToBeSentToVault > 0) {
+            IWETH9(WETH_TOKEN_ADDRESS).transfer(
+                VAULT_ADDRESS,
+                _WethToBeSentToVault
+            );
+        }
 
+        _unpause();
     }
 }

@@ -43,33 +43,100 @@ interface ISSVNetwork {
 
     event AdminChanged(address previousAdmin, address newAdmin);
     event BeaconUpgraded(address indexed beacon);
-    event ClusterDeposited(address indexed owner, uint64[] operatorIds, uint256 value, Cluster cluster);
-    event ClusterLiquidated(address indexed owner, uint64[] operatorIds, Cluster cluster);
-    event ClusterReactivated(address indexed owner, uint64[] operatorIds, Cluster cluster);
-    event ClusterWithdrawn(address indexed owner, uint64[] operatorIds, uint256 value, Cluster cluster);
+    event ClusterDeposited(
+        address indexed owner,
+        uint64[] operatorIds,
+        uint256 value,
+        Cluster cluster
+    );
+    event ClusterLiquidated(
+        address indexed owner,
+        uint64[] operatorIds,
+        Cluster cluster
+    );
+    event ClusterReactivated(
+        address indexed owner,
+        uint64[] operatorIds,
+        Cluster cluster
+    );
+    event ClusterWithdrawn(
+        address indexed owner,
+        uint64[] operatorIds,
+        uint256 value,
+        Cluster cluster
+    );
     event DeclareOperatorFeePeriodUpdated(uint64 value);
     event ExecuteOperatorFeePeriodUpdated(uint64 value);
-    event FeeRecipientAddressUpdated(address indexed owner, address recipientAddress);
+    event FeeRecipientAddressUpdated(
+        address indexed owner,
+        address recipientAddress
+    );
     event Initialized(uint8 version);
     event LiquidationThresholdPeriodUpdated(uint64 value);
     event MinimumLiquidationCollateralUpdated(uint256 value);
     event NetworkEarningsWithdrawn(uint256 value, address recipient);
     event NetworkFeeUpdated(uint256 oldFee, uint256 newFee);
-    event OperatorAdded(uint64 indexed operatorId, address indexed owner, bytes publicKey, uint256 fee);
-    event OperatorFeeDeclarationCancelled(address indexed owner, uint64 indexed operatorId);
-    event OperatorFeeDeclared(address indexed owner, uint64 indexed operatorId, uint256 blockNumber, uint256 fee);
-    event OperatorFeeExecuted(address indexed owner, uint64 indexed operatorId, uint256 blockNumber, uint256 fee);
+    event OperatorAdded(
+        uint64 indexed operatorId,
+        address indexed owner,
+        bytes publicKey,
+        uint256 fee
+    );
+    event OperatorFeeDeclarationCancelled(
+        address indexed owner,
+        uint64 indexed operatorId
+    );
+    event OperatorFeeDeclared(
+        address indexed owner,
+        uint64 indexed operatorId,
+        uint256 blockNumber,
+        uint256 fee
+    );
+    event OperatorFeeExecuted(
+        address indexed owner,
+        uint64 indexed operatorId,
+        uint256 blockNumber,
+        uint256 fee
+    );
     event OperatorFeeIncreaseLimitUpdated(uint64 value);
     event OperatorMaximumFeeUpdated(uint64 maxFee);
     event OperatorRemoved(uint64 indexed operatorId);
-    event OperatorWhitelistUpdated(uint64 indexed operatorId, address whitelisted);
-    event OperatorWithdrawn(address indexed owner, uint64 indexed operatorId, uint256 value);
-    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OperatorWhitelistUpdated(
+        uint64 indexed operatorId,
+        address whitelisted
+    );
+    event OperatorWithdrawn(
+        address indexed owner,
+        uint64 indexed operatorId,
+        uint256 value
+    );
+    event OwnershipTransferStarted(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
     event Upgraded(address indexed implementation);
-    event ValidatorAdded(address indexed owner, uint64[] operatorIds, bytes publicKey, bytes shares, Cluster cluster);
-    event ValidatorExited(address indexed owner, uint64[] operatorIds, bytes publicKey);
-    event ValidatorRemoved(address indexed owner, uint64[] operatorIds, bytes publicKey, Cluster cluster);
+    event ValidatorAdded(
+        address indexed owner,
+        uint64[] operatorIds,
+        bytes publicKey,
+        bytes shares,
+        Cluster cluster
+    );
+    event ValidatorExited(
+        address indexed owner,
+        uint64[] operatorIds,
+        bytes publicKey
+    );
+    event ValidatorRemoved(
+        address indexed owner,
+        uint64[] operatorIds,
+        bytes publicKey,
+        Cluster cluster
+    );
 
     fallback() external;
 
@@ -84,12 +151,12 @@ interface ISSVNetwork {
         uint64[] memory operatorIds,
         uint256 amount,
         Cluster memory cluster
-    )
-        external;
+    ) external;
 
     function executeOperatorFee(uint64 operatorId) external;
 
-    function exitValidator(bytes memory publicKey, uint64[] memory operatorIds) external;
+    function exitValidator(bytes memory publicKey, uint64[] memory operatorIds)
+        external;
 
     function getVersion() external pure returns (string memory version);
 
@@ -105,10 +172,13 @@ interface ISSVNetwork {
         uint64 declareOperatorFeePeriod_,
         uint64 executeOperatorFeePeriod_,
         uint64 operatorMaxFeeIncrease_
-    )
-        external;
+    ) external;
 
-    function liquidate(address clusterOwner, uint64[] memory operatorIds, Cluster memory cluster) external;
+    function liquidate(
+        address clusterOwner,
+        uint64[] memory operatorIds,
+        Cluster memory cluster
+    ) external;
 
     function owner() external view returns (address);
 
@@ -116,11 +186,17 @@ interface ISSVNetwork {
 
     function proxiableUUID() external view returns (bytes32);
 
-    function reactivate(uint64[] memory operatorIds, uint256 amount, Cluster memory cluster) external;
+    function reactivate(
+        uint64[] memory operatorIds,
+        uint256 amount,
+        Cluster memory cluster
+    ) external;
 
     function reduceOperatorFee(uint64 operatorId, uint256 fee) external;
 
-    function registerOperator(bytes memory publicKey, uint256 fee) external returns (uint64 id);
+    function registerOperator(bytes memory publicKey, uint256 fee)
+        external
+        returns (uint64 id);
 
     function registerValidator(
         bytes memory publicKey,
@@ -128,18 +204,22 @@ interface ISSVNetwork {
         bytes memory sharesData,
         uint256 amount,
         Cluster memory cluster
-    )
-        external;
+    ) external;
 
     function removeOperator(uint64 operatorId) external;
 
-    function removeValidator(bytes memory publicKey, uint64[] memory operatorIds, Cluster memory cluster) external;
+    function removeValidator(
+        bytes memory publicKey,
+        uint64[] memory operatorIds,
+        Cluster memory cluster
+    ) external;
 
     function renounceOwnership() external;
 
     function setFeeRecipientAddress(address recipientAddress) external;
 
-    function setOperatorWhitelist(uint64 operatorId, address whitelisted) external;
+    function setOperatorWhitelist(uint64 operatorId, address whitelisted)
+        external;
 
     function transferOwnership(address newOwner) external;
 
@@ -161,13 +241,20 @@ interface ISSVNetwork {
 
     function upgradeTo(address newImplementation) external;
 
-    function upgradeToAndCall(address newImplementation, bytes memory data) external payable;
+    function upgradeToAndCall(address newImplementation, bytes memory data)
+        external
+        payable;
 
-    function withdraw(uint64[] memory operatorIds, uint256 amount, Cluster memory cluster) external;
+    function withdraw(
+        uint64[] memory operatorIds,
+        uint256 amount,
+        Cluster memory cluster
+    ) external;
 
     function withdrawAllOperatorEarnings(uint64 operatorId) external;
 
     function withdrawNetworkEarnings(uint256 amount) external;
 
-    function withdrawOperatorEarnings(uint64 operatorId, uint256 amount) external;
+    function withdrawOperatorEarnings(uint64 operatorId, uint256 amount)
+        external;
 }

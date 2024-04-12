@@ -13,7 +13,7 @@ abstract contract ValidatorRegistrator is Governable {
     address public validatorRegistrator;
     /// @notice The number of validators that have 32 (!) ETH actively deposited. When a new deposit
     /// to a validator happens this number increases, when a validator exit is detected this number
-    /// decreases. 
+    /// decreases.
     uint256 activeDepositedValidators;
     // For future use
     uint256[50] private __gap;
@@ -22,7 +22,10 @@ abstract contract ValidatorRegistrator is Governable {
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
-        require(msg.sender == validatorRegistrator, "Caller is not the Registrator");
+        require(
+            msg.sender == validatorRegistrator,
+            "Caller is not the Registrator"
+        );
         _;
     }
 
@@ -34,7 +37,11 @@ abstract contract ValidatorRegistrator is Governable {
 
     /// @notice return the WETH balance on the contract that can be used to for beacon chain
     /// staking - staking on the validators
-    function getWETHBalanceEligibleForStaking() public virtual view returns(uint256 _amount);
+    function getWETHBalanceEligibleForStaking()
+        public
+        view
+        virtual
+        returns (uint256 _amount);
 
     // /// @notice Stakes WETH to the NDC to the Node validators
     // /// @param validators A list of validator data needed to stake.

@@ -647,7 +647,9 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
       .setHarvesterAddress(oethHarvesterProxy.address)
   );
 
-  const nativeStakingSSVStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+  const nativeStakingSSVStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
   const nativeStakingSSVStrategy = await ethers.getContractAt(
     "NativeStakingSSVStrategy",
     nativeStakingSSVStrategyProxy.address
@@ -753,15 +755,17 @@ const deployNativeStakingSSVStrategy = async () => {
     dFeeAccumulatorProxy.address
   );
 
-
   log("Deploy NativeStakingSSVStrategy");
-  const dStrategyImpl = await deployWithConfirmation("NativeStakingSSVStrategy", [
-    [addresses.zero, cOETHVaultProxy.address], //_baseConfig
-    assetAddresses.WETH, // wethAddress
-    assetAddresses.SSV, // ssvToken
-    assetAddresses.SSVNetwork, // ssvNetwork
-    dFeeAccumulatorProxy.address // feeAccumulator
-  ]);
+  const dStrategyImpl = await deployWithConfirmation(
+    "NativeStakingSSVStrategy",
+    [
+      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+      assetAddresses.WETH, // wethAddress
+      assetAddresses.SSV, // ssvToken
+      assetAddresses.SSVNetwork, // ssvNetwork
+      dFeeAccumulatorProxy.address, // feeAccumulator
+    ]
+  );
   const cStrategyImpl = await ethers.getContractAt(
     "NativeStakingSSVStrategy",
     dStrategyImpl.address
@@ -786,22 +790,22 @@ const deployNativeStakingSSVStrategy = async () => {
 
   log("Initialize the proxy and execute the initialize strategy function");
   await withConfirmation(
-    cNativeStakingSSVStrategyProxy.connect(sDeployer)["initialize(address,address,bytes)"](
-      cStrategyImpl.address, // implementation address
-      governorAddr, // governance
-      initData, // data for call to the initialize function on the strategy
-    )
+    cNativeStakingSSVStrategyProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        cStrategyImpl.address, // implementation address
+        governorAddr, // governance
+        initData // data for call to the initialize function on the strategy
+      )
   );
 
   log("Approve spending of the SSV token");
-  await cStrategy
-    .connect(sDeployer)
-    .safeApproveAllTokens();
+  await cStrategy.connect(sDeployer).safeApproveAllTokens();
 
   log("Deploy fee accumulator implementation");
   const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
     cNativeStakingSSVStrategyProxy.address, // _collector
-    assetAddresses.WETH // _weth
+    assetAddresses.WETH, // _weth
   ]);
   const cFeeAccumulator = await ethers.getContractAt(
     "FeeAccumulator",
@@ -810,11 +814,13 @@ const deployNativeStakingSSVStrategy = async () => {
 
   log("Init fee accumulator proxy");
   await withConfirmation(
-    cFeeAccumulatorProxy.connect(sDeployer)["initialize(address,address,bytes)"](
-      cFeeAccumulator.address, // implementation address
-      governorAddr, // governance
-      "0x", // do not call any initialize functions
-    )
+    cFeeAccumulatorProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        cFeeAccumulator.address, // implementation address
+        governorAddr, // governance
+        "0x" // do not call any initialize functions
+      )
   );
 
   return cStrategy;

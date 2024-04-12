@@ -362,7 +362,9 @@ const defaultFixture = deployments.createFixture(async () => {
       fluxStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
     nativeStakingSSVStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
@@ -466,7 +468,9 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
     nativeStakingSSVStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
@@ -1418,18 +1422,42 @@ async function nativeStakingSSVStrategyFixture() {
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
   } else {
     const { governorAddr } = await getNamedAccounts();
-    const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
+    const { oethVault, weth, nativeStakingSSVStrategy, strategist } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Approve Strategy
-    await oethVault.connect(sGovernor).approveStrategy(nativeStakingSSVStrategy.address);
+    await oethVault
+      .connect(sGovernor)
+      .approveStrategy(nativeStakingSSVStrategy.address);
 
-    console.log("nativeStakingSSVStrategy.address", nativeStakingSSVStrategy.address)
+    console.log(
+      "nativeStakingSSVStrategy.address",
+      nativeStakingSSVStrategy.address
+    );
+
+    const fuseStartBn = ethers.utils.parseEther("21.6");
+    const fuseEndBn = ethers.utils.parseEther("25.6");
 
     // Set as default
     await oethVault
       .connect(sGovernor)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setFuseInterval(fuseStartBn, fuseEndBn);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setRegistratorAddress(governorAddr);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setAccountingGovernor(governorAddr);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setStrategist(strategist.address);
   }
 
   return fixture;

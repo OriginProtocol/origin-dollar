@@ -27,33 +27,24 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
       const { weth, nativeStakingSSVStrategy } = fixture;
-      await expect(await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()).to.equal(
-        addresses.mainnet.WETH,
-        "Incorrect WETH address set"
-      );
+      await expect(
+        await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()
+      ).to.equal(addresses.mainnet.WETH, "Incorrect WETH address set");
       await expect(await nativeStakingSSVStrategy.SSV_TOKEN_ADDRESS()).to.equal(
         addresses.mainnet.SSV,
         "Incorrect SSV Token address"
       );
-      await expect(await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS()).to.equal(
-        addresses.mainnet.SSVNetwork,
-        "Incorrect SSV Network address"
-      );
+      await expect(
+        await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS()
+      ).to.equal(addresses.mainnet.SSVNetwork, "Incorrect SSV Network address");
     });
 
-    it.skip("Should check that the fuse interval is configured correctly", async () => {
-
-    });
+    it.skip("Should check that the fuse interval is configured correctly", async () => {});
   });
 
-  describe("Deposit/Allocation", function () {
-    
-  });
+  describe("Deposit/Allocation", function () {});
 
-  describe("Withdraw", function () {
-   
-  });
+  describe("Withdraw", function () {});
 
-  describe("Balance/Assets", function () {
-  });
+  describe("Balance/Assets", function () {});
 });

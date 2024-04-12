@@ -19,12 +19,15 @@ struct ValidatorStakeData {
 /// @title Native Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
-contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractStrategy {
+contract NativeStakingSSVStrategy is
+    ValidatorAccountant,
+    InitializableAbstractStrategy
+{
     using SafeERC20 for IERC20;
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN_ADDRESS;
-    /// @notice SSV Network contract used to interface with 
+    /// @notice SSV Network contract used to interface with
     address public immutable SSV_NETWORK_ADDRESS;
     /// @notice Fee collector address
     address public immutable FEE_ACCUMULATOR_ADDRESS;
@@ -33,14 +36,23 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     uint256[50] private __gap;
 
     error EmptyRecipient();
-    error InsuffiscientWethBalance(uint256 requiredBalance, uint256 availableBalance);
-    
+    error InsuffiscientWethBalance(
+        uint256 requiredBalance,
+        uint256 availableBalance
+    );
+
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _ssvToken Address of the Erc20 SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    constructor(BaseStrategyConfig memory _baseConfig, address _wethAddress, address _ssvToken, address _ssvNetwork, address _feeAccumulator)
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        address _wethAddress,
+        address _ssvToken,
+        address _ssvNetwork,
+        address _feeAccumulator
+    )
         InitializableAbstractStrategy(_baseConfig)
         ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress)
     {
@@ -66,12 +78,19 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     }
 
     /// @notice return the WETH balance on the contract that can be used to for beacon chain
-    /// staking - staking on the validators. Because WETH on this contract can be present as 
+    /// staking - staking on the validators. Because WETH on this contract can be present as
     /// a result of deposits and beacon chain rewards this function needs to return only WETH
     /// that is present due to deposits.
-    function getWETHBalanceEligibleForStaking() public override view returns(uint256 _amount){
+    function getWETHBalanceEligibleForStaking()
+        public
+        view
+        override
+        returns (uint256 _amount)
+    {
         // if below amount results in a negative number there is a bug with accounting
-        _amount = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)) - beaconChainRewardWETH;
+        _amount =
+            IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)) -
+            beaconChainRewardWETH;
     }
 
     /// @notice Collect accumulated WETH & SSV tokens and send to the Harvester.
@@ -83,7 +102,8 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
         nonReentrant
     {
         // collect ETH from fee collector and wrap it into WETH
-        uint256 ethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS).collect();
+        uint256 ethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+            .collect();
         IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethCollected }();
 
         _collectRewardTokens();
@@ -98,9 +118,12 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
             if (balance > 0) {
-                if(address(rewardToken) == WETH_TOKEN_ADDRESS) {
+                if (address(rewardToken) == WETH_TOKEN_ADDRESS) {
                     if (beaconChainRewardWETH < balance) {
-                        revert InsuffiscientWethBalance(beaconChainRewardWETH, balance);
+                        revert InsuffiscientWethBalance(
+                            beaconChainRewardWETH,
+                            balance
+                        );
                     }
 
                     // only allow for the WETH that is part of beacon chain rewards to be harvested
@@ -128,7 +151,6 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
         onlyVault
         nonReentrant
     {
-
         _deposit(_asset, _amount);
     }
 
@@ -137,12 +159,12 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// @param _amount Amount of WETH to deposit
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
-        /* 
+        /*
          * We could do a check here that would revert when "_amount % 32 ether != 0". With the idea of
          * not allowing deposits that will result in WETH sitting on the strategy after all the possible batches
-         * of 32ETH have been staked. 
+         * of 32ETH have been staked.
          * But someone could mess with our strategy by sending some WETH to it. And we might want to deposit just
-         * enough WETH to add it up to 32 so it can be staked. For that reason the check is left out. 
+         * enough WETH to add it up to 32 so it can be staked. For that reason the check is left out.
          *
          * WETH sitting on the strategy won't interfere with the accounting since accounting only operates on ETH.
          */
@@ -151,7 +173,9 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
 
     /// @notice Deposit the entire balance of WETH asset in the strategy into the underlying platform
     function depositAll() external override onlyVault nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
+            address(this)
+        );
         if (wethBalance > 0) {
             _deposit(WETH_TOKEN_ADDRESS, wethBalance);
         }
@@ -186,10 +210,11 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
-
     /// @notice Remove all supported assets from the underlying platform and send them to Vault contract.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
+            address(this)
+        );
         if (wethBalance > 0) {
             _withdraw(vaultAddress, WETH_TOKEN_ADDRESS, wethBalance);
         }
@@ -212,6 +237,9 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
         balance = 0;
     }
 
+    function pause() external onlyStrategist {
+        _pause();
+    }
 
     /// @dev Retuns bool indicating whether asset is supported by strategy
     /// @param _asset Address of the asset
@@ -223,12 +251,19 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
-        IERC20(SSV_TOKEN_ADDRESS).approve(SSV_NETWORK_ADDRESS, type(uint256).max);
+        IERC20(SSV_TOKEN_ADDRESS).approve(
+            SSV_NETWORK_ADDRESS,
+            type(uint256).max
+        );
     }
 
     /// @dev Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators
     /// A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
-    function depositSSV(uint64[] memory operatorIds, uint256 amount, Cluster memory cluster) external {
+    function depositSSV(
+        uint64[] memory operatorIds,
+        uint256 amount,
+        Cluster memory cluster
+    ) external {
         // address SSV_NETWORK_ADDRESS = lrtConfig.getContract(LRTConstants.SSV_NETWORK);
         // ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(address(this), operatorIds, amount, cluster);
     }

@@ -1,8 +1,9 @@
 const hre = require("hardhat");
 const { expect } = require("chai");
 const ethers = require("ethers");
-const utils = ethers.utils;
+const { utils, BigNumber } = ethers;
 const addresses = require("../../utils/addresses");
+const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { units, oethUnits, isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
@@ -54,22 +55,27 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     it("Should not allow sending of ETH to the strategy via a transaction", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
-      const signer = nativeStakingSSVStrategy.provider.getSigner(strategist.address);
+      const signer = nativeStakingSSVStrategy.provider.getSigner(
+        strategist.address
+      );
       tx = {
-          to: nativeStakingSSVStrategy.address,
-          value: ethers.utils.parseEther('2', 'ether')
+        to: nativeStakingSSVStrategy.address,
+        value: ethers.utils.parseEther("2", "ether"),
       };
 
-      await expect(
-        signer.sendTransaction(tx)
-      ).to.be.revertedWith("function selector was not recognized and there's no fallback nor receive function");
+      await expect(signer.sendTransaction(tx)).to.be.revertedWith(
+        "function selector was not recognized and there's no fallback nor receive function"
+      );
     });
 
     it("SSV network should have allowance to spend SSV tokens of the strategy", async () => {
       const { nativeStakingSSVStrategy, ssv } = fixture;
 
-      const ssvNetworkAddress = await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS();
-      await expect(await ssv.allowance(nativeStakingSSVStrategy.address, ssvNetworkAddress)).to.equal(MAX_UINT256);
+      const ssvNetworkAddress =
+        await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS();
+      await expect(
+        await ssv.allowance(nativeStakingSSVStrategy.address, ssvNetworkAddress)
+      ).to.equal(MAX_UINT256);
     });
   });
 
@@ -82,89 +88,300 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         .setRegistratorAddress(strategist.address);
 
       const events = (await tx.wait()).events || [];
-      const RegistratorAddressChangedEvent = events.find((e) => e.event === "RegistratorAddressChanged");
+      const RegistratorAddressChangedEvent = events.find(
+        (e) => e.event === "RegistratorAddressChanged"
+      );
 
       expect(RegistratorAddressChangedEvent).to.not.be.undefined;
-      expect(RegistratorAddressChangedEvent.event).to.equal("RegistratorAddressChanged");
-      expect(RegistratorAddressChangedEvent.args[0]).to.equal(addresses.zero);
-      expect(RegistratorAddressChangedEvent.args[1]).to.equal(strategist.address);
+      expect(RegistratorAddressChangedEvent.event).to.equal(
+        "RegistratorAddressChanged"
+      );
+      expect(RegistratorAddressChangedEvent.args[0]).to.equal(governor.address);
+      expect(RegistratorAddressChangedEvent.args[1]).to.equal(
+        strategist.address
+      );
     });
 
     it("Non governor should not be able to change the registrator address", async () => {
       const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
-      await expect(nativeStakingSSVStrategy
-        .connect(strategist)
-        .setRegistratorAddress(strategist.address)
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(strategist)
+          .setRegistratorAddress(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
     it("Non governor should not be able to update the fuse intervals", async () => {
       const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
-      await expect(nativeStakingSSVStrategy
-        .connect(strategist)
-        .setFuseInterval(utils.parseEther("21.6"), utils.parseEther("25.6"))
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(strategist)
+          .setFuseInterval(utils.parseEther("21.6"), utils.parseEther("25.6"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
     it("Fuse interval start needs to be larger than fuse end", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      await expect(nativeStakingSSVStrategy
-        .connect(governor)
-        .setFuseInterval(utils.parseEther("25.6"), utils.parseEther("21.6"))
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(governor)
+          .setFuseInterval(utils.parseEther("25.6"), utils.parseEther("21.6"))
       ).to.be.revertedWith("FuseIntervalValuesIncorrect");
     });
 
     it("There should be at least 4 ETH between interval start and interval end", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      await expect(nativeStakingSSVStrategy
-        .connect(governor)
-        .setFuseInterval(utils.parseEther("21.6"), utils.parseEther("25.5"))
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(governor)
+          .setFuseInterval(utils.parseEther("21.6"), utils.parseEther("25.5"))
       ).to.be.revertedWith("FuseIntervalValuesIncorrect");
     });
 
     it("Revert when fuse intervals are larger than 32 ether", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      await expect(nativeStakingSSVStrategy
-        .connect(governor)
-        .setFuseInterval(utils.parseEther("32.1"), utils.parseEther("32.1"))
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(governor)
+          .setFuseInterval(utils.parseEther("32.1"), utils.parseEther("32.1"))
       ).to.be.revertedWith("FuseIntervalValuesIncorrect");
     });
 
-    it("Governor should be able to change the registrator address", async () => {
+    it("Governor should be able to change fuse interval", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      const fuseStartBn = utils.parseEther("21.6");
-      const fuseEndBn = utils.parseEther("25.6");
+      const oldFuseStartBn = utils.parseEther("21.6");
+      const oldFuseEndBn = utils.parseEther("25.6");
+      const fuseStartBn = utils.parseEther("22.6");
+      const fuseEndBn = utils.parseEther("26.6");
 
       const tx = await nativeStakingSSVStrategy
         .connect(governor)
         .setFuseInterval(fuseStartBn, fuseEndBn);
 
       const events = (await tx.wait()).events || [];
-      const FuseIntervalUpdated = events.find((e) => e.event === "FuseIntervalUpdated");
+      const FuseIntervalUpdated = events.find(
+        (e) => e.event === "FuseIntervalUpdated"
+      );
 
       expect(FuseIntervalUpdated).to.not.be.undefined;
       expect(FuseIntervalUpdated.event).to.equal("FuseIntervalUpdated");
-      expect(FuseIntervalUpdated.args[0]).to.equal(addresses.zero); // prev fuse start
-      expect(FuseIntervalUpdated.args[1]).to.equal(addresses.zero); // prev fuse end
+      expect(FuseIntervalUpdated.args[0]).to.equal(oldFuseStartBn); // prev fuse start
+      expect(FuseIntervalUpdated.args[1]).to.equal(oldFuseEndBn); // prev fuse end
       expect(FuseIntervalUpdated.args[2]).to.equal(fuseStartBn); // fuse start
       expect(FuseIntervalUpdated.args[3]).to.equal(fuseEndBn); // fuse end
     });
+
+    it("Only accounting governor can call accounting", async () => {});
+
+    it("Only governor can change the accounting governor", async () => {
+      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(strategist)
+          .setAccountingGovernor(strategist.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Only governor can change the strategist", async () => {
+      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+
+      await expect(
+        nativeStakingSSVStrategy
+          .connect(strategist)
+          .setStrategist(strategist.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Change the accounting governor", async () => {
+      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+
+      const tx = await nativeStakingSSVStrategy
+        .connect(governor)
+        .setAccountingGovernor(strategist.address);
+
+      const events = (await tx.wait()).events || [];
+      const AccountingGovernorChangedEvent = events.find(
+        (e) => e.event === "AccountingGovernorAddressChanged"
+      );
+
+      expect(AccountingGovernorChangedEvent).to.not.be.undefined;
+      expect(AccountingGovernorChangedEvent.event).to.equal(
+        "AccountingGovernorAddressChanged"
+      );
+      expect(AccountingGovernorChangedEvent.args[0]).to.equal(governor.address);
+      expect(AccountingGovernorChangedEvent.args[1]).to.equal(
+        strategist.address
+      );
+    });
+
+    it("Change the strategist", async () => {
+      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+
+      const tx = await nativeStakingSSVStrategy
+        .connect(governor)
+        .setStrategist(governor.address);
+
+      const events = (await tx.wait()).events || [];
+      const strategistAddressChanged = events.find(
+        (e) => e.event === "StrategistAddressChanged"
+      );
+
+      expect(strategistAddressChanged).to.not.be.undefined;
+      expect(strategistAddressChanged.event).to.equal(
+        "StrategistAddressChanged"
+      );
+      expect(strategistAddressChanged.args[0]).to.equal(strategist.address);
+      expect(strategistAddressChanged.args[1]).to.equal(governor.address);
+    });
   });
 
-  describe("Deposit/Allocation", function () {
-    
+  describe("Accounting", function () {
+    const testCases = [
+      {
+        ethBalance: utils.parseEther("14"),
+        expectedRewards: utils.parseEther("14"),
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      {
+        ethBalance: utils.parseEther("34"),
+        expectedRewards: utils.parseEther("2"),
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      {
+        ethBalance: utils.parseEther("276"),
+        expectedRewards: utils.parseEther("20"),
+        expectedValidatorsFullWithdrawals: 8,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      {
+        ethBalance: utils.parseEther("22"),
+        expectedRewards: utils.parseEther("0"),
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: true,
+      },
+      {
+        ethBalance: utils.parseEther("54"),
+        expectedRewards: utils.parseEther("0"),
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: true,
+      },
+      {
+        ethBalance: utils.parseEther("26.6"),
+        expectedRewards: utils.parseEther("0"),
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: true,
+        fuseBlown: false,
+      },
+      {
+        ethBalance: utils.parseEther("58.6"), // 26.6 + 32
+        expectedRewards: utils.parseEther("0"),
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: true,
+        fuseBlown: false,
+      },
+    ];
+
+    for (const testCase of testCases) {
+      const {
+        ethBalance,
+        expectedRewards,
+        expectedValidatorsFullWithdrawals,
+        slashDetected,
+        fuseBlown,
+      } = testCase;
+      it.only(`Expect that ${utils.formatUnits(
+        ethBalance
+      )} ETH will result in ${utils.formatUnits(
+        expectedRewards
+      )} ETH rewards and ${expectedValidatorsFullWithdrawals} validators withdrawn.`, async () => {
+        const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+
+        // setup state
+        await setBalance(nativeStakingSSVStrategy.address, ethBalance);
+        // pause, so manuallyFixAccounting can be called
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          BigNumber.from("30"), // activeDepositedValidators
+          BigNumber.from("0"), // ethToWeth
+          BigNumber.from("0") // WethToBeSentToVault
+        );
+
+        // check accounting values
+        const tx = await nativeStakingSSVStrategy
+          .connect(governor)
+          .doAccounting();
+
+        const events = (await tx.wait()).events || [];
+
+        const BeaconRewardsEvent = events.find(
+          (e) => e.event === "AccountingBeaconChainRewards"
+        );
+        if (expectedRewards.gt(BigNumber.from("0"))) {
+          expect(BeaconRewardsEvent).to.not.be.undefined;
+          expect(BeaconRewardsEvent.args[0]).to.equal(expectedRewards);
+        } else {
+          expect(BeaconRewardsEvent).to.be.undefined;
+        }
+
+        const WithdrawnEvent = events.find(
+          (e) => e.event === "AccuntingFullyWithdrawnValidator"
+        );
+        if (expectedValidatorsFullWithdrawals > 0) {
+          expect(WithdrawnEvent).to.not.be.undefined;
+          expect(WithdrawnEvent.args[0]).to.equal(
+            BigNumber.from(`${expectedValidatorsFullWithdrawals}`)
+          );
+          // still active validators
+          expect(WithdrawnEvent.args[1]).to.equal(
+            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals}`)
+          );
+          // weth sent to vault
+          expect(WithdrawnEvent.args[2]).to.equal(
+            utils
+              .parseEther("32")
+              .mul(BigNumber.from(`${expectedValidatorsFullWithdrawals}`))
+          );
+        } else {
+          expect(WithdrawnEvent).to.be.undefined;
+        }
+
+        const PausedEvent = events.find((e) => e.event === "Paused");
+        if (fuseBlown) {
+          expect(PausedEvent).to.not.be.undefined;
+        } else {
+          expect(PausedEvent).to.be.undefined;
+        }
+
+        const SlashEvent = events.find(
+          (e) => e.event === "AccuntingValidatorSlashed"
+        );
+        if (slashDetected) {
+          expect(SlashEvent).to.not.be.undefined;
+          expect(SlashEvent.args[0]).to.equal(
+            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals - 1}`)
+          );
+        } else {
+          expect(SlashEvent).to.be.undefined;
+        }
+      });
+    }
   });
 
-  describe("Withdraw", function () {
-   
-  });
+  describe("Withdraw", function () {});
 
-  describe("Balance/Assets", function () {
-  });
+  describe("Balance/Assets", function () {});
 });

@@ -49,13 +49,16 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Deploy the new strategy implementation
-    const dStrategyImpl = await deployWithConfirmation("NativeStakingSSVStrategy", [
-      [addresses.zero, cVaultProxy.address], //_baseConfig
-      addresses.mainnet.WETH, // wethAddress
-      addresses.mainnet.SSV, // ssvToken
-      addresses.mainnet.SSVNetwork, // ssvNetwork
-      dFeeAccumulatorProxy.address // feeAccumulator
-    ]);
+    const dStrategyImpl = await deployWithConfirmation(
+      "NativeStakingSSVStrategy",
+      [
+        [addresses.zero, cVaultProxy.address], //_baseConfig
+        addresses.mainnet.WETH, // wethAddress
+        addresses.mainnet.SSV, // ssvToken
+        addresses.mainnet.SSVNetwork, // ssvNetwork
+        dFeeAccumulatorProxy.address, // feeAccumulator
+      ]
+    );
     const cStrategyImpl = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       dStrategyImpl.address
@@ -92,7 +95,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 5. Deploy the new fee accumulator implementation
     const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
       cStrategyProxy.address, // _collector
-      addresses.mainnet.WETH // _weth
+      addresses.mainnet.WETH, // _weth
     ]);
     const cFeeAccumulator = await ethers.getContractAt(
       "FeeAccumulator",
@@ -112,7 +115,10 @@ module.exports = deploymentWithGovernanceProposal(
     // 7. Safe approve SSV token spending
     await cStrategy.connect(sDeployer).safeApproveAllTokens();
 
-    console.log("Native Staking SSV Strategy address: ", cStrategyProxy.address);
+    console.log(
+      "Native Staking SSV Strategy address: ",
+      cStrategyProxy.address
+    );
     console.log("Fee accumulator address: ", cFeeAccumulator.address);
 
     // Governance Actions
@@ -142,7 +148,22 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cStrategy,
           signature: "setFuseInterval(uint256, uint256)",
-          args: [ethers.utils.parseEther("21.6"), ethers.utils.parseEther("25.6")],
+          args: [
+            ethers.utils.parseEther("21.6"),
+            ethers.utils.parseEther("25.6"),
+          ],
+        },
+        // 5. configure the fuse interval
+        {
+          contract: cStrategy,
+          signature: "setAccountingGovernor(address)",
+          args: [strategistAddr], // TODO: change this to the defender action
+        },
+        // 6. configure the fuse interval
+        {
+          contract: cStrategy,
+          signature: "setStrategist(address)",
+          args: [strategistAddr],
         },
       ],
     };
