@@ -41,9 +41,8 @@ def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1
 
     min_amount = 1 * 10**18 if otoken_address == OETH else 1000 * 10**18
 
-    # Quote of 1 OToken to compute slippage
-    quote_min_amount_price = get_1inch_quote(otoken_address, buyback_token, min_amount)
-    quote_no_slippage = (amount * quote_min_amount_price) / min_amount
+    # Get price of the token pair and compute amount without slippage
+    quote_no_slippage = int((amount * get_1inch_price(otoken_address, buyback_token)) / (10**decimalsMap[buyback_token]))
 
     min_expected = int((quote_no_slippage * (100 - max_slippage)) / 100)
 
@@ -82,6 +81,8 @@ def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1
         from_address=SWAPPER_1INCH.lower(),
         to_address=buyback.address.lower(),
     )
+
+    print(result.input)
 
     input_decoded = router_1inch.decode_input(result.input)
 
