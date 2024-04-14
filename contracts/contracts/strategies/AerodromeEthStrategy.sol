@@ -17,7 +17,6 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-import "hardhat/console.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -162,7 +161,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
-        improvePoolBalance
         nonReentrant
     {
         _deposit(_weth, _amount);
