@@ -244,6 +244,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
 
   describe("Accounting", function () {
     const testCases = [
+      // normal beacon chain rewards
       {
         ethBalance: utils.parseEther("14"),
         expectedRewards: utils.parseEther("14"),
@@ -251,6 +252,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: false,
         fuseBlown: false,
       },
+      // normal beacon chain rewards + 1 withdrawn validator
       {
         ethBalance: utils.parseEther("34"),
         expectedRewards: utils.parseEther("2"),
@@ -258,6 +260,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: false,
         fuseBlown: false,
       },
+      // 8 withdrawn validators + beacon chain rewards
       {
         ethBalance: utils.parseEther("276"),
         expectedRewards: utils.parseEther("20"),
@@ -265,6 +268,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: false,
         fuseBlown: false,
       },
+      // fuse blown
       {
         ethBalance: utils.parseEther("22"),
         expectedRewards: utils.parseEther("0"),
@@ -272,6 +276,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: false,
         fuseBlown: true,
       },
+      // fuse blown + 1 full withdrawal
       {
         ethBalance: utils.parseEther("54"),
         expectedRewards: utils.parseEther("0"),
@@ -279,6 +284,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: false,
         fuseBlown: true,
       },
+      // 1 validator slashed
       {
         ethBalance: utils.parseEther("26.6"),
         expectedRewards: utils.parseEther("0"),
@@ -286,6 +292,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
         slashDetected: true,
         fuseBlown: false,
       },
+      // 1 validator fully withdrawn + 1 slashed
       {
         ethBalance: utils.parseEther("58.6"), // 26.6 + 32
         expectedRewards: utils.parseEther("0"),
