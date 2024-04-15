@@ -157,13 +157,13 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cStrategy,
           signature: "setAccountingGovernor(address)",
-          args: [strategistAddr], // TODO: change this to the defender action
+          args: [deployerAddr], // TODO: change this to the defender action
         },
         // 6. configure the fuse interval
         {
           contract: cStrategy,
           signature: "setStrategist(address)",
-          args: [strategistAddr],
+          args: [deployerAddr],
         },
       ],
     };

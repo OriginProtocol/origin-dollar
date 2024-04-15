@@ -790,13 +790,14 @@ const deployNativeStakingSSVStrategy = async () => {
 
   log("Initialize the proxy and execute the initialize strategy function");
   await withConfirmation(
-    cNativeStakingSSVStrategyProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](
-        cStrategyImpl.address, // implementation address
-        governorAddr, // governance
-        initData // data for call to the initialize function on the strategy
-      )
+    cNativeStakingSSVStrategyProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cStrategyImpl.address, // implementation address
+      governorAddr, // governance
+      initData // data for call to the initialize function on the strategy
+    )
   );
 
   log("Approve spending of the SSV token");
@@ -814,13 +815,14 @@ const deployNativeStakingSSVStrategy = async () => {
 
   log("Init fee accumulator proxy");
   await withConfirmation(
-    cFeeAccumulatorProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](
-        cFeeAccumulator.address, // implementation address
-        governorAddr, // governance
-        "0x" // do not call any initialize functions
-      )
+    cFeeAccumulatorProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cFeeAccumulator.address, // implementation address
+      governorAddr, // governance
+      "0x" // do not call any initialize functions
+    )
   );
 
   return cStrategy;

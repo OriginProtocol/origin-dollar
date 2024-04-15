@@ -93,7 +93,7 @@ async function constructNewContract(
           addresses.mainnet.WETH,
           addresses.mainnet.SSV,
           addresses.mainnet.SSVNetwork,
-          addresses.mainnet.feeAccumulatorAddress,
+          feeAccumulatorAddress,
         ],
       ];
     }

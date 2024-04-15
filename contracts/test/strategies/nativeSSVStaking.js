@@ -1,11 +1,9 @@
-const hre = require("hardhat");
 const { expect } = require("chai");
 const ethers = require("ethers");
 const { utils, BigNumber } = ethers;
-const addresses = require("../../utils/addresses");
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 
-const { units, oethUnits, isCI } = require("../helpers");
+const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
@@ -15,8 +13,6 @@ const {
   createFixtureLoader,
   nativeStakingSSVStrategyFixture,
 } = require("./../_fixture");
-const { impersonateAndFund } = require("../../utils/signers");
-const { setERC20TokenBalance } = require("../_fund");
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
@@ -58,7 +54,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
       const signer = nativeStakingSSVStrategy.provider.getSigner(
         strategist.address
       );
-      tx = {
+      const tx = {
         to: nativeStakingSSVStrategy.address,
         value: ethers.utils.parseEther("2", "ether"),
       };
@@ -103,7 +99,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     });
 
     it("Non governor should not be able to change the registrator address", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await expect(
         nativeStakingSSVStrategy
@@ -113,7 +109,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     });
 
     it("Non governor should not be able to update the fuse intervals", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await expect(
         nativeStakingSSVStrategy
@@ -180,7 +176,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     it("Only accounting governor can call accounting", async () => {});
 
     it("Only governor can change the accounting governor", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await expect(
         nativeStakingSSVStrategy
@@ -190,7 +186,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     });
 
     it("Only governor can change the strategist", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await expect(
         nativeStakingSSVStrategy
@@ -327,7 +323,7 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
           ethers.utils.parseEther("0", "ether"), //_wethToBeSentToVault
           ethers.utils.parseEther("0", "ether"), //_beaconChainRewardWETH
           ethers.utils.parseEther("3000", "ether"), //_ethThresholdCheck
-          ethers.utils.parseEther("3000", "ether"), //_wethThresholdCheck
+          ethers.utils.parseEther("3000", "ether") //_wethThresholdCheck
         );
 
         // check accounting values
@@ -391,21 +387,19 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     }
 
     it("Only accounting governor is allowed to manually fix accounting", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
       // unit test fixture sets OUSD governor as accounting governor
       await expect(
-        nativeStakingSSVStrategy
-          .connect(strategist)
-          .manuallyFixAccounting(
-            10, //_activeDepositedValidators
-            ethers.utils.parseEther("2", "ether"), //_ethToWeth
-            ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
-            ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
-            ethers.utils.parseEther("0", "ether"), //_ethThresholdCheck
-            ethers.utils.parseEther("0", "ether"), //_wethThresholdCheck
-          )
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          10, //_activeDepositedValidators
+          ethers.utils.parseEther("2", "ether"), //_ethToWeth
+          ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("0", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("0", "ether") //_wethThresholdCheck
+        )
       ).to.be.revertedWith("Caller is not the Accounting Governor");
     });
 
@@ -414,85 +408,100 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
 
       // unit test fixture sets OUSD governor as accounting governor
       await expect(
-        nativeStakingSSVStrategy
-          .connect(governor)
-          .manuallyFixAccounting(
-            10, //_activeDepositedValidators
-            ethers.utils.parseEther("2", "ether"), //_ethToWeth
-            ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
-            ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
-            ethers.utils.parseEther("1", "ether"), //_ethThresholdCheck
-            ethers.utils.parseEther("0", "ether"), //_wethThresholdCheck
-          )
+        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          10, //_activeDepositedValidators
+          ethers.utils.parseEther("2", "ether"), //_ethToWeth
+          ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("1", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("0", "ether") //_wethThresholdCheck
+        )
       ).to.be.revertedWith("NotPaused");
     });
 
     it("Should not execute manual recovery if eth threshold reached", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } = fixture;
+      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
+        fixture;
 
-      await setBalance(nativeStakingSSVStrategy.address, ethers.utils.parseEther("6", "ether"));
+      await setBalance(
+        nativeStakingSSVStrategy.address,
+        ethers.utils.parseEther("6", "ether")
+      );
       await weth
         .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, ethers.utils.parseEther("5", "ether"));
+        .transfer(
+          nativeStakingSSVStrategy.address,
+          ethers.utils.parseEther("5", "ether")
+        );
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
       await expect(
-        nativeStakingSSVStrategy
-          .connect(governor)
-          .manuallyFixAccounting(
-            10, //_activeDepositedValidators
-            ethers.utils.parseEther("2", "ether"), //_ethToWeth
-            ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
-            ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
-            ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
-            ethers.utils.parseEther("5", "ether"), //_wethThresholdCheck
-          )
+        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          10, //_activeDepositedValidators
+          ethers.utils.parseEther("2", "ether"), //_ethToWeth
+          ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("5", "ether") //_wethThresholdCheck
+        )
       ).to.be.revertedWith("ManualFixAccountingThresholdReached");
     });
 
     it("Should not execute manual recovery if weth threshold reached", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } = fixture;
+      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
+        fixture;
 
-      await setBalance(nativeStakingSSVStrategy.address, ethers.utils.parseEther("5", "ether"));
+      await setBalance(
+        nativeStakingSSVStrategy.address,
+        ethers.utils.parseEther("5", "ether")
+      );
       await weth
         .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, ethers.utils.parseEther("6", "ether"));
+        .transfer(
+          nativeStakingSSVStrategy.address,
+          ethers.utils.parseEther("6", "ether")
+        );
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
       await expect(
-        nativeStakingSSVStrategy
-          .connect(governor)
-          .manuallyFixAccounting(
-            10, //_activeDepositedValidators
-            ethers.utils.parseEther("2", "ether"), //_ethToWeth
-            ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
-            ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
-            ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
-            ethers.utils.parseEther("5", "ether"), //_wethThresholdCheck
-          )
+        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          10, //_activeDepositedValidators
+          ethers.utils.parseEther("2", "ether"), //_ethToWeth
+          ethers.utils.parseEther("2", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("2", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("5", "ether") //_wethThresholdCheck
+        )
       ).to.be.revertedWith("ManualFixAccountingThresholdReached");
     });
 
     it("Should allow 5/8 governor to recover paused contract and correct the accounting state", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } = fixture;
+      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
+        fixture;
 
-      await setBalance(nativeStakingSSVStrategy.address, ethers.utils.parseEther("5", "ether"));
+      await setBalance(
+        nativeStakingSSVStrategy.address,
+        ethers.utils.parseEther("5", "ether")
+      );
       await weth
         .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, ethers.utils.parseEther("5", "ether"));
+        .transfer(
+          nativeStakingSSVStrategy.address,
+          ethers.utils.parseEther("5", "ether")
+        );
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
       // unit test fixture sets OUSD governor as accounting governor
       const tx = await nativeStakingSSVStrategy
-          .connect(governor)
-          .manuallyFixAccounting(
-            3, //_activeDepositedValidators
-            ethers.utils.parseEther("2.1", "ether"), //_ethToWeth
-            ethers.utils.parseEther("2.2", "ether"), //_wethToBeSentToVault
-            ethers.utils.parseEther("2.3", "ether"), //_beaconChainRewardWETH
-            ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
-            ethers.utils.parseEther("5", "ether"), //_wethThresholdCheck
-          );
+        .connect(governor)
+        .manuallyFixAccounting(
+          3, //_activeDepositedValidators
+          ethers.utils.parseEther("2.1", "ether"), //_ethToWeth
+          ethers.utils.parseEther("2.2", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("2.3", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("5", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("5", "ether") //_wethThresholdCheck
+        );
 
       const events = (await tx.wait()).events || [];
       const AccountingManuallyFixedEvent = events.find(
@@ -505,11 +514,18 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
       );
       expect(AccountingManuallyFixedEvent.args[0]).to.equal(0); // oldActiveDepositedValidators
       expect(AccountingManuallyFixedEvent.args[1]).to.equal(3); // activeDepositedValidators
-      expect(AccountingManuallyFixedEvent.args[2]).to.equal(ethers.utils.parseEther("0", "ether")); // oldBeaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[3]).to.equal(ethers.utils.parseEther("2.3", "ether")); // beaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[4]).to.equal(ethers.utils.parseEther("2.1", "ether")); // ethToWeth
-      expect(AccountingManuallyFixedEvent.args[5]).to.equal(ethers.utils.parseEther("2.2", "ether")); // wethToBeSentToVault
-
+      expect(AccountingManuallyFixedEvent.args[2]).to.equal(
+        ethers.utils.parseEther("0", "ether")
+      ); // oldBeaconChainRewardWETH
+      expect(AccountingManuallyFixedEvent.args[3]).to.equal(
+        ethers.utils.parseEther("2.3", "ether")
+      ); // beaconChainRewardWETH
+      expect(AccountingManuallyFixedEvent.args[4]).to.equal(
+        ethers.utils.parseEther("2.1", "ether")
+      ); // ethToWeth
+      expect(AccountingManuallyFixedEvent.args[5]).to.equal(
+        ethers.utils.parseEther("2.2", "ether")
+      ); // wethToBeSentToVault
     });
   });
 

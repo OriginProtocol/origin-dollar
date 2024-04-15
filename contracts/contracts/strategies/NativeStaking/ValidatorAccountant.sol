@@ -198,8 +198,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
     /// @param _ethToWeth the amount of ETH to be converted to WETH
     /// @param _wethToBeSentToVault the amount of WETH to be sent to the Vault
     /// @param _beaconChainRewardWETH the override value for beaconChainRewardWETH
-    /// @param _ethThresholdCheck maximum allowed ETH balance on the contract for the function to run 
-    /// @param _wethThresholdCheck maximum allowed WETH balance on the contract for the function to run 
+    /// @param _ethThresholdCheck maximum allowed ETH balance on the contract for the function to run
+    /// @param _wethThresholdCheck maximum allowed WETH balance on the contract for the function to run
     ///        the above 2 checks are done so transaction doesn't get front run and cause
     ///        unexpected behaviour
     function manuallyFixAccounting(
@@ -215,9 +215,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
         }
 
         uint256 ethBalance = address(this).balance;
-        uint256 wethBalance = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+        uint256 wethBalance = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(
+            address(this)
+        );
 
-        if (ethBalance > _ethThresholdCheck || wethBalance > _wethThresholdCheck) {
+        if (
+            ethBalance > _ethThresholdCheck || wethBalance > _wethThresholdCheck
+        ) {
             revert ManualFixAccountingThresholdReached();
         }
 
