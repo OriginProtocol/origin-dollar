@@ -55,14 +55,26 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
         address oldAddress,
         address newAddress
     );
+    event AccountingBeaconChainRewards(uint256 amount);
     event StrategistAddressChanged(
         address oldStrategist,
         address newStrategist
     );
-    event AccountingBeaconChainRewards(uint256 amount);
 
-    error FuseIntervalValuesIncorrect();
+    event AccountingManuallyFixed(
+        uint256 oldActiveDepositedValidators,
+        uint256 activeDepositedValidators,
+        uint256 oldBeaconChainRewardWETH,
+        uint256 beaconChainRewardWETH,
+        uint256 ethToWeth,
+        uint256 wethToBeSentToVault
+    );
+
     error UnexpectedEthAccountingInterval(uint256 errorneousEthAmount);
+    error ManualFixAccountingThresholdReached();
+    error FuseIntervalValuesIncorrect();
+    error NotPaused();
+    error InsuffiscientETHbalance();
 
     /// @dev Throws if called by any account other than the Accounting Governor
     modifier onlyAccountingGovernor() {
@@ -181,19 +193,55 @@ abstract contract ValidatorAccountant is ValidatorRegistrator, Pausable {
         }
     }
 
+    /// @dev allow the accounting governor to fix the accounting of this strategy and unpause
+    /// @param _activeDepositedValidators the override value of activeDepositedValidators
+    /// @param _ethToWeth the amount of ETH to be converted to WETH
+    /// @param _wethToBeSentToVault the amount of WETH to be sent to the Vault
+    /// @param _beaconChainRewardWETH the override value for beaconChainRewardWETH
+    /// @param _ethThresholdCheck maximum allowed ETH balance on the contract for the function to run 
+    /// @param _wethThresholdCheck maximum allowed WETH balance on the contract for the function to run 
+    ///        the above 2 checks are done so transaction doesn't get front run and cause
+    ///        unexpected behaviour
     function manuallyFixAccounting(
         uint256 _activeDepositedValidators,
         uint256 _ethToWeth,
-        uint256 _WethToBeSentToVault
+        uint256 _wethToBeSentToVault,
+        uint256 _beaconChainRewardWETH,
+        uint256 _ethThresholdCheck,
+        uint256 _wethThresholdCheck
     ) external onlyAccountingGovernor {
+        if (!paused()) {
+            revert NotPaused();
+        }
+
+        uint256 ethBalance = address(this).balance;
+        uint256 wethBalance = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+
+        if (ethBalance > _ethThresholdCheck || wethBalance > _wethThresholdCheck) {
+            revert ManualFixAccountingThresholdReached();
+        }
+
+        emit AccountingManuallyFixed(
+            activeDepositedValidators,
+            _activeDepositedValidators,
+            beaconChainRewardWETH,
+            _beaconChainRewardWETH,
+            _ethToWeth,
+            _wethToBeSentToVault
+        );
+
         activeDepositedValidators = _activeDepositedValidators;
+        beaconChainRewardWETH = _beaconChainRewardWETH;
         if (_ethToWeth > 0) {
+            if (ethBalance < _ethToWeth) {
+                revert InsuffiscientETHbalance();
+            }
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToWeth }();
         }
-        if (_WethToBeSentToVault > 0) {
+        if (_wethToBeSentToVault > 0) {
             IWETH9(WETH_TOKEN_ADDRESS).transfer(
                 VAULT_ADDRESS,
-                _WethToBeSentToVault
+                _wethToBeSentToVault
             );
         }
 
