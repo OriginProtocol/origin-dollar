@@ -15,7 +15,6 @@ import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is BaseCompoundStrategy {
     using SafeERC20 for IERC20;
-
     event SkippedWithdrawal(address asset, uint256 amount);
 
     constructor(BaseStrategyConfig memory _stratConfig)

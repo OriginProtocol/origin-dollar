@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice The Vault contract initializes the vault.
  * @author Origin Protocol Inc
  */
+
 import "./VaultStorage.sol";
 
 contract VaultInitializer is VaultStorage {

@@ -190,8 +190,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Internal method to respond to the addition of new asset / aTokens
-     *         We need to give the AAVE lending pool approval to transfer the
-     *         asset.
+            We need to give the AAVE lending pool approval to transfer the
+            asset.
      * @param _asset Address of the asset to approve
      * @param _aToken Address of the aToken
      */

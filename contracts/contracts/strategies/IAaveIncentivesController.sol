@@ -62,8 +62,7 @@ interface IAaveIncentivesController {
      * @param asset The address of the user
      * @param userBalance The balance of the user of the asset in the lending pool
      * @param totalSupply The total supply of the asset in the lending pool
-     *
-     */
+     **/
     function handleAction(
         address asset,
         uint256 userBalance,
@@ -74,8 +73,7 @@ interface IAaveIncentivesController {
      * @dev Returns the total of rewards of an user, already accrued + not yet accrued
      * @param user The address of the user
      * @return The rewards
-     *
-     */
+     **/
     function getRewardsBalance(address[] calldata assets, address user)
         external
         view
@@ -87,8 +85,7 @@ interface IAaveIncentivesController {
      * @param amount Amount of rewards to claim
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
-     */
+     **/
     function claimRewards(
         address[] calldata assets,
         uint256 amount,
@@ -103,8 +100,7 @@ interface IAaveIncentivesController {
      * @param user Address to check and claim rewards
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
-     */
+     **/
     function claimRewardsOnBehalf(
         address[] calldata assets,
         uint256 amount,

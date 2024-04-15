@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice The VaultAdmin contract makes configuration and admin calls on the vault.
  * @author Origin Protocol Inc
  */
+
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -30,11 +31,9 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
-    /**
-     *
-     *              Configuration
-     *
-     */
+    /***************************************
+                 Configuration
+    ****************************************/
 
     /**
      * @notice Set address of price provider.
@@ -103,7 +102,7 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Set the default Strategy for an asset, i.e. the one which the asset
-     *         will be automatically allocated to and withdrawn from
+            will be automatically allocated to and withdrawn from
      * @param _asset Address of the asset
      * @param _strategy Address of the Strategy
      */
@@ -155,11 +154,9 @@ contract VaultAdmin is VaultStorage {
         emit NetOusdMintForStrategyThresholdChanged(_threshold);
     }
 
-    /**
-     *
-     *                 Swaps
-     *
-     */
+    /***************************************
+                    Swaps
+    ****************************************/
 
     /**
      * @notice Strategist swaps collateral assets sitting in the vault.
@@ -258,11 +255,9 @@ contract VaultAdmin is VaultStorage {
         emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
     }
 
-    /**
-     *
-     *                 Swap Config
-     *
-     */
+    /***************************************
+                    Swap Config
+    ****************************************/
 
     /**
      * @notice Set the contract the performs swaps of collateral assets.
@@ -316,11 +311,9 @@ contract VaultAdmin is VaultStorage {
         emit SwapSlippageChanged(_asset, _allowedOracleSlippageBps);
     }
 
-    /**
-     *
-     *             Asset Config
-     *
-     */
+    /***************************************
+                Asset Config
+    ****************************************/
 
     /**
      * @notice Add a supported asset to the contract, i.e. one that can be
@@ -359,11 +352,9 @@ contract VaultAdmin is VaultStorage {
         _cacheDecimals(_asset);
     }
 
-    /**
-     *
-     *             Strategy Config
-     *
-     */
+    /***************************************
+                Strategy Config
+    ****************************************/
 
     /**
      * @notice Add a strategy to the Vault.
@@ -380,6 +371,7 @@ contract VaultAdmin is VaultStorage {
      * @notice Remove a strategy from the Vault.
      * @param _addr Address of the strategy to remove
      */
+
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
 
@@ -417,11 +409,9 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
-    /**
-     *
-     *             Strategies
-     *
-     */
+    /***************************************
+                Strategies
+    ****************************************/
 
     /**
      * @notice Deposit multiple assets from the vault into the strategy.
@@ -548,11 +538,9 @@ contract VaultAdmin is VaultStorage {
         emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
 
-    /**
-     *
-     *                 Pause
-     *
-     */
+    /***************************************
+                    Pause
+    ****************************************/
 
     /**
      * @notice Set the deposit paused flag to true to prevent rebasing.
@@ -586,11 +574,9 @@ contract VaultAdmin is VaultStorage {
         emit CapitalUnpaused();
     }
 
-    /**
-     *
-     *                 Utils
-     *
-     */
+    /***************************************
+                    Utils
+    ****************************************/
 
     /**
      * @notice Transfer token to governor. Intended for recovering tokens stuck in
@@ -606,11 +592,9 @@ contract VaultAdmin is VaultStorage {
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
-    /**
-     *
-     *          Strategies Admin
-     *
-     */
+    /***************************************
+             Strategies Admin
+    ****************************************/
 
     /**
      * @notice Withdraws all assets from the strategy and sends assets to the Vault.
@@ -638,11 +622,10 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
-    /**
-     *
-     *                 Utils
-     *
-     */
+    /***************************************
+                    Utils
+    ****************************************/
+
     function _cacheDecimals(address token) internal {
         Asset storage tokenAsset = assets[token];
         if (tokenAsset.decimals != 0) {

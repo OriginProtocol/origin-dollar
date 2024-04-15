@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice The VaultStorage contract defines the storage for the Vault contracts
  * @author Origin Protocol Inc
  */
+
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -58,7 +59,6 @@ contract VaultStorage is Initializable, Governable {
         GETEXCHANGERATE
     }
     // Changed to fit into a single storage slot so the decimals needs to be recached
-
     struct Asset {
         // Note: OETHVaultCore doesn't use `isSupported` when minting,
         // redeeming or checking balance of assets.
@@ -83,7 +83,6 @@ contract VaultStorage is Initializable, Governable {
         uint256 _deprecated; // Deprecated storage slot
     }
     /// @dev mapping of strategy contracts to their configiration
-
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -164,7 +163,6 @@ contract VaultStorage is Initializable, Governable {
         // For example 100 == 1%
         uint16 allowedUndervalueBps;
     }
-
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
     // For future use

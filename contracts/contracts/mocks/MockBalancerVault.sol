@@ -10,7 +10,6 @@ import { StableMath } from "../utils/StableMath.sol";
 
 contract MockBalancerVault {
     using StableMath for uint256;
-
     uint256 public slippage = 1 ether;
     bool public transferDisabled = false;
     bool public slippageErrorDisabled = false;

@@ -100,15 +100,13 @@ abstract contract BaseHarvester is Governable {
     /**
      * Address receiving rewards proceeds. Initially the Vault contract later will possibly
      * be replaced by another contract that eases out rewards distribution.
-     *
-     */
+     **/
     address public rewardProceedsAddress;
 
     /**
      * All tokens are swapped to this token before it gets transferred
      * to the `rewardProceedsAddress`. USDT for OUSD and WETH for OETH.
-     *
-     */
+     **/
     address public immutable baseTokenAddress;
     // Cached decimals for `baseTokenAddress`
     uint256 public immutable baseTokenDecimals;
@@ -126,7 +124,6 @@ abstract contract BaseHarvester is Governable {
         uint128 baseTokenIndex;
     }
     // Packed indices of assets on the Curve pool
-
     mapping(address => CurvePoolIndices) public curvePoolIndices;
 
     constructor(address _vaultAddress, address _baseTokenAddress) {
@@ -140,11 +137,9 @@ abstract contract BaseHarvester is Governable {
         baseTokenDecimals = Helpers.getDecimals(_baseTokenAddress);
     }
 
-    /**
-     *
-     *              Configuration
-     *
-     */
+    /***************************************
+                 Configuration
+    ****************************************/
 
     /**
      * Set the Address receiving rewards proceeds.
@@ -392,11 +387,9 @@ abstract contract BaseHarvester is Governable {
         emit SupportedStrategyUpdate(_strategyAddress, _isSupported);
     }
 
-    /**
-     *
-     *                 Rewards
-     *
-     */
+    /***************************************
+                    Rewards
+    ****************************************/
 
     /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
@@ -509,11 +502,11 @@ abstract contract BaseHarvester is Governable {
 
         // Oracle price is 1e18
         uint256 minExpected = (balance *
-            (1e4 - tokenConfig.allowedSlippageBps) *
-            oraclePrice).scaleBy( // max allowed slippage
-            baseTokenDecimals,
-            Helpers.getDecimals(_swapToken)
-        ) /
+            (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
+            oraclePrice).scaleBy(
+                baseTokenDecimals,
+                Helpers.getDecimals(_swapToken)
+            ) /
             1e4 / // fix the max slippage decimal position
             1e18; // and oracle price decimals position
 

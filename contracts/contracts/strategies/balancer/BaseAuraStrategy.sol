@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
  * @title OETH Base Balancer Abstract Strategy
  * @author Origin Protocol Inc
  */
+
 import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";

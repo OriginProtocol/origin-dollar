@@ -19,8 +19,7 @@ contract MockAaveIncentivesController {
      * @dev Returns the total of rewards of an user, already accrued + not yet accrued
      * @param user The address of the user
      * @return The rewards
-     *
-     */
+     **/
     // solhint-disable-next-line no-unused-vars
     function getRewardsBalance(address[] calldata assets, address user)
         external
@@ -35,8 +34,7 @@ contract MockAaveIncentivesController {
      * @param amount Amount of rewards to claim
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
-     */
+     **/
     function claimRewards(
         // solhint-disable-next-line no-unused-vars
         address[] calldata assets,

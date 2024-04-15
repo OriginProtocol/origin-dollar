@@ -19,7 +19,6 @@ import { StableMath } from "../utils/StableMath.sol";
 contract MockAToken is MintableERC20 {
     address public lendingPool;
     IERC20 public underlyingToken;
-
     using SafeERC20 for IERC20;
 
     constructor(

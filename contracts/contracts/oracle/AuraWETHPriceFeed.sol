@@ -41,8 +41,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * TWAP price.
      *
      * @return price The price scaled to 18 decimals
-     *
-     */
+     **/
     function price() external view returns (int256) {
         return _price();
     }
@@ -86,8 +85,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
 
     /**
      * Pauses the price feed. Callable by Strategist as well.
-     *
-     */
+     **/
     function pause() external onlyGovernorOrStrategist {
         if (paused) {
             revert PriceFeedPausedError();
@@ -98,8 +96,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
 
     /**
      * Unpauses the price feed. Only Governor can call it
-     *
-     */
+     **/
     function unpause() external onlyGovernor {
         if (!paused) {
             revert PriceFeedUnpausedError();
@@ -113,8 +110,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * two different price points.
      *
      * @param _tolerance New tolerance value
-     *
-     */
+     **/
     function setTolerance(uint256 _tolerance) external onlyGovernor {
         if (_tolerance > 0.1 ether) {
             revert InvalidToleranceBps();
@@ -131,8 +127,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * The `answer` returned by this is same as what `price()` would return.
      *
      * It doesn't return any data about rounds (since those doesn't exist).
-     *
-     */
+     **/
     function latestRoundData()
         external
         view
@@ -154,8 +149,7 @@ contract AuraWETHPriceFeed is AggregatorV3Interface, Strategizable {
      * with AggregatorV3Interface.
      *
      * Always reverts since there're no round data in this contract.
-     *
-     */
+     **/
     function getRoundData(uint80)
         external
         pure

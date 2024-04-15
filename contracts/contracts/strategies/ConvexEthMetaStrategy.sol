@@ -157,11 +157,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _approveBase();
     }
 
-    /**
-     *
-     *                 Deposit
-     *
-     */
+    /***************************************
+                    Deposit
+    ****************************************/
 
     /**
      * @notice Deposit WETH into the Curve pool
@@ -252,11 +250,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /**
-     *
-     *                 Withdraw
-     *
-     */
+    /***************************************
+                    Withdraw
+    ****************************************/
 
     /**
      * @notice Withdraw ETH and OETH from the Curve pool, burn the OETH,
@@ -369,11 +365,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
 
-    /**
-     *
-     *         Curve pool Rebalancing
-     *
-     */
+    /***************************************
+            Curve pool Rebalancing
+    ****************************************/
 
     /**
      * @notice Mint OTokens and one-sided add to the Curve pool.
@@ -514,11 +508,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
     }
 
-    /**
-     *
-     *             Assets and Rewards
-     *
-     */
+    /***************************************
+                Assets and Rewards
+    ****************************************/
 
     /**
      * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
@@ -569,11 +561,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         return _asset == address(weth);
     }
 
-    /**
-     *
-     *                 Approvals
-     *
-     */
+    /***************************************
+                    Approvals
+    ****************************************/
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,

@@ -16,7 +16,6 @@ import "../utils/Helpers.sol";
 contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant MORPHO = 0x8888882f8f843896699869179fB6E4f7e3B58888;
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
-
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
@@ -104,6 +103,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
          *
          * For the above reasoning such "optimization" is not implemented
          */
+
         address[] memory poolTokens = new address[](assetsMapped.length);
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             poolTokens[i] = assetToPToken[assetsMapped[i]];

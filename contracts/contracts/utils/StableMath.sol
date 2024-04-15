@@ -15,11 +15,9 @@ library StableMath {
      */
     uint256 private constant FULL_SCALE = 1e18;
 
-    /**
-     *
-     *                 Helpers
-     *
-     */
+    /***************************************
+                    Helpers
+    ****************************************/
 
     /**
      * @dev Adjust the scale of an integer
@@ -40,11 +38,9 @@ library StableMath {
         return x;
     }
 
-    /**
-     *
-     *            Precise Arithmetic
-     *
-     */
+    /***************************************
+               Precise Arithmetic
+    ****************************************/
 
     /**
      * @dev Multiplies two precise units, and then truncates by the full scale

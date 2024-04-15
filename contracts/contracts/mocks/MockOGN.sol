@@ -95,11 +95,11 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     //
     // Functions for maintaining whitelist
     //
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
     modifier allowedTransfer(address _from, address _to) {
         require(
             // solium-disable-next-line operator-whitespace
@@ -149,6 +149,7 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     // ERC20 transfer functions that have been overridden to enforce the
     // whitelist.
     //
+
     function transfer(address _to, uint256 _value)
         public
         override

@@ -289,11 +289,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         harvesterAddress = _harvesterAddress;
     }
 
-    /**
-     *
-     *              Abstract
-     *
-     */
+    /***************************************
+                 Abstract
+    ****************************************/
+
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         virtual;

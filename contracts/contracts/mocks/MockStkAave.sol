@@ -31,8 +31,7 @@ contract MockStkAave is MintableERC20 {
      * @dev Redeems staked tokens, and stop earning rewards
      * @param to Address to redeem to
      * @param amount Amount to redeem
-     *
-     */
+     **/
     function redeem(address to, uint256 amount) external {
         uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
         uint256 windowStart = cooldownStartTimestamp + COOLDOWN_SECONDS;
@@ -55,8 +54,7 @@ contract MockStkAave is MintableERC20 {
     /**
      * @dev Activates the cooldown period to unstake
      * - It can't be called if the user is not staking
-     *
-     */
+     **/
     function cooldown() external {
         require(balanceOf(msg.sender) != 0, "INVALID_BALANCE_ON_COOLDOWN");
         stakersCooldowns[msg.sender] = block.timestamp;
@@ -64,8 +62,7 @@ contract MockStkAave is MintableERC20 {
 
     /**
      * @dev Test helper function to allow changing the cooldown
-     *
-     */
+     **/
     function setCooldown(address account, uint256 _cooldown) external {
         stakersCooldowns[account] = _cooldown;
     }

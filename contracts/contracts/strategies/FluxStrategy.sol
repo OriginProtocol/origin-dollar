@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Flux
  * @author Origin Protocol Inc
  */
+
 import { CompoundStrategy } from "./CompoundStrategy.sol";
 
 contract FluxStrategy is CompoundStrategy {

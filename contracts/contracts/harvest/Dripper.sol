@@ -43,6 +43,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * longer curve the more collect() is called without incoming yield.
  *
  */
+
 contract Dripper is Governable {
     using SafeERC20 for IERC20;
 

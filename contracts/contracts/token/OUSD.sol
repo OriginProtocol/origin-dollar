@@ -20,6 +20,7 @@ import { Governable } from "../governance/Governable.sol";
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
  * rebasing design. Any integrations with OUSD should be aware.
  */
+
 contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
@@ -321,7 +322,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
     /**
      * @dev Decrease the amount of tokens that an owner has allowed to
-     *         `_spender`.
+            `_spender`.
      * @param _spender The address which will spend the funds.
      * @param _subtractedValue The amount of tokens to decrease the allowance
      *        by.

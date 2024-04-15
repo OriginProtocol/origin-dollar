@@ -126,7 +126,8 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         // simplifying below to: `uint256 diff = (num3CrvTokens - 1) * k` causes loss of precision
         // prettier-ignore
         // slither-disable-next-line divide-before-multiply
-        uint256 diff = crvPoolBalance * k - (crvPoolBalance - num3CrvTokens - 1) * k;
+        uint256 diff = crvPoolBalance * k -
+            (crvPoolBalance - num3CrvTokens - 1) * k;
         uint256 lpToBurn = diff / 1e36;
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(

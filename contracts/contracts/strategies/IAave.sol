@@ -16,8 +16,7 @@ interface IAaveLendingPool {
      *   is a different wallet
      * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
      *   0 if the action is executed directly by the user, without any middle-man
-     *
-     */
+     **/
     function deposit(
         address asset,
         uint256 amount,
@@ -35,8 +34,7 @@ interface IAaveLendingPool {
      *   wants to receive it on his own wallet, or a different address if the beneficiary is a
      *   different wallet
      * @return The final amount withdrawn
-     *
-     */
+     **/
     function withdraw(
         address asset,
         uint256 amount,

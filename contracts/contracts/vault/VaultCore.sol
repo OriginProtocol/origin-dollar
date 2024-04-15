@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 /**
  * @title OToken VaultCore contract
  * @notice The Vault contract stores assets. On a deposit, OTokens will be minted
- *            and sent to the depositor. On a withdrawal, OTokens will be burned and
- *            assets will be sent to the withdrawer. The Vault accepts deposits of
- *            interest from yield bearing strategies which will modify the supply
- *            of OTokens.
+           and sent to the depositor. On a withdrawal, OTokens will be burned and
+           assets will be sent to the withdrawer. The Vault accepts deposits of
+           interest from yield bearing strategies which will modify the supply
+           of OTokens.
  * @author Origin Protocol Inc
  */
+
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
@@ -22,7 +23,6 @@ contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     // max signed int
-
     uint256 internal constant MAX_INT = 2**255 - 1;
     // max un-signed int
     uint256 internal constant MAX_UINT =
@@ -278,16 +278,14 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
-     *
-     */
+     **/
     function allocate() external whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
     /**
      * @dev Allocate unallocated funds on Vault to strategies.
-     *
-     */
+     **/
     function _allocate() internal {
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
@@ -579,11 +577,9 @@ contract VaultCore is VaultInitializer {
         }
     }
 
-    /**
-     *
-     *                 Pricing
-     *
-     */
+    /***************************************
+                    Pricing
+    ****************************************/
 
     /**
      * @notice Returns the total price in 18 digit units for a given asset.
@@ -629,11 +625,9 @@ contract VaultCore is VaultInitializer {
         price = (_toUnitPrice(asset, false) * units) / 1e18;
     }
 
-    /**
-     *
-     *                 Utils
-     *
-     */
+    /***************************************
+                    Utils
+    ****************************************/
 
     /**
      * @dev Convert a quantity of a token into 1e18 fixed decimal "units"
