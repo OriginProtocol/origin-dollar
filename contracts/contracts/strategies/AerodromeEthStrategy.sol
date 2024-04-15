@@ -212,9 +212,12 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).mintForStrategy(oethToAdd);
 
         // adjust for slippage
-        oethToAdd = oethToAdd.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
-        wethToAdd = wethToAdd.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
-
+        uint256 minOethToAdd = oethToAdd.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+        uint256 minWethToAdd = wethToAdd.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
         // Do the deposit to the Aerodrome pool
         // slither-disable-next-line arbitrary-send
         (, , uint256 lpReceived) = aeroRouterAddress.addLiquidity(
@@ -223,8 +226,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             true,
             wethToAdd,
             oethToAdd,
-            0,
-            0,
+            minWethToAdd,
+            minOethToAdd,
             address(this),
             block.timestamp
         );
