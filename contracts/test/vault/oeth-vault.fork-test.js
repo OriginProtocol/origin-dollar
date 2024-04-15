@@ -189,10 +189,40 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("Remove asset", () => {
     it("should remove all LSTs from the Vault", async function () {
-      const { oethVault, frxETH, reth, stETH, timelock } = fixture;
+      const { oethVault, frxETH, reth, stETH, domen, strategist, timelock } =
+        fixture;
 
       if (!(await oethVault.isSupportedAsset(frxETH.address))) {
         this.skip();
+      }
+
+      const allStrats = await oethVault.getAllStrategies();
+      if (
+        allStrats
+          .map((x) => x.toLowerCase())
+          .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
+      ) {
+        // Remove fraxETH strategy if it exists
+        // Because it no longer holds assets and causes this test to fail
+
+        // Send some dust to that first
+        await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
+
+        // Now make sure it's deposited
+        await oethVault
+          .connect(strategist)
+          .depositToStrategy(
+            addresses.mainnet.FraxETHStrategy,
+            [frxETH.address],
+            [oethUnits("1")]
+          );
+
+        await oethVault
+          .connect(timelock)
+          .setAssetDefaultStrategy(frxETH.address, addresses.zero);
+        await oethVault
+          .connect(timelock)
+          .removeStrategy(addresses.mainnet.FraxETHStrategy);
       }
 
       // Remove all assets from strategies

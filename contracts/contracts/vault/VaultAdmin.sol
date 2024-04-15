@@ -376,13 +376,8 @@ contract VaultAdmin is VaultStorage {
         assetDefaultStrategies[_asset] = address(0);
         emit AssetDefaultStrategyUpdated(_asset, address(0));
 
-        // Mark as unsupported
-        assets[_asset] = Asset({
-            isSupported: false,
-            unitConversion: UnitConversion(0), // Reset to default
-            decimals: 0,
-            allowedOracleSlippageBps: 0 // Reset to default
-        });
+        // Remove asset from storage
+        delete assets[_asset];
 
         emit AssetRemoved(_asset);
     }
