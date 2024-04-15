@@ -97,10 +97,17 @@ describe("ForkTest: Maker DSR Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit some DAI to strategy", async function () {
-      const { dai, ousd, sDAI, makerDsrStrategy, vaultSigner, strategist } =
-        fixture;
+      const {
+        dai,
+        ousd,
+        vault,
+        sDAI,
+        makerDsrStrategy,
+        vaultSigner,
+        strategist,
+      } = fixture;
 
-      await ousd.connect(strategist).rebase();
+      await vault.connect(strategist).rebase();
 
       const daiDepositAmount = await units("1000", dai);
 

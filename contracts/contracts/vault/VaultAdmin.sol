@@ -350,7 +350,7 @@ contract VaultAdmin is VaultStorage {
     function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
         require(
-            IVault(address(this)).checkBalance(_asset) <= 1e6,
+            IVault(address(this)).checkBalance(_asset) <= 1e13,
             "Vault still holds asset"
         );
 

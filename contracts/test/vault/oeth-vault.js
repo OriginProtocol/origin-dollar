@@ -282,7 +282,7 @@ describe("OETH Vault", function () {
     it("should not revert for smaller dust", async () => {
       const { oethVault, weth, governor, daniel } = fixture;
 
-      await oethVault.connect(daniel).mint(weth.address, "50000", "0");
+      await oethVault.connect(daniel).mint(weth.address, "500000000000", "0");
 
       const tx = oethVault.connect(governor).removeAsset(weth.address);
 
