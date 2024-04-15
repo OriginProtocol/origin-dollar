@@ -278,5 +278,15 @@ describe("OETH Vault", function () {
 
       await expect(tx).to.be.revertedWith("Vault still holds asset");
     });
+
+    it("should not revert for smaller dust", async () => {
+      const { oethVault, weth, governor, daniel } = fixture;
+
+      await oethVault.connect(daniel).mint(weth.address, "50000", "0");
+
+      const tx = oethVault.connect(governor).removeAsset(weth.address);
+
+      await expect(tx).to.not.be.revertedWith("Vault still holds asset");
+    });
   });
 });

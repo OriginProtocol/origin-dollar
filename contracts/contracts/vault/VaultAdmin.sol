@@ -350,7 +350,7 @@ contract VaultAdmin is VaultStorage {
     function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
         require(
-            IVault(address(this)).checkBalance(_asset) == 0,
+            IVault(address(this)).checkBalance(_asset) <= 1e6,
             "Vault still holds asset"
         );
 
@@ -377,7 +377,12 @@ contract VaultAdmin is VaultStorage {
         emit AssetDefaultStrategyUpdated(_asset, address(0));
 
         // Mark as unsupported
-        assets[_asset].isSupported = false;
+        assets[_asset] = Asset({
+            isSupported: false,
+            unitConversion: UnitConversion(0), // Reset to default
+            decimals: 0,
+            allowedOracleSlippageBps: 0 // Reset to default
+        });
 
         emit AssetRemoved(_asset);
     }
