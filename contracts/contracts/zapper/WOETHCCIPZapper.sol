@@ -31,6 +31,8 @@ contract WOETHCCIPZapper {
         uint256 amount
     );
 
+    error InsufficientAmount();
+
     /**
      * @dev The destination chain selector
      */
@@ -92,7 +94,7 @@ contract WOETHCCIPZapper {
         payable
         returns (bytes32 messageId)
     {
-        require(msg.value == amount, "INSUFFICIENT_AMOUNT");
+        if (msg.value != amount) revert InsufficientAmount();
 
         uint256 oethBalanceBefore = oeth.balanceOf(address(this));
 
@@ -102,7 +104,9 @@ contract WOETHCCIPZapper {
             oethBalanceBefore;
 
         // 2.) Wrap the recieved woeth
-        uint256 woethBalanceBefore = woethOnSourceChain.balanceOf(address(this));
+        uint256 woethBalanceBefore = woethOnSourceChain.balanceOf(
+            address(this)
+        );
         woethOnSourceChain.deposit(oethRecieved, address(this));
         uint256 woethRecieved = woethOnSourceChain.balanceOf(address(this)) -
             woethBalanceBefore;
