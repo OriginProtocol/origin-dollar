@@ -31,8 +31,6 @@ contract WOETHCCIPZapper {
         uint256 amount
     );
 
-    error InsufficientAmount();
-
     /**
      * @dev The destination chain selector
      */
@@ -86,15 +84,14 @@ contract WOETHCCIPZapper {
     /**
      * @notice Accepts ETH, zaps for OETH, wraps it for WOETH and sends it to the destination chain (arbitrum)
      * @param receiver The address of the EOA on the destination chain
-     * @param amount ETH amount to zap
      * @return messageId The ID of the message that was sent
      */
-    function zapFor(address receiver, uint256 amount)
+    function zapFor(address receiver)
         public
         payable
         returns (bytes32 messageId)
     {
-        return _zap(receiver, amount);
+        return _zap(receiver, msg.value);
     }
 
     /**
@@ -109,8 +106,6 @@ contract WOETHCCIPZapper {
         internal
         returns (bytes32 messageId)
     {
-        if (msg.value != amount) revert InsufficientAmount();
-
         uint256 oethBalanceBefore = oeth.balanceOf(address(this));
 
         // 1.) Zap for OETH
