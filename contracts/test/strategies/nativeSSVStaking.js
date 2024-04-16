@@ -536,24 +536,34 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         feeAccumulatorEth: utils.parseEther("2.2"),
         beaconChainRewardEth: utils.parseEther("16.3"),
         wethFromDeposits: utils.parseEther("100"),
+        nrOfActiveDepositedValidators: 7,
         expectedEthSentToHarvester: utils.parseEther("18.5"),
       },
       {
         feeAccumulatorEth: utils.parseEther("10.2"),
         beaconChainRewardEth: utils.parseEther("21.6"),
         wethFromDeposits: utils.parseEther("0"),
+        nrOfActiveDepositedValidators: 5,
+        expectedEthSentToHarvester: utils.parseEther("31.8"),
+      },
+      {
+        feeAccumulatorEth: utils.parseEther("10.2"),
+        beaconChainRewardEth: utils.parseEther("21.6"),
+        wethFromDeposits: utils.parseEther("1"),
+        nrOfActiveDepositedValidators: 0,
         expectedEthSentToHarvester: utils.parseEther("31.8"),
       },
       {
         feeAccumulatorEth: utils.parseEther("0"),
         beaconChainRewardEth: utils.parseEther("0"),
         wethFromDeposits: utils.parseEther("0"),
+        nrOfActiveDepositedValidators: 0,
         expectedEthSentToHarvester: utils.parseEther("0"),
       },
     ];
 
     for (const testCase of rewardTestCases) {
-      it("Collecting rewards should correctly account for WETH", async () => {
+      it("Collecting rewards and should correctly account for WETH", async () => {
         const {
           nativeStakingSSVStrategy,
           governor,
@@ -623,6 +633,66 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         } else {
           expect(rewardTokenCollectedEvent).to.be.undefined;
         }
+      });
+    }
+
+    for (const testCase of rewardTestCases) {
+      it("Checking balance should return the correct values", async () => {
+        const {
+          nativeStakingSSVStrategy,
+          governor,
+          strategist,
+          oethHarvester,
+          weth,
+          josh,
+        } = fixture;
+        const {
+          feeAccumulatorEth,
+          beaconChainRewardEth,
+          wethFromDeposits,
+          expectedEthSentToHarvester,
+          nrOfActiveDepositedValidators
+        } = testCase;
+        const feeAccumulatorAddress =
+          await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
+        const sHarvester = await impersonateAndFund(oethHarvester.address);
+
+        // setup state
+        if (beaconChainRewardEth.gt(BigNumber.from("0"))) {
+          // set the reward eth on the strategy
+          await setBalance(
+            nativeStakingSSVStrategy.address,
+            beaconChainRewardEth
+          );
+        }
+        if (feeAccumulatorEth.gt(BigNumber.from("0"))) {
+          // set execution layer rewards on the fee accumulator
+          await setBalance(feeAccumulatorAddress, feeAccumulatorEth);
+        }
+        if (wethFromDeposits.gt(BigNumber.from("0"))) {
+          // send eth to the strategy as if Vault would send it via a Deposit function
+          await weth
+            .connect(josh)
+            .transfer(nativeStakingSSVStrategy.address, wethFromDeposits);
+        }
+
+        // set the correct amount of staked validators
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          nrOfActiveDepositedValidators, // activeDepositedValidators
+          ethers.utils.parseEther("0", "ether"), //_ethToWeth
+          ethers.utils.parseEther("0", "ether"), //_wethToBeSentToVault
+          ethers.utils.parseEther("0", "ether"), //_beaconChainRewardWETH
+          ethers.utils.parseEther("3000", "ether"), //_ethThresholdCheck
+          ethers.utils.parseEther("3000", "ether") //_wethThresholdCheck
+        );
+
+        // run the accounting
+        await nativeStakingSSVStrategy.connect(governor).doAccounting();
+
+        expect(await nativeStakingSSVStrategy.checkBalance(weth.address)).to.equal(
+          expectedEthSentToHarvester.add(BigNumber.from(`${nrOfActiveDepositedValidators}`).mul(utils.parseEther("32")))
+        );
       });
     }
 

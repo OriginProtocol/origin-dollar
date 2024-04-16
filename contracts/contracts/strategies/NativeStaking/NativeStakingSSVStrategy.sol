@@ -40,6 +40,7 @@ contract NativeStakingSSVStrategy is
     uint256[50] private __gap;
 
     error EmptyRecipient();
+    error NotWeth();
     error InsuffiscientWethBalance(
         uint256 requiredBalance,
         uint256 availableBalance
@@ -230,22 +231,23 @@ contract NativeStakingSSVStrategy is
 
     function _abstractSetPToken(address _asset, address) internal override {}
 
-    /// @notice Get the total asset value held in the underlying platform
-    ///      This includes any interest that was generated since depositing.
-    ///      The exchange rate between the cToken and asset gradually increases,
-    ///      causing the cToken to be worth more corresponding asset.
-    /// @param _asset      Address of the asset
-    /// @return balance    Total value of the asset in the platform
+    /// @notice Returns the total value of (W)ETH that is staked to the validators
+    /// and also present on the native staking and fee accumulator contracts
+    /// @param _asset      Address of weth asset
+    /// @return balance    Total value of (W)ETH 
     function checkBalance(address _asset)
         external
         view
         override
         returns (uint256 balance)
     {
-        //activeDepositedValidators * 32 ETH
-        // + all the weth on the contract
+        if (_asset != WETH_TOKEN_ADDRESS) {
+            revert NotWeth();
+        }
 
-        balance = 0;
+        balance = activeDepositedValidators * 32 ether;
+        balance += beaconChainRewardWETH;
+        balance += FEE_ACCUMULATOR_ADDRESS.balance;
     }
 
     function pause() external onlyStrategist {
