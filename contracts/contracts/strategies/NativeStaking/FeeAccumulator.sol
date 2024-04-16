@@ -44,7 +44,9 @@ contract FeeAccumulator is Governable {
     function collect() external returns (uint256 wethReturned) {
         _assertIsCollector();
         wethReturned = address(this).balance;
-        IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethReturned }();
-        IWETH9(WETH_TOKEN_ADDRESS).transfer(COLLECTOR, wethReturned);
+        if (wethReturned > 0) {
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethReturned }();
+            IWETH9(WETH_TOKEN_ADDRESS).transfer(COLLECTOR, wethReturned);
+        }
     }
 }

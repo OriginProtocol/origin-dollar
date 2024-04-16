@@ -30,6 +30,10 @@ contract NativeStakingSSVStrategy is
     /// @notice SSV Network contract used to interface with
     address public immutable SSV_NETWORK_ADDRESS;
     /// @notice Fee collector address
+    /// @dev this address will receive Execution layer rewards - These are rewards earned for
+    /// executing transactions on the Ethereum network as part of block proposals. They include
+    /// priority fees (fees paid by users for their transactions to be included) and MEV rewards
+    /// (rewards for arranging transactions in a way that benefits the validator).
     address public immutable FEE_ACCUMULATOR_ADDRESS;
 
     // For future use
@@ -101,11 +105,15 @@ contract NativeStakingSSVStrategy is
         onlyHarvester
         nonReentrant
     {
-        // collect ETH from fee collector and wrap it into WETH
-        uint256 ethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+        // collect WETH from fee collector and wrap it into WETH
+        uint256 wethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
             .collect();
-        IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethCollected }();
 
+        /* add up the WETH collected from the fee accumulator to beaconChainRewardWETH
+         * so it can be sent to the harvester in one swoop in the "_collectRewardTokens"
+         * step.
+         */
+        beaconChainRewardWETH += wethCollected;
         _collectRewardTokens();
     }
 
@@ -119,7 +127,7 @@ contract NativeStakingSSVStrategy is
             uint256 balance = rewardToken.balanceOf(address(this));
             if (balance > 0) {
                 if (address(rewardToken) == WETH_TOKEN_ADDRESS) {
-                    if (beaconChainRewardWETH < balance) {
+                    if (beaconChainRewardWETH > balance) {
                         revert InsuffiscientWethBalance(
                             beaconChainRewardWETH,
                             balance
@@ -234,6 +242,9 @@ contract NativeStakingSSVStrategy is
         override
         returns (uint256 balance)
     {
+        //activeDepositedValidators * 32 ETH
+        // + all the weth on the contract
+
         balance = 0;
     }
 

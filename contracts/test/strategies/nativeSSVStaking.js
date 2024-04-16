@@ -8,6 +8,7 @@ const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256 } = require("../../utils/constants");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const {
   createFixtureLoader,
@@ -16,7 +17,7 @@ const {
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
-describe.only("ForkTest: Native SSV Staking Strategy", function () {
+describe("ForkTest: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -529,7 +530,104 @@ describe.only("ForkTest: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe("Withdraw", function () {});
+  describe("General functionality", function () {
+    const rewardTestCases = [
+      {
+        feeAccumulatorEth: utils.parseEther("2.2"),
+        beaconChainRewardEth: utils.parseEther("16.3"),
+        wethFromDeposits: utils.parseEther("100"),
+        expectedEthSentToHarvester: utils.parseEther("18.5"),
+      },
+      {
+        feeAccumulatorEth: utils.parseEther("10.2"),
+        beaconChainRewardEth: utils.parseEther("21.6"),
+        wethFromDeposits: utils.parseEther("0"),
+        expectedEthSentToHarvester: utils.parseEther("31.8"),
+      },
+      {
+        feeAccumulatorEth: utils.parseEther("0"),
+        beaconChainRewardEth: utils.parseEther("0"),
+        wethFromDeposits: utils.parseEther("0"),
+        expectedEthSentToHarvester: utils.parseEther("0"),
+      },
+    ];
 
-  describe("Balance/Assets", function () {});
+    for (const testCase of rewardTestCases) {
+      it("Collecting rewards should correctly account for WETH", async () => {
+        const {
+          nativeStakingSSVStrategy,
+          governor,
+          strategist,
+          oethHarvester,
+          weth,
+          josh,
+        } = fixture;
+        const {
+          feeAccumulatorEth,
+          beaconChainRewardEth,
+          wethFromDeposits,
+          expectedEthSentToHarvester,
+        } = testCase;
+        const feeAccumulatorAddress =
+          await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
+        const sHarvester = await impersonateAndFund(oethHarvester.address);
+
+        // setup state
+        if (beaconChainRewardEth.gt(BigNumber.from("0"))) {
+          // set the reward eth on the strategy
+          await setBalance(
+            nativeStakingSSVStrategy.address,
+            beaconChainRewardEth
+          );
+        }
+        if (feeAccumulatorEth.gt(BigNumber.from("0"))) {
+          // set execution layer rewards on the fee accumulator
+          await setBalance(feeAccumulatorAddress, feeAccumulatorEth);
+        }
+        if (wethFromDeposits.gt(BigNumber.from("0"))) {
+          // send eth to the strategy as if Vault would send it via a Deposit function
+          await weth
+            .connect(josh)
+            .transfer(nativeStakingSSVStrategy.address, wethFromDeposits);
+        }
+
+        // run the accounting
+        await nativeStakingSSVStrategy.connect(governor).doAccounting();
+
+        const harvesterWethBalance = await weth.balanceOf(
+          oethHarvester.address
+        );
+        const tx = await nativeStakingSSVStrategy
+          .connect(sHarvester)
+          .collectRewardTokens();
+        const events = (await tx.wait()).events || [];
+
+        const harvesterBalanceDiff = (
+          await weth.balanceOf(oethHarvester.address)
+        ).sub(harvesterWethBalance);
+        expect(harvesterBalanceDiff).to.equal(expectedEthSentToHarvester);
+
+        const rewardTokenCollectedEvent = events.find(
+          (e) => e.event === "RewardTokenCollected"
+        );
+
+        if (expectedEthSentToHarvester.gt(BigNumber.from("0"))) {
+          expect(rewardTokenCollectedEvent).to.not.be.undefined;
+          expect(rewardTokenCollectedEvent.event).to.equal(
+            "RewardTokenCollected"
+          );
+          expect(rewardTokenCollectedEvent.args[1]).to.equal(weth.address);
+          expect(rewardTokenCollectedEvent.args[2]).to.equal(
+            expectedEthSentToHarvester
+          );
+        } else {
+          expect(rewardTokenCollectedEvent).to.be.undefined;
+        }
+      });
+    }
+
+    it("Should be able to collect the SSV reward token", async () => {});
+
+    it("Check balance should report correct values", async () => {});
+  });
 });
