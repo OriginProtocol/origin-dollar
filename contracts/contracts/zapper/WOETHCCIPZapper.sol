@@ -89,9 +89,24 @@ contract WOETHCCIPZapper {
      * @param amount ETH amount to zap
      * @return messageId The ID of the message that was sent
      */
-    function zap(address receiver, uint256 amount)
+    function zapFor(address receiver, uint256 amount)
         public
         payable
+        returns (bytes32 messageId)
+    {
+        return _zap(receiver, amount);
+    }
+
+    /**
+     * @dev Deposit ETH and receive WOETH in L2.
+     * @dev Note that the WOETH will be sent to the msg.sender at destination chain as well.
+     */
+    receive() external payable {
+        _zap(msg.sender, msg.value);
+    }
+
+    function _zap(address receiver, uint256 amount)
+        internal
         returns (bytes32 messageId)
     {
         if (msg.value != amount) revert InsufficientAmount();
