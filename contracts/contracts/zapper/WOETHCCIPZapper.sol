@@ -106,20 +106,14 @@ contract WOETHCCIPZapper {
         internal
         returns (bytes32 messageId)
     {
-        uint256 oethBalanceBefore = oeth.balanceOf(address(this));
-
         // 1.) Zap for OETH
-        oethZapper.deposit{ value: amount }();
-        uint256 oethRecieved = oeth.balanceOf(address(this)) -
-            oethBalanceBefore;
+        uint256 oethRecieved = oethZapper.deposit{ value: amount }();
 
         // 2.) Wrap the recieved woeth
-        uint256 woethBalanceBefore = woethOnSourceChain.balanceOf(
+        uint256 woethRecieved = woethOnSourceChain.deposit(
+            oethRecieved,
             address(this)
         );
-        woethOnSourceChain.deposit(oethRecieved, address(this));
-        uint256 woethRecieved = woethOnSourceChain.balanceOf(address(this)) -
-            woethBalanceBefore;
 
         // 3.) Setup params for CCIP transfer
         address token = address(woethOnSourceChain);
