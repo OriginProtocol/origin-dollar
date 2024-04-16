@@ -244,4 +244,14 @@ addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
+// CCIP
+addresses.mainnet.CCIPRouter = "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
+addresses.arbitrumOne.CCIPRouter = "0x141fa059441E0ca23ce184B6A78bafD2A517DdE8";
+// TODO: Update after deployment
+addresses.arbitrumOne.L2GovernanceProxy =
+  "0x0000000000000000000000000000000000000024";
+addresses.mainnet.MainnetGovernanceExecutorProxy =
+  "0x0000000000000000000000000000000000000012";
+addresses.mainnet.L2Governor = "0x0000000000000000000000000000000000000048";
+
 module.exports = addresses;

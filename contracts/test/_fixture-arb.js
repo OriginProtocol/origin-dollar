@@ -4,9 +4,13 @@ const mocha = require("mocha");
 const { isFork, isArbFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const addresses = require("../utils/addresses");
+const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("../utils/logger")("test:fixtures-arb");
 
+const ADMIN_ROLE =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 const BURNER_ROLE =
@@ -40,19 +44,49 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
 
   const signers = await hre.ethers.getSigners();
 
+  const mainnetGovernor = signers[1];
+
   const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const governor = await ethers.getSigner(await woeth.governor());
 
-  if (isArbFork) {
-    await impersonateAndFund(governor.address);
+  // L2 Governance
+  const l2GovernanceProxy = await ethers.getContract("L2GovernanceProxy");
+  const l2Governance = await ethers.getContractAt(
+    "L2Governance",
+    l2GovernanceProxy.address
+  );
 
-    const woethImplAddr = await woethProxy.implementation();
-    const latestImplAddr = (await ethers.getContract("BridgedWOETH")).address;
+  // The actual L2Governor contract
+  const l2Governor = await ethers.getContract("L2Governor");
 
-    if (woethImplAddr != latestImplAddr) {
-      await woethProxy.connect(governor).upgradeTo(latestImplAddr);
+  // Impersonated L2Governor contract's signer for tests
+  const governor = await impersonateAndFund(l2Governor.address);
+
+  if (isFork) {
+    let woethGov = await woeth.governor();
+    if (woethGov != governor.address) {
+      woethGov = await impersonateAndFund(woethGov);
+
+      // Transfer WOETH governance on fork
+      await setStorageAt(
+        woethProxy.address,
+        "0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a",
+        ethers.utils.defaultAbiCoder.encode(["address"], [l2Governor.address])
+      );
+
+      // Grant admin role
+      await woeth.connect(woethGov).grantRole(ADMIN_ROLE, l2Governor.address);
     }
   }
+
+  // Executor
+  const executor = await ethers.getContractAt(
+    "MainnetGovernanceExecutor",
+    isFork
+      ? addresses.mainnet.MainnetGovernanceExecutorProxy
+      : (
+          await ethers.getContract("MainnetGovernanceExecutorProxy")
+        ).address
+  );
 
   await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
   await woeth.connect(governor).grantRole(BURNER_ROLE, burner.address);
@@ -61,16 +95,33 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
   await woeth.connect(minter).mint(rafael.address, oethUnits("1"));
   await woeth.connect(minter).mint(nick.address, oethUnits("1"));
 
+  let mockCCIPRouter;
+  if (!isFork) {
+    mockCCIPRouter = await ethers.getContract("MockCCIPRouter");
+  }
+
+  const ccipRouterSigner = !isFork
+    ? undefined
+    : await impersonateAndFund(addresses.arbitrumOne.CCIPRouter);
+
   return {
+    l2GovernanceProxy,
+    l2Governance,
+    l2Governor,
+    executor,
+
     woeth,
     woethProxy,
 
     governor,
     minter,
     burner,
+    mainnetGovernor,
 
     rafael,
     nick,
+    ccipRouterSigner,
+    mockCCIPRouter,
   };
 });
 

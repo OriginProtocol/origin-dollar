@@ -16,6 +16,7 @@ const {
   isSmokeTest,
   isForkTest,
   getBlockTimestamp,
+  isArbitrumOneOrFork,
   isArbitrumOne,
 } = require("../test/helpers.js");
 
@@ -136,12 +137,21 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
-  if (
-    ![
-      addresses.mainnet.Timelock.toLowerCase(),
-      addresses.mainnet.OldTimelock.toLowerCase(),
-    ].includes(initProxyGovernor)
-  ) {
+
+  if (isArbitrumOneOrFork) {
+    // TODO: Skip for now
+    // Update after deployment
+    return;
+  }
+
+  const governors = isArbitrumOneOrFork
+    ? [addresses.arbitrumOne.L2Governor.toLowerCase()]
+    : [
+        addresses.mainnet.Timelock.toLowerCase(),
+        addresses.mainnet.OldTimelock.toLowerCase(),
+      ];
+
+  if (!governors.includes(initProxyGovernor)) {
     throw new Error(
       `Proxy contract initialised with unexpected governor: ${initProxyGovernor}`
     );
@@ -705,7 +715,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {
@@ -958,6 +970,12 @@ function deploymentWithGovernanceProposal(opts, fn) {
     await sanityCheckOgvGovernance({ deployerIsProposer });
 
     const proposal = await fn(tools);
+
+    if (proposal?.actions?.length == 0) {
+      // No proposal
+      return;
+    }
+
     const propDescription = proposal.name;
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};

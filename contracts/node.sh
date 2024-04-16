@@ -66,6 +66,7 @@ main()
           fi
         done
         printf "\n"
+
         echo "🟢 Node initialized"
 
         FORK_NETWORK_NAME=$FORK_NETWORK_NAME FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
@@ -75,7 +76,6 @@ main()
           do
             wait $job || let "FAIL+=1"
           done
-
 
     else
         npx --no-install hardhat node
