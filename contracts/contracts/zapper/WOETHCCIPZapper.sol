@@ -44,7 +44,7 @@ contract WOETHCCIPZapper {
     /**
      * @dev The WOETH destination chain (Arbitrum)
      */
-    IERC4626 public immutable woethOnDestinationChain;
+    IERC20 public immutable woethOnDestinationChain;
 
     /**
      * @dev The OETH zapper contract address
@@ -65,7 +65,7 @@ contract WOETHCCIPZapper {
         address _ccipRouter,
         uint64 _destinationChainSelector,
         IERC4626 _woethOnSourceChain,
-        IERC4626 _woethOnDestinationChain,
+        IERC20 _woethOnDestinationChain,
         IOETHZapper _oethZapper,
         IERC20 _oeth
     ) {
