@@ -39,12 +39,12 @@ contract WOETHCCIPZapper {
     /**
      * @dev The WOETH source chain (Mainnet)
      */
-    IERC4626 public immutable woethSourceChain;
+    IERC4626 public immutable woethOnSourceChain;
 
     /**
      * @dev The WOETH destination chain (Arbitrum)
      */
-    IERC4626 public immutable woethDestinationChain;
+    IERC4626 public immutable woethOnDestinationChain;
 
     /**
      * @dev The OETH zapper contract address
@@ -64,21 +64,21 @@ contract WOETHCCIPZapper {
     constructor(
         address _ccipRouter,
         uint64 _destinationChainSelector,
-        IERC4626 _woethSourceChain,
-        IERC4626 _woethDestinationChain,
+        IERC4626 _woethOnSourceChain,
+        IERC4626 _woethOnDestinationChain,
         IOETHZapper _oethZapper,
         IERC20 _oeth
     ) {
         ccipRouter = IRouterClient(_ccipRouter);
         destinationChainSelector = _destinationChainSelector;
-        woethSourceChain = _woethSourceChain;
-        woethDestinationChain = _woethDestinationChain;
+        woethOnSourceChain = _woethOnSourceChain;
+        woethOnDestinationChain = _woethOnDestinationChain;
         oethZapper = _oethZapper;
         oeth = _oeth;
 
         // Max allowance for Router and WOETH contracts
-        _oeth.approve(address(_woethSourceChain), type(uint256).max); // for wrapping
-        _woethSourceChain.approve(address(_ccipRouter), type(uint256).max); // for zapping
+        _oeth.approve(address(_woethOnSourceChain), type(uint256).max); // for wrapping
+        _woethOnSourceChain.approve(address(_ccipRouter), type(uint256).max); // for zapping
     }
 
     /**
@@ -102,13 +102,13 @@ contract WOETHCCIPZapper {
             oethBalanceBefore;
 
         // 2.) Wrap the recieved woeth
-        uint256 woethBalanceBefore = woethSourceChain.balanceOf(address(this));
-        woethSourceChain.deposit(oethRecieved, address(this));
-        uint256 woethRecieved = woethSourceChain.balanceOf(address(this)) -
+        uint256 woethBalanceBefore = woethOnSourceChain.balanceOf(address(this));
+        woethOnSourceChain.deposit(oethRecieved, address(this));
+        uint256 woethRecieved = woethOnSourceChain.balanceOf(address(this)) -
             woethBalanceBefore;
 
         // 3.) Setup params for CCIP transfer
-        address token = address(woethSourceChain);
+        address token = address(woethOnSourceChain);
         Client.EVMTokenAmount[]
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
         Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
