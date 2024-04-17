@@ -2105,6 +2105,53 @@ async function harvesterFixture() {
   return fixture;
 }
 
+async function woethCcipZapperFixture() {
+  let fixture = {};
+  let mockCcipRouter;
+  let woethZapper;
+  let oethZapper;
+  let destinationChainSelector = "4949039107694359620";
+  let woethOnSourceChain = addresses.mainnet.WOETHProxy;
+  let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
+
+  oethZapper = await ethers.getContractAt(
+    "OETHZapper",
+    addresses.mainnet.OETHZapper
+  );
+
+  const MockCCIPRouter = await ethers.getContractFactory("MockCCIPRouter");
+  mockCcipRouter = await MockCCIPRouter.deploy();
+  await mockCcipRouter.deployed();
+
+  const WOETHZapper = await ethers.getContractFactory("WOETHCCIPZapper");
+  woethZapper = await WOETHZapper.deploy(
+    mockCcipRouter.address,
+    destinationChainSelector,
+    woethOnSourceChain,
+    woethOnDestinationChain,
+    oethZapper.address,
+    addresses.mainnet.OETHProxy
+  );
+  await woethZapper.deployed();
+  woethOnSourceChain = await ethers.getContractAt(
+    "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+    addresses.mainnet.WOETHProxy
+  );
+
+  fixture.oethZapper = oethZapper;
+  fixture.woethOnSourceChain = woethOnSourceChain;
+  fixture.woethZapper = woethZapper;
+  fixture.mockCcipRouter = mockCcipRouter;
+
+  const [deployer, josh, alice] = await ethers.getSigners();
+  await impersonateAndFund(josh.address, "10");
+
+  fixture.josh = josh;
+  fixture.alice = alice;
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2188,4 +2235,5 @@ module.exports = {
   harvesterFixture,
   nodeSnapshot,
   nodeRevert,
+  woethCcipZapperFixture,
 };
