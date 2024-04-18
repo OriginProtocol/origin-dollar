@@ -4,7 +4,7 @@ const { getTxOpts } = require("../utils/tx");
 
 module.exports = deployOnBase(
   {
-    deployName: "091_woeth_on_base",
+    deployName: "092_woeth_on_base",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
