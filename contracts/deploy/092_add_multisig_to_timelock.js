@@ -12,7 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ ethers }) => {
     const TIMELOCK_ADMIN_ROLE =
-      "0x5f58e3a2316349923ce3780f8d587db2d72378aed66a8261c916544fa6846ca5"; // keccak256"TIMELOCK_ADMIN_ROLE");
+      "0x5f58e3a2316349923ce3780f8d587db2d72378aed66a8261c916544fa6846ca5"; // keccak256("TIMELOCK_ADMIN_ROLE");
     const cTimelock = await ethers.getContractAt(
       "ITimelockController",
       addresses.mainnet.Timelock
@@ -21,7 +21,7 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Add Guardian Multisig to Timelock\n\
     \n\
-    Part of the OGN/OGV merger. This proposal adds the Origin's 5 of 8 Multisig to the Timelock to make things easier during migration/merger. This permission will be revoked once the merger is complete. \
+    Part of the OGN/OGV merger. This proposal adds the Origin's 5 of 8 Multisig to the Timelock to provide a backup governance during the transition between governance systems during the token merger. This permission will be revoked once the merger is complete. \
     ",
       actions: [
         {
