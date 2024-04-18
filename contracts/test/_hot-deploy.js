@@ -89,12 +89,11 @@ async function constructNewContract(
       ].FEE_ACCUMULATOR_ADDRESS();
       return [
         [addresses.zero, addresses.mainnet.OETHVaultProxy],
-        [
-          addresses.mainnet.WETH,
-          addresses.mainnet.SSV,
-          addresses.mainnet.SSVNetwork,
-          feeAccumulatorAddress,
-        ],
+        addresses.mainnet.WETH,
+        addresses.mainnet.SSV,
+        addresses.mainnet.SSVNetwork,
+        feeAccumulatorAddress,
+        addresses.mainnet.beaconChainDepositContract,
       ];
     }
   };
@@ -167,7 +166,7 @@ async function hotDeployOption(
     } else if (fixtureName === "nativeStakingSSVStrategyFixture") {
       await hotDeployFixture(
         fixture, // fixture
-        "nativeStakingStrategy", // fixtureStrategyVarName
+        "nativeStakingSSVStrategy", // fixtureStrategyVarName
         "NativeStakingSSVStrategy" // implContractName
       );
     }

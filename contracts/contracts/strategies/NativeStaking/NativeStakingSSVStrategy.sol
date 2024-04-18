@@ -6,9 +6,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
+import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -27,8 +27,6 @@ contract NativeStakingSSVStrategy is
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN_ADDRESS;
-    /// @notice SSV Network contract used to interface with
-    address public immutable SSV_NETWORK_ADDRESS;
     /// @notice Fee collector address
     /// @dev this address will receive Execution layer rewards - These are rewards earned for
     /// executing transactions on the Ethereum network as part of block proposals. They include
@@ -51,18 +49,20 @@ contract NativeStakingSSVStrategy is
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _ssvToken Address of the Erc20 SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
+    /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wethAddress,
         address _ssvToken,
         address _ssvNetwork,
-        address _feeAccumulator
+        address _feeAccumulator,
+        address _beaconChainDepositContract
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress)
+        ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress, _beaconChainDepositContract, _ssvNetwork)
     {
         SSV_TOKEN_ADDRESS = _ssvToken;
-        SSV_NETWORK_ADDRESS = _ssvNetwork;
         FEE_ACCUMULATOR_ADDRESS = _feeAccumulator;
     }
 
@@ -270,13 +270,17 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    /// @dev Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators
-    /// A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
+    /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
+    ///      uses "onlyStrategist" modifier so continuous fron-running can't DOS our maintenance service
+    ///      that tries to top us SSV tokens. 
     function depositSSV(
         uint64[] memory operatorIds,
         uint256 amount,
         Cluster memory cluster
-    ) external {
+    ) 
+    onlyStrategist
+    external {
         // address SSV_NETWORK_ADDRESS = lrtConfig.getContract(LRTConstants.SSV_NETWORK);
         // ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(address(this), operatorIds, amount, cluster);
     }

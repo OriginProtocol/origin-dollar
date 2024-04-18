@@ -419,6 +419,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("BeaconChainDepositContractMock", {
+    from: deployerAddr,
+  });
+
   console.log("000_mock deploy done.");
 
   return true;

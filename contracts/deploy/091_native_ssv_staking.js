@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     //   "",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
@@ -57,6 +57,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.SSV, // ssvToken
         addresses.mainnet.SSVNetwork, // ssvNetwork
         dFeeAccumulatorProxy.address, // feeAccumulator
+        addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
       ]
     );
     const cStrategyImpl = await ethers.getContractAt(
@@ -147,23 +148,23 @@ module.exports = deploymentWithGovernanceProposal(
         // 4. configure the fuse interval
         {
           contract: cStrategy,
-          signature: "setFuseInterval(uint256, uint256)",
+          signature: "setFuseInterval(uint256,uint256)",
           args: [
             ethers.utils.parseEther("21.6"),
             ethers.utils.parseEther("25.6"),
           ],
         },
-        // 5. configure the fuse interval
+        // 5. configure the accounting governor
         {
           contract: cStrategy,
           signature: "setAccountingGovernor(address)",
           args: [deployerAddr], // TODO: change this to the defender action
         },
-        // 6. configure the fuse interval
+        // 6. configure strategist address
         {
           contract: cStrategy,
           signature: "setStrategist(address)",
-          args: [deployerAddr],
+          args: [strategistAddr],
         },
       ],
     };

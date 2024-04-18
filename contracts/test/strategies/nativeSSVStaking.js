@@ -17,7 +17,7 @@ const {
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
-describe("ForkTest: Native SSV Staking Strategy", function () {
+describe("Unit test: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -697,7 +697,5 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
     }
 
     it("Should be able to collect the SSV reward token", async () => {});
-
-    it("Check balance should report correct values", async () => {});
   });
 });
