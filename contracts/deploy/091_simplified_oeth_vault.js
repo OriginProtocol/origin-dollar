@@ -6,11 +6,11 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "089_simplified_oeth_vault",
+    deployName: "091_simplified_oeth_vault",
     forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
-    // reduceQueueTime: true, // just to solve the issue of later active proposals failing
+    reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId: "",
   },
   async ({ ethers }) => {
