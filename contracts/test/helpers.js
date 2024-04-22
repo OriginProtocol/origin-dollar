@@ -428,7 +428,6 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.mainnet.SSV,
       SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
-
     };
   } else {
     const addressMap = {
@@ -476,7 +475,9 @@ const getAssetAddresses = async (deployments) => {
       BAL: (await deployments.get("MockBAL")).address,
       SSV: (await deployments.get("MockSSV")).address,
       SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
-      beaconChainDepositContract: (await deployments.get("BeaconChainDepositContractMock")).address,
+      beaconChainDepositContract: (
+        await deployments.get("BeaconChainDepositContractMock")
+      ).address,
     };
 
     try {

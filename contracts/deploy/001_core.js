@@ -764,7 +764,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       dFeeAccumulatorProxy.address, // feeAccumulator
-      assetAddresses.beaconChainDepositContract // depositContractMock
+      assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
   );
   const cStrategyImpl = await ethers.getContractAt(

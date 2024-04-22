@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
@@ -60,7 +61,12 @@ contract NativeStakingSSVStrategy is
         address _beaconChainDepositContract
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress, _beaconChainDepositContract, _ssvNetwork)
+        ValidatorAccountant(
+            _wethAddress,
+            _baseConfig.vaultAddress,
+            _beaconChainDepositContract,
+            _ssvNetwork
+        )
     {
         SSV_TOKEN_ADDRESS = _ssvToken;
         FEE_ACCUMULATOR_ADDRESS = _feeAccumulator;
@@ -234,7 +240,7 @@ contract NativeStakingSSVStrategy is
     /// @notice Returns the total value of (W)ETH that is staked to the validators
     /// and also present on the native staking and fee accumulator contracts
     /// @param _asset      Address of weth asset
-    /// @return balance    Total value of (W)ETH 
+    /// @return balance    Total value of (W)ETH
     function checkBalance(address _asset)
         external
         view
@@ -271,17 +277,20 @@ contract NativeStakingSSVStrategy is
     }
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
-    ///      uses "onlyStrategist" modifier so continuous fron-running can't DOS our maintenance service
-    ///      that tries to top us SSV tokens. 
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
+    /// that tries to top up SSV tokens.
+    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
     function depositSSV(
         uint64[] memory operatorIds,
         uint256 amount,
         Cluster memory cluster
-    ) 
-    onlyStrategist
-    external {
-        // address SSV_NETWORK_ADDRESS = lrtConfig.getContract(LRTConstants.SSV_NETWORK);
-        // ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(address(this), operatorIds, amount, cluster);
+    ) external onlyStrategist {
+        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+            address(this),
+            operatorIds,
+            amount,
+            cluster
+        );
     }
 }

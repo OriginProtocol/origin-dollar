@@ -40,12 +40,12 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 start,
         uint256 end
     );
-    event AccuntingFullyWithdrawnValidator(
+    event AccountingFullyWithdrawnValidator(
         uint256 noOfValidators,
         uint256 remainingValidators,
         uint256 wethSentToVault
     );
-    event AccuntingValidatorSlashed(
+    event AccountingValidatorSlashed(
         uint256 remainingValidators,
         uint256 wethSentToVault
     );
@@ -93,8 +93,18 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    constructor(address _wethAddress, address _vaultAddress, address _beaconChainDepositContract, address _ssvNetwork)
-    ValidatorRegistrator(_wethAddress, _beaconChainDepositContract, _ssvNetwork) {
+    constructor(
+        address _wethAddress,
+        address _vaultAddress,
+        address _beaconChainDepositContract,
+        address _ssvNetwork
+    )
+        ValidatorRegistrator(
+            _wethAddress,
+            _beaconChainDepositContract,
+            _ssvNetwork
+        )
+    {
         VAULT_ADDRESS = _vaultAddress;
     }
 
@@ -133,6 +143,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         fuseIntervalEnd = _fuseIntervalEnd;
     }
 
+    /* solhint-disable max-line-length */
     /// This notion page offers a good explanation of how the accounting functions
     /// https://www.notion.so/originprotocol/Limited-simplified-native-staking-accounting-67a217c8420d40678eb943b9da0ee77d
     /// In short after dividing by 32 if the ETH remaining on the contract falls between 0 and fuseIntervalStart the accounting
@@ -143,7 +154,12 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
     /// for now
-    function doAccounting() external onlyRegistrator returns (bool accountingValid) {
+    /* solhint-enable max-line-length */
+    function doAccounting()
+        external
+        onlyRegistrator
+        returns (bool accountingValid)
+    {
         uint256 ethBalance = address(this).balance;
         uint256 MAX_STAKE = 32 ether;
         accountingValid = true;
@@ -157,7 +173,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
 
-            emit AccuntingFullyWithdrawnValidator(
+            emit AccountingFullyWithdrawnValidator(
                 fullyWithdrawnValidators,
                 activeDepositedValidators,
                 wethToVault
@@ -173,6 +189,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // Beacon chain rewards swept (partial validator withdrawals)
         if (ethRemaining <= fuseIntervalStart) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+            // solhint-disable-next-line reentrancy
             beaconChainRewardWETH += ethRemaining;
             emit AccountingBeaconChainRewards(ethRemaining);
         }
@@ -182,7 +199,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
-            emit AccuntingValidatorSlashed(
+            emit AccountingValidatorSlashed(
                 activeDepositedValidators,
                 ethRemaining
             );
