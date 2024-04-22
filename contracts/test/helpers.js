@@ -431,7 +431,6 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.mainnet.SSV,
       SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
-
     };
   } else if (isHolesky) {
     return {
@@ -439,7 +438,7 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.holesky.SSV,
       SSVNetwork: addresses.holesky.SSVNetwork,
       beaconChainDepositContract: addresses.holesky.beaconChainDepositContract,
-    }
+    };
   } else {
     const addressMap = {
       USDT: (await deployments.get("MockUSDT")).address,
@@ -486,7 +485,9 @@ const getAssetAddresses = async (deployments) => {
       BAL: (await deployments.get("MockBAL")).address,
       SSV: (await deployments.get("MockSSV")).address,
       SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
-      beaconChainDepositContract: (await deployments.get("BeaconChainDepositContractMock")).address,
+      beaconChainDepositContract: (
+        await deployments.get("BeaconChainDepositContractMock")
+      ).address,
     };
 
     try {

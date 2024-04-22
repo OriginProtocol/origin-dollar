@@ -93,8 +93,18 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    constructor(address _wethAddress, address _vaultAddress, address _beaconChainDepositContract, address _ssvNetwork)
-    ValidatorRegistrator(_wethAddress, _beaconChainDepositContract, _ssvNetwork) {
+    constructor(
+        address _wethAddress,
+        address _vaultAddress,
+        address _beaconChainDepositContract,
+        address _ssvNetwork
+    )
+        ValidatorRegistrator(
+            _wethAddress,
+            _beaconChainDepositContract,
+            _ssvNetwork
+        )
+    {
         VAULT_ADDRESS = _vaultAddress;
     }
 
@@ -143,7 +153,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
     /// for now
-    function doAccounting() external onlyRegistrator returns (bool accountingValid) {
+    function doAccounting()
+        external
+        onlyRegistrator
+        returns (bool accountingValid)
+    {
         uint256 ethBalance = address(this).balance;
         uint256 MAX_STAKE = 32 ether;
         accountingValid = true;

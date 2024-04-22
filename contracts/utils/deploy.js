@@ -918,16 +918,16 @@ function flexibleDeployment(opts, fn) {
   } else {
     return deploymentWithGovernanceProposal(opts, fn);
   }
-};
+}
 
 /**
- * used for simplified deployment on testnets where: 
+ * used for simplified deployment on testnets where:
  *  - the governor is also a deployer account (preferrably shared between different developers)
- *  - only simplified OETH functionality is deployed. Meaning Vault, Harvester, Token, Oracles and 
+ *  - only simplified OETH functionality is deployed. Meaning Vault, Harvester, Token, Oracles and
  *    nativeStakingStrategy. Deploy files must have `simplified` set to true in order to be ran
  */
 function testnetSimplifiedDeploy(opts, fn) {
-  const networkName = hre.network.name
+  const networkName = hre.network.name;
   const {
     type, // deploymentWithGovernanceProposalSupportingTestnetDeploy
     deployName,
@@ -936,7 +936,9 @@ function testnetSimplifiedDeploy(opts, fn) {
   } = opts;
 
   const main = async (hre) => {
-    console.log(`Running ${deployName} deployment on ${networkName} network...`);
+    console.log(
+      `Running ${deployName} deployment on ${networkName} network...`
+    );
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
     return true;
@@ -954,7 +956,7 @@ function testnetSimplifiedDeploy(opts, fn) {
       ? require(`./../deployments/${networkName}/.migrations.json`)
       : {};
 
-      return Boolean(migrations[deployName]);
+    return Boolean(migrations[deployName]);
   };
 
   return main;

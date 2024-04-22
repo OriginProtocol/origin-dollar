@@ -5,8 +5,7 @@ import { OETHOracleRouter } from "./OETHOracleRouter.sol";
 
 // @notice Oracle Router that denominates all prices in ETH
 contract OETHFixedOracle is OETHOracleRouter {
-    constructor(address _auraPriceFeed) 
-    OETHOracleRouter(_auraPriceFeed) {}
+    constructor(address _auraPriceFeed) OETHOracleRouter(_auraPriceFeed) {}
 
     /**
      * @dev The price feed contract to use for a particular asset along with

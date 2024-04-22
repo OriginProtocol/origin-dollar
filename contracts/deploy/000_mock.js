@@ -6,7 +6,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { hardhatSetBalance } = require("../test/_fund");
 
 const hre = require("hardhat");
-console.log("HRE", hre.network)
+console.log("HRE", hre.network);
 
 const {
   abi: FACTORY_ABI,

@@ -10,7 +10,11 @@ const {
   isHolesky,
   isExternalNet,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation, sleep } = require("../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+  sleep,
+} = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
@@ -766,7 +770,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       dFeeAccumulatorProxy.address, // feeAccumulator
-      assetAddresses.beaconChainDepositContract // depositContractMock
+      assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
   );
   const cStrategyImpl = await ethers.getContractAt(
@@ -840,7 +844,7 @@ const deployOracles = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   let oracleContract = "MockOracleRouter";
-  let args = []
+  let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
   } else if (isHolesky) {
@@ -1430,7 +1434,7 @@ main.skip = () => isFork;
 main.functions = {
   deployOracles,
   deployOETHCore,
-  deployNativeStakingSSVStrategy
+  deployNativeStakingSSVStrategy,
 };
 
 module.exports = main;

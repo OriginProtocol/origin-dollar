@@ -106,7 +106,7 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
 }
 
-const paths = {}
+const paths = {};
 
 if (isHolesky) {
   paths.deploy = "deployHolesky";
@@ -279,17 +279,16 @@ module.exports = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
     },
-    customChains:
-    [
+    customChains: [
       {
         network: "holesky",
         chainId: 17000,
         urls: {
           apiURL: "https://api-holesky.etherscan.io/api",
-          browserURL: "https://holesky.etherscan.io"
-        }
-      }
-    ]
+          browserURL: "https://holesky.etherscan.io",
+        },
+      },
+    ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,

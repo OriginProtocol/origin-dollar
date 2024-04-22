@@ -651,7 +651,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           beaconChainRewardEth,
           wethFromDeposits,
           expectedEthSentToHarvester,
-          nrOfActiveDepositedValidators
+          nrOfActiveDepositedValidators,
         } = testCase;
         const feeAccumulatorAddress =
           await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
@@ -690,8 +690,14 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         // run the accounting
         await nativeStakingSSVStrategy.connect(governor).doAccounting();
 
-        expect(await nativeStakingSSVStrategy.checkBalance(weth.address)).to.equal(
-          expectedEthSentToHarvester.add(BigNumber.from(`${nrOfActiveDepositedValidators}`).mul(utils.parseEther("32")))
+        expect(
+          await nativeStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(
+          expectedEthSentToHarvester.add(
+            BigNumber.from(`${nrOfActiveDepositedValidators}`).mul(
+              utils.parseEther("32")
+            )
+          )
         );
       });
     }
