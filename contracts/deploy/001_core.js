@@ -7,8 +7,10 @@ const {
   isMainnet,
   isFork,
   isMainnetOrFork,
+  isHolesky,
+  isExternalNet,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const { deployWithConfirmation, withConfirmation, sleep } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
@@ -837,11 +839,25 @@ const deployOracles = async () => {
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  // TODO: Change this to intelligently decide which router contract to deploy?
-  const oracleContract = isMainnet ? "OracleRouter" : "MockOracleRouter";
-  await deployWithConfirmation("OracleRouter", [], oracleContract);
+  let oracleContract = "MockOracleRouter";
+  let args = []
+  if (isMainnet) {
+    oracleContract = "OracleRouter";
+  } else if (isHolesky) {
+    oracleContract = "OETHFixedOracle";
+    args = [addresses.zero];
+  }
+
+  await deployWithConfirmation("OracleRouter", args, oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
   log("Deployed OracleRouter");
+
+  if (isHolesky) {
+    // no need to configure any feeds since they are hardcoded to a fixed feed
+    // TODO: further deployments will require more intelligent separation of different
+    // chains / environment oracle deployments
+    return;
+  }
 
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [
@@ -891,12 +907,8 @@ const deployOracles = async () => {
   log("Initialized AuraWETHPriceFeed");
 };
 
-/**
- * Deploy the core contracts (Vault and OUSD).
- */
-const deployCore = async () => {
+const deployOETHCore = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
-
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
@@ -904,35 +916,23 @@ const deployCore = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
-  await deployWithConfirmation("OUSDProxy");
-  await deployWithConfirmation("VaultProxy");
   await deployWithConfirmation("OETHProxy");
   await deployWithConfirmation("OETHVaultProxy");
 
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
-  const dVault = await deployWithConfirmation("Vault");
-  const dVaultCore = await deployWithConfirmation("VaultCore");
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
   const dOETH = await deployWithConfirmation("OETH");
   const dOETHVault = await deployWithConfirmation("OETHVault");
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    addresses.mainnet.WETH,
+    assetAddresses.WETH,
   ]);
-
-  await deployWithConfirmation("Governor", [governorAddr, 60]);
+  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
 
   // Get contract instances
-  const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
-  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
-
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
+  const cOracleRouter = await ethers.getContract("OracleRouter");
+
   const cOETHOracleRouter = isMainnet
     ? await ethers.getContract("OETHOracleRouter")
     : cOracleRouter;
@@ -940,15 +940,6 @@ const deployCore = async () => {
     "IVault",
     cOETHVaultProxy.address
   );
-
-  await withConfirmation(
-    cOUSDProxy["initialize(address,address,bytes)"](
-      dOUSD.address,
-      governorAddr,
-      []
-    )
-  );
-  log("Initialized OUSDProxy");
 
   await withConfirmation(
     cOETHProxy["initialize(address,address,bytes)"](
@@ -959,16 +950,6 @@ const deployCore = async () => {
   );
   log("Initialized OETHProxy");
 
-  // Need to call the initializer on the Vault then upgraded it to the actual
-  // VaultCore implementation
-  await withConfirmation(
-    cVaultProxy["initialize(address,address,bytes)"](
-      dVault.address,
-      governorAddr,
-      []
-    )
-  );
-  log("Initialized OETHVaultProxy");
   await withConfirmation(
     cOETHVaultProxy["initialize(address,address,bytes)"](
       dOETHVault.address,
@@ -979,12 +960,6 @@ const deployCore = async () => {
   log("Initialized OETHVaultProxy");
 
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .initialize(cOracleRouter.address, cOUSDProxy.address)
-  );
-  log("Initialized Vault");
-  await withConfirmation(
     cOETHVault
       .connect(sGovernor)
       .initialize(cOETHOracleRouter.address, cOETHProxy.address)
@@ -992,18 +967,100 @@ const deployCore = async () => {
   log("Initialized OETHVault");
 
   await withConfirmation(
-    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
-  );
-  await withConfirmation(
     cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
   );
   log("Upgraded VaultCore implementation");
 
   await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cOETHVault.connect(sGovernor).setAdminImpl(dOETHVaultAdmin.address)
   );
+
+  log("Initialized VaultAdmin implementation");
+  // Initialize OETH
+  /* Set the original resolution to 27 decimals. We used to have it set to 18
+   * decimals at launch and then migrated to 27. Having it set to 27 it will
+   * make unit tests run at that resolution that more closely mimics mainnet
+   * behaviour.
+   *
+   * Another reason:
+   * Testing Vault value checker with small changes in Vault value and supply
+   * was behaving incorrectly because the rounding error that is present with
+   * 18 decimal point resolution, which was interfering with unit test correctness.
+   * Possible solutions were:
+   *  - scale up unit test values so rounding error isn't a problem
+   *  - have unit test run in 27 decimal point rebasingCreditsPerToken resolution
+   *
+   * Latter seems more fitting - due to mimicking production better as already mentioned.
+   */
+  const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETHVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cOETH
+      .connect(sGovernor)
+      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+  );
+  log("Initialized OETH");
+};
+
+const deployOUSDCore = async () => {
+  const { governorAddr } = await hre.getNamedAccounts();
+  const assetAddresses = await getAssetAddresses(deployments);
+  log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
+
+  // Signers
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Proxies
+  await deployWithConfirmation("OUSDProxy");
+  await deployWithConfirmation("VaultProxy");
+
+  // Main contracts
+  const dOUSD = await deployWithConfirmation("OUSD");
+  const dVault = await deployWithConfirmation("Vault");
+  const dVaultCore = await deployWithConfirmation("VaultCore");
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  await deployWithConfirmation("Governor", [governorAddr, 60]);
+
+  // Get contract instances
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
+  const cOracleRouter = await ethers.getContract("OracleRouter");
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
+
+  await withConfirmation(
+    cOUSDProxy["initialize(address,address,bytes)"](
+      dOUSD.address,
+      governorAddr,
+      []
+    )
+  );
+  log("Initialized OUSDProxy");
+
+  // Need to call the initializer on the Vault then upgraded it to the actual
+  // VaultCore implementation
+  await withConfirmation(
+    cVaultProxy["initialize(address,address,bytes)"](
+      dVault.address,
+      governorAddr,
+      []
+    )
+  );
+
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .initialize(cOracleRouter.address, cOUSDProxy.address)
+  );
+  log("Initialized Vault");
+
+  await withConfirmation(
+    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+  );
+  log("Upgraded VaultCore implementation");
+
+  await withConfirmation(
+    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
 
@@ -1030,13 +1087,14 @@ const deployCore = async () => {
       .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
+};
 
-  await withConfirmation(
-    cOETH
-      .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
-  );
-  log("Initialized OETH");
+/**
+ * Deploy the core contracts (Vault and OUSD).
+ */
+const deployCore = async () => {
+  await deployOUSDCore();
+  await deployOETHCore();
 };
 
 // deploy curve metapool mocks
@@ -1369,5 +1427,10 @@ main.id = "001_core";
 main.dependencies = ["mocks"];
 main.tags = ["unit_tests", "arb_unit_tests"];
 main.skip = () => isFork;
+main.functions = {
+  deployOracles,
+  deployOETHCore,
+  deployNativeStakingSSVStrategy
+};
 
 module.exports = main;

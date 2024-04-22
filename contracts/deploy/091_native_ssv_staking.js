@@ -1,12 +1,13 @@
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const { flexibleDeployment } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
-module.exports = deploymentWithGovernanceProposal(
+module.exports = flexibleDeployment(
   {
     deployName: "091_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: false,
+    simplified: true, // support simplified OETH deployment
     // proposalId:
     //   "",
   },

@@ -6,6 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 addresses.mainnet = {};
+addresses.holesky = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
 
@@ -248,5 +249,13 @@ addresses.mainnet.beaconChainDepositContract = "0x00000000219ab540356cbb839cbe05
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+
+// Holesky
+addresses.holesky.WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+
+// SSV network
+addresses.holesky.SSV = "0xad45A78180961079BFaeEe349704F411dfF947C6";
+addresses.holesky.SSVNetwork = "0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA";
+addresses.holesky.beaconChainDepositContract = "0x4242424242424242424242424242424242424242";
 
 module.exports = addresses;

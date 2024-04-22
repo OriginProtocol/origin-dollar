@@ -48,12 +48,14 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 
 const isFork = process.env.FORK === "true";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
+const isHolesky = process.env.NETWORK_NAME === "holesky";
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
 }`;
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
+const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 let forkBlockNumber =
@@ -102,6 +104,15 @@ if (isForkTest && standaloneLocalNodeRunning) {
   }).json();
 } else if (isForkTest) {
   console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
+}
+
+const paths = {}
+
+if (isHolesky) {
+  paths.deploy = "deployHolesky";
+}
+if (process.env.HARDHAT_CACHE_DIR) {
+  paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
 
 module.exports = {
@@ -154,6 +165,15 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
     },
+    holesky: {
+      url: holeskyProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 17000,
+      tags: ["holesky"],
+    },
     arbitrumOne: {
       url: arbitrumProviderUrl,
       accounts: [
@@ -193,6 +213,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
+      holesky: 0, // on Holesky the deployer is also the governor
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -256,14 +277,22 @@ module.exports = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
+      holesky: process.env.ETHERSCAN_API_KEY,
     },
+    customChains:
+    [
+      {
+        network: "holesky",
+        chainId: 17000,
+        urls: {
+          apiURL: "https://api-holesky.etherscan.io/api",
+          browserURL: "https://holesky.etherscan.io"
+        }
+      }
+    ]
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
-  paths: process.env.HARDHAT_CACHE_DIR
-    ? {
-        cache: process.env.HARDHAT_CACHE_DIR,
-      }
-    : {},
+  paths,
 };

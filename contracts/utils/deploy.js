@@ -9,6 +9,7 @@ const {
   advanceTime,
   advanceBlocks,
   isMainnet,
+  isHolesky,
   isFork,
   isMainnetOrFork,
   getOracleAddresses,
@@ -17,6 +18,7 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
+  isTestnetSimplifiedDeploy,
 } = require("../test/helpers.js");
 
 const {
@@ -42,7 +44,7 @@ const {
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
-const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+const NUM_CONFIRMATIONS = isMainnet || isHolesky ? 3 : 0;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -906,6 +908,58 @@ async function getTimelock() {
   return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
 }
 
+// deployment supporting multiple types of deployments. Currently:
+//  - deploymentWithGovernanceProposal
+//  - testnetSimplifiedDeploy
+function flexibleDeployment(opts, fn) {
+  // add other side chain deployments here
+  if (isTestnetSimplifiedDeploy) {
+    return testnetSimplifiedDeploy(opts, fn);
+  } else {
+    return deploymentWithGovernanceProposal(opts, fn);
+  }
+};
+
+/**
+ * used for simplified deployment on testnets where: 
+ *  - the governor is also a deployer account (preferrably shared between different developers)
+ *  - only simplified OETH functionality is deployed. Meaning Vault, Harvester, Token, Oracles and 
+ *    nativeStakingStrategy. Deploy files must have `simplified` set to true in order to be ran
+ */
+function testnetSimplifiedDeploy(opts, fn) {
+  const networkName = hre.network.name
+  const {
+    type, // deploymentWithGovernanceProposalSupportingTestnetDeploy
+    deployName,
+    dependencies,
+    simplified,
+  } = opts;
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment on ${networkName} network...`);
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies;
+  main.skip = async () => {
+    // skip any deployment file that doesn't support a simplified deploy
+    if (!simplified) {
+      return true;
+    }
+
+    const migrations = isForkTest
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
+      return Boolean(migrations[deployName]);
+  };
+
+  return main;
+}
+
 /**
  * Shortcut to create a deployment on decentralized Governance (OGV) for hardhat to use
  * @param {Object} options for deployment
@@ -1324,5 +1378,6 @@ module.exports = {
   sendProposal,
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
+  flexibleDeployment,
   deploymentWithGuardianGovernor,
 };
