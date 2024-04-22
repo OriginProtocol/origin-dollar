@@ -186,16 +186,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Only governor can change the strategist", async () => {
-      const { nativeStakingSSVStrategy, strategist } = fixture;
-
-      await expect(
-        nativeStakingSSVStrategy
-          .connect(strategist)
-          .setStrategist(strategist.address)
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
     it("Change the accounting governor", async () => {
       const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
@@ -216,26 +206,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       expect(AccountingGovernorChangedEvent.args[1]).to.equal(
         strategist.address
       );
-    });
-
-    it("Change the strategist", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
-
-      const tx = await nativeStakingSSVStrategy
-        .connect(governor)
-        .setStrategist(governor.address);
-
-      const events = (await tx.wait()).events || [];
-      const strategistAddressChanged = events.find(
-        (e) => e.event === "StrategistAddressChanged"
-      );
-
-      expect(strategistAddressChanged).to.not.be.undefined;
-      expect(strategistAddressChanged.event).to.equal(
-        "StrategistAddressChanged"
-      );
-      expect(strategistAddressChanged.args[0]).to.equal(strategist.address);
-      expect(strategistAddressChanged.args[1]).to.equal(governor.address);
     });
   });
 
@@ -345,7 +315,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         }
 
         const WithdrawnEvent = events.find(
-          (e) => e.event === "AccuntingFullyWithdrawnValidator"
+          (e) => e.event === "AccountingFullyWithdrawnValidator"
         );
         if (expectedValidatorsFullWithdrawals > 0) {
           expect(WithdrawnEvent).to.not.be.undefined;
@@ -374,7 +344,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         }
 
         const SlashEvent = events.find(
-          (e) => e.event === "AccuntingValidatorSlashed"
+          (e) => e.event === "AccountingValidatorSlashed"
         );
         if (slashDetected) {
           expect(SlashEvent).to.not.be.undefined;
