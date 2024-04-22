@@ -1,15 +1,11 @@
-const hre = require("hardhat");
 const { expect } = require("chai");
 
-const { units, oethUnits, isCI } = require("../helpers");
 const addresses = require("../../utils/addresses");
 
 const {
   createFixtureLoader,
   nativeStakingSSVStrategyFixture,
 } = require("./../_fixture");
-const { impersonateAndFund } = require("../../utils/signers");
-const { setERC20TokenBalance } = require("../_fund");
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
@@ -17,7 +13,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
-  this.retries(isCI ? 3 : 0);
+  // this.retries(isCI ? 3 : 0);
 
   let fixture;
   beforeEach(async () => {
@@ -26,7 +22,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
 
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
-      const { weth, nativeStakingSSVStrategy } = fixture;
+      const { nativeStakingSSVStrategy } = fixture;
       await expect(
         await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()
       ).to.equal(addresses.mainnet.WETH, "Incorrect WETH address set");

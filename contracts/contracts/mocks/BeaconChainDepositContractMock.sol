@@ -25,13 +25,29 @@ contract BeaconChainDepositContractMock {
     ) external payable {
         // Extended ABI length checks since dynamic types are used.
         require(pubkey.length == 48, "DepositContract: invalid pubkey length");
-        require(withdrawal_credentials.length == 32, "DepositContract: invalid withdrawal_credentials length");
-        require(signature.length == 96, "DepositContract: invalid signature length");
+        require(
+            withdrawal_credentials.length == 32,
+            "DepositContract: invalid withdrawal_credentials length"
+        );
+        require(
+            signature.length == 96,
+            "DepositContract: invalid signature length"
+        );
 
         // Check deposit amount
         require(msg.value >= 1 ether, "DepositContract: deposit value too low");
-        require(msg.value % 1 gwei == 0, "DepositContract: deposit value not multiple of gwei");
-        uint deposit_amount = msg.value / 1 gwei;
-        require(deposit_amount <= type(uint64).max, "DepositContract: deposit value too high");
+        require(
+            msg.value % 1 gwei == 0,
+            "DepositContract: deposit value not multiple of gwei"
+        );
+        uint256 deposit_amount = msg.value / 1 gwei;
+        require(
+            deposit_amount <= type(uint64).max,
+            "DepositContract: deposit value too high"
+        );
+        require(
+            deposit_data_root != 0,
+            "DepositContract: invalid deposit_data_root"
+        );
     }
 }

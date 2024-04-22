@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
@@ -39,7 +40,7 @@ contract NativeStakingSSVStrategy is
 
     error EmptyRecipient();
     error NotWeth();
-    error InsuffiscientWethBalance(
+    error InsufficientWethBalance(
         uint256 requiredBalance,
         uint256 availableBalance
     );
@@ -60,7 +61,12 @@ contract NativeStakingSSVStrategy is
         address _beaconChainDepositContract
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorAccountant(_wethAddress, _baseConfig.vaultAddress, _beaconChainDepositContract, _ssvNetwork)
+        ValidatorAccountant(
+            _wethAddress,
+            _baseConfig.vaultAddress,
+            _beaconChainDepositContract,
+            _ssvNetwork
+        )
     {
         SSV_TOKEN_ADDRESS = _ssvToken;
         FEE_ACCUMULATOR_ADDRESS = _feeAccumulator;
@@ -98,7 +104,8 @@ contract NativeStakingSSVStrategy is
             beaconChainRewardWETH;
     }
 
-    /// @notice Collect accumulated WETH & SSV tokens and send to the Harvester.
+    /// @notice Convert accumulated ETH to WETH and send to the Harvester.
+    /// Only callable by the Harvester.
     function collectRewardTokens()
         external
         virtual
@@ -129,7 +136,7 @@ contract NativeStakingSSVStrategy is
             if (balance > 0) {
                 if (address(rewardToken) == WETH_TOKEN_ADDRESS) {
                     if (beaconChainRewardWETH > balance) {
-                        revert InsuffiscientWethBalance(
+                        revert InsufficientWethBalance(
                             beaconChainRewardWETH,
                             balance
                         );
@@ -232,9 +239,9 @@ contract NativeStakingSSVStrategy is
     function _abstractSetPToken(address _asset, address) internal override {}
 
     /// @notice Returns the total value of (W)ETH that is staked to the validators
-    /// and also present on the native staking and fee accumulator contracts
+    /// and also present on the native staking and fee accumulator contracts.
     /// @param _asset      Address of weth asset
-    /// @return balance    Total value of (W)ETH 
+    /// @return balance    Total value of (W)ETH
     function checkBalance(address _asset)
         external
         view
@@ -254,14 +261,13 @@ contract NativeStakingSSVStrategy is
         _pause();
     }
 
-    /// @dev Retuns bool indicating whether asset is supported by strategy
-    /// @param _asset Address of the asset
+    /// @notice Returns bool indicating whether asset is supported by strategy.
+    /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH_TOKEN_ADDRESS;
     }
 
-    /// @notice Approve the spending of all assets
-    /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
+    /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN_ADDRESS).approve(
@@ -271,17 +277,20 @@ contract NativeStakingSSVStrategy is
     }
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
-    ///      uses "onlyStrategist" modifier so continuous fron-running can't DOS our maintenance service
-    ///      that tries to top us SSV tokens. 
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
+    /// that tries to top up SSV tokens.
+    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
     function depositSSV(
         uint64[] memory operatorIds,
         uint256 amount,
         Cluster memory cluster
-    ) 
-    onlyStrategist
-    external {
-        // address SSV_NETWORK_ADDRESS = lrtConfig.getContract(LRTConstants.SSV_NETWORK);
-        // ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(address(this), operatorIds, amount, cluster);
+    ) external onlyStrategist {
+        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+            address(this),
+            operatorIds,
+            amount,
+            cluster
+        );
     }
 }

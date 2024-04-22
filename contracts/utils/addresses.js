@@ -243,7 +243,8 @@ addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
-addresses.mainnet.beaconChainDepositContract = "0x00000000219ab540356cbb839cbe05303d7705fa";
+addresses.mainnet.beaconChainDepositContract =
+  "0x00000000219ab540356cbb839cbe05303d7705fa";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
