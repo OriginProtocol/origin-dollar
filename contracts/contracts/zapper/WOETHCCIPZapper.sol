@@ -10,7 +10,7 @@ import { IOETHZapper } from "./../interfaces/IOETHZapper.sol";
 
 /**
  * @title WOETH CCIP Zapper Contract
- * @notice Hanldes logic to easily zap ETH on mainnet to WOETH on L2s like Arbitrum.
+ * @notice Handles logic to easily zap ETH on mainnet to WOETH on L2s like Arbitrum.
  * @author Origin Protocol Inc
  */
 
@@ -103,11 +103,11 @@ contract WOETHCCIPZapper {
         returns (bytes32 messageId)
     {
         // 1.) Zap for OETH
-        uint256 oethRecieved = oethZapper.deposit{ value: amount }();
+        uint256 oethReceived = oethZapper.deposit{ value: amount }();
 
-        // 2.) Wrap the recieved woeth
-        uint256 woethRecieved = woethOnSourceChain.deposit(
-            oethRecieved,
+        // 2.) Wrap the received woeth
+        uint256 woethReceived = woethOnSourceChain.deposit(
+            oethReceived,
             address(this)
         );
 
@@ -117,7 +117,7 @@ contract WOETHCCIPZapper {
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
         Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
             token: token,
-            amount: woethRecieved
+            amount: woethReceived
         });
         tokenAmounts[0] = tokenAmount;
 
