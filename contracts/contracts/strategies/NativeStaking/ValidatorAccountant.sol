@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { ValidatorRegistrator } from "./ValidatorRegistrator.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 /// @title Accountant of the rewards Beacon Chain ETH
@@ -33,8 +34,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     uint256 public fuseIntervalEnd = 0;
     /// @notice Governor that can manually correct the accounting
     address public accountingGovernor;
-    /// @notice Strategist that can pause the accounting
-    address public strategist;
 
     uint256[50] private __gap;
 
@@ -58,10 +57,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         address newAddress
     );
     event AccountingBeaconChainRewards(uint256 amount);
-    event StrategistAddressChanged(
-        address oldStrategist,
-        address newStrategist
-    );
 
     event AccountingManuallyFixed(
         uint256 oldActiveDepositedValidators,
@@ -89,8 +84,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     /// @dev Throws if called by any account other than the Strategist
     modifier onlyStrategist() {
-        require(msg.sender == strategist, "Caller is not the Strategist");
-        _;
+        require(
+            msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
+            "Caller is not the Strategist"
+        );
     }
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -115,11 +112,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     function setAccountingGovernor(address _address) external onlyGovernor {
         emit AccountingGovernorAddressChanged(accountingGovernor, _address);
         accountingGovernor = _address;
-    }
-
-    function setStrategist(address _address) external onlyGovernor {
-        emit StrategistAddressChanged(strategist, _address);
-        strategist = _address;
     }
 
     /// @notice set fuse interval values
