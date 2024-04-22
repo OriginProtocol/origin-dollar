@@ -40,7 +40,7 @@ contract NativeStakingSSVStrategy is
 
     error EmptyRecipient();
     error NotWeth();
-    error InsuffiscientWethBalance(
+    error InsufficientWethBalance(
         uint256 requiredBalance,
         uint256 availableBalance
     );
@@ -104,7 +104,8 @@ contract NativeStakingSSVStrategy is
             beaconChainRewardWETH;
     }
 
-    /// @notice Collect accumulated WETH & SSV tokens and send to the Harvester.
+    /// @notice Convert accumulated ETH to WETH and send to the Harvester.
+    /// Only callable by the Harvester.
     function collectRewardTokens()
         external
         virtual
@@ -135,7 +136,7 @@ contract NativeStakingSSVStrategy is
             if (balance > 0) {
                 if (address(rewardToken) == WETH_TOKEN_ADDRESS) {
                     if (beaconChainRewardWETH > balance) {
-                        revert InsuffiscientWethBalance(
+                        revert InsufficientWethBalance(
                             beaconChainRewardWETH,
                             balance
                         );
@@ -238,7 +239,7 @@ contract NativeStakingSSVStrategy is
     function _abstractSetPToken(address _asset, address) internal override {}
 
     /// @notice Returns the total value of (W)ETH that is staked to the validators
-    /// and also present on the native staking and fee accumulator contracts
+    /// and also present on the native staking and fee accumulator contracts.
     /// @param _asset      Address of weth asset
     /// @return balance    Total value of (W)ETH
     function checkBalance(address _asset)
@@ -260,14 +261,13 @@ contract NativeStakingSSVStrategy is
         _pause();
     }
 
-    /// @dev Retuns bool indicating whether asset is supported by strategy
-    /// @param _asset Address of the asset
+    /// @notice Returns bool indicating whether asset is supported by strategy.
+    /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH_TOKEN_ADDRESS;
     }
 
-    /// @notice Approve the spending of all assets
-    /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
+    /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN_ADDRESS).approve(

@@ -10,6 +10,10 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 /// or partial withdrawals
 /// @author Origin Protocol Inc
 abstract contract ValidatorAccountant is ValidatorRegistrator {
+    /// @notice The maximum amount of ETH that can be staked by a validator
+    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
+    uint256 public constant MAX_STAKE = 32 ether;
+    /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
 
     /// @dev The WETH present on this contract will come from 2 sources:
@@ -23,13 +27,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// present as a result of a deposit.
     uint256 public beaconChainRewardWETH = 0;
 
-    /// @dev start of fuse interval
+    /// @notice start of fuse interval
     uint256 public fuseIntervalStart = 0;
-    /// @dev end of fuse interval
+    /// @notice end of fuse interval
     uint256 public fuseIntervalEnd = 0;
-    /// @dev Governor that can manually correct the accounting
+    /// @notice Governor that can manually correct the accounting
     address public accountingGovernor;
-    /// @dev Strategist that can pause the accounting
+    /// @notice Strategist that can pause the accounting
     address public strategist;
 
     uint256[50] private __gap;
@@ -146,14 +150,14 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /* solhint-disable max-line-length */
     /// This notion page offers a good explanation of how the accounting functions
     /// https://www.notion.so/originprotocol/Limited-simplified-native-staking-accounting-67a217c8420d40678eb943b9da0ee77d
-    /// In short after dividing by 32 if the ETH remaining on the contract falls between 0 and fuseIntervalStart the accounting
+    /// In short, after dividing by 32 if the ETH remaining on the contract falls between 0 and fuseIntervalStart the accounting
     /// function will treat that ETH as a Beacon Chain Reward ETH.
     /// On the contrary if after dividing by 32 the ETH remaining on the contract falls between fuseIntervalEnd and 32 the
     /// accounting function will treat that as a validator slashing.
     /// @notice Perform the accounting attributing beacon chain ETH to either full or partial withdrawals. Returns true when
-    /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown
+    /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown.
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
-    /// for now
+    /// for now.
     /* solhint-enable max-line-length */
     function doAccounting()
         external
@@ -161,7 +165,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         returns (bool accountingValid)
     {
         uint256 ethBalance = address(this).balance;
-        uint256 MAX_STAKE = 32 ether;
         accountingValid = true;
 
         // send the WETH that is from fully withdrawn validators to the Vault

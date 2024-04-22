@@ -15,15 +15,15 @@ struct ValidatorStakeData {
 
 /**
  * @title Registrator of the validators
- * @notice This contract implements all the required functionality to register validators
+ * @notice This contract implements all the required functionality to register, exit and remove validators.
  * @author Origin Protocol Inc
  */
 abstract contract ValidatorRegistrator is Governable, Pausable {
-    /// @notice The Wrapped ETH (WETH) contract address
+    /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH_TOKEN_ADDRESS;
-    /// @notice Address of the beacon chain deposit contract
+    /// @notice The address of the beacon chain deposit contract
     address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
-    /// @notice SSV Network contract used to interface with
+    /// @notice The address of the SSV Network contract used to interface with
     address public immutable SSV_NETWORK_ADDRESS;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
@@ -92,8 +92,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Stakes WETH to the node validators
     /// @param validators A list of validator data needed to stake.
-    /// The ValidatorStakeData struct contains the pubkey, signature and depositDataRoot.
-    /// @dev Only accounts with the Operator role can call this function.
+    /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
+    /// Only the registrator can call this function.
     function stakeEth(ValidatorStakeData[] calldata validators)
         external
         onlyRegistrator
@@ -133,8 +133,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         }
     }
 
-    /// @dev Deposit WETH to the beacon chain deposit contract
-    /// @dev The public functions that call this internal function are responsible for access control.
+    /// @dev Deposit WETH to the beacon chain deposit contract.
+    /// The public functions that call this internal function are responsible for access control.
     function _stakeEth(
         bytes calldata pubkey,
         bytes calldata signature,
@@ -161,7 +161,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         emit ETHStaked(pubkey, 32 ether, withdrawal_credentials);
     }
 
-    /// @dev Registers a new validator in the SSV Cluster
+    /// @notice Registers a new validator in the SSV Cluster.
+    /// Only the registrator can call this function.
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
@@ -180,8 +181,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         emit SSVValidatorRegistered(publicKey, operatorIds);
     }
 
-    /// @dev Exit a validator from the Beacon chain.
-    /// The staked ETH will be sent to the EigenPod.
+    /// @notice Exit a validator from the Beacon chain.
+    /// The staked ETH will eventually swept to this native staking strategy.
+    /// Only the registrator can call this function.
     function exitSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds
@@ -197,9 +199,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXITING;
     }
 
-    /// @dev Remove a validator from the SSV Cluster.
+    /// @notice Remove a validator from the SSV Cluster.
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
+    /// Only the registrator can call this function.
     function removeSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,

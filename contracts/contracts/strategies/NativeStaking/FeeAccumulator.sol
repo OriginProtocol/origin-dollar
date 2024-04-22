@@ -7,11 +7,12 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 /**
  * @title Fee Accumulator for Native Staking SSV Strategy
  * @notice This contract is setup to receive fees from processing transactions on the beacon chain
- *         which includes priority fees and any MEV rewards
+ *         which includes priority fees and any MEV rewards.
+ * It does NOT include swept ETH from consensus rewards or withdrawals.
  * @author Origin Protocol Inc
  */
 contract FeeAccumulator is Governable {
-    /// @notice The address the WETH is sent to on `collect`.
+    /// @notice The address the WETH is sent to on `collect` which is the Native Staking Strategy
     address public immutable COLLECTOR;
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH_TOKEN_ADDRESS;
