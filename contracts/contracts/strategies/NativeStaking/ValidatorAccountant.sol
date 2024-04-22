@@ -88,6 +88,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
             "Caller is not the Strategist"
         );
+        _;
     }
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
