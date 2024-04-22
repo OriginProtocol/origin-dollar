@@ -86,11 +86,7 @@ contract WOETHCCIPZapper {
      * @param receiver The address of the EOA on the destination chain
      * @return messageId The ID of the message that was sent
      */
-    function zapFor(address receiver)
-        public
-        payable
-        returns (bytes32 messageId)
-    {
+    function zap(address receiver) public payable returns (bytes32 messageId) {
         return _zap(receiver, msg.value);
     }
 
