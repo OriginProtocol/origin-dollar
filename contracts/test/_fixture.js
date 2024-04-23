@@ -13,6 +13,7 @@ const { setFraxOraclePrice } = require("../utils/frax");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
+  ccip_arbChainSelector,
 } = require("../utils/constants");
 const {
   fundAccounts,
@@ -2110,7 +2111,7 @@ async function woethCcipZapperFixture() {
   let mockCcipRouter;
   let woethZapper;
   let oethZapper;
-  let destinationChainSelector = "4949039107694359620";
+  let destinationChainSelector = ccip_arbChainSelector;
   let woethOnSourceChain = addresses.mainnet.WOETHProxy;
   let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
 
