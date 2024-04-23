@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import { IRouterClient } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+// solhint-disable-next-line  max-line-length
 import { IERC20 } from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "./../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IOETHZapper } from "./../interfaces/IOETHZapper.sol";
 
 /**
  * @title WOETH CCIP Zapper Contract
- * @notice Handles logic to easily zap ETH on mainnet to WOETH on L2s like Arbitrum.
+ * @notice Helps to directly convert ETH on mainnet into WOETH on L2s.
  * @author Origin Protocol Inc
  */
 
@@ -127,7 +128,8 @@ contract WOETHCCIPZapper {
             data: abi.encode(""),
             tokenAmounts: tokenAmounts,
             extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({ gasLimit: 0 }) // See: https://docs.chain.link/ccip/best-practices#setting-gaslimit
+                // See: https://docs.chain.link/ccip/best-practices#setting-gaslimit
+                Client.EVMExtraArgsV1({ gasLimit: 0 })
             ),
             feeToken: address(0)
         });

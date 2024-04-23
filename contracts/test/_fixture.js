@@ -2144,7 +2144,7 @@ async function woethCcipZapperFixture() {
   fixture.woethZapper = woethZapper;
   fixture.mockCcipRouter = mockCcipRouter;
 
-  const [deployer, josh, alice] = await ethers.getSigners();
+  const [josh, alice] = await ethers.getSigners();
   await impersonateAndFund(josh.address, "10");
 
   fixture.josh = josh;

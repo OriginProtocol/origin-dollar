@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract MockCCIPRouter {
     function ccipSend(
+        // solhint-disable-next-line no-unused-vars
         uint64 destinationChainSelector,
         Client.EVM2AnyMessage calldata message
     ) external payable returns (bytes32) {
