@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IRouterClient } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 // solhint-disable-next-line  max-line-length
-import { IERC20 } from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "./../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IOETHZapper } from "./../interfaces/IOETHZapper.sol";
 
