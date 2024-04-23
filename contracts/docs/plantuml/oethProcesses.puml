@@ -212,8 +212,8 @@ reg -> nativeStrat : doAccounting()
 activate nativeStrat
 
 note over nativeStrat
-get ETH balance of the Native Staking Strategy.
-Calculate number of validator withdrawals.
+ETH received since last accounting = current ETH balance - previous consensus rewards
+validator withdrawals = ETH received / 32 ETH
 end note
 
 nativeStrat -> weth : deposit(\nwithdrawn ETH)
@@ -226,14 +226,9 @@ activate weth
 note left : transfer withdrawn WETH\nfrom Native Staking Strategy\nto OETH Vault
 return
 
-nativeStrat -> weth : deposit(\nremaining ETH)
-activate weth
-note left : convert remaining ETH from consensus rewards to WETH
-return
-
 note over nativeStrat
-WETH stays in the Native Staking Strategy.
-Add to account of total consensus rewards in the Native Staking Strategy.
+Add remaining ETH to consensus rewards.
+ETH from consensus rewards stays in the Native Staking Strategy.
 end note
 
 return accounting valid flag
@@ -243,7 +238,7 @@ end group
 group Execution Rewards
 
 sender -> feeAccum : ETH
-note right : Priority and MEV rewards
+note right : tx fees and MEV rewards
 
 note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
 
@@ -258,26 +253,20 @@ activate nativeStrat
 
 nativeStrat -> feeAccum : collect()
 activate feeAccum
-feeAccum -> weth : deposit(\namount)
-note left: convert all ETH in\nFee Accumulator to WETH
+feeAccum -> nativeStrat : ETH
+note right : send all execution rewards in the FeeAccumulator\nto the Native Staking Stragegy
+return execution rewards
+
+note over nativeStrat : total rewards = execution rewards + consensus rewards
+
+note over nativeStrat : reset consensus rewards to zero
+
+nativeStrat -> weth : deposit(\ntotal rewards)
 activate weth
+note left : convert ETH rewards to WETH
 return
-feeAccum -> weth : transfer(\nNative Staking Strategy,\namount)
-activate weth
-note left : transfer WETH\nfrom Fee Accumulator\nto Native Staking Strategy
-return
-return WETH collected
 
-note over nativeStrat : add WETH collected to accounted Beacon rewards
-
-nativeStrat -> weth : balanceOf(\nNative Staking Strategy)
-activate weth
-note left : get WETH in Native Staking Strategy
-return WETH balance
-
-note over nativeStrat : reset accounted Beacon rewards
-
-nativeStrat -> weth : transfer(\nHarvester,\nBeacon rewards)
+nativeStrat -> weth : transfer(\nHarvester,\ntotal ETH rewards)
 activate weth
 note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return

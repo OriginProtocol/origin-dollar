@@ -1,55 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+
 import { Governable } from "../../governance/Governable.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 /**
  * @title Fee Accumulator for Native Staking SSV Strategy
- * @notice This contract is setup to receive fees from processing transactions on the beacon chain
- *         which includes priority fees and any MEV rewards.
- * It does NOT include swept ETH from consensus rewards or withdrawals.
+ * @notice Receives execution rewards which includes tx fees and
+ * MEV rewards like tx priority and tx ordering.
+ * It does NOT include swept ETH from beacon chain consensus rewards or full validator withdrawals.
  * @author Origin Protocol Inc
  */
 contract FeeAccumulator is Governable {
-    /// @notice The address the WETH is sent to on `collect` which is the Native Staking Strategy
-    address public immutable COLLECTOR;
-    /// @notice The address of the Wrapped ETH (WETH) token contract
-    address public immutable WETH_TOKEN_ADDRESS;
-
-    error CallerNotCollector(address caller, address expectedCaller);
-
-    // For future use
-    uint256[50] private __gap;
+    /// @notice The address of the Native Staking Strategy
+    address public immutable STRATEGY;
 
     /**
-     * @param _collector Address of the contract that collects the fees
-     * @param _weth Address of the Wrapped ETH (WETH) token contract
+     * @param _strategy Address of the Native Staking Strategy
      */
-    constructor(address _collector, address _weth) {
-        COLLECTOR = _collector;
-        WETH_TOKEN_ADDRESS = _weth;
+    constructor(address _strategy) {
+        STRATEGY = _strategy;
     }
 
     /**
-     * @dev Asserts that the caller is the collector
+     * @notice sends all ETH in this FeeAccumulator contract to the Native Staking Strategy.
+     * @return eth The amount of execution rewards that were sent to the Native Staking Strategy
      */
-    function _assertIsCollector() internal view {
-        if (msg.sender != COLLECTOR) {
-            revert CallerNotCollector(msg.sender, COLLECTOR);
-        }
-    }
+    function collect() external returns (uint256 eth) {
+        require(msg.sender == STRATEGY, "Caller is not the Strategy");
 
-    /**
-     * @notice Converts ETH to WETH and sends the WETH to the collector
-     * @return weth The amount of WETH sent to the collector
-     */
-    function collect() external returns (uint256 weth) {
-        _assertIsCollector();
-        weth = address(this).balance;
-        if (weth > 0) {
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: weth }();
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(COLLECTOR, weth);
+        eth = address(this).balance;
+        if (eth > 0) {
+            // Send the ETH to the Native Staking Strategy
+            Address.sendValue(payable(STRATEGY), eth);
         }
     }
 }

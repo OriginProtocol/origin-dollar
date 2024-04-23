@@ -807,7 +807,6 @@ const deployNativeStakingSSVStrategy = async () => {
   log("Deploy fee accumulator implementation");
   const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
     cNativeStakingSSVStrategyProxy.address, // _collector
-    assetAddresses.WETH, // _weth
   ]);
   const cFeeAccumulator = await ethers.getContractAt(
     "FeeAccumulator",
