@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
@@ -36,13 +37,6 @@ contract NativeStakingSSVStrategy is
 
     // For future use
     uint256[50] private __gap;
-
-    error EmptyRecipient();
-    error NotWeth();
-    error InsuffiscientWethBalance(
-        uint256 requiredBalance,
-        uint256 availableBalance
-    );
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -87,72 +81,36 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    /// @notice return the WETH balance on the contract that can be used to for beacon chain
-    /// staking - staking on the validators. Because WETH on this contract can be present as
-    /// a result of deposits and beacon chain rewards this function needs to return only WETH
-    /// that is present due to deposits.
-    function getWETHBalanceEligibleForStaking()
-        public
-        view
-        override
-        returns (uint256 _amount)
-    {
-        // if below amount results in a negative number there is a bug with accounting
-        _amount =
-            IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)) -
-            beaconChainRewardWETH;
-    }
-
-    /// @notice Collect accumulated WETH & SSV tokens and send to the Harvester.
-    function collectRewardTokens()
-        external
-        virtual
-        override
-        onlyHarvester
-        nonReentrant
-    {
-        // collect WETH from fee collector and wrap it into WETH
-        uint256 wethCollected = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
+    function _collectRewardTokens() internal override {
+        // collect ETH from execution rewards from the fee accumulator
+        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
             .collect();
 
-        /* add up the WETH collected from the fee accumulator to beaconChainRewardWETH
-         * so it can be sent to the harvester in one swoop in the "_collectRewardTokens"
-         * step.
-         */
-        beaconChainRewardWETH += wethCollected;
-        _collectRewardTokens();
-    }
+        // total ETH rewards to be harvested = execution rewards + consensus rewards
+        uint256 ethRewards = executionRewards + consensusRewards;
 
-    /// @dev Need to override this function since the strategy doesn't allow for all the WETH
-    /// to be collected. Some might be there as a result of deposit and is waiting for the Registrar
-    /// to be deposited to the validators.
-    function _collectRewardTokens() internal override {
-        uint256 rewardTokenCount = rewardTokenAddresses.length;
-        for (uint256 i = 0; i < rewardTokenCount; ++i) {
-            IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
-            uint256 balance = rewardToken.balanceOf(address(this));
-            if (balance > 0) {
-                if (address(rewardToken) == WETH_TOKEN_ADDRESS) {
-                    if (beaconChainRewardWETH > balance) {
-                        revert InsuffiscientWethBalance(
-                            beaconChainRewardWETH,
-                            balance
-                        );
-                    }
+        require(
+            address(this).balance >= ethRewards,
+            "insufficient eth balance"
+        );
 
-                    // only allow for the WETH that is part of beacon chain rewards to be harvested
-                    balance = beaconChainRewardWETH;
-                    // reset the counter keeping track of beacon chain WETH rewards
-                    beaconChainRewardWETH = 0;
-                }
+        if (ethRewards > 0) {
+            // reset the counter keeping track of beacon chain consensus rewards
+            consensusRewards = 0;
 
-                emit RewardTokenCollected(
-                    harvesterAddress,
-                    address(rewardToken),
-                    balance
-                );
-                rewardToken.safeTransfer(harvesterAddress, balance);
-            }
+            // Convert ETH rewards to WETH
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRewards }();
+
+            emit RewardTokenCollected(
+                harvesterAddress,
+                WETH_TOKEN_ADDRESS,
+                ethRewards
+            );
+            IERC20(WETH_TOKEN_ADDRESS).safeTransfer(
+                harvesterAddress,
+                ethRewards
+            );
         }
     }
 
@@ -216,9 +174,7 @@ contract NativeStakingSSVStrategy is
         uint256 _amount
     ) internal {
         require(_amount > 0, "Must withdraw something");
-        if (_recipient == address(0)) {
-            revert EmptyRecipient();
-        }
+        require(_recipient != address(0), "Must specify recipient");
 
         emit Withdrawal(_asset, address(0), _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
@@ -237,7 +193,10 @@ contract NativeStakingSSVStrategy is
     function _abstractSetPToken(address _asset, address) internal override {}
 
     /// @notice Returns the total value of (W)ETH that is staked to the validators
-    /// and also present on the native staking and fee accumulator contracts
+    /// and WETH deposits that are still to be staked.
+    /// This does not include ETH from consensus rewards sitting in this strategy
+    /// or ETH from MEV rewards in the FeeAccumulator. These rewards are harvested
+    /// and sent to the Dripper so will eventually be sent to the Vault as WETH.
     /// @param _asset      Address of weth asset
     /// @return balance    Total value of (W)ETH
     function checkBalance(address _asset)
@@ -246,27 +205,27 @@ contract NativeStakingSSVStrategy is
         override
         returns (uint256 balance)
     {
-        if (_asset != WETH_TOKEN_ADDRESS) {
-            revert NotWeth();
-        }
+        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
 
-        balance = activeDepositedValidators * 32 ether;
-        balance += beaconChainRewardWETH;
-        balance += FEE_ACCUMULATOR_ADDRESS.balance;
+        balance =
+            // add the ETH that has been staked in validators
+            activeDepositedValidators *
+            32 ether +
+            // add the WETH in the strategy from deposits that are still to be staked
+            IERC20(WETH_TOKEN_ADDRESS).balanceOf(address(this));
     }
 
     function pause() external onlyStrategist {
         _pause();
     }
 
-    /// @dev Retuns bool indicating whether asset is supported by strategy
-    /// @param _asset Address of the asset
+    /// @notice Returns bool indicating whether asset is supported by strategy.
+    /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH_TOKEN_ADDRESS;
     }
 
-    /// @notice Approve the spending of all assets
-    /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
+    /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN_ADDRESS).approve(
@@ -276,15 +235,32 @@ contract NativeStakingSSVStrategy is
     }
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds
-    ///      uses "onlyStrategist" modifier so continuous fron-running can't DOS our maintenance service
-    ///      that tries to top us SSV tokens.
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
+    /// that tries to top up SSV tokens.
+    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
     function depositSSV(
         uint64[] memory operatorIds,
         uint256 amount,
         Cluster memory cluster
     ) external onlyStrategist {
-        // address SSV_NETWORK_ADDRESS = lrtConfig.getContract(LRTConstants.SSV_NETWORK);
-        // ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(address(this), operatorIds, amount, cluster);
+        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+            address(this),
+            operatorIds,
+            amount,
+            cluster
+        );
+    }
+
+    /**
+     * @notice Only accept ETH from the FeeAccumulator
+     * @dev don't want to receive donations from anyone else as this will
+     * mess with the accounting of the consensus rewards and validator full withdrawals
+     */
+    receive() external payable {
+        require(
+            msg.sender == FEE_ACCUMULATOR_ADDRESS,
+            "eth not sent from Fee Accumulator"
+        );
     }
 }

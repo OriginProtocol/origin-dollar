@@ -45,5 +45,9 @@ contract BeaconChainDepositContractMock {
             deposit_amount <= type(uint64).max,
             "DepositContract: deposit value too high"
         );
+        require(
+            deposit_data_root != 0,
+            "DepositContract: invalid deposit_data_root"
+        );
     }
 }

@@ -97,7 +97,6 @@ module.exports = flexibleDeployment(
     // 5. Deploy the new fee accumulator implementation
     const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
       cStrategyProxy.address, // _collector
-      addresses.mainnet.WETH, // _weth
     ]);
     const cFeeAccumulator = await ethers.getContractAt(
       "FeeAccumulator",

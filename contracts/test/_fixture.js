@@ -1422,7 +1422,7 @@ async function nativeStakingSSVStrategyFixture() {
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
   } else {
     const { governorAddr } = await getNamedAccounts();
-    const { oethVault, weth, nativeStakingSSVStrategy, strategist } = fixture;
+    const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Approve Strategy
@@ -1454,10 +1454,6 @@ async function nativeStakingSSVStrategyFixture() {
     await nativeStakingSSVStrategy
       .connect(sGovernor)
       .setAccountingGovernor(governorAddr);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setStrategist(strategist.address);
   }
 
   return fixture;
