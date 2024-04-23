@@ -1,11 +1,12 @@
 const addresses = require("../utils/addresses");
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
-module.exports = deploymentWithProposal(
+module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "092_woeth_ccip_zapper",
     forceDeploy: false,
     reduceQueueTime: true,
+    proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
     // Deploy new WOETHCCIPZapper contract
