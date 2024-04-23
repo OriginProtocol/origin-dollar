@@ -44,7 +44,8 @@ const {
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
-const NUM_CONFIRMATIONS = isMainnet || isHolesky ? 3 : 0;
+let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {

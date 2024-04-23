@@ -21,7 +21,7 @@ contract OETHFixedOracle is OETHOracleRouter {
         override
         returns (address feedAddress, uint256 maxStaleness)
     {
-        // FIXED_PRICE: WETH/ETH
+        // fixes price for all of the assets
         feedAddress = FIXED_PRICE;
         maxStaleness = 0;
     }

@@ -20,9 +20,13 @@ const mainExport = async () => {
 	const { governorAddr } = await getNamedAccounts();
 	const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+	console.log("Deploying Oracles");
   	await deployOracles();
+  	console.log("Deploying Core");
   	await deployOETHCore();
+  	console.log("Deploying Native Staking");
   	await deployNativeStakingSSVStrategy();
+  	
   	const cOETHDripper = await deployOETHDripper();
   	const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
 	await configureOETHVault(true);
