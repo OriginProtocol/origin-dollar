@@ -10,6 +10,7 @@ contract MockCCIPRouter {
         uint64 destinationChainSelector,
         Client.EVM2AnyMessage calldata message
     ) external payable returns (bytes32) {
+        require(message.tokenAmounts.length == 1, "INVALID_TOKEN_COUNT");
         // Make sure tokens can be pulled from the zapper contract
         IERC20(message.tokenAmounts[0].token).transferFrom(
             msg.sender,
