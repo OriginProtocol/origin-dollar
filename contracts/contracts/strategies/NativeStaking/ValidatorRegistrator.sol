@@ -51,9 +51,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
 
-    error InsufficientWETH(uint256 wethBalance, uint256 requiredWethBalance);
-    error ValidatorInUnexpectedState(bytes pubkey, VALIDATOR_STATE state);
-
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         require(
@@ -82,14 +79,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorRegistrator = _address;
     }
 
-    /// @notice return the WETH balance on the contract that can be used to for beacon chain
-    /// staking - staking on the validators
-    function getWETHBalanceEligibleForStaking()
-        public
-        view
-        virtual
-        returns (uint256 _amount);
-
     /// @notice Stakes WETH to the node validators
     /// @param validators A list of validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
@@ -99,66 +88,57 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         onlyRegistrator
         whenNotPaused
     {
-        uint256 requiredWETH = validators.length * 32 ether;
-        uint256 wethBalance = getWETHBalanceEligibleForStaking();
-        if (wethBalance < requiredWETH) {
-            revert InsufficientWETH(wethBalance, requiredWETH);
-        }
+        uint256 requiredETH = validators.length * 32 ether;
 
-        // Convert WETH asset to native ETH
-        IWETH9(WETH_TOKEN_ADDRESS).withdraw(wethBalance);
+        // Check there is enough WETH from the deposits sitting in this strategy contract
+        require(
+            requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
+            "insufficient WETH"
+        );
+
+        // Convert required ETH from WETH
+        IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
 
         // For each validator
         for (uint256 i = 0; i < validators.length; ) {
             bytes32 pubkeyHash = keccak256(validators[i].pubkey);
             VALIDATOR_STATE currentState = validatorsStates[pubkeyHash];
 
-            if (currentState != VALIDATOR_STATE.REGISTERED) {
-                revert ValidatorInUnexpectedState(
-                    validators[i].pubkey,
-                    currentState
-                );
-            }
+            require(
+                currentState == VALIDATOR_STATE.REGISTERED,
+                "Validator not registered"
+            );
 
-            _stakeEth(
+            /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
+             * can sweep funds to.
+             * bytes11(0) to fill up the required zeros
+             * remaining bytes20 are for the address
+             */
+            bytes memory withdrawal_credentials = abi.encodePacked(
+                bytes1(0x01),
+                bytes11(0),
+                address(this)
+            );
+            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit(
                 validators[i].pubkey,
+                withdrawal_credentials,
                 validators[i].signature,
                 validators[i].depositDataRoot
             );
+
+            activeDepositedValidators += 1;
+            emit ETHStaked(
+                validators[i].pubkey,
+                32 ether,
+                withdrawal_credentials
+            );
+
             validatorsStates[pubkeyHash] = VALIDATOR_STATE.STAKED;
 
             unchecked {
                 ++i;
             }
         }
-    }
-
-    /// @dev Deposit WETH to the beacon chain deposit contract.
-    /// The public functions that call this internal function are responsible for access control.
-    function _stakeEth(
-        bytes calldata pubkey,
-        bytes calldata signature,
-        bytes32 depositDataRoot
-    ) internal {
-        /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
-         * can sweep funds to.
-         * bytes11(0) to fill up the required zeros
-         * remaining bytes20 are for the address
-         */
-        bytes memory withdrawal_credentials = abi.encodePacked(
-            bytes1(0x01),
-            bytes11(0),
-            address(this)
-        );
-        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit(
-            pubkey,
-            withdrawal_credentials,
-            signature,
-            depositDataRoot
-        );
-
-        activeDepositedValidators += 1;
-        emit ETHStaked(pubkey, 32 ether, withdrawal_credentials);
     }
 
     /// @notice Registers a new validator in the SSV Cluster.
@@ -189,9 +169,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint64[] calldata operatorIds
     ) external onlyRegistrator whenNotPaused {
         VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
-        if (currentState != VALIDATOR_STATE.STAKED) {
-            revert ValidatorInUnexpectedState(publicKey, currentState);
-        }
+        require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
         ISSVNetwork(SSV_NETWORK_ADDRESS).exitValidator(publicKey, operatorIds);
         emit SSVValidatorExitInitiated(publicKey, operatorIds);
@@ -209,9 +187,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
         VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
-        if (currentState != VALIDATOR_STATE.EXITING) {
-            revert ValidatorInUnexpectedState(publicKey, currentState);
-        }
+        require(
+            currentState == VALIDATOR_STATE.EXITING,
+            "Validator not exiting"
+        );
 
         ISSVNetwork(SSV_NETWORK_ADDRESS).removeValidator(
             publicKey,
