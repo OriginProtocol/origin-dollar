@@ -17,7 +17,7 @@ const {
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
-describe("Unit test: Native SSV Staking Strategy", function () {
+describe.only("Unit test: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -612,7 +612,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         const feeAccumulatorEth = parseEther(
           testCase.feeAccumulatorEth.toString()
         );
-        
+
         const consensusRewards = parseEther(
           testCase.consensusRewards.toString()
         );

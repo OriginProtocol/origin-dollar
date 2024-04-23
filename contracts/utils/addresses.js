@@ -252,7 +252,7 @@ addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
 // Holesky
-addresses.holesky.WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+addresses.holesky.WETH = "0x94373a4919b3240d86ea41593d5eba789fef3848";
 
 // SSV network
 addresses.holesky.SSV = "0xad45A78180961079BFaeEe349704F411dfF947C6";

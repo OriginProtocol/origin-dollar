@@ -74,7 +74,7 @@ module.exports = flexibleDeployment(
     const initData = cStrategyImpl.interface.encodeFunctionData(
       "initialize(address[],address[],address[])",
       [
-        [addresses.mainnet.WETH, addresses.mainnet.SSV], // reward token addresses
+        [addresses.mainnet.WETH], // reward token addresses
         /* no need to specify WETH as an asset, since we have that overriden in the "supportsAsset"
          * function on the strategy
          */

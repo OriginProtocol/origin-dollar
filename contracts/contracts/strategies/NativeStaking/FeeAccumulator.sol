@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { Governable } from "../../governance/Governable.sol";
-import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 /**
  * @title Fee Accumulator for Native Staking SSV Strategy

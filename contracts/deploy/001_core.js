@@ -455,7 +455,7 @@ const configureVault = async () => {
 /**
  * Configure OETH Vault by adding supported assets and Strategies.
  */
-const configureOETHVault = async () => {
+const configureOETHVault = async (isSimpleOETH) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
@@ -469,7 +469,8 @@ const configureOETHVault = async () => {
   );
   // Set up supported assets for Vault
   const { WETH, RETH, stETH, frxETH } = assetAddresses;
-  for (const asset of [WETH, RETH, stETH, frxETH]) {
+  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH]
+  for (const asset of assets) {
     await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
   log("Added assets to OETH Vault");
@@ -503,44 +504,28 @@ const configureOETHVault = async () => {
   );
 };
 
-/**
- * Deploy Harvester
- */
-const deployHarvesters = async () => {
+const deployOUSDHarvester = async (ousdDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dHarvesterProxy = await deployWithConfirmation(
     "HarvesterProxy",
     [],
     "InitializeGovernedUpgradeabilityProxy"
   );
-  const dOETHHarvesterProxy = await deployWithConfirmation(
-    "OETHHarvesterProxy",
-    [],
-    "InitializeGovernedUpgradeabilityProxy"
-  );
   const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
   const dHarvester = await deployWithConfirmation("Harvester", [
     cVaultProxy.address,
     assetAddresses.USDT,
   ]);
-  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
-    cOETHVaultProxy.address,
-    assetAddresses.WETH,
-  ]);
+
   const cHarvester = await ethers.getContractAt(
     "Harvester",
     dHarvesterProxy.address
-  );
-  const cOETHHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    dOETHHarvesterProxy.address
   );
 
   await withConfirmation(
@@ -550,6 +535,44 @@ const deployHarvesters = async () => {
       []
     )
   );
+
+  log("Initialized HarvesterProxy");
+
+  await withConfirmation(
+    cHarvester
+      .connect(sGovernor)
+      .setRewardProceedsAddress(
+        isMainnet || isHolesky ? ousdDripper.address : cVaultProxy.address
+      )
+  );
+
+  return dHarvesterProxy;
+}
+
+const deployOETHHarvester = async (oethDripper) => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  const dOETHHarvesterProxy = await deployWithConfirmation(
+    "OETHHarvesterProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
+  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
+    cOETHVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  const cOETHHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    dOETHHarvesterProxy.address
+  );
+
   await withConfirmation(
     cOETHHarvesterProxy["initialize(address,address,bytes)"](
       dOETHHarvester.address,
@@ -557,21 +580,26 @@ const deployHarvesters = async () => {
       []
     )
   );
+
   log("Initialized OETHHarvesterProxy");
 
-  if (!isMainnet) {
-    await withConfirmation(
-      cHarvester
-        .connect(sGovernor)
-        .setRewardProceedsAddress(cVaultProxy.address)
-    );
+  await withConfirmation(
+    cOETHHarvester
+      .connect(sGovernor)
+      .setRewardProceedsAddress(
+        isMainnet || isHolesky ? oethDripper.address : cVaultProxy.address
+      )
+  );
 
-    await withConfirmation(
-      cOETHHarvester
-        .connect(sGovernor)
-        .setRewardProceedsAddress(cOETHVaultProxy.address)
-    );
-  }
+  return dOETHHarvesterProxy;
+}
+
+/**
+ * Deploy Harvester
+ */
+const deployHarvesters = async (ousdDripper, oethDripper) => {
+  const dHarvesterProxy = await deployOUSDHarvester(ousdDripper);
+  const dOETHHarvesterProxy = await deployOETHHarvester(oethDripper);
 
   return [dHarvesterProxy, dOETHHarvesterProxy];
 };
@@ -668,7 +696,7 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
   );
 };
 
-const deployDripper = async () => {
+const deployOUSDDripper = async () => {
   const { governorAddr } = await getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
@@ -689,6 +717,41 @@ const deployDripper = async () => {
       []
     )
   );
+
+  return cDripperProxy;
+};
+
+const deployOETHDripper = async () => {
+  const { governorAddr } = await getNamedAccounts();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  // Deploy Dripper Impl
+  const dDripper = await deployWithConfirmation("OETHDripper", [
+    cVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  await deployWithConfirmation("OETHDripperProxy");
+  // Deploy Dripper Proxy
+  const cDripperProxy = await ethers.getContract("OETHDripperProxy");
+  await withConfirmation(
+    cDripperProxy["initialize(address,address,bytes)"](
+      dDripper.address,
+      governorAddr,
+      []
+    )
+  );
+
+  return cDripperProxy;
+};
+
+const deployDrippers = async () => {
+  const ousdDripper = await deployOUSDDripper();
+  const oethDripper = await deployOETHDripper();
+
+  return [ousdDripper, oethDripper];
 };
 
 /**
@@ -777,16 +840,12 @@ const deployNativeStakingSSVStrategy = async () => {
     "NativeStakingSSVStrategy",
     dStrategyImpl.address
   );
-  const cStrategy = await ethers.getContractAt(
-    "NativeStakingSSVStrategy",
-    dNativeStakingSSVStrategyProxy.address
-  );
 
   log("Deploy encode initialize function of the strategy contract");
   const initData = cStrategyImpl.interface.encodeFunctionData(
     "initialize(address[],address[],address[])",
     [
-      [assetAddresses.WETH, assetAddresses.SSV], // reward token addresses
+      [assetAddresses.WETH], // reward token addresses
       /* no need to specify WETH as an asset, since we have that overriden in the "supportsAsset"
        * function on the strategy
        */
@@ -807,12 +866,19 @@ const deployNativeStakingSSVStrategy = async () => {
     )
   );
 
+  const cStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    dNativeStakingSSVStrategyProxy.address
+  );
+
   log("Approve spending of the SSV token");
-  await cStrategy.connect(sDeployer).safeApproveAllTokens();
+  await withConfirmation(
+    cStrategy.connect(sDeployer).safeApproveAllTokens()
+  );
 
   log("Deploy fee accumulator implementation");
   const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
-    cNativeStakingSSVStrategyProxy.address, // _collector
+    cNativeStakingSSVStrategyProxy.address, // STRATEGY
   ]);
   const cFeeAccumulator = await ethers.getContractAt(
     "FeeAccumulator",
@@ -830,7 +896,6 @@ const deployNativeStakingSSVStrategy = async () => {
       "0x" // do not call any initialize functions
     )
   );
-
   return cStrategy;
 };
 
@@ -1410,11 +1475,11 @@ const main = async () => {
   await deployConvexLUSDMetaStrategy();
   await deployNativeStakingSSVStrategy();
   await deployFraxEthStrategy();
-  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
+  const [ousdDripper, oethDripper] = await deployDrippers();
+  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(ousdDripper, oethDripper);
   await configureVault();
-  await configureOETHVault();
+  await configureOETHVault(false);
   await configureStrategies(harvesterProxy, oethHarvesterProxy);
-  await deployDripper();
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
@@ -1434,6 +1499,9 @@ main.functions = {
   deployOracles,
   deployOETHCore,
   deployNativeStakingSSVStrategy,
+  deployOETHDripper,
+  deployOETHHarvester,
+  configureOETHVault
 };
 
 module.exports = main;
