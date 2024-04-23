@@ -5,9 +5,6 @@ const { threeCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { hardhatSetBalance } = require("../test/_fund");
 
-const hre = require("hardhat");
-console.log("HRE", hre.network);
-
 const {
   abi: FACTORY_ABI,
   bytecode: FACTORY_BYTECODE,
