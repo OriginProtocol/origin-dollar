@@ -34,6 +34,15 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
         depositAmount
       );
   });
+
+  it("zap(): Should zap ETH (< 1)  and send WOETH to CCIP contract", async () => {
+    const { woethZapper, woethOnSourceChain, mockCcipRouter, josh } = fixture;
+    const depositAmount = parseUnits("0.5");
+
+    await woethZapper.connect(josh).zap(josh.address, { value: depositAmount });
+    expect(await woethOnSourceChain.balanceOf(mockCcipRouter.address)).to.gt(0);
+  });
+
   it("receive(): Should zap ETH and send WOETH to CCIP contract", async () => {
     const { woethZapper, woethOnSourceChain, mockCcipRouter, josh } = fixture;
     const depositAmount = parseUnits("5");
