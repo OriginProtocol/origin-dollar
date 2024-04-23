@@ -2135,7 +2135,7 @@ async function woethCcipZapperFixture() {
   );
   await woethZapper.deployed();
   woethOnSourceChain = await ethers.getContractAt(
-    "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+    "WOETH",
     addresses.mainnet.WOETHProxy
   );
 
