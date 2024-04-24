@@ -130,6 +130,12 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         onlyRegistrator
         returns (bool accountingValid)
     {
+        if (address(this).balance < consensusRewards) {
+            // pause and fail the accounting
+            _pause();
+            return false;
+        }
+
         // Calculate all the new ETH that has been swept to the contract since the last accounting
         uint256 newSweptETH = address(this).balance - consensusRewards;
         accountingValid = true;
@@ -150,7 +156,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             );
         }
 
-        uint256 ethRemaining = address(this).balance;
+        uint256 ethRemaining = address(this).balance - consensusRewards;
         // should be less than a whole validator stake
         require(ethRemaining < 32 ether, "unexpected accounting");
 

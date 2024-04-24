@@ -187,15 +187,53 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // no new rewards
       {
         ethBalance: 0,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
       },
+      // no new rewards on previous rewards
+      {
+        ethBalance: 0.001,
+        previousConsensusRewards: 0.001,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // invalid eth balance
+      {
+        ethBalance: 1.9,
+        previousConsensusRewards: 2,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: true,
+      },
       // tiny consensus rewards
       {
         ethBalance: 0.001,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0.001,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // tiny consensus rewards on small previous rewards
+      {
+        ethBalance: 0.03,
+        previousConsensusRewards: 0.02,
+        expectedConsensusRewards: 0.01,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // tiny consensus rewards on large previous rewards
+      {
+        ethBalance: 5.04,
+        previousConsensusRewards: 5,
+        expectedConsensusRewards: 0.04,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
@@ -203,6 +241,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // large consensus rewards
       {
         ethBalance: 14,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 14,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
@@ -211,6 +250,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // just under fuse start
       {
         ethBalance: 21.5,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 21.5,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
@@ -219,6 +259,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // exactly fuse start
       {
         ethBalance: 21.6,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
@@ -227,6 +268,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // fuse blown
       {
         ethBalance: 22,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
@@ -235,6 +277,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // just under fuse end
       {
         ethBalance: 25.5,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
@@ -243,6 +286,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // exactly fuse end
       {
         ethBalance: 25.6,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: true,
@@ -251,6 +295,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // just over fuse end
       {
         ethBalance: 25.7,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: true,
@@ -259,6 +304,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // 1 validator slashed
       {
         ethBalance: 26.6,
+        previousConsensusRewards: 0,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: true,
+        fuseBlown: false,
+      },
+      // no consensus rewards, 1 slashed validator
+      {
+        ethBalance: 31.9,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: true,
@@ -267,6 +322,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // no consensus rewards, 1 validator fully withdrawn
       {
         ethBalance: 32,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 1,
         slashDetected: false,
@@ -275,22 +331,43 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // tiny consensus rewards + 1 withdrawn validator
       {
         ethBalance: 32.01,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0.01,
         expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // consensus rewards on previous rewards > 32
+      {
+        ethBalance: 33,
+        previousConsensusRewards: 32.3,
+        expectedConsensusRewards: 0.7,
+        expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
       },
       // large consensus rewards + 1 withdrawn validator
       {
         ethBalance: 34,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 2,
         expectedValidatorsFullWithdrawals: 1,
         slashDetected: false,
         fuseBlown: false,
       },
-      // fuse blown + 2 withdrawn validator
+      // large consensus rewards on large previous rewards
+      {
+        ethBalance: 44,
+        previousConsensusRewards: 24,
+        expectedConsensusRewards: 20,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // fuse blown + 1 withdrawn validator
       {
         ethBalance: 54,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 1,
         slashDetected: false,
@@ -299,6 +376,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // 1 validator fully withdrawn + 1 slashed
       {
         ethBalance: 58.6, // 26.6 + 32
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 1,
         slashDetected: true,
@@ -307,6 +385,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // 2 full withdraws
       {
         ethBalance: 64,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 2,
         slashDetected: false,
@@ -315,6 +394,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // tiny consensus rewards + 2 withdrawn validators
       {
         ethBalance: 64.1,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 0.1,
         expectedValidatorsFullWithdrawals: 2,
         slashDetected: false,
@@ -323,6 +403,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       // 8 withdrawn validators + consensus rewards
       {
         ethBalance: 276,
+        previousConsensusRewards: 0,
         expectedConsensusRewards: 20,
         expectedValidatorsFullWithdrawals: 8,
         slashDetected: false,
@@ -334,11 +415,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       const { expectedValidatorsFullWithdrawals, slashDetected, fuseBlown } =
         testCase;
       const ethBalance = parseEther(testCase.ethBalance.toString());
+      const previousConsensusRewards = parseEther(
+        testCase.previousConsensusRewards.toString()
+      );
       const expectedConsensusRewards = parseEther(
         testCase.expectedConsensusRewards.toString()
       );
 
-      it.only(`Expect ${testCase.ethBalance} ETH balance will result in ${
+      it(`Expect ${testCase.ethBalance} ETH balance and ${
+        testCase.previousConsensusRewards
+      } previous consensus rewards will result in ${
         testCase.expectedConsensusRewards
       } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
         fuseBlown ? ", fuse blown" : ""
@@ -355,7 +441,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           30, // activeDepositedValidators
           0, //_ethToWeth
           0, //_wethToBeSentToVault
-          0, //_consensusRewards
+          previousConsensusRewards, //_consensusRewards
           parseEther("3000"), //_ethThresholdCheck
           parseEther("3000") //_wethThresholdCheck
         );
