@@ -1,0 +1,293 @@
+{
+  "address": "0xd7Ee8397C76E1040A790777E420321865e2e5107",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_ccipRouter",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_destinationChainSelector",
+          "type": "uint64"
+        },
+        {
+          "internalType": "contract IERC4626",
+          "name": "_woethOnSourceChain",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "_woethOnDestinationChain",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IOETHZapper",
+          "name": "_oethZapper",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "_oeth",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Zap",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "ccipRouter",
+      "outputs": [
+        {
+          "internalType": "contract IRouterClient",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "destinationChainSelector",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oeth",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oethZapper",
+      "outputs": [
+        {
+          "internalType": "contract IOETHZapper",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "woethOnDestinationChain",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "woethOnSourceChain",
+      "outputs": [
+        {
+          "internalType": "contract IERC4626",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "name": "zap",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "messageId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "transactionHash": "0xcbe652c8f6a16893b9f41609d59ff4e462cafe7b1846822982c353b65702a5f6",
+  "receipt": {
+    "to": null,
+    "from": "0xfE9ff48bFc30Ca9f5a079184E42b71c77c371bfF",
+    "contractAddress": "0xd7Ee8397C76E1040A790777E420321865e2e5107",
+    "transactionIndex": 6,
+    "gasUsed": "554753",
+    "logsBloom": "0x00000000000000000040000000000000000000000000000004001000000000000000000000000000000000040000000001000000080000000000000000200000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000001100000000000000000000000080000000020000000000000000000000000000000000000000000000000010000000000000000800200000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000010000000",
+    "blockHash": "0x73c853393533d566356952302cce60485887bfcdaf416cffcd7904f8060cf4cb",
+    "transactionHash": "0xcbe652c8f6a16893b9f41609d59ff4e462cafe7b1846822982c353b65702a5f6",
+    "logs": [
+      {
+        "transactionIndex": 6,
+        "blockNumber": 19726762,
+        "transactionHash": "0xcbe652c8f6a16893b9f41609d59ff4e462cafe7b1846822982c353b65702a5f6",
+        "address": "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3",
+        "topics": [
+          "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+          "0x000000000000000000000000d7ee8397c76e1040a790777e420321865e2e5107",
+          "0x000000000000000000000000dcee70654261af21c44c093c300ed3bb97b78192"
+        ],
+        "data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "logIndex": 57,
+        "blockHash": "0x73c853393533d566356952302cce60485887bfcdaf416cffcd7904f8060cf4cb"
+      },
+      {
+        "transactionIndex": 6,
+        "blockNumber": 19726762,
+        "transactionHash": "0xcbe652c8f6a16893b9f41609d59ff4e462cafe7b1846822982c353b65702a5f6",
+        "address": "0xDcEe70654261AF21C44c093C300eD3Bb97b78192",
+        "topics": [
+          "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+          "0x000000000000000000000000d7ee8397c76e1040a790777e420321865e2e5107",
+          "0x00000000000000000000000080226fc0ee2b096224eeac085bb9a8cba1146f7d"
+        ],
+        "data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "logIndex": 58,
+        "blockHash": "0x73c853393533d566356952302cce60485887bfcdaf416cffcd7904f8060cf4cb"
+      }
+    ],
+    "blockNumber": 19726762,
+    "cumulativeGasUsed": "1772826",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D",
+    "4949039107694359620",
+    "0xDcEe70654261AF21C44c093C300eD3Bb97b78192",
+    "0xD8724322f44E5c58D7A815F542036fb17DbbF839",
+    "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66",
+    "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "4d0e706e1dc5fdf9ce5f66a1e4468316",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ccipRouter\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"_destinationChainSelector\",\"type\":\"uint64\"},{\"internalType\":\"contract IERC4626\",\"name\":\"_woethOnSourceChain\",\"type\":\"address\"},{\"internalType\":\"contract IERC20\",\"name\":\"_woethOnDestinationChain\",\"type\":\"address\"},{\"internalType\":\"contract IOETHZapper\",\"name\":\"_oethZapper\",\"type\":\"address\"},{\"internalType\":\"contract IERC20\",\"name\":\"_oeth\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Zap\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"ccipRouter\",\"outputs\":[{\"internalType\":\"contract IRouterClient\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"destinationChainSelector\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oeth\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oethZapper\",\"outputs\":[{\"internalType\":\"contract IOETHZapper\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"woethOnDestinationChain\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"woethOnSourceChain\",\"outputs\":[{\"internalType\":\"contract IERC4626\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"}],\"name\":\"zap\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"messageId\",\"type\":\"bytes32\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"events\":{\"Zap(bytes32,address,address,uint256)\":{\"details\":\"Event emitted when a zap occurs\",\"params\":{\"amount\":\"Amount of ETH zapped\",\"messageId\":\"Unique message identifier for each zap\",\"recipient\":\"Recipient address at destination chain\",\"sender\":\"Address initiating the zap\"}}},\"kind\":\"dev\",\"methods\":{\"zap(address)\":{\"params\":{\"receiver\":\"The address of the EOA on the destination chain\"},\"returns\":{\"messageId\":\"The ID of the message that was sent\"}}},\"stateVariables\":{\"ccipRouter\":{\"details\":\"The CCIP router contract address\"},\"destinationChainSelector\":{\"details\":\"The destination chain selector\"},\"oeth\":{\"details\":\"The OETH token contract address\"},\"oethZapper\":{\"details\":\"The OETH zapper contract address\"},\"woethOnDestinationChain\":{\"details\":\"The WOETH destination chain (Arbitrum)\"},\"woethOnSourceChain\":{\"details\":\"The WOETH source chain (Mainnet)\"}},\"title\":\"WOETH CCIP Zapper Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"zap(address)\":{\"notice\":\"Accepts ETH, zaps for OETH, wraps it for WOETH and sends it to the destination chain (arbitrum)\"}},\"notice\":\"Helps to directly convert ETH on mainnet into WOETH on L2s.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/zapper/WOETHCCIPZapper.sol\":\"WOETHCCIPZapper\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport {Client} from \\\"../libraries/Client.sol\\\";\\n\\ninterface IRouterClient {\\n  error UnsupportedDestinationChain(uint64 destChainSelector);\\n  error InsufficientFeeTokenAmount();\\n  error InvalidMsgValue();\\n\\n  /// @notice Checks if the given chain ID is supported for sending/receiving.\\n  /// @param chainSelector The chain to check.\\n  /// @return supported is true if it is supported, false if not.\\n  function isChainSupported(uint64 chainSelector) external view returns (bool supported);\\n\\n  /// @notice Gets a list of all supported tokens which can be sent or received\\n  /// to/from a given chain id.\\n  /// @param chainSelector The chainSelector.\\n  /// @return tokens The addresses of all tokens that are supported.\\n  function getSupportedTokens(uint64 chainSelector) external view returns (address[] memory tokens);\\n\\n  /// @param destinationChainSelector The destination chainSelector\\n  /// @param message The cross-chain CCIP message including data and/or tokens\\n  /// @return fee returns execution fee for the message\\n  /// delivery to destination chain, denominated in the feeToken specified in the message.\\n  /// @dev Reverts with appropriate reason upon invalid message.\\n  function getFee(\\n    uint64 destinationChainSelector,\\n    Client.EVM2AnyMessage memory message\\n  ) external view returns (uint256 fee);\\n\\n  /// @notice Request a message to be sent to the destination chain\\n  /// @param destinationChainSelector The destination chain ID\\n  /// @param message The cross-chain CCIP message including data and/or tokens\\n  /// @return messageId The message ID\\n  /// @dev Note if msg.value is larger than the required fee (from getFee) we accept\\n  /// the overpayment with no refund.\\n  /// @dev Reverts with appropriate reason upon invalid message.\\n  function ccipSend(\\n    uint64 destinationChainSelector,\\n    Client.EVM2AnyMessage calldata message\\n  ) external payable returns (bytes32);\\n}\\n\",\"keccak256\":\"0x7f2fdd93e516b7476c6fab099f6806adf5ceaf399b0cc415f6b9ede890f2379b\",\"license\":\"MIT\"},\"@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n// End consumer library.\\nlibrary Client {\\n  /// @dev RMN depends on this struct, if changing, please notify the RMN maintainers.\\n  struct EVMTokenAmount {\\n    address token; // token address on the local chain.\\n    uint256 amount; // Amount of tokens.\\n  }\\n\\n  struct Any2EVMMessage {\\n    bytes32 messageId; // MessageId corresponding to ccipSend on source.\\n    uint64 sourceChainSelector; // Source chain selector.\\n    bytes sender; // abi.decode(sender) if coming from an EVM chain.\\n    bytes data; // payload sent in original message.\\n    EVMTokenAmount[] destTokenAmounts; // Tokens and their amounts in their destination chain representation.\\n  }\\n\\n  // If extraArgs is empty bytes, the default is 200k gas limit.\\n  struct EVM2AnyMessage {\\n    bytes receiver; // abi.encode(receiver address) for dest EVM chains\\n    bytes data; // Data payload\\n    EVMTokenAmount[] tokenAmounts; // Token transfers\\n    address feeToken; // Address of feeToken. address(0) means you will send msg.value.\\n    bytes extraArgs; // Populate this with _argsToBytes(EVMExtraArgsV1)\\n  }\\n\\n  // bytes4(keccak256(\\\"CCIP EVMExtraArgsV1\\\"));\\n  bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;\\n  struct EVMExtraArgsV1 {\\n    uint256 gasLimit;\\n  }\\n\\n  function _argsToBytes(EVMExtraArgsV1 memory extraArgs) internal pure returns (bytes memory bts) {\\n    return abi.encodeWithSelector(EVM_EXTRA_ARGS_V1_TAG, extraArgs);\\n  }\\n}\\n\",\"keccak256\":\"0x8af3ac1085c87342373772fb1a0107c7b90258e6bfed318ab2a601a14477e679\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address recipient, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n}\\n\",\"keccak256\":\"0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../IERC20.sol\\\";\\n\\n/**\\n * @dev Interface for the optional metadata functions from the ERC20 standard.\\n *\\n * _Available since v4.1._\\n */\\ninterface IERC20Metadata is IERC20 {\\n    /**\\n     * @dev Returns the name of the token.\\n     */\\n    function name() external view returns (string memory);\\n\\n    /**\\n     * @dev Returns the symbol of the token.\\n     */\\n    function symbol() external view returns (string memory);\\n\\n    /**\\n     * @dev Returns the decimals places of the token.\\n     */\\n    function decimals() external view returns (uint8);\\n}\\n\",\"keccak256\":\"0x8de418a5503946cabe331f35fe242d3201a73f67f77aaeb7110acb1f30423aca\",\"license\":\"MIT\"},\"contracts/interfaces/IOETHZapper.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IOETHZapper {\\n    function deposit() external payable returns (uint256);\\n}\\n\",\"keccak256\":\"0x0ce993b355f3d6b97947f3ec2f15b4afd5e24645e2c8ab901f4dc02c1d513a1a\",\"license\":\"MIT\"},\"contracts/zapper/WOETHCCIPZapper.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { IRouterClient } from \\\"@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol\\\";\\nimport { Client } from \\\"@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol\\\";\\n// solhint-disable-next-line  max-line-length\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport { IERC4626 } from \\\"./../../lib/openzeppelin/interfaces/IERC4626.sol\\\";\\nimport { IOETHZapper } from \\\"./../interfaces/IOETHZapper.sol\\\";\\n\\n/**\\n * @title WOETH CCIP Zapper Contract\\n * @notice Helps to directly convert ETH on mainnet into WOETH on L2s.\\n * @author Origin Protocol Inc\\n */\\n\\ncontract WOETHCCIPZapper {\\n    /**\\n     * @dev Event emitted when a zap occurs\\n     * @param messageId Unique message identifier for each zap\\n     * @param sender Address initiating the zap\\n     * @param recipient Recipient address at destination chain\\n     * @param amount Amount of ETH zapped\\n     */\\n    event Zap(\\n        bytes32 indexed messageId,\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    );\\n\\n    /**\\n     * @dev The destination chain selector\\n     */\\n    uint64 public immutable destinationChainSelector;\\n\\n    /**\\n     * @dev The WOETH source chain (Mainnet)\\n     */\\n    IERC4626 public immutable woethOnSourceChain;\\n\\n    /**\\n     * @dev The WOETH destination chain (Arbitrum)\\n     */\\n    IERC20 public immutable woethOnDestinationChain;\\n\\n    /**\\n     * @dev The OETH zapper contract address\\n     */\\n    IOETHZapper public immutable oethZapper;\\n\\n    /**\\n     * @dev The CCIP router contract address\\n     */\\n    IRouterClient public immutable ccipRouter;\\n\\n    /**\\n     * @dev The OETH token contract address\\n     */\\n    IERC20 public immutable oeth;\\n\\n    constructor(\\n        address _ccipRouter,\\n        uint64 _destinationChainSelector,\\n        IERC4626 _woethOnSourceChain,\\n        IERC20 _woethOnDestinationChain,\\n        IOETHZapper _oethZapper,\\n        IERC20 _oeth\\n    ) {\\n        ccipRouter = IRouterClient(_ccipRouter);\\n        destinationChainSelector = _destinationChainSelector;\\n        woethOnSourceChain = _woethOnSourceChain;\\n        woethOnDestinationChain = _woethOnDestinationChain;\\n        oethZapper = _oethZapper;\\n        oeth = _oeth;\\n\\n        // Max allowance for Router and WOETH contracts\\n        _oeth.approve(address(_woethOnSourceChain), type(uint256).max); // for wrapping\\n        _woethOnSourceChain.approve(address(_ccipRouter), type(uint256).max); // for zapping\\n    }\\n\\n    /**\\n     * @notice Accepts ETH, zaps for OETH, wraps it for WOETH and sends it to the destination chain (arbitrum)\\n     * @param receiver The address of the EOA on the destination chain\\n     * @return messageId The ID of the message that was sent\\n     */\\n    function zap(address receiver)\\n        external\\n        payable\\n        returns (bytes32 messageId)\\n    {\\n        return _zap(receiver, msg.value);\\n    }\\n\\n    /**\\n     * @dev Deposit ETH and receive WOETH in L2.\\n     * @dev Note that the WOETH will be sent to the msg.sender at destination chain as well.\\n     */\\n    receive() external payable {\\n        _zap(msg.sender, msg.value);\\n    }\\n\\n    function _zap(address receiver, uint256 amount)\\n        internal\\n        returns (bytes32 messageId)\\n    {\\n        // 1.) Zap for OETH\\n        uint256 oethReceived = oethZapper.deposit{ value: amount }();\\n\\n        // 2.) Wrap the received woeth\\n        uint256 woethReceived = woethOnSourceChain.deposit(\\n            oethReceived,\\n            address(this)\\n        );\\n\\n        // 3.) Setup params for CCIP transfer\\n        address token = address(woethOnSourceChain);\\n        Client.EVMTokenAmount[]\\n            memory tokenAmounts = new Client.EVMTokenAmount[](1);\\n        Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({\\n            token: token,\\n            amount: woethReceived\\n        });\\n        tokenAmounts[0] = tokenAmount;\\n\\n        Client.EVM2AnyMessage memory zapWoethMessage = Client.EVM2AnyMessage({\\n            receiver: abi.encode(receiver), // ABI-encoded receiver address\\n            data: abi.encode(\\\"\\\"),\\n            tokenAmounts: tokenAmounts,\\n            extraArgs: Client._argsToBytes(\\n                // See: https://docs.chain.link/ccip/best-practices#setting-gaslimit\\n                Client.EVMExtraArgsV1({ gasLimit: 0 })\\n            ),\\n            feeToken: address(0)\\n        });\\n\\n        // ZAP \\u03df\\n        messageId = ccipRouter.ccipSend(\\n            destinationChainSelector,\\n            zapWoethMessage\\n        );\\n\\n        // Emit Zap event with message details\\n        emit Zap(messageId, msg.sender, receiver, amount);\\n\\n        // Return the message ID\\n        return messageId;\\n    }\\n}\\n\",\"keccak256\":\"0x91cb28bef77a94d07c2cd2962ec57551233b369231d848419c22de3047e13bfd\",\"license\":\"MIT\"},\"lib/openzeppelin/interfaces/IERC4626.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport { IERC20Metadata } from \\\"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\\\";\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\n\\ninterface IERC4626 is IERC20, IERC20Metadata {\\n    event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares);\\n\\n    event Withdraw(\\n        address indexed caller,\\n        address indexed receiver,\\n        address indexed owner,\\n        uint256 assets,\\n        uint256 shares\\n    );\\n\\n    /**\\n     * @dev Returns the address of the underlying token used for the Vault for accounting, depositing, and withdrawing.\\n     *\\n     * - MUST be an ERC-20 token contract.\\n     * - MUST NOT revert.\\n     */\\n    function asset() external view returns (address assetTokenAddress);\\n\\n    /**\\n     * @dev Returns the total amount of the underlying asset that is \\u201cmanaged\\u201d by Vault.\\n     *\\n     * - SHOULD include any compounding that occurs from yield.\\n     * - MUST be inclusive of any fees that are charged against assets in the Vault.\\n     * - MUST NOT revert.\\n     */\\n    function totalAssets() external view returns (uint256 totalManagedAssets);\\n\\n    /**\\n     * @dev Returns the amount of shares that the Vault would exchange for the amount of assets provided, in an ideal\\n     * scenario where all the conditions are met.\\n     *\\n     * - MUST NOT be inclusive of any fees that are charged against assets in the Vault.\\n     * - MUST NOT show any variations depending on the caller.\\n     * - MUST NOT reflect slippage or other on-chain conditions, when performing the actual exchange.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: This calculation MAY NOT reflect the \\u201cper-user\\u201d price-per-share, and instead should reflect the\\n     * \\u201caverage-user\\u2019s\\u201d price-per-share, meaning what the average user should expect to see when exchanging to and\\n     * from.\\n     */\\n    function convertToShares(uint256 assets) external view returns (uint256 shares);\\n\\n    /**\\n     * @dev Returns the amount of assets that the Vault would exchange for the amount of shares provided, in an ideal\\n     * scenario where all the conditions are met.\\n     *\\n     * - MUST NOT be inclusive of any fees that are charged against assets in the Vault.\\n     * - MUST NOT show any variations depending on the caller.\\n     * - MUST NOT reflect slippage or other on-chain conditions, when performing the actual exchange.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: This calculation MAY NOT reflect the \\u201cper-user\\u201d price-per-share, and instead should reflect the\\n     * \\u201caverage-user\\u2019s\\u201d price-per-share, meaning what the average user should expect to see when exchanging to and\\n     * from.\\n     */\\n    function convertToAssets(uint256 shares) external view returns (uint256 assets);\\n\\n    /**\\n     * @dev Returns the maximum amount of the underlying asset that can be deposited into the Vault for the receiver,\\n     * through a deposit call.\\n     *\\n     * - MUST return a limited value if receiver is subject to some deposit limit.\\n     * - MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of assets that may be deposited.\\n     * - MUST NOT revert.\\n     */\\n    function maxDeposit(address receiver) external view returns (uint256 maxAssets);\\n\\n    /**\\n     * @dev Allows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given\\n     * current on-chain conditions.\\n     *\\n     * - MUST return as close to and no more than the exact amount of Vault shares that would be minted in a deposit\\n     *   call in the same transaction. I.e. deposit should return the same or more shares as previewDeposit if called\\n     *   in the same transaction.\\n     * - MUST NOT account for deposit limits like those returned from maxDeposit and should always act as though the\\n     *   deposit would be accepted, regardless if the user has enough tokens approved, etc.\\n     * - MUST be inclusive of deposit fees. Integrators should be aware of the existence of deposit fees.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: any unfavorable discrepancy between convertToShares and previewDeposit SHOULD be considered slippage in\\n     * share price or some other type of condition, meaning the depositor will lose assets by depositing.\\n     */\\n    function previewDeposit(uint256 assets) external view returns (uint256 shares);\\n\\n    /**\\n     * @dev Mints shares Vault shares to receiver by depositing exactly amount of underlying tokens.\\n     *\\n     * - MUST emit the Deposit event.\\n     * - MAY support an additional flow in which the underlying tokens are owned by the Vault contract before the\\n     *   deposit execution, and are accounted for during deposit.\\n     * - MUST revert if all of assets cannot be deposited (due to deposit limit being reached, slippage, the user not\\n     *   approving enough underlying tokens to the Vault contract, etc).\\n     *\\n     * NOTE: most implementations will require pre-approval of the Vault with the Vault\\u2019s underlying asset token.\\n     */\\n    function deposit(uint256 assets, address receiver) external returns (uint256 shares);\\n\\n    /**\\n     * @dev Returns the maximum amount of the Vault shares that can be minted for the receiver, through a mint call.\\n     * - MUST return a limited value if receiver is subject to some mint limit.\\n     * - MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of shares that may be minted.\\n     * - MUST NOT revert.\\n     */\\n    function maxMint(address receiver) external view returns (uint256 maxShares);\\n\\n    /**\\n     * @dev Allows an on-chain or off-chain user to simulate the effects of their mint at the current block, given\\n     * current on-chain conditions.\\n     *\\n     * - MUST return as close to and no fewer than the exact amount of assets that would be deposited in a mint call\\n     *   in the same transaction. I.e. mint should return the same or fewer assets as previewMint if called in the\\n     *   same transaction.\\n     * - MUST NOT account for mint limits like those returned from maxMint and should always act as though the mint\\n     *   would be accepted, regardless if the user has enough tokens approved, etc.\\n     * - MUST be inclusive of deposit fees. Integrators should be aware of the existence of deposit fees.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: any unfavorable discrepancy between convertToAssets and previewMint SHOULD be considered slippage in\\n     * share price or some other type of condition, meaning the depositor will lose assets by minting.\\n     */\\n    function previewMint(uint256 shares) external view returns (uint256 assets);\\n\\n    /**\\n     * @dev Mints exactly shares Vault shares to receiver by depositing amount of underlying tokens.\\n     *\\n     * - MUST emit the Deposit event.\\n     * - MAY support an additional flow in which the underlying tokens are owned by the Vault contract before the mint\\n     *   execution, and are accounted for during mint.\\n     * - MUST revert if all of shares cannot be minted (due to deposit limit being reached, slippage, the user not\\n     *   approving enough underlying tokens to the Vault contract, etc).\\n     *\\n     * NOTE: most implementations will require pre-approval of the Vault with the Vault\\u2019s underlying asset token.\\n     */\\n    function mint(uint256 shares, address receiver) external returns (uint256 assets);\\n\\n    /**\\n     * @dev Returns the maximum amount of the underlying asset that can be withdrawn from the owner balance in the\\n     * Vault, through a withdraw call.\\n     *\\n     * - MUST return a limited value if owner is subject to some withdrawal limit or timelock.\\n     * - MUST NOT revert.\\n     */\\n    function maxWithdraw(address owner) external view returns (uint256 maxAssets);\\n\\n    /**\\n     * @dev Allows an on-chain or off-chain user to simulate the effects of their withdrawal at the current block,\\n     * given current on-chain conditions.\\n     *\\n     * - MUST return as close to and no fewer than the exact amount of Vault shares that would be burned in a withdraw\\n     *   call in the same transaction. I.e. withdraw should return the same or fewer shares as previewWithdraw if\\n     *   called\\n     *   in the same transaction.\\n     * - MUST NOT account for withdrawal limits like those returned from maxWithdraw and should always act as though\\n     *   the withdrawal would be accepted, regardless if the user has enough shares, etc.\\n     * - MUST be inclusive of withdrawal fees. Integrators should be aware of the existence of withdrawal fees.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: any unfavorable discrepancy between convertToShares and previewWithdraw SHOULD be considered slippage in\\n     * share price or some other type of condition, meaning the depositor will lose assets by depositing.\\n     */\\n    function previewWithdraw(uint256 assets) external view returns (uint256 shares);\\n\\n    /**\\n     * @dev Burns shares from owner and sends exactly assets of underlying tokens to receiver.\\n     *\\n     * - MUST emit the Withdraw event.\\n     * - MAY support an additional flow in which the underlying tokens are owned by the Vault contract before the\\n     *   withdraw execution, and are accounted for during withdraw.\\n     * - MUST revert if all of assets cannot be withdrawn (due to withdrawal limit being reached, slippage, the owner\\n     *   not having enough shares, etc).\\n     *\\n     * Note that some implementations will require pre-requesting to the Vault before a withdrawal may be performed.\\n     * Those methods should be performed separately.\\n     */\\n    function withdraw(\\n        uint256 assets,\\n        address receiver,\\n        address owner\\n    ) external returns (uint256 shares);\\n\\n    /**\\n     * @dev Returns the maximum amount of Vault shares that can be redeemed from the owner balance in the Vault,\\n     * through a redeem call.\\n     *\\n     * - MUST return a limited value if owner is subject to some withdrawal limit or timelock.\\n     * - MUST return balanceOf(owner) if owner is not subject to any withdrawal limit or timelock.\\n     * - MUST NOT revert.\\n     */\\n    function maxRedeem(address owner) external view returns (uint256 maxShares);\\n\\n    /**\\n     * @dev Allows an on-chain or off-chain user to simulate the effects of their redeemption at the current block,\\n     * given current on-chain conditions.\\n     *\\n     * - MUST return as close to and no more than the exact amount of assets that would be withdrawn in a redeem call\\n     *   in the same transaction. I.e. redeem should return the same or more assets as previewRedeem if called in the\\n     *   same transaction.\\n     * - MUST NOT account for redemption limits like those returned from maxRedeem and should always act as though the\\n     *   redemption would be accepted, regardless if the user has enough shares, etc.\\n     * - MUST be inclusive of withdrawal fees. Integrators should be aware of the existence of withdrawal fees.\\n     * - MUST NOT revert.\\n     *\\n     * NOTE: any unfavorable discrepancy between convertToAssets and previewRedeem SHOULD be considered slippage in\\n     * share price or some other type of condition, meaning the depositor will lose assets by redeeming.\\n     */\\n    function previewRedeem(uint256 shares) external view returns (uint256 assets);\\n\\n    /**\\n     * @dev Burns exactly shares from owner and sends assets of underlying tokens to receiver.\\n     *\\n     * - MUST emit the Withdraw event.\\n     * - MAY support an additional flow in which the underlying tokens are owned by the Vault contract before the\\n     *   redeem execution, and are accounted for during redeem.\\n     * - MUST revert if all of shares cannot be redeemed (due to withdrawal limit being reached, slippage, the owner\\n     *   not having enough shares, etc).\\n     *\\n     * NOTE: some implementations will require pre-requesting to the Vault before a withdrawal may be performed.\\n     * Those methods should be performed separately.\\n     */\\n    function redeem(\\n        uint256 shares,\\n        address receiver,\\n        address owner\\n    ) external returns (uint256 assets);\\n}\",\"keccak256\":\"0xd1abd028496aacc3eef98e585a744e1a449dcf9b2e818c59d15d5c0091c3f293\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x61014060405234801561001157600080fd5b50604051610a95380380610a958339810160408190526100309161018a565b606086811b6001600160601b03199081166101005260c087811b6001600160c01b03191660805286831b821660a05285831b8216905283821b811660e0529082901b166101205260405163095ea7b360e01b81526001600160a01b038086166004830152600019602483015282169063095ea7b390604401602060405180830381600087803b1580156100c257600080fd5b505af11580156100d6573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906100fa919061021d565b5060405163095ea7b360e01b81526001600160a01b038781166004830152600019602483015285169063095ea7b390604401602060405180830381600087803b15801561014657600080fd5b505af115801561015a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061017e919061021d565b5050505050505061025e565b60008060008060008060c087890312156101a357600080fd5b86516101ae81610246565b60208801519096506001600160401b03811681146101cb57600080fd5b60408801519095506101dc81610246565b60608801519094506101ed81610246565b60808801519093506101fe81610246565b60a088015190925061020f81610246565b809150509295509295509295565b60006020828403121561022f57600080fd5b8151801515811461023f57600080fd5b9392505050565b6001600160a01b038116811461025b57600080fd5b50565b60805160c01c60a05160601c60c05160601c60e05160601c6101005160601c6101205160601c6107b56102e060003960006101c4015260008181609d01526104e401526000818160ee015261021f015260006101f8015260008181610190015281816102db015261036b015260008181610122015261051101526107b56000f3fe6080604052600436106100745760003560e01c8063510a33831161004e578063510a33831461015d578063c082aa591461017e578063ccfe2a69146101b2578063e0e43b95146101e657600080fd5b80630de229841461008b57806314b6cfaf146100dc57806331db1ffc1461011057600080fd5b3661008657610083333461021a565b50005b600080fd5b34801561009757600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100e857600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b34801561011c57600080fd5b506101447f000000000000000000000000000000000000000000000000000000000000000081565b60405167ffffffffffffffff90911681526020016100d3565b61017061016b3660046105f9565b6105e7565b6040519081526020016100d3565b34801561018a57600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b3480156101be57600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b3480156101f257600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b6000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d0e30db0846040518263ffffffff1660e01b81526004016020604051808303818588803b15801561027857600080fd5b505af115801561028c573d6000803e3d6000fd5b50505050506040513d601f19601f820116820180604052508101906102b19190610629565b604051636e553f6560e01b8152600481018290523060248201529091506000906001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001690636e553f6590604401602060405180830381600087803b15801561031f57600080fd5b505af1158015610333573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103579190610629565b6040805160018082528183019092529192507f000000000000000000000000000000000000000000000000000000000000000091600091816020015b604080518082019091526000808252602082015281526020019060019003908161039357905050905060006040518060400160405280846001600160a01b0316815260200185815250905080826000815181106103f2576103f2610769565b60209081029190910101526040805160a081019091526001600160a01b03891660c08201526000908060e08101604051602081830303815290604052815260200160405160200161044e90602080825260009082015260400190565b604051602081830303815290604052815260200184815260200160006001600160a01b031681526020016104c86040518060200160405280600081525060408051915160248084019190915281518084039091018152604490920190526020810180516001600160e01b03166397a657c960e01b17905290565b90526040516396f4e9f960e01b81529091506001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016906396f4e9f99061053b907f000000000000000000000000000000000000000000000000000000000000000090859060040161068f565b602060405180830381600087803b15801561055557600080fd5b505af1158015610569573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061058d9190610629565b604080513381526001600160a01b038c1660208201529081018a905290975087907fe60f8f9891d6ba1d4b24cf83eb5505159db0ad30b8424112e68be6e656927cbe9060600160405180910390a250505050505092915050565b60006105f3823461021a565b92915050565b60006020828403121561060b57600080fd5b81356001600160a01b038116811461062257600080fd5b9392505050565b60006020828403121561063b57600080fd5b5051919050565b6000815180845260005b818110156106685760208185018101518683018201520161064c565b8181111561067a576000602083870101525b50601f01601f19169290920160200192915050565b6000604067ffffffffffffffff8516835260208181850152845160a0838601526106bc60e0860182610642565b905081860151603f19808784030160608801526106d98383610642565b88860151888203830160808a01528051808352908601945060009350908501905b8084101561072c57845180516001600160a01b03168352860151868301529385019360019390930192908601906106fa565b5060608901516001600160a01b031660a08901526080890151888203830160c08a0152955061075b8187610642565b9a9950505050505050505050565b634e487b7160e01b600052603260045260246000fdfea2646970667358221220a375f935d8aa7803955126e8771ac23b7939de7a6f723a8a25d32f97592aab1b64736f6c63430008070033",
+  "deployedBytecode": "0x6080604052600436106100745760003560e01c8063510a33831161004e578063510a33831461015d578063c082aa591461017e578063ccfe2a69146101b2578063e0e43b95146101e657600080fd5b80630de229841461008b57806314b6cfaf146100dc57806331db1ffc1461011057600080fd5b3661008657610083333461021a565b50005b600080fd5b34801561009757600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100e857600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b34801561011c57600080fd5b506101447f000000000000000000000000000000000000000000000000000000000000000081565b60405167ffffffffffffffff90911681526020016100d3565b61017061016b3660046105f9565b6105e7565b6040519081526020016100d3565b34801561018a57600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b3480156101be57600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b3480156101f257600080fd5b506100bf7f000000000000000000000000000000000000000000000000000000000000000081565b6000807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d0e30db0846040518263ffffffff1660e01b81526004016020604051808303818588803b15801561027857600080fd5b505af115801561028c573d6000803e3d6000fd5b50505050506040513d601f19601f820116820180604052508101906102b19190610629565b604051636e553f6560e01b8152600481018290523060248201529091506000906001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001690636e553f6590604401602060405180830381600087803b15801561031f57600080fd5b505af1158015610333573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103579190610629565b6040805160018082528183019092529192507f000000000000000000000000000000000000000000000000000000000000000091600091816020015b604080518082019091526000808252602082015281526020019060019003908161039357905050905060006040518060400160405280846001600160a01b0316815260200185815250905080826000815181106103f2576103f2610769565b60209081029190910101526040805160a081019091526001600160a01b03891660c08201526000908060e08101604051602081830303815290604052815260200160405160200161044e90602080825260009082015260400190565b604051602081830303815290604052815260200184815260200160006001600160a01b031681526020016104c86040518060200160405280600081525060408051915160248084019190915281518084039091018152604490920190526020810180516001600160e01b03166397a657c960e01b17905290565b90526040516396f4e9f960e01b81529091506001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016906396f4e9f99061053b907f000000000000000000000000000000000000000000000000000000000000000090859060040161068f565b602060405180830381600087803b15801561055557600080fd5b505af1158015610569573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061058d9190610629565b604080513381526001600160a01b038c1660208201529081018a905290975087907fe60f8f9891d6ba1d4b24cf83eb5505159db0ad30b8424112e68be6e656927cbe9060600160405180910390a250505050505092915050565b60006105f3823461021a565b92915050565b60006020828403121561060b57600080fd5b81356001600160a01b038116811461062257600080fd5b9392505050565b60006020828403121561063b57600080fd5b5051919050565b6000815180845260005b818110156106685760208185018101518683018201520161064c565b8181111561067a576000602083870101525b50601f01601f19169290920160200192915050565b6000604067ffffffffffffffff8516835260208181850152845160a0838601526106bc60e0860182610642565b905081860151603f19808784030160608801526106d98383610642565b88860151888203830160808a01528051808352908601945060009350908501905b8084101561072c57845180516001600160a01b03168352860151868301529385019360019390930192908601906106fa565b5060608901516001600160a01b031660a08901526080890151888203830160c08a0152955061075b8187610642565b9a9950505050505050505050565b634e487b7160e01b600052603260045260246000fdfea2646970667358221220a375f935d8aa7803955126e8771ac23b7939de7a6f723a8a25d32f97592aab1b64736f6c63430008070033",
+  "libraries": {},
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "events": {
+      "Zap(bytes32,address,address,uint256)": {
+        "details": "Event emitted when a zap occurs",
+        "params": {
+          "amount": "Amount of ETH zapped",
+          "messageId": "Unique message identifier for each zap",
+          "recipient": "Recipient address at destination chain",
+          "sender": "Address initiating the zap"
+        }
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "zap(address)": {
+        "params": {
+          "receiver": "The address of the EOA on the destination chain"
+        },
+        "returns": {
+          "messageId": "The ID of the message that was sent"
+        }
+      }
+    },
+    "stateVariables": {
+      "ccipRouter": {
+        "details": "The CCIP router contract address"
+      },
+      "destinationChainSelector": {
+        "details": "The destination chain selector"
+      },
+      "oeth": {
+        "details": "The OETH token contract address"
+      },
+      "oethZapper": {
+        "details": "The OETH zapper contract address"
+      },
+      "woethOnDestinationChain": {
+        "details": "The WOETH destination chain (Arbitrum)"
+      },
+      "woethOnSourceChain": {
+        "details": "The WOETH source chain (Mainnet)"
+      }
+    },
+    "title": "WOETH CCIP Zapper Contract",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "zap(address)": {
+        "notice": "Accepts ETH, zaps for OETH, wraps it for WOETH and sends it to the destination chain (arbitrum)"
+      }
+    },
+    "notice": "Helps to directly convert ETH on mainnet into WOETH on L2s.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
