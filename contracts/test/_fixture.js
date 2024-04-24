@@ -664,8 +664,8 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  // const { timelock, oethVault } = fixture;
-  const { weth, matt, strategist, timelock, oethVault } = fixture;
+  const { weth, matt, strategist, domen, frxETH, timelock, oethVault } =
+    fixture;
 
   const bufferBps = await oethVault.vaultBuffer();
   const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
@@ -695,6 +695,35 @@ async function oethCollateralSwapFixture() {
   if (shouldChangeBuffer) {
     // Set it back
     await oethVault.connect(strategist).setVaultBuffer(bufferBps);
+  }
+
+  const allStrats = await oethVault.getAllStrategies();
+  if (
+    allStrats
+      .map((x) => x.toLowerCase())
+      .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
+  ) {
+    // Remove fraxETH strategy if it exists
+    // Because it no longer holds assets and causes this test to fail
+
+    // Send some dust to that first
+    await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
+
+    // Now make sure it's deposited
+    await oethVault
+      .connect(strategist)
+      .depositToStrategy(
+        addresses.mainnet.FraxETHStrategy,
+        [frxETH.address],
+        [oethUnits("1")]
+      );
+
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(frxETH.address, addresses.zero);
+    await oethVault
+      .connect(timelock)
+      .removeStrategy(addresses.mainnet.FraxETHStrategy);
   }
 
   // Withdraw all from strategies so we have assets to swap
