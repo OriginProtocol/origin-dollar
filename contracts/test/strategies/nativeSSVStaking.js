@@ -49,7 +49,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
   }));
 
   describe("Initial setup", function () {
-    it("Should not allow sending of ETH to the strategy via a transaction", async () => {
+    it("Should not allow ETH to be sent to the strategy if not Fee Accumulator", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       const signer = nativeStakingSSVStrategy.provider.getSigner(
@@ -82,21 +82,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       const tx = await nativeStakingSSVStrategy
         .connect(governor)
-        .setRegistratorAddress(strategist.address);
+        .setRegistrator(strategist.address);
 
-      const events = (await tx.wait()).events || [];
-      const RegistratorAddressChangedEvent = events.find(
-        (e) => e.event === "RegistratorAddressChanged"
-      );
-
-      expect(RegistratorAddressChangedEvent).to.not.be.undefined;
-      expect(RegistratorAddressChangedEvent.event).to.equal(
-        "RegistratorAddressChanged"
-      );
-      expect(RegistratorAddressChangedEvent.args[0]).to.equal(governor.address);
-      expect(RegistratorAddressChangedEvent.args[1]).to.equal(
-        strategist.address
-      );
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "RegistratorChanged")
+        .withArgs(strategist.address);
     });
 
     it("Non governor should not be able to change the registrator address", async () => {
@@ -105,7 +95,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy
           .connect(strategist)
-          .setRegistratorAddress(strategist.address)
+          .setRegistrator(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
@@ -152,8 +142,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     it("Governor should be able to change fuse interval", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      const oldFuseStartBn = parseEther("21.6");
-      const oldFuseEndBn = parseEther("25.6");
       const fuseStartBn = parseEther("22.6");
       const fuseEndBn = parseEther("26.6");
 
@@ -161,17 +149,9 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .connect(governor)
         .setFuseInterval(fuseStartBn, fuseEndBn);
 
-      const events = (await tx.wait()).events || [];
-      const FuseIntervalUpdated = events.find(
-        (e) => e.event === "FuseIntervalUpdated"
-      );
-
-      expect(FuseIntervalUpdated).to.not.be.undefined;
-      expect(FuseIntervalUpdated.event).to.equal("FuseIntervalUpdated");
-      expect(FuseIntervalUpdated.args[0]).to.equal(oldFuseStartBn); // prev fuse start
-      expect(FuseIntervalUpdated.args[1]).to.equal(oldFuseEndBn); // prev fuse end
-      expect(FuseIntervalUpdated.args[2]).to.equal(fuseStartBn); // fuse start
-      expect(FuseIntervalUpdated.args[3]).to.equal(fuseEndBn); // fuse end
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "FuseIntervalUpdated")
+        .withArgs(fuseStartBn, fuseEndBn);
     });
 
     it("Only accounting governor can call accounting", async () => {});
@@ -193,19 +173,9 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .connect(governor)
         .setAccountingGovernor(strategist.address);
 
-      const events = (await tx.wait()).events || [];
-      const AccountingGovernorChangedEvent = events.find(
-        (e) => e.event === "AccountingGovernorAddressChanged"
-      );
-
-      expect(AccountingGovernorChangedEvent).to.not.be.undefined;
-      expect(AccountingGovernorChangedEvent.event).to.equal(
-        "AccountingGovernorAddressChanged"
-      );
-      expect(AccountingGovernorChangedEvent.args[0]).to.equal(governor.address);
-      expect(AccountingGovernorChangedEvent.args[1]).to.equal(
-        strategist.address
-      );
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingGovernorChanged")
+        .withArgs(strategist.address);
     });
   });
 
@@ -302,57 +272,52 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(governor)
           .doAccounting();
 
-        const events = (await tx.wait()).events || [];
-
-        const BeaconRewardsEvent = events.find(
-          (e) => e.event === "AccountingBeaconChainRewards"
-        );
         if (expectedRewards.gt(BigNumber.from("0"))) {
-          expect(BeaconRewardsEvent).to.not.be.undefined;
-          expect(BeaconRewardsEvent.args[0]).to.equal(expectedRewards);
+          await expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingBeaconChainRewards")
+            .withArgs(expectedRewards);
         } else {
-          expect(BeaconRewardsEvent).to.be.undefined;
+          await expect(tx).to.not.emit(
+            nativeStakingSSVStrategy,
+            "AccountingBeaconChainRewards"
+          );
         }
 
-        const WithdrawnEvent = events.find(
-          (e) => e.event === "AccountingFullyWithdrawnValidator"
-        );
         if (expectedValidatorsFullWithdrawals > 0) {
-          expect(WithdrawnEvent).to.not.be.undefined;
-          expect(WithdrawnEvent.args[0]).to.equal(
-            BigNumber.from(`${expectedValidatorsFullWithdrawals}`)
-          );
-          // still active validators
-          expect(WithdrawnEvent.args[1]).to.equal(
-            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals}`)
-          );
-          // weth sent to vault
-          expect(WithdrawnEvent.args[2]).to.equal(
-            parseEther("32").mul(
-              BigNumber.from(`${expectedValidatorsFullWithdrawals}`)
+          await expect(tx)
+            .to.emit(
+              nativeStakingSSVStrategy,
+              "AccountingFullyWithdrawnValidator"
             )
-          );
+            .withArgs(
+              expectedValidatorsFullWithdrawals,
+              30 - expectedValidatorsFullWithdrawals,
+              parseEther("32").mul(expectedValidatorsFullWithdrawals)
+            );
         } else {
-          expect(WithdrawnEvent).to.be.undefined;
+          await expect(tx).to.not.emit(
+            nativeStakingSSVStrategy,
+            "AccountingFullyWithdrawnValidator"
+          );
         }
 
-        const PausedEvent = events.find((e) => e.event === "Paused");
         if (fuseBlown) {
-          expect(PausedEvent).to.not.be.undefined;
+          await expect(tx).to.emit(nativeStakingSSVStrategy, "Paused");
         } else {
-          expect(PausedEvent).to.be.undefined;
+          await expect(tx).to.not.emit(nativeStakingSSVStrategy, "Paused");
         }
 
-        const SlashEvent = events.find(
-          (e) => e.event === "AccountingValidatorSlashed"
-        );
         if (slashDetected) {
-          expect(SlashEvent).to.not.be.undefined;
-          expect(SlashEvent.args[0]).to.equal(
-            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals - 1}`)
-          );
+          await expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingValidatorSlashed")
+            .withNamedArgs({
+              remainingValidators: 30 - expectedValidatorsFullWithdrawals - 1,
+            });
         } else {
-          expect(SlashEvent).to.be.undefined;
+          await expect(tx).to.not.emit(
+            nativeStakingSSVStrategy,
+            "AccountingValidatorSlashed"
+          );
         }
       });
     }
@@ -465,29 +430,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("5", "ether") //_wethThresholdCheck
         );
 
-      const events = (await tx.wait()).events || [];
-      const AccountingManuallyFixedEvent = events.find(
-        (e) => e.event === "AccountingManuallyFixed"
-      );
-
-      expect(AccountingManuallyFixedEvent).to.not.be.undefined;
-      expect(AccountingManuallyFixedEvent.event).to.equal(
-        "AccountingManuallyFixed"
-      );
-      expect(AccountingManuallyFixedEvent.args[0]).to.equal(0); // oldActiveDepositedValidators
-      expect(AccountingManuallyFixedEvent.args[1]).to.equal(3); // activeDepositedValidators
-      expect(AccountingManuallyFixedEvent.args[2]).to.equal(
-        parseEther("0", "ether")
-      ); // oldBeaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[3]).to.equal(
-        parseEther("2.3", "ether")
-      ); // beaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[4]).to.equal(
-        parseEther("2.1", "ether")
-      ); // ethToWeth
-      expect(AccountingManuallyFixedEvent.args[5]).to.equal(
-        parseEther("2.2", "ether")
-      ); // wethToBeSentToVault
+      expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+        .withArgs(
+          0, // oldActiveDepositedValidators
+          3, // activeDepositedValidators
+          0, // oldBeaconChainRewardWETH
+          parseEther("2.3"), // beaconChainRewardWETH
+          parseEther("2.1"), // ethToWeth
+          parseEther("2.2") // wethToBeSentToVault
+        );
     });
   });
 
@@ -580,29 +532,22 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           const tx = await nativeStakingSSVStrategy
             .connect(sHarvester)
             .collectRewardTokens();
-          const events = (await tx.wait()).events || [];
+
+          if (expectedHarvester.gt(BigNumber.from("0"))) {
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "RewardTokenCollected")
+              .withArgs(oethHarvester.address, weth.address, expectedHarvester);
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingSSVStrategy,
+              "RewardTokenCollected"
+            );
+          }
 
           const harvesterBalanceDiff = (
             await weth.balanceOf(oethHarvester.address)
           ).sub(harvesterWethBalance);
           expect(harvesterBalanceDiff).to.equal(expectedHarvester);
-
-          const rewardTokenCollectedEvent = events.find(
-            (e) => e.event === "RewardTokenCollected"
-          );
-
-          if (expectedHarvester.gt(BigNumber.from("0"))) {
-            expect(rewardTokenCollectedEvent).to.not.be.undefined;
-            expect(rewardTokenCollectedEvent.event).to.equal(
-              "RewardTokenCollected"
-            );
-            expect(rewardTokenCollectedEvent.args[1]).to.equal(weth.address);
-            expect(rewardTokenCollectedEvent.args[2]).to.equal(
-              expectedHarvester
-            );
-          } else {
-            expect(rewardTokenCollectedEvent).to.be.undefined;
-          }
         });
       }
     });

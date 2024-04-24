@@ -45,7 +45,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
 
-    event RegistratorAddressChanged(address oldAddress, address newAddress);
+    event RegistratorChanged(address newAddress);
     event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
     event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
@@ -73,9 +73,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         SSV_NETWORK_ADDRESS = _ssvNetwork;
     }
 
-    /// @notice Set the address of the registrator
-    function setRegistratorAddress(address _address) external onlyGovernor {
-        emit RegistratorAddressChanged(validatorRegistrator, _address);
+    /// @notice Set the address of the registrator which can register, exit and remove validators
+    function setRegistrator(address _address) external onlyGovernor {
+        emit RegistratorChanged(_address);
         validatorRegistrator = _address;
     }
 

@@ -30,12 +30,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     uint256[50] private __gap;
 
-    event FuseIntervalUpdated(
-        uint256 oldStart,
-        uint256 oldEnd,
-        uint256 start,
-        uint256 end
-    );
+    event FuseIntervalUpdated(uint256 start, uint256 end);
     event AccountingFullyWithdrawnValidator(
         uint256 noOfValidators,
         uint256 remainingValidators,
@@ -45,10 +40,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 remainingValidators,
         uint256 wethSentToVault
     );
-    event AccountingGovernorAddressChanged(
-        address oldAddress,
-        address newAddress
-    );
+    event AccountingGovernorChanged(address newAddress);
     event AccountingBeaconChainRewards(uint256 amount);
 
     event AccountingManuallyFixed(
@@ -98,7 +90,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     }
 
     function setAccountingGovernor(address _address) external onlyGovernor {
-        emit AccountingGovernorAddressChanged(accountingGovernor, _address);
+        emit AccountingGovernorChanged(_address);
         accountingGovernor = _address;
     }
 
@@ -115,12 +107,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             "incorrect fuse interval"
         );
 
-        emit FuseIntervalUpdated(
-            fuseIntervalStart,
-            fuseIntervalEnd,
-            _fuseIntervalStart,
-            _fuseIntervalEnd
-        );
+        emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
 
         fuseIntervalStart = _fuseIntervalStart;
         fuseIntervalEnd = _fuseIntervalEnd;
