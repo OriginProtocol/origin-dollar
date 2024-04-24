@@ -41,7 +41,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 wethSentToVault
     );
     event AccountingGovernorChanged(address newAddress);
-    event AccountingBeaconChainRewards(uint256 amount);
+    event AccountingConsensusRewards(uint256 amount);
 
     event AccountingManuallyFixed(
         uint256 oldActiveDepositedValidators,
@@ -116,10 +116,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /* solhint-disable max-line-length */
     /// This notion page offers a good explanation of how the accounting functions
     /// https://www.notion.so/originprotocol/Limited-simplified-native-staking-accounting-67a217c8420d40678eb943b9da0ee77d
-    /// In short, after dividing by 32 if the ETH remaining on the contract falls between 0 and fuseIntervalStart the accounting
-    /// function will treat that ETH as a Beacon Chain Reward ETH.
-    /// On the contrary if after dividing by 32 the ETH remaining on the contract falls between fuseIntervalEnd and 32 the
-    /// accounting function will treat that as a validator slashing.
+    /// In short, after dividing by 32, if the ETH remaining on the contract falls between 0 and fuseIntervalStart,
+    /// the accounting function will treat that ETH as Beacon chain consensus rewards.
+    /// On the contrary, if after dividing by 32, the ETH remaining on the contract falls between fuseIntervalEnd and 32,
+    /// the accounting function will treat that as a validator slashing.
     /// @notice Perform the accounting attributing beacon chain ETH to either full or partial withdrawals. Returns true when
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown.
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
@@ -154,13 +154,18 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // should be less than a whole validator stake
         require(ethRemaining < 32 ether, "unexpected accounting");
 
-        // Beacon chain rewards swept (partial validator withdrawals)
-        if (ethRemaining <= fuseIntervalStart) {
+        // If no Beacon chain consensus rewards swept
+        if (ethRemaining == 0) {
+            // do nothing
+            return accountingValid;
+        }
+        // Beacon chain consensus rewards swept (partial validator withdrawals)
+        else if (ethRemaining < fuseIntervalStart) {
             // solhint-disable-next-line reentrancy
             consensusRewards += ethRemaining;
-            emit AccountingBeaconChainRewards(ethRemaining);
+            emit AccountingConsensusRewards(ethRemaining);
         }
-        // Beacon chain rewards swept but also a slashed validator fully exited
+        // Beacon chain consensus rewards swept but also a slashed validator fully exited
         else if (ethRemaining >= fuseIntervalEnd) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);

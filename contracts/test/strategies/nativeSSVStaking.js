@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { formatUnits, parseEther } = require("ethers").utils;
+const { parseEther } = require("ethers").utils;
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { isCI } = require("../helpers");
@@ -180,91 +180,184 @@ describe("Unit test: Native SSV Staking Strategy", function () {
   });
 
   describe("Accounting", function () {
+    // fuseStart 21.6
+    // fuseEnd 25.6
+
     const testCases = [
-      // normal beacon chain rewards
+      // no new rewards
       {
-        ethBalance: parseEther("14"),
-        expectedRewards: parseEther("14"),
+        ethBalance: 0,
+        expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
       },
-      // normal beacon chain rewards + 1 withdrawn validator
+      // tiny consensus rewards
       {
-        ethBalance: parseEther("34"),
-        expectedRewards: parseEther("2"),
-        expectedValidatorsFullWithdrawals: 1,
+        ethBalance: 0.001,
+        expectedConsensusRewards: 0.001,
+        expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
       },
-      // 8 withdrawn validators + beacon chain rewards
+      // large consensus rewards
       {
-        ethBalance: parseEther("276"),
-        expectedRewards: parseEther("20"),
-        expectedValidatorsFullWithdrawals: 8,
+        ethBalance: 14,
+        expectedConsensusRewards: 14,
+        expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: false,
+      },
+      // just under fuse start
+      {
+        ethBalance: 21.5,
+        expectedConsensusRewards: 21.5,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // exactly fuse start
+      {
+        ethBalance: 21.6,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: false,
+        fuseBlown: true,
       },
       // fuse blown
       {
-        ethBalance: parseEther("22"),
-        expectedRewards: parseEther("0"),
+        ethBalance: 22,
+        expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: true,
       },
-      // fuse blown + 1 full withdrawal
+      // just under fuse end
       {
-        ethBalance: parseEther("54"),
-        expectedRewards: parseEther("0"),
-        expectedValidatorsFullWithdrawals: 1,
+        ethBalance: 25.5,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
         slashDetected: false,
         fuseBlown: true,
       },
-      // 1 validator slashed
+      // exactly fuse end
       {
-        ethBalance: parseEther("26.6"),
-        expectedRewards: parseEther("0"),
+        ethBalance: 25.6,
+        expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 0,
         slashDetected: true,
         fuseBlown: false,
       },
+      // just over fuse end
+      {
+        ethBalance: 25.7,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: true,
+        fuseBlown: false,
+      },
+      // 1 validator slashed
+      {
+        ethBalance: 26.6,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 0,
+        slashDetected: true,
+        fuseBlown: false,
+      },
+      // no consensus rewards, 1 validator fully withdrawn
+      {
+        ethBalance: 32,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // tiny consensus rewards + 1 withdrawn validator
+      {
+        ethBalance: 32.01,
+        expectedConsensusRewards: 0.01,
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // large consensus rewards + 1 withdrawn validator
+      {
+        ethBalance: 34,
+        expectedConsensusRewards: 2,
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // fuse blown + 2 withdrawn validator
+      {
+        ethBalance: 54,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 1,
+        slashDetected: false,
+        fuseBlown: true,
+      },
       // 1 validator fully withdrawn + 1 slashed
       {
-        ethBalance: parseEther("58.6"), // 26.6 + 32
-        expectedRewards: parseEther("0"),
+        ethBalance: 58.6, // 26.6 + 32
+        expectedConsensusRewards: 0,
         expectedValidatorsFullWithdrawals: 1,
         slashDetected: true,
+        fuseBlown: false,
+      },
+      // 2 full withdraws
+      {
+        ethBalance: 64,
+        expectedConsensusRewards: 0,
+        expectedValidatorsFullWithdrawals: 2,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // tiny consensus rewards + 2 withdrawn validators
+      {
+        ethBalance: 64.1,
+        expectedConsensusRewards: 0.1,
+        expectedValidatorsFullWithdrawals: 2,
+        slashDetected: false,
+        fuseBlown: false,
+      },
+      // 8 withdrawn validators + consensus rewards
+      {
+        ethBalance: 276,
+        expectedConsensusRewards: 20,
+        expectedValidatorsFullWithdrawals: 8,
+        slashDetected: false,
         fuseBlown: false,
       },
     ];
 
     for (const testCase of testCases) {
-      const {
-        ethBalance,
-        expectedRewards,
-        expectedValidatorsFullWithdrawals,
-        slashDetected,
-        fuseBlown,
-      } = testCase;
-      it(`Expect that ${formatUnits(
-        ethBalance
-      )} ETH will result in ${formatUnits(
-        expectedRewards
-      )} ETH rewards and ${expectedValidatorsFullWithdrawals} validators withdrawn.`, async () => {
+      const { expectedValidatorsFullWithdrawals, slashDetected, fuseBlown } =
+        testCase;
+      const ethBalance = parseEther(testCase.ethBalance.toString());
+      const expectedConsensusRewards = parseEther(
+        testCase.expectedConsensusRewards.toString()
+      );
+
+      it.only(`Expect ${testCase.ethBalance} ETH balance will result in ${
+        testCase.expectedConsensusRewards
+      } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
+        fuseBlown ? ", fuse blown" : ""
+      }${slashDetected ? ", slash detected" : ""}.`, async () => {
         const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
         // setup state
-        await setBalance(nativeStakingSSVStrategy.address, ethBalance);
+        if (ethBalance.gt(0)) {
+          await setBalance(nativeStakingSSVStrategy.address, ethBalance);
+        }
         // pause, so manuallyFixAccounting can be called
         await nativeStakingSSVStrategy.connect(strategist).pause();
         await nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
           30, // activeDepositedValidators
-          parseEther("0", "ether"), //_ethToWeth
-          parseEther("0", "ether"), //_wethToBeSentToVault
-          parseEther("0", "ether"), //_beaconChainRewardWETH
-          parseEther("3000", "ether"), //_ethThresholdCheck
-          parseEther("3000", "ether") //_wethThresholdCheck
+          0, //_ethToWeth
+          0, //_wethToBeSentToVault
+          0, //_consensusRewards
+          parseEther("3000"), //_ethThresholdCheck
+          parseEther("3000") //_wethThresholdCheck
         );
 
         // check accounting values
@@ -272,14 +365,14 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(governor)
           .doAccounting();
 
-        if (expectedRewards.gt(BigNumber.from("0"))) {
+        if (expectedConsensusRewards.gt(BigNumber.from("0"))) {
           await expect(tx)
-            .to.emit(nativeStakingSSVStrategy, "AccountingBeaconChainRewards")
-            .withArgs(expectedRewards);
+            .to.emit(nativeStakingSSVStrategy, "AccountingConsensusRewards")
+            .withArgs(expectedConsensusRewards);
         } else {
           await expect(tx).to.not.emit(
             nativeStakingSSVStrategy,
-            "AccountingBeaconChainRewards"
+            "AccountingConsensusRewards"
           );
         }
 
@@ -332,7 +425,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           10, //_activeDepositedValidators
           parseEther("2", "ether"), //_ethToWeth
           parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_beaconChainRewardWETH
+          parseEther("2", "ether"), //_consensusRewards
           parseEther("0", "ether"), //_ethThresholdCheck
           parseEther("0", "ether") //_wethThresholdCheck
         )
