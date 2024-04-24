@@ -962,41 +962,45 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    if (isMainnet) {
-      // On Mainnet, only build the propose transaction for OGV governance
-      log("Building OGV governance proposal...");
-      if (deployerIsProposer) {
-        await submitProposalToOgvGovernance(
-          propArgs,
-          propDescription,
-          propOpts
-        );
-      } else {
-        await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
-      }
-      log("Proposal sent.");
-    } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending the governance proposal to OGV governance");
-      propOpts.reduceQueueTime = reduceQueueTime;
-      const { proposalState, proposalId, proposalIdBn } =
-        await submitProposalToOgvGovernance(
-          propArgs,
-          propDescription,
-          propOpts
-        );
-      log("Executing the proposal");
-      await executeGovernanceProposalOnFork({
-        proposalIdBn,
-        proposalState,
-        reduceQueueTime,
-        executeGasLimit,
-      });
-      log("Proposal executed.");
+    if (proposal.actions.length == 0) {
+      console.log("No actions. Skipping governance");
     } else {
-      throw new Error(
-        "deploymentWithGovernanceProposal not supported in local node environment"
-      );
+      if (isMainnet) {
+        // On Mainnet, only build the propose transaction for OGV governance
+        log("Building OGV governance proposal...");
+        if (deployerIsProposer) {
+          await submitProposalToOgvGovernance(
+            propArgs,
+            propDescription,
+            propOpts
+          );
+        } else {
+          await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+        }
+        log("Proposal sent.");
+      } else if (isFork) {
+        // On Fork we can send the proposal then impersonate the guardian to execute it.
+        log("Sending the governance proposal to OGV governance");
+        propOpts.reduceQueueTime = reduceQueueTime;
+        const { proposalState, proposalId, proposalIdBn } =
+          await submitProposalToOgvGovernance(
+            propArgs,
+            propDescription,
+            propOpts
+          );
+        log("Executing the proposal");
+        await executeGovernanceProposalOnFork({
+          proposalIdBn,
+          proposalState,
+          reduceQueueTime,
+          executeGasLimit,
+        });
+        log("Proposal executed.");
+      } else {
+        throw new Error(
+          "deploymentWithGovernanceProposal not supported in local node environment"
+        );
+      }
     }
   };
 
