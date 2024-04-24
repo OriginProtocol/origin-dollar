@@ -159,12 +159,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setAccountingGovernor(address)",
           args: [deployerAddr], // TODO: change this to the defender action
         },
-        // 6. configure strategist address
-        {
-          contract: cStrategy,
-          signature: "setStrategist(address)",
-          args: [strategistAddr],
-        },
       ],
     };
   }
