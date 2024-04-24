@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { ValidatorRegistrator } from "./ValidatorRegistrator.sol";
-import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 /// @title Validator Accountant
@@ -15,8 +14,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
     uint256 public constant MAX_STAKE = 32 ether;
-    /// @notice Address of the OETH Vault proxy contract
-    address public immutable VAULT_ADDRESS;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
     uint256 public consensusRewards = 0;
@@ -61,15 +58,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         _;
     }
 
-    /// @dev Throws if called by any account other than the Strategist
-    modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-        _;
-    }
-
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
@@ -82,12 +70,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     )
         ValidatorRegistrator(
             _wethAddress,
+            _vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork
         )
-    {
-        VAULT_ADDRESS = _vaultAddress;
-    }
+    {}
 
     function setAccountingGovernor(address _address) external onlyGovernor {
         emit AccountingGovernorChanged(_address);
@@ -128,6 +115,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     function doAccounting()
         external
         onlyRegistrator
+        whenNotPaused
         returns (bool accountingValid)
     {
         if (address(this).balance < consensusRewards) {
@@ -172,7 +160,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             emit AccountingConsensusRewards(ethRemaining);
         }
         // Beacon chain consensus rewards swept but also a slashed validator fully exited
-        else if (ethRemaining >= fuseIntervalEnd) {
+        else if (ethRemaining > fuseIntervalEnd) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
@@ -207,9 +195,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 _consensusRewards,
         uint256 _ethThresholdCheck,
         uint256 _wethThresholdCheck
-    ) external onlyAccountingGovernor {
-        require(paused(), "not paused");
-
+    ) external onlyAccountingGovernor whenPaused {
         uint256 ethBalance = address(this).balance;
         uint256 wethBalance = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(
             address(this)

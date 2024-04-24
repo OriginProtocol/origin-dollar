@@ -1430,10 +1430,7 @@ async function nativeStakingSSVStrategyFixture() {
       .connect(sGovernor)
       .approveStrategy(nativeStakingSSVStrategy.address);
 
-    console.log(
-      "nativeStakingSSVStrategy.address",
-      nativeStakingSSVStrategy.address
-    );
+    log("nativeStakingSSVStrategy.address", nativeStakingSSVStrategy.address);
 
     const fuseStartBn = ethers.utils.parseEther("21.6");
     const fuseEndBn = ethers.utils.parseEther("25.6");
