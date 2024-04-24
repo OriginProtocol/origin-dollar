@@ -148,7 +148,36 @@ describe("ForkTest: OETH Vault", function () {
       await expect(tx).to.revertedWith("Liquidity error");
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
-      const { oeth, oethVault, timelock } = fixture;
+      const { oeth, oethVault, timelock, domen, strategist, frxETH } = fixture;
+
+      const allStrats = await oethVault.getAllStrategies();
+      if (
+        allStrats
+          .map((x) => x.toLowerCase())
+          .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
+      ) {
+        // Remove fraxETH strategy if it exists
+        // Because it no longer holds assets and causes this test to fail
+
+        // Send some dust to that first
+        await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
+
+        // Now make sure it's deposited
+        await oethVault
+          .connect(strategist)
+          .depositToStrategy(
+            addresses.mainnet.FraxETHStrategy,
+            [frxETH.address],
+            [oethUnits("1")]
+          );
+
+        await oethVault
+          .connect(timelock)
+          .setAssetDefaultStrategy(frxETH.address, addresses.zero);
+        await oethVault
+          .connect(timelock)
+          .removeStrategy(addresses.mainnet.FraxETHStrategy);
+      }
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
