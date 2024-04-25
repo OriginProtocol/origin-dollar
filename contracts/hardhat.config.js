@@ -267,6 +267,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       mainnet: MAINNET_STRATEGIST,
+      holesky: 0, // on Holesky the deployer is also the strategist
     },
   },
   contractSizer: {
