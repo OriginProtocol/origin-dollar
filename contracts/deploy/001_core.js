@@ -553,7 +553,7 @@ const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-
+  const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dOETHHarvesterProxy = await deployWithConfirmation(

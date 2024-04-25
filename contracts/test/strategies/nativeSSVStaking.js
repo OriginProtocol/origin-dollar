@@ -17,7 +17,7 @@ const {
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
-describe.only("Unit test: Native SSV Staking Strategy", function () {
+describe("Unit test: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
