@@ -160,6 +160,7 @@ contract WOETHCCIPZapper {
         });
 
         // ZAP ϟ
+        //slither-disable-next-line arbitrary-send-eth
         messageId = ccipRouter.ccipSend{ value: feeAmount }(
             destinationChainSelector,
             message
