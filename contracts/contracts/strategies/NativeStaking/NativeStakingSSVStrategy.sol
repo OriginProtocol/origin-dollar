@@ -82,7 +82,8 @@ contract NativeStakingSSVStrategy is
     }
 
     /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    function _collectRewardTokens() internal override {
+    /// Will revert if the strategy is paused for accounting.
+    function _collectRewardTokens() internal override whenNotPaused {
         // collect ETH from execution rewards from the fee accumulator
         uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
             .collect();
@@ -114,19 +115,23 @@ contract NativeStakingSSVStrategy is
         }
     }
 
-    /// @notice Deposit asset into the underlying platform
-    /// @param _asset Address of asset to deposit
-    /// @param _amount Amount of assets to deposit
+    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
+    /// It just checks the asset is WETH and emits the Deposit event.
+    /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
+    /// Will NOT revert if the strategy is paused from an accounting failure.
+    /// @param _asset Address of asset to deposit. Has to be WETH.
+    /// @param _amount Amount of assets that were transferred to the strategy by the vault.
     function deposit(address _asset, uint256 _amount)
         external
         override
         onlyVault
         nonReentrant
     {
+        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
         _deposit(_asset, _amount);
     }
 
-    /// @dev Deposit WETH to this contract to enable automated action to stake it
+    /// @dev Deposit WETH to this strategy so it can later be staked into a validator.
     /// @param _asset Address of WETH
     /// @param _amount Amount of WETH to deposit
     function _deposit(address _asset, uint256 _amount) internal {
@@ -143,7 +148,10 @@ contract NativeStakingSSVStrategy is
         emit Deposit(_asset, address(0), _amount);
     }
 
-    /// @notice Deposit the entire balance of WETH asset in the strategy into the underlying platform
+    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
+    /// It just emits the Deposit event.
+    /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
+    /// Will NOT revert if the strategy is paused from an accounting failure.
     function depositAll() external override onlyVault nonReentrant {
         uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
             address(this)
@@ -157,6 +165,7 @@ contract NativeStakingSSVStrategy is
     /// can happen when:
     ///   - the deposit was not a multiple of 32 WETH
     ///   - someone sent WETH directly to this contract
+    /// Will NOT revert if the strategy is paused from an accounting failure.
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset WETH to withdraw
     /// @param _amount Amount of WETH to withdraw
@@ -180,7 +189,14 @@ contract NativeStakingSSVStrategy is
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
-    /// @notice Remove all supported assets from the underlying platform and send them to Vault contract.
+    /// @notice transfer all WETH deposits back to the vault.
+    /// This does not withdraw from the validators. That has to be done separately with the
+    /// `exitSsvValidator` and `removeSsvValidator` operations.
+    /// This does not withdraw any execution rewards from the FeeAccumulator or
+    /// consensus rewards in this strategy.
+    /// Any ETH in this strategy that was swept from a full validator withdrawal will not be withdrawn.
+    /// ETH from full validator withdrawals is sent to the Vault using `doAccounting`.
+    /// Will NOT revert if the strategy is paused from an accounting failure.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
             address(this)
@@ -231,24 +247,6 @@ contract NativeStakingSSVStrategy is
         IERC20(SSV_TOKEN_ADDRESS).approve(
             SSV_NETWORK_ADDRESS,
             type(uint256).max
-        );
-    }
-
-    /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
-    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
-    /// that tries to top up SSV tokens.
-    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
-    function depositSSV(
-        uint64[] memory operatorIds,
-        uint256 amount,
-        Cluster memory cluster
-    ) external onlyStrategist {
-        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
-            address(this),
-            operatorIds,
-            amount,
-            cluster
         );
     }
 

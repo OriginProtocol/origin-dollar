@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     //   "",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
-    const { deployerAddr, strategistAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
@@ -158,12 +158,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cStrategy,
           signature: "setAccountingGovernor(address)",
           args: [deployerAddr], // TODO: change this to the defender action
-        },
-        // 6. configure strategist address
-        {
-          contract: cStrategy,
-          signature: "setStrategist(address)",
-          args: [strategistAddr],
         },
       ],
     };
