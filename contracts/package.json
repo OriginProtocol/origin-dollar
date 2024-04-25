@@ -13,6 +13,7 @@
     "node": "yarn run node:fork",
     "node:fork": "./node.sh fork",
     "node:arb": "FORK_NETWORK_NAME=arbitrumOne yarn run node:fork",
+    "node:hol": "FORK_NETWORK_NAME=holesky yarn run node:fork",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
@@ -23,6 +24,7 @@
     "test": "IS_TEST=true npx hardhat test",
     "test:fork": "./fork-test.sh",
     "test:arb-fork": "FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
+    "test:hol-fork": "FORK_NETWORK_NAME=holesky ./fork-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "echidna": "yarn run clean && rm -rf echidna-corpus && echidna . --contract Echidna --config echidna-config.yaml",
@@ -34,7 +36,8 @@
     "cache-clean:light": "rm -rf cache/hardhat-network-fork/network-1337/",
     "test:coverage": "IS_TEST=true npx hardhat coverage",
     "test:coverage:fork": "REPORT_COVERAGE=true ./fork-test.sh",
-    "test:coverage:arb-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh"
+    "test:coverage:arb-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
+    "test:coverage:hol-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=holesky ./fork-test.sh"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

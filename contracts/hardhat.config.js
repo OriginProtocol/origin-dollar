@@ -1,6 +1,19 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
-const fetch = require("sync-fetch");
+const { 
+  isFork,
+  isArbitrumFork,
+  isHoleskyFork,
+  isHolesky,
+  isForkTest,
+  isArbForkTest,
+  isHoleskyForkTest,
+  providerUrl,
+  arbitrumProviderUrl,
+  holeskyProviderUrl,
+  adjustTheForkBlockNumber,
+  getHardhatNetworkProperties,
+} = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
@@ -46,74 +59,16 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-const isFork = process.env.FORK === "true";
-const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
-const isHolesky = process.env.NETWORK_NAME === "holesky";
-const isForkTest = isFork && process.env.IS_TEST === "true";
-const isArbForkTest = isForkTest && isArbitrumFork;
-const providerUrl = `${
-  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-}`;
-const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
-const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
-const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
-
-let forkBlockNumber =
-  Number(
-    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : process.env.BLOCK_NUMBER
-  ) || undefined;
-if (isForkTest && standaloneLocalNodeRunning) {
-  const jsonResponse = fetch(
-    isArbForkTest ? arbitrumProviderUrl : providerUrl,
-    {
-      method: "post",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_blockNumber",
-        id: 1,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  ).json();
-
-  /*
-   * We source the block number from the hardhat context rather than from
-   * node-test.sh startup script, so that block number from an already
-   * running local node can be fetched after the deployments have already
-   * been applied.
-   *
-   */
-  forkBlockNumber = parseInt(jsonResponse.result, 16);
-
-  console.log(`Connecting to local node on block: ${forkBlockNumber}`);
-
-  // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(isArbForkTest ? arbitrumProviderUrl : providerUrl, {
-    method: "post",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "hardhat_mine",
-      params: ["0x28"], // 40
-      id: 1,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).json();
-} else if (isForkTest) {
-  console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
-}
+let forkBlockNumber = adjustTheForkBlockNumber();
 
 const paths = {};
-
-if (isHolesky) {
+if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deployHolesky";
 }
 if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
+const { provider, chainId } = getHardhatNetworkProperties();
 
 module.exports = {
   solidity: {
@@ -135,7 +90,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: isFork ? (isArbitrumFork ? 42161 : 1) : 1337,
+      chainId,
       ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
       ...(isForkTest
         ? {
@@ -143,7 +98,7 @@ module.exports = {
             initialBaseFeePerGas: 0,
             forking: {
               enabled: true,
-              url: isArbForkTest ? arbitrumProviderUrl : providerUrl,
+              url: provider,
               blockNumber: forkBlockNumber,
               timeout: 0,
             },
@@ -172,7 +127,7 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
       chainId: 17000,
-      tags: ["holesky"],
+      live: true,
     },
     arbitrumOne: {
       url: arbitrumProviderUrl,
@@ -187,11 +142,6 @@ module.exports = {
       // Fails if gas limit is anything less than 20M on Arbitrum One
       gas: 20000000,
       // initialBaseFeePerGas: 0,
-      // forking: {
-      //   enabled: true,
-      //   url: arbitrumProviderUrl,
-      //   timeout: 0
-      // }
     },
   },
   mocha: {

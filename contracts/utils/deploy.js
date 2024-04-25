@@ -18,7 +18,6 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
-  isTestnetSimplifiedDeploy,
 } = require("../test/helpers.js");
 
 const {
@@ -708,7 +707,7 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({ deployerIsProposer = false } = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {
@@ -907,60 +906,6 @@ async function getTimelock() {
   const { timelockAddr } = await getNamedAccounts();
 
   return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
-}
-
-// deployment supporting multiple types of deployments. Currently:
-//  - deploymentWithGovernanceProposal
-//  - testnetSimplifiedDeploy
-function flexibleDeployment(opts, fn) {
-  // add other side chain deployments here
-  if (isTestnetSimplifiedDeploy) {
-    return testnetSimplifiedDeploy(opts, fn);
-  } else {
-    return deploymentWithGovernanceProposal(opts, fn);
-  }
-}
-
-/**
- * used for simplified deployment on testnets where:
- *  - the governor is also a deployer account (preferrably shared between different developers)
- *  - only simplified OETH functionality is deployed. Meaning Vault, Harvester, Token, Oracles and
- *    nativeStakingStrategy. Deploy files must have `simplified` set to true in order to be ran
- */
-function testnetSimplifiedDeploy(opts, fn) {
-  const networkName = hre.network.name;
-  const {
-    type, // deploymentWithGovernanceProposalSupportingTestnetDeploy
-    deployName,
-    dependencies,
-    simplified,
-  } = opts;
-
-  const main = async (hre) => {
-    console.log(
-      `Running ${deployName} deployment on ${networkName} network...`
-    );
-    await runDeployment(hre);
-    console.log(`${deployName} deploy done.`);
-    return true;
-  };
-
-  main.id = deployName;
-  main.dependencies = dependencies;
-  main.skip = async () => {
-    // skip any deployment file that doesn't support a simplified deploy
-    if (!simplified) {
-      return true;
-    }
-
-    const migrations = isForkTest
-      ? require(`./../deployments/${networkName}/.migrations.json`)
-      : {};
-
-    return Boolean(migrations[deployName]);
-  };
-
-  return main;
 }
 
 /**
@@ -1381,6 +1326,5 @@ module.exports = {
   sendProposal,
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
-  flexibleDeployment,
   deploymentWithGuardianGovernor,
 };

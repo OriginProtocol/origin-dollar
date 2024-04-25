@@ -30,6 +30,9 @@ main()
           PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
           BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
           params+=" --tags arbitrumOne";
+        elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+          PROVIDER_URL=$HOLESKY_PROVIDER_URL;
+          BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
         fi
         echo "Fork Network: $FORK_NETWORK_NAME"
 
@@ -51,7 +54,6 @@ main()
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
         FORK_NETWORK_NAME=$FORK_NETWORK_NAME FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
-
         tail -f $nodeOutput &
 
         i=0

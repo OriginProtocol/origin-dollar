@@ -908,15 +908,17 @@ const deployOracles = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   let oracleContract = "MockOracleRouter";
+  let contractName = "OracleRouter";
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
   } else if (isHolesky) {
     oracleContract = "OETHFixedOracle";
+    contractName = "OETHOracleRouter";
     args = [addresses.zero];
   }
 
-  await deployWithConfirmation("OracleRouter", args, oracleContract);
+  await deployWithConfirmation(contractName, args, oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
   log("Deployed OracleRouter");
 

@@ -50,7 +50,7 @@ const mainExport = async () => {
 };
 
 mainExport.id = id;
-mainExport.tags = tags;
+mainExport.tags = [];
 mainExport.dependencies = [];
 mainExport.skip = () => false;
 

@@ -1,15 +1,13 @@
-const { flexibleDeployment } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
-module.exports = flexibleDeployment(
+module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "091_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: false,
-    simplified: true, // support simplified OETH deployment
     // proposalId:
-    //   "",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, strategistAddr } = await getNamedAccounts();

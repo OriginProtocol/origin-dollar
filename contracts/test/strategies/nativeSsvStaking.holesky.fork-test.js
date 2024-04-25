@@ -3,13 +3,10 @@ const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 
 const {
-  createFixtureLoader,
-  nativeStakingSSVStrategyFixture,
+  loadSimpleOETHFixture,
 } = require("./../_fixture");
 
-const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
-
-describe("ForkTest: Native SSV Staking Strategy", function () {
+describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -17,7 +14,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture();
+    fixture = await loadSimpleOETHFixture();
   });
 
   describe("Initial setup", function () {
@@ -25,14 +22,14 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
       const { nativeStakingSSVStrategy } = fixture;
       await expect(
         await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()
-      ).to.equal(addresses.mainnet.WETH, "Incorrect WETH address set");
+      ).to.equal(addresses.holesky.WETH, "Incorrect WETH address set");
       await expect(await nativeStakingSSVStrategy.SSV_TOKEN_ADDRESS()).to.equal(
-        addresses.mainnet.SSV,
+        addresses.holesky.SSV,
         "Incorrect SSV Token address"
       );
       await expect(
         await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS()
-      ).to.equal(addresses.mainnet.SSVNetwork, "Incorrect SSV Network address");
+      ).to.equal(addresses.holesky.SSVNetwork, "Incorrect SSV Network address");
     });
 
     it.skip("Should check that the fuse interval is configured correctly", async () => {});
