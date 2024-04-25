@@ -142,7 +142,9 @@ contract WOETHCCIPZapper {
     {
         // Estimate fee for zapping.
         uint256 feeAmount = getFee(amount, receiver);
-        if (feeAmount >= amount) revert AmountLessThanFee();
+        if (amount < feeAmount) {
+            revert AmountLessThanFee();
+        }
 
         // Convert only the msg.value - fees amount to WOETH.
         amount -= feeAmount;
