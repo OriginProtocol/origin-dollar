@@ -2137,7 +2137,6 @@ async function harvesterFixture() {
 
 async function woethCcipZapperFixture() {
   let fixture = {};
-  let mockCcipRouter;
   let woethZapper;
   let oethZapper;
   let destinationChainSelector = ccip_arbChainSelector;
@@ -2149,13 +2148,14 @@ async function woethCcipZapperFixture() {
     addresses.mainnet.OETHZapper
   );
 
-  const MockCCIPRouter = await ethers.getContractFactory("MockCCIPRouter");
-  mockCcipRouter = await MockCCIPRouter.deploy();
-  await mockCcipRouter.deployed();
+  const ccipRouter = await ethers.getContractAt(
+    "IRouterClient",
+    addresses.mainnet.ccipRouterMainnet
+  );
 
   const WOETHZapper = await ethers.getContractFactory("WOETHCCIPZapper");
   woethZapper = await WOETHZapper.deploy(
-    mockCcipRouter.address,
+    ccipRouter.address,
     destinationChainSelector,
     woethOnSourceChain,
     woethOnDestinationChain,
@@ -2171,7 +2171,7 @@ async function woethCcipZapperFixture() {
   fixture.oethZapper = oethZapper;
   fixture.woethOnSourceChain = woethOnSourceChain;
   fixture.woethZapper = woethZapper;
-  fixture.mockCcipRouter = mockCcipRouter;
+  fixture.ccipRouter = ccipRouter;
 
   const [josh, alice] = await ethers.getSigners();
   await impersonateAndFund(josh.address, "10");

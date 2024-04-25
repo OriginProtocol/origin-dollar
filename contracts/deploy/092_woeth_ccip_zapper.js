@@ -1,4 +1,5 @@
 const addresses = require("../utils/addresses");
+const { ccip_arbChainSelector } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -10,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation }) => {
     // Deploy new WOETHCCIPZapper contract
-    let destinationChainSelector = "4949039107694359620";
+    let destinationChainSelector = ccip_arbChainSelector;
     let woethOnSourceChain = addresses.mainnet.WOETHProxy;
     let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
     let oethZapper = addresses.mainnet.OETHZapper;
