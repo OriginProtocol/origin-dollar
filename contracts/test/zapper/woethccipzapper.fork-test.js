@@ -14,10 +14,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   it("zap(): Should zap ETH  and send WOETH to CCIP TokenPool", async () => {
     const { woethZapper, woethOnSourceChain, josh } = fixture;
     const depositAmount = parseUnits("5");
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountToBeSentToPool = depositAmount.sub(feeAmount);
     const poolBalanceBefore = await woethOnSourceChain.balanceOf(
       addresses.mainnet.ccipWoethTokenPool
@@ -35,10 +32,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     const { woethZapper, josh, alice } = fixture;
     const depositAmount = parseUnits("5");
 
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
@@ -54,10 +48,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     const { woethZapper, josh, alice } = fixture;
     let depositAmount = parseUnits("0.01");
 
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
 
     depositAmount = feeAmount.sub(1);
 
@@ -71,10 +62,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     const { woethZapper, josh, alice } = fixture;
     const depositAmount = parseUnits("0.5");
 
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
@@ -88,10 +76,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   it("receive(): Should zap ETH and send WOETH to CCIP TokenPool", async () => {
     const { woethZapper, woethOnSourceChain, josh } = fixture;
     const depositAmount = parseUnits("5");
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountToBeSentToPool = depositAmount.sub(feeAmount);
     const poolBalanceBefore = await woethOnSourceChain.balanceOf(
       addresses.mainnet.ccipWoethTokenPool
@@ -111,10 +96,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   it("receive(): Should emit Zap event with args", async () => {
     const { woethZapper, josh } = fixture;
     const depositAmount = parseUnits("5");
-    const feeAmount = await woethZapper.estimateFee(
-      depositAmount,
-      josh.address
-    );
+    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await josh.sendTransaction({
       to: woethZapper.address,

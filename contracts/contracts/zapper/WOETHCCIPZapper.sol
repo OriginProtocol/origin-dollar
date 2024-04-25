@@ -102,12 +102,30 @@ contract WOETHCCIPZapper {
      * @return feeAmount The CCIP tx fee in ETH.
      */
 
-    function estimateFee(uint256 amount, address receiver)
+    function getFee(uint256 amount, address receiver)
         public
         view
         returns (uint256 feeAmount)
     {
-        return _estimateFee(amount, receiver);
+        Client.EVMTokenAmount[]
+            memory tokenAmounts = new Client.EVMTokenAmount[](1);
+        Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
+            token: address(woethOnSourceChain),
+            amount: amount
+        });
+        tokenAmounts[0] = tokenAmount;
+
+        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+            receiver: abi.encode(receiver), // ABI-encoded receiver address
+            data: abi.encode(""),
+            tokenAmounts: tokenAmounts,
+            extraArgs: Client._argsToBytes(
+                Client.EVMExtraArgsV1({ gasLimit: 0 })
+            ),
+            feeToken: address(0)
+        });
+
+        feeAmount = ccipRouter.getFee(destinationChainSelector, message);
     }
 
     /**
@@ -123,7 +141,7 @@ contract WOETHCCIPZapper {
         returns (bytes32 messageId)
     {
         // Estimate fee for zapping.
-        uint256 feeAmount = estimateFee(amount, receiver);
+        uint256 feeAmount = getFee(amount, receiver);
         if (feeAmount >= amount) revert AmountLessThanFee();
 
         // Convert only the msg.value - fees amount to WOETH.
@@ -171,31 +189,5 @@ contract WOETHCCIPZapper {
 
         // Return the message ID
         return messageId;
-    }
-
-    function _estimateFee(uint256 amount, address receiver)
-        internal
-        view
-        returns (uint256 feeAmount)
-    {
-        Client.EVMTokenAmount[]
-            memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
-            token: address(woethOnSourceChain),
-            amount: amount
-        });
-        tokenAmounts[0] = tokenAmount;
-
-        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(receiver), // ABI-encoded receiver address
-            data: abi.encode(""),
-            tokenAmounts: tokenAmounts,
-            extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({ gasLimit: 0 })
-            ),
-            feeToken: address(0)
-        });
-
-        feeAmount = ccipRouter.getFee(destinationChainSelector, message);
     }
 }
