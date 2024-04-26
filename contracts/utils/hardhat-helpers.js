@@ -15,7 +15,6 @@ const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
-let forkBlockNumber = undefined;
 /**
  * - Reads the fork block number from environmental variables depending on the context of the run 
  * - In case a local node is running (and it could have deployments executed) the updated block number is queried
@@ -23,13 +22,15 @@ let forkBlockNumber = undefined;
  * - Local node is forwarded by 40 blocks
  */
 const adjustTheForkBlockNumber = () => {
+  let forkBlockNumber = undefined;
+
   if (isForkTest) {
     if (isArbForkTest) {
-      forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER;
+      forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER ? process.env.ARBITRUM_BLOCK_NUMBER : undefined;
     } else if (isHoleskyForkTest) {
-      forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER;
+      forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER ? process.env.HOLESKY_BLOCK_NUMBER : undefined;
     } else {
-      forkBlockNumber = process.env.BLOCK_NUMBER;
+      forkBlockNumber = process.env.BLOCK_NUMBER ? process.env.BLOCK_NUMBER : undefined;
     }
   }
 
@@ -61,18 +62,22 @@ const adjustTheForkBlockNumber = () => {
     console.log(`Connecting to local node on block: ${forkBlockNumber}`);
 
     // Mine 40 blocks so hardhat wont complain about block fork being too recent
-    fetch(providerUrl, {
-      method: "post",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "hardhat_mine",
-        params: ["0x28"], // 40
-        id: 1,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).json();
+    // On Holesky running this causes repeated tests connecting to a local node
+    // to fail
+    if (!isHoleskyFork && !isHolesky) {
+      fetch(providerUrl, {
+        method: "post",
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "hardhat_mine",
+          params: ["0x28"], // 40
+          id: 1,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).json();
+    }
   } else if (isForkTest) {
     console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
   }

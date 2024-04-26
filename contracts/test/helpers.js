@@ -264,6 +264,7 @@ const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
+const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
 
@@ -791,6 +792,7 @@ module.exports = {
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,
+  isHoleskyFork,
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,

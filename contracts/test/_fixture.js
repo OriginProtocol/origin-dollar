@@ -27,6 +27,8 @@ const {
   ousdUnits,
   units,
   isFork,
+  isHolesky,
+  isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -57,6 +59,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
+
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
   log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
   // Run the contract deployments
@@ -94,8 +97,15 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oethDripper;
 
   if (isFork) {
-    weth = await ethers.getContractAt("IWETH9", addresses.mainnet.WETH);
-    ssv = await ethers.getContractAt(erc20Abi, addresses.mainnet.SSV);
+    let addressContext = addresses.mainnet;
+    if (isHolesky || isHoleskyFork) {
+      addressContext = addresses.holesky;
+    }
+
+    console.log("addressContext.WETH", addressContext.WETH)
+
+    weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
+    ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
 
     const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
     oethDripper = await ethers.getContractAt(
@@ -112,7 +122,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       nativeStakingStrategyProxy.address
     );
   } else {
-    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+    weth = await ethers.getContractAt("MockWETH");
     ssv = await ethers.getContract("MockSSV");
 
     const nativeStakingStrategyProxy = await ethers.getContract(
@@ -140,17 +150,28 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   if (isFork) {
     governor = await ethers.provider.getSigner(governorAddr);
     strategist = await ethers.provider.getSigner(strategistAddr);
-  }
 
-  if (!isFork) {
-    await fundAccounts();
+    for (const user of [matt, josh, anna, domen, daniel, franck]) {
+      // Everyone gets free weth
+      await setERC20TokenBalance(user.address, weth, "1000000", hre);
+      // And vault can rug them all
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  } else {
+    // Fund WETH contract
+    await hardhatSetBalance(weth.address, "999999999999999");
 
-    // Matt and Josh each have $100 OUSD
-    for (const user of [matt, josh]) {
-      await dai.connect(user).approve(vault.address, daiUnits("100"));
-      await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
+    // Fund all with mockTokens
+    await fundAccountsForOETHUnitTests();
+
+    // Reset allowances
+    for (const user of [matt, josh, domen, daniel, franck]) {
+      for (const asset of [weth, reth, stETH, frxETH, sfrxETH]) {
+        await resetAllowance(asset, user, oethVault.address);
+      }
     }
   }
+
   return {
     // Accounts
     matt,
