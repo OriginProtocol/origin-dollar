@@ -89,7 +89,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
-    function setRegistrator(address _address) external onlyGovernor {
+    // TODO CHANGE BACK
+    function setRegistratorAddress(address _address) external onlyGovernor {
         emit RegistratorChanged(_address);
         validatorRegistrator = _address;
     }

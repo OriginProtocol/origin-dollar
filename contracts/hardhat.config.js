@@ -42,6 +42,7 @@ const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
+const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -69,7 +70,7 @@ if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
 const { provider, chainId } = getHardhatNetworkProperties();
-  
+
 module.exports = {
   solidity: {
     version: "0.8.7",
@@ -152,18 +153,19 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
-      hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
+      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 0,
+      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 0,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
+      holesky: HOLESKY_DEPLOYER,
     },
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
-      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 1,
+      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 1,
       mainnet: MAINNET_GOVERNOR,
-      holesky: 0, // on Holesky the deployer is also the governor
+      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -214,10 +216,10 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
-      hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
+      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_STRATEGIST) : 0,
+      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_STRATEGIST) : 0,
       mainnet: MAINNET_STRATEGIST,
-      holesky: 0, // on Holesky the deployer is also the strategist
+      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
     },
   },
   contractSizer: {

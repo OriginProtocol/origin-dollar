@@ -71,6 +71,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
 
   const { governorAddr, strategistAddr } =
     await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -121,6 +122,12 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
     );
+
+    // DELETE when not needed anymore
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setRegistratorAddress(governorAddr);
+
   } else {
     weth = await ethers.getContractAt("MockWETH");
     ssv = await ethers.getContract("MockSSV");
@@ -135,8 +142,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   }
 
   if (!isFork) {
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
-
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
   }
