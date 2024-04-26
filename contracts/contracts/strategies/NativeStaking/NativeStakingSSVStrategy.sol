@@ -251,14 +251,15 @@ contract NativeStakingSSVStrategy is
     }
 
     /**
-     * @notice Only accept ETH from the FeeAccumulator
+     * @notice Only accept ETH from the FeeAccumulator and the WETH contract - required when 
+     * unwrapping WETH just before staking it to the validator
      * @dev don't want to receive donations from anyone else as this will
      * mess with the accounting of the consensus rewards and validator full withdrawals
      */
     receive() external payable {
         require(
-            msg.sender == FEE_ACCUMULATOR_ADDRESS,
-            "eth not sent from Fee Accumulator"
+            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH_TOKEN_ADDRESS,
+            "eth not sent from Fee Accumulator or WETH contract"
         );
     }
 }
