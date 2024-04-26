@@ -29,6 +29,9 @@ contract WOETHCCIPZapper {
         uint256 amount
     );
 
+    // @dev Thrown when Zap amount is less than fee.
+    error AmountLessThanFee();
+
     /**
      * @dev The destination chain selector
      */
@@ -93,6 +96,39 @@ contract WOETHCCIPZapper {
     }
 
     /**
+     * @notice Used to estimate fee for CCIP transaction
+     * @param amount The amount of ETH to be zapped
+     * @param receiver The address of the EOA on the destination chain
+     * @return feeAmount The CCIP tx fee in ETH.
+     */
+
+    function getFee(uint256 amount, address receiver)
+        public
+        view
+        returns (uint256 feeAmount)
+    {
+        Client.EVMTokenAmount[]
+            memory tokenAmounts = new Client.EVMTokenAmount[](1);
+        Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
+            token: address(woethOnSourceChain),
+            amount: amount
+        });
+        tokenAmounts[0] = tokenAmount;
+
+        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+            receiver: abi.encode(receiver), // ABI-encoded receiver address
+            data: abi.encode(""),
+            tokenAmounts: tokenAmounts,
+            extraArgs: Client._argsToBytes(
+                Client.EVMExtraArgsV1({ gasLimit: 0 })
+            ),
+            feeToken: address(0)
+        });
+
+        feeAmount = ccipRouter.getFee(destinationChainSelector, message);
+    }
+
+    /**
      * @dev Deposit ETH and receive WOETH in L2.
      * @dev Note that the WOETH will be sent to the msg.sender at destination chain as well.
      */
@@ -104,6 +140,15 @@ contract WOETHCCIPZapper {
         internal
         returns (bytes32 messageId)
     {
+        // Estimate fee for zapping.
+        uint256 feeAmount = getFee(amount, receiver);
+        if (amount < feeAmount) {
+            revert AmountLessThanFee();
+        }
+
+        // Convert only the msg.value - fees amount to WOETH.
+        amount -= feeAmount;
+
         // 1.) Zap for OETH
         uint256 oethReceived = oethZapper.deposit{ value: amount }();
 
@@ -114,16 +159,16 @@ contract WOETHCCIPZapper {
         );
 
         // 3.) Setup params for CCIP transfer
-        address token = address(woethOnSourceChain);
+
         Client.EVMTokenAmount[]
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
         Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
-            token: token,
+            token: address(woethOnSourceChain),
             amount: woethReceived
         });
         tokenAmounts[0] = tokenAmount;
 
-        Client.EVM2AnyMessage memory zapWoethMessage = Client.EVM2AnyMessage({
+        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
             data: abi.encode(""),
             tokenAmounts: tokenAmounts,
@@ -135,9 +180,10 @@ contract WOETHCCIPZapper {
         });
 
         // ZAP ϟ
-        messageId = ccipRouter.ccipSend(
+        //slither-disable-next-line arbitrary-send-eth
+        messageId = ccipRouter.ccipSend{ value: feeAmount }(
             destinationChainSelector,
-            zapWoethMessage
+            message
         );
 
         // Emit Zap event with message details
