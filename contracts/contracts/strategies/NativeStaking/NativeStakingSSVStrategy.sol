@@ -259,7 +259,7 @@ contract NativeStakingSSVStrategy is
     receive() external payable {
         require(
             msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH_TOKEN_ADDRESS,
-            "eth not sent from Fee Accumulator or WETH contract"
+            "eth not from allowed contracts"
         );
     }
 }
