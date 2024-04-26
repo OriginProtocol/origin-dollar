@@ -34,7 +34,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The number of validators that have 32 (!) ETH actively deposited. When a new deposit
     /// to a validator happens this number increases, when a validator exit is detected this number
     /// decreases.
-    uint256 activeDepositedValidators;
+    uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
 
