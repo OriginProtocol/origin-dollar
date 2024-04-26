@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { formatUnits, parseEther } = require("ethers").utils;
+const { parseEther } = require("ethers").utils;
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { isCI } = require("../helpers");
@@ -49,7 +49,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
   }));
 
   describe("Initial setup", function () {
-    it("Should not allow sending of ETH to the strategy via a transaction", async () => {
+    it("Should not allow ETH to be sent to the strategy if not Fee Accumulator", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       const signer = nativeStakingSSVStrategy.provider.getSigner(
@@ -82,21 +82,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       const tx = await nativeStakingSSVStrategy
         .connect(governor)
-        .setRegistratorAddress(strategist.address);
+        .setRegistrator(strategist.address);
 
-      const events = (await tx.wait()).events || [];
-      const RegistratorAddressChangedEvent = events.find(
-        (e) => e.event === "RegistratorAddressChanged"
-      );
-
-      expect(RegistratorAddressChangedEvent).to.not.be.undefined;
-      expect(RegistratorAddressChangedEvent.event).to.equal(
-        "RegistratorAddressChanged"
-      );
-      expect(RegistratorAddressChangedEvent.args[0]).to.equal(governor.address);
-      expect(RegistratorAddressChangedEvent.args[1]).to.equal(
-        strategist.address
-      );
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "RegistratorChanged")
+        .withArgs(strategist.address);
     });
 
     it("Non governor should not be able to change the registrator address", async () => {
@@ -105,7 +95,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy
           .connect(strategist)
-          .setRegistratorAddress(strategist.address)
+          .setRegistrator(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
@@ -152,8 +142,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     it("Governor should be able to change fuse interval", async () => {
       const { nativeStakingSSVStrategy, governor } = fixture;
 
-      const oldFuseStartBn = parseEther("21.6");
-      const oldFuseEndBn = parseEther("25.6");
       const fuseStartBn = parseEther("22.6");
       const fuseEndBn = parseEther("26.6");
 
@@ -161,17 +149,9 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .connect(governor)
         .setFuseInterval(fuseStartBn, fuseEndBn);
 
-      const events = (await tx.wait()).events || [];
-      const FuseIntervalUpdated = events.find(
-        (e) => e.event === "FuseIntervalUpdated"
-      );
-
-      expect(FuseIntervalUpdated).to.not.be.undefined;
-      expect(FuseIntervalUpdated.event).to.equal("FuseIntervalUpdated");
-      expect(FuseIntervalUpdated.args[0]).to.equal(oldFuseStartBn); // prev fuse start
-      expect(FuseIntervalUpdated.args[1]).to.equal(oldFuseEndBn); // prev fuse end
-      expect(FuseIntervalUpdated.args[2]).to.equal(fuseStartBn); // fuse start
-      expect(FuseIntervalUpdated.args[3]).to.equal(fuseEndBn); // fuse end
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "FuseIntervalUpdated")
+        .withArgs(fuseStartBn, fuseEndBn);
     });
 
     it("Only accounting governor can call accounting", async () => {});
@@ -193,169 +173,373 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .connect(governor)
         .setAccountingGovernor(strategist.address);
 
-      const events = (await tx.wait()).events || [];
-      const AccountingGovernorChangedEvent = events.find(
-        (e) => e.event === "AccountingGovernorAddressChanged"
-      );
-
-      expect(AccountingGovernorChangedEvent).to.not.be.undefined;
-      expect(AccountingGovernorChangedEvent.event).to.equal(
-        "AccountingGovernorAddressChanged"
-      );
-      expect(AccountingGovernorChangedEvent.args[0]).to.equal(governor.address);
-      expect(AccountingGovernorChangedEvent.args[1]).to.equal(
-        strategist.address
-      );
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingGovernorChanged")
+        .withArgs(strategist.address);
     });
   });
 
   describe("Accounting", function () {
-    const testCases = [
-      // normal beacon chain rewards
-      {
-        ethBalance: parseEther("14"),
-        expectedRewards: parseEther("14"),
-        expectedValidatorsFullWithdrawals: 0,
-        slashDetected: false,
-        fuseBlown: false,
-      },
-      // normal beacon chain rewards + 1 withdrawn validator
-      {
-        ethBalance: parseEther("34"),
-        expectedRewards: parseEther("2"),
-        expectedValidatorsFullWithdrawals: 1,
-        slashDetected: false,
-        fuseBlown: false,
-      },
-      // 8 withdrawn validators + beacon chain rewards
-      {
-        ethBalance: parseEther("276"),
-        expectedRewards: parseEther("20"),
-        expectedValidatorsFullWithdrawals: 8,
-        slashDetected: false,
-        fuseBlown: false,
-      },
-      // fuse blown
-      {
-        ethBalance: parseEther("22"),
-        expectedRewards: parseEther("0"),
-        expectedValidatorsFullWithdrawals: 0,
-        slashDetected: false,
-        fuseBlown: true,
-      },
-      // fuse blown + 1 full withdrawal
-      {
-        ethBalance: parseEther("54"),
-        expectedRewards: parseEther("0"),
-        expectedValidatorsFullWithdrawals: 1,
-        slashDetected: false,
-        fuseBlown: true,
-      },
-      // 1 validator slashed
-      {
-        ethBalance: parseEther("26.6"),
-        expectedRewards: parseEther("0"),
-        expectedValidatorsFullWithdrawals: 0,
-        slashDetected: true,
-        fuseBlown: false,
-      },
-      // 1 validator fully withdrawn + 1 slashed
-      {
-        ethBalance: parseEther("58.6"), // 26.6 + 32
-        expectedRewards: parseEther("0"),
-        expectedValidatorsFullWithdrawals: 1,
-        slashDetected: true,
-        fuseBlown: false,
-      },
-    ];
+    describe("Should account for beacon chain ETH", function () {
+      // fuseStart 21.6
+      // fuseEnd 25.6
 
-    for (const testCase of testCases) {
-      const {
-        ethBalance,
-        expectedRewards,
-        expectedValidatorsFullWithdrawals,
-        slashDetected,
-        fuseBlown,
-      } = testCase;
-      it(`Expect that ${formatUnits(
-        ethBalance
-      )} ETH will result in ${formatUnits(
-        expectedRewards
-      )} ETH rewards and ${expectedValidatorsFullWithdrawals} validators withdrawn.`, async () => {
-        const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+      const testCases = [
+        // no new rewards
+        {
+          ethBalance: 0,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // no new rewards on previous rewards
+        {
+          ethBalance: 0.001,
+          previousConsensusRewards: 0.001,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // invalid eth balance
+        {
+          ethBalance: 1.9,
+          previousConsensusRewards: 2,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // tiny consensus rewards
+        {
+          ethBalance: 0.001,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0.001,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // tiny consensus rewards on small previous rewards
+        {
+          ethBalance: 0.03,
+          previousConsensusRewards: 0.02,
+          expectedConsensusRewards: 0.01,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // tiny consensus rewards on large previous rewards
+        {
+          ethBalance: 5.04,
+          previousConsensusRewards: 5,
+          expectedConsensusRewards: 0.04,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // large consensus rewards
+        {
+          ethBalance: 14,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 14,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // just under fuse start
+        {
+          ethBalance: 21.5,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 21.5,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // exactly fuse start
+        {
+          ethBalance: 21.6,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // fuse blown
+        {
+          ethBalance: 22,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // just under fuse end
+        {
+          ethBalance: 25.5,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // exactly fuse end
+        {
+          ethBalance: 25.6,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // just over fuse end
+        {
+          ethBalance: 25.7,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: true,
+          fuseBlown: false,
+        },
+        // 1 validator slashed
+        {
+          ethBalance: 26.6,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: true,
+          fuseBlown: false,
+        },
+        // no consensus rewards, 1 slashed validator
+        {
+          ethBalance: 31.9,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: true,
+          fuseBlown: false,
+        },
+        // no consensus rewards, 1 validator fully withdrawn
+        {
+          ethBalance: 32,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // tiny consensus rewards + 1 withdrawn validator
+        {
+          ethBalance: 32.01,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0.01,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // consensus rewards on previous rewards > 32
+        {
+          ethBalance: 33,
+          previousConsensusRewards: 32.3,
+          expectedConsensusRewards: 0.7,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // large consensus rewards + 1 withdrawn validator
+        {
+          ethBalance: 34,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 2,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // large consensus rewards on large previous rewards
+        {
+          ethBalance: 44,
+          previousConsensusRewards: 24,
+          expectedConsensusRewards: 20,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // fuse blown + 1 withdrawn validator
+        {
+          ethBalance: 54,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // fuse blown + 1 withdrawn validator with previous rewards
+        {
+          ethBalance: 55,
+          previousConsensusRewards: 1,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: true,
+        },
+        // 1 validator fully withdrawn + 1 slashed
+        {
+          ethBalance: 58.6, // 26.6 + 32
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: true,
+          fuseBlown: false,
+        },
+        // 2 full withdraws
+        {
+          ethBalance: 64,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 2,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // tiny consensus rewards + 2 withdrawn validators
+        {
+          ethBalance: 64.1,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 0.1,
+          expectedValidatorsFullWithdrawals: 2,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // 2 full withdraws on previous rewards
+        {
+          ethBalance: 66,
+          previousConsensusRewards: 2,
+          expectedConsensusRewards: 0,
+          expectedValidatorsFullWithdrawals: 2,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // consensus rewards on large previous rewards
+        {
+          ethBalance: 66,
+          previousConsensusRewards: 65,
+          expectedConsensusRewards: 1,
+          expectedValidatorsFullWithdrawals: 0,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // consensus rewards on large previous rewards with withdraw
+        {
+          ethBalance: 100,
+          previousConsensusRewards: 65,
+          expectedConsensusRewards: 3,
+          expectedValidatorsFullWithdrawals: 1,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+        // 8 withdrawn validators + consensus rewards
+        {
+          ethBalance: 276,
+          previousConsensusRewards: 0,
+          expectedConsensusRewards: 20,
+          expectedValidatorsFullWithdrawals: 8,
+          slashDetected: false,
+          fuseBlown: false,
+        },
+      ];
 
-        // setup state
-        await setBalance(nativeStakingSSVStrategy.address, ethBalance);
-        // pause, so manuallyFixAccounting can be called
-        await nativeStakingSSVStrategy.connect(strategist).pause();
-        await nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
-          30, // activeDepositedValidators
-          parseEther("0", "ether"), //_ethToWeth
-          parseEther("0", "ether"), //_wethToBeSentToVault
-          parseEther("0", "ether"), //_beaconChainRewardWETH
-          parseEther("3000", "ether"), //_ethThresholdCheck
-          parseEther("3000", "ether") //_wethThresholdCheck
+      for (const testCase of testCases) {
+        const { expectedValidatorsFullWithdrawals, slashDetected, fuseBlown } =
+          testCase;
+        const ethBalance = parseEther(testCase.ethBalance.toString());
+        const previousConsensusRewards = parseEther(
+          testCase.previousConsensusRewards.toString()
+        );
+        const expectedConsensusRewards = parseEther(
+          testCase.expectedConsensusRewards.toString()
         );
 
-        // check accounting values
-        const tx = await nativeStakingSSVStrategy
-          .connect(governor)
-          .doAccounting();
+        it(`given ${testCase.ethBalance} ETH balance and ${
+          testCase.previousConsensusRewards
+        } previous consensus rewards, then ${
+          testCase.expectedConsensusRewards
+        } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
+          fuseBlown ? ", fuse blown" : ""
+        }${slashDetected ? ", slash detected" : ""}.`, async () => {
+          const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
-        const events = (await tx.wait()).events || [];
+          // setup state
+          if (ethBalance.gt(0)) {
+            await setBalance(nativeStakingSSVStrategy.address, ethBalance);
+          }
+          // pause, so manuallyFixAccounting can be called
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          await nativeStakingSSVStrategy
+            .connect(governor)
+            .manuallyFixAccounting(
+              30, // activeDepositedValidators
+              0, //_ethToWeth
+              0, //_wethToBeSentToVault
+              previousConsensusRewards, //_consensusRewards
+              parseEther("3000"), //_ethThresholdCheck
+              parseEther("3000") //_wethThresholdCheck
+            );
 
-        const BeaconRewardsEvent = events.find(
-          (e) => e.event === "AccountingBeaconChainRewards"
-        );
-        if (expectedRewards.gt(BigNumber.from("0"))) {
-          expect(BeaconRewardsEvent).to.not.be.undefined;
-          expect(BeaconRewardsEvent.args[0]).to.equal(expectedRewards);
-        } else {
-          expect(BeaconRewardsEvent).to.be.undefined;
-        }
+          // check accounting values
+          const tx = await nativeStakingSSVStrategy
+            .connect(governor)
+            .doAccounting();
 
-        const WithdrawnEvent = events.find(
-          (e) => e.event === "AccountingFullyWithdrawnValidator"
-        );
-        if (expectedValidatorsFullWithdrawals > 0) {
-          expect(WithdrawnEvent).to.not.be.undefined;
-          expect(WithdrawnEvent.args[0]).to.equal(
-            BigNumber.from(`${expectedValidatorsFullWithdrawals}`)
-          );
-          // still active validators
-          expect(WithdrawnEvent.args[1]).to.equal(
-            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals}`)
-          );
-          // weth sent to vault
-          expect(WithdrawnEvent.args[2]).to.equal(
-            parseEther("32").mul(
-              BigNumber.from(`${expectedValidatorsFullWithdrawals}`)
-            )
-          );
-        } else {
-          expect(WithdrawnEvent).to.be.undefined;
-        }
+          if (expectedConsensusRewards.gt(BigNumber.from("0"))) {
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "AccountingConsensusRewards")
+              .withArgs(expectedConsensusRewards);
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingSSVStrategy,
+              "AccountingConsensusRewards"
+            );
+          }
 
-        const PausedEvent = events.find((e) => e.event === "Paused");
-        if (fuseBlown) {
-          expect(PausedEvent).to.not.be.undefined;
-        } else {
-          expect(PausedEvent).to.be.undefined;
-        }
+          if (expectedValidatorsFullWithdrawals > 0) {
+            await expect(tx)
+              .to.emit(
+                nativeStakingSSVStrategy,
+                "AccountingFullyWithdrawnValidator"
+              )
+              .withArgs(
+                expectedValidatorsFullWithdrawals,
+                30 - expectedValidatorsFullWithdrawals,
+                parseEther("32").mul(expectedValidatorsFullWithdrawals)
+              );
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingSSVStrategy,
+              "AccountingFullyWithdrawnValidator"
+            );
+          }
 
-        const SlashEvent = events.find(
-          (e) => e.event === "AccountingValidatorSlashed"
-        );
-        if (slashDetected) {
-          expect(SlashEvent).to.not.be.undefined;
-          expect(SlashEvent.args[0]).to.equal(
-            BigNumber.from(`${30 - expectedValidatorsFullWithdrawals - 1}`)
-          );
-        } else {
-          expect(SlashEvent).to.be.undefined;
-        }
-      });
-    }
+          if (fuseBlown) {
+            await expect(tx).to.emit(nativeStakingSSVStrategy, "Paused");
+          } else {
+            await expect(tx).to.not.emit(nativeStakingSSVStrategy, "Paused");
+          }
+
+          if (slashDetected) {
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "AccountingValidatorSlashed")
+              .withNamedArgs({
+                remainingValidators: 30 - expectedValidatorsFullWithdrawals - 1,
+              });
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingSSVStrategy,
+              "AccountingValidatorSlashed"
+            );
+          }
+        });
+      }
+    });
 
     it("Only accounting governor is allowed to manually fix accounting", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
@@ -367,7 +551,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           10, //_activeDepositedValidators
           parseEther("2", "ether"), //_ethToWeth
           parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_beaconChainRewardWETH
+          parseEther("2", "ether"), //_consensusRewards
           parseEther("0", "ether"), //_ethThresholdCheck
           parseEther("0", "ether") //_wethThresholdCheck
         )
@@ -387,7 +571,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("1", "ether"), //_ethThresholdCheck
           parseEther("0", "ether") //_wethThresholdCheck
         )
-      ).to.be.revertedWith("not paused");
+      ).to.be.revertedWith("Pausable: not paused");
     });
 
     it("Should not execute manual recovery if eth threshold reached", async () => {
@@ -465,34 +649,62 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("5", "ether") //_wethThresholdCheck
         );
 
-      const events = (await tx.wait()).events || [];
-      const AccountingManuallyFixedEvent = events.find(
-        (e) => e.event === "AccountingManuallyFixed"
-      );
-
-      expect(AccountingManuallyFixedEvent).to.not.be.undefined;
-      expect(AccountingManuallyFixedEvent.event).to.equal(
-        "AccountingManuallyFixed"
-      );
-      expect(AccountingManuallyFixedEvent.args[0]).to.equal(0); // oldActiveDepositedValidators
-      expect(AccountingManuallyFixedEvent.args[1]).to.equal(3); // activeDepositedValidators
-      expect(AccountingManuallyFixedEvent.args[2]).to.equal(
-        parseEther("0", "ether")
-      ); // oldBeaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[3]).to.equal(
-        parseEther("2.3", "ether")
-      ); // beaconChainRewardWETH
-      expect(AccountingManuallyFixedEvent.args[4]).to.equal(
-        parseEther("2.1", "ether")
-      ); // ethToWeth
-      expect(AccountingManuallyFixedEvent.args[5]).to.equal(
-        parseEther("2.2", "ether")
-      ); // wethToBeSentToVault
+      expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+        .withArgs(
+          0, // oldActiveDepositedValidators
+          3, // activeDepositedValidators
+          0, // oldBeaconChainRewardWETH
+          parseEther("2.3"), // beaconChainRewardWETH
+          parseEther("2.1"), // ethToWeth
+          parseEther("2.2") // wethToBeSentToVault
+        );
     });
   });
 
-  describe("General functionality", function () {
+  describe("Harvest and strategy balance", function () {
+    // fuseStart 21.6
+    // fuseEnd 25.6
+    // expectedHarvester = feeAccumulatorEth + consensusRewards
+    // expectedBalance = deposits + nrOfActiveDepositedValidators * 32
     const rewardTestCases = [
+      // no rewards to harvest
+      {
+        feeAccumulatorEth: 0,
+        consensusRewards: 0,
+        deposits: 0,
+        nrOfActiveDepositedValidators: 0,
+        expectedHarvester: 0,
+        expectedBalance: 0,
+      },
+      // a little execution rewards
+      {
+        feeAccumulatorEth: 0.1,
+        consensusRewards: 0,
+        deposits: 0,
+        nrOfActiveDepositedValidators: 0,
+        expectedHarvester: 0.1,
+        expectedBalance: 0,
+      },
+      // a little consensus rewards
+      {
+        feeAccumulatorEth: 0,
+        consensusRewards: 0.2,
+        deposits: 0,
+        nrOfActiveDepositedValidators: 0,
+        expectedHarvester: 0.2,
+        expectedBalance: 0,
+      },
+      // a little consensus and execution rewards
+      {
+        feeAccumulatorEth: 0.1,
+        consensusRewards: 0.2,
+        deposits: 0,
+        nrOfActiveDepositedValidators: 0,
+        expectedHarvester: 0.3,
+        expectedBalance: 0,
+      },
+      // a lot of consensus rewards
       {
         feeAccumulatorEth: 2.2,
         consensusRewards: 16.3,
@@ -501,133 +713,42 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         expectedHarvester: 18.5,
         expectedBalance: 100 + 7 * 32,
       },
+      // consensus rewards just below fuse start
       {
         feeAccumulatorEth: 10.2,
-        consensusRewards: 21.6,
+        consensusRewards: 21.5,
         deposits: 0,
         nrOfActiveDepositedValidators: 5,
-        expectedHarvester: 31.8,
+        expectedHarvester: 31.7,
         expectedBalance: 0 + 5 * 32,
       },
+      // consensus rewards just below fuse start
       {
         feeAccumulatorEth: 10.2,
-        consensusRewards: 21.6,
+        consensusRewards: 21.5,
         deposits: 1,
         nrOfActiveDepositedValidators: 0,
-        expectedHarvester: 31.8,
+        expectedHarvester: 31.7,
         expectedBalance: 1 + 0 * 32,
-      },
-      {
-        feeAccumulatorEth: 0,
-        consensusRewards: 0,
-        deposits: 0,
-        nrOfActiveDepositedValidators: 0,
-        expectedHarvester: 0,
-        expectedBalance: 0 + 0 * 32,
       },
     ];
 
-    describe("Collecting rewards and should correctly account for WETH", async () => {
-      for (const testCase of rewardTestCases) {
-        const feeAccumulatorEth = parseEther(
-          testCase.feeAccumulatorEth.toString()
-        );
-        const consensusRewards = parseEther(
-          testCase.consensusRewards.toString()
-        );
-        const deposits = parseEther(testCase.deposits.toString());
-        const expectedHarvester = parseEther(
-          testCase.expectedHarvester.toString()
-        );
+    for (const testCase of rewardTestCases) {
+      const feeAccumulatorEth = parseEther(
+        testCase.feeAccumulatorEth.toString()
+      );
+      const consensusRewards = parseEther(testCase.consensusRewards.toString());
+      const deposits = parseEther(testCase.deposits.toString());
+      const expectedHarvester = parseEther(
+        testCase.expectedHarvester.toString()
+      );
+      const expectedBalance = parseEther(testCase.expectedBalance.toString());
+      const { nrOfActiveDepositedValidators } = testCase;
 
-        it(`with ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards and ${testCase.deposits} deposits. expect harvest ${testCase.expectedHarvester}`, async () => {
-          const {
-            nativeStakingSSVStrategy,
-            governor,
-            oethHarvester,
-            weth,
-            josh,
-          } = fixture;
-          const feeAccumulatorAddress =
-            await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
-          const sHarvester = await impersonateAndFund(oethHarvester.address);
-
-          // setup state
-          if (consensusRewards.gt(BigNumber.from("0"))) {
-            // set the reward eth on the strategy
-            await setBalance(
-              nativeStakingSSVStrategy.address,
-              consensusRewards
-            );
-          }
-          if (feeAccumulatorEth.gt(BigNumber.from("0"))) {
-            // set execution layer rewards on the fee accumulator
-            await setBalance(feeAccumulatorAddress, feeAccumulatorEth);
-          }
-          if (deposits.gt(BigNumber.from("0"))) {
-            // send eth to the strategy as if Vault would send it via a Deposit function
-            await weth
-              .connect(josh)
-              .transfer(nativeStakingSSVStrategy.address, deposits);
-          }
-
-          // run the accounting
-          await nativeStakingSSVStrategy.connect(governor).doAccounting();
-
-          const harvesterWethBalance = await weth.balanceOf(
-            oethHarvester.address
-          );
-          const tx = await nativeStakingSSVStrategy
-            .connect(sHarvester)
-            .collectRewardTokens();
-          const events = (await tx.wait()).events || [];
-
-          const harvesterBalanceDiff = (
-            await weth.balanceOf(oethHarvester.address)
-          ).sub(harvesterWethBalance);
-          expect(harvesterBalanceDiff).to.equal(expectedHarvester);
-
-          const rewardTokenCollectedEvent = events.find(
-            (e) => e.event === "RewardTokenCollected"
-          );
-
-          if (expectedHarvester.gt(BigNumber.from("0"))) {
-            expect(rewardTokenCollectedEvent).to.not.be.undefined;
-            expect(rewardTokenCollectedEvent.event).to.equal(
-              "RewardTokenCollected"
-            );
-            expect(rewardTokenCollectedEvent.args[1]).to.equal(weth.address);
-            expect(rewardTokenCollectedEvent.args[2]).to.equal(
-              expectedHarvester
-            );
-          } else {
-            expect(rewardTokenCollectedEvent).to.be.undefined;
-          }
-        });
-      }
-    });
-
-    describe("Checking balance should return the correct values", async () => {
-      for (const testCase of rewardTestCases) {
-        const feeAccumulatorEth = parseEther(
-          testCase.feeAccumulatorEth.toString()
-        );
-
-        const consensusRewards = parseEther(
-          testCase.consensusRewards.toString()
-        );
-        const deposits = parseEther(testCase.deposits.toString());
-        const expectedBalance = parseEther(testCase.expectedBalance.toString());
-        const { nrOfActiveDepositedValidators } = testCase;
-        it(`with ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards, ${testCase.deposits} deposits and ${nrOfActiveDepositedValidators} validators. expected balance ${testCase.expectedBalance}`, async () => {
-          const {
-            nativeStakingSSVStrategy,
-            governor,
-            strategist,
-            // oethHarvester,
-            weth,
-            josh,
-          } = fixture;
+      describe(`given ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards, ${testCase.deposits} deposits and ${nrOfActiveDepositedValidators} validators`, () => {
+        beforeEach(async () => {
+          const { nativeStakingSSVStrategy, governor, strategist, weth, josh } =
+            fixture;
           const feeAccumulatorAddress =
             await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
 
@@ -656,23 +777,53 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             .connect(governor)
             .manuallyFixAccounting(
               nrOfActiveDepositedValidators, // activeDepositedValidators
-              parseEther("0", "ether"), //_ethToWeth
-              parseEther("0", "ether"), //_wethToBeSentToVault
-              parseEther("0", "ether"), //_beaconChainRewardWETH
-              parseEther("3000", "ether"), //_ethThresholdCheck
-              parseEther("3000", "ether") //_wethThresholdCheck
+              parseEther("0"), //_ethToWeth
+              parseEther("0"), //_wethToBeSentToVault
+              consensusRewards, //_consensusRewards
+              parseEther("3000"), //_ethThresholdCheck
+              parseEther("3000") //_wethThresholdCheck
             );
 
           // run the accounting
           await nativeStakingSSVStrategy.connect(governor).doAccounting();
+        });
+
+        it(`then should harvest ${testCase.expectedHarvester} WETH`, async () => {
+          const { nativeStakingSSVStrategy, oethHarvester, weth } = fixture;
+          const sHarvester = await impersonateAndFund(oethHarvester.address);
+
+          const harvesterWethBalanceBefore = await weth.balanceOf(
+            oethHarvester.address
+          );
+          const tx = await nativeStakingSSVStrategy
+            .connect(sHarvester)
+            .collectRewardTokens();
+
+          if (expectedHarvester.gt(BigNumber.from("0"))) {
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "RewardTokenCollected")
+              .withArgs(oethHarvester.address, weth.address, expectedHarvester);
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingSSVStrategy,
+              "RewardTokenCollected"
+            );
+          }
+
+          const harvesterBalanceDiff = (
+            await weth.balanceOf(oethHarvester.address)
+          ).sub(harvesterWethBalanceBefore);
+          expect(harvesterBalanceDiff).to.equal(expectedHarvester);
+        });
+
+        it(`then the strategy should have a ${testCase.expectedBalance} balance`, async () => {
+          const { nativeStakingSSVStrategy, weth } = fixture;
 
           expect(
             await nativeStakingSSVStrategy.checkBalance(weth.address)
           ).to.equal(expectedBalance);
         });
-      }
-    });
-
-    it("Should be able to collect the SSV reward token", async () => {});
+      });
+    }
   });
 });

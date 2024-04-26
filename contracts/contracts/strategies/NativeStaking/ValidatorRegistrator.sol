@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 
@@ -25,6 +26,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
     address public immutable SSV_NETWORK_ADDRESS;
+    /// @notice Address of the OETH Vault proxy contract
+    address public immutable VAULT_ADDRESS;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
@@ -45,7 +48,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
 
-    event RegistratorAddressChanged(address oldAddress, address newAddress);
+    event RegistratorChanged(address newAddress);
     event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
     event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
@@ -60,22 +63,34 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         _;
     }
 
+    /// @dev Throws if called by any account other than the Strategist
+    modifier onlyStrategist() {
+        require(
+            msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
+            "Caller is not the Strategist"
+        );
+        _;
+    }
+
     /// @param _wethAddress Address of the Erc20 WETH Token contract
+    /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
     constructor(
         address _wethAddress,
+        address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork
     ) {
         WETH_TOKEN_ADDRESS = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK_ADDRESS = _ssvNetwork;
+        VAULT_ADDRESS = _vaultAddress;
     }
 
-    /// @notice Set the address of the registrator
-    function setRegistratorAddress(address _address) external onlyGovernor {
-        emit RegistratorAddressChanged(validatorRegistrator, _address);
+    /// @notice Set the address of the registrator which can register, exit and remove validators
+    function setRegistrator(address _address) external onlyGovernor {
+        emit RegistratorChanged(_address);
         validatorRegistrator = _address;
     }
 
@@ -200,5 +215,23 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         emit SSVValidatorExitCompleted(publicKey, operatorIds);
 
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXIT_COMPLETE;
+    }
+
+    /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
+    /// that tries to top up SSV tokens.
+    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
+    function depositSSV(
+        uint64[] memory operatorIds,
+        uint256 amount,
+        Cluster memory cluster
+    ) external onlyStrategist {
+        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+            address(this),
+            operatorIds,
+            amount,
+            cluster
+        );
     }
 }
