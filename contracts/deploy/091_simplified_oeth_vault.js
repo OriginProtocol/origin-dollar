@@ -11,7 +11,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
-    proposalId: "",
+    proposalId:
+      "115324645974339614256957686144083128142732871333625430716165228599583774495641",
   },
   async ({ ethers }) => {
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
