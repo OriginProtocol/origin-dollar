@@ -47,7 +47,7 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
       await mintTest(fixture, josh, weth, "32");
     });
 
-    it.only("Should mint using WETH and deposit to a validator", async () => {
+    it("Should mint using WETH and deposit to a validator", async () => {
       const { nativeStakingSSVStrategy, josh, weth } = fixture;
       await mintTest(fixture, josh, weth, "32");
 

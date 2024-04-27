@@ -64,13 +64,18 @@ let forkBlockNumber = adjustTheForkBlockNumber();
 
 const paths = {};
 if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
-  paths.deploy = "deployHolesky";
+  // holesky deployment files are in contracts/deploy/holesky
+  paths.deploy = "deploy/holesky";
+} else {
+  // holesky deployment files are in contracts/deploy/mainnet
+  paths.deploy = "deploy/mainnet";
 }
 if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
 const { provider, chainId } = getHardhatNetworkProperties();
 
+console.log("PATHS", paths);
 module.exports = {
   solidity: {
     version: "0.8.7",
