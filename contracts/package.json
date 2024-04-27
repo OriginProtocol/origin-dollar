@@ -19,7 +19,7 @@
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:js": "prettier --write \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
-    "test": "IS_TEST=true npx hardhat test",
+    "test": "rm -rf deployments/hardhat && IS_TEST=true npx hardhat test",
     "test:fork": "./fork-test.sh",
     "test:arb-fork": "FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",
