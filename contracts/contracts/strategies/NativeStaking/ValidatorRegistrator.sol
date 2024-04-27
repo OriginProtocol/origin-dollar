@@ -89,8 +89,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
-    // TODO CHANGE BACK
-    function setRegistratorAddress(address _address) external onlyGovernor {
+    function setRegistrator(address _address) external onlyGovernor {
         emit RegistratorChanged(_address);
         validatorRegistrator = _address;
     }
@@ -135,7 +134,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 bytes11(0),
                 address(this)
             );
-            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit(
+            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{ value: 32 ether }(
                 validators[i].pubkey,
                 withdrawal_credentials,
                 validators[i].signature,

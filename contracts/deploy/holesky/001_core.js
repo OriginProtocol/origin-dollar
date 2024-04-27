@@ -1,19 +1,17 @@
 const hre = require("hardhat");
-const main = require("../deploy/001_core.js");
 
-const { id, tags } = main;
 const { 
-	deployOracles,
-	deployOETHCore,
-	deployNativeStakingSSVStrategy,
-	deployOETHDripper,
-	deployOETHHarvester,
-	configureOETHVault
-} = main.functions;
+  deployOracles,
+  deployOETHCore,
+  deployNativeStakingSSVStrategy,
+  deployOETHDripper,
+  deployOETHHarvester,
+  configureOETHVault,
+} = require("../deployActions");
 
 const {
   withConfirmation,
-} = require("../utils/deploy");
+} = require("../../utils/deploy");
 
 const mainExport = async () => {
 	console.log("Running 001_core deployment on Holesky...");
@@ -75,7 +73,7 @@ const mainExport = async () => {
 	return true;
 };
 
-mainExport.id = id;
+mainExport.id = "001_core";
 mainExport.tags = [];
 mainExport.dependencies = [];
 mainExport.skip = () => false;

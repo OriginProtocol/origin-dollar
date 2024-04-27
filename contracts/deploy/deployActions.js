@@ -806,9 +806,8 @@ const upgradeNativeStakingSSVStrategy = async () => {
   const strategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  const cFeeAccumulatorProxy = await ethers.getContractAt(
+  const cFeeAccumulatorProxy = await ethers.getContract(
     "NativeStakingFeeAccumulatorProxy",
-    dFeeAccumulatorProxy.address
   );
 
   const dStrategyImpl = await deployWithConfirmation(
