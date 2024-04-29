@@ -9,6 +9,7 @@ const {
   advanceTime,
   advanceBlocks,
   isMainnet,
+  isHolesky,
   isFork,
   isMainnetOrFork,
   getOracleAddresses,
@@ -42,7 +43,8 @@ const {
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
-const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -705,7 +707,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {
