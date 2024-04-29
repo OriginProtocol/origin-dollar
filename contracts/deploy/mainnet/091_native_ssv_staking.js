@@ -152,12 +152,6 @@ module.exports = deploymentWithGovernanceProposal(
             ethers.utils.parseEther("25.6"),
           ],
         },
-        // 5. configure the accounting governor
-        {
-          contract: cStrategy,
-          signature: "setAccountingGovernor(address)",
-          args: [deployerAddr], // TODO: change this to the defender action
-        },
       ],
     };
   }

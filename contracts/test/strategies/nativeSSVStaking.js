@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { parseEther } = require("ethers").utils;
-const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
+const {
+  setBalance,
+  setStorageAt,
+} = require("@nomicfoundation/hardhat-network-helpers");
 
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
@@ -57,7 +60,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       );
       const tx = {
         to: nativeStakingSSVStrategy.address,
-        value: parseEther("2", "ether"),
+        value: parseEther("2"),
       };
 
       await expect(signer.sendTransaction(tx)).to.be.revertedWith(
@@ -152,30 +155,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(tx)
         .to.emit(nativeStakingSSVStrategy, "FuseIntervalUpdated")
         .withArgs(fuseStartBn, fuseEndBn);
-    });
-
-    it("Only accounting governor can call accounting", async () => {});
-
-    it("Only governor can change the accounting governor", async () => {
-      const { nativeStakingSSVStrategy, strategist } = fixture;
-
-      await expect(
-        nativeStakingSSVStrategy
-          .connect(strategist)
-          .setAccountingGovernor(strategist.address)
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("Change the accounting governor", async () => {
-      const { nativeStakingSSVStrategy, governor, strategist } = fixture;
-
-      const tx = await nativeStakingSSVStrategy
-        .connect(governor)
-        .setAccountingGovernor(strategist.address);
-
-      await expect(tx)
-        .to.emit(nativeStakingSSVStrategy, "AccountingGovernorChanged")
-        .withArgs(strategist.address);
     });
   });
 
@@ -466,24 +445,18 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
           fuseBlown ? ", fuse blown" : ""
         }${slashDetected ? ", slash detected" : ""}.`, async () => {
-          const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+          const { nativeStakingSSVStrategy, governor } = fixture;
 
           // setup state
           if (ethBalance.gt(0)) {
             await setBalance(nativeStakingSSVStrategy.address, ethBalance);
           }
-          // pause, so manuallyFixAccounting can be called
-          await nativeStakingSSVStrategy.connect(strategist).pause();
-          await nativeStakingSSVStrategy
-            .connect(governor)
-            .manuallyFixAccounting(
-              30, // activeDepositedValidators
-              0, //_ethToWeth
-              0, //_wethToBeSentToVault
-              previousConsensusRewards, //_consensusRewards
-              parseEther("3000"), //_ethThresholdCheck
-              parseEther("3000") //_wethThresholdCheck
-            );
+
+          await setActiveDepositedValidators(30, nativeStakingSSVStrategy);
+          await setConsensusRewards(
+            previousConsensusRewards,
+            nativeStakingSSVStrategy
+          );
 
           // check accounting values
           const tx = await nativeStakingSSVStrategy
@@ -541,124 +514,214 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       }
     });
 
-    it("Only accounting governor is allowed to manually fix accounting", async () => {
-      const { nativeStakingSSVStrategy, strategist } = fixture;
+    it("Only strategist is allowed to manually fix accounting", async () => {
+      const { nativeStakingSSVStrategy, strategist, governor } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
       // unit test fixture sets OUSD governor as accounting governor
       await expect(
-        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
-          10, //_activeDepositedValidators
-          parseEther("2", "ether"), //_ethToWeth
-          parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_consensusRewards
-          parseEther("0", "ether"), //_ethThresholdCheck
-          parseEther("0", "ether") //_wethThresholdCheck
+        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
+          1, //_validatorsDelta
+          parseEther("2"), //_consensusRewardsDelta
+          parseEther("2") //_wethToVault
         )
-      ).to.be.revertedWith("Caller is not the Accounting Governor");
+      ).to.be.revertedWith("Caller is not the Strategist");
     });
 
     it("Accounting needs to be paused in order to call fix accounting function", async () => {
-      const { nativeStakingSSVStrategy, governor } = fixture;
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       // unit test fixture sets OUSD governor as accounting governor
       await expect(
-        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
-          10, //_activeDepositedValidators
-          parseEther("2", "ether"), //_ethToWeth
-          parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_beaconChainRewardWETH
-          parseEther("1", "ether"), //_ethThresholdCheck
-          parseEther("0", "ether") //_wethThresholdCheck
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          1, //_validatorsDelta
+          parseEther("2"), //_consensusRewardsDelta
+          parseEther("2") //_wethToVault
         )
       ).to.be.revertedWith("Pausable: not paused");
     });
 
-    it("Should not execute manual recovery if eth threshold reached", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
-        fixture;
-
-      await setBalance(
-        nativeStakingSSVStrategy.address,
-        parseEther("6", "ether")
-      );
-      await weth
-        .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, parseEther("5", "ether"));
+    it("Validators delta should not be <-4 or >4 for fix accounting function", async () => {
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
+
       await expect(
-        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
-          10, //_activeDepositedValidators
-          parseEther("2", "ether"), //_ethToWeth
-          parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_beaconChainRewardWETH
-          parseEther("5", "ether"), //_ethThresholdCheck
-          parseEther("5", "ether") //_wethThresholdCheck
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          -4, //_validatorsDelta
+          0, //_consensusRewardsDelta
+          0 //_wethToVault
         )
-      ).to.be.revertedWith("over accounting threshold");
+      ).to.be.revertedWith("invalid validatorsDelta");
+
+      await expect(
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          4, //_validatorsDelta
+          0, //_consensusRewardsDelta
+          0 //_wethToVault
+        )
+      ).to.be.revertedWith("invalid validatorsDelta");
     });
 
-    it("Should not execute manual recovery if weth threshold reached", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
-        fixture;
-
-      await setBalance(
-        nativeStakingSSVStrategy.address,
-        parseEther("5", "ether")
-      );
-      await weth
-        .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, parseEther("6", "ether"));
+    it("Consensus rewards delta should not be <-333> and >333 for fix accounting function", async () => {
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
+
       await expect(
-        nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
-          10, //_activeDepositedValidators
-          parseEther("2", "ether"), //_ethToWeth
-          parseEther("2", "ether"), //_wethToBeSentToVault
-          parseEther("2", "ether"), //_beaconChainRewardWETH
-          parseEther("5", "ether"), //_ethThresholdCheck
-          parseEther("5", "ether") //_wethThresholdCheck
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          0, //_validatorsDelta
+          parseEther("-333"), //_consensusRewardsDelta
+          0 //_wethToVault
         )
-      ).to.be.revertedWith("over accounting threshold");
+      ).to.be.revertedWith("invalid consensusRewardsDelta");
+
+      await expect(
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          0, //_validatorsDelta
+          parseEther("333"), //_consensusRewardsDelta
+          0 //_wethToVault
+        )
+      ).to.be.revertedWith("invalid consensusRewardsDelta");
     });
 
-    it("Should allow 5/8 governor to recover paused contract and correct the accounting state", async () => {
-      const { nativeStakingSSVStrategy, strategist, governor, josh, weth } =
-        fixture;
-
-      await setBalance(
-        nativeStakingSSVStrategy.address,
-        parseEther("5", "ether")
-      );
-      await weth
-        .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, parseEther("5", "ether"));
+    it("WETH to Vault amount should not be >32 for fix accounting function", async () => {
+      const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
-      // unit test fixture sets OUSD governor as accounting governor
-      const tx = await nativeStakingSSVStrategy
-        .connect(governor)
-        .manuallyFixAccounting(
-          3, //_activeDepositedValidators
-          parseEther("2.1", "ether"), //_ethToWeth
-          parseEther("2.2", "ether"), //_wethToBeSentToVault
-          parseEther("2.3", "ether"), //_beaconChainRewardWETH
-          parseEther("5", "ether"), //_ethThresholdCheck
-          parseEther("5", "ether") //_wethThresholdCheck
-        );
 
-      expect(tx)
-        .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
-        .withArgs(
-          0, // oldActiveDepositedValidators
-          3, // activeDepositedValidators
-          0, // oldBeaconChainRewardWETH
-          parseEther("2.3"), // beaconChainRewardWETH
-          parseEther("2.1"), // ethToWeth
-          parseEther("2.2") // wethToBeSentToVault
-        );
+      await expect(
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          0, //_validatorsDelta
+          0, //_consensusRewardsDelta
+          parseEther("33") //_wethToVault
+        )
+      ).to.be.revertedWith("invalid wethToVaultAmount");
+    });
+
+    describe("Should allow strategist to recover paused contract", async () => {
+      for (const validatorsDelta of [-3, -2, -1, 0, 1, 2, 3]) {
+        it(`by changing validators by ${validatorsDelta}`, async () => {
+          const { nativeStakingSSVStrategy, strategist } = fixture;
+
+          await setActiveDepositedValidators(10, nativeStakingSSVStrategy);
+
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          const activeDepositedValidatorsBefore =
+            await nativeStakingSSVStrategy.activeDepositedValidators();
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(validatorsDelta, 0, 0);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(validatorsDelta, 0, 0);
+
+          expect(
+            await nativeStakingSSVStrategy.activeDepositedValidators()
+          ).to.equal(
+            activeDepositedValidatorsBefore.add(validatorsDelta),
+            "active deposited validators not updated"
+          );
+        });
+      }
+
+      for (const delta of [-332, -320, -1, 0, 1, 320, 332]) {
+        it(`by changing consensus rewards by ${delta}`, async () => {
+          const { nativeStakingSSVStrategy, strategist } = fixture;
+
+          await setBalance(nativeStakingSSVStrategy.address, parseEther("670"));
+          await setConsensusRewards(
+            parseEther("336"),
+            nativeStakingSSVStrategy
+          );
+          await setActiveDepositedValidators(10000, nativeStakingSSVStrategy);
+
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          const consensusRewardsDelta = parseEther(delta.toString());
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(0, consensusRewardsDelta, 0);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(0, consensusRewardsDelta, 0);
+
+          expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            ),
+            "consensus rewards matches eth balance"
+          );
+        });
+      }
+
+      it("by sending WETH to vault", async () => {
+        const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
+
+        await weth
+          .connect(josh)
+          .transfer(nativeStakingSSVStrategy.address, parseEther("100"));
+
+        for (const wethInEthers of [0, 1, 26, 32]) {
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          const wethBefore = await weth.balanceOf(
+            nativeStakingSSVStrategy.address
+          );
+          const wethToVault = parseEther(wethInEthers.toString());
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(0, 0, wethToVault);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(0, 0, wethToVault);
+
+          expect(
+            await weth.balanceOf(nativeStakingSSVStrategy.address)
+          ).to.equal(
+            wethBefore.sub(wethToVault),
+            "consensus rewards not updated"
+          );
+
+          expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            ),
+            "consensus rewards matches eth balance"
+          );
+        }
+      });
+
+      it("by changing all three manuallyFixAccounting delta values", async () => {
+        const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
+
+        await setBalance(nativeStakingSSVStrategy.address, parseEther("5"));
+        await weth
+          .connect(josh)
+          .transfer(nativeStakingSSVStrategy.address, parseEther("5"));
+
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        // unit test fixture sets OUSD governor as accounting governor
+        const tx = await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            1, //_validatorsDelta
+            parseEther("2.3"), //_consensusRewardsDeltaDelta
+            parseEther("2.2") //_wethToVault
+          );
+
+        expect(tx)
+          .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+          .withArgs(
+            1, // validatorsDelta
+            parseEther("2.3"), // consensusRewards
+            parseEther("2.2") // wethToVault
+          );
+      });
     });
   });
 
@@ -747,8 +810,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       describe(`given ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards, ${testCase.deposits} deposits and ${nrOfActiveDepositedValidators} validators`, () => {
         beforeEach(async () => {
-          const { nativeStakingSSVStrategy, governor, strategist, weth, josh } =
-            fixture;
+          const { nativeStakingSSVStrategy, governor, weth, josh } = fixture;
           const feeAccumulatorAddress =
             await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
 
@@ -772,17 +834,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
 
           // set the correct amount of staked validators
-          await nativeStakingSSVStrategy.connect(strategist).pause();
-          await nativeStakingSSVStrategy
-            .connect(governor)
-            .manuallyFixAccounting(
-              nrOfActiveDepositedValidators, // activeDepositedValidators
-              parseEther("0"), //_ethToWeth
-              parseEther("0"), //_wethToBeSentToVault
-              consensusRewards, //_consensusRewards
-              parseEther("3000"), //_ethThresholdCheck
-              parseEther("3000") //_wethThresholdCheck
-            );
+          await setActiveDepositedValidators(
+            nrOfActiveDepositedValidators,
+            nativeStakingSSVStrategy
+          );
+          await setConsensusRewards(consensusRewards, nativeStakingSSVStrategy);
 
           // run the accounting
           await nativeStakingSSVStrategy.connect(governor).doAccounting();
@@ -827,3 +883,27 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     }
   });
 });
+
+const setActiveDepositedValidators = async (
+  validators,
+  nativeStakingSSVStrategy
+) => {
+  await setStorageAt(nativeStakingSSVStrategy.address, 52, validators);
+
+  expect(await nativeStakingSSVStrategy.activeDepositedValidators()).to.equal(
+    validators,
+    "validators no set properly"
+  );
+};
+
+const setConsensusRewards = async (
+  consensusRewards,
+  nativeStakingSSVStrategy
+) => {
+  await setStorageAt(nativeStakingSSVStrategy.address, 104, consensusRewards);
+
+  expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+    consensusRewards,
+    "consensusRewards no set properly"
+  );
+};

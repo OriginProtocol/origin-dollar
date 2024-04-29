@@ -22,8 +22,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     uint256 public fuseIntervalStart = 0;
     /// @notice end of fuse interval
     uint256 public fuseIntervalEnd = 0;
-    /// @notice Governor that can manually correct the accounting
-    address public accountingGovernor;
 
     uint256[50] private __gap;
 
@@ -37,26 +35,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 remainingValidators,
         uint256 wethSentToVault
     );
-    event AccountingGovernorChanged(address newAddress);
     event AccountingConsensusRewards(uint256 amount);
 
     event AccountingManuallyFixed(
-        uint256 oldActiveDepositedValidators,
-        uint256 activeDepositedValidators,
-        uint256 oldBeaconChainRewards,
-        uint256 beaconChainRewards,
-        uint256 ethToWeth,
-        uint256 wethToBeSentToVault
+        int256 validatorsDelta,
+        int256 consensusRewardsDelta,
+        uint256 wethToVault
     );
-
-    /// @dev Throws if called by any account other than the Accounting Governor
-    modifier onlyAccountingGovernor() {
-        require(
-            msg.sender == accountingGovernor,
-            "Caller is not the Accounting Governor"
-        );
-        _;
-    }
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
@@ -75,11 +60,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             _ssvNetwork
         )
     {}
-
-    function setAccountingGovernor(address _address) external onlyGovernor {
-        emit AccountingGovernorChanged(_address);
-        accountingGovernor = _address;
-    }
 
     /// @notice set fuse interval values
     function setFuseInterval(
@@ -111,6 +91,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// accounting is valid and fuse isn't "blown". Returns false when fuse is blown.
     /// @dev This function could in theory be permission-less but lets allow only the Registrator (Defender Action) to call it
     /// for now.
+    /// @return accountingValid true if accounting was successful, false if fuse is blown
     /* solhint-enable max-line-length */
     function doAccounting()
         external
@@ -118,9 +99,20 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         whenNotPaused
         returns (bool accountingValid)
     {
+        // pause the accounting on failure
+        accountingValid = _doAccounting(true);
+    }
+
+    function _doAccounting(bool pauseOnFail)
+        internal
+        returns (bool accountingValid)
+    {
         if (address(this).balance < consensusRewards) {
-            // pause and fail the accounting
-            _pause();
+            // pause if not already
+            if (pauseOnFail) {
+                _pause();
+            }
+            // fail the accounting
             return false;
         }
 
@@ -170,66 +162,66 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 ethRemaining
             );
         }
-        // Oh no... Fuse is blown. The governor (Multisig not OGV Governor) needs to set the
-        // record straight by manually set the accounting values.
+        // Oh no... Fuse is blown. The Strategist needs to adjust the accounting values.
         else {
-            // will emit a paused event
-            _pause();
+            // pause if not already
+            if (pauseOnFail) {
+                _pause();
+            }
+            // fail the accounting
             accountingValid = false;
         }
     }
 
-    /// @dev allow the accounting governor to fix the accounting of this strategy and unpause
-    /// @param _activeDepositedValidators the override value of activeDepositedValidators
-    /// @param _ethToWeth the amount of ETH to be converted to WETH
-    /// @param _wethToBeSentToVault the amount of WETH to be sent to the Vault
-    /// @param _consensusRewards the override value for consensusRewards
-    /// @param _ethThresholdCheck maximum allowed ETH balance on the contract for the function to run
-    /// @param _wethThresholdCheck maximum allowed WETH balance on the contract for the function to run
-    ///        the above 2 checks are done so transaction doesn't get front run and cause
-    ///        unexpected behaviour
+    /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
+    /// @param _validatorsDelta adjust the active validators by plus one, minus one or unchanged with zero
+    /// @param _wethToVaultAmount the amount of WETH to be sent to the Vault
+    /// @param _consensusRewardsDelta adjust the accounted for consensus rewards up or down
     function manuallyFixAccounting(
-        uint256 _activeDepositedValidators,
-        uint256 _ethToWeth,
-        uint256 _wethToBeSentToVault,
-        uint256 _consensusRewards,
-        uint256 _ethThresholdCheck,
-        uint256 _wethThresholdCheck
-    ) external onlyAccountingGovernor whenPaused {
-        uint256 ethBalance = address(this).balance;
-        uint256 wethBalance = IWETH9(WETH_TOKEN_ADDRESS).balanceOf(
-            address(this)
-        );
-
+        int256 _validatorsDelta,
+        int256 _consensusRewardsDelta,
+        uint256 _wethToVaultAmount
+    ) external onlyStrategist whenPaused {
         require(
-            ethBalance <= _ethThresholdCheck &&
-                wethBalance <= _wethThresholdCheck,
-            "over accounting threshold"
+            _validatorsDelta >= -3 &&
+                _validatorsDelta <= 3 &&
+                // new value must be positive
+                int256(activeDepositedValidators) + _validatorsDelta >= 0,
+            "invalid validatorsDelta"
         );
+        require(
+            _consensusRewardsDelta >= -332 ether &&
+                _consensusRewardsDelta <= 332 ether &&
+                // new value must be positive
+                int256(consensusRewards) + _consensusRewardsDelta >= 0,
+            "invalid consensusRewardsDelta"
+        );
+        require(_wethToVaultAmount <= 32 ether, "invalid wethToVaultAmount");
 
         emit AccountingManuallyFixed(
-            activeDepositedValidators,
-            _activeDepositedValidators,
-            consensusRewards,
-            _consensusRewards,
-            _ethToWeth,
-            _wethToBeSentToVault
+            _validatorsDelta,
+            _consensusRewardsDelta,
+            _wethToVaultAmount
         );
 
-        activeDepositedValidators = _activeDepositedValidators;
-        consensusRewards = _consensusRewards;
-        if (_ethToWeth > 0) {
-            require(_ethToWeth <= ethBalance, "insufficient ETH");
-
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToWeth }();
-        }
-        if (_wethToBeSentToVault > 0) {
+        activeDepositedValidators = uint256(
+            int256(activeDepositedValidators) + _validatorsDelta
+        );
+        consensusRewards = uint256(
+            int256(consensusRewards) + _consensusRewardsDelta
+        );
+        if (_wethToVaultAmount > 0) {
             IWETH9(WETH_TOKEN_ADDRESS).transfer(
                 VAULT_ADDRESS,
-                _wethToBeSentToVault
+                _wethToVaultAmount
             );
         }
 
+        // rerun the accounting to see if it has now been fixed.
+        // Do not pause the accounting on failure as it is already paused
+        require(_doAccounting(false), "fuse still blown");
+
+        // unpause since doAccounting was successful
         _unpause();
     }
 }
