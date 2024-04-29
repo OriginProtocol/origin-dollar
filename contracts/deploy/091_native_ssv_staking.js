@@ -153,6 +153,12 @@ module.exports = deploymentWithGovernanceProposal(
             ethers.utils.parseEther("25.6"),
           ],
         },
+        // 5. set validator registrator
+        {
+          contract: cStrategy,
+          signature: "setRegistrator(address)",
+          args: [addresses.mainnet.validatorRegistrator],
+        },
       ],
     };
   }

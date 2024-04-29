@@ -1420,6 +1420,10 @@ async function nativeStakingSSVStrategyFixture() {
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+
+    fixture.validatorRegistrator = await ethers.provider.getSigner(
+      addresses.mainnet.validatorRegistrator
+    );
   } else {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
@@ -1429,8 +1433,6 @@ async function nativeStakingSSVStrategyFixture() {
     await oethVault
       .connect(sGovernor)
       .approveStrategy(nativeStakingSSVStrategy.address);
-
-    log("nativeStakingSSVStrategy.address", nativeStakingSSVStrategy.address);
 
     const fuseStartBn = ethers.utils.parseEther("21.6");
     const fuseEndBn = ethers.utils.parseEther("25.6");
@@ -1447,7 +1449,6 @@ async function nativeStakingSSVStrategyFixture() {
     await nativeStakingSSVStrategy
       .connect(sGovernor)
       .setRegistrator(governorAddr);
-
   }
 
   return fixture;
