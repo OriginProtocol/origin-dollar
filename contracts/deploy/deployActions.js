@@ -469,7 +469,7 @@ const configureOETHVault = async (isSimpleOETH) => {
   );
   // Set up supported assets for Vault
   const { WETH, RETH, stETH, frxETH } = assetAddresses;
-  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH]
+  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
   for (const asset of assets) {
     await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
@@ -547,7 +547,7 @@ const deployOUSDHarvester = async (ousdDripper) => {
   );
 
   return dHarvesterProxy;
-}
+};
 
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -592,7 +592,7 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   return dOETHHarvesterProxy;
-}
+};
 
 /**
  * Deploy Harvester
@@ -803,11 +803,13 @@ const upgradeNativeStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-  const strategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+  const strategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cFeeAccumulatorProxy = await ethers.getContract(
-    "NativeStakingFeeAccumulatorProxy",
+    "NativeStakingFeeAccumulatorProxy"
   );
 
   const dStrategyImpl = await deployWithConfirmation(
@@ -823,11 +825,8 @@ const upgradeNativeStakingSSVStrategy = async () => {
   );
 
   await withConfirmation(
-    strategyProxy
-      .connect(sDeployer)
-      .upgradeTo(dStrategyImpl.address)
+    strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
   );
-  
 };
 
 /**
@@ -906,9 +905,7 @@ const deployNativeStakingSSVStrategy = async () => {
   );
 
   log("Approve spending of the SSV token");
-  await withConfirmation(
-    cStrategy.connect(sDeployer).safeApproveAllTokens()
-  );
+  await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
 
   log("Deploy fee accumulator implementation");
   const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
@@ -1529,4 +1526,4 @@ module.exports = {
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
-}
+};

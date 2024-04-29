@@ -1,4 +1,7 @@
-const { deploymentWithProposal, withConfirmation } = require("../../utils/deploy");
+const {
+  deploymentWithProposal,
+  withConfirmation,
+} = require("../../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "039_wrapped_ousd", forceDeploy: false },

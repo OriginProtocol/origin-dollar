@@ -69,8 +69,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   });
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  const { governorAddr, strategistAddr } =
-    await getNamedAccounts();
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const oethProxy = await ethers.getContract("OETHProxy");
@@ -91,11 +90,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
-  let 
-    weth,
-    ssv,
-    nativeStakingSSVStrategy,
-    oethDripper;
+  let weth, ssv, nativeStakingSSVStrategy, oethDripper;
 
   if (isFork) {
     let addressContext = addresses.mainnet;
@@ -103,7 +98,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       addressContext = addresses.holesky;
     }
 
-    console.log("addressContext.WETH", addressContext.WETH)
+    console.log("addressContext.WETH", addressContext.WETH);
 
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
@@ -191,7 +186,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oeth,
     nativeStakingSSVStrategy,
     oethDripper,
-    oethHarvester
+    oethHarvester,
   };
 });
 

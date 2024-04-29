@@ -1,6 +1,6 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
-const { 
+const {
   isFork,
   isArbitrumFork,
   isHoleskyFork,
@@ -157,8 +157,18 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 0,
-      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 0,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 0,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 0,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
@@ -166,8 +176,18 @@ module.exports = {
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 1,
-      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_DEPLOYER) : 1,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 1,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 1,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
     },
@@ -220,8 +240,18 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_STRATEGIST) : 0,
-      hardhat: process.env.FORK === "true" ? (isHoleskyFork ? HOLESKY_DEPLOYER : MAINNET_STRATEGIST) : 0,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_STRATEGIST
+          : 0,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_STRATEGIST
+          : 0,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
     },

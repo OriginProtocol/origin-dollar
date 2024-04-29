@@ -707,7 +707,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false } = {}) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {

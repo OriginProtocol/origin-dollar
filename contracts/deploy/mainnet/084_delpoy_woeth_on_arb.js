@@ -1,5 +1,8 @@
 const { deployOnArb } = require("../../utils/delpoy-l2");
-const { deployWithConfirmation, withConfirmation } = require("../../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
 
 module.exports = deployOnArb(

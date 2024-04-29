@@ -3,9 +3,7 @@ const { utils, BigNumber } = require("ethers");
 const addresses = require("../../utils/addresses");
 const { units, oethUnits } = require("../helpers");
 
-const {
-  loadSimpleOETHFixture,
-} = require("./../_fixture");
+const { loadSimpleOETHFixture } = require("./../_fixture");
 
 describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
   this.timeout(0);
@@ -36,8 +34,12 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
     it("Should check that the fuse interval is configured correctly", async () => {
       const { nativeStakingSSVStrategy } = fixture;
 
-      await expect(utils.parseEther("21.6")).to.equal(await nativeStakingSSVStrategy.fuseIntervalStart());
-      await expect(utils.parseEther("25.6")).to.equal(await nativeStakingSSVStrategy.fuseIntervalEnd());
+      await expect(utils.parseEther("21.6")).to.equal(
+        await nativeStakingSSVStrategy.fuseIntervalStart()
+      );
+      await expect(utils.parseEther("25.6")).to.equal(
+        await nativeStakingSSVStrategy.fuseIntervalEnd()
+      );
     });
   });
 
@@ -74,8 +76,8 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
         // amount
         BigNumber.from("1534241968000000000"),
         // cluster tuple
-        [0,0,0,true,0]
-      )
+        [0, 0, 0, true, 0]
+      );
 
     await nativeStakingSSVStrategy
       .connect(strategist) // TODO this will be a Defender relayer
@@ -86,13 +88,14 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
           //signature
           "0xa450d596551c7fb7aca201e9a075b034d8da1ec7bf8806740ca53c0e8653465ed9cd26d6ce10290581586676eb0dd896022a243dc42179337c9c4c2a60969a11bb9e4a2dcf57a783daf880999f6db34d1e42163cb96287b3bb91b03361942b80",
           //depositDataRoot
-          "0x3f327f69bb527386ff4c2f820e6e375fcc632b1b7ee826bd53d4d2807cfd6769"
-        ]
-      ])
-  }
+          "0x3f327f69bb527386ff4c2f820e6e375fcc632b1b7ee826bd53d4d2807cfd6769",
+        ],
+      ]);
+  };
 
   const mintTest = async (fixture, user, asset, amount = "32") => {
-    const { oethVault, oeth, weth, nativeStakingSSVStrategy, strategist } = fixture;
+    const { oethVault, oeth, weth, nativeStakingSSVStrategy, strategist } =
+      fixture;
     const { strategistAddr } = await getNamedAccounts();
 
     const unitAmount = await units(amount, asset);
@@ -117,13 +120,19 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
 
     await oethVault
       .connect(strategist)
-      .depositToStrategy(nativeStakingSSVStrategy.address, [asset.address], [unitAmount]);
+      .depositToStrategy(
+        nativeStakingSSVStrategy.address,
+        [asset.address],
+        [unitAmount]
+      );
 
     await oethVault.connect(user).allocate();
 
     const newBalance = await oeth.connect(user).balanceOf(user.address);
     const newSupply = await oeth.totalSupply();
-    const newStrategyBalance = await nativeStakingSSVStrategy.checkBalance(weth.address);
+    const newStrategyBalance = await nativeStakingSSVStrategy.checkBalance(
+      weth.address
+    );
 
     const balanceDiff = newBalance.sub(currentBalance);
     // Ensure user has correct balance (w/ 1% slippage tolerance)
@@ -135,5 +144,5 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
     expect(supplyDiff).to.approxEqualTolerance(oethUnitAmount, 1);
 
     expect(unitAmount).to.equal(newStrategyBalance.sub(currentStrategyBalance));
-  }
+  };
 });

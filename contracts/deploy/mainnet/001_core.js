@@ -1,7 +1,5 @@
 const hre = require("hardhat");
-const {
-  isFork,
-} = require("../../test/helpers.js");
+const { isFork } = require("../../test/helpers.js");
 
 const {
   deployOracles,
@@ -27,12 +25,10 @@ const {
   deployVaultValueChecker,
   deployWOusd,
   deployOETHSwapper,
-  deployOUSDSwapper
-} = require('../deployActions');
+  deployOUSDSwapper,
+} = require("../deployActions");
 
 const log = require("../../utils/logger")("deploy:001_core");
-
-
 
 const main = async () => {
   console.log("Running 001_core deployment...");
@@ -49,7 +45,10 @@ const main = async () => {
   await deployNativeStakingSSVStrategy();
   await deployFraxEthStrategy();
   const [ousdDripper, oethDripper] = await deployDrippers();
-  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(ousdDripper, oethDripper);
+  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(
+    ousdDripper,
+    oethDripper
+  );
   await configureVault();
   await configureOETHVault(false);
   await configureStrategies(harvesterProxy, oethHarvesterProxy);

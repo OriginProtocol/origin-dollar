@@ -47,7 +47,10 @@ async function signAndBroadcast() {
 
 signAndBroadcast()
   .then((transactionResponse) => {
-    console.log("Transaction broadcasted, transaction hash:", transactionResponse.hash);
+    console.log(
+      "Transaction broadcasted, transaction hash:",
+      transactionResponse.hash
+    );
   })
   .catch((error) => {
     console.error("Error:", error);

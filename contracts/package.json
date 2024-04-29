@@ -75,6 +75,7 @@
     "solhint": "^3.4.1",
     "solidifier": "^2.2.3",
     "solidity-coverage": "^0.8.2",
+    "ssv-scanner": "github:bloxapp/ssv-scanner",
     "sync-fetch": "^0.5.2",
     "web3-utils": "^1.5.2"
   },

@@ -1,5 +1,5 @@
 const fetch = require("sync-fetch");
-require('dotenv').config()
+require("dotenv").config();
 
 const isFork = process.env.FORK === "true";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
@@ -16,7 +16,7 @@ const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
- * - Reads the fork block number from environmental variables depending on the context of the run 
+ * - Reads the fork block number from environmental variables depending on the context of the run
  * - In case a local node is running (and it could have deployments executed) the updated block number is queried
  *   from the node and that one is used.
  * - Local node is forwarded by 40 blocks
@@ -26,29 +26,32 @@ const adjustTheForkBlockNumber = () => {
 
   if (isForkTest) {
     if (isArbForkTest) {
-      forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER ? process.env.ARBITRUM_BLOCK_NUMBER : undefined;
+      forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER
+        ? process.env.ARBITRUM_BLOCK_NUMBER
+        : undefined;
     } else if (isHoleskyForkTest) {
-      forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER ? process.env.HOLESKY_BLOCK_NUMBER : undefined;
+      forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER
+        ? process.env.HOLESKY_BLOCK_NUMBER
+        : undefined;
     } else {
-      forkBlockNumber = process.env.BLOCK_NUMBER ? process.env.BLOCK_NUMBER : undefined;
+      forkBlockNumber = process.env.BLOCK_NUMBER
+        ? process.env.BLOCK_NUMBER
+        : undefined;
     }
   }
 
   if (isForkTest && standaloneLocalNodeRunning) {
-    const jsonResponse = fetch(
-      providerUrl,
-      {
-        method: "post",
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_blockNumber",
-          id: 1,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    ).json();
+    const jsonResponse = fetch(providerUrl, {
+      method: "post",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_blockNumber",
+        id: 1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).json();
 
     /*
      * We source the block number from the hardhat context rather than from
@@ -83,7 +86,7 @@ const adjustTheForkBlockNumber = () => {
   }
 
   return forkBlockNumber;
-}
+};
 
 // returns hardhat network chainId and provider
 const getHardhatNetworkProperties = () => {
@@ -92,7 +95,8 @@ const getHardhatNetworkProperties = () => {
     chainId = 42161;
   } else if (isHoleskyFork && isFork) {
     chainId = 17000;
-  } else if (isFork) { // is mainnet fork
+  } else if (isFork) {
+    // is mainnet fork
     chainId = 1;
   }
 
@@ -103,7 +107,7 @@ const getHardhatNetworkProperties = () => {
     provider = holeskyProviderUrl;
   }
 
-  return { chainId, provider }
+  return { chainId, provider };
 };
 
 module.exports = {
@@ -119,4 +123,4 @@ module.exports = {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-}
+};

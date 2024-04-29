@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 
-const { 
+const {
   deployOracles,
   deployOETHCore,
   deployNativeStakingSSVStrategy,
@@ -9,27 +9,25 @@ const {
   configureOETHVault,
 } = require("../deployActions");
 
-const {
-  withConfirmation,
-} = require("../../utils/deploy");
+const { withConfirmation } = require("../../utils/deploy");
 
 const mainExport = async () => {
-	console.log("Running 001_core deployment on Holesky...");
-	const { governorAddr } = await getNamedAccounts();
-	const sGovernor = await ethers.provider.getSigner(governorAddr);
+  console.log("Running 001_core deployment on Holesky...");
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-	console.log("Deploying Oracles");
-	await deployOracles();
-	console.log("Deploying Core");
-	await deployOETHCore();
-	console.log("Deploying Native Staking");
-	await deployNativeStakingSSVStrategy();
-	
-	const cOETHDripper = await deployOETHDripper();
-	const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
-	await configureOETHVault(true);
+  console.log("Deploying Oracles");
+  await deployOracles();
+  console.log("Deploying Core");
+  await deployOETHCore();
+  console.log("Deploying Native Staking");
+  await deployNativeStakingSSVStrategy();
 
-	const cVault = await ethers.getContractAt(
+  const cOETHDripper = await deployOETHDripper();
+  const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
+  await configureOETHVault(true);
+
+  const cVault = await ethers.getContractAt(
     "IVault",
     (
       await ethers.getContract("OETHVaultProxy")
@@ -58,9 +56,7 @@ const mainExport = async () => {
   );
 
   await withConfirmation(
-    nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setRegistrator(governorAddr)
+    nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(governorAddr)
   );
 
   await withConfirmation(
@@ -69,8 +65,8 @@ const mainExport = async () => {
       .setAccountingGovernor(governorAddr)
   );
 
-	console.log("001_core deploy done.");
-	return true;
+  console.log("001_core deploy done.");
+  return true;
 };
 
 mainExport.id = "001_core";
