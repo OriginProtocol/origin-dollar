@@ -27,6 +27,8 @@ const {
   ousdUnits,
   units,
   isFork,
+  isHolesky,
+  isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -52,6 +54,139 @@ const { impersonateAndFund } = require("../utils/signers");
 const log = require("../utils/logger")("test:fixtures");
 
 let snapshotId;
+
+const simpleOETHFixture = deployments.createFixture(async () => {
+  if (!snapshotId && !isFork) {
+    snapshotId = await nodeSnapshot();
+  }
+
+  log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
+  log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
+  // Run the contract deployments
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true,
+    fallbackToGlobal: true,
+  });
+  log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
+  );
+
+  const oethOracleRouter = await ethers.getContract(
+    isFork ? "OETHOracleRouter" : "OracleRouter"
+  );
+
+  let weth, ssv, nativeStakingSSVStrategy, oethDripper;
+
+  if (isFork) {
+    let addressContext = addresses.mainnet;
+    if (isHolesky || isHoleskyFork) {
+      addressContext = addresses.holesky;
+    }
+
+    console.log("addressContext.WETH", addressContext.WETH);
+
+    weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
+    ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
+
+    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+    oethDripper = await ethers.getContractAt(
+      "OETHDripper",
+      oethDripperProxy.address
+    );
+
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
+  } else {
+    weth = await ethers.getContractAt("MockWETH");
+    ssv = await ethers.getContract("MockSSV");
+
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
+  }
+
+  if (!isFork) {
+    // Enable capital movement
+    await oethVault.connect(sGovernor).unpauseCapital();
+  }
+
+  const signers = await hre.ethers.getSigners();
+  let governor = signers[1];
+  let strategist = signers[0];
+
+  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
+
+  if (isFork) {
+    governor = await ethers.provider.getSigner(governorAddr);
+    strategist = await ethers.provider.getSigner(strategistAddr);
+
+    for (const user of [matt, josh, anna, domen, daniel, franck]) {
+      // Everyone gets free weth
+      await setERC20TokenBalance(user.address, weth, "1000000", hre);
+      // And vault can rug them all
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  } else {
+    // Fund WETH contract
+    await hardhatSetBalance(weth.address, "999999999999999");
+
+    // Fund all with mockTokens
+    await fundAccountsForOETHUnitTests();
+
+    // Reset allowances
+    for (const user of [matt, josh, domen, daniel, franck]) {
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  }
+
+  return {
+    // Accounts
+    matt,
+    josh,
+    anna,
+    governor,
+    strategist,
+    domen,
+    daniel,
+    franck,
+    // Contracts
+    oethOracleRouter,
+    // Assets
+    ssv,
+    weth,
+    // OETH
+    oethVault,
+    oeth,
+    nativeStakingSSVStrategy,
+    oethDripper,
+    oethHarvester,
+  };
+});
 
 const defaultFixture = deployments.createFixture(async () => {
   if (!snapshotId && !isFork) {
@@ -2215,6 +2350,10 @@ async function loadDefaultFixture() {
   return await defaultFixture();
 }
 
+async function loadSimpleOETHFixture() {
+  return await simpleOETHFixture();
+}
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -2223,7 +2362,9 @@ mocha.after(async () => {
 
 module.exports = {
   createFixtureLoader,
+  simpleOETHFixture,
   loadDefaultFixture,
+  loadSimpleOETHFixture,
   resetAllowance,
   defaultFixture,
   oethDefaultFixture,

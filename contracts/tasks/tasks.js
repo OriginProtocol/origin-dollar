@@ -1,10 +1,12 @@
 const { subtask, task, types } = require("hardhat/config");
-
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
+const addresses = require("../utils/addresses");
+const { networkMap } = require("../utils/hardhat-helpers");
+
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -46,6 +48,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const { printClusterInfo } = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -53,6 +56,7 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -739,3 +743,34 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
     types.int
   )
   .setAction(proxyUpgrades);
+
+subtask("getClusterInfo", "Print out information regarding SSV cluster")
+  .addParam(
+    "operatorids",
+    "4 operator ids separated with a dot: same as IP format. E.g. 60.79.220.349",
+    "",
+    types.string
+  )
+  .addParam(
+    "owner",
+    "Address of the cluster owner. Default to NodeDelegator",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const network = await ethers.provider.getNetwork();
+    const ssvNetwork = addresses[networkMap[network.chainId]].SSVNetwork;
+
+    log(
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network.name} network using ssvNetworkContract ${ssvNetwork}`
+    );
+    await printClusterInfo({
+      ...taskArgs,
+      ownerAddress: taskArgs.owner,
+      chainId: network.chainId,
+      ssvNetwork,
+    });
+  });
+task("getClusterInfo").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
