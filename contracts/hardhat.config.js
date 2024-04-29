@@ -75,7 +75,6 @@ if (process.env.HARDHAT_CACHE_DIR) {
 }
 const { provider, chainId } = getHardhatNetworkProperties();
 
-console.log("PATHS", paths);
 module.exports = {
   solidity: {
     version: "0.8.7",
