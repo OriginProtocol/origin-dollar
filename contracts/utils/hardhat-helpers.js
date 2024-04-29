@@ -111,11 +111,11 @@ const getHardhatNetworkProperties = () => {
 };
 
 const networkMap = {
-  "1": "mainnet",
-  "17000": "holesky",
-  "42161": "arbitrumOne",
-  "1337": "hardhat"
-}
+  1: "mainnet",
+  17000: "holesky",
+  42161: "arbitrumOne",
+  1337: "hardhat",
+};
 
 module.exports = {
   isFork,
@@ -130,5 +130,5 @@ module.exports = {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-  networkMap
+  networkMap,
 };
