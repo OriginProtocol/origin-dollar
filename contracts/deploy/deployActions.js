@@ -8,10 +8,7 @@ const {
   isMainnetOrFork,
   isHolesky,
 } = require("../test/helpers.js");
-const {
-  deployWithConfirmation,
-  withConfirmation,
-} = require("../utils/deploy");
+const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
