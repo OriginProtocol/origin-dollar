@@ -99,13 +99,16 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         whenNotPaused
         returns (bool accountingValid)
     {
-        accountingValid = _doAccounting();
+        // pause the accounting on failure
+        accountingValid = _doAccounting(true);
     }
 
-    function _doAccounting() internal returns (bool accountingValid) {
+    function _doAccounting(
+        bool pauseOnFail
+    ) internal returns (bool accountingValid) {
         if (address(this).balance < consensusRewards) {
             // pause if not already
-            if (!paused()) {
+            if (pauseOnFail) {
                 _pause();
             }
             // fail the accounting
@@ -161,7 +164,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // Oh no... Fuse is blown. The Strategist needs to adjust the accounting values.
         else {
             // pause if not already
-            if (!paused()) {
+            if (pauseOnFail) {
                 _pause();
             }
             // fail the accounting
@@ -179,15 +182,15 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         uint256 _wethToVaultAmount
     ) external onlyStrategist whenPaused {
         require(
-            _validatorsDelta >= -1 &&
-                _validatorsDelta <= 1 &&
+            _validatorsDelta >= -3 &&
+                _validatorsDelta <= 3 &&
                 // new value must be positive
                 int256(activeDepositedValidators) + _validatorsDelta >= 0,
             "invalid validatorsDelta"
         );
         require(
-            _consensusRewardsDelta >= -32 ether &&
-                _consensusRewardsDelta <= 32 ether &&
+            _consensusRewardsDelta >= -332 ether &&
+                _consensusRewardsDelta <= 332 ether &&
                 // new value must be positive
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
             "invalid consensusRewardsDelta"
@@ -214,7 +217,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         }
 
         // rerun the accounting to see if it has now been fixed.
-        require(_doAccounting(), "fuse still blown");
+        // Do not pause the accounting on failure as it is already paused
+        require(_doAccounting(false), "fuse still blown");
 
         // unpause since doAccounting was successful
         _unpause();

@@ -66,7 +66,7 @@
 <text text-anchor="start" x="8" y="-1319.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_msgData(): bytes &lt;&lt;Context&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1302.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_pause() &lt;&lt;whenNotPaused&gt;&gt; &lt;&lt;Pausable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1285.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unpause() &lt;&lt;whenPaused&gt;&gt; &lt;&lt;Pausable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1268.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_doAccounting(): (accountingValid: bool) &lt;&lt;ValidatorAccountant&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1268.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_doAccounting(pauseOnFail: bool): (accountingValid: bool) &lt;&lt;ValidatorAccountant&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1251.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_initialize(_rewardTokenAddresses: address[], _assets: address[], _pTokens: address[]) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1235.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_collectRewardTokens() &lt;&lt;whenNotPaused&gt;&gt; &lt;&lt;NativeStakingSSVStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1218.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_setPTokenAddress(_asset: address, _pToken: address) &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>

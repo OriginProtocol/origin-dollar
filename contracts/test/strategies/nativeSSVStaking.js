@@ -156,10 +156,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .to.emit(nativeStakingSSVStrategy, "FuseIntervalUpdated")
         .withArgs(fuseStartBn, fuseEndBn);
     });
-
-    it("Only strategist can call fix accounting", async () => {
-      // TODO
-    });
   });
 
   describe("Accounting", function () {
@@ -545,14 +541,14 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       ).to.be.revertedWith("Pausable: not paused");
     });
 
-    it("Validators delta should not be >=-1 and <=1 for fix accounting function", async () => {
+    it("Validators delta should not be <-4 or >4 for fix accounting function", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
-          -2, //_validatorsDelta
+          -4, //_validatorsDelta
           0, //_consensusRewardsDelta
           0 //_wethToVault
         )
@@ -560,14 +556,14 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
-          2, //_validatorsDelta
+          4, //_validatorsDelta
           0, //_consensusRewardsDelta
           0 //_wethToVault
         )
       ).to.be.revertedWith("invalid validatorsDelta");
     });
 
-    it("Consensus rewards delta should not be >=-32 and <=32 for fix accounting function", async () => {
+    it("Consensus rewards delta should not be <-333> and >333 for fix accounting function", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -575,7 +571,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
-          parseEther("-33"), //_consensusRewardsDelta
+          parseEther("-333"), //_consensusRewardsDelta
           0 //_wethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
@@ -583,7 +579,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
-          parseEther("33"), //_consensusRewardsDelta
+          parseEther("333"), //_consensusRewardsDelta
           0 //_wethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
@@ -603,45 +599,46 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       ).to.be.revertedWith("invalid wethToVaultAmount");
     });
 
-    it("Should allow strategist to recover paused contract by changing validators", async () => {
-      const { nativeStakingSSVStrategy, strategist } = fixture;
-
-      await setActiveDepositedValidators(10, nativeStakingSSVStrategy);
-
-      for (const validatorsDelta of [-1, 0, 1]) {
-        await nativeStakingSSVStrategy.connect(strategist).pause();
-        const activeDepositedValidatorsBefore =
-          await nativeStakingSSVStrategy.activeDepositedValidators();
-
-        const tx = await nativeStakingSSVStrategy
-          .connect(strategist)
-          .manuallyFixAccounting(validatorsDelta, 0, 0);
-
-        expect(tx)
-          .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
-          .withArgs(validatorsDelta, 0, 0);
-
-        expect(
-          await nativeStakingSSVStrategy.activeDepositedValidators()
-        ).to.equal(
-          activeDepositedValidatorsBefore.add(validatorsDelta),
-          "active deposited validators not updated"
-        );
-      }
-    });
-
     describe("Should allow strategist to recover paused contract", async () => {
-      for (const delta of [-32, -20, -1, 0, 1, 20, 32]) {
-        it(`Should allow strategist to recover paused contract by changing ${delta} consensus rewards`, async () => {
+      for (const validatorsDelta of [-3, -2, -1, 0, 1, 2, 3]) {
+        it(`by changing validators by ${validatorsDelta}`, async () => {
           const { nativeStakingSSVStrategy, strategist } = fixture;
 
-          await setBalance(nativeStakingSSVStrategy.address, parseEther("68"));
-          await setConsensusRewards(parseEther("35"), nativeStakingSSVStrategy);
           await setActiveDepositedValidators(10, nativeStakingSSVStrategy);
 
           await nativeStakingSSVStrategy.connect(strategist).pause();
-          const consensusRewardsBefore =
-            await nativeStakingSSVStrategy.consensusRewards();
+          const activeDepositedValidatorsBefore =
+            await nativeStakingSSVStrategy.activeDepositedValidators();
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(validatorsDelta, 0, 0);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(validatorsDelta, 0, 0);
+
+          expect(
+            await nativeStakingSSVStrategy.activeDepositedValidators()
+          ).to.equal(
+            activeDepositedValidatorsBefore.add(validatorsDelta),
+            "active deposited validators not updated"
+          );
+        });
+      }
+
+      for (const delta of [-332, -320, -1, 0, 1, 320, 332]) {
+        it(`by changing consensus rewards by ${delta}`, async () => {
+          const { nativeStakingSSVStrategy, strategist } = fixture;
+
+          await setBalance(nativeStakingSSVStrategy.address, parseEther("670"));
+          await setConsensusRewards(
+            parseEther("336"),
+            nativeStakingSSVStrategy
+          );
+          await setActiveDepositedValidators(10000, nativeStakingSSVStrategy);
+
+          await nativeStakingSSVStrategy.connect(strategist).pause();
           const consensusRewardsDelta = parseEther(delta.toString());
 
           const tx = await nativeStakingSSVStrategy
@@ -652,69 +649,79 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
             .withArgs(0, consensusRewardsDelta, 0);
 
-          // TODO fix this test
-          // expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
-          //   consensusRewardsBefore.add(consensusRewardsDelta),
-          //   "consensus rewards not updated"
-          // );
+          expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            ),
+            "consensus rewards matches eth balance"
+          );
         });
       }
-    });
 
-    it("Should allow strategist to recover paused contract by changing WETH to vault", async () => {
-      const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
+      it("by sending WETH to vault", async () => {
+        const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
 
-      await weth
-        .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, parseEther("100"));
+        await weth
+          .connect(josh)
+          .transfer(nativeStakingSSVStrategy.address, parseEther("100"));
 
-      for (const wethInEthers of [0, 1, 26, 32]) {
+        for (const wethInEthers of [0, 1, 26, 32]) {
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          const wethBefore = await weth.balanceOf(
+            nativeStakingSSVStrategy.address
+          );
+          const wethToVault = parseEther(wethInEthers.toString());
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(0, 0, wethToVault);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(0, 0, wethToVault);
+
+          expect(
+            await weth.balanceOf(nativeStakingSSVStrategy.address)
+          ).to.equal(
+            wethBefore.sub(wethToVault),
+            "consensus rewards not updated"
+          );
+
+          expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            ),
+            "consensus rewards matches eth balance"
+          );
+        }
+      });
+
+      it("by changing all three manuallyFixAccounting delta values", async () => {
+        const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
+
+        await setBalance(nativeStakingSSVStrategy.address, parseEther("5"));
+        await weth
+          .connect(josh)
+          .transfer(nativeStakingSSVStrategy.address, parseEther("5"));
+
         await nativeStakingSSVStrategy.connect(strategist).pause();
-        const wethBefore = await weth.balanceOf(
-          nativeStakingSSVStrategy.address
-        );
-        const wethToVault = parseEther(wethInEthers.toString());
-
+        // unit test fixture sets OUSD governor as accounting governor
         const tx = await nativeStakingSSVStrategy
           .connect(strategist)
-          .manuallyFixAccounting(0, 0, wethToVault);
+          .manuallyFixAccounting(
+            1, //_validatorsDelta
+            parseEther("2.3"), //_consensusRewardsDeltaDelta
+            parseEther("2.2") //_wethToVault
+          );
 
         expect(tx)
           .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
-          .withArgs(0, 0, wethToVault);
-
-        expect(await weth.balanceOf(nativeStakingSSVStrategy.address)).to.equal(
-          wethBefore.sub(wethToVault),
-          "consensus rewards not updated"
-        );
-      }
-    });
-
-    it("Should allow strategist to recover paused contract and correct the accounting state", async () => {
-      const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
-
-      await setBalance(nativeStakingSSVStrategy.address, parseEther("5"));
-      await weth
-        .connect(josh)
-        .transfer(nativeStakingSSVStrategy.address, parseEther("5"));
-
-      await nativeStakingSSVStrategy.connect(strategist).pause();
-      // unit test fixture sets OUSD governor as accounting governor
-      const tx = await nativeStakingSSVStrategy
-        .connect(strategist)
-        .manuallyFixAccounting(
-          1, //_validatorsDelta
-          parseEther("2.3"), //_consensusRewardsDeltaDelta
-          parseEther("2.2") //_wethToVault
-        );
-
-      expect(tx)
-        .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
-        .withArgs(
-          1, // validatorsDelta
-          parseEther("2.3"), // consensusRewards
-          parseEther("2.2") // wethToVault
-        );
+          .withArgs(
+            1, // validatorsDelta
+            parseEther("2.3"), // consensusRewards
+            parseEther("2.2") // wethToVault
+          );
+      });
     });
   });
 
