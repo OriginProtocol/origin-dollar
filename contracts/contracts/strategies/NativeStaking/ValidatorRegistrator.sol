@@ -134,7 +134,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 bytes11(0),
                 address(this)
             );
-            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit(
+            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{ value: 32 ether }(
                 validators[i].pubkey,
                 withdrawal_credentials,
                 validators[i].signature,
