@@ -1,6 +1,19 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
-const fetch = require("sync-fetch");
+const {
+  isFork,
+  isArbitrumFork,
+  isHoleskyFork,
+  isHolesky,
+  isForkTest,
+  isArbForkTest,
+  isHoleskyForkTest,
+  providerUrl,
+  arbitrumProviderUrl,
+  holeskyProviderUrl,
+  adjustTheForkBlockNumber,
+  getHardhatNetworkProperties,
+} = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
@@ -29,6 +42,7 @@ const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
+const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -46,63 +60,20 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-const isFork = process.env.FORK === "true";
-const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
-const isForkTest = isFork && process.env.IS_TEST === "true";
-const isArbForkTest = isForkTest && isArbitrumFork;
-const providerUrl = `${
-  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-}`;
-const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
-const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
+let forkBlockNumber = adjustTheForkBlockNumber();
 
-let forkBlockNumber =
-  Number(
-    isArbForkTest ? process.env.ARBITRUM_BLOCK_NUMBER : process.env.BLOCK_NUMBER
-  ) || undefined;
-if (isForkTest && standaloneLocalNodeRunning) {
-  const jsonResponse = fetch(
-    isArbForkTest ? arbitrumProviderUrl : providerUrl,
-    {
-      method: "post",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_blockNumber",
-        id: 1,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  ).json();
-
-  /*
-   * We source the block number from the hardhat context rather than from
-   * node-test.sh startup script, so that block number from an already
-   * running local node can be fetched after the deployments have already
-   * been applied.
-   *
-   */
-  forkBlockNumber = parseInt(jsonResponse.result, 16);
-
-  console.log(`Connecting to local node on block: ${forkBlockNumber}`);
-
-  // Mine 40 blocks so hardhat wont complain about block fork being too recent
-  fetch(isArbForkTest ? arbitrumProviderUrl : providerUrl, {
-    method: "post",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "hardhat_mine",
-      params: ["0x28"], // 40
-      id: 1,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).json();
-} else if (isForkTest) {
-  console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
+const paths = {};
+if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
+  // holesky deployment files are in contracts/deploy/holesky
+  paths.deploy = "deploy/holesky";
+} else {
+  // holesky deployment files are in contracts/deploy/mainnet
+  paths.deploy = "deploy/mainnet";
 }
+if (process.env.HARDHAT_CACHE_DIR) {
+  paths.cache = process.env.HARDHAT_CACHE_DIR;
+}
+const { provider, chainId } = getHardhatNetworkProperties();
 
 module.exports = {
   solidity: {
@@ -124,7 +95,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: isFork ? (isArbitrumFork ? 42161 : 1) : 1337,
+      chainId,
       ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
       ...(isForkTest
         ? {
@@ -132,7 +103,7 @@ module.exports = {
             initialBaseFeePerGas: 0,
             forking: {
               enabled: true,
-              url: isArbForkTest ? arbitrumProviderUrl : providerUrl,
+              url: provider,
               blockNumber: forkBlockNumber,
               timeout: 0,
             },
@@ -154,6 +125,15 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
     },
+    holesky: {
+      url: holeskyProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 17000,
+      live: true,
+    },
     arbitrumOne: {
       url: arbitrumProviderUrl,
       accounts: [
@@ -167,11 +147,6 @@ module.exports = {
       // Fails if gas limit is anything less than 20M on Arbitrum One
       gas: 20000000,
       // initialBaseFeePerGas: 0,
-      // forking: {
-      //   enabled: true,
-      //   url: arbitrumProviderUrl,
-      //   timeout: 0
-      // }
     },
   },
   mocha: {
@@ -182,17 +157,39 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
-      hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 0,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 0,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
+      holesky: HOLESKY_DEPLOYER,
     },
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
-      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 1,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_DEPLOYER
+          : 1,
       mainnet: MAINNET_GOVERNOR,
+      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -243,9 +240,20 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
-      hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
+      localhost:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_STRATEGIST
+          : 0,
+      hardhat:
+        process.env.FORK === "true"
+          ? isHoleskyFork
+            ? HOLESKY_DEPLOYER
+            : MAINNET_STRATEGIST
+          : 0,
       mainnet: MAINNET_STRATEGIST,
+      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
     },
   },
   contractSizer: {
@@ -256,14 +264,21 @@ module.exports = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
+      holesky: process.env.ETHERSCAN_API_KEY,
     },
+    customChains: [
+      {
+        network: "holesky",
+        chainId: 17000,
+        urls: {
+          apiURL: "https://api-holesky.etherscan.io/api",
+          browserURL: "https://holesky.etherscan.io",
+        },
+      },
+    ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
-  paths: process.env.HARDHAT_CACHE_DIR
-    ? {
-        cache: process.env.HARDHAT_CACHE_DIR,
-      }
-    : {},
+  paths,
 };
