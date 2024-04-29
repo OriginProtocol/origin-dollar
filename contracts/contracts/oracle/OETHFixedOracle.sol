@@ -15,6 +15,7 @@ contract OETHFixedOracle is OETHOracleRouter {
      * @return feedAddress address of the price feed for the asset
      * @return maxStaleness maximum acceptable data staleness duration
      */
+    // solhint-disable-next-line no-unused-vars
     function feedMetadata(address asset)
         internal
         view

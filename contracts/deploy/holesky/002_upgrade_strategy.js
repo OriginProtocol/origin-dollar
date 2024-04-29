@@ -1,10 +1,7 @@
-const hre = require("hardhat");
 const { upgradeNativeStakingSSVStrategy } = require("../deployActions");
 
 const mainExport = async () => {
   console.log("Running 002 deployment on Holesky...");
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   console.log("Upgrading native staking strategy");
   await upgradeNativeStakingSSVStrategy();

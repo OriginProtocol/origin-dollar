@@ -132,7 +132,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
 
   if (!isFork) {
     // Enable capital movement
-    await vault.connect(sGovernor).unpauseCapital();
+    await oethVault.connect(sGovernor).unpauseCapital();
   }
 
   const signers = await hre.ethers.getSigners();
@@ -160,9 +160,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      for (const asset of [weth, reth, stETH, frxETH, sfrxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
+      await resetAllowance(weth, user, oethVault.address);
     }
   }
 

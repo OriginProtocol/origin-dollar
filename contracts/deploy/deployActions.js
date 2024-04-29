@@ -5,15 +5,12 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isFork,
   isMainnetOrFork,
   isHolesky,
-  isExternalNet,
 } = require("../test/helpers.js");
 const {
   deployWithConfirmation,
   withConfirmation,
-  sleep,
 } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
@@ -801,7 +798,7 @@ const deployFraxEthStrategy = async () => {
  */
 const upgradeNativeStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const strategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"

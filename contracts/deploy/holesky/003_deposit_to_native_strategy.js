@@ -1,4 +1,3 @@
-const hre = require("hardhat");
 const { utils, BigNumber } = require("ethers");
 const { withConfirmation } = require("../../utils/deploy");
 

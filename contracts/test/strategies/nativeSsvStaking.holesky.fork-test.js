@@ -45,12 +45,12 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
 
   describe("Deposit/Allocation register validators", function () {
     it("Should mint using WETH and see balance on the strategy contract", async () => {
-      const { nativeStakingSSVStrategy, josh, weth } = fixture;
+      const { josh, weth } = fixture;
       await mintTest(fixture, josh, weth, "32");
     });
 
     it("Should mint using WETH and deposit to a validator", async () => {
-      const { nativeStakingSSVStrategy, josh, weth } = fixture;
+      const { josh, weth } = fixture;
       await mintTest(fixture, josh, weth, "32");
 
       await registerAndDepositTest(fixture);
@@ -96,7 +96,6 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
   const mintTest = async (fixture, user, asset, amount = "32") => {
     const { oethVault, oeth, weth, nativeStakingSSVStrategy, strategist } =
       fixture;
-    const { strategistAddr } = await getNamedAccounts();
 
     const unitAmount = await units(amount, asset);
 

@@ -1,4 +1,3 @@
-const hre = require("hardhat");
 const { isFork } = require("../../test/helpers.js");
 
 const {
@@ -27,8 +26,6 @@ const {
   deployOETHSwapper,
   deployOUSDSwapper,
 } = require("../deployActions");
-
-const log = require("../../utils/logger")("deploy:001_core");
 
 const main = async () => {
   console.log("Running 001_core deployment...");
