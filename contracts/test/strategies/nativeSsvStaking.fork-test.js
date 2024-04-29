@@ -117,21 +117,6 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         "0x0d12c28849771f3f946d8d705a1f73683d97add9edaec5e6b30650cc03bc57d5",
     };
 
-    beforeEach(async () => {
-      const { nativeStakingSSVStrategy, ssv } = fixture;
-      // Add some ETH to the Defender Relayer account
-      // TODO this can be removed once the account is funded on mainnet
-      await impersonateAndFund(addresses.mainnet.validatorRegistrator, 1);
-
-      // Fund some SSV to the native staking strategy
-      const ssvWhale = await impersonateAndFund(
-        "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
-      );
-      await ssv
-        .connect(ssvWhale)
-        .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
-    });
-
     it("Should register and staked 32 ETH by validator registrator", async () => {
       const { weth, domen, nativeStakingSSVStrategy, validatorRegistrator } =
         fixture;
@@ -149,6 +134,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         chainId: 1,
         ssvNetwork: addresses.mainnet.SSVNetwork,
       });
+      // const cluster = ["0", "0", "0", true, "0"];
       const stakeAmount = oethUnits("32");
 
       // Register a new validator with the SSV Network

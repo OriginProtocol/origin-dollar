@@ -1551,14 +1551,24 @@ async function nativeStakingSSVStrategyFixture() {
   });
 
   if (isFork) {
-    const { oethVault, weth, nativeStakingSSVStrategy, timelock } = fixture;
+    const { oethVault, weth, nativeStakingSSVStrategy, ssv, timelock } =
+      fixture;
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
 
-    fixture.validatorRegistrator = await ethers.provider.getSigner(
+    // The Defender Relayer
+    fixture.validatorRegistrator = await impersonateAndFund(
       addresses.mainnet.validatorRegistrator
     );
+
+    // Fund some SSV to the native staking strategy
+    const ssvWhale = await impersonateAndFund(
+      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
+    );
+    await ssv
+      .connect(ssvWhale)
+      .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
   } else {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, nativeStakingSSVStrategy } = fixture;

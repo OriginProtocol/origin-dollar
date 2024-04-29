@@ -1,9 +1,11 @@
-const { logTxDetails } = require("../utils/txLogger");
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const { ClusterScanner, NonceScanner } = require("ssv-scanner");
 const { SSVKeys, KeyShares, KeySharesItem } = require("ssv-keys");
 const path = require("path");
 const fsp = require("fs").promises;
+
+const { isForkWithLocalNode } = require("../test/helpers");
+const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("utils:ssv");
 
@@ -126,7 +128,9 @@ const getClusterInfo = async ({
 }) => {
   const ssvNetworkName = chainId === 1 ? "MAINNET" : "HOLESKY";
   log(`SSV network: ${ssvNetworkName}`);
-  const providerUrl = process.env.PROVIDER_URL;
+  const providerUrl = isForkWithLocalNode
+    ? "http://localhost:8545/"
+    : process.env.PROVIDER_URL;
   log(`Provider URL: ${providerUrl}`);
 
   const params = {
