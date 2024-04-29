@@ -9,6 +9,7 @@ const {
   advanceTime,
   advanceBlocks,
   isMainnet,
+  isHolesky,
   isFork,
   isMainnetOrFork,
   getOracleAddresses,
@@ -42,7 +43,8 @@ const {
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
-const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -705,7 +707,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {
@@ -962,45 +966,41 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    if (proposal.actions.length == 0) {
-      console.log("No actions. Skipping governance");
-    } else {
-      if (isMainnet) {
-        // On Mainnet, only build the propose transaction for OGV governance
-        log("Building OGV governance proposal...");
-        if (deployerIsProposer) {
-          await submitProposalToOgvGovernance(
-            propArgs,
-            propDescription,
-            propOpts
-          );
-        } else {
-          await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
-        }
-        log("Proposal sent.");
-      } else if (isFork) {
-        // On Fork we can send the proposal then impersonate the guardian to execute it.
-        log("Sending the governance proposal to OGV governance");
-        propOpts.reduceQueueTime = reduceQueueTime;
-        const { proposalState, proposalId, proposalIdBn } =
-          await submitProposalToOgvGovernance(
-            propArgs,
-            propDescription,
-            propOpts
-          );
-        log("Executing the proposal");
-        await executeGovernanceProposalOnFork({
-          proposalIdBn,
-          proposalState,
-          reduceQueueTime,
-          executeGasLimit,
-        });
-        log("Proposal executed.");
-      } else {
-        throw new Error(
-          "deploymentWithGovernanceProposal not supported in local node environment"
+    if (isMainnet) {
+      // On Mainnet, only build the propose transaction for OGV governance
+      log("Building OGV governance proposal...");
+      if (deployerIsProposer) {
+        await submitProposalToOgvGovernance(
+          propArgs,
+          propDescription,
+          propOpts
         );
+      } else {
+        await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
       }
+      log("Proposal sent.");
+    } else if (isFork) {
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending the governance proposal to OGV governance");
+      propOpts.reduceQueueTime = reduceQueueTime;
+      const { proposalState, proposalId, proposalIdBn } =
+        await submitProposalToOgvGovernance(
+          propArgs,
+          propDescription,
+          propOpts
+        );
+      log("Executing the proposal");
+      await executeGovernanceProposalOnFork({
+        proposalIdBn,
+        proposalState,
+        reduceQueueTime,
+        executeGasLimit,
+      });
+      log("Proposal executed.");
+    } else {
+      throw new Error(
+        "deploymentWithGovernanceProposal not supported in local node environment"
+      );
     }
   };
 
