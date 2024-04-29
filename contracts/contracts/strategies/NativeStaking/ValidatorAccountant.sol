@@ -103,9 +103,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         accountingValid = _doAccounting(true);
     }
 
-    function _doAccounting(
-        bool pauseOnFail
-    ) internal returns (bool accountingValid) {
+    function _doAccounting(bool pauseOnFail)
+        internal
+        returns (bool accountingValid)
+    {
         if (address(this).balance < consensusRewards) {
             // pause if not already
             if (pauseOnFail) {
