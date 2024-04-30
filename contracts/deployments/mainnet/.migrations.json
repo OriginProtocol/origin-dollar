@@ -81,5 +81,6 @@
   "087_reduce_redeem_fee": 1710470610,
   "089_1inch_buyback": 1711371391,
   "090_disable_compound": 1711469659,
+  "091_simplified_oeth_vault": 1714138519,
   "092_woeth_ccip_zapper": 1714111493
 }
