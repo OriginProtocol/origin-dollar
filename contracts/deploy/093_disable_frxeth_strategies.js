@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId:
-      "83580898965808725375888139100046802775881006834154592210638204262085739243220",
+      "44277089853749395103495090988298299772264220800986246762669183539782770414789",
   },
   async ({ ethers }) => {
     // Current contracts
@@ -21,6 +21,11 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Remove OETH frxETH Strategies",
       actions: [
+        {
+          contract: cVault,
+          signature: "setAssetDefaultStrategy(address,address)",
+          args: [addresses.mainnet.frxETH, addresses.zero],
+        },
         {
           contract: cVault,
           signature: "removeStrategy(address)",
