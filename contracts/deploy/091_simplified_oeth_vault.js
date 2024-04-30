@@ -29,7 +29,7 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Simplified OETH mint and redeem\n\
     \n\
-    Part of simplified OETH proposal. Trims down mint and redeem complexity on OETH Vault. Set redeem fees to zero. \
+    Part of simplified OETH proposal. Makes redeem WETH-only (no more LST-mix redeem). \
     ",
       actions: [
         {
