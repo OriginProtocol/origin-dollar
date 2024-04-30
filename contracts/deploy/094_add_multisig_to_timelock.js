@@ -13,8 +13,12 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ ethers }) => {
     const TIMELOCK_ADMIN_ROLE =
       "0x5f58e3a2316349923ce3780f8d587db2d72378aed66a8261c916544fa6846ca5"; // keccak256("TIMELOCK_ADMIN_ROLE");
-    const TIMELOCK_PROPOSER_ROLE =
-      "0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1"; // keccak256("TIMELOCK_PROPOSER_ROLE");
+    const PROPOSER_ROLE =
+      "0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1"; // keccak256("PROPOSER_ROLE");
+    const EXECUTOR_ROLE =
+      "0xd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e63"; // keccak256("EXECUTOR_ROLE");
+    const CANCELLER_ROLE =
+      "0xfd643c72710c63c0180259aba6b2d05451e3591a24e58b62239378085726f783"; // keccak256("CANCELLER_ROLE");
     const cTimelock = await ethers.getContractAt(
       "ITimelockController",
       addresses.mainnet.Timelock
@@ -34,7 +38,17 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cTimelock,
           signature: "grantRole(bytes32,address)",
-          args: [TIMELOCK_PROPOSER_ROLE, addresses.mainnet.Guardian],
+          args: [PROPOSER_ROLE, addresses.mainnet.Guardian],
+        },
+        {
+          contract: cTimelock,
+          signature: "grantRole(bytes32,address)",
+          args: [EXECUTOR_ROLE, addresses.mainnet.Guardian],
+        },
+        {
+          contract: cTimelock,
+          signature: "grantRole(bytes32,address)",
+          args: [CANCELLER_ROLE, addresses.mainnet.Guardian],
         },
       ],
     };
