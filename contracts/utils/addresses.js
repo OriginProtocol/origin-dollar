@@ -117,6 +117,10 @@ addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 addresses.mainnet.chainlinkBAL_ETH =
   "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
+addresses.mainnet.ccipRouterMainnet =
+  "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
+addresses.mainnet.ccipWoethTokenPool =
+  "0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0";
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
