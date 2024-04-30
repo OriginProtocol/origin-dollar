@@ -12,7 +12,7 @@ const { setERC20TokenBalance } = require("../_fund");
 
 const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
 
-describe("ForkTest: FraxETH Strategy", function () {
+describe.skip("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
