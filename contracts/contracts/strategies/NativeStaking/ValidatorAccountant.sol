@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { ValidatorRegistrator } from "./ValidatorRegistrator.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
