@@ -361,6 +361,7 @@ const defaultFixture = deployments.createFixture(async () => {
     convexEthMetaStrategy,
     fluxStrategy,
     nativeStakingSSVStrategy,
+    nativeStakingFeeAccumulator,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -503,6 +504,14 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingSSVStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
+    );
+
+    const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
+      "NativeStakingFeeAccumulatorProxy"
+    );
+    nativeStakingFeeAccumulator = await ethers.getContractAt(
+      "FeeAccumulator",
+      nativeStakingFeeAccumulatorProxy.address
     );
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
@@ -759,6 +768,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     fraxEthStrategy,
     nativeStakingSSVStrategy,
+    nativeStakingFeeAccumulator,
     frxEthRedeemStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -1569,6 +1579,11 @@ async function nativeStakingSSVStrategyFixture() {
     await ssv
       .connect(ssvWhale)
       .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
+
+    fixture.ssvNetwork = await ethers.getContractAt(
+      "ISSVNetwork",
+      addresses.mainnet.SSVNetwork
+    );
   } else {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, nativeStakingSSVStrategy } = fixture;

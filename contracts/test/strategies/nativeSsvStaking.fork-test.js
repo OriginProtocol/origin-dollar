@@ -1,5 +1,9 @@
 const { expect } = require("chai");
 const { AddressZero } = require("@ethersproject/constants");
+const {
+  setBalance,
+  setStorageAt,
+} = require("@nomicfoundation/hardhat-network-helpers");
 
 const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
@@ -10,6 +14,7 @@ const {
   createFixtureLoader,
   nativeStakingSSVStrategyFixture,
 } = require("./../_fixture");
+const { parseEther } = require("ethers/lib/utils");
 
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 
@@ -104,7 +109,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe("Spin up a new validator", function () {
+  describe("Validator operations", function () {
     const testValidator = {
       publicKey:
         "0xad9ade40c386259fe4161ec12d7746ab49a098a4760a279c56dc7e26b56fc4d985e74eeecdd2bc5a1decceb5174204f4",
@@ -117,13 +122,18 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         "0x0d12c28849771f3f946d8d705a1f73683d97add9edaec5e6b30650cc03bc57d5",
     };
 
-    it("Should register and staked 32 ETH by validator registrator", async () => {
-      const { weth, domen, nativeStakingSSVStrategy, validatorRegistrator } =
-        fixture;
+    beforeEach(async () => {
+      const { weth, domen, nativeStakingSSVStrategy } = fixture;
+
       // Add 32 WETH to the strategy so it can be staked
       await weth
         .connect(domen)
         .transfer(nativeStakingSSVStrategy.address, oethUnits("32"));
+    });
+
+    it("Should register and staked 32 ETH by validator registrator", async () => {
+      const { weth, nativeStakingSSVStrategy, validatorRegistrator } = fixture;
+
       const strategyWethBalanceBefore = await weth.balanceOf(
         nativeStakingSSVStrategy.address
       );
@@ -176,25 +186,219 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         )
       );
     });
+
+    it("Should exit and remove validator by validator registrator", async () => {
+      const { nativeStakingSSVStrategy, ssvNetwork, validatorRegistrator } =
+        fixture;
+
+      const cluster = ["0", "0", "0", true, "0"];
+      const stakeAmount = oethUnits("32");
+
+      // Register a new validator with the SSV network
+      const regTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          stakeAmount,
+          cluster
+        );
+      const regReceipt = await regTx.wait();
+      const ValidatorAddedEvent = ssvNetwork.interface.parseLog(
+        regReceipt.events[2]
+      );
+      const { cluster: newCluster } = ValidatorAddedEvent.args;
+
+      // Stake 32 ETH to the new validator
+      await nativeStakingSSVStrategy.connect(validatorRegistrator).stakeEth([
+        {
+          pubkey: testValidator.publicKey,
+          signature: testValidator.signature,
+          depositDataRoot: testValidator.depositDataRoot,
+        },
+      ]);
+
+      // exit validator from SSV network
+      const exitTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .exitSsvValidator(testValidator.publicKey, testValidator.operatorIds);
+
+      await expect(exitTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
+        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+
+      const removeTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          newCluster
+        );
+
+      await expect(removeTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
+        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+    });
   });
 
-  describe("ETH rewards", function () {
+  describe("Accounting for ETH", function () {
+    let strategyBalanceBefore;
+    let consensusRewardsBefore;
+    let activeDepositedValidatorsBefore = 30000;
+    beforeEach(async () => {
+      const { nativeStakingSSVStrategy, validatorRegistrator, weth } = fixture;
+
+      // clear any ETH sitting in the strategy
+      await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .doAccounting();
+
+      // Set the number validators to a high number
+      await setStorageAt(
+        nativeStakingSSVStrategy.address,
+        52, // the storage slot
+        activeDepositedValidatorsBefore
+      );
+
+      strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
+        weth.address
+      );
+      consensusRewardsBefore =
+        await nativeStakingSSVStrategy.consensusRewards();
+    });
+
     it("Should account for new consensus rewards", async () => {
-      // check balance should not increase
+      const { nativeStakingSSVStrategy, validatorRegistrator, weth } = fixture;
+
+      const rewards = oethUnits("2");
+
+      // simulate consensus rewards
+      await setBalance(
+        nativeStakingSSVStrategy.address,
+        consensusRewardsBefore.add(rewards)
+      );
+
+      const tx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .doAccounting();
+
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingConsensusRewards")
+        .withArgs(rewards);
+
+      // check balances after
+      expect(
+        await nativeStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
+      expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+        consensusRewardsBefore.add(rewards),
+        "consensusRewards should increase"
+      );
     });
-    it("Strategist should account for new execution rewards", async () => {
-      // check balance should not increase
+    it("Should account for withdrawals and consensus rewards", async () => {
+      const {
+        oethVault,
+        nativeStakingSSVStrategy,
+        validatorRegistrator,
+        weth,
+      } = fixture;
+
+      const rewards = oethUnits("3");
+      const withdrawals = oethUnits("64");
+      const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+
+      // simulate withdraw of 2 validators and consensus rewards
+      await setBalance(
+        nativeStakingSSVStrategy.address,
+        withdrawals.add(rewards)
+      );
+
+      const tx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .doAccounting();
+
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingFullyWithdrawnValidator")
+        .withArgs(2, activeDepositedValidatorsBefore - 2, withdrawals);
+
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "AccountingConsensusRewards")
+        .withArgs(rewards);
+
+      // check balances after
+      expect(
+        await nativeStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        strategyBalanceBefore.sub(withdrawals),
+        "checkBalance should decrease"
+      );
+      expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+        consensusRewardsBefore.add(rewards),
+        "consensusRewards should increase"
+      );
+      expect(
+        await nativeStakingSSVStrategy.activeDepositedValidators()
+      ).to.equal(
+        activeDepositedValidatorsBefore - 2,
+        "active validators decreases"
+      );
+      expect(await weth.balanceOf(oethVault.address)).to.equal(
+        vaultWethBalanceBefore.add(withdrawals, "WETH in vault should increase")
+      );
     });
   });
 
-  describe("Withdraw", function () {
-    it("Should account for full withdrawal from validator", async () => {
-      // check balance should not increase after sweep but before accounting
-      // check balance should increase after accounting
-      // check balance should decrease after withdrawal
-      // WETH in vault should decrease after withdrawal
+  describe("Harvest", function () {
+    it("Should account for new execution rewards", async () => {
+      const {
+        oethHarvester,
+        josh,
+        nativeStakingSSVStrategy,
+        nativeStakingFeeAccumulator,
+        oethDripper,
+        weth,
+        validatorRegistrator,
+      } = fixture;
+      const dripperWethBefore = await weth.balanceOf(oethDripper.address);
+
+      const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
+        weth.address
+      );
+
+      // add some ETH to the FeeAccumulator to simulate execution rewards
+      const executionRewards = parseEther("7");
+      await setBalance(nativeStakingFeeAccumulator.address, executionRewards);
+      // simulate consensus rewards
+      const consensusRewards = parseEther("5");
+      await setBalance(nativeStakingSSVStrategy.address, consensusRewards);
+      // account for the consensus rewards
+      await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .doAccounting();
+
+      // prettier-ignore
+      const tx = await oethHarvester
+        .connect(josh)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
+
+      await expect(tx)
+        .to.emit(oethHarvester, "RewardProceedsTransferred")
+        .withArgs(
+          weth.address,
+          addresses.zero,
+          executionRewards.add(consensusRewards),
+          0
+        );
+
+      // check balances after
+      expect(
+        await nativeStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
+
+      expect(await weth.balanceOf(oethDripper.address)).to.equal(
+        dripperWethBefore.add(executionRewards).add(consensusRewards),
+        "Dripper WETH balance should increase"
+      );
     });
   });
-
-  describe("Balance/Assets", function () {});
 });

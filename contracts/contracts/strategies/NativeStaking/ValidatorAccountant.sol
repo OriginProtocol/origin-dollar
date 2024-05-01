@@ -107,12 +107,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         returns (bool accountingValid)
     {
         if (address(this).balance < consensusRewards) {
-            // pause if not already
-            if (pauseOnFail) {
-                _pause();
-            }
-            // fail the accounting
-            return false;
+            return _failAccounting(pauseOnFail);
         }
 
         // Calculate all the new ETH that has been swept to the contract since the last accounting
@@ -122,6 +117,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // send the ETH that is from fully withdrawn validators to the Vault
         if (newSweptETH >= MAX_STAKE) {
             uint256 fullyWithdrawnValidators = newSweptETH / MAX_STAKE;
+            if (activeDepositedValidators < fullyWithdrawnValidators) {
+                return _failAccounting(pauseOnFail);
+            }
             activeDepositedValidators -= fullyWithdrawnValidators;
 
             uint256 wethToVault = MAX_STAKE * fullyWithdrawnValidators;
@@ -163,13 +161,21 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         }
         // Oh no... Fuse is blown. The Strategist needs to adjust the accounting values.
         else {
-            // pause if not already
-            if (pauseOnFail) {
-                _pause();
-            }
-            // fail the accounting
-            accountingValid = false;
+            return _failAccounting(pauseOnFail);
         }
+    }
+
+    /// @dev pause any further accounting if required and return false
+    function _failAccounting(bool pauseOnFail)
+        internal
+        returns (bool accountingValid)
+    {
+        // pause if not already
+        if (pauseOnFail) {
+            _pause();
+        }
+        // fail the accounting
+        accountingValid = false;
     }
 
     /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
