@@ -18,5 +18,7 @@ module.exports = {
     getNamedAccounts: "readable",
     hre: "readable",
   },
-  rules: {},
+  rules: {
+    "no-constant-condition": ["error", { checkLoops: false }],
+  },
 };
