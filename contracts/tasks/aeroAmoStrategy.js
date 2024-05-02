@@ -1,8 +1,6 @@
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
-const addresses = require("../utils/addresses");
-const { getSigner } = require("../utils/signers");
 const { getDiffBlocks } = require("./block");
 const { scaleAmount } = require("../utils/units");
 const {
