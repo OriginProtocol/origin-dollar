@@ -90,7 +90,7 @@ contract WOETHCCIPZapper {
     function zap(address receiver)
         external
         payable
-        returns (bytes32 messageId)
+        returns (bytes32 messageId, uint256 woethAmount)
     {
         return _zap(receiver, msg.value);
     }
@@ -138,7 +138,7 @@ contract WOETHCCIPZapper {
 
     function _zap(address receiver, uint256 amount)
         internal
-        returns (bytes32 messageId)
+        returns (bytes32 messageId, uint256 woethAmount)
     {
         // Estimate fee for zapping.
         uint256 feeAmount = getFee(amount, receiver);
@@ -190,6 +190,6 @@ contract WOETHCCIPZapper {
         emit Zap(messageId, msg.sender, receiver, amount);
 
         // Return the message ID
-        return messageId;
+        return (messageId, woethReceived);
     }
 }
