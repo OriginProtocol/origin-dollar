@@ -1,6 +1,6 @@
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
-const { resolveAsset } = require("../utils/assets");
+const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");

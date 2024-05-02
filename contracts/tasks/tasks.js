@@ -56,6 +56,11 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const {
+  governor,
+  transferGovernance,
+  claimGovernance,
+} = require("./governable");
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -743,6 +748,43 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
     types.int
   )
   .setAction(proxyUpgrades);
+
+// Governable
+
+task("governor", "Gets the governor of a Governable contract")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(governor);
+
+task(
+  "transferGovernance",
+  "Start transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(transferGovernance);
+
+task(
+  "claimGovernance",
+  "Complete the transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(claimGovernance);
+
+// SSV
 
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
   .addParam(
