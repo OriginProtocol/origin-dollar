@@ -5,18 +5,16 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:governable");
 
-async function governor(taskArguments) {
-  const { name } = taskArguments;
+async function governor({ proxy }) {
   const signer = await getSigner();
 
-  const contract = await resolveContract(name, "Governable");
+  const contract = await resolveContract(proxy, "Governable");
 
   const governor = await contract.connect(signer).governor();
-  console.log(`Governor for ${name} is ${governor}`);
+  console.log(`Governor for ${proxy} is ${governor}`);
 }
 
-async function transferGovernance(taskArguments) {
-  const { proxy, governor } = taskArguments;
+async function transferGovernance({ proxy, governor }) {
   const signer = await getSigner();
 
   const contract = await resolveContract(proxy, "Governable");
@@ -30,8 +28,7 @@ async function transferGovernance(taskArguments) {
   await logTxDetails(tx, "transferGovernance");
 }
 
-async function claimGovernance(taskArguments) {
-  const { proxy } = taskArguments;
+async function claimGovernance({ proxy }) {
   const signer = await getSigner();
 
   const governable = await resolveContract(proxy, "Governable");
