@@ -7,31 +7,18 @@ actor "Anyone" as anyone
 actor "Trustee" as trust <<Origin>> #DeepSkyBlue
 participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
-participant "Harvester" as harv <<Origin>> #DeepSkyBlue
-participant "Dripper" as drip <<Origin>> #DeepSkyBlue
-participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
-participant "OGV\nRewards" as ogvRewards <<Origin>> #DeepSkyBlue
-participant "Buyback" as buyBack <<Origin>> #DeepSkyBlue
 
-participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
-participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
-participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
+participant "Native ETH\nStrategy" as nativeStrat <<Origin>> #DeepSkyBlue
+participant "Native ETH\nFee Accumulator" as feeAcc <<Origin>> #DeepSkyBlue
+participant "SSV Network" as ssvNetwork <<SSV>>
+participant "Deposit" as dep <<Beacon>>
+participant "Validator" as val <<Beacon>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
 participant "OETH-ETH\nMetapool" as oethCrv <<Curve>>
 participant "OETH-ETH\nPool" as oethCvx <<Convex>>
 participant "Rewards\nPool" as cvxRewards <<Convex>>
 participant "Locked\nCVX" as icvx <<Convex>>
-
-participant "rETH/WETH\nBalancer\nMetaStable\nStrategy" as balMetaStrat <<Origin>> #DeepSkyBlue
-participant "Balancer\nVault" as balVault <<Balancer>>
-participant "rETH\nMetaStable\nPool" as balMetaPool <<Balancer>>
-participant "rETH\nRewards\nPool" as auraRewards <<Aura>>
-
-participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
-participant "Morpho\nAave V2" as morpho <<Morpho>>
-participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
-participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
 participant "TriCrv\ncrvUSD/ETH/CRV" as triCrv <<Curve>>
 participant "cvxeth\nCVX/ETH" as cvxeth <<Curve>>
@@ -41,8 +28,11 @@ participant "OGV/ETH\nV3 Pool" as uniOgv <<Uniswap>>
 participant "CVX/ETH\nV3 Pool" as uniCvx <<Uniswap>>
 
 participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
-
-participant "1Inch\nRouter" as 1r <<1Inch>>
+participant "Harvester" as harv <<Origin>> #DeepSkyBlue
+participant "Dripper" as drip <<Origin>> #DeepSkyBlue
+participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
+participant "OGV\nRewards" as ogvRewards <<Origin>> #DeepSkyBlue
+participant "Buyback" as buyBack <<Origin>> #DeepSkyBlue
 
 ' Deposit ETH via Zapper
 group User deposit ETH [> 10 OETH]
@@ -64,70 +54,20 @@ vault o-> user : OETH
 note left : mint OETH\nto match ETH
 end
 
-' Deposit sfrxETH via Zapper
-group User deposit sfrxETH [> 10 OETH]
-note over zap : User approves Zapper to transfer their sfrxETH
-
-user -x sfrxETH : sfrxETH
-note left : redeem sfrxETH for frxETH
-sfrxETH -> zap : frxETH
-
-vault o-> trust : OETH
-note left : 20% performance\nfee from rebase
-
-zap -> vault : frxETH
-
-group FRAX Strategy
-vault -> frxStrat : frxETH
-note left: > 10 ETH worth so allocate\nto default frxETH strategy
-frxStrat -> sfrxETH : frxETH
-note left : deposit frxETH
-sfrxETH o-> frxStrat : sfrxETH
-note left : get sfrxETH shares
-end 
-
-vault o-> user : OETH
-note left : mint OETH to match\nETH value of frxETH
-end
-
 
 ' Mint
 group User mint [< 10 OETH]
 vault o-> trust : OETH
 note left : 20% performance\nfee from rebase
 
-user -> vault : frxETH, stETH, rETH or WETH
+user -> vault : WETH
 note left: Only to vault,\nnot strategy as <10 ETH
 vault o-> user : OETH
 note left : mint OETH to\nETH value of deposit
 end
 
-' Allocate
-group Vault allocate [anyone can call]
-
-' FRAX Strategy for frxETH
-group Deposit frxETH to FRAX Strategy [unallocated frxETH in vault]
-vault -> frxStrat : frxETH
-frxStrat -> sfrxETH : frxETH
-note left : deposit frxETH
-sfrxETH o-> frxStrat : sfrxETH
-note left : get sfrxETH shares
-end
-
-' FRAX Strategy for WETH
-group Deposit WETH to FRAX Strategy [unallocated WETH in vault]
-vault -> frxStrat : WETH
-frxStrat -x weth : WETH
-note left : withdraw ETH from WETH
-weth -> frxStrat : ETH
-frxStrat -> frxETH : ETH
-note left : Deposit and stake ETH for sfrxETH
-frxETH -> sfrxETH : frxETH
-sfrxETH o-> frxStrat : sfrxETH
-end
-
 ' Curve AMO Strategy
-group Deposit to Curve AMO Strategy [unallocated WETH in vault]
+group Strategist deposits to Curve AMO Strategy [unallocated WETH in vault]
 vault -> crvStrat : WETH
 note left : Vault transfers\nWETH to strategy
 crvStrat -x weth : WETH
@@ -148,63 +88,91 @@ oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
-' Balancer MetaPool Strategy
-group Deposit rETH and WETH to Balancer MetaStable Strategy [unallocated rETH and WETH in vault]
-vault -> balMetaStrat : rETH and WETH
-note left : Vault transfers\nrETH and WETH to strategy
-balMetaStrat -> balVault : rETH and WETH
-note left : join Balancer pool
-balMetaPool o-> balMetaStrat : B-rETH-STABLE
-balMetaStrat -> auraRewards : B-rETH-STABLE
-note left : deposit BPT to Aura
-auraRewards o-> balMetaStrat : auraB-rETH-STABLE-vault
+' Native staking strategy
+group Strategist deposits to Native Staking Strategy [unallocated WETH in vault]
+
+... deposit to strategy ...
+
+vault -> nativeStrat : WETH
+note left : Vault transfers\nWETH to strategy
+
+... register SSV validator ...
+
+nativeStrat -> ssvNetwork : SSV
+note left : deposit SSV to SSV Cluster to pay SSV Operators
+
+... stake to validator ...
+
+nativeStrat -x weth : WETH
+note left : WETH is burned
+weth -> nativeStrat : ETH
+note left : ETH is withdrawn
+
+nativeStrat -> dep : 32 ETH
+note left : deposit 32 ETH to\nSSV Beacon Chain
+
+... 1024 execution blocks (~4 hours) ...
+... 32 consensus epochs (~3.5 hours) ...
+
+dep -> val : 32 ETH
+
+note over val : Pending Activation
+
+... four validators are activated each epoch from the Validator Queue (0.5-10 days) ...
+
+note over val : Active
 
 end
 
-' Morpho Aave Strategy
-group Deposit to Morpho Aave Strategy [unallocated WETH in vault]
-vault -> morphAaveStrat : WETH
-morphAaveStrat -> morpho : WETH
-morpho -> aweth : WETH
 
-alt Morpho has more borrows than deposits
-morpho -x vdweth : varDebtWETH
-note left : repay borrowed WETH from Aave
-else Morpho has more deposits than borrows
-aweth o-> morpho  : aWETH
-note left : deposit WETH to Aave
-end
-end
+group Native staking rewards
+
+... partial withdraw from Beacon chain very 8-10 days ...
+
+val -> nativeStrat : ETH
+note right : Beacon chain\nconsensus rewards
+
+... when a validator produces a block (~4 times a year) ...
+
+val -> feeAcc : ETH
+note right : execution rewards\nincluding MEV
 
 end
 
+group Validator registrator exits a validator
 
-' Redeem
-group User redeem OETH
-vault o-> trust : OETH
-note left : 20% performance\nfee from rebase
+... validator exit ...
 
-user -x vault : OETH
-note left : burn User's OETH
+... wait until validator has exited.\nmin four epochs (~25 min), currently 1.5 hours but can take a number of days depending on the number of validators in the exit queue ...
 
-note over vault : 0.5% fee applied to redeemed assets.\nThis adds to the yield in the next rebase.
+... wait for the validator to be swept on the Beacon chain\ncurrent time is every 8-10 days ...
 
-' FRAX Strategy
-group Withdraw from FRAX Strategy [not enough frxETH in vault]
-note over frxStrat
-can only redeem frxETH.
-depositted WETH is removed as frxETH.
-end note
-frxStrat -x sfrxETH : sfrxETH
-note left : redeem sfrxETH shares
-sfrxETH -> user : frxETH
-note left : transfer directly to user
-' sfrxETH -> vault : frxETH
-' note left : transfer to vault
+val -> nativeStrat : ETH
+note right : Beacon chain sweeps ETH\nto the Native Staking strategy
+
+... validator registrator does accounting ...
+
+nativeStrat -> weth : ETH
+note left : deposit ETH into Wrapped ETH
+weth o-> nativeStrat : WETH
+note left : mint WETH to Native Staking Strategy
+
+nativeStrat -> vault : WETH
+note right : transfer WETH to Vault
+
+end
+
+group Strategist withdraw from Native Staking Strategy [WETH in strategy from deposits]
+
+nativeStrat -> vault : WETH
+note right : transfer WETH to Vault
+
+note over nativeStrat : Once WETH has been staked in a validator, the exist validator process must be used.
+
 end
 
 ' Curve AMO Strategy
-group Withdraw from Curve AMO Strategy [not enough WETH in vault]
+group Strategist withdraw from Curve AMO Strategy [not enough WETH in vault]
 cvxRewards -x oethCvx : cvxOETHCRV-f
 note left : unstake and burn Convex LP tokens
 oethCvx -> crvStrat : OETHCRV-f
@@ -226,26 +194,19 @@ note left : transfer directly to user
 ' note left : transfer to vault
 end
 
-' Morpho Aave Strategy
-group Withdraw from Morpho Aave Strategy [not enough WETH in vault]
-alt Morpho has more borrows than deposits
-vdweth o-> morpho : varDebtWETH
-note left : borrow WETH from Aave
-else Morpho has more deposits than borrows
-morpho -x aweth : aWETH
-note left : withdraw WETH deposit from Aave
-end
-aweth -> morpho : WETH
-morpho -> morphAaveStrat : WETH
-' morphAaveStrat -> vault : WETH
-morphAaveStrat -> user : WETH
-note left : transfer directly to user
+' Redeem
+group User redeem OETH
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+user -x vault : OETH
+note left : burn User's OETH
+
+vault -> user : WETH
+note right : 0.1% fee applied to redeemed assets.\nThis adds to the yield in the next rebase.
+
 end
 
-note over vault : no strategy so comes from vault
-vault -> user : stETH
-vault -> user : rETH
-end
 
 ' Curve AMO Strategy - mint and add oTokens
 group Strategist mints and adds oTokens to Metapool [too much ETH in Metapool]
@@ -299,6 +260,17 @@ end
 ' Harvest and swap Convex AMO
 group Harvest and swap Convex AMO rewards [can be called by anyone]
 
+feeAcc -> nativeStrat : ETH
+note left : transfer execution rewards to Native Staking Strategy
+nativeStrat -> weth : ETH
+note left : deposit ETH from execution and consensus rewards into Wrapped ETH
+weth o-> nativeStrat : WETH
+note left : mint WETH to Native Staking Strategy
+nativeStrat -> harv : WETH
+note left : transfer WETH to Harvester
+harv -> drip : 100% WETH
+note left : 100% of WETH to Dripper
+
 cvxRewards -> crvStrat : CVX & CRV
 note left : collect Convex rewards
 crvStrat -> harv : CVX & CRV
@@ -327,32 +299,6 @@ harv -> anyone : 2% WETH
 note left : 2% of WETH\nto Harvest caller
 end
 
-' Harvest and swap Balancer
-group Harvest and swap Balancer rewards [can be called by anyone]
-
-balMetaPool -> balMetaStrat : BAL
-note left : collect Balancer rewards
-auraRewards  -> balMetaStrat : AURA
-note left : collect Aura rewards
-balMetaStrat -> harv : BAL & AURA
-note left : transfer rewards to Harvester
-harv -> balVault : BAL
-note left : swap BAL for WETH\nmax 1,000 BAL
-balVault -> harv : WETH
-harv -> drip : WETH
-note left : 98% of WETH to Dripper
-harv -> anyone : WETH
-note left : 2% of WETH\nto Harvest caller
-harv -> balVault : AURA
-note left : swap AURA for WETH\nmax 4,000 BAL
-balVault -> harv : WETH
-harv -> drip : WETH
-note left : 98% of WETH to Dripper
-harv -> anyone : WETH
-note left : 2% of WETH\nto Harvest caller
-
-end
-
 ' Collect and Rebase
 group Collect and Rebase [can be called by anyone]
 
@@ -368,7 +314,7 @@ note left : 20% of rebase\nto trustee as\nperformance fee
 end 
 end
 
-group Trustee OETH rewards
+group OETH rewards
 
 group OGV buyback for OGV stakers
 trust -> uniRouter : OETH
@@ -393,14 +339,6 @@ icvx o-> trust : vlCVX
 note over trust : Trustee delegates\nvoting power
 end
 
-end
-
-' Swap vault collateral assets
-group Trustee swaps collateral assets [WETH for rETH]
-vault -> swapper : WETH
-note left : swap WETH for rETH
-swapper -> 1r : WETH
-1r -> vault : rETH
 end
 
 @enduml
