@@ -268,4 +268,6 @@ addresses.holesky.SSVNetwork = "0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA";
 addresses.holesky.beaconChainDepositContract =
   "0x4242424242424242424242424242424242424242";
 
+addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
+addresses.holesky.validatorRegistrator = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 module.exports = addresses;
