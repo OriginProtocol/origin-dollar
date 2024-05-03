@@ -1,40 +1,11 @@
-const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const { ClusterScanner, NonceScanner } = require("ssv-scanner");
 const { SSVKeys, KeyShares, KeySharesItem } = require("ssv-keys");
 const path = require("path");
 const fsp = require("fs").promises;
 
 const { isForkWithLocalNode } = require("../test/helpers");
-const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("utils:ssv");
-
-const depositSSV = async (options) => {
-  const { signer, chainId, nodeDelegator, ssvNetwork, amount, operatorIds } =
-    options;
-  const amountBN = parseUnits(amount.toString(), 18);
-
-  // Cluster details
-  const clusterInfo = await getClusterInfo({
-    chainId,
-    ssvNetwork,
-    operatorIds,
-    ownerAddress: nodeDelegator.address,
-  });
-
-  log(
-    `About to deposit ${formatUnits(
-      amountBN
-    )} SSV tokens to the SSV Network for NodeDelegator ${
-      nodeDelegator.address
-    } with operator IDs ${operatorIds}`
-  );
-  log(`Cluster: ${JSON.stringify(clusterInfo.snapshot)}`);
-  const tx = await nodeDelegator
-    .connect(signer)
-    .depositSSV(operatorIds, amountBN, clusterInfo.cluster);
-  await logTxDetails(tx, "depositSSV");
-};
 
 const splitValidatorKey = async ({
   keystorelocation,
@@ -195,7 +166,6 @@ const printClusterInfo = async (options) => {
 };
 
 module.exports = {
-  depositSSV,
   printClusterInfo,
   getClusterInfo,
   splitValidatorKey,

@@ -48,7 +48,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { printClusterInfo } = require("./ssv");
+const { depositSSV, printClusterInfo } = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -61,6 +61,7 @@ const {
   transferGovernance,
   claimGovernance,
 } = require("./governable");
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -814,5 +815,21 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     });
   });
 task("getClusterInfo").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositSSV",
+  "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
+)
+  .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addParam(
+    "operatorids",
+    "4 operator ids separated with a dot: same as IP format. E.g. 60.79.220.349",
+    undefined,
+    types.string
+  )
+  .setAction(depositSSV);
+task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
