@@ -144,7 +144,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         chainId: 1,
         ssvNetwork: addresses.mainnet.SSVNetwork,
       });
-      // const cluster = ["0", "0", "0", true, "0"];
+
       const stakeAmount = oethUnits("32");
 
       // Register a new validator with the SSV Network
@@ -191,7 +191,13 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
       const { nativeStakingSSVStrategy, ssvNetwork, validatorRegistrator } =
         fixture;
 
-      const cluster = ["0", "0", "0", true, "0"];
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingSSVStrategy.address,
+        operatorIds: testValidator.operatorIds,
+        chainId: 1,
+        ssvNetwork: addresses.mainnet.SSVNetwork,
+      });
+
       const stakeAmount = oethUnits("32");
 
       // Register a new validator with the SSV network
