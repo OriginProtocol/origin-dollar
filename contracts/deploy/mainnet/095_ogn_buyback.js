@@ -1,12 +1,12 @@
-const addresses = require("../utils/addresses");
+const addresses = require("../../utils/addresses");
 const {
   deploymentWithGovernanceProposal,
   deployWithConfirmation,
-} = require("../utils/deploy");
+} = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "093_ogn_buyback",
+    deployName: "095_ogn_buyback",
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
