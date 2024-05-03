@@ -187,6 +187,8 @@ addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
 addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
 addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
+addresses.mainnet.FraxETHRedeemStrategy =
+  "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 
