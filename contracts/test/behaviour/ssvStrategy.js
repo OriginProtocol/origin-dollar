@@ -70,7 +70,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
   describe("Deposit/Allocation", function () {
     it("Should accept and handle WETH allocation", async () => {
-      const { oethVault, weth, domen, nativeStakingSSVStrategy, } = await context();
+      const { oethVault, weth, domen, nativeStakingSSVStrategy } =
+        await context();
       const fakeVaultSigner = await impersonateAndFund(oethVault.address);
 
       const depositAmount = oethUnits("32");
@@ -110,7 +111,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
   describe("Validator operations", function () {
     beforeEach(async () => {
-      const { weth, domen, nativeStakingSSVStrategy, addresses } = await context();
+      const { weth, domen, nativeStakingSSVStrategy, addresses } =
+        await context();
 
       // Add 32 WETH to the strategy so it can be staked
       await weth
@@ -119,7 +121,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     });
 
     it("Should register and staked 32 ETH by validator registrator", async () => {
-      const { weth, nativeStakingSSVStrategy, validatorRegistrator, testValidator } = await context();
+      const {
+        weth,
+        nativeStakingSSVStrategy,
+        validatorRegistrator,
+        testValidator,
+      } = await context();
 
       const strategyWethBalanceBefore = await weth.balanceOf(
         nativeStakingSSVStrategy.address
@@ -175,8 +182,13 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     });
 
     it("Should exit and remove validator by validator registrator", async () => {
-      const { nativeStakingSSVStrategy, ssvNetwork, validatorRegistrator, addresses, testValidator } =
-        await context();
+      const {
+        nativeStakingSSVStrategy,
+        ssvNetwork,
+        validatorRegistrator,
+        addresses,
+        testValidator,
+      } = await context();
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
@@ -240,7 +252,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     let consensusRewardsBefore;
     let activeDepositedValidatorsBefore = 30000;
     beforeEach(async () => {
-      const { nativeStakingSSVStrategy, validatorRegistrator, weth } = await context();
+      const { nativeStakingSSVStrategy, validatorRegistrator, weth } =
+        await context();
 
       // clear any ETH sitting in the strategy
       await nativeStakingSSVStrategy
@@ -262,7 +275,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     });
 
     it("Should account for new consensus rewards", async () => {
-      const { nativeStakingSSVStrategy, validatorRegistrator, weth } = await context();
+      const { nativeStakingSSVStrategy, validatorRegistrator, weth } =
+        await context();
 
       const rewards = oethUnits("2");
 
@@ -352,7 +366,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         oethDripper,
         weth,
         validatorRegistrator,
-        addresses
+        addresses,
       } = await context();
       const dripperWethBefore = await weth.balanceOf(oethDripper.address);
 
@@ -397,4 +411,4 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 };
 
-module.exports = { shouldBehaveLikeAnSsvStrategy }
+module.exports = { shouldBehaveLikeAnSsvStrategy };

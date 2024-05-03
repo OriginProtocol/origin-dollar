@@ -12,11 +12,12 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
   });
 
   shouldBehaveLikeAnSsvStrategy(async () => {
-
     return {
       ...fixture,
       addresses: addresses.holesky,
-      validatorRegistrator: await impersonateAndFund(addresses.holesky.validatorRegistrator),
+      validatorRegistrator: await impersonateAndFund(
+        addresses.holesky.validatorRegistrator
+      ),
       ssvNetwork: await ethers.getContractAt(
         "ISSVNetwork",
         addresses.holesky.SSVNetwork
@@ -35,7 +36,7 @@ describe("Holesky ForkTest: Native SSV Staking Strategy", function () {
           "0xa450d596551c7fb7aca201e9a075b034d8da1ec7bf8806740ca53c0e8653465ed9cd26d6ce10290581586676eb0dd896022a243dc42179337c9c4c2a60969a11bb9e4a2dcf57a783daf880999f6db34d1e42163cb96287b3bb91b03361942b80",
         depositDataRoot:
           "0x3f327f69bb527386ff4c2f820e6e375fcc632b1b7ee826bd53d4d2807cfd6769",
-      }
-    }
+      },
+    };
   });
 });
