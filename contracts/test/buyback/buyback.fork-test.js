@@ -27,28 +27,32 @@ describe("ForkTest: OETH Buyback", function () {
     const cvxShareBefore = await oethBuyback.balanceForCVX();
     const rewardsBalanceBefore = await ogn.balanceOf(rewardsSource.address);
 
+    const ognAmount = ognShareBefore.lte(oethUnits("1"))
+      ? ognShareBefore
+      : oethUnits("1");
+
     let data = await getIInchSwapData({
       vault: oethVault,
       fromAsset: oeth,
       toAsset: ogn,
-      fromAmount: ognShareBefore,
-      // 20%, just so that fork-tests don't fail on
+      fromAmount: ognAmount,
+      // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
-      slippage: 20,
+      slippage: 5,
     });
     data = await recodeSwapData(data);
 
     await oethBuyback
       .connect(strategist)
-      .swapForOGN(ognShareBefore, oethUnits("100"), data);
+      .swapForOGN(ognAmount, oethUnits("100"), data);
 
     const oethBalanceAfter = await oeth.balanceOf(oethBuyback.address);
     const ognShareAfter = await oethBuyback.balanceForOGN();
     const cvxShareAfter = await oethBuyback.balanceForCVX();
     const rewardsBalanceAfter = await ogn.balanceOf(rewardsSource.address);
 
-    expect(ognShareAfter).to.eq(0);
-    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(ognShareBefore));
+    expect(ognShareAfter).to.eq(ognShareBefore.sub(ognAmount));
+    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(ognAmount));
     expect(cvxShareAfter).to.eq(cvxShareBefore);
     expect(rewardsBalanceAfter).to.be.gt(rewardsBalanceBefore);
   });
@@ -70,9 +74,9 @@ describe("ForkTest: OETH Buyback", function () {
       fromAsset: oeth,
       toAsset: cvx,
       fromAmount: cvxShareBefore,
-      // 20%, just so that fork-tests don't fail on
+      // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
-      slippage: 20,
+      slippage: 5,
     });
     data = await recodeSwapData(data);
 

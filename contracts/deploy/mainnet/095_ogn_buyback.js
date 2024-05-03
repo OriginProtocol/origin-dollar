@@ -1,3 +1,4 @@
+const { isFork } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
 const {
   deploymentWithGovernanceProposal,
@@ -45,6 +46,14 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     await cSwapper.approveAssets([addresses.mainnet.OGN]);
+
+    if (!isFork) {
+      // No Governance action on mainnet
+      // To be upgraded with the proposal from `ousd-governance` repo
+      return {
+        actions: [],
+      };
+    }
 
     return {
       name: "Upgrade contracts for OGN Buyback",
