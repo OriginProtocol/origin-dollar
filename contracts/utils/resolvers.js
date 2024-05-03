@@ -18,7 +18,7 @@ const resolveAsset = async (symbol) => {
 
   if (isMainnetOrFork) {
     const assetAddr =
-      addresses.mainnet[symbol] || addresses.mainnet[symbol + "Proxy"];
+      addresses.mainnet[symbol + "Proxy"] || addresses.mainnet[symbol];
     if (!assetAddr) {
       throw Error(`Failed to resolve symbol "${symbol}" to an address`);
     }

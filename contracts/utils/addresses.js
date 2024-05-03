@@ -248,10 +248,10 @@ addresses.mainnet.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 
 // Native Staking Strategy
-addresses.mainnet.nativeStakingSSVStrategyProxy =
-  "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F";
-addresses.mainnet.nativeStakingFeeAccumulatorProxy =
-  "0x85094b52754591A3dE0002AD97F433584389aea0";
+// addresses.mainnet.nativeStakingSSVStrategyProxy =
+//   "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F";
+// addresses.mainnet.nativeStakingFeeAccumulatorProxy =
+//   "0x85094b52754591A3dE0002AD97F433584389aea0";
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
