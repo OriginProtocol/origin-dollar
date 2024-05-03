@@ -543,6 +543,32 @@ const deployOUSDHarvester = async (ousdDripper) => {
   return dHarvesterProxy;
 };
 
+const upgradeOETHHarvester = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
+    cOETHVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  const cOETHHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    cOETHHarvesterProxy.address
+  );
+
+  await withConfirmation(
+    cOETHHarvesterProxy
+      .upgradeTo(cOETHHarvester.address)
+  );
+
+  log("Upgraded OETHHarvesterProxy");
+  return cOETHHarvesterProxy;
+};
+
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
@@ -1508,6 +1534,7 @@ module.exports = {
   deployHarvesters,
   deployOETHHarvester,
   deployOUSDHarvester,
+  upgradeOETHHarvester,
   configureVault,
   configureOETHVault,
   configureStrategies,

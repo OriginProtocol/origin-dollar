@@ -1,5 +1,6 @@
 {
   "001_core": 1714168010,
   "002_upgrade_strategy": 1714233842,
-  "003_deposit_to_native_strategy": 1714307581
+  "003_deposit_to_native_strategy": 1714307581,
+  "004_upgrade_strategy": 1714765217
 }

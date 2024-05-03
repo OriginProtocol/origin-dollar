@@ -181,7 +181,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
     });
 
-    it.only("Should exit and remove validator by validator registrator", async () => {
+    it("Should exit and remove validator by validator registrator", async () => {
       const {
         nativeStakingSSVStrategy,
         ssvNetwork,
