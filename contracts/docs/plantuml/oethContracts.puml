@@ -7,7 +7,7 @@
 !$thirdPartyColor = WhiteSmoke
 
 legend
-blue - existing
+blue - Origin
 ' green - new
 ' orange - changed
 white - 3rd Party
@@ -23,8 +23,8 @@ object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
-}
+' object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+' }
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
@@ -129,8 +129,8 @@ zap ..> oethv
 ' drip .....> weth
 oethv <. drip
 
-checker ..> oeth
-checker ..> oethv
+' checker ..> oeth
+' checker ..> oethv
 
 oethv <.. harv 
 drip <.. harv 
@@ -156,7 +156,7 @@ nativeStrat ..> ssvNet
 nativeStrat ..> bDep
 
 cvxStrat ..> crvPool
-' cvxStrat ..> cvxPool
+cvxStrat ...> cvxPool
 ' cvxStrat ...> weth
 ' cvxStrat ...> cvx
 ' cvxStrat ...> crv
