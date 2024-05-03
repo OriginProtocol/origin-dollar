@@ -181,7 +181,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
     });
 
-    it("Should exit and remove validator by validator registrator", async () => {
+    it.only("Should exit and remove validator by validator registrator", async () => {
       const {
         nativeStakingSSVStrategy,
         ssvNetwork,
@@ -224,15 +224,18 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         },
       ]);
 
+      console.log("HEre!")
       // exit validator from SSV network
       const exitTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .exitSsvValidator(testValidator.publicKey, testValidator.operatorIds);
 
+      console.log("HEre! 1")
       await expect(exitTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
         .withArgs(testValidator.publicKey, testValidator.operatorIds);
 
+      console.log("HEre! 2")
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
