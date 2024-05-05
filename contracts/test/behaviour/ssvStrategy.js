@@ -210,8 +210,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           cluster
         );
       const regReceipt = await regTx.wait();
+      const ValidatorAddedRawEvent = regReceipt.events.find(
+        (e) => e.address.toLowerCase() == ssvNetwork.address.toLowerCase()
+      );
       const ValidatorAddedEvent = ssvNetwork.interface.parseLog(
-        regReceipt.events[2]
+        ValidatorAddedRawEvent
       );
       const { cluster: newCluster } = ValidatorAddedEvent.args;
 
@@ -224,18 +227,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         },
       ]);
 
-      console.log("HEre!")
       // exit validator from SSV network
       const exitTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .exitSsvValidator(testValidator.publicKey, testValidator.operatorIds);
 
-      console.log("HEre! 1")
       await expect(exitTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
         .withArgs(testValidator.publicKey, testValidator.operatorIds);
 
-      console.log("HEre! 2")
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(

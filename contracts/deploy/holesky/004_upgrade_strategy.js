@@ -1,4 +1,7 @@
-const { upgradeNativeStakingSSVStrategy, upgradeOETHHarvester } = require("../deployActions");
+const {
+  upgradeNativeStakingSSVStrategy,
+  upgradeOETHHarvester,
+} = require("../deployActions");
 
 const mainExport = async () => {
   console.log("Running 004 deployment on Holesky...");
@@ -6,7 +9,7 @@ const mainExport = async () => {
   console.log("Upgrading native staking strategy");
   await upgradeNativeStakingSSVStrategy();
 
-  console.log("deploying harvester")
+  console.log("deploying harvester");
   const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
   const cOETHHarvester = await upgradeOETHHarvester(cOETHDripperProxy.address);
   console.log("Running 004 deployment done");

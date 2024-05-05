@@ -560,10 +560,7 @@ const upgradeOETHHarvester = async () => {
     cOETHHarvesterProxy.address
   );
 
-  await withConfirmation(
-    cOETHHarvesterProxy
-      .upgradeTo(cOETHHarvester.address)
-  );
+  await withConfirmation(cOETHHarvesterProxy.upgradeTo(cOETHHarvester.address));
 
   log("Upgraded OETHHarvesterProxy");
   return cOETHHarvesterProxy;
