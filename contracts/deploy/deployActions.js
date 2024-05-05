@@ -555,12 +555,7 @@ const upgradeOETHHarvester = async () => {
     assetAddresses.WETH,
   ]);
 
-  const cOETHHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    cOETHHarvesterProxy.address
-  );
-
-  await withConfirmation(cOETHHarvesterProxy.upgradeTo(cOETHHarvester.address));
+  await withConfirmation(cOETHHarvesterProxy.upgradeTo(dOETHHarvester.address));
 
   log("Upgraded OETHHarvesterProxy");
   return cOETHHarvesterProxy;

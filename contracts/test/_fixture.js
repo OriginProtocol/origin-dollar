@@ -98,8 +98,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       addressContext = addresses.holesky;
     }
 
-    console.log("addressContext.WETH", addressContext.WETH);
-
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
 
