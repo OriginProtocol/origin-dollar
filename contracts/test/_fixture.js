@@ -13,6 +13,7 @@ const { setFraxOraclePrice } = require("../utils/frax");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
+  ccip_arbChainSelector,
 } = require("../utils/constants");
 const {
   fundAccounts,
@@ -820,8 +821,8 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  // const { timelock, oethVault } = fixture;
-  const { weth, matt, strategist, timelock, oethVault } = fixture;
+  const { weth, matt, strategist, domen, frxETH, timelock, oethVault } =
+    fixture;
 
   const bufferBps = await oethVault.vaultBuffer();
   const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
@@ -851,6 +852,35 @@ async function oethCollateralSwapFixture() {
   if (shouldChangeBuffer) {
     // Set it back
     await oethVault.connect(strategist).setVaultBuffer(bufferBps);
+  }
+
+  const allStrats = await oethVault.getAllStrategies();
+  if (
+    allStrats
+      .map((x) => x.toLowerCase())
+      .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
+  ) {
+    // Remove fraxETH strategy if it exists
+    // Because it no longer holds assets and causes this test to fail
+
+    // Send some dust to that first
+    await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
+
+    // Now make sure it's deposited
+    await oethVault
+      .connect(strategist)
+      .depositToStrategy(
+        addresses.mainnet.FraxETHStrategy,
+        [frxETH.address],
+        [oethUnits("1")]
+      );
+
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(frxETH.address, addresses.zero);
+    await oethVault
+      .connect(timelock)
+      .removeStrategy(addresses.mainnet.FraxETHStrategy);
   }
 
   // Withdraw all from strategies so we have assets to swap
@@ -2308,6 +2338,53 @@ async function harvesterFixture() {
   return fixture;
 }
 
+async function woethCcipZapperFixture() {
+  let fixture = {};
+  let woethZapper;
+  let oethZapper;
+  let destinationChainSelector = ccip_arbChainSelector;
+  let woethOnSourceChain = addresses.mainnet.WOETHProxy;
+  let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
+
+  oethZapper = await ethers.getContractAt(
+    "OETHZapper",
+    addresses.mainnet.OETHZapper
+  );
+
+  const ccipRouter = await ethers.getContractAt(
+    "IRouterClient",
+    addresses.mainnet.ccipRouterMainnet
+  );
+
+  const WOETHZapper = await ethers.getContractFactory("WOETHCCIPZapper");
+  woethZapper = await WOETHZapper.deploy(
+    ccipRouter.address,
+    destinationChainSelector,
+    woethOnSourceChain,
+    woethOnDestinationChain,
+    oethZapper.address,
+    addresses.mainnet.OETHProxy
+  );
+  await woethZapper.deployed();
+  woethOnSourceChain = await ethers.getContractAt(
+    "WOETH",
+    addresses.mainnet.WOETHProxy
+  );
+
+  fixture.oethZapper = oethZapper;
+  fixture.woethOnSourceChain = woethOnSourceChain;
+  fixture.woethZapper = woethZapper;
+  fixture.ccipRouter = ccipRouter;
+
+  const [josh, alice] = await ethers.getSigners();
+  await impersonateAndFund(josh.address, "10");
+
+  fixture.josh = josh;
+  fixture.alice = alice;
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2398,4 +2475,5 @@ module.exports = {
   harvesterFixture,
   nodeSnapshot,
   nodeRevert,
+  woethCcipZapperFixture,
 };
