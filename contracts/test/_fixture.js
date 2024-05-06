@@ -1612,7 +1612,6 @@ async function nativeStakingSSVStrategyFixture() {
     await nativeStakingSSVStrategy
       .connect(sGovernor)
       .setRegistrator(governorAddr);
-
   }
 
   return fixture;
