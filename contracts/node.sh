@@ -34,6 +34,7 @@ main()
           PROVIDER_URL=$HOLESKY_PROVIDER_URL;
           BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
         fi
+        
         echo "Fork Network: $FORK_NETWORK_NAME"
 
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi

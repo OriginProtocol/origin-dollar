@@ -71,6 +71,7 @@ lusd_3pool_strat = load_contract('lusd_3pool_strat', LUSD_3POOL_STRAT)
 oeth_morpho_aave_strat = load_contract('morpho_aave_strat', OETH_MORPHO_AAVE_STRAT)
 oeth_meta_strat = load_contract('oeth_meta_strat', OETH_CONVEX_OETH_ETH_STRAT)
 flux_strat = load_contract('comp_strat', FLUX_STRAT)
+frxeth_redeem_strat = load_contract('frxeth_redeem_strat', OETH_FRAX_ETH_REDEEM_STRAT)
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
 threepool = load_contract("threepool_swap", THREEPOOL)
@@ -93,6 +94,7 @@ frxeth = load_contract('ERC20', FRXETH)
 sfrxeth = load_contract('ERC20', SFRXETH)
 oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
 oeth_vault_core = load_contract('vault_core', OETH_VAULT)
+oeth_metapool = load_contract('oeth_metapool', OETH_METAPOOL)
 
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)
@@ -491,6 +493,7 @@ class TemporaryForkForReallocations:
     def __enter__(self):
         self.txs = []
         brownie.chain.snapshot()
+
         return self.txs
 
     def __exit__(self, *args, **kwargs):
@@ -500,6 +503,81 @@ class TemporaryForkForReallocations:
         print(to_gnosis_json(self.txs))
         print("----")
         print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
+
+
+class TemporaryForkForOUSD:
+    def __enter__(self, profit_variance, vault_value_variance):
+        self.txs = []
+        self.profit_variance = profit_variance
+        self.vault_value_variance = vault_value_variance
+        brownie.chain.snapshot()
+
+        # Before
+        self.txs.append(vault_core.rebase(std))
+        self.txs.append(vault_value_checker.takeSnapshot(std))
+
+        return self.txs
+
+    def __exit__(self, *args, **kwargs):
+        vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+        supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+        profit = vault_change - supply_change
+
+        self.txs.append(
+            vault_value_checker.checkDelta(
+                profit, 
+                self.profit_variance, 
+                vault_change, 
+                self.vault_value_variance, 
+                std
+            )
+        )
+        print("-----")
+        print("Profit", "{:.6f}".format(profit / 10**18), profit)
+        print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+        brownie.chain.revert()
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(self.txs))
+        print("----")
+
+class TemporaryForkForOETH:
+    def __enter__(self, profit_variance, vault_value_variance):
+        self.txs = []
+        self.profit_variance = profit_variance
+        self.vault_value_variance = vault_value_variance
+        brownie.chain.snapshot()
+
+        # Before
+        self.txs.append(vault_oeth_core.rebase(std))
+        self.txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+        return self.txs
+
+    def __exit__(self, *args, **kwargs):
+        vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+        supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+        profit = vault_change - supply_change
+
+        self.txs.append(
+            oeth_vault_value_checker.checkDelta(
+                profit, 
+                self.profit_variance, 
+                vault_change, 
+                self.vault_value_variance, 
+                std
+            )
+        )
+        print("-----")
+        print("Profit", "{:.6f}".format(profit / 10**18), profit)
+        print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+        brownie.chain.revert()
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(self.txs))
+        print("----")
 
 
 def show_governor_four_proposal_actions(proposal_id):

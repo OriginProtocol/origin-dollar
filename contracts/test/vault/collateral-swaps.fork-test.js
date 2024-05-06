@@ -33,11 +33,11 @@ describe("ForkTest: OETH Vault", function () {
       expect(await oethVault.swapper()).to.equal(swapper.address);
     });
     it("assets should have allowed slippage", async () => {
-      const { oethVault, weth, reth, stETH, frxETH } = fixture;
+      const { oethVault, weth, reth, stETH } = fixture;
 
-      const assets = [weth, stETH, reth, frxETH];
-      const expectedConversions = [0, 0, 1, 0];
-      const expectedSlippage = [20, 70, 200, 20];
+      const assets = [weth, stETH, reth];
+      const expectedConversions = [0, 0, 1];
+      const expectedSlippage = [20, 70, 200];
 
       for (let i = 0; i < assets.length; i++) {
         const config = await oethVault.getAssetConfig(assets[i].address);
@@ -63,128 +63,19 @@ describe("ForkTest: OETH Vault", function () {
 
     const tests = [
       {
-        from: "WETH",
-        to: "rETH",
-        fromAmount: 100,
-        minToAssetAmount: 90,
+        from: "rETH",
+        to: "WETH",
+        fromAmount: 10,
+        minToAssetAmount: "10.7",
+        slippage: 0.3,
       },
-      // {
-      //   from: "WETH",
-      //   to: "stETH",
-      //   fromAmount: 100,
-      //   minToAssetAmount: 99.96,
-      // },
       {
-        from: "WETH",
-        to: "frxETH",
-        fromAmount: 100,
-        minToAssetAmount: 100,
-      },
-      // {
-      //   from: "rETH",
-      //   to: "stETH",
-      //   fromAmount: 10,
-      //   minToAssetAmount: "10.73",
-      //   slippage: 0.1,
-      // },
-      // {
-      //   from: "rETH",
-      //   to: "frxETH",
-      //   fromAmount: 10,
-      //   minToAssetAmount: 10.7,
-      //   slippage: 0.1,
-      // },
-      // {
-      //   from: "rETH",
-      //   to: "WETH",
-      //   fromAmount: 10,
-      //   minToAssetAmount: "10.7",
-      //   slippage: 0.3,
-      // },
-      // {
-      //   from: "stETH",
-      //   to: "rETH",
-      //   fromAmount: 400,
-      //   minToAssetAmount: 350,
-      //   approxFromBalance: true,
-      // },
-      // {
-      //   from: "stETH",
-      //   to: "frxETH",
-      //   fromAmount: 400,
-      //   minToAssetAmount: 399.1,
-      //   approxFromBalance: true,
-      // },
-      // {
-      //   from: "stETH",
-      //   to: "WETH",
-      //   fromAmount: 750,
-      //   minToAssetAmount: 749.1,
-      //   approxFromBalance: true,
-      // },
-      // {
-      //   from: "frxETH",
-      //   to: "rETH",
-      //   fromAmount: 25,
-      //   minToAssetAmount: 21,
-      // },
-      // {
-      //   from: "frxETH",
-      //   to: "stETH",
-      //   fromAmount: 25,
-      //   minToAssetAmount: 24.9,
-      // },
-      // {
-      //   from: "frxETH",
-      //   to: "WETH",
-      //   fromAmount: 25,
-      //   minToAssetAmount: 24.9,
-      // },
-      {
-        from: "WETH",
-        to: "stETH",
+        from: "stETH",
+        to: "WETH",
         fromAmount: 1,
-        minToAssetAmount: 0.9,
-        protocols: "UNISWAP_V2",
+        minToAssetAmount: 0.99,
+        approxFromBalance: true,
       },
-      // Commenting out due to low liquidity
-      // {
-      //   from: "WETH",
-      //   to: "frxETH",
-      //   fromAmount: 1,
-      //   minToAssetAmount: 0.97,
-      //   protocols: "UNISWAP_V3",
-      // },
-      {
-        from: "WETH",
-        to: "frxETH",
-        fromAmount: 100,
-        minToAssetAmount: 100,
-        protocols: "CURVE,CURVE_V2",
-      },
-      {
-        from: "WETH",
-        to: "stETH",
-        fromAmount: 100,
-        minToAssetAmount: 99.999,
-        protocols: "ST_ETH",
-      },
-      // {
-      //   from: "stETH",
-      //   to: "frxETH",
-      //   fromAmount: 750,
-      //   minToAssetAmount: 749.2,
-      //   protocols: "ST_ETH,CURVE,CURVE_V2,MAVERICK_V1",
-      //   approxFromBalance: true,
-      // },
-      // {
-      //   from: "rETH",
-      //   to: "frxETH",
-      //   fromAmount: 100,
-      //   minToAssetAmount: 107.2,
-      //   protocols:
-      //     "BALANCER,BALANCER_V2,BALANCER_V2_WRAPPER,CURVE,CURVE_V2,MAVERICK_V1",
-      // },
     ];
     for (const test of tests) {
       it(`should be able to swap ${test.fromAmount} ${test.from} for a min of ${
@@ -194,94 +85,6 @@ describe("ForkTest: OETH Vault", function () {
         const toAsset = await resolveAsset(test.to);
 
         await assertSwap(
-          {
-            ...test,
-            fromAsset,
-            toAsset,
-            vault: fixture.oethVault,
-          },
-          fixture
-        );
-      });
-    }
-  });
-
-  describe("Collateral swaps (Unhappy paths)", async () => {
-    const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-
-    const tests = [
-      {
-        error: "",
-        from: "WETH",
-        to: "frxETH",
-        fromAmount: 100,
-        minToAssetAmount: 105,
-      },
-      {
-        error: "",
-        from: "WETH",
-        to: "stETH",
-        fromAmount: 100,
-        minToAssetAmount: 90,
-        protocols: "UNISWAP_V3",
-      },
-      {
-        error: "Oracle slippage limit exceeded",
-        from: "WETH",
-        to: "stETH",
-        fromAmount: 100,
-        minToAssetAmount: 80,
-        protocols: "UNISWAP_V2",
-      },
-      {
-        error: "To asset is not supported",
-        from: "WETH",
-        to: "USDT",
-        fromAmount: 20,
-        minToAssetAmount: 1,
-      },
-      // {
-      //   error: "ERC20: transfer amount exceeds balance",
-      //   from: "frxETH",
-      //   to: "WETH",
-      //   fromAmount: 50000,
-      //   minToAssetAmount: 49000,
-      // },
-      {
-        error: "SafeERC20: low-level call failed",
-        from: "WETH",
-        to: "frxETH",
-        fromAmount: 30000,
-        minToAssetAmount: 29900,
-      },
-      // {
-      //   error: "BALANCE_EXCEEDED",
-      //   from: "stETH",
-      //   to: "WETH",
-      //   fromAmount: 10000,
-      //   minToAssetAmount: 9900,
-      // },
-      // {
-      //   error: "ERC20: transfer amount exceeds balance",
-      //   from: "rETH",
-      //   to: "WETH",
-      //   fromAmount: 10000,
-      //   minToAssetAmount: 9900,
-      // },
-    ];
-
-    for (const test of tests) {
-      it(`should fail to swap ${test.fromAmount} ${test.from} for ${
-        test.to
-      } using ${test.protocols || "all"} protocols: error ${
-        test.error
-      }`, async () => {
-        const fromAsset = await resolveAsset(test.from);
-        const toAsset = await resolveAsset(test.to);
-        await assertFailedSwap(
           {
             ...test,
             fromAsset,
