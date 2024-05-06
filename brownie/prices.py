@@ -6,31 +6,32 @@ from world import *
 
 COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 
+decimalsMap = {
+    WETH: 18,
+    RETH: 18,
+    STETH: 18,
+    FRXETH: 18,
+    SFRXETH: 18,
+    DAI: 18,
+    USDT: 6,
+    USDC: 6,
+
+    CVX: 18,
+    OGV: 18,
+    OUSD: 18,
+    OETH: 18,
+
+    'human': 0,
+}
+
 def scale_amount(from_token, to_token, amount, decimals=0):
     if from_token == to_token:
         return amount
 
-    decimalsMap = {
-        WETH: 18,
-        RETH: 18,
-        STETH: 18,
-        FRXETH: 18,
-        SFRXETH: 18,
-        DAI: 18,
-        USDT: 6,
-        USDC: 6,
-
-        CVX: 18,
-        OGV: 18,
-        OUSD: 18,
-        OETH: 18,
-
-        'human': 0
-    }
     scaled_amount = (amount * 10 ** decimalsMap[to_token]) / (10 ** decimalsMap[from_token])
 
     if decimals == 0:
-        return int(scaled_amount)
+        return int(scaled_amount * 10**6) / 10**6
 
     return int(scale_amount * 10**decimals) / (10**decimals)
     
