@@ -55,7 +55,6 @@ contract AeroHarvester is Governable {
 
     error InvalidSwapPlatform(SwapPlatform swapPlatform);
 
-    error InvalidUniswapV2PathLength();
     error InvalidTokenInSwapPath(address token);
 
     error UnsupportedStrategy(address strategyAddress);
@@ -69,7 +68,7 @@ contract AeroHarvester is Governable {
         uint16 allowedSlippageBps;
         // Reward when calling a harvest function denominated in basis points.
         uint16 harvestRewardBps;
-        // Address of Uniswap V2 compatible protocol like Aerodrome.
+        // Address of AMM protocol like Aerodrome to perform swap Rewards => BaseToken.
         address swapPlatformAddr;
         /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
          * a reward token this needs to be set to false.
@@ -86,8 +85,6 @@ contract AeroHarvester is Governable {
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
     mapping(address => bool) public supportedStrategies;
-
-    // address public immutable vaultAddress;
 
     /**
      * Address receiving rewards proceeds. Initially the Vault contract later will possibly
@@ -147,7 +144,7 @@ contract AeroHarvester is Governable {
      *          Example: 300 == 3% slippage
      * @param tokenConfig.harvestRewardBps uint16 amount of reward tokens the caller of the function is rewarded.
      *          Example: 100 == 1%
-     * @param tokenConfig.swapPlatformAddr Address Address of a UniswapV2 compatible contract to perform
+     * @param tokenConfig.swapPlatformAddr Address of a AMM contract to perform
      *          the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
      * @param tokenConfig.liquidationLimit uint256 Maximum amount of token to be sold per one swap function call.
      *          When value is 0 there is no limit.
@@ -461,9 +458,9 @@ contract AeroHarvester is Governable {
     }
 
     /**
-     * @dev Swaps the token to `baseToken` with Uniswap V2
+     * @dev Swaps the token to `baseToken` with Aerodrome
      *
-     * @param routerAddress Uniswap V2 Router address
+     * @param routerAddress Aerodrome Router address
      * @param swapToken Address of the tokenIn
      * @param amountIn Amount of `swapToken` to swap
      * @param minAmountOut Minimum expected amount of `baseToken`
