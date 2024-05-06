@@ -12,15 +12,15 @@ const resolveAsset = async (symbol) => {
   // if put outside this function, the following error occurs:
   // "Hardhat can't be initialized while its config is being defined"
   const hre = require("hardhat");
-  const isFork = process.env.FORK === "true";
-  const isMainnet = hre.network.name === "mainnet";
-  const isMainnetOrFork = isMainnet || isFork;
 
-  if (isMainnetOrFork) {
+  if (hre.network.name != "hardhat") {
     const assetAddr =
-      addresses.mainnet[symbol + "Proxy"] || addresses.mainnet[symbol];
+      addresses[hre.network.name][symbol + "Proxy"] ||
+      addresses[hre.network.name][symbol];
     if (!assetAddr) {
-      throw Error(`Failed to resolve symbol "${symbol}" to an address`);
+      throw Error(
+        `Failed to resolve symbol "${symbol}" to an address on the "${hre.network.name}" network`
+      );
     }
     log(`Resolved ${symbol} to ${assetAddr}`);
     const asset = await ethers.getContractAt("IERC20Metadata", assetAddr);

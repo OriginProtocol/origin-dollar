@@ -545,8 +545,6 @@ const deployOUSDHarvester = async (ousdDripper) => {
 
 const upgradeOETHHarvester = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
 
@@ -585,11 +583,13 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   await withConfirmation(
-    cOETHHarvesterProxy["initialize(address,address,bytes)"](
-      dOETHHarvester.address,
-      governorAddr,
-      []
-    )
+    // prettier-ignore
+    cOETHHarvesterProxy
+      .connect(sGovernor)["initialize(address,address,bytes)"](
+        dOETHHarvester.address,
+        governorAddr,
+        []
+      )
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -602,7 +602,7 @@ const deployOETHHarvester = async (oethDripper) => {
       )
   );
 
-  return dOETHHarvesterProxy;
+  return cOETHHarvester;
 };
 
 /**

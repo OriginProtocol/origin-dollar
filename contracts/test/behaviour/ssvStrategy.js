@@ -127,8 +127,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
   describe("Validator operations", function () {
     beforeEach(async () => {
-      const { weth, domen, nativeStakingSSVStrategy, addresses } =
-        await context();
+      const { weth, domen, nativeStakingSSVStrategy } = await context();
 
       // Add 32 WETH to the strategy so it can be staked
       await weth
@@ -385,7 +384,6 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         oethDripper,
         weth,
         validatorRegistrator,
-        addresses,
       } = await context();
       const dripperWethBefore = await weth.balanceOf(oethDripper.address);
 

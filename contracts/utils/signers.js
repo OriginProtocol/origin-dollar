@@ -1,4 +1,4 @@
-const { Wallet } = require("ethers").utils;
+const { Wallet } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
 
 const { ethereumAddress, privateKey } = require("./regex");
