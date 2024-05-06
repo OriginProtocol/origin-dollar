@@ -61,6 +61,11 @@ const {
   transferGovernance,
   claimGovernance,
 } = require("./governable");
+const {
+  getRewardTokenAddresses,
+  setRewardTokenAddresses,
+  checkBalance,
+} = require("./strategy");
 
 const log = require("../utils/logger")("tasks");
 
@@ -784,6 +789,47 @@ task(
     types.string
   )
   .setAction(claimGovernance);
+
+// Strategy
+
+task("checkBalance", "Gets the asset balance of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(checkBalance);
+
+task("getRewardTokenAddresses", "Gets the reward tokens of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(getRewardTokenAddresses);
+
+task("setRewardTokenAddresses", "Sets the reward token of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(setRewardTokenAddresses);
 
 // SSV
 
