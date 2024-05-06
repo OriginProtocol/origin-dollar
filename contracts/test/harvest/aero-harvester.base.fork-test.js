@@ -2,6 +2,9 @@ const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
 const { aeroOETHAMOFixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
+const { parseEther, parseUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("ethers");
 
 describe("ForkTest: Harvest AERO", function () {
   this.timeout(0);
@@ -25,8 +28,53 @@ describe("ForkTest: Harvest AERO", function () {
       await harvester.supportedStrategies(aerodromeEthStrategy.address)
     ).to.be.eq(true);
   });
-  it.only("should harvest and swap", async function () {
-    const { harvester, aerodromeEthStrategy, oethVault } = fixture;
-    await harvester.harvestAndSwap(aerodromeEthStrategy.address);
+  it("should harvest and swap", async function () {
+    const { harvester, aerodromeEthStrategy, aeroWethOracle, rewardHarvester } =
+      fixture;
+    const yieldAccrued = "1000"; // AERO tokens
+
+    // Mock accrue yield
+    const minter = await impersonateAndFund(
+      "0xeB018363F0a9Af8f91F06FEe6613a751b2A33FE5"
+    );
+    const aeroTokenInstance = await ethers.getContractAt(
+      "IERC20MintableBurnable",
+      addresses.base.aeroTokenAddress
+    );
+    await aeroTokenInstance
+      .connect(minter)
+      .mint(harvester.address, parseEther(yieldAccrued));
+
+    // find signer balance before
+    const wethTokenInstance = await ethers.getContractAt(
+      "IERC20",
+      addresses.base.wethTokenAddress
+    );
+    const wethBalanceBefore = await wethTokenInstance.balanceOf(
+      rewardHarvester.address
+    );
+    await harvester["harvestAndSwap(address,address)"](
+      aerodromeEthStrategy.address,
+      rewardHarvester.address
+    );
+    const wethBalanceAfter = await wethTokenInstance.balanceOf(
+      rewardHarvester.address
+    );
+
+    // Fetch Aero Value for accrued yield in ETH
+    const poolInstance = await ethers.getContractAt(
+      "IPool",
+      addresses.base.wethAeroPoolAddress
+    );
+    const ammRate = await poolInstance.getAmountOut(
+      parseUnits("1"),
+      addresses.base.aeroTokenAddress
+    );
+    const rewardValue = ammRate.mul(BigNumber.from(yieldAccrued));
+
+    expect(rewardValue).to.approxEqualTolerance(
+      wethBalanceAfter.sub(wethBalanceBefore),
+      2
+    );
   });
 });

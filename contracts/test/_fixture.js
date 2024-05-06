@@ -1714,9 +1714,11 @@ async function aeroOETHAMOFixture(
 
   fixture.weth = wETH;
   fixture.oeth = oETH;
-  const [deployer, josh, governorAddr] = await ethers.getSigners();
+  const [defaultSigner, josh, governorAddr, rewardHarvester] =
+    await ethers.getSigners();
   const { strategistAddr, timelockAddr } = await getNamedAccounts();
 
+  fixture.rewardHarvester = rewardHarvester;
   fixture.strategist = ethers.provider.getSigner(strategistAddr);
   fixture.timelock = ethers.provider.getSigner(timelockAddr);
 
@@ -1894,6 +1896,8 @@ async function aeroOETHAMOFixture(
     addresses.base.ethUsdPriceFeed,
     addresses.base.aeroUsdPriceFeed
   );
+  fixture.aeroWethOracle = aeroWethOracle;
+
   const AeroHarvester = await ethers.getContractFactory("AeroHarvester");
   let harvester = await AeroHarvester.deploy(
     aeroWethOracle.address,
@@ -1921,6 +1925,7 @@ async function aeroOETHAMOFixture(
   );
 
   await harvester.setSupportedStrategy(aerodromeEthStrategy.address, true);
+  await harvester.setRewardProceedsAddress(rewardHarvester.address);
 
   fixture.harvester = harvester;
 
