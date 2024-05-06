@@ -64,7 +64,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       };
 
       await expect(signer.sendTransaction(tx)).to.be.revertedWith(
-        "eth not sent from Fee Accumulator"
+        "eth not from allowed contracts"
       );
     });
 
