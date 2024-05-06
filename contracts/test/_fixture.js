@@ -1888,6 +1888,44 @@ async function aeroOETHAMOFixture(
     }
   }
 
+  // Deploy Oracle and Harvester contracts
+  const AeroWethOracle = await ethers.getContractFactory("AeroWEthPriceFeed");
+  let aeroWethOracle = await AeroWethOracle.deploy(
+    addresses.base.ethUsdPriceFeed,
+    addresses.base.aeroUsdPriceFeed
+  );
+  const AeroHarvester = await ethers.getContractFactory("AeroHarvester");
+  let harvester = await AeroHarvester.deploy(
+    aeroWethOracle.address,
+    addresses.base.wethTokenAddress
+  );
+  await harvester.deployed();
+  await harvester.setRewardTokenConfig(
+    addresses.base.aeroTokenAddress,
+    {
+      allowedSlippageBps: 300,
+      harvestRewardBps: 100,
+      swapPlatform: 0, // Aerodrome
+      swapPlatformAddr: addresses.base.aeroRouterAddress,
+      liquidationLimit: 0,
+      doSwapRewardToken: true,
+    },
+    [
+      {
+        from: addresses.base.aeroTokenAddress,
+        to: addresses.base.wethTokenAddress,
+        stable: true,
+        factory: addresses.base.aeroFactoryAddress,
+      },
+    ]
+  );
+
+  await harvester.setSupportedStrategy(aerodromeEthStrategy.address, true);
+
+  fixture.harvester = harvester;
+
+  await aerodromeEthStrategy.setHarvesterAddress(harvester.address);
+
   return fixture;
 }
 
