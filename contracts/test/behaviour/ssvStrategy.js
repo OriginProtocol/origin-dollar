@@ -159,7 +159,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const stakeAmount = oethUnits("32");
 
-      await setERC20TokenBalance(nativeStakingSSVStrategy.address, ssv, "1000", hre);
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
 
       // Register a new validator with the SSV Network
       const regTx = await nativeStakingSSVStrategy
@@ -219,7 +224,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       });
 
       const stakeAmount = oethUnits("32");
-      await setERC20TokenBalance(nativeStakingSSVStrategy.address, ssv, "1000", hre);
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
 
       // Register a new validator with the SSV network
       const regTx = await nativeStakingSSVStrategy
