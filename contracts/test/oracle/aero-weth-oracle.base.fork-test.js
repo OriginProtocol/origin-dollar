@@ -10,24 +10,30 @@ describe("ForkTest: Aero WETH Oracle", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
-  let aeroWethOracle;
-
+  let aeroWethFeed,oracleRouter;
   beforeEach(async () => {
-    const AeroWethOracle = await ethers.getContractFactory("AeroWEthPriceFeed");
-    aeroWethOracle = await AeroWethOracle.deploy(
+    const AeroWethFeed = await ethers.getContractFactory("PriceFeedPair");
+    aeroWethFeed = await AeroWethFeed.deploy(
+      addresses.base.aeroUsdPriceFeed,
       addresses.base.ethUsdPriceFeed,
-      addresses.base.aeroUsdPriceFeed
+      false,
+      true
     );
-    await aeroWethOracle.deployed();
+    await aeroWethFeed.deployed();
+
+    const OracleRouter = await ethers.getContractFactory("BaseOETHOracleRouter");
+    oracleRouter = await OracleRouter.deploy(aeroWethFeed.address);
+    await oracleRouter.deployed();
+    await oracleRouter.cacheDecimals(addresses.base.aeroTokenAddress);
   });
 
   it("should get WETH price", async () => {
-    const price = await aeroWethOracle.price(addresses.base.wethTokenAddress);
+    const price = await oracleRouter.price(addresses.base.wethTokenAddress);
     expect(price).to.eq(parseUnits("1", 18));
   });
 
   it("should get AERO price", async () => {
-    const price = await aeroWethOracle.price(addresses.base.aeroTokenAddress);
+    const price = await oracleRouter.price(addresses.base.aeroTokenAddress);
     const poolInstance = await ethers.getContractAt(
       "IPool",
       addresses.base.wethAeroPoolAddress
