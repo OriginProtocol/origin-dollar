@@ -258,13 +258,15 @@ const isHolesky = hre.network.name == "holesky";
 const isExternalNet = isMainnet || isHolesky;
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
-const isMainnetOrFork = isMainnet || isFork;
+const isMainnetOrFork =
+  isMainnet || (isFork && process.env.FORK_NETWORK_NAME == "mainnet");
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
 const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
+const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
 
@@ -433,7 +435,7 @@ const getAssetAddresses = async (deployments) => {
       SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
     };
-  } else if (isHolesky) {
+  } else if (isHoleskyOrFork) {
     return {
       WETH: addresses.holesky.WETH,
       SSV: addresses.holesky.SSV,
@@ -793,6 +795,7 @@ module.exports = {
   isArbitrumOne,
   isHolesky,
   isHoleskyFork,
+  isHoleskyOrFork,
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,

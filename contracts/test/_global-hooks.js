@@ -1,6 +1,6 @@
 const mocha = require("mocha");
 
-const { isForkTest, isArbFork } = require("./helpers");
+const { isForkTest, isArbFork, isHoleskyFork } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
 const _maxChunks = Number(process.env.MAX_CHUNKS);
@@ -36,7 +36,8 @@ mocha.before(function () {
   // For fork tests, scrape out all unit tests.
   root.suites = root.suites.filter(
     (s) =>
-      s.file.endsWith(".fork-test.js") == isForkTest &&
+      s.file.endsWith(".fork-test.js") == isForkTest ||
+      s.file.endsWith(".holesky-fork-test.js") == isHoleskyFork ||
       s.file.endsWith(".arb.fork-test.js") == isArbFork
   );
 

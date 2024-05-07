@@ -10,7 +10,7 @@ const {
 } = require("../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const { decimalsFor, isCI } = require("../helpers");
-const { resolveAsset } = require("../../utils/assets");
+const { resolveAsset } = require("../../utils/resolvers");
 
 const log = require("../../utils/logger")("test:fork:swaps");
 

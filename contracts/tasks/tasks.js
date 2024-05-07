@@ -48,7 +48,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { printClusterInfo } = require("./ssv");
+const { depositSSV, printClusterInfo } = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -56,6 +56,17 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const {
+  governor,
+  transferGovernance,
+  claimGovernance,
+} = require("./governable");
+const {
+  getRewardTokenAddresses,
+  setRewardTokenAddresses,
+  checkBalance,
+} = require("./strategy");
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -744,6 +755,84 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
   )
   .setAction(proxyUpgrades);
 
+// Governable
+
+task("governor", "Gets the governor of a Governable contract")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(governor);
+
+task(
+  "transferGovernance",
+  "Start transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(transferGovernance);
+
+task(
+  "claimGovernance",
+  "Complete the transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(claimGovernance);
+
+// Strategy
+
+task("checkBalance", "Gets the asset balance of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(checkBalance);
+
+task("getRewardTokenAddresses", "Gets the reward tokens of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(getRewardTokenAddresses);
+
+task("setRewardTokenAddresses", "Sets the reward token of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(setRewardTokenAddresses);
+
+// SSV
+
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
   .addParam(
     "operatorids",
@@ -772,5 +861,21 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     });
   });
 task("getClusterInfo").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositSSV",
+  "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
+)
+  .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addParam(
+    "operatorids",
+    "4 operator ids separated with a dot: same as IP format. E.g. 60.79.220.349",
+    undefined,
+    types.string
+  )
+  .setAction(depositSSV);
+task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

@@ -5,11 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
-import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;

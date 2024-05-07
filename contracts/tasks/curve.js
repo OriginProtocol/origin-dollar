@@ -4,7 +4,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
 const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
-const { resolveAsset } = require("../utils/assets");
+const { resolveAsset } = require("../utils/resolvers");
 const { getDiffBlocks } = require("./block");
 const { getSigner } = require("../utils/signers");
 

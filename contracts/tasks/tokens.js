@@ -1,6 +1,6 @@
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
-const { resolveAsset } = require("../utils/assets");
+const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
@@ -8,8 +8,7 @@ const { getBlock } = require("./block");
 
 const log = require("../utils/logger")("task:tokens");
 
-async function tokenBalance(taskArguments) {
-  const { account, block, symbol } = taskArguments;
+async function tokenBalance({ account, block, symbol }) {
   const signer = await getSigner();
 
   const asset = await resolveAsset(symbol);
@@ -24,8 +23,7 @@ async function tokenBalance(taskArguments) {
   const decimals = await asset.decimals();
   console.log(`${accountAddr} has ${formatUnits(balance, decimals)} ${symbol}`);
 }
-async function tokenAllowance(taskArguments) {
-  const { block, owner, spender, symbol } = taskArguments;
+async function tokenAllowance({ block, owner, spender, symbol }) {
   const signer = await getSigner();
 
   const asset = await resolveAsset(symbol);
@@ -46,8 +44,7 @@ async function tokenAllowance(taskArguments) {
   );
 }
 
-async function tokenApprove(taskArguments) {
-  const { amount, symbol, spender } = taskArguments;
+async function tokenApprove({ amount, symbol, spender }) {
   const signer = await getSigner();
 
   if (!spender.match(ethereumAddress)) {
@@ -62,8 +59,7 @@ async function tokenApprove(taskArguments) {
   await logTxDetails(tx, "approve");
 }
 
-async function tokenTransfer(taskArguments) {
-  const { amount, symbol, to } = taskArguments;
+async function tokenTransfer({ amount, symbol, to }) {
   const signer = await getSigner();
 
   if (!to.match(ethereumAddress)) {
@@ -90,8 +86,7 @@ async function tokenTransfer(taskArguments) {
   await logTxDetails(tx, "transfer");
 }
 
-async function tokenTransferFrom(taskArguments) {
-  const { amount, symbol, from, to } = taskArguments;
+async function tokenTransferFrom({ amount, symbol, from, to }) {
   const signer = await getSigner();
 
   if (!from.match(ethereumAddress)) {

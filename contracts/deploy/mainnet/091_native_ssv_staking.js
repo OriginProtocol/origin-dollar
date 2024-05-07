@@ -114,11 +114,23 @@ module.exports = deploymentWithGovernanceProposal(
     // 7. Safe approve SSV token spending
     await cStrategy.connect(sDeployer).safeApproveAllTokens();
 
+    // 8. Deploy Harvester
+    const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    await deployWithConfirmation("OETHHarvester", [
+      cVaultProxy.address,
+      addresses.mainnet.WETH,
+    ]);
+    const dOETHHarvesterImpl = await ethers.getContract("OETHHarvester");
+
     console.log(
       "Native Staking SSV Strategy address: ",
       cStrategyProxy.address
     );
     console.log("Fee accumulator address: ", cFeeAccumulator.address);
+    console.log(
+      "New OETHHarvester implementation address: ",
+      dOETHHarvesterImpl.address
+    );
 
     // Governance Actions
     // ----------------
@@ -151,6 +163,18 @@ module.exports = deploymentWithGovernanceProposal(
             ethers.utils.parseEther("21.6"),
             ethers.utils.parseEther("25.6"),
           ],
+        },
+        // 5. set validator registrator
+        {
+          contract: cStrategy,
+          signature: "setRegistrator(address)",
+          args: [addresses.mainnet.validatorRegistrator],
+        },
+        // 6. Upgrade the OETH Harvester
+        {
+          contract: cOETHHarvesterProxy,
+          signature: "upgradeTo(address)",
+          args: [dOETHHarvesterImpl.address],
         },
       ],
     };

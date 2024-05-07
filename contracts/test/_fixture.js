@@ -99,8 +99,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       addressContext = addresses.holesky;
     }
 
-    console.log("addressContext.WETH", addressContext.WETH);
-
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
 
@@ -362,6 +360,7 @@ const defaultFixture = deployments.createFixture(async () => {
     convexEthMetaStrategy,
     fluxStrategy,
     nativeStakingSSVStrategy,
+    nativeStakingFeeAccumulator,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -504,6 +503,14 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingSSVStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
+    );
+
+    const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
+      "NativeStakingFeeAccumulatorProxy"
+    );
+    nativeStakingFeeAccumulator = await ethers.getContractAt(
+      "FeeAccumulator",
+      nativeStakingFeeAccumulatorProxy.address
     );
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
@@ -760,6 +767,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     fraxEthStrategy,
     nativeStakingSSVStrategy,
+    nativeStakingFeeAccumulator,
     frxEthRedeemStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -1581,10 +1589,29 @@ async function nativeStakingSSVStrategyFixture() {
   });
 
   if (isFork) {
-    const { oethVault, weth, nativeStakingSSVStrategy, timelock } = fixture;
+    const { oethVault, weth, nativeStakingSSVStrategy, ssv, timelock } =
+      fixture;
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+
+    // The Defender Relayer
+    fixture.validatorRegistrator = await impersonateAndFund(
+      addresses.mainnet.validatorRegistrator
+    );
+
+    // Fund some SSV to the native staking strategy
+    const ssvWhale = await impersonateAndFund(
+      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
+    );
+    await ssv
+      .connect(ssvWhale)
+      .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
+
+    fixture.ssvNetwork = await ethers.getContractAt(
+      "ISSVNetwork",
+      addresses.mainnet.SSVNetwork
+    );
   } else {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
@@ -1594,8 +1621,6 @@ async function nativeStakingSSVStrategyFixture() {
     await oethVault
       .connect(sGovernor)
       .approveStrategy(nativeStakingSSVStrategy.address);
-
-    log("nativeStakingSSVStrategy.address", nativeStakingSSVStrategy.address);
 
     const fuseStartBn = ethers.utils.parseEther("21.6");
     const fuseEndBn = ethers.utils.parseEther("25.6");

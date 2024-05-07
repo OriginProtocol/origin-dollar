@@ -1,4 +1,4 @@
-const { Wallet } = require("ethers").utils;
+const { Wallet } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
 
 const { ethereumAddress, privateKey } = require("./regex");
@@ -103,7 +103,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await hardhatSetBalance(account, amount);
+  await hardhatSetBalance(account, amount.toString());
 
   return signer;
 }

@@ -16,6 +16,10 @@
 
 ## Fee Accumulator
 
+### Hierarchy
+
+![Fee Accumulator Hierarchy](../../../docs/FeeAccumulatorHierarchy.svg)
+
 ### Squashed
 
 ![Fee Accumulator Squashed](../../../docs/FeeAccumulatorSquashed.svg)

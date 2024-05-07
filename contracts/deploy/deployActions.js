@@ -543,11 +543,26 @@ const deployOUSDHarvester = async (ousdDripper) => {
   return dHarvesterProxy;
 };
 
+const upgradeOETHHarvester = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
+    cOETHVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  await withConfirmation(cOETHHarvesterProxy.upgradeTo(dOETHHarvester.address));
+
+  log("Upgraded OETHHarvesterProxy");
+  return cOETHHarvesterProxy;
+};
+
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dOETHHarvesterProxy = await deployWithConfirmation(
@@ -568,11 +583,13 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   await withConfirmation(
-    cOETHHarvesterProxy["initialize(address,address,bytes)"](
-      dOETHHarvester.address,
-      governorAddr,
-      []
-    )
+    // prettier-ignore
+    cOETHHarvesterProxy
+      .connect(sGovernor)["initialize(address,address,bytes)"](
+        dOETHHarvester.address,
+        governorAddr,
+        []
+      )
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -581,11 +598,11 @@ const deployOETHHarvester = async (oethDripper) => {
     cOETHHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? oethDripper.address : cVaultProxy.address
+        isMainnet || isHolesky ? oethDripper.address : cOETHVaultProxy.address
       )
   );
 
-  return dOETHHarvesterProxy;
+  return cOETHHarvester;
 };
 
 /**
@@ -1509,6 +1526,7 @@ module.exports = {
   deployHarvesters,
   deployOETHHarvester,
   deployOUSDHarvester,
+  upgradeOETHHarvester,
   configureVault,
   configureOETHVault,
   configureStrategies,

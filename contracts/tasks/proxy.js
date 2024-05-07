@@ -3,9 +3,7 @@ const { getSigner } = require("../utils/signers");
 
 const log = require("../utils/logger")("task:proxy");
 
-async function proxyUpgrades(taskArguments, hre) {
-  const { contract, from, to } = taskArguments;
-
+async function proxyUpgrades({ contract, from, to }, hre) {
   const toBlockNumber = to || (await hre.ethers.provider.getBlockNumber());
 
   log(`Searching for Upgraded events from ${from} to ${toBlockNumber}`);

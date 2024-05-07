@@ -52,7 +52,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
   }));
 
   describe("Initial setup", function () {
-    it("Should not allow ETH to be sent to the strategy if not Fee Accumulator", async () => {
+    it("Should not allow ETH to be sent to the strategy if not FeeAccumulator or WETH", async () => {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       const signer = nativeStakingSSVStrategy.provider.getSigner(
