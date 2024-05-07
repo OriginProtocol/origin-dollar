@@ -226,6 +226,7 @@ jobs:
       - contracts-unit-coverage
       - contracts-forktest
       - contracts-arb-forktest
+      - contracts-hol-forktest
     steps:
       - uses: actions/checkout@v3
 
