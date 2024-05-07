@@ -31,6 +31,8 @@ const ERROR_THRESHOLD = 5;
  *   - if spawn process gets stuck at any of the above steps and is not able to
  *     recover in X amount of times (e.g. 5 times). Mark the process as failed
  *     and start over.
+ *   - TODO: (implement this) if fuse of the native staking strategy is blown
+ *     stop with all the operations
  */
 const operateValidators = async ({ store, signer, contracts, config }) => {
   const {
@@ -61,8 +63,8 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
         await createValidatorRequest(
           p2p_api_key, // api key
           p2p_base_url,
-          contracts.nodeDelegator.address, // node delegator address
-          eigenPodAddress, // eigenPod address
+          nativeStakingStrategy.address, // node delegator address
+          feeRecipientAddress, // eigenPod address
           validatorSpawnOperationalPeriodInDays,
           store
         );
@@ -302,8 +304,8 @@ const p2pRequest = async (url, api_key, method, body) => {
 const createValidatorRequest = async (
   p2p_api_key,
   p2p_base_url,
-  nodeDelegatorAddress,
-  eigenPodAddress,
+  nativeStakingStrategy,
+  feeRecipientAddress,
   validatorSpawnOperationalPeriodInDays,
   store
 ) => {
@@ -315,9 +317,9 @@ const createValidatorRequest = async (
     {
       validatorsCount: 1,
       id: uuid,
-      withdrawalAddress: eigenPodAddress,
-      feeRecipientAddress: nodeDelegatorAddress,
-      ssvOwnerAddress: nodeDelegatorAddress,
+      withdrawalAddress: nativeStakingStrategy,
+      feeRecipientAddress,
+      ssvOwnerAddress: nativeStakingStrategy,
       type: "without-encrypt-key",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
     }

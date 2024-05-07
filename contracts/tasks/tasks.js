@@ -5,7 +5,9 @@ const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
+const { getDefenderSigner } = require("../utils/signers");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { KeyValueStoreClient } = require("defender-kvstore-client");
 
 const {
   storeStorageLayoutForAllContracts,
@@ -877,5 +879,67 @@ subtask(
   )
   .setAction(depositSSV);
 task("depositSSV").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Defender
+subtask("operateValidators", "Creates the required amount of new SSV validators and stakes ETH")
+  .addOptionalParam("index", "Index of Native Staking contract", 1, types.int)
+  .addOptionalParam("stake", "Stake 32 ether after registering a new SSV validator", true, types.boolean)
+  .addOptionalParam("days", "SSV Cluster operational time in days", 1, types.int)
+  .addOptionalParam("clear", "Clear storage", true, types.boolean)
+  .setAction(async (taskArgs) => {
+    const storeFilePath = require("path").join(__dirname, "..", ".localKeyValueStorage");
+    const network = await ethers.provider.getNetwork();
+    const isMainnet = network.chainId === 1;
+    const isHolesky = network.chainId === 17000;
+
+    if (!isMainnet && !isHolesky) {
+      throw new Error("operate validatos is supported on Mainnet and Holesky only");
+    }
+
+    // TODO separate store file for a separate network
+    const store = new KeyValueStoreClient({ path: storeFilePath });
+    const signer = await getDefenderSigner();
+
+    const WETH = await ethers.getContractAt("IWETH9", addresses.mainnet/holesky.WETH);
+
+    const addressName = taskArgs.index === 1 ? "NODE_DELEGATOR_NATIVE_STAKING" : "NODE_DELEGATOR";
+    const nodeDelegatorAddress = await parseAddress(addressName);
+    const nodeDelegator = await ethers.getContractAt("NodeDelegator", nodeDelegatorAddress);
+
+    const contracts = {
+      nodeDelegator,
+      WETH,
+    };
+
+    const eigenPodAddress = await parseAddress("EIGEN_POD");
+
+    const p2p_api_key = network.chainId === 1 ? process.env.P2P_MAINNET_API_KEY : process.env.P2P_HOLESKY_API_KEY;
+    if (!p2p_api_key) {
+      throw new Error("P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY");
+    }
+    const p2p_base_url = network.chainId === 1 ? "api.p2p.org" : "api-test-holesky.p2p.org";
+
+    const config = {
+      eigenPodAddress,
+      p2p_api_key,
+      p2p_base_url,
+      // how much SSV (expressed in days of runway) gets deposited into the
+      // SSV Network contract on validator registration. This is calculated
+      // at a Cluster level rather than a single validator.
+      validatorSpawnOperationalPeriodInDays: taskArgs.days,
+      stake: taskArgs.stake,
+      clear: taskArgs.clear,
+    };
+
+    await operateValidators({
+      signer,
+      contracts,
+      store,
+      config,
+    });
+  });
+task("operateValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

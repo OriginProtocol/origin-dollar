@@ -59,6 +59,7 @@ contracts/coverage/
 contracts/coverage.json
 contracts/build/
 contracts/dist/
+contracts/.localKeyValueStorage
 
 todo.txt
 brownie/env-brownie/
