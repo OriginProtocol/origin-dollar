@@ -261,6 +261,7 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork =
   isMainnet || (isFork && process.env.FORK_NETWORK_NAME == "mainnet");
 const isForkTest = isFork && isTest;
+const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
@@ -791,6 +792,7 @@ module.exports = {
   isLocalhost,
   isMainnetOrFork,
   isForkTest,
+  isMainnetForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,
