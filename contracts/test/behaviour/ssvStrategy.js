@@ -137,7 +137,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .transfer(nativeStakingSSVStrategy.address, oethUnits("32"));
     });
 
-    it.only("Should register and staked 32 ETH by validator registrator", async () => {
+    it("Should register and staked 32 ETH by validator registrator", async () => {
       const {
         weth,
         ssv,
@@ -201,7 +201,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
     });
 
-    it.only("Should exit and remove validator by validator registrator", async () => {
+    it("Should exit and remove validator by validator registrator", async () => {
       const {
         ssv,
         nativeStakingSSVStrategy,
