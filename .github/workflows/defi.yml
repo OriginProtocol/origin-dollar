@@ -179,7 +179,7 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
   
-  contracts-arb-forktest:
+  contracts-hol-forktest:
     name: "Holesky Fork Tests"
     runs-on: ubuntu-latest
     continue-on-error: true
