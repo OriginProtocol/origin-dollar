@@ -1,6 +1,6 @@
 const mocha = require("mocha");
 
-const { isForkTest, isArbFork, isBaseFork } = require("./helpers");
+const { isMainnetForkTest, isArbFork, isHoleskyFork,isBaseFork } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
 const _maxChunks = Number(process.env.MAX_CHUNKS);
@@ -34,12 +34,25 @@ mocha.before(function () {
 
   // If you are running unit tests, scrape out all fork tests.
   // For fork tests, scrape out all unit tests.
-  root.suites = root.suites.filter(
-    (s) =>
-      s.file.endsWith(".fork-test.js") == isForkTest &&
-      s.file.endsWith(".arb.fork-test.js") == isArbFork &&
-      s.file.endsWith(".base.fork-test.js") == isBaseFork
-  );
+  root.suites = root.suites.filter((s) => {
+    const isMainnetForkTestFile = s.file.endsWith(".fork-test.js");
+    const isHoleskyTestFile = s.file.endsWith(".holesky-fork-test.js");
+    const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
+    const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
+
+    if (isMainnetForkTest) {
+      return isMainnetForkTestFile;
+    } else if (isHoleskyFork) {
+      return isHoleskyTestFile;
+    } else if (isArbFork) {
+      return isArbTestFile;
+    } else if (isBaseFork) {
+      return isBaseTestFile;
+    } else {
+      // else is unit test
+      return !isMainnetForkTestFile && !isHoleskyTestFile && !isArbTestFile && !isBaseTestFile;
+    }
+  });
 
   if (!runTestsParallely) {
     // When running serially
