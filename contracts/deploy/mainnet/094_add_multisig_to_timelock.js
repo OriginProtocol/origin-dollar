@@ -1,5 +1,5 @@
-const addresses = require("../utils/addresses");
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const addresses = require("../../utils/addresses");
+const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
-    proposalId: "",
+    proposalId: "76565349657922140684589379459208028078547529916278436872532296348233972897503",
   },
   async ({ ethers }) => {
     const PROPOSER_ROLE =

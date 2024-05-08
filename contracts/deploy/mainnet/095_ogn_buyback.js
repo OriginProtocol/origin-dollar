@@ -8,7 +8,7 @@ const {
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "095_ogn_buyback",
-    // forceSkip: true,
+    forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId: "",
