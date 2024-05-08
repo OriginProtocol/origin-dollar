@@ -8,7 +8,10 @@ const addresses = require("../../utils/addresses");
 const mainExport = async () => {
   console.log("Running 006 deployment on Holesky...");
 
-  const cNativeStakingStrategy = await resolveContract("NativeStakingSSVStrategyProxy", "NativeStakingSSVStrategy");
+  const cNativeStakingStrategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
 
   await withConfirmation(
     cNativeStakingStrategy

@@ -271,6 +271,8 @@ addresses.holesky.beaconChainDepositContract =
   "0x4242424242424242424242424242424242424242";
 
 addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
+// Address of the Holesky defender relayer
 addresses.holesky.validatorRegistrator =
-  "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
+  "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
+
 module.exports = addresses;

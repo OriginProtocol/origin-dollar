@@ -5,8 +5,8 @@ const { v4: uuidv4 } = require("uuid");
 
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
-const { getClusterInfo } = require("../utils/ssv");
 const { sleep } = require("../utils/time");
+const { getClusterInfo } = require("./ssv");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:p2p");
@@ -36,12 +36,12 @@ const ERROR_THRESHOLD = 5;
  */
 const operateValidators = async ({ store, signer, contracts, config }) => {
   const {
-    clear,
-    eigenPodAddress,
+    feeAccumulatorAddress,
     p2p_api_key,
-    validatorSpawnOperationalPeriodInDays,
     p2p_base_url,
+    validatorSpawnOperationalPeriodInDays,
     stake,
+    clear,
   } = config;
 
   let currentState = await getState(store);
@@ -52,8 +52,8 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
     currentState = undefined;
   }
 
-  if (!(await nodeDelegatorHas32Eth(contracts))) {
-    log(`Node delegator doesn't have enough ETH, exiting`);
+  if (!(await stakingContractHas32ETH(contracts))) {
+    log(`Native staking contract doesn't have enough ETH, exiting`);
     return;
   }
 
@@ -63,8 +63,8 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
         await createValidatorRequest(
           p2p_api_key, // api key
           p2p_base_url,
-          nativeStakingStrategy.address, // node delegator address
-          feeRecipientAddress, // eigenPod address
+          contracts.nativeStakingStrategy.address, // SSV owner address & withdrawal address
+          feeAccumulatorAddress, // execution layer fee recipient
           validatorSpawnOperationalPeriodInDays,
           store
         );
@@ -87,7 +87,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
           store,
           currentState.uuid,
           currentState.metadata,
-          contracts.nodeDelegator
+          contracts.nativeStakingStrategy
         );
         currentState = await getState(store);
       }
@@ -96,7 +96,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
         await waitForTransactionAndUpdateStateOnSuccess(
           store,
           currentState.uuid,
-          contracts.nodeDelegator.provider,
+          contracts.nativeStakingStrategy.provider,
           currentState.metadata.validatorRegistrationTx,
           "registerSsvValidator", // name of transaction we are waiting for
           "validator_registered" // new state when transaction confirmed
@@ -111,7 +111,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
           signer,
           store,
           currentState.uuid,
-          contracts.nodeDelegator,
+          contracts.nativeStakingStrategy,
           currentState.metadata.depositData
         );
         currentState = await getState(store);
@@ -121,7 +121,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
         await waitForTransactionAndUpdateStateOnSuccess(
           store,
           currentState.uuid,
-          contracts.nodeDelegator.provider,
+          contracts.nativeStakingStrategy.provider,
           currentState.metadata.depositTx,
           "stakeEth", // name of transaction we are waiting for
           "deposit_confirmed" // new state when transaction confirmed
@@ -251,14 +251,14 @@ const getState = async (store) => {
   return JSON.parse(await store.get("currentRequest"));
 };
 
-const nodeDelegatorHas32Eth = async (contracts) => {
-  const address = contracts.nodeDelegator.address;
+const stakingContractHas32ETH = async (contracts) => {
+  const address = contracts.nativeStakingStrategy.address;
   const wethBalance = await contracts.WETH.balanceOf(address);
-  const ethBalance = await contracts.nodeDelegator.provider.getBalance(address);
-  const totalBalance = wethBalance.add(ethBalance);
 
-  log(`Node delegator has ${formatUnits(totalBalance, 18)} ETH in total`);
-  return totalBalance.gte(parseEther("32"));
+  log(
+    `Native staking contract has ${formatUnits(wethBalance, 18)} WETH in total`
+  );
+  return wethBalance.gte(parseEther("32"));
 };
 
 /* Make a GET or POST request to P2P service
@@ -305,7 +305,7 @@ const createValidatorRequest = async (
   p2p_api_key,
   p2p_base_url,
   nativeStakingStrategy,
-  feeRecipientAddress,
+  feeAccumulatorAddress,
   validatorSpawnOperationalPeriodInDays,
   store
 ) => {
@@ -318,8 +318,9 @@ const createValidatorRequest = async (
       validatorsCount: 1,
       id: uuid,
       withdrawalAddress: nativeStakingStrategy,
-      feeRecipientAddress,
+      feeRecipientAddress: feeAccumulatorAddress,
       ssvOwnerAddress: nativeStakingStrategy,
+      // TODO: we need to alter this and store the key somewhere
       type: "without-encrypt-key",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
     }
@@ -348,14 +349,20 @@ const waitForTransactionAndUpdateStateOnSuccess = async (
   await updateState(uuid, newState, store);
 };
 
-const depositEth = async (signer, store, uuid, nodeDelegator, depositData) => {
+const depositEth = async (
+  signer,
+  store,
+  uuid,
+  nativeStakingStrategy,
+  depositData
+) => {
   const { pubkey, signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
     log(`pubkey: ${pubkey}`);
     log(`signature: ${signature}`);
     log(`depositDataRoot: ${depositDataRoot}`);
-    const tx = await nodeDelegator.connect(signer).stakeEth([
+    const tx = await nativeStakingStrategy.connect(signer).stakeEth([
       {
         pubkey,
         signature,
@@ -380,7 +387,7 @@ const broadcastRegisterValidator = async (
   store,
   uuid,
   metadata,
-  nodeDelegator
+  nativeStakingStrategy
 ) => {
   const registerTransactionParams = defaultAbiCoder.decode(
     [
@@ -414,7 +421,7 @@ const broadcastRegisterValidator = async (
   log(`cluster: ${cluster}`);
 
   try {
-    const tx = await nodeDelegator
+    const tx = await nativeStakingStrategy
       .connect(signer)
       .registerSsvValidator(
         publicKey,
