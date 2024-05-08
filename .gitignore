@@ -60,6 +60,8 @@ contracts/coverage.json
 contracts/build/
 contracts/dist/
 contracts/.localKeyValueStorage
+contracts/.localKeyValueStorageMainnet
+contracts/.localKeyValueStorageHolesky
 
 todo.txt
 brownie/env-brownie/
