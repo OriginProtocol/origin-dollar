@@ -219,6 +219,7 @@ describe("ForkTest: OETH Vault", function () {
   shouldHaveRewardTokensConfigured(() => ({
     vault: fixture.oethVault,
     harvester: fixture.oethHarvester,
+    ignoreTokens: [fixture.weth.address.toLowerCase()],
     expectedConfigs: {
       [fixture.cvx.address]: {
         allowedSlippageBps: 300,
