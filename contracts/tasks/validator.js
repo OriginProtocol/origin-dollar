@@ -57,6 +57,11 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
     return;
   }
 
+  if (await stakingContractPaused(contracts)) {
+    log(`Native staking contract is paused... exiting`);
+    return;
+  }
+
   const executeOperateLoop = async () => {
     while (true) {
       if (!currentState) {
@@ -249,6 +254,13 @@ const getState = async (store) => {
   }
 
   return JSON.parse(await store.get("currentRequest"));
+};
+
+const stakingContractPaused = async (contracts) => {
+  const paused = await contracts.nativeStakingStrategy.paused();
+
+  log(`Native staking contract is ${paused ? "" : "not "}paused`);
+  return paused;
 };
 
 const stakingContractHas32ETH = async (contracts) => {
