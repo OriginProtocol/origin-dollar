@@ -10,36 +10,46 @@ struct Cluster {
 }
 
 interface ISSVNetwork {
-    error ApprovalNotWithinTimeframe();
-    error CallerNotOwner();
-    error CallerNotWhitelisted();
-    error ClusterAlreadyEnabled();
-    error ClusterDoesNotExists();
-    error ClusterIsLiquidated();
-    error ClusterNotLiquidatable();
-    error ExceedValidatorLimit();
-    error FeeExceedsIncreaseLimit();
-    error FeeIncreaseNotAllowed();
-    error FeeTooHigh();
-    error FeeTooLow();
-    error IncorrectClusterState();
-    error IncorrectValidatorState();
-    error InsufficientBalance();
-    error InvalidOperatorIdsLength();
-    error InvalidPublicKeyLength();
-    error MaxValueExceeded();
-    error NewBlockPeriodIsBelowMinimum();
-    error NoFeeDeclared();
-    error NotAuthorized();
-    error OperatorAlreadyExists();
-    error OperatorDoesNotExist();
-    error OperatorsListNotUnique();
-    error SameFeeChangeNotAllowed();
-    error TargetModuleDoesNotExist();
-    error TokenTransferFailed();
-    error UnsortedOperatorsList();
-    error ValidatorAlreadyExists();
-    error ValidatorDoesNotExist();
+    /**********/
+    /* Errors */
+    /**********/
+
+    error CallerNotOwner(); // 0x5cd83192
+    error CallerNotWhitelisted(); // 0x8c6e5d71
+    error FeeTooLow(); // 0x732f9413
+    error FeeExceedsIncreaseLimit(); // 0x958065d9
+    error NoFeeDeclared(); // 0x1d226c30
+    error ApprovalNotWithinTimeframe(); // 0x97e4b518
+    error OperatorDoesNotExist(); // 0x961e3e8c
+    error InsufficientBalance(); // 0xf4d678b8
+    error ValidatorDoesNotExist(); // 0xe51315d2
+    error ClusterNotLiquidatable(); // 0x60300a8d
+    error InvalidPublicKeyLength(); // 0x637297a4
+    error InvalidOperatorIdsLength(); // 0x38186224
+    error ClusterAlreadyEnabled(); // 0x3babafd2
+    error ClusterIsLiquidated(); // 0x95a0cf33
+    error ClusterDoesNotExists(); // 0x185e2b16
+    error IncorrectClusterState(); // 0x12e04c87
+    error UnsortedOperatorsList(); // 0xdd020e25
+    error NewBlockPeriodIsBelowMinimum(); // 0x6e6c9cac
+    error ExceedValidatorLimit(); // 0x6df5ab76
+    error TokenTransferFailed(); // 0x045c4b02
+    error SameFeeChangeNotAllowed(); // 0xc81272f8
+    error FeeIncreaseNotAllowed(); // 0x410a2b6c
+    error NotAuthorized(); // 0xea8e4eb5
+    error OperatorsListNotUnique(); // 0xa5a1ff5d
+    error OperatorAlreadyExists(); // 0x289c9494
+    error TargetModuleDoesNotExist(); // 0x8f9195fb
+    error MaxValueExceeded(); // 0x91aa3017
+    error FeeTooHigh(); // 0xcd4e6167
+    error PublicKeysSharesLengthMismatch(); // 0x9ad467b8
+    error IncorrectValidatorStateWithData(bytes publicKey); // 0x89307938
+    error ValidatorAlreadyExistsWithData(bytes publicKey); // 0x388e7999
+    error EmptyPublicKeysList(); // df83e679
+
+    // legacy errors
+    error ValidatorAlreadyExists(); // 0x8d09a73e
+    error IncorrectValidatorState(); // 0x2feda3c1
 
     event AdminChanged(address previousAdmin, address newAdmin);
     event BeaconUpgraded(address indexed beacon);
