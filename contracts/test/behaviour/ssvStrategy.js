@@ -4,12 +4,14 @@ const {
   setBalance,
   setStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
+const hre = require("hardhat");
 
 const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
 const { getClusterInfo } = require("../../utils/ssv");
 const { parseEther } = require("ethers/lib/utils");
+const { setERC20TokenBalance } = require("../_fund");
 
 /**
  *
@@ -138,6 +140,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     it("Should register and staked 32 ETH by validator registrator", async () => {
       const {
         weth,
+        ssv,
         nativeStakingSSVStrategy,
         validatorRegistrator,
         testValidator,
@@ -155,6 +158,13 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       });
 
       const stakeAmount = oethUnits("32");
+
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
 
       // Register a new validator with the SSV Network
       const regTx = await nativeStakingSSVStrategy
@@ -198,6 +208,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
     it("Should exit and remove validator by validator registrator", async () => {
       const {
+        ssv,
         nativeStakingSSVStrategy,
         ssvNetwork,
         validatorRegistrator,
@@ -213,6 +224,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       });
 
       const stakeAmount = oethUnits("32");
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
 
       // Register a new validator with the SSV network
       const regTx = await nativeStakingSSVStrategy
