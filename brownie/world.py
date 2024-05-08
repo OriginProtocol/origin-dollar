@@ -84,6 +84,7 @@ timelock = brownie.accounts.at(TIMELOCK, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)
+timelock_contract = load_contract('timelock', TIMELOCK)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
