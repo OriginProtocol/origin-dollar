@@ -39,15 +39,15 @@ mocha.before(function () {
     const isHoleskyTestFile = s.file.endsWith(".holesky-fork-test.js");
     const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
 
-    if (isMainnetForkTest) {
+    if (isArbFork) {
+      return isArbTestFile;
+    } else if (isMainnetForkTest) {
       return isMainnetForkTestFile;
     } else if (isHoleskyFork) {
       return isHoleskyTestFile;
-    } else if (isArbFork) {
-      return isArbTestFile;
     } else {
       // else is unit test
-      return !isMainnetForkTestFile && !isHoleskyTestFile && !isArbTestFile;
+      return !isMainnetForkTestFile && !isHoleskyTestFile;
     }
   });
 
