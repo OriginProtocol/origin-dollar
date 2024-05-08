@@ -42,7 +42,7 @@ mocha.before(function () {
     if (isArbFork) {
       return isArbTestFile;
     } else if (isMainnetForkTest) {
-      return isMainnetForkTestFile;
+      return isMainnetForkTestFile && !isArbTestFile;
     } else if (isHoleskyFork) {
       return isHoleskyTestFile;
     } else {
