@@ -15,12 +15,12 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     uint256 public constant MAX_STAKE = 32 ether;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
-    uint256 public consensusRewards = 0;
+    uint256 public consensusRewards;
 
     /// @notice start of fuse interval
-    uint256 public fuseIntervalStart = 0;
+    uint256 public fuseIntervalStart;
     /// @notice end of fuse interval
-    uint256 public fuseIntervalEnd = 0;
+    uint256 public fuseIntervalEnd;
 
     uint256[50] private __gap;
 
