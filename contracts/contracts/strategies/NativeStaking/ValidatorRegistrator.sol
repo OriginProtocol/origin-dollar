@@ -114,8 +114,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
 
+        uint256 validatorsLength = validators.length;
         // For each validator
-        for (uint256 i = 0; i < validators.length; ) {
+        for (uint256 i = 0; i < validatorsLength; ) {
             bytes32 pubkeyHash = keccak256(validators[i].pubkey);
             VALIDATOR_STATE currentState = validatorsStates[pubkeyHash];
 
@@ -143,7 +144,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 validators[i].depositDataRoot
             );
 
-            activeDepositedValidators += 1;
             emit ETHStaked(
                 validators[i].pubkey,
                 32 ether,
@@ -156,6 +156,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 ++i;
             }
         }
+        // save gas by changing this storage variable only once rather each time in the loop.
+        activeDepositedValidators += validatorsLength;
     }
 
     /// @notice Registers a new validator in the SSV Cluster.
