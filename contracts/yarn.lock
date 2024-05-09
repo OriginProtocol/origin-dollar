@@ -1799,6 +1799,17 @@ ajv@^8.0.1:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
+amazon-cognito-identity-js@^4.3.3:
+  version "4.6.3"
+  resolved "https://registry.yarnpkg.com/amazon-cognito-identity-js/-/amazon-cognito-identity-js-4.6.3.tgz#889410379a5fc5e883edc95f4ce233cc628e354c"
+  integrity sha512-MPVJfirbdmSGo7l4h7Kbn3ms1eJXT5Xq8ly+mCPPi8yAxaxdg7ouMUUNTqtDykoZxIdDLF/P6F3Zbg3dlGKOWg==
+  dependencies:
+    buffer "4.9.2"
+    crypto-js "^4.0.0"
+    fast-base64-decode "^1.0.0"
+    isomorphic-unfetch "^3.0.0"
+    js-cookie "^2.2.1"
+
 amazon-cognito-identity-js@^6.0.1:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/amazon-cognito-identity-js/-/amazon-cognito-identity-js-6.2.0.tgz#99e96666944429cb8f67b62e4cf7ad77fbe71ad0"
@@ -2990,6 +3001,11 @@ crypto-browserify@3.12.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
+crypto-js@^4.0.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
+  integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
+
 crypto@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/crypto/-/crypto-1.0.1.tgz#2af1b7cad8175d24c8a1b0778255794a21803037"
@@ -3089,6 +3105,17 @@ deep-is@^0.1.3, deep-is@~0.1.3:
   resolved "https://registry.yarnpkg.com/deep-is/-/deep-is-0.1.4.tgz#a6f2dce612fadd2ef1f519b73551f17e85199831"
   integrity sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==
 
+defender-base-client@1.38.1-rc.0:
+  version "1.38.1-rc.0"
+  resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.38.1-rc.0.tgz#0d167845648a38bd2f5f80f5c50e081ec5f58b54"
+  integrity sha512-LNsuop5CE7fYyfWV3C4tlqkZawnxsMKW1SeF8TnobhZ6V5pO9LKyGSOo/V3KvPhO2/cTw5/S66+p1f6nkGCREA==
+  dependencies:
+    amazon-cognito-identity-js "^4.3.3"
+    async-retry "^1.3.3"
+    axios "^0.21.2"
+    lodash "^4.17.19"
+    node-fetch "^2.6.0"
+
 defender-base-client@^1.44.0:
   version "1.44.0"
   resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.44.0.tgz#afe724447c0f9177b999b70b9f14dd70d61d5a7a"
@@ -3097,6 +3124,17 @@ defender-base-client@^1.44.0:
     amazon-cognito-identity-js "^6.0.1"
     async-retry "^1.3.3"
     axios "^0.21.2"
+    lodash "^4.17.19"
+    node-fetch "^2.6.0"
+
+defender-kvstore-client@^1.38.1-rc.0:
+  version "1.38.1-rc.0"
+  resolved "https://registry.yarnpkg.com/defender-kvstore-client/-/defender-kvstore-client-1.38.1-rc.0.tgz#6e33633a90e1355893141bad72298c6727abf30d"
+  integrity sha512-MeN8CtQSY72QFIys56Phxcn3tQ1nnmDXVtP/RlY9HCMynUO4zOQZaanDkgUmXTb+MYMj5VO3y+qfOfdEE+5EWA==
+  dependencies:
+    axios "^0.21.2"
+    defender-base-client "1.38.1-rc.0"
+    fs-extra "^10.0.0"
     lodash "^4.17.19"
     node-fetch "^2.6.0"
 
@@ -6875,9 +6913,9 @@ promise@^8.0.0:
   dependencies:
     asap "~2.0.6"
 
-"prompts@git+https://github.com/meshin-blox/prompts.git":
+"prompts@https://github.com/meshin-blox/prompts.git":
   version "2.4.2"
-  resolved "git+https://github.com/meshin-blox/prompts.git#a22bdac044f6b32ba67adb4eacc2e58322512a2d"
+  resolved "https://github.com/meshin-blox/prompts.git#a22bdac044f6b32ba67adb4eacc2e58322512a2d"
   dependencies:
     kleur "^4.0.1"
     sisteransi "^1.0.5"
