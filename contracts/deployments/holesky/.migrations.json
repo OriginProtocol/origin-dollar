@@ -4,5 +4,6 @@
   "003_deposit_to_native_strategy": 1714307581,
   "004_upgrade_strategy": 1714944723,
   "005_deploy_new_harvester": 1714998707,
-  "006_update_registrator": 1715184342
+  "006_update_registrator": 1715184342,
+  "007_upgrade_strategy": 1715251466
 }

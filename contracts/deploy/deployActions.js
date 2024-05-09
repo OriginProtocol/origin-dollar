@@ -808,6 +808,32 @@ const deployFraxEthStrategy = async () => {
 };
 
 /**
+ * upgradeNativeStakingFeeAccumulator
+ */
+const upgradeNativeStakingFeeAccumulator = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const strategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const feeAccumulatorProxy = await ethers.getContract(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+
+  log("Deploy fee accumulator implementation");
+  const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
+    strategyProxy.address, // STRATEGY
+  ]);
+
+  await withConfirmation(
+    feeAccumulatorProxy
+      .connect(sDeployer)
+      .upgradeTo(dFeeAccumulatorImpl.address)
+  );
+};
+
+/**
  * Upgrade NativeStakingSSVStrategy
  */
 const upgradeNativeStakingSSVStrategy = async () => {
@@ -1538,4 +1564,5 @@ module.exports = {
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
+  upgradeNativeStakingFeeAccumulator,
 };

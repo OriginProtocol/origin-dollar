@@ -410,7 +410,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       // add some ETH to the FeeAccumulator to simulate execution rewards
       const executionRewards = parseEther("7");
-      await setBalance(nativeStakingFeeAccumulator.address, executionRewards);
+      //await setBalance(nativeStakingFeeAccumulator.address, executionRewards);
+      await josh.sendTransaction({
+        to: nativeStakingFeeAccumulator.address,
+        value: executionRewards,
+      });
+
       // simulate consensus rewards
       const consensusRewards = parseEther("5");
       await setBalance(nativeStakingSSVStrategy.address, consensusRewards);
