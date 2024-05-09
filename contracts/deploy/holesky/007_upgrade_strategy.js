@@ -2,7 +2,6 @@ const {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
 } = require("../deployActions");
-const { withConfirmation } = require("../../utils/deploy");
 
 const mainExport = async () => {
   console.log("Running 007 deployment on Holesky...");

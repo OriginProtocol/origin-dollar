@@ -584,8 +584,7 @@ const deployOETHHarvester = async (oethDripper) => {
 
   await withConfirmation(
     // prettier-ignore
-    cOETHHarvesterProxy
-      ["initialize(address,address,bytes)"](
+    cOETHHarvesterProxy["initialize(address,address,bytes)"](
         dOETHHarvester.address,
         governorAddr,
         []
