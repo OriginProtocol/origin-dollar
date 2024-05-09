@@ -66,16 +66,29 @@ const getDefenderSigner = async () => {
     );
     process.exit(2);
   }
+
+  const network = await ethers.provider.getNetwork();
+  const isMainnet = network.chainId === 1;
+  const isHolesky = network.chainId === 17000;
+
+  const apiKeyName = isMainnet
+    ? "DEFENDER_API_KEY"
+    : "HOLESKY_DEFENDER_API_KEY";
+  const apiKeySecret = isMainnet
+    ? "DEFENDER_API_SECRET"
+    : "HOLESKY_DEFENDER_API_SECRET";
+
   const credentials = {
-    relayerApiKey: process.env.DEFENDER_API_KEY,
-    relayerApiSecret: process.env.DEFENDER_API_SECRET,
+    relayerApiKey: process.env[apiKeyName],
+    relayerApiSecret: process.env[apiKeySecret],
   };
+
   const client = new Defender(credentials);
   const provider = client.relaySigner.getProvider();
 
   const signer = client.relaySigner.getSigner(provider, { speed });
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} from env vars DEFENDER_API_KEY and DEFENDER_API_SECRET`
+    `Using Defender Relayer account ${await signer.getAddress()} from env vars ${apiKeyName} and ${apiKeySecret}`
   );
   return signer;
 };
@@ -112,4 +125,5 @@ module.exports = {
   getSigner,
   impersonateAccount,
   impersonateAndFund,
+  getDefenderSigner,
 };
