@@ -1,7 +1,9 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
-const { woethCcipZapperFixture } = require("../_fixture");
+const { createFixtureLoader, woethCcipZapperFixture } = require("../_fixture");
 const addresses = require("../../utils/addresses");
+
+const loadFixture = createFixtureLoader(woethCcipZapperFixture);
 
 describe("ForkTest: WOETH CCIP Zapper", function () {
   this.timeout(0);
@@ -9,7 +11,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   let fixture;
 
   beforeEach(async () => {
-    fixture = await woethCcipZapperFixture();
+    fixture = await loadFixture();
   });
   it("zap(): Should zap ETH  and send WOETH to CCIP TokenPool", async () => {
     const { woethZapper, woethOnSourceChain, josh } = fixture;

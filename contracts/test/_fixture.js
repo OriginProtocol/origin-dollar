@@ -2158,7 +2158,7 @@ async function woethCcipZapperFixture() {
   fixture.woethZapper = woethZapper;
   fixture.ccipRouter = ccipRouter;
 
-  const [, josh, alice] = await ethers.getSigners();
+  const [josh, alice] = (await ethers.getSigners()).slice(4);
   await impersonateAndFund(josh.address, "10");
 
   fixture.josh = josh;
