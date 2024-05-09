@@ -82,3 +82,67 @@ def main():
       print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     except:
       brownie.chain.revert()
+
+# -------------------------------------
+# May 08, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogv, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGV,
+        oeth_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        1
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# May 08, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogv, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGV,
+        ousd_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))
