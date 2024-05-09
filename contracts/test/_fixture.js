@@ -13,7 +13,6 @@ const { setFraxOraclePrice } = require("../utils/frax");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
-  ccip_arbChainSelector,
 } = require("../utils/constants");
 const {
   fundAccounts,
