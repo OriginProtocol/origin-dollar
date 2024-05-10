@@ -116,10 +116,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         // send the ETH that is from fully withdrawn validators to the Vault
         if (newSweptETH >= MAX_STAKE) {
-            // explicitly cast to uint256 as we want to round to a whole number of validators
-            uint256 fullyWithdrawnValidators = uint256(newSweptETH / MAX_STAKE);
-            if (activeDepositedValidators < fullyWithdrawnValidators) {
-                return _failAccounting(pauseOnFail);
+            uint256 fullyWithdrawnValidators;
+            // safe since MAX_STAKE is hardcoded to 32ETH
+            unchecked {
+                // explicitly cast to uint256 as we want to round to a whole number of validators
+                fullyWithdrawnValidators = uint256(newSweptETH / MAX_STAKE);
             }
             activeDepositedValidators -= fullyWithdrawnValidators;
 
