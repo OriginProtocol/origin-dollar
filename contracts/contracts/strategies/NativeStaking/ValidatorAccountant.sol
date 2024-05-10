@@ -38,8 +38,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     event AccountingManuallyFixed(
         int256 validatorsDelta,
-        int256 consensusRewardsDelta,
-        uint256 wethToVault
+        int256 consensusRewardsDelta
     );
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -182,12 +181,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
     /// @param _validatorsDelta adjust the active validators by plus one, minus one or unchanged with zero
-    /// @param _wethToVaultAmount the amount of WETH to be sent to the Vault
     /// @param _consensusRewardsDelta adjust the accounted for consensus rewards up or down
     function manuallyFixAccounting(
         int256 _validatorsDelta,
-        int256 _consensusRewardsDelta,
-        uint256 _wethToVaultAmount
+        int256 _consensusRewardsDelta
     ) external onlyStrategist whenPaused {
         require(
             _validatorsDelta >= -3 &&
@@ -203,13 +200,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
             "invalid consensusRewardsDelta"
         );
-        require(_wethToVaultAmount <= 32 ether, "invalid wethToVaultAmount");
 
-        emit AccountingManuallyFixed(
-            _validatorsDelta,
-            _consensusRewardsDelta,
-            _wethToVaultAmount
-        );
+        emit AccountingManuallyFixed(_validatorsDelta, _consensusRewardsDelta);
 
         activeDepositedValidators = uint256(
             int256(activeDepositedValidators) + _validatorsDelta
@@ -217,12 +209,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         consensusRewards = uint256(
             int256(consensusRewards) + _consensusRewardsDelta
         );
-        if (_wethToVaultAmount > 0) {
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(
-                VAULT_ADDRESS,
-                _wethToVaultAmount
-            );
-        }
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
