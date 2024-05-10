@@ -55,11 +55,11 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     });
   });
 
-  it("zap(): Should be reverted with 'Amount less than fee'", async () => {
+  it("zap(): Should be reverted with 'AmountLessThanFee'", async () => {
     const { woethZapper, josh } = fixture;
 
     const tx = woethZapper.connect(josh).zap(josh.address, { value: "1" });
-    await expect(tx).to.be.revertedWith("Amount less than fee");
+    await expect(tx).to.be.revertedWith("AmountLessThanFee");
   });
 
   it("zap(): Should zap ETH (< 1) and emit Zap event with args", async () => {
