@@ -29,9 +29,6 @@ contract WOETHCCIPZapper {
         uint256 amount
     );
 
-    // @dev Thrown when Zap amount is less than fee.
-    error AmountLessThanFee();
-
     /**
      * @dev The destination chain selector
      */
@@ -142,9 +139,7 @@ contract WOETHCCIPZapper {
     {
         // Estimate fee for zapping.
         uint256 feeAmount = getFee(amount, receiver);
-        if (amount < feeAmount) {
-            revert AmountLessThanFee();
-        }
+        require(feeAmount < amount, "Amount less than fee");
 
         // Convert only the msg.value - fees amount to WOETH.
         amount -= feeAmount;
