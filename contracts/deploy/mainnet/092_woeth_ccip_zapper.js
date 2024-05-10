@@ -11,12 +11,12 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation }) => {
     // Deploy new WOETHCCIPZapper contract
-    let destinationChainSelector = ccip_arbChainSelector;
-    let woethOnSourceChain = addresses.mainnet.WOETHProxy;
-    let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
-    let oethZapper = addresses.mainnet.OETHZapper;
-    let ccipRouter = addresses.mainnet.ccipRouterMainnet;
-    let oeth = addresses.mainnet.OETHProxy;
+    const destinationChainSelector = ccip_arbChainSelector;
+    const woethOnSourceChain = addresses.mainnet.WOETHProxy;
+    const woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
+    const oethZapper = addresses.mainnet.OETHZapper;
+    const ccipRouter = addresses.mainnet.ccipRouterMainnet;
+    const oeth = addresses.mainnet.OETHProxy;
 
     await deployWithConfirmation("WOETHCCIPZapper", [
       ccipRouter,

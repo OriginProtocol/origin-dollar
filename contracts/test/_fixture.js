@@ -2364,17 +2364,11 @@ async function harvesterFixture() {
 }
 
 async function woethCcipZapperFixture() {
-  const fixture = {};
+  const fixture = await defaultFixture();
 
   fixture.oethZapper = await resolveContract("OETHZapper");
   fixture.woethOnSourceChain = await resolveContract("WOETHProxy", "WOETH");
   fixture.woethZapper = await resolveContract("WOETHCCIPZapper");
-
-  const [josh, alice] = await ethers.getSigners();
-  await impersonateAndFund(josh.address, "10");
-
-  fixture.josh = josh;
-  fixture.alice = alice;
 
   return fixture;
 }
