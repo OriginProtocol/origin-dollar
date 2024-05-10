@@ -2135,7 +2135,7 @@ async function harvesterFixture() {
 }
 
 async function woethCcipZapperFixture() {
-  let fixture = {};
+  let fixture = await defaultFixture()
 
   const oethZapper = await ethers.getContractAt(
     "OETHZapper",
@@ -2157,12 +2157,6 @@ async function woethCcipZapperFixture() {
   fixture.woethOnSourceChain = woethOnSourceChain;
   fixture.woethZapper = woethZapper;
   fixture.ccipRouter = ccipRouter;
-
-  const [josh, alice] = (await ethers.getSigners()).slice(4);
-  await impersonateAndFund(josh.address, "10");
-
-  fixture.josh = josh;
-  fixture.alice = alice;
 
   return fixture;
 }

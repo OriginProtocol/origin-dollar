@@ -40,23 +40,23 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     );
   });
   it("zap(): Should emit Zap event with args", async () => {
-    const { woethZapper, josh, alice } = fixture;
+    const { woethZapper, josh, anna } = fixture;
     const depositAmount = parseUnits("5");
 
     const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
-      .zap(alice.address, { value: depositAmount });
+      .zap(anna.address, { value: depositAmount });
     await expect(tx).to.emit(woethZapper, "Zap").withNamedArgs({
       sender: josh.address,
-      recipient: alice.address,
+      recipient: anna.address,
       amount: expectedAmountInEvent,
     });
   });
 
   it("zap(): Should be reverted with 'AmountLessThanFee'", async () => {
-    const { woethZapper, josh, alice } = fixture;
+    const { woethZapper, josh, anna } = fixture;
     let depositAmount = parseUnits("0.01");
 
     const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
@@ -65,22 +65,22 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
 
     let tx = woethZapper
       .connect(josh)
-      .zap(alice.address, { value: depositAmount });
+      .zap(anna.address, { value: depositAmount });
     await expect(tx).to.be.revertedWith("AmountLessThanFee");
   });
 
   it("zap(): Should zap ETH (< 1) and emit Zap event with args", async () => {
-    const { woethZapper, josh, alice } = fixture;
+    const { woethZapper, josh, anna } = fixture;
     const depositAmount = parseUnits("0.5");
 
     const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
-      .zap(alice.address, { value: depositAmount });
+      .zap(anna.address, { value: depositAmount });
     await expect(tx).to.emit(woethZapper, "Zap").withNamedArgs({
       sender: josh.address,
-      recipient: alice.address,
+      recipient: anna.address,
       amount: expectedAmountInEvent,
     });
   });
