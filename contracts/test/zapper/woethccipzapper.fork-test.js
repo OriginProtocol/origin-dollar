@@ -60,7 +60,7 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
 
     const tx = woethZapper.connect(josh).zap(josh.address, { value: "1" });
     // Current HH version is not compatible with Custom errors.
-    await expect(tx).to.be.reverted; 
+    await expect(tx).to.be.reverted;
   });
 
   it("zap(): Should zap ETH (< 1) and emit Zap event with args", async () => {
