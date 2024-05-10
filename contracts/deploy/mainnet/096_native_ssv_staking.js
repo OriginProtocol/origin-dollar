@@ -6,6 +6,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "091_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
+    reduceQueueTime: true,
     deployerIsProposer: false,
     // proposalId:
   },
