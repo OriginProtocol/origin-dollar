@@ -1,30 +1,42 @@
 #!/bin/bash
 
-export OETH_VAULT=0xa7191fEE1Ed313908FCb09D09b82ABB7BC56F71B
-export OETH_VAULT_PROXY=0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9
-export OETH_VAULT_CORE=0xE92e25B81E44B8377Df1362f8fFBc426A00d6ef4
-export OETH_VAULT_ADMIN=0xa94c4aab0Cf9f6E79bB064DB145fBe2506b9Fa75
-export OETH_PROXY=0xB1876706d2402d300bf263F9e53335CEFc53d9Cb
-export OETH=0x7909c19E355E95043e277e76Dd6680fE899F61D6
-export FEE_ACC=0x79681d3f14a0068479420eE5fDdF59B62301f810
-export FEE_ACC_PROXY=0x590B781b511e953dbFC49e7E7864A6E787aFBDCc
-export OETH_DRIPPER=0x3833C32826A7f2a93C48D50ae44D45F45Ab17B7F
-export OETH_DRIPPER_PROXY=0xaFF1E6263F4004C95Ae611DEb2ADaC049B5aD121
-export OETH_HARVESTER=0xBd09F938259AE61e089959d52580235b76C69A83
-export OETH_HARVESTER_PROXY=0xB7491cdf36367C89001cc41312F22f63A3a17931
-export OETH_ORACLE_ROUTER=0x7e2bf9A89180f20591EcFA42C0dd7e52b2C546E3
-export NATIVE_STAKING=0x51766Fd366D6C9121F6Aeec20267ecA87c2c9793
-export NATIVE_STAKING_PROXY=0x4Eac8847c7AE50e3A3551B1Aa4FF7Cc162151410
-export WETH=0x94373a4919b3240d86ea41593d5eba789fef3848
-export ZERO=0x0000000000000000000000000000000000000000
-export SSV=0xad45A78180961079BFaeEe349704F411dfF947C6
-export SSVNetwork=0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA
-export beaconChainDepositContract=0x4242424242424242424242424242424242424242
+export NETWORK=holesky
+# TODO: fetch these addresses from deployment files
+export OETH_VAULT=$(jq -r ".address" deployments/$NETWORK/OETHVault.json)
+export OETH_VAULT_PROXY=$(jq -r ".address" deployments/$NETWORK/OETHVaultProxy.json)
+export OETH_VAULT_CORE=$(jq -r ".address" deployments/$NETWORK/OETHVaultCore.json)
+export OETH_VAULT_ADMIN=$(jq -r ".address" deployments/$NETWORK/OETHVaultAdmin.json)
+export OETH_PROXY=$(jq -r ".address" deployments/$NETWORK/OETHProxy.json)
+export OETH=$(jq -r ".address" deployments/$NETWORK/OETH.json)
+export FEE_ACC=$(jq -r ".address" deployments/$NETWORK/FeeAccumulator.json)
+export FEE_ACC_PROXY=$(jq -r ".address" deployments/$NETWORK/NativeStakingFeeAccumulatorProxy.json)
+export OETH_DRIPPER=$(jq -r ".address" deployments/$NETWORK/OETHDripper.json)
+export OETH_DRIPPER_PROXY=$(jq -r ".address" deployments/$NETWORK/OETHDripperProxy.json)
+export OETH_HARVESTER=$(jq -r ".address" deployments/$NETWORK/OETHHarvesterProxy.json)
+export OETH_HARVESTER_PROXY=$(jq -r ".address" deployments/$NETWORK/OETHHarvester.json)
+export OETH_ORACLE_ROUTER=$(jq -r ".address" deployments/$NETWORK/OETHOracleRouter.json)
+export NATIVE_STAKING=$(jq -r ".address" deployments/$NETWORK/NativeStakingSSVStrategy.json)
+export NATIVE_STAKING_PROXY=$(jq -r ".address" deployments/$NETWORK/NativeStakingSSVStrategyProxy.json)
+
+if [ NETWORK="holesky" ]; then
+	export WETH=0x94373a4919b3240d86ea41593d5eba789fef3848
+	export ZERO=0x0000000000000000000000000000000000000000
+	export SSV=0xad45A78180961079BFaeEe349704F411dfF947C6
+	export SSVNetwork=0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA
+	export beaconChainDepositContract=0x4242424242424242424242424242424242424242
+# else mainnet
+else
+	export WETH=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+	export ZERO=0x0000000000000000000000000000000000000000
+	export SSV=0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54
+	export SSVNetwork=0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1
+	export beaconChainDepositContract=0x00000000219ab540356cBB839Cbe05303d7705Fa
+fi
 
 yarn run hardhat verify --contract contracts/vault/OETHVault.sol:OETHVault --network holesky $OETH_VAULT
-echo "module.exports = [\"0xD8724322f44E5c58D7A815F542036fb17DbbF839\"]" > vault_args.js
+echo "module.exports = [\"$WETH\"]" > vault_args.js
 yarn run hardhat verify --contract contracts/vault/OETHVaultCore.sol:OETHVaultCore --network holesky  --constructor-args vault_args.js $OETH_VAULT_CORE
-yarn run hardhat verify --contract contracts/proxies/Proxies.sol:OETHVaultAdmin --network holesky --constructor-args vault_args.js $OETH_VAULT_ADMIN
+yarn run hardhat verify --contract contracts/proxies/Proxies.sol:OETHVaultAdmin --network holesky $OETH_VAULT_ADMIN
 yarn run hardhat verify --contract contracts/proxies/Proxies.sol:OETHVaultProxy --network holesky $OETH_VAULT_PROXY
 yarn run hardhat verify --contract contracts/proxies/Proxies.sol:OETHProxy --network holesky $OETH_PROXY
 yarn run hardhat verify --contract contracts/token/OETH.sol:OETH --network holesky $OETH
@@ -32,7 +44,7 @@ yarn run hardhat verify --contract contracts/token/OETH.sol:OETH --network holes
 echo "module.exports = [\"$NATIVE_STAKING_PROXY\"]" > fee_acc_args.js
 yarn run hardhat verify --contract contracts/strategies/NativeStaking/FeeAccumulator.sol:FeeAccumulator --network holesky --constructor-args fee_acc_args.js $FEE_ACC
 yarn run hardhat verify --contract contracts/proxies/Proxies.sol:NativeStakingFeeAccumulatorProxy --network holesky $FEE_ACC_PROXY
-echo "module.exports = [\"$OETH_VAULT_PROXY\", \"$OETH_PROXY\"]" > dripper_acc_args.js
+echo "module.exports = [\"$OETH_VAULT_PROXY\", \"$WETH\"]" > dripper_acc_args.js
 yarn run hardhat verify --contract contracts/harvest/OETHDripper.sol:OETHDripper --network holesky --constructor-args dripper_acc_args.js $OETH_DRIPPER
 yarn run hardhat verify --contract contracts/proxies/Proxies.sol:OETHDripperProxy --network holesky $OETH_DRIPPER_PROXY
 echo "module.exports = [\"$OETH_VAULT_PROXY\", \"$WETH\"]" > harvester_acc_args.js
