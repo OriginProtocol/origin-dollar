@@ -180,7 +180,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     }
 
     /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
-    /// @param _validatorsDelta adjust the active validators by plus one, minus one or unchanged with zero
+    /// @param _validatorsDelta adjust the active validators by up to plus three or minus three
     /// @param _consensusRewardsDelta adjust the accounted for consensus rewards up or down
     function manuallyFixAccounting(
         int256 _validatorsDelta,
