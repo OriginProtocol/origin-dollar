@@ -106,7 +106,7 @@
       "src": "contracts/buyback/BaseBuyback.sol:49"
     },
     {
-      "label": "balanceForOGV",
+      "label": "balanceForOGN",
       "offset": 0,
       "slot": "110",
       "type": "t_uint256",
