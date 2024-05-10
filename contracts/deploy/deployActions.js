@@ -1335,13 +1335,13 @@ const deployBuyback = async () => {
   const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
   const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
     ousd.address,
-    assetAddresses.OGV,
+    assetAddresses.OGN,
     assetAddresses.CVX,
     assetAddresses.CVXLocker,
   ]);
   const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, [
     oeth.address,
-    assetAddresses.OGV,
+    assetAddresses.OGN,
     assetAddresses.CVX,
     assetAddresses.CVXLocker,
   ]);

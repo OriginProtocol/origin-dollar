@@ -741,7 +741,7 @@ describe("Vault with Compound strategy", function () {
     expect(await mintDoesAllocate("25000")).to.be.true;
   });
 
-  it("Alloc with both threshhold and buffer", async () => {
+  it("Alloc with both threshold and buffer", async () => {
     const { anna, vault, usdc, dai, governor } = fixture;
 
     await vault.allocate();

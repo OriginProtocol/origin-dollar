@@ -1087,7 +1087,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  /* When `reduceQueueTime` is set to true the Timelock delay is overriden to
+  /* When `reduceQueueTime` is set to true the Timelock delay is overridden to
    * 60 seconds and blockchain also advances only minimally when passing proposals.
    *
    * This is required because in some cases we need minimal chain advancement e.g.
