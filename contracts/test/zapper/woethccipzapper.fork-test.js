@@ -1,7 +1,13 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
-const { woethCcipZapperFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  woethCcipZapperFixture,
+  loadDefaultFixture,
+} = require("../_fixture");
 const addresses = require("../../utils/addresses");
+
+const loadFixture = createFixtureLoader(woethCcipZapperFixture);
 
 describe("ForkTest: WOETH CCIP Zapper", function () {
   this.timeout(0);
@@ -9,8 +15,13 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   let fixture;
 
   beforeEach(async () => {
-    fixture = await woethCcipZapperFixture();
+    fixture = await loadFixture();
   });
+
+  after(async () => {
+    await loadDefaultFixture();
+  });
+
   it("zap(): Should zap ETH  and send WOETH to CCIP TokenPool", async () => {
     const { woethZapper, woethOnSourceChain, josh } = fixture;
     const depositAmount = parseUnits("5");
@@ -29,47 +40,41 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
     );
   });
   it("zap(): Should emit Zap event with args", async () => {
-    const { woethZapper, josh, alice } = fixture;
+    const { woethZapper, josh, anna } = fixture;
     const depositAmount = parseUnits("5");
 
     const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
-      .zap(alice.address, { value: depositAmount });
+      .zap(anna.address, { value: depositAmount });
     await expect(tx).to.emit(woethZapper, "Zap").withNamedArgs({
       sender: josh.address,
-      recipient: alice.address,
+      recipient: anna.address,
       amount: expectedAmountInEvent,
     });
   });
 
   it("zap(): Should be reverted with 'AmountLessThanFee'", async () => {
-    const { woethZapper, josh, alice } = fixture;
-    let depositAmount = parseUnits("0.01");
+    const { woethZapper, josh } = fixture;
 
-    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
-
-    depositAmount = feeAmount.sub(1);
-
-    let tx = woethZapper
-      .connect(josh)
-      .zap(alice.address, { value: depositAmount });
-    await expect(tx).to.be.revertedWith("AmountLessThanFee");
+    const tx = woethZapper.connect(josh).zap(josh.address, { value: "1" });
+    // Current HH version is not compatible with Custom errors.
+    await expect(tx).to.be.reverted;
   });
 
   it("zap(): Should zap ETH (< 1) and emit Zap event with args", async () => {
-    const { woethZapper, josh, alice } = fixture;
+    const { woethZapper, josh, anna } = fixture;
     const depositAmount = parseUnits("0.5");
 
     const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
     const expectedAmountInEvent = depositAmount.sub(feeAmount);
     let tx = await woethZapper
       .connect(josh)
-      .zap(alice.address, { value: depositAmount });
+      .zap(anna.address, { value: depositAmount });
     await expect(tx).to.emit(woethZapper, "Zap").withNamedArgs({
       sender: josh.address,
-      recipient: alice.address,
+      recipient: anna.address,
       amount: expectedAmountInEvent,
     });
   });

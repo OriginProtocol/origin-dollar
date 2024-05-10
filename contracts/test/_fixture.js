@@ -13,7 +13,6 @@ const { setFraxOraclePrice } = require("../utils/frax");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
-  ccip_arbChainSelector,
 } = require("../utils/constants");
 const {
   fundAccounts,
@@ -2136,14 +2135,9 @@ async function harvesterFixture() {
 }
 
 async function woethCcipZapperFixture() {
-  let fixture = {};
-  let woethZapper;
-  let oethZapper;
-  let destinationChainSelector = ccip_arbChainSelector;
-  let woethOnSourceChain = addresses.mainnet.WOETHProxy;
-  let woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
+  const fixture = await defaultFixture();
 
-  oethZapper = await ethers.getContractAt(
+  const oethZapper = await ethers.getContractAt(
     "OETHZapper",
     addresses.mainnet.OETHZapper
   );
@@ -2153,17 +2147,8 @@ async function woethCcipZapperFixture() {
     addresses.mainnet.ccipRouterMainnet
   );
 
-  const WOETHZapper = await ethers.getContractFactory("WOETHCCIPZapper");
-  woethZapper = await WOETHZapper.deploy(
-    ccipRouter.address,
-    destinationChainSelector,
-    woethOnSourceChain,
-    woethOnDestinationChain,
-    oethZapper.address,
-    addresses.mainnet.OETHProxy
-  );
-  await woethZapper.deployed();
-  woethOnSourceChain = await ethers.getContractAt(
+  const woethZapper = await ethers.getContract("WOETHCCIPZapper");
+  const woethOnSourceChain = await ethers.getContractAt(
     "WOETH",
     addresses.mainnet.WOETHProxy
   );
@@ -2172,12 +2157,6 @@ async function woethCcipZapperFixture() {
   fixture.woethOnSourceChain = woethOnSourceChain;
   fixture.woethZapper = woethZapper;
   fixture.ccipRouter = ccipRouter;
-
-  const [josh, alice] = await ethers.getSigners();
-  await impersonateAndFund(josh.address, "10");
-
-  fixture.josh = josh;
-  fixture.alice = alice;
 
   return fixture;
 }
