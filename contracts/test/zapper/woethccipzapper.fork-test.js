@@ -56,16 +56,11 @@ describe("ForkTest: WOETH CCIP Zapper", function () {
   });
 
   it("zap(): Should be reverted with 'AmountLessThanFee'", async () => {
-    const { woethZapper, josh, anna } = fixture;
-    let depositAmount = parseUnits("0.01");
+    const { woethZapper, josh } = fixture;
 
-    const feeAmount = await woethZapper.getFee(depositAmount, josh.address);
-
-    depositAmount = feeAmount.sub(1);
-
-    let tx = woethZapper
+    const tx = woethZapper
       .connect(josh)
-      .zap(anna.address, { value: depositAmount });
+      .zap(josh.address, { value: "1" });
     await expect(tx).to.be.revertedWith("AmountLessThanFee");
   });
 
