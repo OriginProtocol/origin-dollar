@@ -2135,7 +2135,7 @@ async function harvesterFixture() {
 }
 
 async function woethCcipZapperFixture() {
-  let fixture = await defaultFixture()
+  let fixture = await defaultFixture();
 
   const oethZapper = await ethers.getContractAt(
     "OETHZapper",
