@@ -4,6 +4,7 @@ const { parseEther } = require("ethers").utils;
 const {
   setBalance,
   setStorageAt,
+  mine,
 } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { isCI } = require("../helpers");
@@ -12,6 +13,7 @@ const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
+const minFixAccountingCadence = 7200 + 1;
 
 const {
   createFixtureLoader,
@@ -543,6 +545,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
+      await mine(minFixAccountingCadence);
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
@@ -563,6 +566,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       const { nativeStakingSSVStrategy, strategist } = fixture;
 
       await nativeStakingSSVStrategy.connect(strategist).pause();
+      await mine(minFixAccountingCadence);
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
@@ -587,6 +591,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           await setActiveDepositedValidators(10, nativeStakingSSVStrategy);
 
           await nativeStakingSSVStrategy.connect(strategist).pause();
+          await mine(minFixAccountingCadence);
           const activeDepositedValidatorsBefore =
             await nativeStakingSSVStrategy.activeDepositedValidators();
 
@@ -619,6 +624,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           await setActiveDepositedValidators(10000, nativeStakingSSVStrategy);
 
           await nativeStakingSSVStrategy.connect(strategist).pause();
+          await mine(minFixAccountingCadence);
           const consensusRewardsDelta = parseEther(delta.toString());
 
           const tx = await nativeStakingSSVStrategy
@@ -647,6 +653,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .transfer(nativeStakingSSVStrategy.address, parseEther("5"));
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
         // unit test fixture sets OUSD governor as accounting governor
         const tx = await nativeStakingSSVStrategy
           .connect(strategist)
@@ -660,6 +667,50 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .withArgs(
             1, // validatorsDelta
             parseEther("2.3") // consensusRewards
+          );
+      });
+
+      it("Calling manually fix accounting too often should result in an error", async () => {
+        const { nativeStakingSSVStrategy, strategist, governor } = fixture;
+
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
+        await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            0, //_validatorsDelta
+            parseEther("0") //_consensusRewardsDelta
+          );
+
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence - 4);
+        await expect(
+          nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+            0, //_validatorsDelta
+            parseEther("0") //_consensusRewardsDelta
+          )
+        ).to.be.revertedWith("manuallyFixAccounting called too soon");
+      });
+
+      it("Calling manually fix accounting twice with enough blocks in between should pass", async () => {
+        const { nativeStakingSSVStrategy, strategist, governor } = fixture;
+
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
+        await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            0, //_validatorsDelta
+            parseEther("0") //_consensusRewardsDelta
+          );
+
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
+        await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            0, //_validatorsDelta
+            parseEther("0") //_consensusRewardsDelta
           );
       });
     });
