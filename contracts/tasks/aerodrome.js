@@ -3,15 +3,9 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
 const { getDiffBlocks } = require("./block");
-const { getSigner } = require("../utils/signers");
 
 const log = require("../utils/logger")("task:aerodrome");
 
-const advanceTime = async (seconds) => {
-  seconds = Math.floor(seconds);
-  await hre.ethers.provider.send("evm_increaseTime", [seconds]);
-  await hre.ethers.provider.send("evm_mine");
-};
 /**
  * Hardhat task to dump the current state of a Aerodrome sAMM pool used for AMO
  */
