@@ -45,7 +45,8 @@ module.exports = deploymentWithGovernanceProposal(
       true
     );
 
-    await cSwapper.approveAssets([addresses.mainnet.OGN]);
+    // TODO: resolve this at some point
+    //await cSwapper.approveAssets([addresses.mainnet.OGN]);
 
     if (!isFork) {
       // No Governance action on mainnet
