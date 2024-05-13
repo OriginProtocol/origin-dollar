@@ -13,6 +13,7 @@ const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
+const { zero } = require("../../utils/addresses");
 const minFixAccountingCadence = 7200 + 1;
 
 const {
@@ -447,7 +448,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
           fuseBlown ? ", fuse blown" : ""
         }${slashDetected ? ", slash detected" : ""}.`, async () => {
-          const { nativeStakingSSVStrategy, governor } = fixture;
+          const { nativeStakingSSVStrategy, governor, weth } = fixture;
 
           // setup state
           if (ethBalance.gt(0)) {
@@ -477,6 +478,9 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
 
           if (expectedValidatorsFullWithdrawals > 0) {
+            const ethWithdrawnToVault = parseEther("32").mul(
+              expectedValidatorsFullWithdrawals
+            );
             await expect(tx)
               .to.emit(
                 nativeStakingSSVStrategy,
@@ -485,8 +489,12 @@ describe("Unit test: Native SSV Staking Strategy", function () {
               .withArgs(
                 expectedValidatorsFullWithdrawals,
                 30 - expectedValidatorsFullWithdrawals,
-                parseEther("32").mul(expectedValidatorsFullWithdrawals)
+                ethWithdrawnToVault
               );
+
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+              .withArgs(weth.address, zero, ethWithdrawnToVault);
           } else {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
@@ -501,11 +509,22 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
 
           if (slashDetected) {
+            const fullExitEthWithdrawnToVault = parseEther("32").mul(
+              expectedValidatorsFullWithdrawals
+            );
+            const slashedEthRemaining = ethBalance.sub(
+              fullExitEthWithdrawnToVault
+            );
+
             await expect(tx)
               .to.emit(nativeStakingSSVStrategy, "AccountingValidatorSlashed")
               .withNamedArgs({
                 remainingValidators: 30 - expectedValidatorsFullWithdrawals - 1,
               });
+
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+              .withArgs(weth.address, zero, slashedEthRemaining);
           } else {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
