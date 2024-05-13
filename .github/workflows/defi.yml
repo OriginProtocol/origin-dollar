@@ -18,12 +18,12 @@ jobs:
     name: "Contracts Linter"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
@@ -46,12 +46,12 @@ jobs:
     name: "Contracts Unit Tests"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
@@ -69,12 +69,12 @@ jobs:
     name: "Contracts Unit Coverage"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
@@ -85,7 +85,7 @@ jobs:
         run: yarn run test:coverage
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage-${{ github.sha }}
           path: | 
@@ -108,16 +108,16 @@ jobs:
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -131,7 +131,7 @@ jobs:
       - run: yarn run test:coverage:fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-coverage-${{ github.sha }}-runner${{ matrix.chunk_id }}
           path: | 
@@ -148,16 +148,16 @@ jobs:
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ARBITRUM_PROVIDER_URL: ${{ secrets.ARBITRUM_PROVIDER_URL }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -171,7 +171,7 @@ jobs:
       - run: yarn run test:coverage:arb-fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-arb-coverage-${{ github.sha }}
           path: | 
@@ -188,16 +188,16 @@ jobs:
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       HOLESKY_PROVIDER_URL: ${{ secrets.HOLESKY_PROVIDER_URL }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -211,9 +211,9 @@ jobs:
       - run: yarn run test:coverage:hol-fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: fork-test-arb-coverage-${{ github.sha }}
+          name: fork-test-hol-coverage-${{ github.sha }}
           path: | 
             ./contracts/coverage.json
             ./contracts/coverage/**/*
@@ -227,17 +227,19 @@ jobs:
       - contracts-forktest
       - contracts-arb-forktest
       - contracts-hol-forktest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -249,9 +251,9 @@ jobs:
         working-directory: ./contracts
       
       - name: Download all reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true
 
@@ -261,10 +263,10 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -277,9 +279,9 @@ jobs:
           pip3 inspect
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 

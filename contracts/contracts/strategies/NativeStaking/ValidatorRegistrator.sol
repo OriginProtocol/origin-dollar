@@ -98,6 +98,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param validators A list of validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
+    // slither-disable-start reentrancy-eth
     function stakeEth(ValidatorStakeData[] calldata validators)
         external
         onlyRegistrator
@@ -160,6 +161,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         activeDepositedValidators += validatorsLength;
     }
 
+    // slither-disable-end reentrancy-eth
+
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
     function registerSsvValidator(
@@ -183,6 +186,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
+    // slither-disable-start reentrancy-no-eth
     function exitSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds
@@ -196,10 +200,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXITING;
     }
 
+    // slither-disable-end reentrancy-no-eth
+
     /// @notice Remove a validator from the SSV Cluster.
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
+    // slither-disable-start reentrancy-no-eth
     function removeSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
@@ -220,6 +227,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXIT_COMPLETE;
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.

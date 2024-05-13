@@ -105,6 +105,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         accountingValid = _doAccounting(true);
     }
 
+    // slither-disable-start reentrancy-eth
     function _doAccounting(bool pauseOnFail)
         internal
         returns (bool accountingValid)
@@ -129,6 +130,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
             uint256 wethToVault = MAX_STAKE * fullyWithdrawnValidators;
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
+            // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
 
             emit AccountingFullyWithdrawnValidator(
@@ -156,6 +158,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // Beacon chain consensus rewards swept but also a slashed validator fully exited
         else if (ethRemaining > fuseIntervalEnd) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+            // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
@@ -169,6 +172,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             return _failAccounting(pauseOnFail);
         }
     }
+
+    // slither-disable-end reentrancy-eth
 
     /// @dev pause any further accounting if required and return false
     function _failAccounting(bool pauseOnFail)

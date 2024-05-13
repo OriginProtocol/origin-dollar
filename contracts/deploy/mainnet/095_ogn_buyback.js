@@ -17,7 +17,7 @@ module.exports = deploymentWithGovernanceProposal(
     const cOETHBuybackProxy = await ethers.getContract("OETHBuybackProxy");
     const cOUSDBuybackProxy = await ethers.getContract("BuybackProxy");
 
-    const cSwapper = await ethers.getContract("Swapper1InchV5");
+    // const cSwapper = await ethers.getContract("Swapper1InchV5");
 
     // Deploy new OETHBuyback implementation
     const dOETHBuybackImpl = await deployWithConfirmation(
@@ -45,7 +45,7 @@ module.exports = deploymentWithGovernanceProposal(
       true
     );
 
-    await cSwapper.approveAssets([addresses.mainnet.OGN]);
+    // await cSwapper.approveAssets([addresses.mainnet.OGN]);
 
     if (!isFork) {
       // No Governance action on mainnet

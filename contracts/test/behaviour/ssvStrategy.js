@@ -7,7 +7,6 @@ const {
 const hre = require("hardhat");
 
 const { oethUnits } = require("../helpers");
-const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
 const { getClusterInfo } = require("../../utils/ssv");
 const { parseEther } = require("ethers/lib/utils");
@@ -139,6 +138,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
     it("Should register and staked 32 ETH by validator registrator", async () => {
       const {
+        addresses,
         weth,
         ssv,
         nativeStakingSSVStrategy,
@@ -153,7 +153,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
         operatorIds: testValidator.operatorIds,
-        chainId: 1,
+        chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });
 
@@ -219,7 +219,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
         operatorIds: testValidator.operatorIds,
-        chainId: 1,
+        chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });
 
@@ -348,6 +348,9 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const rewards = oethUnits("3");
       const withdrawals = oethUnits("64");
+      const expectedConsensusRewards = rewards.sub(
+        await nativeStakingSSVStrategy.consensusRewards()
+      );
       const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
 
       // simulate withdraw of 2 validators and consensus rewards
@@ -366,7 +369,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(tx)
         .to.emit(nativeStakingSSVStrategy, "AccountingConsensusRewards")
-        .withArgs(rewards);
+        .withArgs(expectedConsensusRewards);
 
       // check balances after
       expect(
@@ -376,7 +379,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         "checkBalance should decrease"
       );
       expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
-        consensusRewardsBefore.add(rewards),
+        consensusRewardsBefore.add(expectedConsensusRewards),
         "consensusRewards should increase"
       );
       expect(
