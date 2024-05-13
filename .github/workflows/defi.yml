@@ -18,7 +18,7 @@ jobs:
     name: "Contracts Linter"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -46,7 +46,7 @@ jobs:
     name: "Contracts Unit Tests"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -69,7 +69,7 @@ jobs:
     name: "Contracts Unit Coverage"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -108,7 +108,7 @@ jobs:
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -148,7 +148,7 @@ jobs:
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ARBITRUM_PROVIDER_URL: ${{ secrets.ARBITRUM_PROVIDER_URL }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -178,7 +178,7 @@ jobs:
             ./contracts/coverage.json
             ./contracts/coverage/**/*
           retention-days: 1
-
+  
   coverage-uploader:
     name: "Upload Coverage Reports"
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
       - contracts-forktest
       - contracts-arb-forktest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -220,7 +220,7 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
