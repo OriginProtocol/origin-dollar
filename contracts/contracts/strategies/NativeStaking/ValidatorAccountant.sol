@@ -132,7 +132,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
             // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
-            wethWithdrawnToVault(wethToVault);
+            _wethWithdrawnToVault(wethToVault);
 
             emit AccountingFullyWithdrawnValidator(
                 fullyWithdrawnValidators,
@@ -163,7 +163,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
-            wethWithdrawnToVault(ethRemaining);
+            _wethWithdrawnToVault(ethRemaining);
 
             emit AccountingValidatorSlashed(
                 activeDepositedValidators,
@@ -242,5 +242,5 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     ****************************************/
 
     /// @dev allows for NativeStakingSSVStrategy contract to emit Withdrawal event
-    function wethWithdrawnToVault(uint256 _amount) internal virtual;
+    function _wethWithdrawnToVault(uint256 _amount) internal virtual;
 }

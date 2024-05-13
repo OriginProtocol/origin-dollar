@@ -33,8 +33,17 @@ contract NativeStakingSSVStrategy is
     /// (rewards for arranging transactions in a way that benefits the validator).
     address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
+    /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
+    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators. 
+    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been 
+    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track 
+    /// of WETH that has already been accounted for. 
+    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the 
+    /// deposit events.
+    uint256 depositedWethAccountedFor;
+
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -126,6 +135,7 @@ contract NativeStakingSSVStrategy is
         nonReentrant
     {
         require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        depositedWethAccountedFor += _amount;
         _deposit(_asset, _amount);
     }
 
@@ -154,8 +164,13 @@ contract NativeStakingSSVStrategy is
         uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
             address(this)
         );
+        uint256 newWeth = wethBalance - depositedWethAccountedFor;
+        depositedWethAccountedFor += newWeth;
+
+        require(depositedWethAccountedFor == wethBalance, "Unexpected depositedWethAccountedFor amount");
+
         if (wethBalance > 0) {
-            _deposit(WETH_TOKEN_ADDRESS, wethBalance);
+            _deposit(WETH_TOKEN_ADDRESS, newWeth);
         }
     }
 
@@ -262,7 +277,11 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    function wethWithdrawnToVault(uint256 _amount) internal override {
+    function _wethWithdrawnToVault(uint256 _amount) internal override {
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+    }
+
+    function _wethWithdrawnAndStaked(uint256 _amount) internal override {
+        depositedWethAccountedFor -= _amount;
     }
 }
