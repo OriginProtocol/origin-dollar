@@ -261,4 +261,8 @@ contract NativeStakingSSVStrategy is
             "eth not from allowed contracts"
         );
     }
+
+    function wethWithdrawnToVault(uint256 _amount) internal override {
+        emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+    }
 }
