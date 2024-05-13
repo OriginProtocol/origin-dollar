@@ -10,6 +10,8 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 /// Full withdrawals are from exited validators.
 /// @author Origin Protocol Inc
 abstract contract ValidatorAccountant is ValidatorRegistrator {
+    /// @notice The minimum amount of blocks that need to pass between two calls to manuallyFixAccounting
+    uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
     uint256 public constant MAX_STAKE = 32 ether;
@@ -21,8 +23,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     uint256 public fuseIntervalStart;
     /// @notice end of fuse interval
     uint256 public fuseIntervalEnd;
+    /// @notice last block number manuallyFixAccounting has been called
+    uint256 public lastFixAccountingBlockNumber;
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     event FuseIntervalUpdated(uint256 start, uint256 end);
     event AccountingFullyWithdrawnValidator(
@@ -187,6 +191,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         int256 _consensusRewardsDelta
     ) external onlyStrategist whenPaused {
         require(
+            lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
+                block.number,
+            "manuallyFixAccounting called too soon"
+        );
+        require(
             _validatorsDelta >= -3 &&
                 _validatorsDelta <= 3 &&
                 // new value must be positive
@@ -209,6 +218,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         consensusRewards = uint256(
             int256(consensusRewards) + _consensusRewardsDelta
         );
+
+        lastFixAccountingBlockNumber = block.number;
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
