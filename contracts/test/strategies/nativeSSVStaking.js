@@ -671,7 +671,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       });
 
       it("Calling manually fix accounting too often should result in an error", async () => {
-        const { nativeStakingSSVStrategy, strategist, governor } = fixture;
+        const { nativeStakingSSVStrategy, strategist } = fixture;
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
         await mine(minFixAccountingCadence);
@@ -693,7 +693,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       });
 
       it("Calling manually fix accounting twice with enough blocks in between should pass", async () => {
-        const { nativeStakingSSVStrategy, strategist, governor } = fixture;
+        const { nativeStakingSSVStrategy, strategist } = fixture;
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
         await mine(minFixAccountingCadence);
