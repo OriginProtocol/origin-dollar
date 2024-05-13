@@ -7,6 +7,8 @@ import "hardhat/console.sol";
 interface IERC20MintableBurnable {
     function mintTo(address to, uint256 value) external;
 
+    function mint(address to, uint256 value) external;
+
     function burnFrom(address account, uint256 value) external;
 
     function transfer(address account, uint256 value) external;

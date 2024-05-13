@@ -1714,9 +1714,11 @@ async function aeroOETHAMOFixture(
 
   fixture.weth = wETH;
   fixture.oeth = oETH;
-  const [deployer, josh, governorAddr] = await ethers.getSigners();
+  const [defaultSigner, josh, governorAddr, rewardHarvester] =
+    await ethers.getSigners();
   const { strategistAddr, timelockAddr } = await getNamedAccounts();
 
+  fixture.rewardHarvester = rewardHarvester;
   fixture.strategist = ethers.provider.getSigner(strategistAddr);
   fixture.timelock = ethers.provider.getSigner(timelockAddr);
 
@@ -1887,6 +1889,47 @@ async function aeroOETHAMOFixture(
       log(`Deposited ${wethAmount} WETH to the strategy contract`);
     }
   }
+
+  // Deploy Oracle and Harvester contracts
+  const AeroWethOracle = await ethers.getContractFactory("AeroWEthPriceFeed");
+  let aeroWethOracle = await AeroWethOracle.deploy(
+    addresses.base.ethUsdPriceFeed,
+    addresses.base.aeroUsdPriceFeed
+  );
+  fixture.aeroWethOracle = aeroWethOracle;
+
+  const AeroHarvester = await ethers.getContractFactory("AeroHarvester");
+  let harvester = await AeroHarvester.deploy(
+    aeroWethOracle.address,
+    addresses.base.wethTokenAddress
+  );
+  await harvester.deployed();
+  await harvester.setRewardTokenConfig(
+    addresses.base.aeroTokenAddress,
+    {
+      allowedSlippageBps: 300,
+      harvestRewardBps: 100,
+      swapPlatform: 0, // Aerodrome
+      swapPlatformAddr: addresses.base.aeroRouterAddress,
+      liquidationLimit: 0,
+      doSwapRewardToken: true,
+    },
+    [
+      {
+        from: addresses.base.aeroTokenAddress,
+        to: addresses.base.wethTokenAddress,
+        stable: true,
+        factory: addresses.base.aeroFactoryAddress,
+      },
+    ]
+  );
+
+  await harvester.setSupportedStrategy(aerodromeEthStrategy.address, true);
+  await harvester.setRewardProceedsAddress(rewardHarvester.address);
+
+  fixture.harvester = harvester;
+
+  await aerodromeEthStrategy.setHarvesterAddress(harvester.address);
 
   return fixture;
 }
