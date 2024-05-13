@@ -186,6 +186,8 @@ jobs:
       - contracts-unit-coverage
       - contracts-forktest
       - contracts-arb-forktest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
