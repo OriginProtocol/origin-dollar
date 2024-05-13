@@ -105,6 +105,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         accountingValid = _doAccounting(true);
     }
 
+    // slither-disable-start reentrancy-eth
     function _doAccounting(bool pauseOnFail)
         internal
         returns (bool accountingValid)
@@ -171,6 +172,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             return _failAccounting(pauseOnFail);
         }
     }
+
+    // slither-disable-end reentrancy-eth
 
     /// @dev pause any further accounting if required and return false
     function _failAccounting(bool pauseOnFail)
