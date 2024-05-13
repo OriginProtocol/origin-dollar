@@ -1,6 +1,3 @@
-const { parseEther } = require("ethers/lib/utils");
-
-const { deployNativeStakingSSVStrategy } = require("../deployActions");
 const { withConfirmation } = require("../../utils/deploy");
 const { resolveContract } = require("../../utils/resolvers");
 const addresses = require("../../utils/addresses");

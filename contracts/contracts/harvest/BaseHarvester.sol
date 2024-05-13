@@ -549,7 +549,7 @@ abstract contract BaseHarvester is Governable {
         IERC20 baseToken = IERC20(baseTokenAddress);
         uint256 baseTokenBalance = baseToken.balanceOf(address(this));
         if (baseTokenBalance < amountReceived) {
-            // Note: It's possible to bypass this check by transfering `baseToken`
+            // Note: It's possible to bypass this check by transferring `baseToken`
             // directly to Harvester before calling the `harvestAndSwap`. However,
             // there's no incentive for an attacker to do that. Doing a balance diff
             // will increase the gas cost significantly

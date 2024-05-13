@@ -36,4 +36,9 @@ contract FeeAccumulator is Governable {
             Address.sendValue(payable(STRATEGY), eth);
         }
     }
+
+    /**
+     * @dev Accept ETH
+     */
+    receive() external payable {}
 }

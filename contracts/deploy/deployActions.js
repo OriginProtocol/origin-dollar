@@ -584,8 +584,7 @@ const deployOETHHarvester = async (oethDripper) => {
 
   await withConfirmation(
     // prettier-ignore
-    cOETHHarvesterProxy
-      ["initialize(address,address,bytes)"](
+    cOETHHarvesterProxy["initialize(address,address,bytes)"](
         dOETHHarvester.address,
         governorAddr,
         []
@@ -805,6 +804,32 @@ const deployFraxEthStrategy = async () => {
     )
   );
   return cFraxETHStrategy;
+};
+
+/**
+ * upgradeNativeStakingFeeAccumulator
+ */
+const upgradeNativeStakingFeeAccumulator = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const strategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const feeAccumulatorProxy = await ethers.getContract(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+
+  log("Deploy fee accumulator implementation");
+  const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
+    strategyProxy.address, // STRATEGY
+  ]);
+
+  await withConfirmation(
+    feeAccumulatorProxy
+      .connect(sDeployer)
+      .upgradeTo(dFeeAccumulatorImpl.address)
+  );
 };
 
 /**
@@ -1310,13 +1335,13 @@ const deployBuyback = async () => {
   const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
   const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
     ousd.address,
-    assetAddresses.OGV,
+    assetAddresses.OGN,
     assetAddresses.CVX,
     assetAddresses.CVXLocker,
   ]);
   const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, [
     oeth.address,
-    assetAddresses.OGV,
+    assetAddresses.OGN,
     assetAddresses.CVX,
     assetAddresses.CVXLocker,
   ]);
@@ -1538,4 +1563,5 @@ module.exports = {
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
+  upgradeNativeStakingFeeAccumulator,
 };

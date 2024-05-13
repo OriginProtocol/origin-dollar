@@ -31,7 +31,7 @@ contract NativeStakingSSVStrategy is
     /// executing transactions on the Ethereum network as part of block proposals. They include
     /// priority fees (fees paid by users for their transactions to be included) and MEV rewards
     /// (rewards for arranging transactions in a way that benefits the validator).
-    address public immutable FEE_ACCUMULATOR_ADDRESS;
+    address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
     // For future use
     uint256[50] private __gap;
@@ -60,7 +60,7 @@ contract NativeStakingSSVStrategy is
         )
     {
         SSV_TOKEN_ADDRESS = _ssvToken;
-        FEE_ACCUMULATOR_ADDRESS = _feeAccumulator;
+        FEE_ACCUMULATOR_ADDRESS = payable(_feeAccumulator);
     }
 
     /// @notice initialize function, to set up initial internal state

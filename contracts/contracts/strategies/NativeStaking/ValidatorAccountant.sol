@@ -10,19 +10,23 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 /// Full withdrawals are from exited validators.
 /// @author Origin Protocol Inc
 abstract contract ValidatorAccountant is ValidatorRegistrator {
+    /// @notice The minimum amount of blocks that need to pass between two calls to manuallyFixAccounting
+    uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
     uint256 public constant MAX_STAKE = 32 ether;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
-    uint256 public consensusRewards = 0;
+    uint256 public consensusRewards;
 
     /// @notice start of fuse interval
-    uint256 public fuseIntervalStart = 0;
+    uint256 public fuseIntervalStart;
     /// @notice end of fuse interval
-    uint256 public fuseIntervalEnd = 0;
+    uint256 public fuseIntervalEnd;
+    /// @notice last block number manuallyFixAccounting has been called
+    uint256 public lastFixAccountingBlockNumber;
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     event FuseIntervalUpdated(uint256 start, uint256 end);
     event AccountingFullyWithdrawnValidator(
@@ -38,8 +42,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     event AccountingManuallyFixed(
         int256 validatorsDelta,
-        int256 consensusRewardsDelta,
-        uint256 wethToVault
+        int256 consensusRewardsDelta
     );
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -116,9 +119,11 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         // send the ETH that is from fully withdrawn validators to the Vault
         if (newSweptETH >= MAX_STAKE) {
-            uint256 fullyWithdrawnValidators = newSweptETH / MAX_STAKE;
-            if (activeDepositedValidators < fullyWithdrawnValidators) {
-                return _failAccounting(pauseOnFail);
+            uint256 fullyWithdrawnValidators;
+            // safe since MAX_STAKE is hardcoded to 32ETH
+            unchecked {
+                // explicitly cast to uint256 as we want to round to a whole number of validators
+                fullyWithdrawnValidators = uint256(newSweptETH / MAX_STAKE);
             }
             activeDepositedValidators -= fullyWithdrawnValidators;
 
@@ -179,14 +184,17 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     }
 
     /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
-    /// @param _validatorsDelta adjust the active validators by plus one, minus one or unchanged with zero
-    /// @param _wethToVaultAmount the amount of WETH to be sent to the Vault
+    /// @param _validatorsDelta adjust the active validators by up to plus three or minus three
     /// @param _consensusRewardsDelta adjust the accounted for consensus rewards up or down
     function manuallyFixAccounting(
         int256 _validatorsDelta,
-        int256 _consensusRewardsDelta,
-        uint256 _wethToVaultAmount
+        int256 _consensusRewardsDelta
     ) external onlyStrategist whenPaused {
+        require(
+            lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
+                block.number,
+            "manuallyFixAccounting called too soon"
+        );
         require(
             _validatorsDelta >= -3 &&
                 _validatorsDelta <= 3 &&
@@ -201,13 +209,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
             "invalid consensusRewardsDelta"
         );
-        require(_wethToVaultAmount <= 32 ether, "invalid wethToVaultAmount");
 
-        emit AccountingManuallyFixed(
-            _validatorsDelta,
-            _consensusRewardsDelta,
-            _wethToVaultAmount
-        );
+        emit AccountingManuallyFixed(_validatorsDelta, _consensusRewardsDelta);
 
         activeDepositedValidators = uint256(
             int256(activeDepositedValidators) + _validatorsDelta
@@ -215,12 +218,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         consensusRewards = uint256(
             int256(consensusRewards) + _consensusRewardsDelta
         );
-        if (_wethToVaultAmount > 0) {
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(
-                VAULT_ADDRESS,
-                _wethToVaultAmount
-            );
-        }
+
+        lastFixAccountingBlockNumber = block.number;
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused

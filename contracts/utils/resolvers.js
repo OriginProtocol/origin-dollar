@@ -82,7 +82,7 @@ const resolveContract = async (proxy, abiName) => {
     return contract;
   }
 
-  return proxy;
+  return proxyContract;
 };
 
 module.exports = {

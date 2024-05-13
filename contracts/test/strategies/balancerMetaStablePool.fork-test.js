@@ -170,6 +170,9 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   describe("Deposit", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
+      const { oethVault, josh, reth } = fixture;
+
+      await reth.connect(josh).transfer(oethVault.address, oethUnits("32"));
     });
     it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
       const { reth, rEthBPT, weth } = fixture;
@@ -267,8 +270,10 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   describe("Withdraw", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
-      const { balancerREthStrategy, oethVault, strategist, reth, weth } =
+      const { balancerREthStrategy, oethVault, josh, strategist, reth, weth } =
         fixture;
+
+      await reth.connect(josh).transfer(oethVault.address, oethUnits("32"));
 
       await oethVault
         .connect(strategist)
@@ -543,8 +548,11 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   describe("Harvest rewards", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureDefault();
-    });
 
+      const { oethVault, josh, reth } = fixture;
+
+      await reth.connect(josh).transfer(oethVault.address, oethUnits("32"));
+    });
     it("Should be able to collect reward tokens", async function () {
       const {
         weth,
