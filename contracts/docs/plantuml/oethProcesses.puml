@@ -68,7 +68,7 @@ activate api
 return status,\nvalidatorRegistration,\nshareData
 note right : validatorRegistration contains the pubkey, operatorIds and cluster details
 
-reg -> nativeStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot)
+reg -> nativeStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster)
 activate nativeStrat
 note right
 cluster data:
@@ -85,16 +85,22 @@ activate ssv
 note right: transfer SSV tokens\nfrom NodeDelegator\nto SSV Network
 return
 return
+return
 
-nativeStrat -> weth : withdraw(\namount)
+reg -> nativeStrat : stake([\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot])
+activate nativeStrat
+nativeStrat -> weth : withdraw(32 ETH * number of validators)
 activate weth
 note right : WETH burned for ETH
 return ETH
+
+loop for each validator
 
 nativeStrat -> dep : stake(\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot)
 activate dep
 note left : 32 ETH from Native Staking Strategy\nis sent to Beacon Deposit
 return
+end
 return
 
 note over val : Pending Deposit
