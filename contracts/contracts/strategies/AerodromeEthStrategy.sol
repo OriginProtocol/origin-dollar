@@ -17,6 +17,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import "hardhat/console.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -37,10 +38,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     // Ordered list of pool assets
     uint128 public immutable wethCoinIndex;
     uint128 public immutable oethCoinIndex;
-
-    // Maximum allowed imbalance percentage.
-    // Initially set as 5%, meaning the allowed range is 0.475 < ratio < 0.525
-    uint256 public poolImbalanceThreshold = 5_000; // 5%
 
     // Used to circumvent the stack too deep issue
     struct AerodromeEthConfig {
@@ -71,37 +68,26 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * Withdrawals are proportional so doesn't change the pools asset balance.
      */
     modifier improvePoolBalance() {
+        uint256 midpoint = 0.5e18; // 0.5e18 represents a 50:50 pool balance
+
+        // Get the initial ratio of oeth to weth.
+        uint256 initialRatio = aeroRouterAddress.quoteStableLiquidityRatio(
+            address(weth),
+            address(oeth),
+            address(aeroFactoryAddress)
+        );
         _;
 
-        // weth/oeth reserve ratio
-        uint256 ratio1 = aeroRouterAddress.quoteStableLiquidityRatio(
+        // Get the ratio of oeth to weth after rebalance.
+        uint256 finalRatio = aeroRouterAddress.quoteStableLiquidityRatio(
             address(weth),
             address(oeth),
             address(aeroFactoryAddress)
         );
 
-        // oeth/weth reserve ratio
-        uint256 ratio2 = aeroRouterAddress.quoteStableLiquidityRatio(
-            address(oeth),
-            address(weth),
-            address(aeroFactoryAddress)
-        );
-
-        uint256 difference;
-        if (ratio1 > ratio2) {
-            difference = ratio1 - ratio2;
-        } else {
-            difference = ratio2 - ratio1;
-        }
-
-        // scale to basis points precision
-        uint256 scaledDifference = (difference * 100_000) / 1e18;
-
-        // Check that the scaled difference does not exceed the threshold
-        require(
-            scaledDifference <= poolImbalanceThreshold,
-            "Pool imbalance exceeds threshold"
-        );
+        // Ensure that the rebalance does not cross the midpoint and that the final ratio better than initial.
+        require(finalRatio > midpoint, "WETH reserves exceeds OETH"); // This means we needed more WETH (not profitable)
+        require(finalRatio <= initialRatio, "Pool imbalance worsened");
     }
 
     constructor(
@@ -500,17 +486,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         _approveBase();
-    }
-
-    /**
-     * @notice Update the pool imbalance threshold percentage.
-     * @param newThreshold New imbalance threshold. Eg: 10% should be passed as 10000
-     */
-    function setPoolImbalanceThreshold(uint256 newThreshold)
-        external
-        onlyGovernor
-    {
-        poolImbalanceThreshold = newThreshold;
     }
 
     /**
