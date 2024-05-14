@@ -687,7 +687,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       for (const eth of [0, 1, 26, 32, 63, 65, 95]) {
         it(`by sending ${eth} ETH wrapped to WETH to the vault`, async () => {
-          const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
+          const { nativeStakingSSVStrategy, strategist } = fixture;
 
           const wethToVaultBn = parseEther(`${eth}`);
 
@@ -730,8 +730,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       }
 
       it("by marking a validator as withdrawn when severely slashed and sent its funds to the vault", async () => {
-        const { nativeStakingSSVStrategy, governor, strategist, josh, weth } =
-          fixture;
+        const { nativeStakingSSVStrategy, governor, strategist } = fixture;
 
         // setup initial state
         await nativeStakingSSVStrategy.connect(strategist).pause();

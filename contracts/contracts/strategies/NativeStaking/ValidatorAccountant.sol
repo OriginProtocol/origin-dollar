@@ -239,6 +239,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         consensusRewards = uint256(
             int256(consensusRewards) + _consensusRewardsDelta
         );
+        lastFixAccountingBlockNumber = block.number;
         if (_ethToVaultAmount > 0) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToVaultAmount }();
             IWETH9(WETH_TOKEN_ADDRESS).transfer(
@@ -246,7 +247,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 _ethToVaultAmount
             );
         }
-        lastFixAccountingBlockNumber = block.number;
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
