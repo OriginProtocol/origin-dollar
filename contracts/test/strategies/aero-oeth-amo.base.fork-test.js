@@ -459,6 +459,47 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       expect(netOEthMintedAfter).to.lt(netOEthMintedBefore);
     });
 
+    it("Should not rebalance pool by making the WETH reserve > OETH reserve", async function () {
+      const { oeth, weth, josh, aeroRouter, aerodromeEthStrategy } = fixture;
+      const oethToSwap = parseUnits("1000");
+      await oeth.connect(josh).approve(aeroRouter.address, oethToSwap);
+
+      // Perform swap to imbalance the pool
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          oethToSwap,
+          0,
+          [
+            [
+              oeth.address,
+              weth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+
+      // Try to make the pool balance even worse (should revert)
+      const { tokenIn, amountIn } = await getParamsForPoolRebalance(
+        fixture,
+        49,
+        51
+      );
+      if (tokenIn == weth.address) {
+        await weth
+          .connect(josh)
+          .transfer(aerodromeEthStrategy.address, amountIn);
+      }
+
+      // Rebalance pool should revert with error message
+      tx = aerodromeEthStrategy
+        .connect(josh)
+        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
+      await expect(tx).to.revertedWith("WETH reserves exceeds OETH");
+    });
     it("Should not rebalance pool more than allowed threshold", async function () {
       const { oeth, weth, josh, aeroRouter, aerodromeEthStrategy } = fixture;
       const oethToSwap = parseUnits("1000");
@@ -482,7 +523,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
           parseInt(Date.now() / 1000) + 5 * 360
         );
 
-      // Try to rebalance the pool in a 55:45 ratio.
+      // Try to rebalance the pool in a 55:45 ratio (should go through)
       const { tokenIn, amountIn } = await getParamsForPoolRebalance(
         fixture,
         55,
@@ -495,12 +536,23 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
           .transfer(aerodromeEthStrategy.address, amountIn);
       }
 
+      await aerodromeEthStrategy
+        .connect(josh)
+        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
+      // Try to make the pool balance even worse (should revert)
+      const { tokenIn: tokenIn2, amountIn: amountIn2 } =
+        await getParamsForPoolRebalance(fixture, 57, 43);
+      if (tokenIn2 == weth.address) {
+        await weth
+          .connect(josh)
+          .transfer(aerodromeEthStrategy.address, amountIn2);
+      }
+
       // Rebalance pool should revert with error message
       tx = aerodromeEthStrategy
         .connect(josh)
-        .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
-
-      await expect(tx).to.revertedWith("Pool imbalance exceeds threshold");
+        .swapAndRebalancePool(amountIn2, 0, tokenIn2, josh.address);
+      await expect(tx).to.revertedWith("Pool imbalance worsened");
     });
     it("Vault should be able to deposit some WETH to AMO strategy after rebalancing", async function () {
       const { aerodromeEthStrategy, oeth, pool, weth, josh, oethVault } =
