@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -304,9 +305,16 @@ contract NativeStakingSSVStrategy is
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
     }
 
-    // TODO(!) this is exploitable since someone can send WETH to the strategy and force
-    // depositedWethAccountedFor to try to be negative. DOS-ing the transaction
     function _wethWithdrawnAndStaked(uint256 _amount) internal override {
-        depositedWethAccountedFor -= _amount;
+        /* In an ideal world we wouldn't need to reduce the deduction amount when the
+         * depositedWethAccountedFor is smaller than the _amount.
+         *
+         * The reason this is required is that a malicious actor could sent WETH direclty
+         * to this contract and that would circumvent the increase of depositedWethAccountedFor
+         * property. When the ETH would be staked the depositedWethAccountedFor amount could
+         * be deducted so much that it would be negative.
+         */
+        uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
+        depositedWethAccountedFor -= deductAmount;
     }
 }
