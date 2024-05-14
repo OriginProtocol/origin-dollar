@@ -128,15 +128,22 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
   describe("Validator operations", function () {
     beforeEach(async () => {
-      const { weth, domen, nativeStakingSSVStrategy } = await context();
+      const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
+        await context();
 
-      // Add 32 WETH to the strategy so it can be staked
-      await weth
-        .connect(domen)
-        .transfer(nativeStakingSSVStrategy.address, oethUnits("32"));
+      // Add 32 WETH to the strategy via a Vualt deposit
+      await weth.connect(domen).transfer(oethVault.address, oethUnits("32"));
+
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          nativeStakingSSVStrategy.address,
+          [weth.address],
+          [oethUnits("32")]
+        );
     });
 
-    it("Should register and staked 32 ETH by validator registrator", async () => {
+    it("Should register and stake 32 ETH by validator registrator", async () => {
       const {
         addresses,
         weth,

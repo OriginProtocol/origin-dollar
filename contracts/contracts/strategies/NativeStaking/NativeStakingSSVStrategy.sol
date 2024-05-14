@@ -304,6 +304,8 @@ contract NativeStakingSSVStrategy is
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
     }
 
+    // TODO(!) this is exploitable since someone can send WETH to the strategy and force
+    // depositedWethAccountedFor to try to be negative. DOS-ing the transaction
     function _wethWithdrawnAndStaked(uint256 _amount) internal override {
         depositedWethAccountedFor -= _amount;
     }
