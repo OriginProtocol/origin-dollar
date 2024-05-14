@@ -242,6 +242,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         lastFixAccountingBlockNumber = block.number;
         if (_ethToVaultAmount > 0) {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToVaultAmount }();
+            // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(
                 VAULT_ADDRESS,
                 _ethToVaultAmount
