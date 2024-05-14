@@ -3,6 +3,7 @@ const { parseUnits } = require("ethers/lib/utils");
 
 const { isCI } = require("../helpers");
 const addresses = require("../../utils/addresses");
+const { aeroOETHAMOFixture } = require("../_fixture");
 
 describe("ForkTest: Aero WETH Oracle", function () {
   this.timeout(0);
@@ -10,29 +11,20 @@ describe("ForkTest: Aero WETH Oracle", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
-  let aeroWethFeed,oracleRouter;
+  let fixture;
   beforeEach(async () => {
-    const AeroWethFeed = await ethers.getContractFactory("PriceFeedPair");
-    aeroWethFeed = await AeroWethFeed.deploy(
-      addresses.base.aeroUsdPriceFeed,
-      addresses.base.ethUsdPriceFeed,
-      false,
-      true
-    );
-    await aeroWethFeed.deployed();
-
-    const OracleRouter = await ethers.getContractFactory("BaseOETHOracleRouter");
-    oracleRouter = await OracleRouter.deploy(aeroWethFeed.address);
-    await oracleRouter.deployed();
-    await oracleRouter.cacheDecimals(addresses.base.aeroTokenAddress);
+    fixture = await aeroOETHAMOFixture();
   });
 
   it("should get WETH price", async () => {
+    const { oracleRouter } = fixture;
     const price = await oracleRouter.price(addresses.base.wethTokenAddress);
     expect(price).to.eq(parseUnits("1", 18));
   });
 
   it("should get AERO price", async () => {
+    const { oracleRouter } = fixture;
+
     const price = await oracleRouter.price(addresses.base.aeroTokenAddress);
     const poolInstance = await ethers.getContractAt(
       "IPool",

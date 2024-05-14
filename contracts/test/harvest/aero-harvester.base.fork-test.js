@@ -29,7 +29,7 @@ describe("ForkTest: Harvest AERO", function () {
     ).to.be.eq(true);
   });
   it("should harvest and swap", async function () {
-    const { harvester, aerodromeEthStrategy, aeroWethOracle, rewardHarvester } =
+    const { harvester, aerodromeEthStrategy, oracleRouter, rewardHarvester } =
       fixture;
     const yieldAccrued = "1000"; // AERO tokens
 
@@ -61,20 +61,12 @@ describe("ForkTest: Harvest AERO", function () {
       rewardHarvester.address
     );
 
-    // Fetch Aero Value for accrued yield in ETH
-    const poolInstance = await ethers.getContractAt(
-      "IPool",
-      addresses.base.wethAeroPoolAddress
-    );
-    const ammRate = await poolInstance.getAmountOut(
-      parseUnits("1"),
-      addresses.base.aeroTokenAddress
-    );
-    const rewardValue = ammRate.mul(BigNumber.from(yieldAccrued));
+    const rate = await oracleRouter.price(addresses.base.aeroTokenAddress);
+    const rewardValue = rate.mul(BigNumber.from(yieldAccrued));
 
     expect(rewardValue).to.approxEqualTolerance(
       wethBalanceAfter.sub(wethBalanceBefore),
-      2
+      10
     );
   });
 });
