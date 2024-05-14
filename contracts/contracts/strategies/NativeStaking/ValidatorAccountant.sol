@@ -246,6 +246,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 VAULT_ADDRESS,
                 _ethToVaultAmount
             );
+            _wethWithdrawnToVault(_ethToVaultAmount);
         }
 
         // rerun the accounting to see if it has now been fixed.

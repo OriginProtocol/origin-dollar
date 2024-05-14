@@ -730,7 +730,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       }
 
       it("by marking a validator as withdrawn when severely slashed and sent its funds to the vault", async () => {
-        const { nativeStakingSSVStrategy, governor, strategist } = fixture;
+        const { nativeStakingSSVStrategy, governor, strategist, weth } = fixture;
 
         // setup initial state
         await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -771,6 +771,10 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             0, // consensusRewards
             parseEther("24")
           );
+
+        expect(tx2)
+          .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+          .withArgs(weth.address, zero, parseEther("24"));
       });
 
       it("by changing all three manuallyFixAccounting delta values", async () => {
