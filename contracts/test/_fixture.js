@@ -1890,24 +1890,32 @@ async function aeroOETHAMOFixture(
     }
   }
 
-  // Deploy Oracle and Harvester contracts
-  const AeroWethOracle = await ethers.getContractFactory("AeroWEthPriceFeed");
-  let aeroWethOracle = await AeroWethOracle.deploy(
+  const AeroWethFeed = await ethers.getContractFactory("PriceFeedPair");
+  const aeroWethFeed = await AeroWethFeed.deploy(
+    addresses.base.aeroUsdPriceFeed,
     addresses.base.ethUsdPriceFeed,
-    addresses.base.aeroUsdPriceFeed
+    false,
+    true
   );
-  fixture.aeroWethOracle = aeroWethOracle;
+  await aeroWethFeed.deployed();
+
+  const OracleRouter = await ethers.getContractFactory("BaseOETHOracleRouter");
+  const oracleRouter = await OracleRouter.deploy(aeroWethFeed.address);
+  await oracleRouter.deployed();
+  await oracleRouter.cacheDecimals(addresses.base.aeroTokenAddress);
+
+  fixture.oracleRouter = oracleRouter;
 
   const AeroHarvester = await ethers.getContractFactory("AeroHarvester");
-  let harvester = await AeroHarvester.deploy(
-    aeroWethOracle.address,
+  const harvester = await AeroHarvester.deploy(
+    oracleRouter.address,
     addresses.base.wethTokenAddress
   );
   await harvester.deployed();
   await harvester.setRewardTokenConfig(
     addresses.base.aeroTokenAddress,
     {
-      allowedSlippageBps: 300,
+      allowedSlippageBps: 800,
       harvestRewardBps: 100,
       swapPlatform: 0, // Aerodrome
       swapPlatformAddr: addresses.base.aeroRouterAddress,
