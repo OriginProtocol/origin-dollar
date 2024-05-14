@@ -544,8 +544,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
           1, //_validatorsDelta
           parseEther("2"), //_consensusRewardsDelta,
-          parseEther("2") //_wethToVault
-
+          parseEther("2") //_ethToVault
         )
       ).to.be.revertedWith("Caller is not the Strategist");
     });
@@ -558,7 +557,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           1, //_validatorsDelta
           parseEther("2"), //_consensusRewardsDelta
-          parseEther("2") //_wethToVault
+          parseEther("2") //_ethToVault
         )
       ).to.be.revertedWith("Pausable: not paused");
     });
@@ -573,7 +572,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           -4, //_validatorsDelta
           0, //_consensusRewardsDelta,
-          0 //_wethToVault
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid validatorsDelta");
 
@@ -581,7 +580,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           4, //_validatorsDelta
           0, //_consensusRewardsDelta
-          0 //_wethToVault
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid validatorsDelta");
     });
@@ -596,7 +595,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
           parseEther("-333"), //_consensusRewardsDelta
-          0 //_wethToVault
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
 
@@ -604,7 +603,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
           parseEther("333"), //_consensusRewardsDelta
-          0 //_wethToVault
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
     });
@@ -619,7 +618,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
           0, //_consensusRewardsDelta
-          parseEther("97") //_wethToVault
+          parseEther("97") //_ethToVault
         )
       ).to.be.revertedWith("invalid wethToVaultAmount");
     });
@@ -686,33 +685,38 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         });
       }
 
-      for (const wethInEthers of [0, 1, 26, 32, 63, 65, 95]) {
-        it(`by sending ${wethInEthers} WETH to the vault`, async () => {
+      for (const eth of [0, 1, 26, 32, 63, 65, 95]) {
+        it(`by sending ${eth} ETH wrapped to WETH to the vault`, async () => {
           const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
 
-          await weth
-            .connect(josh)
-            .transfer(nativeStakingSSVStrategy.address, parseEther(`${wethInEthers}`));
+          const wethToVaultBn = parseEther(`${eth}`);
+
+          // add a bit more ETH so we don't completely empty the contract
+          await setBalance(
+            nativeStakingSSVStrategy.address,
+            wethToVaultBn.add(parseEther("2"))
+          );
 
           await nativeStakingSSVStrategy.connect(strategist).pause();
           await mine(minFixAccountingCadence);
-          const wethBefore = await weth.balanceOf(
+          const ethBefore = await nativeStakingSSVStrategy.provider.getBalance(
             nativeStakingSSVStrategy.address
           );
-          const wethToVault = parseEther(wethInEthers.toString());
 
           const tx = await nativeStakingSSVStrategy
             .connect(strategist)
-            .manuallyFixAccounting(0, 0, wethToVault);
+            .manuallyFixAccounting(0, 0, wethToVaultBn);
 
           expect(tx)
             .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
-            .withArgs(0, 0, wethToVault);
+            .withArgs(0, 0, wethToVaultBn);
 
           expect(
-            await weth.balanceOf(nativeStakingSSVStrategy.address)
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            )
           ).to.equal(
-            wethBefore.sub(wethToVault),
+            ethBefore.sub(wethToVaultBn),
             "consensus rewards not updated"
           );
 
@@ -724,6 +728,51 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           );
         });
       }
+
+      it("by marking a validator as withdrawn when severely slashed and sent its funds to the vault", async () => {
+        const { nativeStakingSSVStrategy, governor, strategist, josh, weth } =
+          fixture;
+
+        // setup initial state
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
+        // setup 1 validator so one can be deducted later in the test
+        await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            1, //_validatorsDelta
+            0, //_consensusRewardsDeltaDelta
+            0 //_ethToVault
+          );
+
+        // a validator has been slashed and penalized by 8 ETH
+        await setBalance(nativeStakingSSVStrategy.address, parseEther("24"));
+
+        // run the accounting
+        const tx = await nativeStakingSSVStrategy
+          .connect(governor)
+          .doAccounting();
+        // fuse blown contract paused
+        await expect(tx).to.emit(nativeStakingSSVStrategy, "Paused");
+        await mine(minFixAccountingCadence);
+
+        // unit test fixture sets OUSD governor as accounting governor
+        const tx2 = await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            -1, //_validatorsDelta
+            0, //_consensusRewardsDeltaDelta
+            parseEther("24") //_ethToVault
+          );
+
+        expect(tx2)
+          .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+          .withArgs(
+            -1, // validatorsDelta
+            0, // consensusRewards
+            parseEther("24")
+          );
+      });
 
       it("by changing all three manuallyFixAccounting delta values", async () => {
         const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
@@ -741,7 +790,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .manuallyFixAccounting(
             1, //_validatorsDelta
             parseEther("2.3"), //_consensusRewardsDeltaDelta
-            parseEther("2.2"), //_wethToVault
+            parseEther("2.2") //_ethToVault
           );
 
         expect(tx)
@@ -763,7 +812,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .manuallyFixAccounting(
             0, //_validatorsDelta
             0, //_consensusRewardsDelta
-            0 //_wethToVault
+            0 //_ethToVault
           );
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -772,7 +821,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
             0, //_validatorsDelta
             0, //_consensusRewardsDelta
-            0 //_wethToVault
+            0 //_ethToVault
           )
         ).to.be.revertedWith("manuallyFixAccounting called too soon");
       });
@@ -787,7 +836,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .manuallyFixAccounting(
             0, //_validatorsDelta
             0, //_consensusRewardsDelta
-            0 //_wethToVault
+            0 //_ethToVault
           );
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -797,7 +846,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .manuallyFixAccounting(
             0, //_validatorsDelta
             0, //_consensusRewardsDelta
-            0 //_wethToVault
+            0 //_ethToVault
           );
       });
     });

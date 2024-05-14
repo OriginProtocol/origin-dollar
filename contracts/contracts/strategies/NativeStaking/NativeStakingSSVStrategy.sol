@@ -18,12 +18,12 @@ struct ValidatorStakeData {
 /// @title Native Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
-/// @dev This contract handles WETH and ETH and in some operations interchanges between the two. Any WETH that 
+/// @dev This contract handles WETH and ETH and in some operations interchanges between the two. Any WETH that
 /// is on the contract across multiple blocks (and not just transitory within a transaction) is considered an
-/// asset. Meaning deposits increase the balance of the asset and withdrawal decrease it. As opposed to all 
+/// asset. Meaning deposits increase the balance of the asset and withdrawal decrease it. As opposed to all
 /// our other strategies the WETH doesn't immediately get deposited into an underlying strategy and can be present
 /// across multiple blocks waiting to be unwrapped to ETH and staked to validators. This separation of WETH and ETH is
-/// required since the rewards (reward token) is also in ETH. 
+/// required since the rewards (reward token) is also in ETH.
 ///
 /// To simplify the accounting of WETH there is another difference in behavior compared to the other strategies.
 /// To withdraw WETH asset - exit message is posted to validators and the ETH hits this contract with multiple days delay.
@@ -34,7 +34,7 @@ struct ValidatorStakeData {
 ///  - as a result of already accounted for consensus rewards
 ///  - as a result of not yet accounted for consensus rewards
 ///  - as a results of not yet accounted for full validator withdrawals (or validator slashes)
-/// 
+///
 /// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the execution layer
 /// rewards are considered rewards and those are dripped to the Vault over a configurable time interval and not immediately.
 contract NativeStakingSSVStrategy is
@@ -53,11 +53,11 @@ contract NativeStakingSSVStrategy is
     address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
-    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators. 
-    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been 
-    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track 
-    /// of WETH that has already been accounted for. 
-    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the 
+    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
+    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been
+    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track
+    /// of WETH that has already been accounted for.
+    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the
     /// deposit events.
     uint256 depositedWethAccountedFor;
 
@@ -186,7 +186,10 @@ contract NativeStakingSSVStrategy is
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
         depositedWethAccountedFor += newWeth;
 
-        require(depositedWethAccountedFor == wethBalance, "Unexpected depositedWethAccountedFor amount");
+        require(
+            depositedWethAccountedFor == wethBalance,
+            "Unexpected depositedWethAccountedFor amount"
+        );
 
         if (wethBalance > 0) {
             _deposit(WETH_TOKEN_ADDRESS, newWeth);
