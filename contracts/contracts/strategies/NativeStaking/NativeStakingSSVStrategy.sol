@@ -27,7 +27,7 @@ struct ValidatorStakeData {
 ///
 /// To simplify the accounting of WETH there is another difference in behavior compared to the other strategies.
 /// To withdraw WETH asset - exit message is posted to validators and the ETH hits this contract with multiple days
-/// delay. In order to simplify the WETH accounting upon detection of such an event the ValidatorAccountant 
+/// delay. In order to simplify the WETH accounting upon detection of such an event the ValidatorAccountant
 /// immediately wraps ETH to WETH and sends it to the Vault.
 ///
 /// On the other hand any ETH on the contract (across multiple blocks) is there either:
@@ -36,7 +36,7 @@ struct ValidatorStakeData {
 ///  - as a results of not yet accounted for full validator withdrawals (or validator slashes)
 ///
 /// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the
-/// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time 
+/// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
 /// interval and not immediately.
 contract NativeStakingSSVStrategy is
     ValidatorAccountant,
