@@ -13,6 +13,8 @@ const {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
+  isBaseFork,
+  baseProviderUrl,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
@@ -282,6 +284,7 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
+      base: process.env.BASESCAN_API_KEY,
     },
     customChains: [
       {
@@ -290,6 +293,14 @@ module.exports = {
         urls: {
           apiURL: "https://api-holesky.etherscan.io/api",
           browserURL: "https://holesky.etherscan.io",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8543,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org",
         },
       },
     ],

@@ -80,6 +80,10 @@ main()
             # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
             # pass all other params along
             params+="test/**/*.holesky.fork-test.js"
+        elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+            # Run all files with `.base.fork-test.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.base.fork-test.js"
         else
             # Run all files with `.fork-test.js` suffix when no file name param is given
             # pass all other params along
@@ -101,7 +105,7 @@ main()
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
     else
         echo "Running fork tests..."
-        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
+        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]} --show-stack-traces
     fi
 
     if [ ! $? -eq 0 ] && $is_ci; then

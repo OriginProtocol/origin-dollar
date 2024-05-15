@@ -21,7 +21,7 @@ describe("ForkTest: Harvest AERO", function () {
       addresses.base.aeroTokenAddress
     );
     expect(aeroTokenConfig.liquidationLimit.toString()).to.be.equal("0");
-    expect(aeroTokenConfig.allowedSlippageBps.toString()).to.be.equal("300");
+    expect(aeroTokenConfig.allowedSlippageBps.toString()).to.be.equal("800");
     expect(aeroTokenConfig.harvestRewardBps.toString()).to.be.equal("100");
 
     expect(

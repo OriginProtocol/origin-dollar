@@ -15,7 +15,7 @@ describe("ForkTest: WOETH", function () {
     const { woeth } = fixture;
 
     expect(await woeth.decimals()).to.equal(18);
-    expect(await woeth.symbol()).to.equal("WOETH");
+    expect(await woeth.symbol()).to.equal("wOETH");
     expect(await woeth.name()).to.equal("Wrapped OETH");
   });
 
