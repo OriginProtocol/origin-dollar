@@ -61,8 +61,8 @@ contract NativeStakingSSVStrategy is
     /// of WETH that has already been accounted for.
     /// This value represents the amount of WETH balance of this contract that has already been accounted for by the
     /// deposit events.
-    /// It is important to note that this variable is not concerned with WETH that is a result of full/partial 
-    /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to 
+    /// It is important to note that this variable is not concerned with WETH that is a result of full/partial
+    /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 depositedWethAccountedFor;
 

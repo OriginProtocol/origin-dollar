@@ -127,14 +127,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 
   describe("Validator operations", function () {
-    const initialWETHDepositFixture = async (amount) => {
+    const depositToStrategy = async (amount) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
 
       // Add 32 WETH to the strategy via a Vualt deposit
       await weth.connect(domen).transfer(oethVault.address, amount);
 
-      await oethVault
+      return await oethVault
         .connect(strategist)
         .depositToStrategy(
           nativeStakingSSVStrategy.address,
@@ -214,14 +214,34 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     };
 
     it("Should register and stake 32 ETH by validator registrator", async () => {
-      await initialWETHDepositFixture(oethUnits("32"));
+      await depositToStrategy(oethUnits("32"));
       await registerAndStakeEth();
+    });
+
+    it("Should emit correct values in deposit event", async () => {
+      const { weth, domen, nativeStakingSSVStrategy, oethVault } =
+        await context();
+
+      await depositToStrategy(oethUnits("40"));
+      // at least 8 WETH has remained on the contract and a deposit all
+      // event should emit a correct amount
+      await registerAndStakeEth();
+
+      /* deposit to strategy calls depositAll on the strategy contract after sending the WETH
+       * to it. The event should contain only the amount of newly deposited WETH and not include
+       * the pre-exiting WETH.
+       */
+      const tx = await depositToStrategy(parseEther("10"));
+
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "Deposit")
+        .withArgs(weth.address, AddressZero, parseEther("10"));
     });
 
     it("Should register and stake 32 ETH even if half supplied by a 3rd party", async () => {
       const { weth, domen, nativeStakingSSVStrategy } = await context();
 
-      await initialWETHDepositFixture(oethUnits("16"));
+      await depositToStrategy(oethUnits("16"));
       // A malicious actor is sending WETH directly to the native staking contract hoping to
       // mess up the accounting.
       await weth
@@ -240,7 +260,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses,
         testValidator,
       } = await context();
-      await initialWETHDepositFixture(oethUnits("32"));
+      await depositToStrategy(oethUnits("32"));
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
