@@ -34,6 +34,7 @@ interface IVault {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
+    event DripperChanged(address indexed _dripper);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -198,6 +199,8 @@ interface IVault {
     function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
 
     function netOusdMintedForStrategy() external view returns (int256);
+
+    function setDripper(address _dripper) external;
 
     function weth() external view returns (address);
 

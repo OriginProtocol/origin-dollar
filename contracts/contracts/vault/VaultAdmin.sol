@@ -154,6 +154,15 @@ contract VaultAdmin is VaultStorage {
         emit NetOusdMintForStrategyThresholdChanged(_threshold);
     }
 
+    /**
+     * @notice Set the Dripper contract that streams harvested rewards to the vault.
+     * @param _dripper Address of the Dripper contract.
+     */
+    function setDripper(address _dripper) external onlyGovernor {
+        dripper = _dripper;
+        emit DripperChanged(_dripper);
+    }
+
     /***************************************
                     Swaps
     ****************************************/

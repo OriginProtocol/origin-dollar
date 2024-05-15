@@ -52,6 +52,7 @@ contract VaultStorage is Initializable, Governable {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
+    event DripperChanged(address indexed _dripper);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -165,8 +166,11 @@ contract VaultStorage is Initializable, Governable {
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
+    /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
+    address public dripper;
+
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
