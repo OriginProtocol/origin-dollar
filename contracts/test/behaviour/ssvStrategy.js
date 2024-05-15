@@ -219,8 +219,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     });
 
     it("Should emit correct values in deposit event", async () => {
-      const { weth, domen, nativeStakingSSVStrategy, oethVault } =
-        await context();
+      const { weth, nativeStakingSSVStrategy } = await context();
 
       await depositToStrategy(oethUnits("40"));
       // at least 8 WETH has remained on the contract and a deposit all
