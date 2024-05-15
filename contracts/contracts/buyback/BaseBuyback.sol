@@ -19,12 +19,12 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     event TreasuryManagerUpdated(address indexed _address);
     event CVXShareBpsUpdated(uint256 bps);
 
-    // Emitted whenever OUSD/OETH is swapped for OGV/CVX or any other token
+    // Emitted whenever OUSD/OETH is swapped for OGN/CVX or any other token
     event OTokenBuyback(
         address indexed oToken,
         address indexed swappedFor,
         uint256 swapAmountIn,
-        uint256 minExpected
+        uint256 amountOut
     );
 
     // Address of 1-inch Swap Router
@@ -39,7 +39,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     // slither-disable-next-line constable-states
     address private __deprecated_weth9;
 
-    // Address that receives OGV after swaps
+    // Address that receives OGN after swaps
     address public rewardsSource;
 
     // Address that receives all other tokens after swaps
@@ -49,12 +49,12 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     uint256 private __deprecated_treasuryBps;
 
     address public immutable oToken;
-    address public immutable ogv;
+    address public immutable ogn;
     address public immutable cvx;
     address public immutable cvxLocker;
 
-    // Amount of `oToken` balance to use for OGV buyback
-    uint256 public balanceForOGV;
+    // Amount of `oToken` balance to use for OGN buyback
+    uint256 public balanceForOGN;
 
     // Amount of `oToken` balance to use for CVX buyback
     uint256 public balanceForCVX;
@@ -64,7 +64,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
 
     constructor(
         address _oToken,
-        address _ogv,
+        address _ogn,
         address _cvx,
         address _cvxLocker
     ) {
@@ -72,7 +72,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         _setGovernor(address(0));
 
         oToken = _oToken;
-        ogv = _ogv;
+        ogn = _ogn;
         cvx = _cvx;
         cvxLocker = _cvxLocker;
     }
@@ -118,9 +118,9 @@ abstract contract BaseBuyback is Initializable, Strategizable {
         if (oldRouter != address(0)) {
             // Remove allowance of old router, if any
 
-            if (IERC20(ogv).allowance(address(this), oldRouter) != 0) {
+            if (IERC20(ogn).allowance(address(this), oldRouter) != 0) {
                 // slither-disable-next-line unused-return
-                IERC20(ogv).safeApprove(oldRouter, 0);
+                IERC20(ogn).safeApprove(oldRouter, 0);
             }
 
             if (IERC20(cvx).allowance(address(this), oldRouter) != 0) {
@@ -133,7 +133,7 @@ abstract contract BaseBuyback is Initializable, Strategizable {
     }
 
     /**
-     * @dev Sets the address that receives the OGV buyback rewards
+     * @dev Sets the address that receives the OGN buyback rewards
      * @param _address Address
      */
     function setRewardsSource(address _address) external onlyGovernor {
@@ -176,27 +176,27 @@ abstract contract BaseBuyback is Initializable, Strategizable {
 
     /**
      * @dev Computes the split of oToken balance that can be
-     *      used for OGV and CVX buybacks.
+     *      used for OGN and CVX buybacks.
      */
     function _updateBuybackSplits()
         internal
-        returns (uint256 _balanceForOGV, uint256 _balanceForCVX)
+        returns (uint256 _balanceForOGN, uint256 _balanceForCVX)
     {
-        _balanceForOGV = balanceForOGV;
+        _balanceForOGN = balanceForOGN;
         _balanceForCVX = balanceForCVX;
 
         uint256 totalBalance = IERC20(oToken).balanceOf(address(this));
-        uint256 unsplitBalance = totalBalance - _balanceForOGV - _balanceForCVX;
+        uint256 unsplitBalance = totalBalance - _balanceForOGN - _balanceForCVX;
 
         // Check if all balance is accounted for
         if (unsplitBalance != 0) {
             // If not, split unaccounted balance based on `cvxShareBps`
             uint256 addToCVX = (unsplitBalance * cvxShareBps) / 10000;
             _balanceForCVX = _balanceForCVX + addToCVX;
-            _balanceForOGV = _balanceForOGV + unsplitBalance - addToCVX;
+            _balanceForOGN = _balanceForOGN + unsplitBalance - addToCVX;
 
             // Update storage
-            balanceForOGV = _balanceForOGV;
+            balanceForOGN = _balanceForOGN;
             balanceForCVX = _balanceForCVX;
         }
     }
@@ -231,34 +231,34 @@ abstract contract BaseBuyback is Initializable, Strategizable {
 
         require(amountOut >= minAmountOut, "Higher Slippage");
 
-        emit OTokenBuyback(oToken, tokenOut, minAmountOut, amountOut);
+        emit OTokenBuyback(oToken, tokenOut, oTokenAmount, amountOut);
     }
 
     /**
-     * @dev Swaps `oTokenAmount` to OGV
+     * @dev Swaps `oTokenAmount` to OGN
      * @param oTokenAmount Amount of OUSD/OETH to swap
-     * @param minOGV Minimum OGV to receive for oTokenAmount
+     * @param minOGN Minimum OGN to receive for oTokenAmount
      * @param swapData 1inch Swap Data
      */
-    function swapForOGV(
+    function swapForOGN(
         uint256 oTokenAmount,
-        uint256 minOGV,
+        uint256 minOGN,
         bytes calldata swapData
     ) external onlyGovernorOrStrategist nonReentrant {
-        (uint256 _amountForOGV, ) = _updateBuybackSplits();
-        require(_amountForOGV >= oTokenAmount, "Balance underflow");
+        (uint256 _amountForOGN, ) = _updateBuybackSplits();
+        require(_amountForOGN >= oTokenAmount, "Balance underflow");
         require(rewardsSource != address(0), "RewardsSource contract not set");
 
         unchecked {
             // Subtract the amount to swap from net balance
-            balanceForOGV = _amountForOGV - oTokenAmount;
+            balanceForOGN = _amountForOGN - oTokenAmount;
         }
 
-        uint256 ogvReceived = _swapToken(ogv, oTokenAmount, minOGV, swapData);
+        uint256 ognReceived = _swapToken(ogn, oTokenAmount, minOGN, swapData);
 
-        // Transfer OGV received to RewardsSource contract
+        // Transfer OGN received to RewardsSource contract
         // slither-disable-next-line unchecked-transfer unused-return
-        IERC20(ogv).transfer(rewardsSource, ogvReceived);
+        IERC20(ogn).transfer(rewardsSource, ognReceived);
     }
 
     /**

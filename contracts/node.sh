@@ -30,14 +30,16 @@ main()
           PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
           BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
           params+=" --tags arbitrumOne";
-        fi
-
-         if [[ $FORK_NETWORK_NAME == "base" ]]; then
+        elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+          PROVIDER_URL=$HOLESKY_PROVIDER_URL;
+          BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
           PROVIDER_URL=$BASE_PROVIDER_URL;
           BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
           params+=" --tags base";
         fi
 
+        
         echo "Fork Network: $FORK_NETWORK_NAME"
 
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi

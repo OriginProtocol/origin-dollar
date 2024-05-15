@@ -9,6 +9,7 @@ const {
   advanceTime,
   advanceBlocks,
   isMainnet,
+  isHolesky,
   isFork,
   isMainnetOrFork,
   getOracleAddresses,
@@ -44,7 +45,8 @@ const {
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
-const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
+NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -712,7 +714,9 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
+const sanityCheckOgvGovernance = async ({
+  deployerIsProposer = false,
+} = {}) => {
   if (isMainnet) {
     // only applicable when OGV governance is the governor
     if (deployerIsProposer) {
@@ -1033,11 +1037,11 @@ function deploymentWithGovernanceProposal(opts, fn) {
       ? require(`./../deployments/${networkName}/.migrations.json`)
       : {};
 
-    if (isFork && proposalId) {
-      // Skip if proposal is older than 14 days
-      const olderProposal =
-        Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+    // Skip if proposal is older than 14 days
+    const olderProposal =
+      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
 
+    if (isFork && proposalId && !olderProposal) {
       /** Just for context of fork env change the id of the deployment script. This is required
        * in circumstances when:
        * - the deployment script has already been run on the mainnet
@@ -1057,19 +1061,18 @@ function deploymentWithGovernanceProposal(opts, fn) {
        * And we can not package this inside of `skip` function since without this workaround it
        * doesn't even get evaluated.
        */
-      if (!olderProposal) {
-        // We skip force running deployments that have been run
-        // more than 14 days ago on mainnet with a governance proposal.
-        // Any deployment without a proposal, which has not been run yet,
-        // will still be force run on fork.
-        main.id = `${deployName}_force`;
-      }
+
+      main.id = `${deployName}_force`;
     }
 
     main.skip = async () => {
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
-        return false;
+        // We skip force running deployments that have been run
+        // more than 14 days ago on mainnet with a governance proposal.
+        // Any deployment without a proposal, which has not been run yet,
+        // will still be force run on fork.
+        return olderProposal;
       } else if (isFork) {
         /* running on fork, and proposal not yet submitted. This is usually during development
          * before kicking off deploy.
@@ -1090,7 +1093,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  /* When `reduceQueueTime` is set to true the Timelock delay is overriden to
+  /* When `reduceQueueTime` is set to true the Timelock delay is overridden to
    * 60 seconds and blockchain also advances only minimally when passing proposals.
    *
    * This is required because in some cases we need minimal chain advancement e.g.
