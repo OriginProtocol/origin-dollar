@@ -10,7 +10,7 @@ const mainExport = async () => {
 
   console.log("Deploying Oracles");
   await deployOracles();
-  
+
   console.log("Deploying OETH Core");
   await deployOETHCore();
 
@@ -19,7 +19,6 @@ const mainExport = async () => {
 
   console.log("Configuring OETH Vault");
   await configureOETHVault(true);
-
 
   console.log("001_core deploy done.");
   return true;

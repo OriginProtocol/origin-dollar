@@ -947,10 +947,10 @@ const deployOracles = async () => {
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  const oracleRouter = await ethers.getContract("OracleRouter");
+  const oracleRouter = await ethers.getContract(contractName);
   log("Deployed OracleRouter");
 
-  if (isHolesky) {
+  if (isHolesky || isBase) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -1029,13 +1029,13 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
+  // const cOracleRouter = await ethers.getContract("OracleRouter");
 
   const cOETHOracleRouter = isMainnet
     ? await ethers.getContract("OETHOracleRouter")
-    : isBase 
+    : isBase
     ? await ethers.getContract("BaseOETHOracleRouter")
-    : cOracleRouter;
+    : await ethers.getContract("OracleRouter");
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
@@ -1094,11 +1094,11 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   let name = "Origin Ether";
-  let symbol = "OETH"
-  if(isBase) {
+  let symbol = "OETH";
+  if (isBase) {
     name = "OETH Base";
     symbol = "OETHbase";
-  } 
+  }
   await withConfirmation(
     cOETH
       .connect(sGovernor)
