@@ -90,8 +90,10 @@ contract VaultCore is VaultInitializer {
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            // Stream any harvested rewards that are available
-            IDripper(dripper).collect();
+            if (dripper != address(0)) {
+                // Stream any harvested rewards that are available
+                IDripper(dripper).collect();
+            }
             _rebase();
         }
 

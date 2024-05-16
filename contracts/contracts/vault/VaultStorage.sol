@@ -179,7 +179,8 @@ contract VaultStorage is Initializable, Governable {
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
-    address public dripper;
+    // the initialization is just for Slither. The vault is proxied so needs to be initialized and not set in the implementation
+    address public dripper = address(0);
 
     /// Withdrawal Queue Storage /////
 
