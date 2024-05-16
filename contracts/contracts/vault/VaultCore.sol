@@ -289,7 +289,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function _allocate() internal {
+    function _allocate() internal virtual {
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
@@ -417,7 +417,12 @@ contract VaultCore is VaultInitializer {
      * @dev Internal to calculate total value of all assets held in Vault.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValueInVault() internal view returns (uint256 value) {
+    function _totalValueInVault()
+        internal
+        view
+        virtual
+        returns (uint256 value)
+    {
         uint256 assetCount = allAssets.length;
         for (uint256 y = 0; y < assetCount; ++y) {
             address assetAddr = allAssets[y];

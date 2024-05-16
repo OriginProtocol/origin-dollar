@@ -489,7 +489,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyFromAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) internal {
+    ) internal virtual {
         require(
             strategies[_strategyFromAddress].isSupported,
             "Invalid from Strategy"
@@ -613,6 +613,10 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernorOrStrategist
     {
+        _withdrawAllFromStrategy(_strategyAddr);
+    }
+
+    function _withdrawAllFromStrategy(address _strategyAddr) internal virtual {
         require(
             strategies[_strategyAddr].isSupported,
             "Strategy is not supported"
@@ -625,6 +629,10 @@ contract VaultAdmin is VaultStorage {
      * @notice Withdraws all assets from all the strategies and sends assets to the Vault.
      */
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
+        _withdrawAllFromStrategies();
+    }
+
+    function _withdrawAllFromStrategies() internal virtual {
         uint256 stratCount = allStrategies.length;
         for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy(allStrategies[i]).withdrawAll();

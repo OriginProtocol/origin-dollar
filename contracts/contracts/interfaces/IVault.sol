@@ -211,4 +211,7 @@ interface IVault {
     function initialize(address, address) external;
 
     function setAdminImpl(address) external;
+
+    // This is an OETH specific function
+    function addWithdrawalQueueLiquidity() external;
 }

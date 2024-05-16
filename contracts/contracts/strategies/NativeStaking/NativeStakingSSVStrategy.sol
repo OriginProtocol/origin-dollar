@@ -6,6 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 
@@ -264,5 +265,8 @@ contract NativeStakingSSVStrategy is
 
     function wethWithdrawnToVault(uint256 _amount) internal override {
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+
+        // Add WETH to the withdraw queue if there is a shortfall
+        IVault(vaultAddress).addWithdrawalQueueLiquidity();
     }
 }

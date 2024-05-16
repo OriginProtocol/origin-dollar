@@ -65,6 +65,9 @@ contract OETHVaultCore is VaultCore {
         // Transfer the deposited coins to the vault
         IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
 
+        // Give priority to the withdrawal queue for the new WETH liquidity
+        _addWithdrawalQueueLiquidity();
+
         // Auto-allocate if necessary
         if (_amount >= autoAllocateThreshold) {
             _allocate();
@@ -125,7 +128,8 @@ contract OETHVaultCore is VaultCore {
             "Redeem amount lower than minimum"
         );
 
-        if (IERC20(weth).balanceOf(address(this)) >= amountMinusFee) {
+        // If there is any WETH in the Vault available after accounting for the withdrawal queue
+        if (_wethAvailable() >= amountMinusFee) {
             // Use Vault funds first if sufficient
             IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
         } else {
@@ -144,5 +148,155 @@ contract OETHVaultCore is VaultCore {
         oUSD.burn(msg.sender, _amount);
 
         _postRedeem(_amount);
+    }
+
+    /**
+     * @notice Request an asynchronous withdrawal of the underlying asset. eg WETH
+     * @param _amount Amount of oTokens to burn. eg OETH
+     */
+    function requestWithdrawal(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256 requestId, uint256 queued)
+    {
+        // Check the user has enough OETH to burn
+        require(oUSD.balanceOf(msg.sender) >= _amount, "Insufficient OETH");
+
+        // burn the user's oTokens
+        oUSD.burn(msg.sender, _amount);
+
+        requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
+        queued = withdrawalQueueMetadata.queued + _amount;
+
+        // store the next withdrawal request
+        withdrawalQueueMetadata.nextWithdrawalIndex = uint128(requestId + 1);
+        withdrawalQueueMetadata.queued = uint128(queued);
+
+        emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
+
+        withdrawalRequests[requestId] = WithdrawalRequest({
+            withdrawer: msg.sender,
+            claimed: false,
+            amount: uint128(_amount),
+            queued: uint128(queued)
+        });
+    }
+
+    function claimWithdrawal(uint256 requestId)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+    {
+        // Check if there's enough liquidity to cover the withdrawal request
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+        WithdrawalRequest memory request = withdrawalRequests[requestId];
+
+        require(request.queued <= queue.claimable, "pending liquidity");
+        require(request.claimed == false, "already claimed");
+        require(request.withdrawer == msg.sender, "not requester");
+
+        // Store the updated claimed amount
+        withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
+        // Store the request as claimed
+        withdrawalRequests[requestId].claimed = true;
+
+        emit WithdrawalClaimed(msg.sender, requestId, request.amount);
+
+        // transfer WETH from the vault to the withdrawer
+        IERC20(weth).safeTransfer(msg.sender, request.amount);
+    }
+
+    /// @notice Adds any unallocated WETH to the withdrawal queue if there is a funding shortfall.
+    /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
+    function addWithdrawalQueueLiquidity() external {
+        _addWithdrawalQueueLiquidity();
+    }
+
+    /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
+    function _addWithdrawalQueueLiquidity() internal {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // Check if the claimable WETH is less than the queued amount
+        uint256 queueShortfall = queue.queued - queue.claimable;
+
+        // No need to get WETH balance if all the withdrawal requests are claimable
+        if (queueShortfall > 0) {
+            uint256 wethBalance = IERC20(weth).balanceOf(address(this));
+
+            // TODO do we also need to look for WETH in the default strategy?
+
+            // Of the claimable withdrawal requests, how much is unclaimed?
+            uint256 unclaimed = queue.claimable - queue.claimed;
+            if (wethBalance > unclaimed) {
+                uint256 unallocatedWeth = wethBalance - unclaimed;
+
+                // the new claimable amount is the smaller of the queue shortfall or unallocated weth
+                uint256 addedClaimable = queueShortfall < unallocatedWeth
+                    ? queueShortfall
+                    : unallocatedWeth;
+                uint256 newClaimable = queue.claimable + addedClaimable;
+
+                // Store the new claimable amount back to storage
+                withdrawalQueueMetadata.claimable = uint128(newClaimable);
+
+                // emit a WithdrawalClaimable event
+                emit WithdrawalClaimable(newClaimable, addedClaimable);
+            }
+        }
+    }
+
+    /***************************************
+                View Functions
+    ****************************************/
+
+    function _wethAvailable() internal view returns (uint256 wethAvailable) {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // Check if the claimable WETH is less than the queued amount
+        uint256 queueShortfall = queue.queued - queue.claimable;
+        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
+        // Of the claimable withdrawal requests, how much is unclaimed?
+        uint256 unclaimed = queue.claimable - queue.claimed;
+
+        if (wethBalance > queueShortfall + unclaimed) {
+            wethAvailable = wethBalance - queueShortfall - unclaimed;
+        }
+    }
+
+    function _checkBalance(address _asset)
+        internal
+        view
+        override
+        returns (uint256 balance)
+    {
+        balance = super._checkBalance(_asset);
+
+        if (_asset == weth) {
+            WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+            // Need to remove WETH that is reserved for the withdrawal queue
+            return balance + queue.claimed - queue.queued;
+        }
+    }
+
+    function _allocate() internal override {
+        // Add any unallocated WETH to the withdrawal queue first
+        _addWithdrawalQueueLiquidity();
+
+        super._allocate();
+    }
+
+    function _totalValueInVault()
+        internal
+        view
+        override
+        returns (uint256 value)
+    {
+        value = super._totalValueInVault();
+
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+        // Need to remove WETH that is reserved for the withdrawal queue
+        // reserver for the withdrawal queue = cumulative queued total - total claimed
+        value = value + queue.claimed - queue.queued;
     }
 }

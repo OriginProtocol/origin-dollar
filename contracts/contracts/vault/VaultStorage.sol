@@ -53,6 +53,18 @@ contract VaultStorage is Initializable, Governable {
         uint256 _toAssetAmount
     );
     event DripperChanged(address indexed _dripper);
+    event WithdrawalRequested(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount,
+        uint256 _queued
+    );
+    event WithdrawalClaimed(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount
+    );
+    event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -169,8 +181,36 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     address public dripper;
 
+    /// Withdrawal Queue Storage /////
+
+    struct WithdrawalQueueMetadata {
+        // cumulative total of all withdrawal requests included the ones that have already bene claimed
+        uint128 queued;
+        // cumulative total of all the requests that can be claimed included the ones that have already bene claimed
+        uint128 claimable;
+        // total of all the requests that have been claimed
+        uint128 claimed;
+        // index of the next withdrawal request starting at 0
+        uint128 nextWithdrawalIndex;
+    }
+
+    WithdrawalQueueMetadata public withdrawalQueueMetadata;
+
+    struct WithdrawalRequest {
+        address withdrawer;
+        bool claimed;
+        // Amount of oTokens to redeem
+        uint128 amount;
+        // cumulative total of all withdrawal requests including this one.
+        // this request can be claimed when this queued amount is less than or equal to the queue's claimable amount.
+        uint128 queued;
+    }
+
+    // Mapping of withdrawal requests indexes to the user withdrawal request data
+    mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
+
     // For future use
-    uint256[49] private __gap;
+    uint256[46] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
