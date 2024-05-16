@@ -1,6 +1,9 @@
-const { deployOnBase } = require("../utils/delpoy-l2");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
-const { getTxOpts } = require("../utils/tx");
+const { deployOnBase } = require("../../utils/delpoy-l2");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../../utils/deploy");
+const { getTxOpts } = require("../../utils/tx");
 
 module.exports = deployOnBase(
   {

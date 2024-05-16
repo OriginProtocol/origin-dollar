@@ -7,12 +7,14 @@ const {
   isMainnet,
   isMainnetOrFork,
   isHolesky,
+  isBaseFork,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
+const { isBase } = require("../utils/hardhat-helpers.js");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -927,6 +929,21 @@ const deployOracles = async () => {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
     args = [addresses.zero];
+  } else if (isBase) {
+    await deployWithConfirmation(
+      "PriceFeedPair",
+      [
+        addresses.base.aeroUsdPriceFeed,
+        addresses.base.ethUsdPriceFeed,
+        false,
+        true,
+      ],
+      "PriceFeedPair"
+    );
+    const priceFeedPair = await ethers.getContract("PriceFeedPair");
+    oracleContract = "BaseOETHOracleRouter";
+    contractName = "BaseOETHOracleRouter";
+    args = [priceFeedPair.address];
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
@@ -1016,6 +1033,8 @@ const deployOETHCore = async () => {
 
   const cOETHOracleRouter = isMainnet
     ? await ethers.getContract("OETHOracleRouter")
+    : isBase 
+    ? await ethers.getContract("BaseOETHOracleRouter")
     : cOracleRouter;
   const cOETHVault = await ethers.getContractAt(
     "IVault",
@@ -1074,10 +1093,16 @@ const deployOETHCore = async () => {
    * Latter seems more fitting - due to mimicking production better as already mentioned.
    */
   const resolution = ethers.utils.parseUnits("1", 27);
+  let name = "Origin Ether";
+  let symbol = "OETH"
+  if(isBase) {
+    name = "OETH Base";
+    symbol = "OETHbase";
+  } 
   await withConfirmation(
     cOETH
       .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+      .initialize(name, symbol, cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };

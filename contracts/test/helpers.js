@@ -268,6 +268,7 @@ const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
+const isBaseOrFork = isBase || isBaseFork;
 const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
@@ -432,6 +433,8 @@ const getAssetAddresses = async (deployments) => {
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
     };
+  } else if(isBaseOrFork){
+    return { WETH: addresses.base.wethTokenAddress }
   } else {
     const addressMap = {
       USDT: (await deployments.get("MockUSDT")).address,
