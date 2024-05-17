@@ -33,7 +33,9 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Fetch the strategy proxy deployed by relayer
-    const cStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    const cStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
 
     // 2. Deploy the new fee accumulator proxy
     const dFeeAccumulatorProxy = await deployWithConfirmation(
@@ -80,14 +82,14 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     if (isFork) {
-      const relayerSigner = await impersonateAndFund(addresses.mainnet.validatorRegistrator, "100");
+      const relayerSigner = await impersonateAndFund(
+        addresses.mainnet.validatorRegistrator,
+        "100"
+      );
       await withConfirmation(
         cStrategyProxy
           .connect(relayerSigner)
-          .transferGovernance(
-            deployerAddr,
-            await getTxOpts()
-          )
+          .transferGovernance(deployerAddr, await getTxOpts())
       );
     } else {
       /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
@@ -101,10 +103,8 @@ module.exports = deploymentWithGovernanceProposal(
     }
 
     await withConfirmation(
-        cStrategyProxy
-          .connect(sDeployer)
-          .claimGovernance(await getTxOpts())
-      );
+      cStrategyProxy.connect(sDeployer).claimGovernance(await getTxOpts())
+    );
 
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
     const proxyInitFunction = "initialize(address,address,bytes)";
