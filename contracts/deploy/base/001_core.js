@@ -10,10 +10,11 @@ const {
 const mainExport = async () => {
   console.log("Running 001_core deployment on Base...");
 
-  // const { deployerAddr } = await getNamedAccounts();
-  // if (isFork) {
-  //   await hardhatSetBalance(deployerAddr);
-  // }
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  if (isFork) {
+    await hardhatSetBalance(deployerAddr);
+    await hardhatSetBalance(governorAddr);
+  }
 
   console.log("Deploying Oracles");
   await deployOracles();

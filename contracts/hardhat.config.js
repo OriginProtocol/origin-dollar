@@ -50,7 +50,8 @@ const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
-const mnemonic = "test test test test test test test test test test test junk";
+const mnemonic = 
+  "replace hover unaware super where filter stone fine garlic address matrix basic";
 
 let privateKeys = [];
 
@@ -207,7 +208,7 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : 1
+            : MAINNET_GOVERNOR
           : MAINNET_GOVERNOR,
       hardhat:
         process.env.FORK === "true"
