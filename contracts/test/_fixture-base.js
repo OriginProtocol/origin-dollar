@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
-const { isFork, isBaseFork, oethUnits } = require("./helpers");
+const { isFork, isBaseFork, oethUnits, fundAccount } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 
@@ -26,6 +26,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   log(
     `Before deployments with param "${isFork ? ["base"] : ["base_unit_tests"]}"`
   );
+  const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
+  await fundAccount(deployerAddr);
   // Run the contract deployments
   await deployments.fixture(isFork ? ["base"] : ["base_unit_tests"], {
     keepExistingDeployments: true,

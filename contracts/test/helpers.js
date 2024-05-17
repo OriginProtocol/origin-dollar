@@ -270,6 +270,7 @@ const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isBaseOrFork = isBase || isBaseFork;
+const isBaseForkTest = isForkTest && hre.network.config.chainId == 8543;
 const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
@@ -391,7 +392,7 @@ const getOracleAddresses = async (deployments) => {
 };
 
 const getAssetAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
+  if (isMainnet || isMainnetForkTest) {
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -434,7 +435,7 @@ const getAssetAddresses = async (deployments) => {
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
     };
-  } else if (isBaseOrFork) {
+  } else if (isBase || isBaseFork) {
     return { WETH: addresses.base.wethTokenAddress };
   } else {
     const addressMap = {

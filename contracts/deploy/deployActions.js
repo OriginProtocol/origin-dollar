@@ -950,7 +950,7 @@ const deployOracles = async () => {
   const oracleRouter = await ethers.getContract(contractName);
   log("Deployed OracleRouter");
 
-  if (isHolesky || isBase) {
+  if (isHolesky || (isBase || isBaseFork)) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -1040,7 +1040,7 @@ const deployOETHCore = async () => {
     "IVault",
     cOETHVaultProxy.address
   );
-
+  
   await withConfirmation(
     cOETHProxy["initialize(address,address,bytes)"](
       dOETH.address,
