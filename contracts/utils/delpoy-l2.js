@@ -81,7 +81,7 @@ function deployOnBase(opts, fn) {
 
   main.tags = ["base"];
 
-  main.skip = () => 
+  main.skip = () =>
     !(
       isBaseFork ||
       hre.network.name == "base" ||

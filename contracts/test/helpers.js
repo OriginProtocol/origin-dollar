@@ -435,7 +435,7 @@ const getAssetAddresses = async (deployments) => {
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
     };
-  } else if (isBase || isBaseFork) {
+  } else if (isBaseOrFork) {
     return { WETH: addresses.base.wethTokenAddress };
   } else {
     const addressMap = {
@@ -791,6 +791,7 @@ module.exports = {
   isArbFork,
   isBase,
   isBaseFork,
+  isBaseOrFork,
   isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,

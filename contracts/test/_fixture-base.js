@@ -27,7 +27,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     `Before deployments with param "${isFork ? ["base"] : ["base_unit_tests"]}"`
   );
   const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
+
   await fundAccount(deployerAddr);
+  await fundAccount(governorAddr);
+
   // Run the contract deployments
   await deployments.fixture(isFork ? ["base"] : ["base_unit_tests"], {
     keepExistingDeployments: true,
