@@ -17,7 +17,6 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-import "hardhat/console.sol";
 
 contract AerodromeEthStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -76,6 +75,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             address(aeroFactoryAddress)
         );
+
         _;
 
         // Get the ratio of oeth to weth after rebalance.

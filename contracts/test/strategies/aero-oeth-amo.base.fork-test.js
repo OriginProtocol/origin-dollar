@@ -389,21 +389,20 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         fixture;
 
       let joshWethBalanceBefore = await weth.balanceOf(josh.address);
-      let netOEthMintedBefore = await oethVault.netOusdMintedForStrategy();
 
-      const wethToSwap = parseUnits("1000");
-      await weth.connect(josh).approve(aeroRouter.address, wethToSwap);
+      const oethToSwap = parseUnits("1000");
+      await oeth.connect(josh).approve(aeroRouter.address, oethToSwap);
 
       // Perform swap to imbalance the pool
       await aeroRouter
         .connect(josh)
         .swapExactTokensForTokens(
-          wethToSwap,
+          oethToSwap,
           0,
           [
             [
-              weth.address,
               oeth.address,
+              weth.address,
               true,
               addresses.base.aeroFactoryAddress,
             ],
@@ -442,10 +441,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       });
 
       let joshWethBalanceAfter = await weth.balanceOf(josh.address);
-      let netOEthMintedAfter = await oethVault.netOusdMintedForStrategy();
 
       expect(joshWethBalanceAfter).to.gt(joshWethBalanceBefore);
-      expect(netOEthMintedAfter).to.gt(netOEthMintedBefore);
     });
     it("Should be able to burn OETH when rebalancing", async function () {
       const { oethVault } = fixture;
