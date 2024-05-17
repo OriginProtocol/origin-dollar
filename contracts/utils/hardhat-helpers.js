@@ -85,7 +85,7 @@ const adjustTheForkBlockNumber = () => {
     console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
   }
 
-  return forkBlockNumber;
+  return Number(forkBlockNumber);
 };
 
 // returns hardhat network chainId and provider

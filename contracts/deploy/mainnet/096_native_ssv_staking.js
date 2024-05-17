@@ -1,5 +1,7 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { isFork } = require("../../test/helpers.js");
+const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -30,14 +32,8 @@ module.exports = deploymentWithGovernanceProposal(
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy the new strategy proxy
-    const dStrategyProxy = await deployWithConfirmation(
-      "NativeStakingSSVStrategyProxy"
-    );
-    const cStrategyProxy = await ethers.getContractAt(
-      "NativeStakingSSVStrategyProxy",
-      dStrategyProxy.address
-    );
+    // 1. Fetch the strategy proxy deployed by relayer
+    const cStrategyProxy = await ethers.getContract("NativeStakingSSVStrategyProxy");
 
     // 2. Deploy the new fee accumulator proxy
     const dFeeAccumulatorProxy = await deployWithConfirmation(
@@ -64,9 +60,10 @@ module.exports = deploymentWithGovernanceProposal(
       "NativeStakingSSVStrategy",
       dStrategyImpl.address
     );
+
     const cStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      dStrategyProxy.address
+      cStrategyProxy.address
     );
 
     // 3. Initialize Proxy with new implementation and strategy initialization
@@ -81,6 +78,33 @@ module.exports = deploymentWithGovernanceProposal(
         [], // platform tokens addresses
       ]
     );
+
+    if (isFork) {
+      const relayerSigner = await impersonateAndFund(addresses.mainnet.validatorRegistrator, "100");
+      await withConfirmation(
+        cStrategyProxy
+          .connect(relayerSigner)
+          .transferGovernance(
+            deployerAddr,
+            await getTxOpts()
+          )
+      );
+    } else {
+      /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+       * of the proxy to the deployer account that shall be deploying this script so it will be able
+       * to initialize the proxy contract
+       *
+       * Run the following to make it happen, and comment this error block out:
+       * yarn run hardhat transferGovernanceNativeStakingProxy --address 0xdeployerAddress  --network mainnet
+       */
+      new Error("Transfer governance not yet ran");
+    }
+
+    await withConfirmation(
+        cStrategyProxy
+          .connect(sDeployer)
+          .claimGovernance(await getTxOpts())
+      );
 
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
     const proxyInitFunction = "initialize(address,address,bytes)";

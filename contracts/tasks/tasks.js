@@ -72,6 +72,23 @@ const {
   checkBalance,
 } = require("./strategy");
 
+// can not import from utils/deploy since that imports hardhat globally
+const withConfirmation = async (
+  deployOrTransactionPromise,
+  logContractAbi = false
+) => {
+  const hre = require("hardhat");
+
+  const result = await deployOrTransactionPromise;
+  const receipt = await hre.ethers.provider.waitForTransaction(
+    result.receipt ? result.receipt.transactionHash : result.hash,
+    3
+  );
+
+  result.receipt = receipt;
+  return result;
+};
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -884,6 +901,52 @@ subtask(
 task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+/**
+ * The native staking proxy needs to be deployed via the defender relayer because the SSV networkd
+ * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
+ * the recipient
+ */
+subtask("deployNativeStakingProxy", "Deploy the native staking proxy via the Defender Relayer")
+  .setAction(async (taskArgs) => {
+    const defenderSigner = await getDefenderSigner();
+
+    log("Deploy NativeStakingSSVStrategyProxy");
+    const { governorAddr, deployerAddr } = await getNamedAccounts();
+
+    const nativeStakingProxyFactory = await ethers.getContractFactory("NativeStakingSSVStrategyProxy");
+    const contract = await nativeStakingProxyFactory.connect(defenderSigner).deploy();
+    await contract.deployed();
+    log(`Address of deployed contract is: ${contract.address}`)
+  });
+task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * Governance of the SSV strategy proxy needs to be transferred to the deployer address so that 
+ * the deployer is able to initialize the proxy
+ */
+subtask("transferGovernanceNativeStakingProxy", "Transfer governance of the proxy from the the Defender Relayer")
+  .addParam("address", "Address of the new governor", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const defenderSigner = await getDefenderSigner();
+
+    log("Tranfer governance of NativeStakingSSVStrategyProxy");
+    const { governorAddr, deployerAddr } = await getNamedAccounts();
+
+    const nativeStakingProxyFactory = await ethers.getContract("NativeStakingSSVStrategyProxy");
+    await withConfirmation(
+      nativeStakingProxyFactory
+        .connect(defenderSigner)
+        .transferGovernance(taskArgs.address)
+    );
+    log(`Governance of NativeStakingSSVStrategyProxy transferred to  ${taskArgs.address}`)
+  });
+task("transferGovernanceNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 
 // Defender
 subtask(
