@@ -50,8 +50,7 @@ const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
-const mnemonic =
-  "replace hover unaware super where filter stone fine garlic address matrix basic";
+const mnemonic = "test test test test test test test test test test test junk";
 
 let privateKeys = [];
 
@@ -124,6 +123,9 @@ module.exports = {
           }),
     },
     localhost: {
+      accounts: {
+        mnemonic,
+      },
       timeout: 0,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
@@ -185,14 +187,14 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
+            : 0
+          : MAINNET_DEPLOYER,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
+            : 0
+          : MAINNET_DEPLOYER,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
@@ -205,14 +207,14 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : MAINNET_GOVERNOR
-          : 1,
+            : 1
+          : MAINNET_GOVERNOR,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : MAINNET_GOVERNOR
-          : 1,
+            : 1
+          : MAINNET_GOVERNOR,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_DEPLOYER, // TODO: change this
@@ -272,13 +274,13 @@ module.exports = {
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
             : MAINNET_STRATEGIST
-          : 0,
+          : MAINNET_STRATEGIST,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : MAINNET_STRATEGIST
-          : 0,
+            : 0
+          : MAINNET_STRATEGIST,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
     },
