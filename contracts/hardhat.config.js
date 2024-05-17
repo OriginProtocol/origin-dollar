@@ -205,8 +205,6 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_DEPLOYER
             : MAINNET_GOVERNOR
           : 1,
       hardhat:

@@ -1,4 +1,4 @@
-const { isFork, isArbFork } = require("../test/helpers");
+const { isFork, isArbFork, isBaseFork } = require("../test/helpers");
 const { deployWithConfirmation, withConfirmation } = require("./deploy");
 const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
@@ -81,9 +81,9 @@ function deployOnBase(opts, fn) {
 
   main.tags = ["base"];
 
-  main.skip = () =>
+  main.skip = () => 
     !(
-      isArbFork ||
+      isBaseFork ||
       hre.network.name == "base" ||
       hre.network.config.chainId == 8453
     );
