@@ -40,6 +40,7 @@ contract OETHVaultCore is VaultCore {
     }
 
     // @inheritdoc VaultCore
+    // slither-disable-start reentrancy-no-eth
     function _mint(
         address _asset,
         uint256 _amount,
@@ -73,6 +74,8 @@ contract OETHVaultCore is VaultCore {
             _allocate();
         }
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     // @inheritdoc VaultCore
     function _calculateRedeemOutputs(uint256 _amount)
@@ -153,6 +156,9 @@ contract OETHVaultCore is VaultCore {
     /**
      * @notice Request an asynchronous withdrawal of the underlying asset. eg WETH
      * @param _amount Amount of oTokens to burn. eg OETH
+     * @param requestId Unique ID for the withdrawal request
+     * @param queued Cumulative total of all WETH queued including already claimed requests.
+     * This request can be claimed once the withdrawal queue's claimable amount is greater than or equal this request's queued amount.
      */
     function requestWithdrawal(uint256 _amount)
         external
@@ -183,10 +189,16 @@ contract OETHVaultCore is VaultCore {
         });
     }
 
+    /**
+     * @notice Claim a previously requested withdrawal once it is claimable.
+     * @param requestId Unique ID for the withdrawal request
+     * @return amount Amount of WETH transferred to the withdrawer
+     */
     function claimWithdrawal(uint256 requestId)
         external
         whenNotCapitalPaused
         nonReentrant
+        returns (uint256 amount)
     {
         // Check if there's enough liquidity to cover the withdrawal request
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
@@ -205,6 +217,8 @@ contract OETHVaultCore is VaultCore {
 
         // transfer WETH from the vault to the withdrawer
         IERC20(weth).safeTransfer(msg.sender, request.amount);
+
+        return request.amount;
     }
 
     /// @notice Adds any unallocated WETH to the withdrawal queue if there is a funding shortfall.
