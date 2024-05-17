@@ -27,15 +27,15 @@ const adjustTheForkBlockNumber = () => {
   if (isForkTest) {
     if (isArbForkTest) {
       forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER
-        ? process.env.ARBITRUM_BLOCK_NUMBER
+        ? Number(process.env.ARBITRUM_BLOCK_NUMBER)
         : undefined;
     } else if (isHoleskyForkTest) {
       forkBlockNumber = process.env.HOLESKY_BLOCK_NUMBER
-        ? process.env.HOLESKY_BLOCK_NUMBER
+        ? Number(process.env.HOLESKY_BLOCK_NUMBER)
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
-        ? process.env.BLOCK_NUMBER
+        ? Number(process.env.BLOCK_NUMBER)
         : undefined;
     }
   }
@@ -85,7 +85,7 @@ const adjustTheForkBlockNumber = () => {
     console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
   }
 
-  return Number(forkBlockNumber);
+  return forkBlockNumber;
 };
 
 // returns hardhat network chainId and provider
