@@ -105,7 +105,7 @@ main()
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
     else
         echo "Running fork tests..."
-        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]} --show-stack-traces
+        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
     fi
 
     if [ ! $? -eq 0 ] && $is_ci; then
