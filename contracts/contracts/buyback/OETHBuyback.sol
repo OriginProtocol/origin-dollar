@@ -6,8 +6,8 @@ import { BaseBuyback } from "./BaseBuyback.sol";
 contract OETHBuyback is BaseBuyback {
     constructor(
         address _oToken,
-        address _ogv,
+        address _ogn,
         address _cvx,
         address _cvxLocker
-    ) BaseBuyback(_oToken, _ogv, _cvx, _cvxLocker) {}
+    ) BaseBuyback(_oToken, _ogn, _cvx, _cvxLocker) {}
 }
