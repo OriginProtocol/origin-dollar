@@ -5,6 +5,7 @@ const addresses = require("../../utils/addresses");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI, oethUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
+const { logTxDetails } = require("../../utils/txLogger");
 const {
   shouldHaveRewardTokensConfigured,
 } = require("../behaviour/reward-tokens.fork");
@@ -69,7 +70,7 @@ describe("ForkTest: OETH Vault", function () {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
 
-    it("should mint with WETH", async () => {
+    it("should mint with 1 WETH then no allocation", async () => {
       const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("1", 18);
@@ -80,6 +81,27 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(josh)
         .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
+
+      await expect(tx)
+        .to.emit(oethVault, "Mint")
+        .withArgs(josh.address, amount);
+    });
+
+    it("should mint with 11 WETH then auto allocate", async () => {
+      const { oethVault, weth, josh } = fixture;
+
+      const amount = parseUnits("11", 18);
+      const minOeth = parseUnits("8", 18);
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      const tx = await oethVault
+        .connect(josh)
+        .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
 
       await expect(tx)
         .to.emit(oethVault, "Mint")
