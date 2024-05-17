@@ -950,6 +950,7 @@ const deployOracles = async () => {
   const oracleRouter = await ethers.getContract(contractName);
   log("Deployed OracleRouter");
 
+
   if (isHolesky || isBaseOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
@@ -1041,6 +1042,7 @@ const deployOETHCore = async () => {
     "IVault",
     cOETHVaultProxy.address
   );
+
   await withConfirmation(
     cOETHProxy
       .connect(sDeployer)
@@ -1048,6 +1050,7 @@ const deployOETHCore = async () => {
   );
   log("Initialized OETHProxy");
 
+  // prettier-ignore
   await withConfirmation(
     cOETHVaultProxy
       .connect(sDeployer)
