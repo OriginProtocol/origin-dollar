@@ -8,9 +8,9 @@
 
 legend
 blue - Origin
-' green - new
-' orange - changed
-white - 3rd Party
+green - new
+orange - changed
+' white - 3rd Party
 end legend
 
 title "Origin Ether Contract Dependencies"
@@ -18,6 +18,16 @@ title "Origin Ether Contract Dependencies"
 object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
+
+
+
+' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
+' }
+
+object "OETH ARM" as arm <<Origin>><<Proxy>> #$newColor {
+    assets: WETH, OETH
+}
+
 
 object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
@@ -37,7 +47,7 @@ object "OETH" as oeth <<Origin>><<Proxy>> #$originColor {
     name: Origin Ether
 }
 
-object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
+object "OETH Vault" as oethv <<Origin>><<Proxy>> #$changedColor {
 asset: WETH
 }
 
@@ -53,7 +63,7 @@ object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
     Rewards: CRV, CVX
 }
 
-object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
+object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$changedColor {
     assets: WETH, ETH
     Rewards: ETH, SSV
 }
@@ -74,35 +84,35 @@ object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
 '     pairs: CRV/ETH, CVX/ETH
 ' }
 
-' Curve
-object "Gauge" as gauge <<Curve>> {
-    asset: OETHCRV-f
-    symbol: OETHCRV-f-gauge
-    name: Curve.fi OETHCRV-f Gauge Deposit
-}
-object "StableSwap" as crvPool <<Curve>> {
-    assets: [ETH, OETH]
-    symbol: OETHCRV-f
-    name: Curve.fi Factory Pool: OETH
-}
-' Convex
-object "Booster" as cvxBoost <<Convex>> {
-}
-object "BaseRewardPool" as cvxPool <<Convex>> {
-}
-' object "DepositToken" as cvxPoolLp <<Convex>> {
-'     symbol: cvxOUSD3CRV-f
-'     name: Origin Dollar Convex Deposit
+' ' Curve
+' object "Gauge" as gauge <<Curve>> {
+'     asset: OETHCRV-f
+'     symbol: OETHCRV-f-gauge
+'     name: Curve.fi OETHCRV-f Gauge Deposit
+' }
+' object "StableSwap" as crvPool <<Curve>> {
+'     assets: [ETH, OETH]
+'     symbol: OETHCRV-f
+'     name: Curve.fi Factory Pool: OETH
+' }
+' ' Convex
+' object "Booster" as cvxBoost <<Convex>> {
+' }
+' object "BaseRewardPool" as cvxPool <<Convex>> {
+' }
+' ' object "DepositToken" as cvxPoolLp <<Convex>> {
+' '     symbol: cvxOUSD3CRV-f
+' '     name: Origin Dollar Convex Deposit
+' ' }
+
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
 ' }
 
-' SSV
-object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
-assets: ETH, SSV
-}
-
-object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
-assets: ETH
-}
+' object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
+' assets: ETH
+' }
 
 
 ' ' Assets
@@ -126,8 +136,11 @@ zap ..> oeth
 zap ..> oethv
 ' zap .....> weth
 
+' router ..> arm
+arm ..> oethv
+
 ' drip .....> weth
-oethv <. drip
+oethv <.> drip
 
 ' checker ..> oeth
 ' checker ..> oethv
@@ -152,21 +165,21 @@ oeth <... cvxStrat
 harv <..> nativeStrat
 oethv <...> nativeStrat
 nativeStrat <.> feeAcc
-nativeStrat ..> ssvNet
-nativeStrat ..> bDep
+' nativeStrat ..> ssvNet
+' nativeStrat ..> bDep
 
-cvxStrat ..> crvPool
-cvxStrat ...> cvxPool
-' cvxStrat ...> weth
-' cvxStrat ...> cvx
-' cvxStrat ...> crv
-' cvxPool ..> cvxPoolLp
-' cvxPool ..> crv
-gauge <. cvxPool
-crvPool <.. gauge
-oeth <... crvPool
-cvxStrat ..> cvxBoost
-cvxBoost ..> cvxPool
+' cvxStrat ..> crvPool
+' cvxStrat ...> cvxPool
+' ' cvxStrat ...> weth
+' ' cvxStrat ...> cvx
+' ' cvxStrat ...> crv
+' ' cvxPool ..> cvxPoolLp
+' ' cvxPool ..> crv
+' gauge <. cvxPool
+' crvPool <.. gauge
+' oeth <... crvPool
+' cvxStrat ..> cvxBoost
+' cvxBoost ..> cvxPool
 
 ' ' Vault to Assets
 ' oethv ....> weth
