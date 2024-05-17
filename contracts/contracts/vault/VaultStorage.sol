@@ -180,7 +180,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
-    // slither-disable-next-line uninitialized-state constable-states
+    // slither-disable-next-line uninitialized-state
     address public dripper;
 
     /// Withdrawal Queue Storage /////

@@ -158,7 +158,8 @@ contract OETHVaultCore is VaultCore {
      * @param _amount Amount of oTokens to burn. eg OETH
      * @param requestId Unique ID for the withdrawal request
      * @param queued Cumulative total of all WETH queued including already claimed requests.
-     * This request can be claimed once the withdrawal queue's claimable amount is greater than or equal this request's queued amount.
+     * This request can be claimed once the withdrawal queue's claimable amount
+     * is greater than or equal this request's queued amount.
      */
     function requestWithdrawal(uint256 _amount)
         external
