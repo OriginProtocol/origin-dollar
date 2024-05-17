@@ -25,7 +25,6 @@ async function aeroPoolTask(taskArguments, hre) {
     blockTag,
     fromBlockTag,
     output,
-    fixture,
   });
 }
 
@@ -295,7 +294,7 @@ function displayRatio(a, b, aBefore, bBefore, precision = 6) {
 function sqrt(value) {
   const ONE = ethers.BigNumber.from(1);
   const TWO = ethers.BigNumber.from(2);
-  x = ethers.BigNumber.from(value);
+  let x = ethers.BigNumber.from(value);
   let z = x.add(ONE).div(TWO);
   let y = x;
   while (z.sub(y).isNegative()) {

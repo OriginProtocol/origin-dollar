@@ -27,8 +27,6 @@ const {
   ousdUnits,
   units,
   isFork,
-  getBlockTimestamp,
-  fundAccount,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -50,7 +48,6 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
-const { deployWithConfirmation } = require("../utils/deploy.js");
 
 const log = require("../utils/logger")("test:fixtures");
 

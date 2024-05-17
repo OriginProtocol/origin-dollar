@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { aeroOETHAMOFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
-const { parseEther, parseUnits } = require("ethers/lib/utils");
+const { parseEther } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
 describe("ForkTest: Harvest AERO", function () {
