@@ -255,6 +255,16 @@ describe("ForkTest: OETH Vault", function () {
     });
   });
 
+  describe("operations", () => {
+    it.only("should rebase", async function () {
+      const { oethVault } = fixture;
+
+      const tx = await oethVault.rebase();
+
+      await logTxDetails(tx, "rebase");
+    });
+  });
+
   shouldHaveRewardTokensConfigured(() => ({
     vault: fixture.oethVault,
     harvester: fixture.oethHarvester,
