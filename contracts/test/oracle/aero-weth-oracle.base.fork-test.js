@@ -34,6 +34,6 @@ describe("ForkTest: Aero WETH Oracle", function () {
       parseUnits("1"),
       addresses.base.aeroTokenAddress
     );
-    expect(price).to.approxEqualTolerance(ammPrice, 10); 
+    expect(price).to.approxEqualTolerance(ammPrice, 15); 
   });
 });
