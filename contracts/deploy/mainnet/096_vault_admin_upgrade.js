@@ -1,11 +1,12 @@
+const addresses = require("../../utils/addresses");
 const {
   deploymentWithGovernanceProposal,
   deployWithConfirmation,
-} = require("../utils/deploy");
+} = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "092_vault_admin_upgrade",
+    deployName: "096_vault_admin_upgrade",
     // forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
@@ -33,6 +34,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "setAdminImpl(address)",
           args: [dVaultAdminImpl.address],
+        },
+        {
+          contract: cVaultAdmin,
+          signature: "removeAsset(address)",
+          args: [addresses.mainnet.frxETH],
         },
       ],
     };

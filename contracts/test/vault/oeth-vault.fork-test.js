@@ -143,7 +143,7 @@ describe("ForkTest: OETH Vault", function () {
       });
     });
 
-    it("should partially redeem", async () => {
+    it("should partially redeem 10 OETH", async () => {
       const { oeth, oethVault } = fixture;
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
@@ -154,11 +154,14 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(amount, minEth);
+
+      await logTxDetails(tx, "redeem");
+
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    it("OETH whale can not full redeem due to liquidity", async () => {
+    it("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
@@ -170,36 +173,7 @@ describe("ForkTest: OETH Vault", function () {
       await expect(tx).to.revertedWith("Liquidity error");
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
-      const { oeth, oethVault, timelock, domen, strategist, frxETH } = fixture;
-
-      const allStrats = await oethVault.getAllStrategies();
-      if (
-        allStrats
-          .map((x) => x.toLowerCase())
-          .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
-      ) {
-        // Remove fraxETH strategy if it exists
-        // Because it no longer holds assets and causes this test to fail
-
-        // Send some dust to that first
-        await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
-
-        // Now make sure it's deposited
-        await oethVault
-          .connect(strategist)
-          .depositToStrategy(
-            addresses.mainnet.FraxETHStrategy,
-            [frxETH.address],
-            [oethUnits("1")]
-          );
-
-        await oethVault
-          .connect(timelock)
-          .setAssetDefaultStrategy(frxETH.address, addresses.zero);
-        await oethVault
-          .connect(timelock)
-          .removeStrategy(addresses.mainnet.FraxETHStrategy);
-      }
+      const { oeth, oethVault, timelock } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
@@ -225,6 +199,9 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(amount, minEth);
+
+      await logTxDetails(tx, "redeem");
+
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
@@ -240,40 +217,10 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("Remove asset", () => {
     it("should remove all LSTs from the Vault", async function () {
-      const { oethVault, frxETH, reth, stETH, domen, strategist, timelock } =
-        fixture;
+      const { oethVault, frxETH, reth, stETH, timelock } = fixture;
 
       if (!(await oethVault.isSupportedAsset(frxETH.address))) {
         this.skip();
-      }
-
-      const allStrats = await oethVault.getAllStrategies();
-      if (
-        allStrats
-          .map((x) => x.toLowerCase())
-          .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
-      ) {
-        // Remove fraxETH strategy if it exists
-        // Because it no longer holds assets and causes this test to fail
-
-        // Send some dust to that first
-        await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
-
-        // Now make sure it's deposited
-        await oethVault
-          .connect(strategist)
-          .depositToStrategy(
-            addresses.mainnet.FraxETHStrategy,
-            [frxETH.address],
-            [oethUnits("1")]
-          );
-
-        await oethVault
-          .connect(timelock)
-          .setAssetDefaultStrategy(frxETH.address, addresses.zero);
-        await oethVault
-          .connect(timelock)
-          .removeStrategy(addresses.mainnet.FraxETHStrategy);
       }
 
       // Remove all assets from strategies
