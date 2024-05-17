@@ -80,7 +80,7 @@ main()
             # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
             # pass all other params along
             params+="test/**/*.holesky.fork-test.js"
-        elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
             # Run all files with `.base.fork-test.js` suffix when no file name param is given
             # pass all other params along
             params+="test/**/*.base.fork-test.js"
