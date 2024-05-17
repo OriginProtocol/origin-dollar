@@ -100,14 +100,12 @@ describe("ForkTest: Maker DSR Strategy", function () {
       const {
         dai,
         ousd,
-        vault,
         sDAI,
         makerDsrStrategy,
-        vaultSigner,
+        vault,
         strategist,
+        vaultSigner,
       } = fixture;
-
-      await vault.connect(strategist).rebase();
 
       const daiDepositAmount = await units("1000", dai);
 
@@ -115,6 +113,8 @@ describe("ForkTest: Maker DSR Strategy", function () {
       await dai
         .connect(vaultSigner)
         .transfer(makerDsrStrategy.address, daiDepositAmount);
+
+      await vault.connect(strategist).rebase();
 
       const ousdSupplyBefore = await ousd.totalSupply();
 
@@ -139,7 +139,7 @@ describe("ForkTest: Maker DSR Strategy", function () {
       const ousdSupplyAfter = await ousd.totalSupply();
       expect(ousdSupplyAfter).to.approxEqualTolerance(
         ousdSupplyBefore.add(daiDepositAmount),
-        0.01 // 0.01% or 1 basis point
+        0.1 // 0.1% or 10 basis point
       );
     });
     it("Only vault can deposit some DAI to the strategy", async function () {

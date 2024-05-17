@@ -254,13 +254,17 @@ async function humanBalance(user, contract) {
 const isFork = process.env.FORK === "true";
 const isLocalhost = !isFork && hre.network.name === "localhost";
 const isMainnet = hre.network.name === "mainnet";
+const isHolesky = hre.network.name == "holesky";
+const isExternalNet = isMainnet || isHolesky;
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
+const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
+const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
 
@@ -763,6 +767,7 @@ module.exports = {
   advanceTime,
   getBlockTimestamp,
   isMainnet,
+  isExternalNet,
   isFork,
   isTest,
   isSmokeTest,
@@ -771,6 +776,9 @@ module.exports = {
   isForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
+  isHolesky,
+  isHoleskyFork,
+  isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,
   isCI,

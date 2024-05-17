@@ -18,37 +18,41 @@ describe("ForkTest: OETH Buyback", function () {
     });
   });
 
-  it("Should swap OETH for OGV", async () => {
-    const { oethBuyback, oeth, oethVault, ogv, rewardsSource, strategist } =
+  it("Should swap OETH for OGN", async () => {
+    const { oethBuyback, oeth, oethVault, ogn, rewardsSource, strategist } =
       fixture;
 
     const oethBalanceBefore = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareBefore = await oethBuyback.balanceForOGV();
+    const ognShareBefore = await oethBuyback.balanceForOGN();
     const cvxShareBefore = await oethBuyback.balanceForCVX();
-    const rewardsBalanceBefore = await ogv.balanceOf(rewardsSource.address);
+    const rewardsBalanceBefore = await ogn.balanceOf(rewardsSource.address);
+
+    const ognAmount = ognShareBefore.lte(oethUnits("1"))
+      ? ognShareBefore
+      : oethUnits("1");
 
     let data = await getIInchSwapData({
       vault: oethVault,
       fromAsset: oeth,
-      toAsset: ogv,
-      fromAmount: ogvShareBefore,
-      // 20%, just so that fork-tests don't fail on
+      toAsset: ogn,
+      fromAmount: ognAmount,
+      // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
-      slippage: 20,
+      slippage: 5,
     });
     data = await recodeSwapData(data);
 
     await oethBuyback
       .connect(strategist)
-      .swapForOGV(ogvShareBefore, oethUnits("100"), data);
+      .swapForOGN(ognAmount, oethUnits("100"), data);
 
     const oethBalanceAfter = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareAfter = await oethBuyback.balanceForOGV();
+    const ognShareAfter = await oethBuyback.balanceForOGN();
     const cvxShareAfter = await oethBuyback.balanceForCVX();
-    const rewardsBalanceAfter = await ogv.balanceOf(rewardsSource.address);
+    const rewardsBalanceAfter = await ogn.balanceOf(rewardsSource.address);
 
-    expect(ogvShareAfter).to.eq(0);
-    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(ogvShareBefore));
+    expect(ognShareAfter).to.eq(ognShareBefore.sub(ognAmount));
+    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(ognAmount));
     expect(cvxShareAfter).to.eq(cvxShareBefore);
     expect(rewardsBalanceAfter).to.be.gt(rewardsBalanceBefore);
   });
@@ -58,7 +62,7 @@ describe("ForkTest: OETH Buyback", function () {
       fixture;
 
     const oethBalanceBefore = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareBefore = await oethBuyback.balanceForOGV();
+    const ognShareBefore = await oethBuyback.balanceForOGN();
     const cvxShareBefore = await oethBuyback.balanceForCVX();
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
@@ -70,9 +74,9 @@ describe("ForkTest: OETH Buyback", function () {
       fromAsset: oeth,
       toAsset: cvx,
       fromAmount: cvxShareBefore,
-      // 20%, just so that fork-tests don't fail on
+      // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
-      slippage: 20,
+      slippage: 5,
     });
     data = await recodeSwapData(data);
 
@@ -81,12 +85,12 @@ describe("ForkTest: OETH Buyback", function () {
       .swapForCVX(cvxShareBefore, oethUnits("1"), data);
 
     const oethBalanceAfter = await oeth.balanceOf(oethBuyback.address);
-    const ogvShareAfter = await oethBuyback.balanceForOGV();
+    const ognShareAfter = await oethBuyback.balanceForOGN();
     const cvxShareAfter = await oethBuyback.balanceForCVX();
 
     expect(cvxShareAfter).to.eq(0);
     expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(cvxShareBefore));
-    expect(ogvShareAfter).to.eq(ogvShareBefore);
+    expect(ognShareAfter).to.eq(ognShareBefore);
 
     expect(await cvxLocker.lockedBalanceOf(strategistAddr)).to.be.gte(
       lockedCVXBalanceBefore
@@ -106,20 +110,20 @@ describe("ForkTest: OUSD Buyback", function () {
     });
   });
 
-  it("Should swap OUSD for OGV", async () => {
-    const { ousdBuyback, ousd, vault, ogv, rewardsSource, strategist } =
+  it("Should swap OUSD for OGN", async () => {
+    const { ousdBuyback, ousd, vault, ogn, rewardsSource, strategist } =
       fixture;
 
     const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareBefore = await ousdBuyback.balanceForOGV();
+    const ognShareBefore = await ousdBuyback.balanceForOGN();
     const cvxShareBefore = await ousdBuyback.balanceForCVX();
-    const rewardsBalanceBefore = await ogv.balanceOf(rewardsSource.address);
+    const rewardsBalanceBefore = await ogn.balanceOf(rewardsSource.address);
 
     let data = await getIInchSwapData({
       vault: vault,
       fromAsset: ousd,
-      toAsset: ogv,
-      fromAmount: ogvShareBefore,
+      toAsset: ogn,
+      fromAmount: ognShareBefore,
       // 20%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
       slippage: 20,
@@ -128,15 +132,15 @@ describe("ForkTest: OUSD Buyback", function () {
 
     await ousdBuyback
       .connect(strategist)
-      .swapForOGV(ogvShareBefore, ousdUnits("1"), data);
+      .swapForOGN(ognShareBefore, ousdUnits("1"), data);
 
     const ousdBalanceAfter = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareAfter = await ousdBuyback.balanceForOGV();
+    const ognShareAfter = await ousdBuyback.balanceForOGN();
     const cvxShareAfter = await ousdBuyback.balanceForCVX();
-    const rewardsBalanceAfter = await ogv.balanceOf(rewardsSource.address);
+    const rewardsBalanceAfter = await ogn.balanceOf(rewardsSource.address);
 
-    expect(ogvShareAfter).to.eq(0);
-    expect(ousdBalanceAfter).to.eq(ousdBalanceBefore.sub(ogvShareBefore));
+    expect(ognShareAfter).to.eq(0);
+    expect(ousdBalanceAfter).to.eq(ousdBalanceBefore.sub(ognShareBefore));
     expect(cvxShareAfter).to.eq(cvxShareBefore);
     expect(rewardsBalanceAfter).to.be.gt(rewardsBalanceBefore);
   });
@@ -145,7 +149,7 @@ describe("ForkTest: OUSD Buyback", function () {
     const { ousdBuyback, ousd, vault, cvx, cvxLocker, strategist } = fixture;
 
     const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareBefore = await ousdBuyback.balanceForOGV();
+    const ognShareBefore = await ousdBuyback.balanceForOGN();
     const cvxShareBefore = await ousdBuyback.balanceForCVX();
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
@@ -168,12 +172,12 @@ describe("ForkTest: OUSD Buyback", function () {
       .swapForCVX(cvxShareBefore, ousdUnits("0.01"), data);
 
     const ousdBalanceAfter = await ousd.balanceOf(ousdBuyback.address);
-    const ogvShareAfter = await ousdBuyback.balanceForOGV();
+    const ognShareAfter = await ousdBuyback.balanceForOGN();
     const cvxShareAfter = await ousdBuyback.balanceForCVX();
 
     expect(cvxShareAfter).to.eq(0);
     expect(ousdBalanceAfter).to.eq(ousdBalanceBefore.sub(cvxShareBefore));
-    expect(ogvShareAfter).to.eq(ogvShareBefore);
+    expect(ognShareAfter).to.eq(ognShareBefore);
 
     expect(await cvxLocker.lockedBalanceOf(strategistAddr)).to.be.gte(
       lockedCVXBalanceBefore

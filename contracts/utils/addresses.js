@@ -117,6 +117,10 @@ addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 addresses.mainnet.chainlinkBAL_ETH =
   "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
+addresses.mainnet.ccipRouterMainnet =
+  "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
+addresses.mainnet.ccipWoethTokenPool =
+  "0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0";
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
@@ -183,6 +187,8 @@ addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
 addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
 addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
+addresses.mainnet.FraxETHRedeemStrategy =
+  "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 

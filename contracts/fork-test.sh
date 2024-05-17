@@ -37,8 +37,12 @@ main()
     
     params=()
     if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
-        PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
-        BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
+      PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
+      BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
+      params+=" --tags arbitrumOne";
+    elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+      PROVIDER_URL=$HOLESKY_PROVIDER_URL;
+      BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
     fi
 
     if $is_local; then
@@ -67,9 +71,15 @@ main()
     fi
 
     if [ -z "$1" ]; then
-        # Run all files with `.fork-test.js` suffix when no file name param is given
-        # pass all other params along
-        params+="test/**/*.fork-test.js"
+        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.holesky.fork-test.js"
+        else
+            # Run all files with `.fork-test.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.fork-test.js"
+        fi
     else
         # Run specifc files when a param is given
         params+="$@"

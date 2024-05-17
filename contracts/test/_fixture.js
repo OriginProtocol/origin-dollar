@@ -664,7 +664,6 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  // const { timelock, oethVault } = fixture;
   const { weth, matt, strategist, domen, frxETH, timelock, oethVault } =
     fixture;
 
@@ -2135,6 +2134,33 @@ async function harvesterFixture() {
   return fixture;
 }
 
+async function woethCcipZapperFixture() {
+  const fixture = await defaultFixture();
+
+  const oethZapper = await ethers.getContractAt(
+    "OETHZapper",
+    addresses.mainnet.OETHZapper
+  );
+
+  const ccipRouter = await ethers.getContractAt(
+    "IRouterClient",
+    addresses.mainnet.ccipRouterMainnet
+  );
+
+  const woethZapper = await ethers.getContract("WOETHCCIPZapper");
+  const woethOnSourceChain = await ethers.getContractAt(
+    "WOETH",
+    addresses.mainnet.WOETHProxy
+  );
+
+  fixture.oethZapper = oethZapper;
+  fixture.woethOnSourceChain = woethOnSourceChain;
+  fixture.woethZapper = woethZapper;
+  fixture.ccipRouter = ccipRouter;
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2218,4 +2244,5 @@ module.exports = {
   harvesterFixture,
   nodeSnapshot,
   nodeRevert,
+  woethCcipZapperFixture,
 };
