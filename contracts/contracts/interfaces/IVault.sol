@@ -208,4 +208,6 @@ interface IVault {
     function initialize(address, address) external;
 
     function setAdminImpl(address) external;
+
+    function removeAsset(address _asset) external;
 }

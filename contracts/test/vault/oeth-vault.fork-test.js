@@ -5,6 +5,7 @@ const addresses = require("../../utils/addresses");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI, oethUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
+const { logTxDetails } = require("../../utils/txLogger");
 const {
   shouldHaveRewardTokensConfigured,
 } = require("../behaviour/reward-tokens.fork");
@@ -69,7 +70,7 @@ describe("ForkTest: OETH Vault", function () {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
 
-    it("should mint with WETH", async () => {
+    it("should mint with 1 WETH then no allocation", async () => {
       const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("1", 18);
@@ -80,6 +81,27 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(josh)
         .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
+
+      await expect(tx)
+        .to.emit(oethVault, "Mint")
+        .withArgs(josh.address, amount);
+    });
+
+    it("should mint with 11 WETH then auto allocate", async () => {
+      const { oethVault, weth, josh } = fixture;
+
+      const amount = parseUnits("11", 18);
+      const minOeth = parseUnits("8", 18);
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      const tx = await oethVault
+        .connect(josh)
+        .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
 
       await expect(tx)
         .to.emit(oethVault, "Mint")
@@ -121,7 +143,7 @@ describe("ForkTest: OETH Vault", function () {
       });
     });
 
-    it("should partially redeem", async () => {
+    it("should partially redeem 10 OETH", async () => {
       const { oeth, oethVault } = fixture;
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
@@ -132,11 +154,14 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(amount, minEth);
+
+      await logTxDetails(tx, "redeem");
+
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    it("OETH whale can not full redeem due to liquidity", async () => {
+    it("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
@@ -148,36 +173,7 @@ describe("ForkTest: OETH Vault", function () {
       await expect(tx).to.revertedWith("Liquidity error");
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
-      const { oeth, oethVault, timelock, domen, strategist, frxETH } = fixture;
-
-      const allStrats = await oethVault.getAllStrategies();
-      if (
-        allStrats
-          .map((x) => x.toLowerCase())
-          .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
-      ) {
-        // Remove fraxETH strategy if it exists
-        // Because it no longer holds assets and causes this test to fail
-
-        // Send some dust to that first
-        await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
-
-        // Now make sure it's deposited
-        await oethVault
-          .connect(strategist)
-          .depositToStrategy(
-            addresses.mainnet.FraxETHStrategy,
-            [frxETH.address],
-            [oethUnits("1")]
-          );
-
-        await oethVault
-          .connect(timelock)
-          .setAssetDefaultStrategy(frxETH.address, addresses.zero);
-        await oethVault
-          .connect(timelock)
-          .removeStrategy(addresses.mainnet.FraxETHStrategy);
-      }
+      const { oeth, oethVault, timelock } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
@@ -203,6 +199,9 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(amount, minEth);
+
+      await logTxDetails(tx, "redeem");
+
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
@@ -213,6 +212,56 @@ describe("ForkTest: OETH Vault", function () {
       expect((await oethVault.weth()).toLowerCase()).to.equal(
         addresses.mainnet.WETH.toLowerCase()
       );
+    });
+  });
+
+  describe("Remove asset", () => {
+    it("should remove all LSTs from the Vault", async function () {
+      const { oethVault, frxETH, reth, stETH, timelock } = fixture;
+
+      if (!(await oethVault.isSupportedAsset(frxETH.address))) {
+        this.skip();
+      }
+
+      // Remove all assets from strategies
+      await oethVault.connect(timelock).withdrawAllFromStrategies();
+
+      const lstAssets = [frxETH, reth, stETH];
+
+      // Just draining out every asset to make
+      // sure `checkBalance(asset)` returns 0
+      const mockedVaultSigner = await impersonateAndFund(oethVault.address);
+      for (const asset of lstAssets) {
+        const balance = await asset.balanceOf(oethVault.address);
+        // stETH has rounding issues, so transferring 1 wei more than the balance
+        await asset
+          .connect(mockedVaultSigner)
+          .transfer(
+            addresses.dead,
+            asset.address == stETH.address ? balance.add(1) : balance
+          );
+      }
+
+      // Now remove all LSTs
+      for (const asset of lstAssets) {
+        await oethVault.connect(timelock).removeAsset(asset.address);
+
+        expect(await oethVault.checkBalance(asset.address)).to.equal(0);
+        expect(await oethVault.isSupportedAsset(asset.address)).to.be.false;
+        expect(await oethVault.assetDefaultStrategies(asset.address)).to.equal(
+          addresses.zero
+        );
+      }
+    });
+  });
+
+  describe("operations", () => {
+    it.only("should rebase", async function () {
+      const { oethVault } = fixture;
+
+      const tx = await oethVault.rebase();
+
+      await logTxDetails(tx, "rebase");
     });
   });
 

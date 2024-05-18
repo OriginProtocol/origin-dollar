@@ -10,7 +10,7 @@ import { ISwapper } from "../interfaces/ISwapper.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 
-abstract contract BaseBuyback is Initializable, Strategizable {
+abstract contract AbstractBuyback is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
     event SwapRouterUpdated(address indexed _address);
