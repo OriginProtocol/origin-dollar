@@ -965,7 +965,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     if (!proposal.actions?.length) {
       log("No Proposal.");
-      return
+      return;
     }
 
     const propDescription = proposal.name;
