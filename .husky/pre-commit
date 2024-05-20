@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd contracts
-yarn run lint
+yarn run lint:js
