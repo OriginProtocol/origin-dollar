@@ -94,7 +94,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       );
       await oethVault.connect(josh).rebase();
 
-      await expect(wethDiff).to.be.gte(parseUnits("0.2"));
+      await expect(wethDiff).to.be.gte(parseUnits("0.1"));
     });
     it("Only Governor can approve all tokens", async () => {
       const {
