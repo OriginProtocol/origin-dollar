@@ -256,7 +256,7 @@ describe("ForkTest: OETH Vault", function () {
   });
 
   describe("operations", () => {
-    it.only("should rebase", async function () {
+    it("should rebase", async function () {
       const { oethVault } = fixture;
 
       const tx = await oethVault.rebase();
