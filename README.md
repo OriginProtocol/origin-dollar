@@ -105,4 +105,4 @@ The best way to get involved is to join the Origin Protocol [discord server](htt
 
 [husky](https://typicode.github.io/husky/) is a development dependency in the root project folder. To install, run `yarn` in the project root folder.
 
-If the [.husky/pre-commit](.husky/pre-commit) script returns non-zero, the pre-commit hook will fail. Currently, the script prevents a commit if there is a ".only" in the test scripts. Use `git commit --no-verify` if you have the hook enabled and you'd like to skip pre-commit check.
+If the [.husky/pre-commit](.husky/pre-commit) script returns non-zero, the pre-commit hook will fail. Currently, the script runs the contracts linter. Use `git commit --no-verify` if you have the hook enabled and you'd like to skip the pre-commit check.
