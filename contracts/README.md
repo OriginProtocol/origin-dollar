@@ -341,17 +341,17 @@ export DEFENDER_TEAM_SECRET=
 # set -o allexport && source ../../.env && set +o allexport
 
 # Set the DEBUG environment variable to oeth* for the Defender Action
-npx hardhat setActionVars --id e9d07e16-b076-43c2-a098-74a0e004634d
-npx hardhat setActionVars --id d93f597d-78dc-430f-a337-93e9a56661a6
+npx hardhat setActionVars --id 38e44420-f38b-4d4a-86b0-6012a8897ad9
+npx hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
 
 # Upload Deposit to EigenLayer code
 # The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
 export API_KEY=${DEFENDER_TEAM_KEY}
 export API_SECRET=${DEFENDER_TEAM_SECRET}
 # Holesky
-npx defender-autotask update-code d93f597d-78dc-430f-a337-93e9a56661a6 ./dist/operateValidators
+npx defender-autotask update-code 38e44420-f38b-4d4a-86b0-6012a8897ad9 ./dist/operateValidators
 # Mainnet
-npx defender-autotask update-code e9d07e16-b076-43c2-a098-74a0e004634d ./dist/operateValidators
+npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/operateValidators
 ```
 
 `rollup` and `defender-autotask-client` can be installed globally to avoid the `npx` prefix.
