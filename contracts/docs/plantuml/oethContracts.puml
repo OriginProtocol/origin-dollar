@@ -3,7 +3,7 @@
 title "Origin Ether Contract Dependencies"
 
 object "OETHZapper" as zap <<Origin>> #DeepSkyBlue {
-    assets: ETH, sfrxETH
+    assets: ETH
 }
 
 object "OETHDripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -27,7 +27,7 @@ object "OETH" as oeth <<Origin>><<Proxy>> #DeepSkyBlue {
 object "OETH Vault" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
 assets:
   WETH
-  frxETH
+'   frxETH
   stETH
   rETH
 }
@@ -41,10 +41,10 @@ object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 ' Strategies
-object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: frxETH, WETH
-    vault: sfrxETH
-}
+' object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
+'     asset: frxETH, WETH
+'     vault: sfrxETH
+' }
 object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
     Curve metapool: OETHCRV-f
@@ -65,7 +65,7 @@ object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyB
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
-    frxETH/ETH
+    ' frxETH/ETH
     stETH/ETH
     rETH/ETH
     CRV/ETH
@@ -182,7 +182,7 @@ oethv .> swap
 
 
 ' Staked FRAX ETH Strategy
-oethv ...> frxethstrat
+' oethv ...> frxethstrat
 ' frxethstrat ..> sfrxeth
 
 ' Convex ETH Metapool Strategy
