@@ -18,5 +18,8 @@ module.exports = {
     getNamedAccounts: "readable",
     hre: "readable",
   },
-  rules: {},
+  plugins: ["no-only-tests"],
+  rules: {
+    "no-only-tests/no-only-tests": "error",
+  },
 };
