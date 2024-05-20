@@ -2,6 +2,7 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
+const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
@@ -985,7 +986,7 @@ subtask(
 
     if (!isMainnet && !isHolesky) {
       throw new Error(
-        "operate validatos is supported on Mainnet and Holesky only"
+        "operate validators is supported on Mainnet and Holesky only"
       );
     }
 
@@ -1049,5 +1050,13 @@ subtask(
     });
   });
 task("operateValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Defender
+subtask("setActionVars", "Set environment variables on a Defender Actions. eg DEBUG=prime*")
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .setAction(setActionVars);
+task("setActionVars").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
