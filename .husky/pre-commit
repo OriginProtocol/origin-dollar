@@ -5,7 +5,7 @@ NC='\033[0m'
 GREEN='\033[0;32m'
 files=""
 # find all file ending with test.js that are not in node_modules
-for file in $(find . -type d -name node_modules -prune -o -name '*test.js' -print); do
+for file in $(find contracts/test -type d -name node_modules -prune -o -name '*.js' -print); do
     # uncomment below to debug which files match
     # echo "$file"
 		# search if any contain it.only or describe.only
