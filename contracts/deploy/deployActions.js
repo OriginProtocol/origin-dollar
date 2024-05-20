@@ -5,7 +5,6 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isMainnetOrFork,
   isHolesky,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
@@ -1361,8 +1360,8 @@ const deployBuyback = async () => {
   // Deploy proxy and implementation
   const dOUSDBuybackProxy = await deployWithConfirmation("BuybackProxy");
   const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
-  const ousdContractName = isMainnetOrFork ? "OUSDBuyback" : "MockBuyback";
-  const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
+  const ousdContractName = "OUSDBuyback";
+  const oethContractName = "OETHBuyback";
   const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
     ousd.address,
     assetAddresses.OGN,

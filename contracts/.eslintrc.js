@@ -18,7 +18,9 @@ module.exports = {
     getNamedAccounts: "readable",
     hre: "readable",
   },
+  plugins: ["no-only-tests"],
   rules: {
+    "no-only-tests/no-only-tests": "error",
     "no-constant-condition": ["error", { checkLoops: false }],
   },
 };
