@@ -1056,7 +1056,7 @@ task("operateValidators").setAction(async (_, __, runSuper) => {
 // Defender
 subtask(
   "setActionVars",
-  "Set environment variables on a Defender Actions. eg DEBUG=prime*"
+  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
 )
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
