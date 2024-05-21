@@ -37,9 +37,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
+    /// @notice Amount of ETH that can be staked before staking on the contract is suspended 
+    /// and the governor needs to approve further staking
+    uint256 public stakeETHThreshold;
+    /// @notice Amount of ETH that can has been staked since the last governor approval.
+    uint256 public stakeETHTally;
 
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     enum VALIDATOR_STATE {
         REGISTERED, // validator is registered on the SSV network
@@ -53,6 +58,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
+    event StakeETHThresholdChanged(uint256 amount);
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -92,6 +98,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function setRegistrator(address _address) external onlyGovernor {
         emit RegistratorChanged(_address);
         validatorRegistrator = _address;
+    }
+
+    /// @notice Set the amount of ETH that can be staked before governor needs to a approve
+    /// further staking.
+    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
+        emit StakeETHThresholdChanged(_amount);
+        stakeETHThreshold = _amount;
     }
 
     /// @notice Stakes WETH to the node validators
