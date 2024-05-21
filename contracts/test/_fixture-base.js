@@ -4,6 +4,7 @@ const mocha = require("mocha");
 const { isFork, isBaseFork, oethUnits, fundAccount } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const addresses = require("../utils/addresses");
 
 const log = require("../utils/logger")("test:fixtures-base");
 
@@ -40,9 +41,35 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
 
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+  const weth = await ethers.getContractAt(
+    "IWETH9",
+    addresses.base.wethTokenAddress
+  );
+
+  const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+  const oethDripper = await ethers.getContractAt(
+    "OETHDripper",
+    oethDripperProxy.address
+  );
+
+  const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    oethVaultProxy.address
+  );
+  const oethVaultCore = await ethers.getContract("OETHVaultCore");
+
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
+  );
+
   const signers = await hre.ethers.getSigners();
 
-  const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
+  const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const governor = await ethers.getSigner(await woeth.governor());
 
   if (isBaseFork) {
@@ -66,6 +93,16 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   return {
     woeth,
     woethProxy,
+    oeth,
+    oethProxy,
+    oethDripper,
+    oethDripperProxy,
+    oethVault,
+    oethVaultProxy,
+    oethVaultCore,
+    oethHarvester,
+    oethHarvesterProxy,
+    weth,
 
     governor,
     minter,
@@ -73,6 +110,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     rafael,
     nick,
+    josh,
   };
 });
 

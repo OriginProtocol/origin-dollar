@@ -49,7 +49,7 @@ const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202"
+const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -205,12 +205,16 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,

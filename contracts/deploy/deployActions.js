@@ -547,9 +547,9 @@ const deployOUSDHarvester = async (ousdDripper) => {
 
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dOETHHarvesterProxy = await deployWithConfirmation(
@@ -570,11 +570,13 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   await withConfirmation(
-    cOETHHarvesterProxy["initialize(address,address,bytes)"](
-      dOETHHarvester.address,
-      governorAddr,
-      []
-    )
+    cOETHHarvesterProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dOETHHarvester.address,
+        governorAddr,
+        []
+      )
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -583,7 +585,9 @@ const deployOETHHarvester = async (oethDripper) => {
     cOETHHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? oethDripper.address : cVaultProxy.address
+        isMainnet || isHolesky || isBaseOrFork
+          ? oethDripper.address
+          : await ethers.getContract("VaultProxy")
       )
   );
 
