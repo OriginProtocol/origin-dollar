@@ -580,15 +580,17 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   log("Initialized OETHHarvesterProxy");
+  let rewardProceedsAddress;
+  if (isMainnet || isHolesky || isBaseOrFork) {
+    rewardProceedsAddress = oethDripper.address;
+  } else {
+    rewardProceedsAddress = (await ethers.getContract("VaultProxy")).address;
+  }
 
   await withConfirmation(
     cOETHHarvester
       .connect(sGovernor)
-      .setRewardProceedsAddress(
-        isMainnet || isHolesky || isBaseOrFork
-          ? oethDripper.address
-          : await ethers.getContract("VaultProxy")
-      )
+      .setRewardProceedsAddress(rewardProceedsAddress)
   );
 
   return dOETHHarvesterProxy;
