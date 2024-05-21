@@ -1906,17 +1906,6 @@ ajv@^8.0.1:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
-amazon-cognito-identity-js@^4.3.3:
-  version "4.6.3"
-  resolved "https://registry.yarnpkg.com/amazon-cognito-identity-js/-/amazon-cognito-identity-js-4.6.3.tgz#889410379a5fc5e883edc95f4ce233cc628e354c"
-  integrity sha512-MPVJfirbdmSGo7l4h7Kbn3ms1eJXT5Xq8ly+mCPPi8yAxaxdg7ouMUUNTqtDykoZxIdDLF/P6F3Zbg3dlGKOWg==
-  dependencies:
-    buffer "4.9.2"
-    crypto-js "^4.0.0"
-    fast-base64-decode "^1.0.0"
-    isomorphic-unfetch "^3.0.0"
-    js-cookie "^2.2.1"
-
 amazon-cognito-identity-js@^6.0.1:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/amazon-cognito-identity-js/-/amazon-cognito-identity-js-6.2.0.tgz#99e96666944429cb8f67b62e4cf7ad77fbe71ad0"
@@ -3138,11 +3127,6 @@ crypto-browserify@3.12.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
-crypto-js@^4.0.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
-  integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
-
 crypto@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/crypto/-/crypto-1.0.1.tgz#2af1b7cad8175d24c8a1b0778255794a21803037"
@@ -3247,12 +3231,12 @@ deepmerge@^4.2.2:
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.3.1.tgz#44b5f2147cd3b00d4b56137685966f26fd25dd4a"
   integrity sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==
 
-defender-base-client@1.38.1-rc.0:
-  version "1.38.1-rc.0"
-  resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.38.1-rc.0.tgz#0d167845648a38bd2f5f80f5c50e081ec5f58b54"
-  integrity sha512-LNsuop5CE7fYyfWV3C4tlqkZawnxsMKW1SeF8TnobhZ6V5pO9LKyGSOo/V3KvPhO2/cTw5/S66+p1f6nkGCREA==
+defender-base-client@1.44.3:
+  version "1.44.3"
+  resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.44.3.tgz#c5ab770b24eec2b9ddcbb0f3cd859918faeafd3b"
+  integrity sha512-f8a2m8rlYkd+7sfqfnotkvW4dITBB4RVUF1XI1Gz7v3POszgXJIW0TKbVVs2xigmmEpmyCcRB3VnDw3VnQBvoA==
   dependencies:
-    amazon-cognito-identity-js "^4.3.3"
+    amazon-cognito-identity-js "^6.0.1"
     async-retry "^1.3.3"
     axios "^0.21.2"
     lodash "^4.17.19"
@@ -3269,13 +3253,13 @@ defender-base-client@^1.44.0:
     lodash "^4.17.19"
     node-fetch "^2.6.0"
 
-defender-kvstore-client@^1.38.1-rc.0:
-  version "1.38.1-rc.0"
-  resolved "https://registry.yarnpkg.com/defender-kvstore-client/-/defender-kvstore-client-1.38.1-rc.0.tgz#6e33633a90e1355893141bad72298c6727abf30d"
-  integrity sha512-MeN8CtQSY72QFIys56Phxcn3tQ1nnmDXVtP/RlY9HCMynUO4zOQZaanDkgUmXTb+MYMj5VO3y+qfOfdEE+5EWA==
+defender-kvstore-client@^1.44.4:
+  version "1.44.4"
+  resolved "https://registry.yarnpkg.com/defender-kvstore-client/-/defender-kvstore-client-1.44.4.tgz#ecdf6f7a6b128a9dc88224b46ff963c091ffdd14"
+  integrity sha512-nrLv+NKsCJU85ZCNtSQ19pAqB4O3AcjItPpTz0XPaujwNmn0z+o9BRcO+ZYKpgieJrkMXMAoYQwbSeQxaHxFYQ==
   dependencies:
     axios "^0.21.2"
-    defender-base-client "1.38.1-rc.0"
+    defender-base-client "1.44.3"
     fs-extra "^10.0.0"
     lodash "^4.17.19"
     node-fetch "^2.6.0"

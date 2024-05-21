@@ -13,6 +13,7 @@ const commonConfig = {
     "chai",
     /^defender-relay-client(\/.*)?$/,
     "@openzeppelin/defender-sdk",
+    "defender-kvstore-client",
     "@nomicfoundation/solidity-analyzer-darwin-arm64",
     "@nomicfoundation/solidity-analyzer-darwin-x64",
     "fsevents",
@@ -25,7 +26,6 @@ module.exports = [
     input: "operateValidators.js",
     output: {
       file: "dist/operateValidators/index.js",
-      //dir: "dist/operateValidators",
       format: "cjs",
     },
   }
