@@ -12,7 +12,7 @@ const setActionVars = async (options) => {
 
   // Update Variables
   const variables = await client.updateEnvironmentVariables(options.id, {
-    DEBUG: "oeth*",
+    DEBUG: "origin*",
   });
   console.log("updated Autotask environment variables", variables);
 };

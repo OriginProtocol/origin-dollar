@@ -1098,6 +1098,28 @@
     lodash "^4.17.19"
     node-fetch "^2.6.0"
 
+"@openzeppelin/defender-kvstore-client@^1.54.5":
+  version "1.54.5"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/defender-kvstore-client/-/defender-kvstore-client-1.54.5.tgz#d65fba0d956f5b3b90136bc774479d94af058559"
+  integrity sha512-vhkFgXJanwD/RvLtKogCCWBzWdBDyZTO9h0DKnS9ZFHV7E27zMTqjt9FISNT1pD2b1QBHVVlKaKXVk6SDYCrtQ==
+  dependencies:
+    "@openzeppelin/defender-base-client" "1.54.4"
+    axios "^1.4.0"
+    fs-extra "^10.0.0"
+    lodash "^4.17.19"
+    node-fetch "^2.6.0"
+
+"@openzeppelin/defender-relay-client@^1.54.4":
+  version "1.54.4"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/defender-relay-client/-/defender-relay-client-1.54.4.tgz#613c75436fcd15e53c3ae20df7a4288081559f0a"
+  integrity sha512-AgPw4FY7RK9ZaWpPEIqeayBPIlOg/ltvviiBc+bV5fXWXdJQ77iw8Lbv7KrS9pZ21TcgblbRtE3T1epq21tbrg==
+  dependencies:
+    "@openzeppelin/defender-base-client" "1.54.4"
+    amazon-cognito-identity-js "^6.0.1"
+    axios "^1.4.0"
+    lodash "^4.17.19"
+    node-fetch "^2.6.0"
+
 "@openzeppelin/defender-sdk-account-client@^1.13.1":
   version "1.13.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/defender-sdk-account-client/-/defender-sdk-account-client-1.13.1.tgz#8670fff98b35f70a10f6ed741e6d7c12ae539b69"
@@ -3231,17 +3253,6 @@ deepmerge@^4.2.2:
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.3.1.tgz#44b5f2147cd3b00d4b56137685966f26fd25dd4a"
   integrity sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==
 
-defender-base-client@1.44.3:
-  version "1.44.3"
-  resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.44.3.tgz#c5ab770b24eec2b9ddcbb0f3cd859918faeafd3b"
-  integrity sha512-f8a2m8rlYkd+7sfqfnotkvW4dITBB4RVUF1XI1Gz7v3POszgXJIW0TKbVVs2xigmmEpmyCcRB3VnDw3VnQBvoA==
-  dependencies:
-    amazon-cognito-identity-js "^6.0.1"
-    async-retry "^1.3.3"
-    axios "^0.21.2"
-    lodash "^4.17.19"
-    node-fetch "^2.6.0"
-
 defender-base-client@^1.44.0:
   version "1.44.0"
   resolved "https://registry.yarnpkg.com/defender-base-client/-/defender-base-client-1.44.0.tgz#afe724447c0f9177b999b70b9f14dd70d61d5a7a"
@@ -3250,17 +3261,6 @@ defender-base-client@^1.44.0:
     amazon-cognito-identity-js "^6.0.1"
     async-retry "^1.3.3"
     axios "^0.21.2"
-    lodash "^4.17.19"
-    node-fetch "^2.6.0"
-
-defender-kvstore-client@^1.44.4:
-  version "1.44.4"
-  resolved "https://registry.yarnpkg.com/defender-kvstore-client/-/defender-kvstore-client-1.44.4.tgz#ecdf6f7a6b128a9dc88224b46ff963c091ffdd14"
-  integrity sha512-nrLv+NKsCJU85ZCNtSQ19pAqB4O3AcjItPpTz0XPaujwNmn0z+o9BRcO+ZYKpgieJrkMXMAoYQwbSeQxaHxFYQ==
-  dependencies:
-    axios "^0.21.2"
-    defender-base-client "1.44.3"
-    fs-extra "^10.0.0"
     lodash "^4.17.19"
     node-fetch "^2.6.0"
 

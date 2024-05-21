@@ -9,7 +9,9 @@ const addresses = require("../utils/addresses");
 const { getDefenderSigner } = require("../utils/signers");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { resolveContract } = require("../utils/resolvers");
-const { KeyValueStoreClient } = require("defender-kvstore-client");
+const {
+  KeyValueStoreClient,
+} = require("@openzeppelin/defender-kvstore-client");
 const { operateValidators } = require("./validator");
 const { formatUnits } = require("ethers/lib/utils");
 
@@ -74,9 +76,7 @@ const {
 } = require("./strategy");
 
 // can not import from utils/deploy since that imports hardhat globally
-const withConfirmation = async (
-  deployOrTransactionPromise
-) => {
+const withConfirmation = async (deployOrTransactionPromise) => {
   const hre = require("hardhat");
 
   const result = await deployOrTransactionPromise;
@@ -1054,7 +1054,10 @@ task("operateValidators").setAction(async (_, __, runSuper) => {
 });
 
 // Defender
-subtask("setActionVars", "Set environment variables on a Defender Actions. eg DEBUG=prime*")
+subtask(
+  "setActionVars",
+  "Set environment variables on a Defender Actions. eg DEBUG=prime*"
+)
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
