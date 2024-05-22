@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits, parseEther, formatEther } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { createFixtureLoader } = require("../_fixture");
@@ -216,6 +216,26 @@ describe("ForkTest: OETH Vault Base", function () {
       expect((await oethVault.weth()).toLowerCase()).to.equal(
         addresses.base.wethTokenAddress.toLowerCase()
       );
+    });
+    it("Should return a price for minting with WETH", async () => {
+      const { oethVault, weth } = fixture;
+      const price = await oethVault.priceUnitMint(weth.address);
+
+      log(`Price for minting with WETH: ${formatEther(price, 6)}`);
+
+      expect(price).to.be.lte(parseEther("1"));
+      expect(price).to.be.gt(parseEther("0.998"));
+    });
+  });
+  describe("Rebase", () => {
+    it(`Shouldn't be paused`, async () => {
+      const { oethVault } = fixture;
+      expect(await oethVault.rebasePaused()).to.be.false;
+    });
+
+    it(`Should rebase`, async () => {
+      const { oethVault } = fixture;
+      await oethVault.rebase();
     });
   });
 });
