@@ -1013,6 +1013,18 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       });
     }
   });
+
+  it.skip("Deposit alternate deposit_data_root ", async () => {
+    const { depositContractUtils } = fixture;
+
+    const newDepositDataRoot =
+      await depositContractUtils.calculateDepositDataRoot(
+        "0x9254b0fba5173550bcf0950031533e816150167577c15636922406977bafa09ed1a1cc72a148030db977d7091d31c1fa",
+        "0x010000000000000000000000cf4a9e80ddb173cc17128a361b98b9a140e3932e",
+        "0x9144bddd6d969571dd058d9656c9da32cf4b8556e18a16362383d02a93bd0901f100874f7f795165a2162badceb5466811f5cfbce8be21d02a87af1898cbe53f5d160d46cbc0863d8e6e28d5f0becf4804cf728b39d0bae69540df896ce97b8b"
+      );
+    console.log(`the new newDepositDataRoot is: ${newDepositDataRoot}`);
+  });
 });
 
 const setActiveDepositedValidators = async (

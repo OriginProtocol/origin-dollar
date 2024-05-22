@@ -351,6 +351,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
+    depositContractUtils,
     LUSDMetaStrategy,
     oethDripper,
     oethZapper,
@@ -550,6 +551,7 @@ const defaultFixture = deployments.createFixture(async () => {
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
     cvxRewardPool = await ethers.getContract("MockRewardPool");
+    depositContractUtils = await ethers.getContract("DepositContractUtils");
 
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");
@@ -741,6 +743,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
+    depositContractUtils,
 
     aaveStrategy,
     aaveToken,
