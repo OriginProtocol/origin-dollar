@@ -216,3 +216,17 @@ contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 contract BridgedBaseWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice AerodromeEthStrategyProxy delegates calls to AerodromEthStrategy implementation
+ */
+contract AerodromeEthStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice AeroHarvesterProxy delegates calls to a Harvester implementation
+ */
+contract AeroHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

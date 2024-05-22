@@ -436,7 +436,10 @@ const getAssetAddresses = async (deployments) => {
       BAL: addresses.mainnet.BAL,
     };
   } else if (isBaseOrFork) {
-    return { WETH: addresses.base.wethTokenAddress };
+    return {
+      WETH: addresses.base.wethTokenAddress,
+      AERO: addresses.base.aeroTokenAddress,
+    };
   } else {
     const addressMap = {
       USDT: (await deployments.get("MockUSDT")).address,

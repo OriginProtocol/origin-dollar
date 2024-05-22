@@ -587,6 +587,29 @@ const deployOETHHarvester = async (oethDripper) => {
     rewardProceedsAddress = (await ethers.getContract("VaultProxy")).address;
   }
 
+  if (isBaseOrFork) {
+    await withConfirmation(
+      cOETHHarvester.connect(sGovernor).setRewardTokenConfig(
+        addresses.base.aeroTokenAddress,
+        {
+          allowedSlippageBps: 800,
+          harvestRewardBps: 100,
+          swapPlatform: 0, // Aerodrome
+          swapPlatformAddr: addresses.base.aeroRouterAddress,
+          liquidationLimit: 0,
+          doSwapRewardToken: true,
+        },
+        [
+          {
+            from: addresses.base.aeroTokenAddress,
+            to: addresses.base.wethTokenAddress,
+            stable: true,
+            factory: addresses.base.aeroFactoryAddress,
+          },
+        ]
+      )
+    );
+  }
   await withConfirmation(
     cOETHHarvester
       .connect(sGovernor)
@@ -594,6 +617,79 @@ const deployOETHHarvester = async (oethDripper) => {
   );
 
   return dOETHHarvesterProxy;
+};
+
+const deployAeroHarvester = async (oethDripper) => {
+  if (!isBaseOrFork) {
+    // Run only on base
+    return;
+  }
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cBaseOETHOracleRouter = await ethers.getContract(
+    "BaseOETHOracleRouter"
+  );
+
+  const dAeroHarvesterProxy = await deployWithConfirmation(
+    "AeroHarvesterProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
+  const cAeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
+
+  const dAeroHarvester = await deployWithConfirmation("AeroHarvester", [
+    cBaseOETHOracleRouter.address,
+    assetAddresses.WETH,
+  ]);
+
+  const cAeroHarvester = await ethers.getContractAt(
+    "AeroHarvester",
+    dAeroHarvesterProxy.address
+  );
+  await withConfirmation(
+    cAeroHarvesterProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dAeroHarvester.address,
+        governorAddr,
+        []
+      )
+  );
+
+  log("Initialized AeroHarvesterProxy");
+  await withConfirmation(
+    cAeroHarvester.connect(sGovernor).setRewardTokenConfig(
+      assetAddresses.AERO,
+      {
+        allowedSlippageBps: 800,
+        harvestRewardBps: 100,
+        swapPlatform: 0, // Aerodrome
+        swapPlatformAddr: addresses.base.aeroRouterAddress,
+        liquidationLimit: 0,
+        doSwapRewardToken: true,
+      },
+      [
+        {
+          from: addresses.base.aeroTokenAddress,
+          to: addresses.base.wethTokenAddress,
+          stable: true,
+          factory: addresses.base.aeroFactoryAddress,
+        },
+      ]
+    )
+  );
+
+  log("Reward token config set");
+
+  await withConfirmation(
+    cAeroHarvester
+      .connect(sGovernor)
+      .setRewardProceedsAddress(oethDripper.address)
+  );
+
+  return dAeroHarvesterProxy;
 };
 
 /**
@@ -956,7 +1052,7 @@ const deployOracles = async () => {
   const oracleRouter = await ethers.getContract(contractName);
   log("Deployed OracleRouter");
 
-  if (isHolesky || isBaseOrFork) {
+  if (isHolesky) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -964,6 +1060,12 @@ const deployOracles = async () => {
   }
 
   const assetAddresses = await getAssetAddresses(deployments);
+
+  if (isBaseOrFork) {
+    await withConfirmation(oracleRouter.cacheDecimals(assetAddresses.AERO));
+    return;
+  }
+
   await deployWithConfirmation("AuraWETHPriceFeed", [
     assetAddresses.auraWeightedOraclePool,
     governorAddr,
@@ -1506,6 +1608,73 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
+const deployAerodromeStrategy = async (poolAddress, gaugeAddress) => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oethVault = await ethers.getContract("OETHVaultProxy");
+  const oeth = await ethers.getContract("OETHProxy");
+
+  log("Deploy AerodromeEthStrategyProxy");
+  const dAerodromeEthStrategyProxy = await deployWithConfirmation(
+    "AerodromeEthStrategyProxy"
+  );
+  const cAerodromeEthStrategyProxy = await ethers.getContract(
+    "AerodromeEthStrategyProxy"
+  );
+
+  log("Deploy AerodromeEthStrategy");
+  const dStrategyImpl = await deployWithConfirmation("AerodromeEthStrategy", [
+    [poolAddress, oethVault.address],
+    [
+      addresses.base.aeroRouterAddress,
+      gaugeAddress,
+      addresses.base.aeroFactoryAddress,
+      poolAddress,
+      oeth.address,
+      assetAddresses.WETH,
+    ],
+  ]);
+  const cStrategyImpl = await ethers.getContractAt(
+    "AerodromeEthStrategy",
+    dStrategyImpl.address
+  );
+
+  log("Deploy encode initialize function of the strategy contract");
+  const initData = cStrategyImpl.interface.encodeFunctionData(
+    "initialize(address[],address[])",
+    [
+      [assetAddresses.AERO], // reward token addresses
+      [assetAddresses.WETH], // asset token addresses
+    ]
+  );
+
+  log("Initialize the proxy and execute the initialize strategy function");
+  await withConfirmation(
+    cAerodromeEthStrategyProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cStrategyImpl.address, // implementation address
+      governorAddr, // governance
+      initData // data for call to the initialize function on the strategy
+    )
+  );
+  log("Set harvester address");
+  const cStrategy = await ethers.getContractAt(
+    "AerodromeEthStrategy",
+    cAerodromeEthStrategyProxy.address
+  );
+  const cHarvester = await ethers.getContract("AeroHarvesterProxy");
+  await withConfirmation(
+    cStrategy.connect(sGovernor).setHarvesterAddress(cHarvester.address)
+  );
+  return dAerodromeEthStrategyProxy;
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1538,4 +1707,6 @@ module.exports = {
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
+  deployAerodromeStrategy,
+  deployAeroHarvester,
 };

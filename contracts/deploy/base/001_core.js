@@ -5,7 +5,7 @@ const {
   deployOETHCore,
   deployOETHDripper,
   configureOETHVault,
-  deployOETHHarvester,
+  deployAeroHarvester,
 } = require("../deployActions");
 
 const mainExport = async () => {
@@ -25,8 +25,8 @@ const mainExport = async () => {
   console.log("Deploying OETH Dripper");
   const cOETHDripper = await deployOETHDripper();
 
-  console.log("Deploying Harvester");
-  await deployOETHHarvester(cOETHDripper);
+  console.log("Deploying AeroHarvester");
+  await deployAeroHarvester(cOETHDripper);
 
   console.log("Configuring OETH Vault");
   await configureOETHVault(true);
