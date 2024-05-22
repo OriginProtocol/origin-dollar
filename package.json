@@ -5,12 +5,14 @@
   "scripts": {
     "build": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "start": "(cd contracts && yarn run node)",
-    "test": "exit 0"
+    "test": "exit 0",
+    "prepare": "husky"
   },
   "engines": {
     "node": "20"
   },
   "devDependencies": {
-    "danger": "^11.2.8"
+    "danger": "^11.2.8",
+    "husky": "^9.0.11"
   }
 }

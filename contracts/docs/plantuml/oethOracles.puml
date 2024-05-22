@@ -7,7 +7,7 @@ title "OETH Oracle Contract Dependencies"
 object "OETHVault" as vault <<Origin>> #DeepSkyBlue {
 assets:
     \tWETH
-    \tfrxETH
+    ' \tfrxETH
     \trETH
     \tstETH
 }
@@ -15,17 +15,29 @@ assets:
 object "OETHOracleRouter" as router <<Origin>> #DeepSkyBlue {
 pairs:
     \tWETH/ETH
-    \tfrxETH/ETH
+    ' \tfrxETH/ETH
     \tstETH/ETH
     \trETH/ETH
+    \tCRV/ETH
+    \tCVX/ETH
+    \tBAL/ETH
+    \tAURA/ETH
 }
 
-object "FrxEthFraxOracle" as fo <<Frax>> {
-pair: frxETH/ETH
+' object "FrxEthFraxOracle" as fo <<Frax>> {
+' pair: frxETH/ETH
+' }
+
+' object "FrxEthEthDualOracle" as fdo <<Frax>> {
+' pair: frxETH/ETH
+' }
+
+object "AuraWETHPriceFeed" as auraPF <<Origin>> #DeepSkyBlue {
+pair: AURA/ETH
 }
 
-object "FrxEthEthDualOracle" as fdo <<Frax>> {
-pair: frxETH/ETH
+object "80 Aura\n20 WETH\nPool" as auraBal <<Balancer>> {
+    assets: AURA/WETH
 }
 
 object "External\nAccess\nControlled\nAggregator" as clrETH <<Chainlink>> {
@@ -36,35 +48,52 @@ object "External\nAccess\nControlled\nAggregator" as clstETH <<Chainlink>> {
 pair: stETH/ETH
 }
 
-object "External\nAccess\nControlled\nAggregator" as cleth <<Chainlink>> {
-pair: ETH/USD
+object "External\nAccess\nControlled\nAggregator" as clCRV <<Chainlink>> {
+pair: CRV/ETH
 }
 
-object "External\nAccess\nControlled\nAggregator" as clfrax <<Chainlink>> {
-pair: FRAX/USD
+object "External\nAccess\nControlled\nAggregator" as clCVX <<Chainlink>> {
+pair: CVX/ETH
 }
 
-object "frxETH/ETH Pool" as cp <<Curve>> {
-assets: frxETH, ETH
+object "External\nAccess\nControlled\nAggregator" as clBAL <<Chainlink>> {
+pair: BAL/ETH
 }
 
-object "StaticOracle" as uso <<Uniswap>> {
-}
+' object "External\nAccess\nControlled\nAggregator" as cleth <<Chainlink>> {
+' pair: ETH/USD
+' }
 
-object "frxETH/FRAX Pool" as up <<Uniswap>> {
-    assets: frxETH, FRAX
-}
+' object "External\nAccess\nControlled\nAggregator" as clfrax <<Chainlink>> {
+' pair: FRAX/USD
+' }
+
+' object "frxETH/ETH Pool" as cp <<Curve>> {
+' assets: frxETH, ETH
+' }
+
+' object "StaticOracle" as uso <<Uniswap>> {
+' }
+
+' object "frxETH/FRAX Pool" as up <<Uniswap>> {
+'     assets: frxETH, FRAX
+' }
 
 
 vault ..> router : price(asset)
-router ...> clrETH : latestRoundData()
-router ...> clstETH : latestRoundData()
-router ..> fo : latestRoundData()
-fdo .> fo : addRoundData()
-fdo ....> cp : price_oracle()
-fdo ....> uso : quoteSpecificPoolsWithTimePeriod()
-uso .> up : observe()
-fdo ..> cleth : latestRoundData()
-fdo ..> clfrax : latestRoundData()
+router ..> auraPF : latestRoundData()
+auraPF ..> auraBal : getTimeWeightedAverage()
+router ..> clrETH : latestRoundData()
+router ..> clstETH : latestRoundData()
+router ..> clCRV : latestRoundData()
+router ..> clCVX: latestRoundData()
+router ..> clBAL : latestRoundData()
+' router ..> fo : latestRoundData()
+' fdo .> fo : addRoundData()
+' fdo ....> cp : price_oracle()
+' fdo ....> uso : quoteSpecificPoolsWithTimePeriod()
+' uso .> up : observe()
+' fdo ..> cleth : latestRoundData()
+' fdo ..> clfrax : latestRoundData()
 
 @enduml
