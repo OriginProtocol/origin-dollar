@@ -32,6 +32,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   await fundAccount(deployerAddr);
   await fundAccount(governorAddr);
 
+  const sGovernor = await ethers.getSigner(governorAddr);
+  const sDeployer = await ethers.getSigner(deployerAddr);
+
   // Run the contract deployments
   await deployments.fixture(isFork ? ["base"] : ["base_unit_tests"], {
     keepExistingDeployments: true,
@@ -59,6 +62,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     "IVault",
     oethVaultProxy.address
   );
+  const oethVaultSigner = await impersonateAndFund(oethVault.address);
+
   const oethVaultCore = await ethers.getContract("OETHVaultCore");
 
   const aeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
@@ -103,6 +108,53 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   await woeth.connect(minter).mint(rafael.address, oethUnits("1"));
   await woeth.connect(minter).mint(nick.address, oethUnits("1"));
 
+  // Loading the AeroRouter instance
+  const aeroRouter = await ethers.getContractAt(
+    "IRouter",
+    addresses.base.aeroRouterAddress
+  );
+  let poolAddress = await aeroRouter.poolFor(
+    weth.address,
+    oeth.address,
+    true,
+    addresses.base.aeroFactoryAddress
+  );
+  let pool = await ethers.getContractAt("IPool", poolAddress, josh);
+  // Create gauge
+  const aeroVoter = await ethers.getContractAt(
+    "IVoter",
+    addresses.base.aeroVoterAddress
+  );
+
+  const gaugeAddress = await aeroVoter.gauges(poolAddress);
+  const aeroGauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
+  const wethReserveIndex =
+    weth.address === (await pool.token0()) ? "_reserve0" : "_reserve1";
+
+  const oethReserveIndex =
+    wethReserveIndex === "_reserve1" ? "_reserve0" : "_reserve1";
+
+  if (config?.wethMintAmount > 0) {
+    const wethAmount = parseUnits(config.wethMintAmount.toString());
+
+    // Set vault balance. This will sit in the vault, not the strategy
+    await weth.connect(josh).transfer(oethVault.address, wethAmount);
+
+    log(`Vault weth balance set to: ${wethAmount}`);
+    // Add ETH to the pool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the AMO strategy
+      await oethVault
+        .connect(josh)
+        .depositToStrategy(
+          aerodromeEthStrategy.address,
+          [weth.address],
+          [wethAmount]
+        );
+      log(`Deposited ${wethAmount} WETH to the strategy contract`);
+    }
+  }
+
   return {
     woeth,
     woethProxy,
@@ -125,6 +177,15 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     rafael,
     nick,
     josh,
+
+    pool,
+    wethReserveIndex,
+    oethReserveIndex,
+    aeroRouter,
+    aeroGauge,
+    oethVaultSigner,
+    sGovernor,
+    sDeployer,
   };
 });
 

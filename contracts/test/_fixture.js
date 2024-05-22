@@ -27,8 +27,6 @@ const {
   ousdUnits,
   units,
   isFork,
-  getBlockTimestamp,
-  fundAccount,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -50,7 +48,7 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
-const { deployWithConfirmation } = require("../utils/deploy.js");
+const { defaultBaseFixture } = require("./_fixture-base.js");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -1731,242 +1729,31 @@ async function aeroOETHAMOFixture(
     balancePool: false,
   }
 ) {
-  let fixture = {};
-  const MockWETH = await ethers.getContractFactory("MockWETH");
-  const MockOETH = await ethers.getContractFactory("MockOETH");
-
-  const wETH = await MockWETH.deploy();
-  await wETH.deployed();
-
-  const oETH = await MockOETH.deploy();
-  await oETH.deployed();
-
-  fixture.weth = wETH;
-  fixture.oeth = oETH;
-  const [defaultSigner, josh, governorAddr, rewardHarvester] =
-    await ethers.getSigners();
-  const { strategistAddr, timelockAddr } = await getNamedAccounts();
-
-  fixture.rewardHarvester = rewardHarvester;
-  fixture.strategist = ethers.provider.getSigner(strategistAddr);
-  fixture.timelock = ethers.provider.getSigner(timelockAddr);
-
-  log(`wETH mock token address: ${wETH.address}`);
-  log(`oETH mock token address: ${oETH.address}`);
-
-  log("Getting signers...");
-
-  // Deploy mock vault
-  const MockVaultForBase = await ethers.getContractFactory("MockVaultForBase");
-
-  const mockVault = await MockVaultForBase.deploy(
-    josh.address,
-    oETH.address,
-    wETH.address
-  );
-  await mockVault.deployed();
-  log(`Mock Vault deployed: ${mockVault.address}`);
-
-  // Mint one token each to the vault for the task
-  await oETH.mintTo(mockVault.address, parseUnits("1"));
-  await wETH.mintTo(mockVault.address, parseUnits("1"));
-
-  fixture.oethVaultSigner = await impersonateAndFund(mockVault.address);
-
-  fixture.josh = josh;
-  fixture.governor = governorAddr;
-  // Minting  tokens to Josh's wallet
-  await oETH.mintTo(josh.address, parseEther("15000"));
-  await wETH.mintTo(josh.address, parseEther("15000"));
-
-  // Loading the AeroRouter instance
-  const aeroRouter = await ethers.getContractAt(
-    "IRouter",
-    addresses.base.aeroRouterAddress
-  );
-
-  // // Approve the router to spend the tokens
-  await wETH
-    .connect(josh)
-    .approve(aeroRouter.address, ethers.utils.parseEther("5000"));
-  await oETH
-    .connect(josh)
-    .approve(aeroRouter.address, ethers.utils.parseEther("5000"));
-
-  // Add initial liquidity (100 * 1e18 on each side)
-  await aeroRouter.connect(josh).addLiquidity(
-    wETH.address,
-    oETH.address,
-    true,
-    ethers.utils.parseEther("5000"),
-    ethers.utils.parseEther("5000"),
-    // Slippage adjusted amounts
-    ethers.utils.parseEther("5000"),
-    ethers.utils.parseEther("5000"),
-    josh.address,
-    parseInt(Date.now() / 1000) + 5 * 360
-  );
-  //await aeroRouter.connect(josh).swapExactTokenForTokens(parseUnits("100"),0,[[oeth.address,weth.address,true,addresses.base.aeroFactoryAddress]],josh.address,parseInt(Date.now() / 1000) + 5 * 360);
-
-  // Fetch wETH/oETH pool address
-  let poolAddress = await aeroRouter.poolFor(
-    wETH.address,
-    oETH.address,
-    true,
-    addresses.base.aeroFactoryAddress
-  );
-  let pool = await ethers.getContractAt("IPool", poolAddress, josh);
-  const lpBalance = (await pool.balanceOf(josh.address)).toString();
-  log("Received LP tokens: ", formatUnits(lpBalance, 18));
-
-  // We need to do this as the order will be different for each run.
-  const wethReserveIndex =
-    wETH.address === (await pool.token0()) ? "_reserve0" : "_reserve1";
-  const oethReserveIndex =
-    wethReserveIndex === "_reserve1" ? "_reserve0" : "_reserve1";
-
-  fixture.pool = pool;
-  fixture.aeroRouter = aeroRouter;
-  fixture.wethReserveIndex = wethReserveIndex;
-  fixture.oethReserveIndex = oethReserveIndex;
-
-  // Create gauge
-  const aeroVoter = await ethers.getContractAt(
-    "IVoter",
-    addresses.base.aeroVoterAddress
-  );
-  // Create gauge for weth/oETH LP
-  let governor = await impersonateAndFund(
-    addresses.base.aeroGaugeGovernorAddress,
-    "2"
-  );
-
-  // Do a static call to fetch the gauge address first
-  const gaugeAddress = await aeroVoter
-    .connect(governor)
-    .callStatic.createGauge(addresses.base.aeroFactoryAddress, poolAddress);
-
-  await aeroVoter
-    .connect(governor)
-    .createGauge(addresses.base.aeroFactoryAddress, poolAddress);
-  log(`Aero Gauge created for wETH/oETH pool at address: ${gaugeAddress}`);
-
-  fixture.routerAddress = addresses.base.aeroRouterAddress;
-
-  log("Deploying AerodromeEthStrategy with a mock vault");
-
-  const AerodromeEthStrategy = await ethers.getContractFactory(
-    "AerodromeEthStrategy"
-  );
-
-  // TODO: replace mockVault with actual vault address.
-  const aerodromeEthStrategy = await AerodromeEthStrategy.connect(
-    governorAddr
-  ).deploy(
-    [poolAddress, mockVault.address],
-    [
-      addresses.base.aeroRouterAddress,
-      gaugeAddress,
-      addresses.base.aeroFactoryAddress,
-      poolAddress,
-      oETH.address,
-      wETH.address,
-    ]
-  );
-  await aerodromeEthStrategy.deployed();
-  log("oETH/wETH Pool address", await aerodromeEthStrategy.lpTokenAddress());
-
-  await aerodromeEthStrategy.initialize(
-    [addresses.base.aeroTokenAddress],
-    [wETH.address]
-  );
-  // await vault.approveStrategy(aerodromeEthStrategy.address);
-  // log("AerodromeEthStrategy strategy approved in OETHVault");
-
-  fixture.aerodromeEthStrategy = aerodromeEthStrategy;
-  fixture.oethVault = mockVault;
-
-  // Deposit LP Tokens to the Gauge onbehalf of the strategy contract
-  const gauge = await ethers.getContractAt("IGauge", gaugeAddress, josh);
-  await pool.approve(gaugeAddress, parseEther(lpBalance));
-  await gauge["deposit(uint256,address)"](
-    lpBalance,
-    aerodromeEthStrategy.address
-  );
-  log(`LP Tokens added to the gauge`);
-
-  fixture.aeroGauge = gauge;
+  const baseFixture = createFixtureLoader(defaultBaseFixture);
+  const fixture = await baseFixture();
+  const { josh, oethVault, weth, aerodromeEthStrategy, sGovernor } = fixture;
   // Conditional actions based on input params
   // mint some OETH using WETH is configured
   if (config?.wethMintAmount > 0) {
     const wethAmount = parseUnits(config.wethMintAmount.toString());
 
     // Set vault balance. This will sit in the vault, not the strategy
-    await setERC20TokenBalance(mockVault.address, wETH, wethAmount);
+    await weth.connect(josh).transfer(oethVault.address, wethAmount);
 
-    log(`MockVault weth balance set to: ${wethAmount}`);
+    log(`OETHVault weth balance set to: ${wethAmount}`);
     // Add ETH to the pool
     if (config?.depositToStrategy) {
-      // The strategist deposits the WETH to the AMO strategy
-      await mockVault
-        .connect(josh)
+      // The governor deposits the WETH to the AMO strategy
+      await oethVault
+        .connect(sGovernor)
         .depositToStrategy(
           aerodromeEthStrategy.address,
-          [wETH.address],
+          [weth.address],
           [wethAmount]
         );
       log(`Deposited ${wethAmount} WETH to the strategy contract`);
     }
   }
-
-  const AeroWethFeed = await ethers.getContractFactory("PriceFeedPair");
-  const aeroWethFeed = await AeroWethFeed.deploy(
-    addresses.base.aeroUsdPriceFeed,
-    addresses.base.ethUsdPriceFeed,
-    false,
-    true
-  );
-  await aeroWethFeed.deployed();
-
-  const OracleRouter = await ethers.getContractFactory("BaseOETHOracleRouter");
-  const oracleRouter = await OracleRouter.deploy(aeroWethFeed.address);
-  await oracleRouter.deployed();
-  await oracleRouter.cacheDecimals(addresses.base.aeroTokenAddress);
-
-  fixture.oracleRouter = oracleRouter;
-
-  const AeroHarvester = await ethers.getContractFactory("AeroHarvester");
-  const harvester = await AeroHarvester.deploy(
-    oracleRouter.address,
-    addresses.base.wethTokenAddress
-  );
-  await harvester.deployed();
-  await harvester.setRewardTokenConfig(
-    addresses.base.aeroTokenAddress,
-    {
-      allowedSlippageBps: 800,
-      harvestRewardBps: 100,
-      swapPlatform: 0, // Aerodrome
-      swapPlatformAddr: addresses.base.aeroRouterAddress,
-      liquidationLimit: 0,
-      doSwapRewardToken: true,
-    },
-    [
-      {
-        from: addresses.base.aeroTokenAddress,
-        to: addresses.base.wethTokenAddress,
-        stable: true,
-        factory: addresses.base.aeroFactoryAddress,
-      },
-    ]
-  );
-
-  await harvester.setSupportedStrategy(aerodromeEthStrategy.address, true);
-  await harvester.setRewardProceedsAddress(rewardHarvester.address);
-
-  fixture.harvester = harvester;
-
-  await aerodromeEthStrategy.setHarvesterAddress(harvester.address);
 
   return fixture;
 }

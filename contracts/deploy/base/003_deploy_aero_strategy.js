@@ -24,7 +24,7 @@ const mainExport = async () => {
       const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
       const vaultSigner = await impersonateAndFund(oethVaultProxy.address);
       await oeth.connect(vaultSigner).mint(josh.address, oethUnits("250"));
-      await weth.connect(josh).deposit({ value: oethUnits("250") });
+      await weth.connect(josh).deposit({ value: oethUnits("350") });
 
       // Loading the AeroRouter instance
       const aeroRouter = await ethers.getContractAt(
@@ -74,7 +74,7 @@ const mainExport = async () => {
         .connect(governor)
         .createGauge(addresses.base.aeroFactoryAddress, poolAddress);
 
-      const gaugeAddress = aeroVoter.gauges(poolAddress);
+      const gaugeAddress = await aeroVoter.gauges(poolAddress);
       console.log(
         `Gauge created for weth/oeth pool at address: ${gaugeAddress}`
       );

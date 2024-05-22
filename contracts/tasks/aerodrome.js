@@ -208,7 +208,7 @@ async function aeroContracts(oTokenSymbol, fixture) {
   );
   fixture.oeth = await ethers.getContractAt("IERC20", fixture.oeth.address);
   fixture.oethVault = await ethers.getContractAt(
-    "MockVaultForBase",
+    "IVault",
     fixture.oethVault.address
   );
   fixture.aeroRouter = await ethers.getContractAt(
@@ -266,9 +266,10 @@ function displayProperty(
 }
 
 function displayPortion(amount, total, units, comparison, precision = 2) {
-  const basisPoints = amount
-    .mul(BigNumber.from(10).pow(2 + precision))
-    .div(total);
+  const basisPoints =
+    amount.gt(0) && total.gt(0)
+      ? amount.mul(BigNumber.from(10).pow(2 + precision)).div(total)
+      : BigNumber.from(0);
   return `${formatUnits(amount)} ${units} ${formatUnits(
     basisPoints,
     precision

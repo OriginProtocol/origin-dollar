@@ -15,6 +15,7 @@ const {
   lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
 const { isBase } = require("../utils/hardhat-helpers.js");
+const { BigNumber } = require("ethers");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -498,6 +499,13 @@ const configureOETHVault = async (isSimpleOETH) => {
       .connect(sGovernor)
       .setAutoAllocateThreshold(ethers.utils.parseUnits("5", 18))
   );
+
+  if (isBase) {
+    // Set strategist address to governor
+    await withConfirmation(
+      cVault.connect(sGovernor).setStrategistAddr(governorAddr)
+    );
+  }
 };
 
 const deployOUSDHarvester = async (ousdDripper) => {
@@ -1615,7 +1623,12 @@ const deployAerodromeStrategy = async (poolAddress, gaugeAddress) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  const oethVault = await ethers.getContract("OETHVaultProxy");
+  const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    oethVaultProxy.address
+  );
+
   const oeth = await ethers.getContract("OETHProxy");
 
   log("Deploy AerodromeEthStrategyProxy");
@@ -1672,6 +1685,22 @@ const deployAerodromeStrategy = async (poolAddress, gaugeAddress) => {
   await withConfirmation(
     cStrategy.connect(sGovernor).setHarvesterAddress(cHarvester.address)
   );
+
+  await withConfirmation(
+    oethVault.connect(sGovernor).setOusdMetaStrategy(cStrategy.address)
+  );
+
+  // Set mint threshold to 50m (arbitrary)
+  const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18));
+  await withConfirmation(
+    oethVault.connect(sGovernor).setNetOusdMintForStrategyThreshold(fiftyMil)
+  );
+
+  // Approve strategy
+  await withConfirmation(
+    oethVault.connect(sGovernor).approveStrategy(cStrategy.address)
+  );
+
   return dAerodromeEthStrategyProxy;
 };
 
