@@ -73,9 +73,7 @@ const {
 } = require("./strategy");
 
 // can not import from utils/deploy since that imports hardhat globally
-const withConfirmation = async (
-  deployOrTransactionPromise
-) => {
+const withConfirmation = async (deployOrTransactionPromise) => {
   const hre = require("hardhat");
 
   const result = await deployOrTransactionPromise;
