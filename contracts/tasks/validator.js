@@ -6,7 +6,6 @@ const { v4: uuidv4 } = require("uuid");
 //const { resolveContract } = require("../utils/resolvers");
 const { sleep } = require("../utils/time");
 //const { getClusterInfo } = require("./ssv");
-const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:p2p");
 

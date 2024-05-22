@@ -114,6 +114,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
+        _wethWithdrawnAndStaked(requiredETH);
 
         uint256 validatorsLength = validators.length;
         // For each validator
@@ -247,4 +248,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             cluster
         );
     }
+
+    /***************************************
+                 Abstract
+    ****************************************/
+
+    /// @dev allows for NativeStakingSSVStrategy contract know how much WETH had been staked
+    function _wethWithdrawnAndStaked(uint256 _amount) internal virtual;
 }

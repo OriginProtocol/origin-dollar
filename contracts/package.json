@@ -63,6 +63,7 @@
     "debug": "^4.3.4",
     "dotenv": "^10.0.0",
     "eslint": "^7.32.0",
+    "eslint-plugin-no-only-tests": "^3.1.0",
     "ethereum-waffle": "^4.0.10",
     "ethers": "^5.4.6",
     "hardhat": "^2.14.1",
