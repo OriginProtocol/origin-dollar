@@ -4,7 +4,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "090_disable_compound",
-    forceDeploy: false,
+    // forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing

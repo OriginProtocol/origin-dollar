@@ -42,7 +42,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     event AccountingManuallyFixed(
         int256 validatorsDelta,
-        int256 consensusRewardsDelta
+        int256 consensusRewardsDelta,
+        uint256 wethToVault
     );
 
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -132,7 +133,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
             // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
-            wethWithdrawnToVault(wethToVault);
+            _wethWithdrawnToVault(wethToVault);
 
             emit AccountingFullyWithdrawnValidator(
                 fullyWithdrawnValidators,
@@ -163,7 +164,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
-            wethWithdrawnToVault(ethRemaining);
+            _wethWithdrawnToVault(ethRemaining);
 
             emit AccountingValidatorSlashed(
                 activeDepositedValidators,
@@ -194,9 +195,16 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @notice Allow the Strategist to fix the accounting of this strategy and unpause.
     /// @param _validatorsDelta adjust the active validators by up to plus three or minus three
     /// @param _consensusRewardsDelta adjust the accounted for consensus rewards up or down
+    /// @param _ethToVaultAmount the amount of ETH that gets wrapped into WETH and sent to the Vault
+    /// @dev There is a case when a validator(s) gets slashed so much that the eth swept from
+    /// the beacon chain enters the fuse area and there are no consensus rewards on the contract
+    /// to "dip into"/use. To increase the amount of unaccounted ETH over the fuse end interval
+    /// we need to reduce the amount of active deposited validators and immediately send WETH
+    /// to the vault, so it doesn't interfere with further accounting.
     function manuallyFixAccounting(
         int256 _validatorsDelta,
-        int256 _consensusRewardsDelta
+        int256 _consensusRewardsDelta,
+        uint256 _ethToVaultAmount
     ) external onlyStrategist whenPaused {
         require(
             lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
@@ -217,8 +225,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
             "invalid consensusRewardsDelta"
         );
+        require(_ethToVaultAmount <= 32 ether * 3, "invalid wethToVaultAmount");
 
-        emit AccountingManuallyFixed(_validatorsDelta, _consensusRewardsDelta);
+        emit AccountingManuallyFixed(
+            _validatorsDelta,
+            _consensusRewardsDelta,
+            _ethToVaultAmount
+        );
 
         activeDepositedValidators = uint256(
             int256(activeDepositedValidators) + _validatorsDelta
@@ -226,8 +239,16 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         consensusRewards = uint256(
             int256(consensusRewards) + _consensusRewardsDelta
         );
-
         lastFixAccountingBlockNumber = block.number;
+        if (_ethToVaultAmount > 0) {
+            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToVaultAmount }();
+            // slither-disable-next-line unchecked-transfer
+            IWETH9(WETH_TOKEN_ADDRESS).transfer(
+                VAULT_ADDRESS,
+                _ethToVaultAmount
+            );
+            _wethWithdrawnToVault(_ethToVaultAmount);
+        }
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
@@ -242,5 +263,5 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     ****************************************/
 
     /// @dev allows for NativeStakingSSVStrategy contract to emit Withdrawal event
-    function wethWithdrawnToVault(uint256 _amount) internal virtual;
+    function _wethWithdrawnToVault(uint256 _amount) internal virtual;
 }
