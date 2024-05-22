@@ -189,14 +189,10 @@ contract NativeStakingSSVStrategy is
             address(this)
         );
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
-        depositedWethAccountedFor += newWeth;
 
-        require(
-            depositedWethAccountedFor == wethBalance,
-            "Unexpected depositedWethAccountedFor amount"
-        );
+        if (newWeth > 0) {
+            depositedWethAccountedFor = wethBalance;
 
-        if (wethBalance > 0) {
             _deposit(WETH_TOKEN_ADDRESS, newWeth);
         }
     }
