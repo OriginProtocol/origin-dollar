@@ -59,6 +59,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
     event StakeETHThresholdChanged(uint256 amount);
+    event StakeETHTallyReset();
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -107,6 +108,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         stakeETHThreshold = _amount;
     }
 
+    /// @notice Reset the stakeETHTally
+    function resetStakeETHTally() external onlyGovernor {
+        emit StakeETHTallyReset();
+        stakeETHTally = 0;
+    }
+
     /// @notice Stakes WETH to the node validators
     /// @param validators A list of validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
@@ -124,6 +131,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
             "insufficient WETH"
         );
+
+        require(
+            stakeETHTally + requiredETH <= stakeETHThreshold,
+            "Staking ETH over approved threshold"
+        );
+        stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);

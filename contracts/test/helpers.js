@@ -490,7 +490,7 @@ const getAssetAddresses = async (deployments) => {
       SSV: (await deployments.get("MockSSV")).address,
       SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
       beaconChainDepositContract: (
-        await deployments.get("BeaconChainDepositContractMock")
+        await deployments.get("MockDepositContract")
       ).address,
     };
 
