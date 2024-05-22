@@ -84,10 +84,9 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             address(aeroFactoryAddress)
         );
-
         // Ensure that the rebalance does not cross the midpoint and that the final ratio better than initial.
         require(finalRatio > midpoint, "WETH reserves exceeds OETH"); // This means we needed more WETH (not profitable)
-        require(finalRatio <= initialRatio, "Pool imbalance worsened");
+        require(initialRatio > finalRatio, "Pool imbalance worsened");
     }
 
     constructor(
