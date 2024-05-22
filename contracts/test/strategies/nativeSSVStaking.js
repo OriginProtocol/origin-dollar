@@ -898,10 +898,10 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
   describe("Register and stake validators", async () =>{
     beforeEach(async () => {
-      console.log("THIS HAPPENED!")
       const {
         weth,
         josh,
+        governor,
         ssv,
         nativeStakingSSVStrategy,
       } = fixture;
@@ -916,9 +916,17 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await weth
         .connect(josh)
         .transfer(nativeStakingSSVStrategy.address, ethUnits("256"));
+
+      const stakeThreshold = ethers.utils.parseEther("64");
+
+      await nativeStakingSSVStrategy
+        // todo change to monitoring governor
+        .connect(governor)
+        .setStakeETHThreshold(stakeThreshold);
+
     });
 
-    it.only("Should stake to a validator", async () => {
+    const stakeValidator = async (validators, stakeTresholdErrorTriggered) => {
       const {
         addresses,
         weth,
@@ -935,39 +943,101 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy.address
       );
 
-      console.log("WETH BALANCE", strategyWethBalanceBefore.toString());
-      console.log("SSV BALANCE", strategySSVBalance.toString());
+      // there is a limitation to this function as it will only check for
+      // a failure transaction with the last stake call
+      for (let i = 0; i < validators; i++) {
+        const stakeAmount = ethUnits("32");
+        // Register a new validator with the SSV Network
+        await nativeStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .registerSsvValidator(
+            testValidator.publicKey,
+            testValidator.operatorIds,
+            testValidator.sharesData,
+            stakeAmount,
+            emptyCluster
+          );
 
-      const stakeAmount = ethUnits("32");
+        // Stake ETH to the new validator
+        const tx = nativeStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .stakeEth([
+            {
+              pubkey: testValidator.publicKey,
+              signature: testValidator.signature,
+              depositDataRoot: testValidator.depositDataRoot,
+            },
+          ]);
 
-      // Register a new validator with the SSV Network
-      await nativeStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .registerSsvValidator(
-          testValidator.publicKey,
-          testValidator.operatorIds,
-          testValidator.sharesData,
-          stakeAmount,
-          emptyCluster
-        );
+        if (stakeTresholdErrorTriggered && i == validators - 1) {
+          await expect(tx).to.be.revertedWith(
+            "Staking ETH over approved threshold"
+          );
+        } else {
+          await tx;
+        }
+      }
+    };
 
-      // Stake 32 ETH to the new validator
-      await nativeStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .stakeEth([
-          {
-            pubkey: testValidator.publicKey,
-            signature: testValidator.signature,
-            depositDataRoot: testValidator.depositDataRoot,
-          },
-        ]);
+    it.only("Should stake to a validator", async () => {
+      await stakeValidator(1, false);
+    });
 
-      expect(await weth.balanceOf(nativeStakingSSVStrategy.address)).to.equal(
-        strategyWethBalanceBefore.sub(
-          stakeAmount,
-          "strategy WETH not decreased"
-        )
-      );
+    it.only("Should stake to 2 validators", async () => {
+      await stakeValidator(2, false);
+    });
+
+    it.only("Should not stake to 3 validators as stake threshold is triggered", async () => {
+      await stakeValidator(3, true);
+    });
+
+    it.only("Should stake to 2 validators continually when threshold is reset", async () => {
+      const {
+        governor,
+        nativeStakingSSVStrategy,
+      } = fixture;
+
+      const resetThreshold = async () => {
+        await nativeStakingSSVStrategy
+          // TODO change to monitoring governor
+          .connect(governor)
+          .resetStakeETHTally();
+      };
+
+      await stakeValidator(2, false);
+      await resetThreshold();
+      await stakeValidator(2, false);
+      await resetThreshold();
+      await stakeValidator(2, false);
+      await resetThreshold();
+    });
+
+    it.only("Should not reset stake tally if not governor", async () => {
+      const {
+        josh,
+        nativeStakingSSVStrategy,
+      } = fixture;
+
+      await expect(
+        nativeStakingSSVStrategy
+          // TODO change to monitoring governor
+          .connect(josh)
+          .resetStakeETHTally()
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it.only("Should not set stake threshold if not governor", async () => {
+      const {
+        josh,
+        nativeStakingSSVStrategy,
+      } = fixture;
+
+      await expect(
+        nativeStakingSSVStrategy
+          // TODO change to monitoring governor
+          .connect(josh)
+          .setStakeETHThreshold(ethUnits("32"))
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 
