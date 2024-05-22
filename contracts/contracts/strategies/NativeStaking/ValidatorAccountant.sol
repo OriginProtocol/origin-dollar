@@ -133,7 +133,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
             wethWithdrawnToVault(wethToVault);
-            
+
             emit AccountingFullyWithdrawnValidator(
                 fullyWithdrawnValidators,
                 activeDepositedValidators,

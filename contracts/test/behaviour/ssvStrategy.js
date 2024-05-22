@@ -46,7 +46,7 @@ const { setERC20TokenBalance } = require("../_fund");
 
 const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Initial setup", function () {
-    it("Should verify the initial state", async () => {
+    it.only("Should verify the initial state", async () => {
       const { nativeStakingSSVStrategy, addresses } = await context();
       await expect(
         await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()
@@ -80,6 +80,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         await nativeStakingSSVStrategy.validatorRegistrator()
       ).to.equal(
         addresses.validatorRegistrator,
+        "Incorrect validator registrator"
+      );
+      await expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
+        addresses.Guardian,
         "Incorrect validator registrator"
       );
     });

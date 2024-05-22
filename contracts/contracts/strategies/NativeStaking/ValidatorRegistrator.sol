@@ -37,14 +37,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
-    /// @notice Amount of ETH that can be staked before staking on the contract is suspended 
+    /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
+    address public stakingMonitor;
+    /// @notice Amount of ETH that can be staked before staking on the contract is suspended
     /// and the governor needs to approve further staking
     uint256 public stakeETHThreshold;
     /// @notice Amount of ETH that can has been staked since the last governor approval.
     uint256 public stakeETHTally;
-
     // For future use
-    uint256[49] private __gap;
+    uint256[48] private __gap;
 
     enum VALIDATOR_STATE {
         REGISTERED, // validator is registered on the SSV network
@@ -54,6 +55,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     }
 
     event RegistratorChanged(address newAddress);
+    event StakingMonitorChanged(address newAddress);
     event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
     event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
@@ -67,6 +69,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             msg.sender == validatorRegistrator,
             "Caller is not the Registrator"
         );
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Staking monitor
+    modifier onlyStakingMonitor() {
+        require(msg.sender == stakingMonitor, "Caller is not the Monitor");
         _;
     }
 
@@ -101,15 +109,22 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorRegistrator = _address;
     }
 
+    /// @notice Set the address of the staking monitor that is allowed to modify
+    /// stakeETHThreshold and reset stakeETHTally
+    function setStakingMonitor(address _address) external onlyGovernor {
+        emit StakingMonitorChanged(_address);
+        stakingMonitor = _address;
+    }
+
     /// @notice Set the amount of ETH that can be staked before governor needs to a approve
     /// further staking.
-    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
+    function setStakeETHThreshold(uint256 _amount) external onlyStakingMonitor {
         emit StakeETHThresholdChanged(_amount);
         stakeETHThreshold = _amount;
     }
 
     /// @notice Reset the stakeETHTally
-    function resetStakeETHTally() external onlyGovernor {
+    function resetStakeETHTally() external onlyStakingMonitor {
         emit StakeETHTallyReset();
         stakeETHTally = 0;
     }

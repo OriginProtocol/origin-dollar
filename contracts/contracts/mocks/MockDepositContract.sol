@@ -11,16 +11,28 @@ contract MockDepositContract is IDepositContract {
         bytes calldata withdrawal_credentials,
         bytes calldata signature,
         bytes32 deposit_data_root
-    ) override external payable {
+    ) external payable override {
         require(pubkey.length == 48, "DepositContract: invalid pubkey length");
-        require(withdrawal_credentials.length == 32, "DepositContract: invalid withdrawal_credentials length");
-        require(signature.length == 96, "DepositContract: invalid signature length");
+        require(
+            withdrawal_credentials.length == 32,
+            "DepositContract: invalid withdrawal_credentials length"
+        );
+        require(
+            signature.length == 96,
+            "DepositContract: invalid signature length"
+        );
 
         // Check deposit amount
         require(msg.value >= 1 ether, "DepositContract: deposit value too low");
-        require(msg.value % 1 gwei == 0, "DepositContract: deposit value not multiple of gwei");
-        uint deposit_amount = msg.value / 1 gwei;
-        require(deposit_amount <= type(uint64).max, "DepositContract: deposit value too high");
+        require(
+            msg.value % 1 gwei == 0,
+            "DepositContract: deposit value not multiple of gwei"
+        );
+        uint256 deposit_amount = msg.value / 1 gwei;
+        require(
+            deposit_amount <= type(uint64).max,
+            "DepositContract: deposit value too high"
+        );
 
         // Emit `DepositEvent` log
         bytes memory amount = to_little_endian_64(uint64(deposit_amount));
@@ -37,18 +49,22 @@ contract MockDepositContract is IDepositContract {
         );
     }
 
-    function get_deposit_root() override external view returns (bytes32) {
+    function get_deposit_root() external view override returns (bytes32) {
         // just return some bytes32
         return sha256(abi.encodePacked(deposit_count, bytes16(0)));
     }
 
     /// @notice Query the current deposit count.
     /// @return The deposit count encoded as a little endian 64-bit number.
-    function get_deposit_count() override external view returns (bytes memory) {
+    function get_deposit_count() external view override returns (bytes memory) {
         return to_little_endian_64(uint64(deposit_count));
     }
 
-    function to_little_endian_64(uint64 value) internal pure returns (bytes memory ret) {
+    function to_little_endian_64(uint64 value)
+        internal
+        pure
+        returns (bytes memory ret)
+    {
         ret = new bytes(8);
         bytes8 bytesValue = bytes8(value);
         // Byteswapping during copying to bytes.

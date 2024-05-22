@@ -12,7 +12,10 @@ contract MockSSVNetwork {
         Cluster memory cluster
     ) external {}
 
-    function exitValidator(bytes calldata publicKey, uint64[] calldata operatorIds) external {}
+    function exitValidator(
+        bytes calldata publicKey,
+        uint64[] calldata operatorIds
+    ) external {}
 
     function removeValidator(
         bytes calldata publicKey,
