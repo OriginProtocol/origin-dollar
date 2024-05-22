@@ -46,7 +46,7 @@ const { setERC20TokenBalance } = require("../_fund");
 
 const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Initial setup", function () {
-    it.only("Should verify the initial state", async () => {
+    it("Should verify the initial state", async () => {
       const { nativeStakingSSVStrategy, addresses } = await context();
       await expect(
         await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()

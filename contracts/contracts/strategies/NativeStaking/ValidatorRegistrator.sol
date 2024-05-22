@@ -45,7 +45,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Amount of ETH that can has been staked since the last governor approval.
     uint256 public stakeETHTally;
     // For future use
-    uint256[48] private __gap;
+    uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
         REGISTERED, // validator is registered on the SSV network
