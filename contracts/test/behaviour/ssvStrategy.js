@@ -131,7 +131,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
 
-      // Add 32 WETH to the strategy via a Vualt deposit
+      // Add WETH to the strategy via a Vualt deposit
       await weth.connect(domen).transfer(oethVault.address, amount);
 
       return await oethVault

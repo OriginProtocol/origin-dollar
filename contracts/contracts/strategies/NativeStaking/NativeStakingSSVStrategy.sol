@@ -64,7 +64,7 @@ contract NativeStakingSSVStrategy is
     /// It is important to note that this variable is not concerned with WETH that is a result of full/partial
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
-    uint256 depositedWethAccountedFor;
+    uint256 public depositedWethAccountedFor;
 
     // For future use
     uint256[49] private __gap;
