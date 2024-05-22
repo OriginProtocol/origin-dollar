@@ -3,11 +3,9 @@ const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
 
-const { resolveContract } = require("../utils/resolvers");
-const { getSigner } = require("../utils/signers");
+//const { resolveContract } = require("../utils/resolvers");
 const { sleep } = require("../utils/time");
-const { getClusterInfo } = require("./ssv");
-const { logTxDetails } = require("../utils/txLogger");
+//const { getClusterInfo } = require("./ssv");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -518,46 +516,42 @@ const confirmValidatorCreatedRequest = async (
   }
 };
 
-async function exitValidator({ publicKey, operatorIds }) {
-  const signer = await getSigner();
+// async function exitValidator({ publicKey, signer, operatorIds }) {
+//   const strategy = await resolveContract(
+//     "NativeStakingSSVStrategyProxy",
+//     "NativeStakingSSVStrategy"
+//   );
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+//   log(`About to exit validator`);
+//   const tx = await strategy
+//     .connect(signer)
+//     .exitSsvValidator(publicKey, operatorIds);
+//   await logTxDetails(tx, "exitSsvValidator");
+// }
 
-  log(`About to exit validator`);
-  const tx = await strategy
-    .connect(signer)
-    .exitSsvValidator(publicKey, operatorIds);
-  await logTxDetails(tx, "exitSsvValidator");
-}
+// async function removeValidator({ publicKey, signer, operatorIds }) {
+//   const strategy = await resolveContract(
+//     "NativeStakingSSVStrategyProxy",
+//     "NativeStakingSSVStrategy"
+//   );
 
-async function removeValidator({ publicKey, operatorIds }) {
-  const signer = await getSigner();
+//   // Cluster details
+//   const { cluster } = await getClusterInfo({
+//     chainId: hre.network.config.chainId,
+//     ssvNetwork: hre.network.name.toUpperCase(),
+//     operatorIds,
+//     ownerAddress: strategy.address,
+//   });
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
-
-  // Cluster details
-  const { cluster } = await getClusterInfo({
-    chainId: hre.network.config.chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
-    operatorIds,
-    ownerAddress: strategy.address,
-  });
-
-  log(`About to exit validator`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(publicKey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
-}
+//   log(`About to exit validator`);
+//   const tx = await strategy
+//     .connect(signer)
+//     .removeSsvValidator(publicKey, operatorIds, cluster);
+//   await logTxDetails(tx, "removeSsvValidator");
+// }
 
 module.exports = {
   operateValidators,
-  removeValidator,
-  exitValidator,
+  //removeValidator,
+  //exitValidator,
 };
