@@ -1091,7 +1091,9 @@ const deployOETHCore = async () => {
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
     assetAddresses.WETH,
   ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+    assetAddresses.WETH,
+  ]);
 
   // Get contract instances
   const cOETHProxy = await ethers.getContract("OETHProxy");
