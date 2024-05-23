@@ -148,12 +148,23 @@ module.exports = deploymentWithGovernanceProposal(
     const dOETHHarvesterImpl = await ethers.getContract("OETHHarvester");
 
     console.log(
-      "Native Staking SSV Strategy address: ",
+      "Native Staking SSV Strategy proxy: ",
       cStrategyProxy.address
     );
-    console.log("Fee accumulator address: ", cFeeAccumulator.address);
     console.log(
-      "New OETHHarvester implementation address: ",
+      "Native Staking SSV Strategy implementation: ",
+      dStrategyImpl.address
+    );
+    console.log(
+      "Fee accumulator proxy: ",
+      cFeeAccumulatorProxy.address
+    );
+    console.log(
+      "Fee accumulator implementation: ",
+      cFeeAccumulator.address
+    );
+    console.log(
+      "New OETHHarvester implementation: ",
       dOETHHarvesterImpl.address
     );
 
