@@ -285,6 +285,7 @@ module.exports = {
           : 0,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
+      base: BASE_GOVERNOR,
     },
   },
   contractSizer: {
