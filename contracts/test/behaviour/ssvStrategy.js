@@ -159,7 +159,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
-        operatorIds: testValidator.operatorIds,
+        operatorids: testValidator.operatorIds,
         chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });
@@ -263,7 +263,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
-        operatorIds: testValidator.operatorIds,
+        operatorids: testValidator.operatorIds,
         chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });

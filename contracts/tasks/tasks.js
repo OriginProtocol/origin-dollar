@@ -858,7 +858,7 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
   .addParam(
     "operatorids",
-    "4 operator ids separated with a dot: same as IP format. E.g. 60.79.220.349",
+    "Comma separated operator ids. E.g. 60,79,220,349",
     "",
     types.string
   )
@@ -893,7 +893,7 @@ subtask(
   .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
   .addParam(
     "operatorids",
-    "4 operator ids separated with a dot: same as IP format. E.g. 60.79.220.349",
+    "Comma separated operator ids. E.g. 60,79,220,349",
     undefined,
     types.string
   )
