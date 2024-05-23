@@ -636,9 +636,8 @@ const deployAeroHarvester = async (oethDripper) => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const cBaseOETHOracleRouter = await ethers.getContract(
-    "BaseOETHOracleRouter"
-  );
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dAeroHarvesterProxy = await deployWithConfirmation(
     "AeroHarvesterProxy",
@@ -648,7 +647,7 @@ const deployAeroHarvester = async (oethDripper) => {
   const cAeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
 
   const dAeroHarvester = await deployWithConfirmation("AeroHarvester", [
-    cBaseOETHOracleRouter.address,
+    cOETHVaultProxy.address,
     assetAddresses.WETH,
   ]);
 

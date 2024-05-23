@@ -144,7 +144,6 @@ describe("ForkTest: OETH Vault Base", function () {
       const tx = oethVault.connect(oethWhaleSigner).redeem(parseUnits("10"), 0);
       await expect(tx).to.revertedWith("Liquidity error");
     });
-    // Should remove .skip() after adding Strategy deployment scriot
     it.skip("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock, domen, strategist, frxETH } = fixture;
 
