@@ -201,6 +201,36 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256 amount)
     {
+        amount = _claimWithdrawal(requestId);
+
+        // transfer WETH from the vault to the withdrawer
+        IERC20(weth).safeTransfer(msg.sender, amount);
+    }
+
+    /**
+     * @notice Claim a previously requested withdrawals once they are claimable.
+     * @param requestIds Unique ID of each withdrawal request
+     * @return amounts Amount of WETH received for each request
+     */
+    function claimWithdrawals(uint256[] memory requestIds)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256[] memory amounts, uint256 totalAmount)
+    {
+        for (uint256 i = 0; i < requestIds.length; ++i) {
+            amounts[i] = _claimWithdrawal(requestIds[i]);
+            totalAmount += amounts[i];
+        }
+
+        // transfer all the claimed WETH from the vault to the withdrawer
+        IERC20(weth).safeTransfer(msg.sender, totalAmount);
+    }
+
+    function _claimWithdrawal(uint256 requestId)
+        internal
+        returns (uint256 amount)
+    {
         // Check if there's enough liquidity to cover the withdrawal request
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
         WithdrawalRequest memory request = withdrawalRequests[requestId];
@@ -215,9 +245,6 @@ contract OETHVaultCore is VaultCore {
         withdrawalRequests[requestId].claimed = true;
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
-
-        // transfer WETH from the vault to the withdrawer
-        IERC20(weth).safeTransfer(msg.sender, request.amount);
 
         return request.amount;
     }
