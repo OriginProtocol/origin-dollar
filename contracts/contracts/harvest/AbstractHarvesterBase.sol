@@ -302,6 +302,50 @@ abstract contract AbstractHarvesterBase is Governable {
         );
     }
 
+    function _validateConfigAndApproveTokens(
+        address _tokenAddress,
+        RewardTokenConfig calldata tokenConfig
+    ) internal {
+        if (tokenConfig.allowedSlippageBps > 1000) {
+            revert InvalidSlippageBps();
+        }
+
+        if (tokenConfig.harvestRewardBps > 1000) {
+            revert InvalidHarvestRewardBps();
+        }
+
+        address newRouterAddress = tokenConfig.swapPlatformAddr;
+        if (newRouterAddress == address(0)) {
+            // Swap router address should be non zero address
+            revert EmptyAddress();
+        }
+
+        address oldRouterAddress = rewardTokenConfigs[_tokenAddress]
+            .swapPlatformAddr;
+        rewardTokenConfigs[_tokenAddress] = tokenConfig;
+
+        // Revert if feed does not exist
+        // slither-disable-next-line unused-return
+        IOracle(IVault(vaultAddress).priceProvider()).price(_tokenAddress);
+
+        IERC20 token = IERC20(_tokenAddress);
+        // if changing token swap provider cancel existing allowance
+        if (
+            /* oldRouterAddress == address(0) when there is no pre-existing
+             * configuration for said rewards token
+             */
+            oldRouterAddress != address(0) &&
+            oldRouterAddress != newRouterAddress
+        ) {
+            token.safeApprove(oldRouterAddress, 0);
+        }
+        // Give SwapRouter infinite approval when needed
+        if (oldRouterAddress != newRouterAddress) {
+            token.safeApprove(newRouterAddress, 0);
+            token.safeApprove(newRouterAddress, type(uint256).max);
+        }
+    }
+
     function _doSwap(
         uint8 swapPlatform,
         address routerAddress,
