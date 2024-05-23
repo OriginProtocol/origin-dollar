@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { BaseHarvester } from "./BaseHarvester.sol";
+import { AbstractHarvesterBase } from "./AbstractHarvesterBase.sol";
 
-contract Harvester is BaseHarvester {
+contract Harvester is AbstractHarvesterBase {
     constructor(address _vault, address _usdtAddress)
-        BaseHarvester(_vault, _usdtAddress)
+        AbstractHarvesterBase(_vault, _usdtAddress)
     {}
 }
