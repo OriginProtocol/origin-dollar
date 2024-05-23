@@ -197,6 +197,7 @@ contract VaultStorage is Initializable, Governable {
         uint128 nextWithdrawalIndex;
     }
 
+    // slither-disable-next-line uninitialized-state
     WithdrawalQueueMetadata public withdrawalQueueMetadata;
 
     struct WithdrawalRequest {

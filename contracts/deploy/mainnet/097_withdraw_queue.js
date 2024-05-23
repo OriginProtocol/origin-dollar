@@ -25,7 +25,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
     const dVaultAdmin = await deployWithConfirmation(
       "OETHVaultAdmin",
-      [],
+      [addresses.mainnet.WETH],
       null,
       true
     );

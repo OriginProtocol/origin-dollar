@@ -188,6 +188,22 @@ contract VaultAdmin is VaultStorage {
         onlyGovernorOrStrategist
         returns (uint256 toAssetAmount)
     {
+        toAssetAmount = _swapCollateral(
+            _fromAsset,
+            _toAsset,
+            _fromAssetAmount,
+            _minToAssetAmount,
+            _data
+        );
+    }
+
+    function _swapCollateral(
+        address _fromAsset,
+        address _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _minToAssetAmount,
+        bytes calldata _data
+    ) internal virtual returns (uint256 toAssetAmount) {
         // Check fromAsset and toAsset are valid
         Asset memory fromAssetConfig = assets[address(_fromAsset)];
         Asset memory toAssetConfig = assets[_toAsset];
@@ -479,7 +495,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyToAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) internal {
+    ) internal virtual {
         require(
             strategies[_strategyToAddress].isSupported,
             "Invalid to Strategy"

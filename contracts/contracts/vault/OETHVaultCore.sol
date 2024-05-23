@@ -231,6 +231,8 @@ contract OETHVaultCore is VaultCore {
         IERC20(weth).safeTransfer(msg.sender, totalAmount);
     }
 
+    // slither-disable-start reentrancy-no-eth
+
     function _claimWithdrawal(uint256 requestId)
         internal
         returns (uint256 amount)
@@ -263,7 +265,9 @@ contract OETHVaultCore is VaultCore {
         return request.amount;
     }
 
-    /// @notice Collects harvested rewards from the Dripper as WETH then 
+    // slither-disable-end reentrancy-no-eth
+
+    /// @notice Collects harvested rewards from the Dripper as WETH then
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     function addWithdrawalQueueLiquidity() external {
