@@ -20,7 +20,7 @@ module.exports = {
   },
   plugins: ["no-only-tests"],
   rules: {
-    "no-only-tests/no-only-tests": "error",
     "no-constant-condition": ["error", { checkLoops: false }],
+    "no-only-tests/no-only-tests": "error",
   },
 };

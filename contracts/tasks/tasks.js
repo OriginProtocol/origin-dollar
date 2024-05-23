@@ -2,13 +2,16 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
+const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { getDefenderSigner } = require("../utils/signers");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { resolveContract } = require("../utils/resolvers");
-const { KeyValueStoreClient } = require("defender-kvstore-client");
+const {
+  KeyValueStoreClient,
+} = require("@openzeppelin/defender-kvstore-client");
 const { operateValidators } = require("./validator");
 const { formatUnits } = require("ethers/lib/utils");
 
@@ -71,6 +74,20 @@ const {
   setRewardTokenAddresses,
   checkBalance,
 } = require("./strategy");
+
+// can not import from utils/deploy since that imports hardhat globally
+const withConfirmation = async (deployOrTransactionPromise) => {
+  const hre = require("hardhat");
+
+  const result = await deployOrTransactionPromise;
+  const receipt = await hre.ethers.provider.waitForTransaction(
+    result.receipt ? result.receipt.transactionHash : result.hash,
+    3
+  );
+
+  result.receipt = receipt;
+  return result;
+};
 
 const log = require("../utils/logger")("tasks");
 
@@ -885,6 +902,63 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+/**
+ * The native staking proxy needs to be deployed via the defender relayer because the SSV networkd
+ * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
+ * the recipient
+ */
+subtask(
+  "deployNativeStakingProxy",
+  "Deploy the native staking proxy via the Defender Relayer"
+).setAction(async () => {
+  const defenderSigner = await getDefenderSigner();
+
+  log("Deploy NativeStakingSSVStrategyProxy");
+  const nativeStakingProxyFactory = await ethers.getContractFactory(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const contract = await nativeStakingProxyFactory
+    .connect(defenderSigner)
+    .deploy();
+  await contract.deployed();
+  log(`Address of deployed contract is: ${contract.address}`);
+});
+task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * Governance of the SSV strategy proxy needs to be transferred to the deployer address so that
+ * the deployer is able to initialize the proxy
+ */
+subtask(
+  "transferGovernanceNativeStakingProxy",
+  "Transfer governance of the proxy from the the Defender Relayer"
+)
+  .addParam("address", "Address of the new governor", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const defenderSigner = await getDefenderSigner();
+
+    log("Tranfer governance of NativeStakingSSVStrategyProxy");
+
+    const nativeStakingProxyFactory = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+    await withConfirmation(
+      nativeStakingProxyFactory
+        .connect(defenderSigner)
+        .transferGovernance(taskArgs.address)
+    );
+    log(
+      `Governance of NativeStakingSSVStrategyProxy transferred to  ${taskArgs.address}`
+    );
+  });
+task("transferGovernanceNativeStakingProxy").setAction(
+  async (_, __, runSuper) => {
+    return runSuper();
+  }
+);
+
 // Defender
 subtask(
   "operateValidators",
@@ -912,7 +986,7 @@ subtask(
 
     if (!isMainnet && !isHolesky) {
       throw new Error(
-        "operate validatos is supported on Mainnet and Holesky only"
+        "operate validators is supported on Mainnet and Holesky only"
       );
     }
 
@@ -976,5 +1050,16 @@ subtask(
     });
   });
 task("operateValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Defender
+subtask(
+  "setActionVars",
+  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
+)
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .setAction(setActionVars);
+task("setActionVars").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

@@ -127,16 +127,23 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 
   describe("Validator operations", function () {
-    beforeEach(async () => {
-      const { weth, domen, nativeStakingSSVStrategy } = await context();
+    const depositToStrategy = async (amount) => {
+      const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
+        await context();
 
-      // Add 32 WETH to the strategy so it can be staked
-      await weth
-        .connect(domen)
-        .transfer(nativeStakingSSVStrategy.address, oethUnits("32"));
-    });
+      // Add WETH to the strategy via a Vualt deposit
+      await weth.connect(domen).transfer(oethVault.address, amount);
 
-    it("Should register and staked 32 ETH by validator registrator", async () => {
+      return await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          nativeStakingSSVStrategy.address,
+          [weth.address],
+          [amount]
+        );
+    };
+
+    const registerAndStakeEth = async () => {
       const {
         addresses,
         weth,
@@ -157,14 +164,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         ssvNetwork: addresses.SSVNetwork,
       });
 
-      const stakeAmount = oethUnits("32");
-
       await setERC20TokenBalance(
         nativeStakingSSVStrategy.address,
         ssv,
         "1000",
         hre
       );
+
+      const stakeAmount = oethUnits("32");
 
       // Register a new validator with the SSV Network
       const regTx = await nativeStakingSSVStrategy
@@ -180,7 +187,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
         .withArgs(testValidator.publicKey, testValidator.operatorIds);
 
-      // Stake 32 ETH to the new validator
+      // Stake stakeAmount ETH to the new validator
       const stakeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth([
@@ -195,7 +202,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .to.emit(nativeStakingSSVStrategy, "ETHStaked")
         .withNamedArgs({
           pubkey: testValidator.publicKey,
-          amount: stakeAmount,
+          amount: oethUnits("32"),
         });
 
       expect(await weth.balanceOf(nativeStakingSSVStrategy.address)).to.equal(
@@ -204,6 +211,43 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           "strategy WETH not decreased"
         )
       );
+    };
+
+    it("Should register and stake 32 ETH by validator registrator", async () => {
+      await depositToStrategy(oethUnits("32"));
+      await registerAndStakeEth();
+    });
+
+    it("Should emit correct values in deposit event", async () => {
+      const { weth, nativeStakingSSVStrategy } = await context();
+
+      await depositToStrategy(oethUnits("40"));
+      // at least 8 WETH has remained on the contract and a deposit all
+      // event should emit a correct amount
+      await registerAndStakeEth();
+
+      /* deposit to strategy calls depositAll on the strategy contract after sending the WETH
+       * to it. The event should contain only the amount of newly deposited WETH and not include
+       * the pre-exiting WETH.
+       */
+      const tx = await depositToStrategy(parseEther("10"));
+
+      await expect(tx)
+        .to.emit(nativeStakingSSVStrategy, "Deposit")
+        .withArgs(weth.address, AddressZero, parseEther("10"));
+    });
+
+    it("Should register and stake 32 ETH even if half supplied by a 3rd party", async () => {
+      const { weth, domen, nativeStakingSSVStrategy } = await context();
+
+      await depositToStrategy(oethUnits("16"));
+      // A malicious actor is sending WETH directly to the native staking contract hoping to
+      // mess up the accounting.
+      await weth
+        .connect(domen)
+        .transfer(nativeStakingSSVStrategy.address, oethUnits("16"));
+
+      await registerAndStakeEth();
     });
 
     it("Should exit and remove validator by validator registrator", async () => {
@@ -215,6 +259,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses,
         testValidator,
       } = await context();
+      await depositToStrategy(oethUnits("32"));
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,

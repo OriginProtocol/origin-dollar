@@ -156,7 +156,6 @@ oeth <.> oethv
 ' oethv ..> oracle
 ' oracle ...> chain
 
-
 ' Convex ETH Metapool Strategy
 harv <..> cvxStrat
 oethv <...> cvxStrat

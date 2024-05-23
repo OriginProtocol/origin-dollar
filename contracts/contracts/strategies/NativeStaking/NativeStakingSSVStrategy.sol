@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -19,6 +20,26 @@ struct ValidatorStakeData {
 /// @title Native Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
+/// @dev This contract handles WETH and ETH and in some operations interchanges between the two. Any WETH that
+/// is on the contract across multiple blocks (and not just transitory within a transaction) is considered an
+/// asset. Meaning deposits increase the balance of the asset and withdrawal decrease it. As opposed to all
+/// our other strategies the WETH doesn't immediately get deposited into an underlying strategy and can be present
+/// across multiple blocks waiting to be unwrapped to ETH and staked to validators. This separation of WETH and ETH is
+/// required since the rewards (reward token) is also in ETH.
+///
+/// To simplify the accounting of WETH there is another difference in behavior compared to the other strategies.
+/// To withdraw WETH asset - exit message is posted to validators and the ETH hits this contract with multiple days
+/// delay. In order to simplify the WETH accounting upon detection of such an event the ValidatorAccountant
+/// immediately wraps ETH to WETH and sends it to the Vault.
+///
+/// On the other hand any ETH on the contract (across multiple blocks) is there either:
+///  - as a result of already accounted for consensus rewards
+///  - as a result of not yet accounted for consensus rewards
+///  - as a results of not yet accounted for full validator withdrawals (or validator slashes)
+///
+/// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the
+/// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
+/// interval and not immediately.
 contract NativeStakingSSVStrategy is
     ValidatorAccountant,
     InitializableAbstractStrategy
@@ -34,8 +55,20 @@ contract NativeStakingSSVStrategy is
     /// (rewards for arranging transactions in a way that benefits the validator).
     address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
+    /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
+    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
+    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been
+    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track
+    /// of WETH that has already been accounted for.
+    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the
+    /// deposit events.
+    /// It is important to note that this variable is not concerned with WETH that is a result of full/partial
+    /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
+    /// be staked.
+    uint256 public depositedWethAccountedFor;
+
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -127,6 +160,7 @@ contract NativeStakingSSVStrategy is
         nonReentrant
     {
         require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        depositedWethAccountedFor += _amount;
         _deposit(_asset, _amount);
     }
 
@@ -155,8 +189,12 @@ contract NativeStakingSSVStrategy is
         uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
             address(this)
         );
-        if (wethBalance > 0) {
-            _deposit(WETH_TOKEN_ADDRESS, wethBalance);
+        uint256 newWeth = wethBalance - depositedWethAccountedFor;
+
+        if (newWeth > 0) {
+            depositedWethAccountedFor = wethBalance;
+
+            _deposit(WETH_TOKEN_ADDRESS, newWeth);
         }
     }
 
@@ -263,10 +301,23 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    function wethWithdrawnToVault(uint256 _amount) internal override {
+    function _wethWithdrawnToVault(uint256 _amount) internal override {
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
 
         // Add WETH to the withdraw queue if there is a shortfall
         IVault(vaultAddress).addWithdrawalQueueLiquidity();
+    }
+
+    function _wethWithdrawnAndStaked(uint256 _amount) internal override {
+        /* In an ideal world we wouldn't need to reduce the deduction amount when the
+         * depositedWethAccountedFor is smaller than the _amount.
+         *
+         * The reason this is required is that a malicious actor could sent WETH direclty
+         * to this contract and that would circumvent the increase of depositedWethAccountedFor
+         * property. When the ETH would be staked the depositedWethAccountedFor amount could
+         * be deducted so much that it would be negative.
+         */
+        uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
+        depositedWethAccountedFor -= deductAmount;
     }
 }
