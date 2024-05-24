@@ -6,6 +6,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract MockStrategy {
     address[] public assets;
 
+    address public withdrawAllAsset;
+    address public withdrawAllRecipient;
+
     constructor() {}
 
     function deposit(address asset, uint256 amount) external {}
@@ -21,7 +24,10 @@ contract MockStrategy {
     }
 
     function withdrawAll() external {
-        require(false, "Not implemented");
+        IERC20(withdrawAllAsset).transfer(
+            withdrawAllRecipient,
+            IERC20(withdrawAllAsset).balanceOf(address(this))
+        );
     }
 
     function checkBalance(address asset)
@@ -44,5 +50,10 @@ contract MockStrategy {
         returns (address[] memory)
     {
         return new address[](0);
+    }
+
+    function setWithdrawAll(address asset, address recipient) external {
+        withdrawAllAsset = asset;
+        withdrawAllRecipient = recipient;
     }
 }
