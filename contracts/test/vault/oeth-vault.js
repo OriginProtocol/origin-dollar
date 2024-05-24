@@ -369,7 +369,7 @@ describe("OETH Vault", function () {
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
     });
     const firstRequestAmount = oethUnits("5");
-    const secondRequestAmount = oethUnits("5");
+    const secondRequestAmount = oethUnits("8");
     it("should request first withdrawal by josh", async () => {
       const { oethVault, josh } = fixture;
       const fixtureWithUser = { ...fixture, user: josh };
@@ -391,6 +391,80 @@ describe("OETH Vault", function () {
           userWeth: 0,
           vaultWeth: 0,
           queued: firstRequestAmount,
+          claimable: 0,
+          claimed: 0,
+          nextWithdrawalIndex: 1,
+        },
+        fixtureWithUser
+      );
+    });
+    it("should request withdrawal of zero amount", async () => {
+      const { oethVault, josh } = fixture;
+      const fixtureWithUser = { ...fixture, user: josh };
+      await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
+      const dataBefore = await snapData(fixtureWithUser);
+
+      const tx = await oethVault.connect(josh).requestWithdrawal(0);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalRequested")
+        .withArgs(josh.address, 1, 0, firstRequestAmount);
+
+      assertChangedData(
+        dataBefore,
+        {
+          oethTotal: 0,
+          userOeth: 0,
+          userWeth: 0,
+          vaultWeth: 0,
+          queued: firstRequestAmount,
+          claimable: 0,
+          claimed: 0,
+          nextWithdrawalIndex: 2,
+        },
+        fixtureWithUser
+      );
+    });
+    it("should request withdrawal with no WETH in the Vault", async () => {
+      const { oethVault, governor, josh, matt, weth } = fixture;
+      const fixtureWithUser = { ...fixture, user: josh };
+
+      const mockStrategy = await deployWithConfirmation("MockStrategy");
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+
+      // Deposit all 10 + 20 + 30 = 60 WETH to strategy
+      await oethVault
+        .connect(governor)
+        .depositToStrategy(
+          mockStrategy.address,
+          [weth.address],
+          [oethUnits("60")]
+        );
+
+      const dataBefore = await snapData(fixtureWithUser);
+
+      await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
+      const tx = await oethVault
+        .connect(matt)
+        .requestWithdrawal(secondRequestAmount);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalRequested")
+        .withArgs(
+          matt.address,
+          1,
+          secondRequestAmount,
+          firstRequestAmount.add(secondRequestAmount)
+        );
+
+      assertChangedData(
+        dataBefore,
+        {
+          oethTotal: secondRequestAmount.mul(-1),
+          userOeth: secondRequestAmount.mul(-1),
+          userWeth: 0,
+          vaultWeth: 0,
+          queued: firstRequestAmount.add(secondRequestAmount),
           claimable: 0,
           claimed: 0,
           nextWithdrawalIndex: 1,
@@ -495,8 +569,59 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
+    // Should deposit all WETH to a strategy if no WETH in the withdrawal queue
 
-    // deposit some WETH to a strategy
+    describe("deposit some WETH to a strategy", () => {
+      let mockStrategy;
+      beforeEach(async () => {
+        const { oethVault, weth, governor, matt, josh } = fixture;
+
+        mockStrategy = await deployWithConfirmation("MockStrategy");
+        await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+
+        // Deposit 15 WETH of 10 + 20 + 30 = 60 WETH to strategy
+        await oethVault
+          .connect(governor)
+          .depositToStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [oethUnits("15")]
+          );
+        // Request withdrawal of 5 + 8 = 13 OETH
+        await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
+        await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+      });
+      it("Should not deposit allocated WETH to a strategy", async () => {
+        const { oethVault, weth, governor } = fixture;
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 13 = 32 WETH
+        // 33 WETH to deposit > the 32 WETH available so it should revert
+        const depositAmount = oethUnits("33");
+        const tx = oethVault
+          .connect(governor)
+          .depositToStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [depositAmount]
+          );
+        await expect(tx).to.be.revertedWith("Not enough WETH available");
+      });
+      it("Should deposit unallocated WETH to a strategy", async () => {
+        const { oethVault, weth, governor } = fixture;
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 13 = 32 WETH
+        const depositAmount = oethUnits("32");
+        await oethVault
+          .connect(governor)
+          .depositToStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [depositAmount]
+          );
+      });
+    });
     // Should claim the first request with enough WETH liquidity
     // Should not claim the second request as not enough WETH liquidity
     // Should claim after withdraw from strategy
@@ -515,6 +640,17 @@ describe("OETH Vault", function () {
           .requestWithdrawal(dataBefore.userOeth.add(1));
 
         await expect(tx).to.revertedWith("Remove exceeds balance");
+      });
+      it("capital is paused", async () => {
+        const { oethVault, governor, josh } = fixture;
+
+        await oethVault.connect(governor).pauseCapital();
+
+        const tx = oethVault
+          .connect(josh)
+          .requestWithdrawal(firstRequestAmount);
+
+        await expect(tx).to.be.revertedWith("Capital paused");
       });
     });
   });
