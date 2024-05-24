@@ -577,7 +577,12 @@ describe("OETH Vault", function () {
       beforeEach(async () => {
         const { oethVault, weth, governor, daniel, josh } = fixture;
 
-        mockStrategy = await deployWithConfirmation("MockStrategy");
+        const dMockStrategy = await deployWithConfirmation("MockStrategy");
+        mockStrategy = await ethers.getContractAt(
+          "MockStrategy",
+          dMockStrategy.address
+        );
+        await mockStrategy.setWithdrawAll(weth.address, oethVault.address);
         await oethVault.connect(governor).approveStrategy(mockStrategy.address);
 
         // Deposit 15 WETH of 10 + 20 + 30 = 60 WETH to strategy
@@ -696,9 +701,86 @@ describe("OETH Vault", function () {
         const tx = oethVault.connect(matt).claimWithdrawal(2);
         await expect(tx).to.be.revertedWith("queue pending liquidity");
       });
-      // Should claim after liquidity added to the queue from withdraw from strategy
-      // Should claim after withdrawAll from strategies
+      it("Should claim a new request after withdraw from strategy adds enough liquidity", async () => {
+        const { oethVault, daniel, matt, strategist, weth } = fixture;
 
+        // Set the claimable amount to the queued amount
+        await oethVault.addWithdrawalQueueLiquidity();
+
+        // Matt requests all 30 OETH to be withdrawn which is currently 8 WETH short
+        const requestAmount = oethUnits("30");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBeforeMint = await snapData(fixtureWithUser);
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Add another 8 WETH so the unallocated WETH is 22 + 8 = 30 WETH
+        const withdrawAmount = oethUnits("8");
+        await oethVault
+          .connect(strategist)
+          .withdrawFromStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [withdrawAmount]
+          );
+
+        await assertChangedData(
+          dataBeforeMint,
+          {
+            oethTotal: 0,
+            userOeth: 0,
+            userWeth: 0,
+            vaultWeth: withdrawAmount,
+            queued: 0,
+            claimable: requestAmount,
+            claimed: 0,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+
+        await oethVault.connect(matt).claimWithdrawal(2);
+      });
+      it("Should claim a new request after withdrawAll from strategies adds enough liquidity", async () => {
+        const { oethVault, daniel, matt, strategist, weth } = fixture;
+
+        // Set the claimable amount to the queued amount
+        await oethVault.addWithdrawalQueueLiquidity();
+
+        // Matt requests all 30 OETH to be withdrawn which is currently 8 WETH short
+        const requestAmount = oethUnits("30");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBeforeMint = await snapData(fixtureWithUser);
+        const strategyBalanceBefore = await weth.balanceOf(
+          mockStrategy.address
+        );
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Add another 8 WETH so the unallocated WETH is 22 + 8 = 30 WETH
+        await oethVault.connect(strategist).withdrawAllFromStrategies();
+
+        await assertChangedData(
+          dataBeforeMint,
+          {
+            oethTotal: 0,
+            userOeth: 0,
+            userWeth: 0,
+            vaultWeth: strategyBalanceBefore,
+            queued: 0,
+            claimable: requestAmount,
+            claimed: 0,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+
+        await oethVault.connect(matt).claimWithdrawal(2);
+      });
       it("Should fail to claim a new request after mint with NOT enough liquidity", async () => {
         const { oethVault, daniel, matt, weth } = fixture;
 
