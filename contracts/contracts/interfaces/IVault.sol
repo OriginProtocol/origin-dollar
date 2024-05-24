@@ -35,6 +35,18 @@ interface IVault {
         uint256 _toAssetAmount
     );
     event DripperChanged(address indexed _dripper);
+    event WithdrawalRequested(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount,
+        uint256 _queued
+    );
+    event WithdrawalClaimed(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount
+    );
+    event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -228,4 +240,14 @@ interface IVault {
     function claimWithdrawals(uint256[] memory requestIds)
         external
         returns (uint256[] memory amounts, uint256 totalAmount);
+
+    function withdrawalQueueMetadata()
+        external
+        view
+        returns (VaultStorage.WithdrawalQueueMetadata memory);
+
+    function withdrawalRequests(uint256 requestId)
+        external
+        view
+        returns (VaultStorage.WithdrawalRequest memory);
 }

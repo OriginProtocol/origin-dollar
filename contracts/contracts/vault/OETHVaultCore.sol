@@ -171,10 +171,8 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
-        // Check the user has enough OETH to burn
-        require(oUSD.balanceOf(msg.sender) >= _amount, "Insufficient OETH");
-
-        // burn the user's oTokens
+        // Burn the user's OETH
+        // This also checks the requester has enough OETH to burn
         oUSD.burn(msg.sender, _amount);
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
@@ -250,10 +248,14 @@ contract OETHVaultCore is VaultCore {
             IDripper(dripper).collect();
 
             // Add any WETH from the Dripper to the withdrawal queue
-            _addWithdrawalQueueLiquidity();
+            uint256 addedClaimable = _addWithdrawalQueueLiquidity();
+
+            // If there still isn't enough liquidity in the queue to claim, revert
+            require(
+                request.queued <= queue.claimable + addedClaimable,
+                "pending liquidity"
+            );
         }
-        // If there still isn't enough liquidity in the queue to claim, revert
-        require(request.queued <= queue.claimable, "pending liquidity");
 
         // Store the updated claimed amount
         withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
@@ -278,7 +280,10 @@ contract OETHVaultCore is VaultCore {
     }
 
     /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
-    function _addWithdrawalQueueLiquidity() internal {
+    function _addWithdrawalQueueLiquidity()
+        internal
+        returns (uint256 addedClaimable)
+    {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         // Check if the claimable WETH is less than the queued amount
@@ -296,7 +301,7 @@ contract OETHVaultCore is VaultCore {
                 uint256 unallocatedWeth = wethBalance - unclaimed;
 
                 // the new claimable amount is the smaller of the queue shortfall or unallocated weth
-                uint256 addedClaimable = queueShortfall < unallocatedWeth
+                addedClaimable = queueShortfall < unallocatedWeth
                     ? queueShortfall
                     : unallocatedWeth;
                 uint256 newClaimable = queue.claimable + addedClaimable;
