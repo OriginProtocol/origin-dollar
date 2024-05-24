@@ -220,6 +220,7 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
+        amounts = new uint256[](requestIds.length);
         for (uint256 i = 0; i < requestIds.length; ++i) {
             amounts[i] = _claimWithdrawal(requestIds[i]);
             totalAmount += amounts[i];

@@ -538,7 +538,7 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
-    it("Should claim matt's request with enough liquidity", async () => {
+    it("Should claim second request with enough liquidity", async () => {
       const { oethVault, daniel, josh } = fixture;
       const fixtureWithUser = { ...fixture, user: josh };
       await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
@@ -548,6 +548,9 @@ describe("OETH Vault", function () {
 
       const tx = await oethVault.connect(josh).claimWithdrawal(requestId);
 
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(josh.address, requestId, secondRequestAmount);
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimable")
         .withArgs(
@@ -570,7 +573,43 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
-    // Should deposit all WETH to a strategy if no WETH in the withdrawal queue
+    it("Should claim multiple requests with enough liquidity", async () => {
+      const { oethVault, matt } = fixture;
+      const fixtureWithUser = { ...fixture, user: matt };
+      await oethVault.connect(matt).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+      const dataBefore = await snapData(fixtureWithUser);
+
+      const tx = await oethVault.connect(matt).claimWithdrawals([0, 1]);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(matt.address, 0, firstRequestAmount);
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(matt.address, 1, secondRequestAmount);
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimable")
+        .withArgs(
+          firstRequestAmount.add(secondRequestAmount),
+          firstRequestAmount.add(secondRequestAmount)
+        );
+
+      await assertChangedData(
+        dataBefore,
+        {
+          oethTotal: 0,
+          userOeth: 0,
+          userWeth: firstRequestAmount.add(secondRequestAmount),
+          vaultWeth: firstRequestAmount.add(secondRequestAmount).mul(-1),
+          queued: 0,
+          claimable: firstRequestAmount.add(secondRequestAmount),
+          claimed: firstRequestAmount.add(secondRequestAmount),
+          nextWithdrawalIndex: 0,
+        },
+        fixtureWithUser
+      );
+    });
 
     describe("when deposit some WETH to a strategy", () => {
       let mockStrategy;
@@ -733,6 +772,46 @@ describe("OETH Vault", function () {
             userOeth: 0,
             userWeth: 0,
             vaultWeth: withdrawAmount,
+            queued: 0,
+            claimable: requestAmount,
+            claimed: 0,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+
+        await oethVault.connect(matt).claimWithdrawal(2);
+      });
+      it("Should claim a new request after withdrawAllFromStrategy adds enough liquidity", async () => {
+        const { oethVault, daniel, matt, strategist, weth } = fixture;
+
+        // Set the claimable amount to the queued amount
+        await oethVault.addWithdrawalQueueLiquidity();
+
+        // Matt requests all 30 OETH to be withdrawn which is currently 8 WETH short
+        const requestAmount = oethUnits("30");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBeforeMint = await snapData(fixtureWithUser);
+        const strategyBalanceBefore = await weth.balanceOf(
+          mockStrategy.address
+        );
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Add another 8 WETH so the unallocated WETH is 22 + 8 = 30 WETH
+        await oethVault
+          .connect(strategist)
+          .withdrawAllFromStrategy(mockStrategy.address);
+
+        await assertChangedData(
+          dataBeforeMint,
+          {
+            oethTotal: 0,
+            userOeth: 0,
+            userWeth: 0,
+            vaultWeth: strategyBalanceBefore,
             queued: 0,
             claimable: requestAmount,
             claimed: 0,
