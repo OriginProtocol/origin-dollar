@@ -243,6 +243,12 @@ describe("OETH Vault", function () {
       expect(vaultBalanceBefore).to.eq(vaultBalanceAfter);
     });
 
+    it("should redeem zero amount without revert", async () => {
+      const { oethVault, daniel } = fixture;
+
+      await oethVault.connect(daniel).redeem(0, 0);
+    });
+
     it("should revert on liquidity error", async () => {
       const { oethVault, daniel } = fixture;
       const tx = oethVault
