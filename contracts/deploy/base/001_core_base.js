@@ -1,25 +1,38 @@
-const { deploymentWithGuardianGovernor } = require("../../utils/deploy.js");
 const addresses = require("../../utils/addresses.js");
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
 const { getAssetAddresses } = require("../../test/helpers.js");
+const { deployOnBaseWithGuardian } = require("../../utils/delpoy-l2.js");
 
 // 5/8 multisig
 const guardianAddr = addresses.base.governor;
 
-module.exports = deploymentWithGuardianGovernor(
+module.exports = deployOnBaseWithGuardian(
   { deployName: "001_core_base" },
   async ({ deployWithConfirmation, ethers, withConfirmation }) => {
-    let actions = await deployCore({
+    let actions = [];
+    const coreActions = await deployCore({
       deployWithConfirmation,
       withConfirmation,
       ethers,
     });
 
+    actions = actions.concat(coreActions);
+
+    await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+
+    const harvesterActions = await deployHarvester({
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+    });
+
+    actions = actions.concat(harvesterActions);
+
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy OETH Vault",
+      name: "Deploy OETH Vault, Dripper and Harvester",
       actions,
     };
   }
@@ -35,7 +48,6 @@ const deployCore = async ({
 }) => {
   const { deployerAddr, strategistAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
   const assetAddresses = await getAssetAddresses(hre.deployments);
   console.log(
     `Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`
@@ -43,6 +55,8 @@ const deployCore = async ({
 
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
+  await deployWithConfirmation("OETHProxy");
+
   //await deployWithConfirmation("OETHOracleRouter");
   await deployWithConfirmation(
     "PriceFeedPair",
@@ -59,8 +73,7 @@ const deployCore = async ({
   contractName = "BaseOETHOracleRouter";
   args = [priceFeedPair.address];
 
-
-await deployWithConfirmation(contractName, args, oracleContract);
+  await deployWithConfirmation(contractName, args, oracleContract);
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
@@ -69,16 +82,25 @@ await deployWithConfirmation(contractName, args, oracleContract);
    * separate storage slot layouts for these shared contracts.
    */
   const dVault = await deployWithConfirmation("OETHVault", null, null, false);
-  const dVaultCore = await deployWithConfirmation("OETHVaultCore");
+  const dVaultCore = await deployWithConfirmation("OETHVaultCore", [
+    assetAddresses.WETH,
+  ]);
   const dVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
 
   // Get contract instances
-  // OETH proxy has already been deployed by deploy 049
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
   const cOETHOracleRouter = await ethers.getContract("BaseOETHOracleRouter");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
+
+  await withConfirmation(
+    cOETHProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dOETH.address, deployerAddr, [])
+  );
+  console.log("Initialized OETHProxy");
 
   // Need to call the initializer on the Vault then upgraded it to the actual
   // VaultCore implementation
@@ -109,19 +131,13 @@ await deployWithConfirmation(contractName, args, oracleContract);
   await withConfirmation(
     cVault
       .connect(sDeployer)
-      .setAutoAllocateThreshold(utils.parseUnits("10", 18))
+      .setAutoAllocateThreshold(utils.parseUnits("25", 18))
   );
 
-  await withConfirmation(
-    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("1", 18))
-  );
+  await withConfirmation(cOETHOracleRouter.cacheDecimals(assetAddresses.AERO));
 
   await withConfirmation(
-    cVault.connect(sDeployer).setMaxSupplyDiff(utils.parseUnits("3", 16))
-  );
-
-  await withConfirmation(
-    cVault.connect(sDeployer).setRedeemFeeBps(50) // 50 BPS = 0.5%
+    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("5", 18))
   );
 
   await withConfirmation(
@@ -140,11 +156,14 @@ await deployWithConfirmation(contractName, args, oracleContract);
 
   await withConfirmation(
     // 0 stands for DECIMAL unit conversion
-    cVault.connect(sDeployer).supportAsset(addresses.base.WETH, 0)
+    cVault.connect(sDeployer).supportAsset(assetAddresses.WETH, 0)
   );
 
   console.log("Initialized OETHVaultAdmin implementation");
 
+  await withConfirmation(
+    cOETHProxy.connect(sDeployer).transferGovernance(guardianAddr)
+  );
   await withConfirmation(
     cVaultProxy.connect(sDeployer).transferGovernance(guardianAddr)
   );
@@ -177,8 +196,8 @@ await deployWithConfirmation(contractName, args, oracleContract);
       signature: "initialize(string,string,address,uint256)",
       // TODO: Verify name is ok
       args: [
-        "Origin Ether",
-        "OETH",
+        "OETH Base",
+        "OETHbase",
         cVaultProxy.address,
         utils.parseUnits("1", 27).sub(BigNumber.from(1)),
       ],
@@ -186,3 +205,116 @@ await deployWithConfirmation(contractName, args, oracleContract);
   ];
 };
 
+const deployDripper = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  // Deploy Dripper Impl
+  const dDripper = await deployWithConfirmation("OETHDripper", [
+    cVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+  await deployWithConfirmation("OETHDripperProxy");
+  // Deploy Dripper Proxy
+  const cDripperProxy = await ethers.getContract("OETHDripperProxy");
+  await withConfirmation(
+    cDripperProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dDripper.address, guardianAddr, [])
+  );
+};
+
+const deployHarvester = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cDripper = await ethers.getContract("OETHDripperProxy");
+
+  const dAeroHarvesterProxy = await deployWithConfirmation(
+    "AeroHarvesterProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
+  const cAeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
+
+  const dAeroHarvester = await deployWithConfirmation("AeroHarvester", [
+    cOETHVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  const cAeroHarvester = await ethers.getContractAt(
+    "AeroHarvester",
+    dAeroHarvesterProxy.address
+  );
+  await withConfirmation(
+    cAeroHarvesterProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dAeroHarvester.address,
+        deployerAddr,
+        []
+      )
+  );
+  console.log("Initialized AeroHarvesterProxy");
+
+  await withConfirmation(
+    cAeroHarvesterProxy.connect(sDeployer).transferGovernance(guardianAddr)
+  );
+
+  console.log("Governance transfer initialized");
+
+  return [
+    {
+      // Claim governance
+      contract: cAeroHarvesterProxy,
+      signature: "claimGovernance()",
+      args: [],
+    },
+    {
+      // Set reward token config
+      contract: cAeroHarvester,
+      signature:
+        "setRewardTokenConfig(address,(uint16,uint16,address,bool,uint8,uint256),(address,address,bool,address)[])",
+      args: [
+        assetAddresses.AERO,
+        {
+          allowedSlippageBps: 800,
+          harvestRewardBps: 100,
+          swapPlatform: 0, // Aerodrome
+          swapPlatformAddr: addresses.base.aeroRouterAddress,
+          liquidationLimit: 0,
+          doSwapRewardToken: true,
+        },
+        [
+          {
+            from: assetAddresses.AERO,
+            to: assetAddresses.WETH,
+            stable: true,
+            factory: addresses.base.aeroFactoryAddress,
+          },
+        ],
+      ],
+    },
+    {
+      // Set reward proceeds
+      contract: cAeroHarvester,
+      signature: "setRewardProceedsAddress(address)",
+      args: [cDripper.address],
+    },
+  ];
+};
