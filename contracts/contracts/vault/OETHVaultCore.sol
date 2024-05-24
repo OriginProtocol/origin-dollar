@@ -355,17 +355,12 @@ contract OETHVaultCore is VaultCore {
         super._allocate();
     }
 
-    function _totalValueInVault()
-        internal
-        view
-        override
-        returns (uint256 value)
-    {
-        value = super._totalValueInVault();
+    function _totalValue() internal view override returns (uint256 value) {
+        value = super._totalValue();
 
+        // Need to remove WETH that is reserved for the withdrawal queue.
+        // reserved for the withdrawal queue = cumulative queued total - total claimed
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-        // Need to remove WETH that is reserved for the withdrawal queue
-        // reserver for the withdrawal queue = cumulative queued total - total claimed
         value = value + queue.claimed - queue.queued;
     }
 }

@@ -650,7 +650,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("Should claim a second request with enough WETH liquidity", async () => {
+      it("Should claim a new request with enough WETH liquidity", async () => {
         const { oethVault, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
 
@@ -686,7 +686,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("Should not claim a new request when pending queue liquidity", async () => {
+      it("Should fail to claim a new request with NOT enough WETH liquidity", async () => {
         const { oethVault, matt } = fixture;
 
         // Matt request 23 OETH to be withdrawn when only 22 WETH is unallocated to existing requests
@@ -696,10 +696,60 @@ describe("OETH Vault", function () {
         const tx = oethVault.connect(matt).claimWithdrawal(2);
         await expect(tx).to.be.revertedWith("queue pending liquidity");
       });
-      // Should claim after withdraw from strategy
+      // Should claim after liquidity added to the queue from withdraw from strategy
       // Should claim after withdrawAll from strategies
-      // Should not claim after a new mint didn't add enough liquidity
-      // Should claim after a new mint did add enough liquidity
+
+      it("Should fail to claim a new request after mint with NOT enough liquidity", async () => {
+        const { oethVault, daniel, matt, weth } = fixture;
+
+        // Matt requests all 30 OETH to be withdrawn which is not enough liquidity
+        const requestAmount = oethUnits("30");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Add another 6 WETH so the unallocated WETH is 22 + 6 = 28 WETH
+        await oethVault.connect(daniel).mint(weth.address, oethUnits("6"), 0);
+
+        const tx = oethVault.connect(matt).claimWithdrawal(2);
+        await expect(tx).to.be.revertedWith("queue pending liquidity");
+      });
+      it("Should claim a new request after mint adds enough liquidity", async () => {
+        const { oethVault, daniel, matt, weth } = fixture;
+
+        // Set the claimable amount to the queued amount
+        await oethVault.addWithdrawalQueueLiquidity();
+
+        // Matt requests all 30 OETH to be withdrawn which is currently 8 WETH short
+        const requestAmount = oethUnits("30");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBeforeMint = await snapData(fixtureWithUser);
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Add another 8 WETH so the unallocated WETH is 22 + 8 = 30 WETH
+        const mintAmount = oethUnits("8");
+        await oethVault.connect(daniel).mint(weth.address, mintAmount, 0);
+
+        await assertChangedData(
+          dataBeforeMint,
+          {
+            oethTotal: mintAmount,
+            userOeth: mintAmount,
+            userWeth: mintAmount.mul(-1),
+            vaultWeth: mintAmount,
+            queued: 0,
+            claimable: requestAmount,
+            claimed: 0,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+
+        await oethVault.connect(matt).claimWithdrawal(2);
+      });
     });
 
     describe("Should fail when", () => {
