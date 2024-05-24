@@ -87,7 +87,7 @@ return
 return
 return
 
-reg -> nativeStrat : stake([\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot])
+reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
 activate nativeStrat
 nativeStrat -> weth : withdraw(32 ETH * number of validators)
 activate weth
@@ -98,7 +98,10 @@ loop for each validator
 
 nativeStrat -> dep : stake(\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot)
 activate dep
-note left : 32 ETH from Native Staking Strategy\nis sent to Beacon Deposit
+note left
+32 ETH from Native Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Native Staking Strategy
+end note
 return
 end
 return
