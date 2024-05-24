@@ -253,7 +253,7 @@ contract OETHVaultCore is VaultCore {
             // If there still isn't enough liquidity in the queue to claim, revert
             require(
                 request.queued <= queue.claimable + addedClaimable,
-                "pending liquidity"
+                "queue pending liquidity"
             );
         }
 

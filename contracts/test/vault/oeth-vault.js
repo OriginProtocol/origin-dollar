@@ -88,10 +88,11 @@ describe("OETH Vault", function () {
         .to.emit(oethVault, "Mint")
         .withArgs(josh.address, amount);
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
           oethTotal: amount,
+          userOeth: amount,
           userWeth: amount.mul(-1),
           vaultWeth: amount,
           queued: 0,
@@ -369,21 +370,21 @@ describe("OETH Vault", function () {
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
     });
     const firstRequestAmount = oethUnits("5");
-    const secondRequestAmount = oethUnits("8");
-    it("should request first withdrawal by josh", async () => {
-      const { oethVault, josh } = fixture;
-      const fixtureWithUser = { ...fixture, user: josh };
+    const secondRequestAmount = oethUnits("18");
+    it("should request first withdrawal by Daniel", async () => {
+      const { oethVault, daniel } = fixture;
+      const fixtureWithUser = { ...fixture, user: daniel };
       const dataBefore = await snapData(fixtureWithUser);
 
       const tx = await oethVault
-        .connect(josh)
+        .connect(daniel)
         .requestWithdrawal(firstRequestAmount);
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalRequested")
-        .withArgs(josh.address, 0, firstRequestAmount, firstRequestAmount);
+        .withArgs(daniel.address, 0, firstRequestAmount, firstRequestAmount);
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
           oethTotal: firstRequestAmount.mul(-1),
@@ -410,22 +411,22 @@ describe("OETH Vault", function () {
         .to.emit(oethVault, "WithdrawalRequested")
         .withArgs(josh.address, 1, 0, firstRequestAmount);
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
           oethTotal: 0,
           userOeth: 0,
           userWeth: 0,
           vaultWeth: 0,
-          queued: firstRequestAmount,
+          queued: 0,
           claimable: 0,
           claimed: 0,
-          nextWithdrawalIndex: 2,
+          nextWithdrawalIndex: 1,
         },
         fixtureWithUser
       );
     });
-    it("should request withdrawal with no WETH in the Vault", async () => {
+    it("should request first and second withdrawals with no WETH in the Vault", async () => {
       const { oethVault, governor, josh, matt, weth } = fixture;
       const fixtureWithUser = { ...fixture, user: josh };
 
@@ -457,25 +458,25 @@ describe("OETH Vault", function () {
           firstRequestAmount.add(secondRequestAmount)
         );
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
-          oethTotal: secondRequestAmount.mul(-1),
-          userOeth: secondRequestAmount.mul(-1),
+          oethTotal: firstRequestAmount.add(secondRequestAmount).mul(-1),
+          userOeth: firstRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
           queued: firstRequestAmount.add(secondRequestAmount),
           claimable: 0,
           claimed: 0,
-          nextWithdrawalIndex: 1,
+          nextWithdrawalIndex: 2,
         },
         fixtureWithUser
       );
     });
     it("should request second withdrawal by matt", async () => {
-      const { oethVault, josh, matt } = fixture;
+      const { oethVault, daniel, matt } = fixture;
       const fixtureWithUser = { ...fixture, user: matt };
-      await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
       const dataBefore = await snapData(fixtureWithUser);
 
       const tx = await oethVault
@@ -491,14 +492,14 @@ describe("OETH Vault", function () {
           firstRequestAmount.add(secondRequestAmount)
         );
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
           oethTotal: secondRequestAmount.mul(-1),
           userOeth: secondRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
-          queued: firstRequestAmount.add(secondRequestAmount),
+          queued: secondRequestAmount,
           claimable: 0,
           claimed: 0,
           nextWithdrawalIndex: 1,
@@ -506,14 +507,14 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
-    it("Should add liquidity to the withdrawal queue", async () => {
-      const { oethVault, josh, matt } = fixture;
-      const fixtureWithUser = { ...fixture, user: matt };
-      await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
-      await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+    it("Should add claimable liquidity to the withdrawal queue", async () => {
+      const { oethVault, daniel, josh } = fixture;
+      const fixtureWithUser = { ...fixture, user: josh };
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(josh).requestWithdrawal(secondRequestAmount);
       const dataBefore = await snapData(fixtureWithUser);
 
-      const tx = await oethVault.connect(matt).addWithdrawalQueueLiquidity();
+      const tx = await oethVault.connect(josh).addWithdrawalQueueLiquidity();
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimable")
@@ -522,7 +523,7 @@ describe("OETH Vault", function () {
           firstRequestAmount.add(secondRequestAmount)
         );
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
           oethTotal: 0,
@@ -538,14 +539,14 @@ describe("OETH Vault", function () {
       );
     });
     it("Should claim matt's request with enough liquidity", async () => {
-      const { oethVault, josh, matt } = fixture;
-      const fixtureWithUser = { ...fixture, user: matt };
-      await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
-      await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+      const { oethVault, daniel, josh } = fixture;
+      const fixtureWithUser = { ...fixture, user: josh };
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(josh).requestWithdrawal(secondRequestAmount);
       const requestId = 1; // ids start at 0 so the second request is at index 1
       const dataBefore = await snapData(fixtureWithUser);
 
-      const tx = await oethVault.connect(matt).claimWithdrawal(requestId);
+      const tx = await oethVault.connect(josh).claimWithdrawal(requestId);
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimable")
@@ -554,14 +555,14 @@ describe("OETH Vault", function () {
           firstRequestAmount.add(secondRequestAmount)
         );
 
-      assertChangedData(
+      await assertChangedData(
         dataBefore,
         {
-          oethTotal: secondRequestAmount.mul(-1),
-          userOeth: secondRequestAmount.mul(-1),
+          oethTotal: 0,
+          userOeth: 0,
           userWeth: secondRequestAmount,
           vaultWeth: secondRequestAmount.mul(-1),
-          queued: firstRequestAmount.add(secondRequestAmount),
+          queued: 0,
           claimable: firstRequestAmount.add(secondRequestAmount),
           claimed: secondRequestAmount,
           nextWithdrawalIndex: 0,
@@ -571,15 +572,16 @@ describe("OETH Vault", function () {
     });
     // Should deposit all WETH to a strategy if no WETH in the withdrawal queue
 
-    describe("deposit some WETH to a strategy", () => {
+    describe("when deposit some WETH to a strategy", () => {
       let mockStrategy;
       beforeEach(async () => {
-        const { oethVault, weth, governor, matt, josh } = fixture;
+        const { oethVault, weth, governor, daniel, josh } = fixture;
 
         mockStrategy = await deployWithConfirmation("MockStrategy");
         await oethVault.connect(governor).approveStrategy(mockStrategy.address);
 
         // Deposit 15 WETH of 10 + 20 + 30 = 60 WETH to strategy
+        // This leave 60 - 15 = 45 WETH in the vault
         await oethVault
           .connect(governor)
           .depositToStrategy(
@@ -587,17 +589,18 @@ describe("OETH Vault", function () {
             [weth.address],
             [oethUnits("15")]
           );
-        // Request withdrawal of 5 + 8 = 13 OETH
-        await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
-        await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+        // Request withdrawal of 5 + 18 = 23 OETH
+        // This leave 45 - 23 = 22 WETH unallocated to the withdrawal queue
+        await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+        await oethVault.connect(josh).requestWithdrawal(secondRequestAmount);
       });
       it("Should not deposit allocated WETH to a strategy", async () => {
         const { oethVault, weth, governor } = fixture;
 
         // WETH in the vault = 60 - 15 = 45 WETH
-        // unallocated WETH in the Vault = 45 - 13 = 32 WETH
-        // 33 WETH to deposit > the 32 WETH available so it should revert
-        const depositAmount = oethUnits("33");
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // 23 WETH to deposit > the 22 WETH available so it should revert
+        const depositAmount = oethUnits("23");
         const tx = oethVault
           .connect(governor)
           .depositToStrategy(
@@ -611,8 +614,8 @@ describe("OETH Vault", function () {
         const { oethVault, weth, governor } = fixture;
 
         // WETH in the vault = 60 - 15 = 45 WETH
-        // unallocated WETH in the Vault = 45 - 13 = 32 WETH
-        const depositAmount = oethUnits("32");
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        const depositAmount = oethUnits("22");
         await oethVault
           .connect(governor)
           .depositToStrategy(
@@ -621,13 +624,83 @@ describe("OETH Vault", function () {
             [depositAmount]
           );
       });
+      it("Should claim first request with enough liquidity", async () => {
+        const { oethVault, daniel } = fixture;
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(daniel).claimWithdrawal(0);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(daniel.address, 0, firstRequestAmount);
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotal: 0,
+            userOeth: 0,
+            userWeth: firstRequestAmount,
+            vaultWeth: firstRequestAmount.mul(-1),
+            queued: 0,
+            claimable: firstRequestAmount.add(secondRequestAmount),
+            claimed: firstRequestAmount,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+      });
+      it("Should claim a second request with enough WETH liquidity", async () => {
+        const { oethVault, matt } = fixture;
+        const fixtureWithUser = { ...fixture, user: matt };
+
+        // Set the claimable amount to the queued amount
+        await oethVault.addWithdrawalQueueLiquidity();
+
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // unallocated WETH in the Vault = 45 - 23 = 22 WETH
+        // Matt request all unallocated WETH to be withdrawn
+        const requestAmount = oethUnits("22");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(matt).claimWithdrawal(2);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(matt.address, 2, requestAmount);
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotal: 0,
+            userOeth: 0,
+            userWeth: requestAmount,
+            vaultWeth: requestAmount.mul(-1),
+            queued: 0,
+            claimable: requestAmount,
+            claimed: requestAmount,
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+      });
+      it("Should not claim a new request when pending queue liquidity", async () => {
+        const { oethVault, matt } = fixture;
+
+        // Matt request 23 OETH to be withdrawn when only 22 WETH is unallocated to existing requests
+        const requestAmount = oethUnits("23");
+        await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        const tx = oethVault.connect(matt).claimWithdrawal(2);
+        await expect(tx).to.be.revertedWith("queue pending liquidity");
+      });
+      // Should claim after withdraw from strategy
+      // Should claim after withdrawAll from strategies
+      // Should not claim after a new mint didn't add enough liquidity
+      // Should claim after a new mint did add enough liquidity
     });
-    // Should claim the first request with enough WETH liquidity
-    // Should not claim the second request as not enough WETH liquidity
-    // Should claim after withdraw from strategy
-    // Should claim after withdrawAll from strategies
-    // Should not claim after a new mint didn't add enough liquidity
-    // Should claim after a new mint did add enough liquidity
 
     describe("Should fail when", () => {
       it("request doesn't have enough OETH", async () => {
