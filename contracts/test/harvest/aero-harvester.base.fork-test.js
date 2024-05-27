@@ -32,8 +32,12 @@ describe("ForkTest: Harvest (Base)", function () {
     ).to.be.eq(true);
   });
   it("should harvest and swap", async function () {
-    const { oethBaseHarvester, aerodromeEthStrategy, oracleRouter, oethDripper } =
-      fixture;
+    const {
+      oethBaseHarvester,
+      aerodromeEthStrategy,
+      oracleRouter,
+      oethDripper,
+    } = fixture;
     const yieldAccrued = "1000"; // AERO tokens
 
     // Mock accrue yield

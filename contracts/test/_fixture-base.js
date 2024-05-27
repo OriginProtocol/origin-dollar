@@ -66,7 +66,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   const oethVaultCore = await ethers.getContract("OETHVaultCore");
 
-  const oethBaseHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
+  const oethBaseHarvesterProxy = await ethers.getContract(
+    "OETHBaseHarvesterProxy"
+  );
   const oethBaseHarvester = await ethers.getContractAt(
     "OETHBaseHarvester",
     oethBaseHarvesterProxy.address

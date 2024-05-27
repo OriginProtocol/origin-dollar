@@ -644,7 +644,9 @@ const deployOETHBaseHarvester = async (oethDripper) => {
     [],
     "InitializeGovernedUpgradeabilityProxy"
   );
-  const cOETHBaseHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
+  const cOETHBaseHarvesterProxy = await ethers.getContract(
+    "OETHBaseHarvesterProxy"
+  );
 
   const dOETHBaseHarvester = await deployWithConfirmation("OETHBaseHarvester", [
     cOETHVaultProxy.address,
