@@ -225,8 +225,8 @@ contract AerodromeEthStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice AeroHarvesterProxy delegates calls to a Harvester implementation
+ * @notice OETHBaseHarvesterProxy delegates calls to a Harvester implementation
  */
-contract AeroHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

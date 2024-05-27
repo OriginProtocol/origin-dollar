@@ -66,10 +66,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   const oethVaultCore = await ethers.getContract("OETHVaultCore");
 
-  const aeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
-  const aeroHarvester = await ethers.getContractAt(
-    "AeroHarvester",
-    aeroHarvesterProxy.address
+  const oethBaseHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
+  const oethBaseHarvester = await ethers.getContractAt(
+    "OETHBaseHarvester",
+    oethBaseHarvesterProxy.address
   );
 
   const oracleRouter = await ethers.getContract("BaseOETHOracleRouter");
@@ -96,7 +96,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     if (woethImplAddr != latestImplAddr) {
       await woethProxy.connect(governor).upgradeTo(latestImplAddr);
     }
-    await aeroHarvester
+    await oethBaseHarvester
       .connect(governor)
       .setSupportedStrategy(aerodromeEthStrategy.address, true);
   }
@@ -166,8 +166,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oracleRouter,
     oethVaultProxy,
     oethVaultCore,
-    aeroHarvester,
-    aeroHarvesterProxy,
+    oethBaseHarvester,
+    oethBaseHarvesterProxy,
     weth,
     aerodromeEthStrategy,
     governor,

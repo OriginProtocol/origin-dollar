@@ -627,7 +627,7 @@ const deployOETHHarvester = async (oethDripper) => {
   return dOETHHarvesterProxy;
 };
 
-const deployAeroHarvester = async (oethDripper) => {
+const deployOETHBaseHarvester = async (oethDripper) => {
   if (!isBaseOrFork) {
     // Run only on base
     return;
@@ -639,35 +639,35 @@ const deployAeroHarvester = async (oethDripper) => {
 
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
-  const dAeroHarvesterProxy = await deployWithConfirmation(
-    "AeroHarvesterProxy",
+  const dOETHBaseHarvesterProxy = await deployWithConfirmation(
+    "OETHBaseHarvesterProxy",
     [],
     "InitializeGovernedUpgradeabilityProxy"
   );
-  const cAeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
+  const cOETHBaseHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
 
-  const dAeroHarvester = await deployWithConfirmation("AeroHarvester", [
+  const dOETHBaseHarvester = await deployWithConfirmation("OETHBaseHarvester", [
     cOETHVaultProxy.address,
     assetAddresses.WETH,
   ]);
 
-  const cAeroHarvester = await ethers.getContractAt(
-    "AeroHarvester",
-    dAeroHarvesterProxy.address
+  const cOETHBaseHarvester = await ethers.getContractAt(
+    "OETHBaseHarvester",
+    dOETHBaseHarvesterProxy.address
   );
   await withConfirmation(
-    cAeroHarvesterProxy
+    cOETHBaseHarvesterProxy
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](
-        dAeroHarvester.address,
+        dOETHBaseHarvester.address,
         governorAddr,
         []
       )
   );
 
-  log("Initialized AeroHarvesterProxy");
+  log("Initialized OETHBaseHarvesterProxy");
   await withConfirmation(
-    cAeroHarvester.connect(sGovernor).setRewardTokenConfig(
+    cOETHBaseHarvester.connect(sGovernor).setRewardTokenConfig(
       assetAddresses.AERO,
       {
         allowedSlippageBps: 800,
@@ -691,12 +691,12 @@ const deployAeroHarvester = async (oethDripper) => {
   log("Reward token config set");
 
   await withConfirmation(
-    cAeroHarvester
+    cOETHBaseHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(oethDripper.address)
   );
 
-  return dAeroHarvesterProxy;
+  return dOETHBaseHarvesterProxy;
 };
 
 /**
@@ -1680,7 +1680,7 @@ const deployAerodromeStrategy = async (poolAddress, gaugeAddress) => {
     "AerodromeEthStrategy",
     cAerodromeEthStrategyProxy.address
   );
-  const cHarvester = await ethers.getContract("AeroHarvesterProxy");
+  const cHarvester = await ethers.getContract("OETHBaseHarvesterProxy");
   await withConfirmation(
     cStrategy.connect(sGovernor).setHarvesterAddress(cHarvester.address)
   );
@@ -1736,5 +1736,5 @@ module.exports = {
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   deployAerodromeStrategy,
-  deployAeroHarvester,
+  deployOETHBaseHarvester,
 };

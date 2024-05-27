@@ -13,7 +13,7 @@ import "../utils/Helpers.sol";
 import { AbstractHarvesterBase } from "./AbstractHarvesterBase.sol";
 import { IVault } from "./../interfaces/IVault.sol";
 
-contract AeroHarvester is AbstractHarvesterBase {
+contract OETHBaseHarvester is AbstractHarvesterBase {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using StableMath for uint256;

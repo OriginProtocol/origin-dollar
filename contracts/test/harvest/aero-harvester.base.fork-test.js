@@ -18,9 +18,9 @@ describe("ForkTest: Harvest (Base)", function () {
   });
 
   it("config", async function () {
-    const { aeroHarvester, aerodromeEthStrategy } = fixture;
+    const { oethBaseHarvester, aerodromeEthStrategy } = fixture;
 
-    const aeroTokenConfig = await aeroHarvester.rewardTokenConfigs(
+    const aeroTokenConfig = await oethBaseHarvester.rewardTokenConfigs(
       addresses.base.aeroTokenAddress
     );
     expect(aeroTokenConfig.liquidationLimit.toString()).to.be.equal("0");
@@ -28,11 +28,11 @@ describe("ForkTest: Harvest (Base)", function () {
     expect(aeroTokenConfig.harvestRewardBps.toString()).to.be.equal("100");
 
     expect(
-      await aeroHarvester.supportedStrategies(aerodromeEthStrategy.address)
+      await oethBaseHarvester.supportedStrategies(aerodromeEthStrategy.address)
     ).to.be.eq(true);
   });
   it("should harvest and swap", async function () {
-    const { aeroHarvester, aerodromeEthStrategy, oracleRouter, oethDripper } =
+    const { oethBaseHarvester, aerodromeEthStrategy, oracleRouter, oethDripper } =
       fixture;
     const yieldAccrued = "1000"; // AERO tokens
 
@@ -46,7 +46,7 @@ describe("ForkTest: Harvest (Base)", function () {
     );
     await aeroTokenInstance
       .connect(minter)
-      .mint(aeroHarvester.address, parseEther(yieldAccrued));
+      .mint(oethBaseHarvester.address, parseEther(yieldAccrued));
 
     // find signer balance before
     const wethTokenInstance = await ethers.getContractAt(
@@ -56,7 +56,7 @@ describe("ForkTest: Harvest (Base)", function () {
     const wethBalanceBefore = await wethTokenInstance.balanceOf(
       oethDripper.address
     );
-    await aeroHarvester["harvestAndSwap(address,address)"](
+    await oethBaseHarvester["harvestAndSwap(address,address)"](
       aerodromeEthStrategy.address,
       oethDripper.address
     );

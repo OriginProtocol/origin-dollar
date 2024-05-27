@@ -245,35 +245,35 @@ const deployHarvester = async ({
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cDripper = await ethers.getContract("OETHDripperProxy");
 
-  const dAeroHarvesterProxy = await deployWithConfirmation(
-    "AeroHarvesterProxy",
+  const dOETHBaseHarvesterProxy = await deployWithConfirmation(
+    "OETHBaseHarvesterProxy",
     [],
     "InitializeGovernedUpgradeabilityProxy"
   );
-  const cAeroHarvesterProxy = await ethers.getContract("AeroHarvesterProxy");
+  const cOETHBaseHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
 
-  const dAeroHarvester = await deployWithConfirmation("AeroHarvester", [
+  const dOETHBaseHarvester = await deployWithConfirmation("OETHBaseHarvester", [
     cOETHVaultProxy.address,
     assetAddresses.WETH,
   ]);
 
-  const cAeroHarvester = await ethers.getContractAt(
-    "AeroHarvester",
-    dAeroHarvesterProxy.address
+  const cOETHBaseHarvester = await ethers.getContractAt(
+    "OETHBaseHarvester",
+    dOETHBaseHarvesterProxy.address
   );
   await withConfirmation(
-    cAeroHarvesterProxy
+    cOETHBaseHarvesterProxy
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](
-        dAeroHarvester.address,
+        dOETHBaseHarvester.address,
         deployerAddr,
         []
       )
   );
-  console.log("Initialized AeroHarvesterProxy");
+  console.log("Initialized OETHBaseHarvesterProxy");
 
   await withConfirmation(
-    cAeroHarvesterProxy.connect(sDeployer).transferGovernance(guardianAddr)
+    cOETHBaseHarvesterProxy.connect(sDeployer).transferGovernance(guardianAddr)
   );
 
   console.log("Governance transfer initialized");
@@ -281,13 +281,13 @@ const deployHarvester = async ({
   return [
     {
       // Claim governance
-      contract: cAeroHarvesterProxy,
+      contract: cOETHBaseHarvesterProxy,
       signature: "claimGovernance()",
       args: [],
     },
     {
       // Set reward token config
-      contract: cAeroHarvester,
+      contract: cOETHBaseHarvester,
       signature:
         "setRewardTokenConfig(address,(uint16,uint16,address,bool,uint8,uint256),(address,address,bool,address)[])",
       args: [
@@ -312,7 +312,7 @@ const deployHarvester = async ({
     },
     {
       // Set reward proceeds
-      contract: cAeroHarvester,
+      contract: cOETHBaseHarvester,
       signature: "setRewardProceedsAddress(address)",
       args: [cDripper.address],
     },

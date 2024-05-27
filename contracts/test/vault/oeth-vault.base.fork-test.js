@@ -32,14 +32,14 @@ describe("ForkTest: OETH Vault Base", function () {
 
   describe("post deployment", () => {
     it("Should have the correct governor address set", async () => {
-      const { oethVault, oethDripper, oeth, woeth, aeroHarvester } = fixture;
+      const { oethVault, oethDripper, oeth, woeth, oethBaseHarvester } = fixture;
 
       const oethContracts = [
         oethVault,
         oethDripper,
         oeth,
         woeth,
-        aeroHarvester,
+        oethBaseHarvester,
       ];
 
       for (let i = 0; i < oethContracts.length; i++) {

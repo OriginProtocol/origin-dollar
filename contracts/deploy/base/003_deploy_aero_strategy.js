@@ -203,7 +203,7 @@ const deployAerodromeStrategy = async ({
     "AerodromeEthStrategy",
     cAerodromeEthStrategyProxy.address
   );
-  const cHarvester = await ethers.getContract("AeroHarvesterProxy");
+  const cHarvester = await ethers.getContract("OETHBaseHarvesterProxy");
   const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18));
 
   // return actions to be executed by the Governor
