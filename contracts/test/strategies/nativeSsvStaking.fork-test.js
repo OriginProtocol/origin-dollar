@@ -28,7 +28,7 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
         signature:
           "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0",
         depositDataRoot:
-          "0xdbe778a625c68446f3cc8b2009753a5e7dd7c37b8721ee98a796bb9179dfe8ac",
+          "0xf7d704e25a2b5bea06fafa2dfe5c6fa906816e5c1622400339b2088a11d5f446",
       },
     };
   });

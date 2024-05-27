@@ -6,6 +6,7 @@ const {
   setStorageAt,
   mine,
 } = require("@nomicfoundation/hardhat-network-helpers");
+const { solidityPack } = require("ethers/lib/utils");
 
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
@@ -13,6 +14,7 @@ const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
+const { zero } = require("../../utils/addresses");
 const minFixAccountingCadence = 7200 + 1;
 
 const {
@@ -447,7 +449,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         } consensus rewards, ${expectedValidatorsFullWithdrawals} withdraws${
           fuseBlown ? ", fuse blown" : ""
         }${slashDetected ? ", slash detected" : ""}.`, async () => {
-          const { nativeStakingSSVStrategy, governor } = fixture;
+          const { nativeStakingSSVStrategy, governor, weth } = fixture;
 
           // setup state
           if (ethBalance.gt(0)) {
@@ -477,6 +479,9 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
 
           if (expectedValidatorsFullWithdrawals > 0) {
+            const ethWithdrawnToVault = parseEther("32").mul(
+              expectedValidatorsFullWithdrawals
+            );
             await expect(tx)
               .to.emit(
                 nativeStakingSSVStrategy,
@@ -485,8 +490,12 @@ describe("Unit test: Native SSV Staking Strategy", function () {
               .withArgs(
                 expectedValidatorsFullWithdrawals,
                 30 - expectedValidatorsFullWithdrawals,
-                parseEther("32").mul(expectedValidatorsFullWithdrawals)
+                ethWithdrawnToVault
               );
+
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+              .withArgs(weth.address, zero, ethWithdrawnToVault);
           } else {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
@@ -501,11 +510,22 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
 
           if (slashDetected) {
+            const fullExitEthWithdrawnToVault = parseEther("32").mul(
+              expectedValidatorsFullWithdrawals
+            );
+            const slashedEthRemaining = ethBalance.sub(
+              fullExitEthWithdrawnToVault
+            );
+
             await expect(tx)
               .to.emit(nativeStakingSSVStrategy, "AccountingValidatorSlashed")
               .withNamedArgs({
                 remainingValidators: 30 - expectedValidatorsFullWithdrawals - 1,
               });
+
+            await expect(tx)
+              .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+              .withArgs(weth.address, zero, slashedEthRemaining);
           } else {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
@@ -524,7 +544,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(governor).manuallyFixAccounting(
           1, //_validatorsDelta
-          parseEther("2") //_consensusRewardsDelta
+          parseEther("2"), //_consensusRewardsDelta,
+          parseEther("2") //_ethToVault
         )
       ).to.be.revertedWith("Caller is not the Strategist");
     });
@@ -536,7 +557,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           1, //_validatorsDelta
-          parseEther("2") //_consensusRewardsDelta
+          parseEther("2"), //_consensusRewardsDelta
+          parseEther("2") //_ethToVault
         )
       ).to.be.revertedWith("Pausable: not paused");
     });
@@ -550,14 +572,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           -4, //_validatorsDelta
-          0 //_consensusRewardsDelta
+          0, //_consensusRewardsDelta,
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid validatorsDelta");
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           4, //_validatorsDelta
-          0 //_consensusRewardsDelta
+          0, //_consensusRewardsDelta
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid validatorsDelta");
     });
@@ -571,16 +595,33 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
-          parseEther("-333") //_consensusRewardsDelta
+          parseEther("-333"), //_consensusRewardsDelta
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
           0, //_validatorsDelta
-          parseEther("333") //_consensusRewardsDelta
+          parseEther("333"), //_consensusRewardsDelta
+          0 //_ethToVault
         )
       ).to.be.revertedWith("invalid consensusRewardsDelta");
+    });
+
+    it("WETH to Vault amount should not be > 96 for fix accounting function", async () => {
+      const { nativeStakingSSVStrategy, strategist } = fixture;
+
+      await nativeStakingSSVStrategy.connect(strategist).pause();
+      await mine(minFixAccountingCadence);
+
+      await expect(
+        nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
+          0, //_validatorsDelta
+          0, //_consensusRewardsDelta
+          parseEther("97") //_ethToVault
+        )
+      ).to.be.revertedWith("invalid wethToVaultAmount");
     });
 
     describe("Should allow strategist to recover paused contract", async () => {
@@ -592,12 +633,13 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
           await nativeStakingSSVStrategy.connect(strategist).pause();
           await mine(minFixAccountingCadence);
+
           const activeDepositedValidatorsBefore =
             await nativeStakingSSVStrategy.activeDepositedValidators();
 
           const tx = await nativeStakingSSVStrategy
             .connect(strategist)
-            .manuallyFixAccounting(validatorsDelta, 0);
+            .manuallyFixAccounting(validatorsDelta, 0, 0);
 
           expect(tx)
             .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
@@ -629,7 +671,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
           const tx = await nativeStakingSSVStrategy
             .connect(strategist)
-            .manuallyFixAccounting(0, consensusRewardsDelta);
+            .manuallyFixAccounting(0, consensusRewardsDelta, 0);
 
           expect(tx)
             .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
@@ -643,6 +685,99 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           );
         });
       }
+
+      for (const eth of [0, 1, 26, 32, 63, 65, 95]) {
+        it(`by sending ${eth} ETH wrapped to WETH to the vault`, async () => {
+          const { nativeStakingSSVStrategy, strategist } = fixture;
+
+          const wethToVaultBn = parseEther(`${eth}`);
+
+          // add a bit more ETH so we don't completely empty the contract
+          await setBalance(
+            nativeStakingSSVStrategy.address,
+            wethToVaultBn.add(parseEther("2"))
+          );
+
+          await nativeStakingSSVStrategy.connect(strategist).pause();
+          await mine(minFixAccountingCadence);
+          const ethBefore = await nativeStakingSSVStrategy.provider.getBalance(
+            nativeStakingSSVStrategy.address
+          );
+
+          const tx = await nativeStakingSSVStrategy
+            .connect(strategist)
+            .manuallyFixAccounting(0, 0, wethToVaultBn);
+
+          expect(tx)
+            .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+            .withArgs(0, 0, wethToVaultBn);
+
+          expect(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            )
+          ).to.equal(
+            ethBefore.sub(wethToVaultBn),
+            "consensus rewards not updated"
+          );
+
+          expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+            await nativeStakingSSVStrategy.provider.getBalance(
+              nativeStakingSSVStrategy.address
+            ),
+            "consensus rewards matches eth balance"
+          );
+        });
+      }
+
+      it("by marking a validator as withdrawn when severely slashed and sent its funds to the vault", async () => {
+        const { nativeStakingSSVStrategy, governor, strategist, weth } =
+          fixture;
+
+        // setup initial state
+        await nativeStakingSSVStrategy.connect(strategist).pause();
+        await mine(minFixAccountingCadence);
+        // setup 1 validator so one can be deducted later in the test
+        await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            1, //_validatorsDelta
+            0, //_consensusRewardsDeltaDelta
+            0 //_ethToVault
+          );
+
+        // a validator has been slashed and penalized by 8 ETH
+        await setBalance(nativeStakingSSVStrategy.address, parseEther("24"));
+
+        // run the accounting
+        const tx = await nativeStakingSSVStrategy
+          .connect(governor)
+          .doAccounting();
+        // fuse blown contract paused
+        await expect(tx).to.emit(nativeStakingSSVStrategy, "Paused");
+        await mine(minFixAccountingCadence);
+
+        // unit test fixture sets OUSD governor as accounting governor
+        const tx2 = await nativeStakingSSVStrategy
+          .connect(strategist)
+          .manuallyFixAccounting(
+            -1, //_validatorsDelta
+            0, //_consensusRewardsDeltaDelta
+            parseEther("24") //_ethToVault
+          );
+
+        expect(tx2)
+          .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
+          .withArgs(
+            -1, // validatorsDelta
+            0, // consensusRewards
+            parseEther("24")
+          );
+
+        expect(tx2)
+          .to.emit(nativeStakingSSVStrategy, "Withdrawal")
+          .withArgs(weth.address, zero, parseEther("24"));
+      });
 
       it("by changing all three manuallyFixAccounting delta values", async () => {
         const { nativeStakingSSVStrategy, strategist, josh, weth } = fixture;
@@ -659,14 +794,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(strategist)
           .manuallyFixAccounting(
             1, //_validatorsDelta
-            parseEther("2.3") //_consensusRewardsDeltaDelta
+            parseEther("2.3"), //_consensusRewardsDeltaDelta
+            parseEther("2.2") //_ethToVault
           );
 
         expect(tx)
           .to.emit(nativeStakingSSVStrategy, "AccountingManuallyFixed")
           .withArgs(
             1, // validatorsDelta
-            parseEther("2.3") // consensusRewards
+            parseEther("2.3"), // consensusRewards
+            parseEther("2.2")
           );
       });
 
@@ -679,7 +816,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(strategist)
           .manuallyFixAccounting(
             0, //_validatorsDelta
-            parseEther("0") //_consensusRewardsDelta
+            0, //_consensusRewardsDelta
+            0 //_ethToVault
           );
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -687,7 +825,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         await expect(
           nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
             0, //_validatorsDelta
-            parseEther("0") //_consensusRewardsDelta
+            0, //_consensusRewardsDelta
+            0 //_ethToVault
           )
         ).to.be.revertedWith("manuallyFixAccounting called too soon");
       });
@@ -701,7 +840,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(strategist)
           .manuallyFixAccounting(
             0, //_validatorsDelta
-            parseEther("0") //_consensusRewardsDelta
+            0, //_consensusRewardsDelta
+            0 //_ethToVault
           );
 
         await nativeStakingSSVStrategy.connect(strategist).pause();
@@ -710,7 +850,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           .connect(strategist)
           .manuallyFixAccounting(
             0, //_validatorsDelta
-            parseEther("0") //_consensusRewardsDelta
+            0, //_consensusRewardsDelta
+            0 //_ethToVault
           );
       });
     });
@@ -872,6 +1013,36 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         });
       });
     }
+  });
+
+  it("Deposit alternate deposit_data_root ", async () => {
+    const { depositContractUtils } = fixture;
+
+    const withdrawalCredentials = solidityPack(
+      ["bytes1", "bytes11", "address"],
+      [
+        "0x01",
+        "0x0000000000000000000000",
+        // mainnet Native Staking Strategy proxy
+        "0x34edb2ee25751ee67f68a45813b22811687c0238",
+      ]
+    );
+    expect(withdrawalCredentials).to.equal(
+      "0x01000000000000000000000034edb2ee25751ee67f68a45813b22811687c0238"
+    );
+
+    const expectedDepositDataRoot =
+      await depositContractUtils.calculateDepositDataRoot(
+        // Mainnet fork test public key
+        "0xaba6acd335d524a89fb89b9977584afdb23f34a6742547fa9ec1c656fbd2bfc0e7a234460328c2731828c9a43be06e25",
+        withdrawalCredentials,
+        // Mainnet fork test signature
+        "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0"
+      );
+
+    expect(
+      "0xf7d704e25a2b5bea06fafa2dfe5c6fa906816e5c1622400339b2088a11d5f446"
+    ).to.equal(expectedDepositDataRoot, "Incorrect deposit data root");
   });
 });
 

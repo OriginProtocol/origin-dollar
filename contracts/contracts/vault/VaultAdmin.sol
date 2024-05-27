@@ -344,6 +344,45 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @notice Remove a supported asset from the Vault
+     * @param _asset Address of asset
+     */
+    function removeAsset(address _asset) external onlyGovernor {
+        require(assets[_asset].isSupported, "Asset not supported");
+        require(
+            IVault(address(this)).checkBalance(_asset) <= 1e13,
+            "Vault still holds asset"
+        );
+
+        uint256 assetsCount = allAssets.length;
+        uint256 assetIndex = assetsCount; // initialize at invaid index
+        for (uint256 i = 0; i < assetsCount; ++i) {
+            if (allAssets[i] == _asset) {
+                assetIndex = i;
+                break;
+            }
+        }
+
+        // Note: If asset is not found in `allAssets`, the following line
+        // will revert with an out-of-bound error. However, there's no
+        // reason why an asset would have `Asset.isSupported = true` but
+        // not exist in `allAssets`.
+
+        // Update allAssets array
+        allAssets[assetIndex] = allAssets[assetsCount - 1];
+        allAssets.pop();
+
+        // Reset default strategy
+        assetDefaultStrategies[_asset] = address(0);
+        emit AssetDefaultStrategyUpdated(_asset, address(0));
+
+        // Remove asset from storage
+        delete assets[_asset];
+
+        emit AssetRemoved(_asset);
+    }
+
+    /**
      * @notice Cache decimals on OracleRouter for a particular asset. This action
      *      is required before that asset's price can be accessed.
      * @param _asset Address of asset token

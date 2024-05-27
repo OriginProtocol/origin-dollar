@@ -254,6 +254,10 @@ addresses.mainnet.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 
 // Native Staking Strategy
+addresses.mainnet.NativeStakingSSVStrategyProxy =
+  "0x34edb2ee25751ee67f68a45813b22811687c0238";
+
+// Defender relayer
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
@@ -269,6 +273,10 @@ addresses.holesky.SSV = "0xad45A78180961079BFaeEe349704F411dfF947C6";
 addresses.holesky.SSVNetwork = "0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA";
 addresses.holesky.beaconChainDepositContract =
   "0x4242424242424242424242424242424242424242";
+
+// Native Staking Strategy
+addresses.holesky.NativeStakingSSVStrategyProxy =
+  "0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E";
 
 addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
 // Address of the Holesky defender relayer

@@ -114,6 +114,18 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
+        _wethWithdrawnAndStaked(requiredETH);
+
+        /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
+         * can sweep funds to.
+         * bytes11(0) to fill up the required zeros
+         * remaining bytes20 are for the address
+         */
+        bytes memory withdrawal_credentials = abi.encodePacked(
+            bytes1(0x01),
+            bytes11(0),
+            address(this)
+        );
 
         uint256 validatorsLength = validators.length;
         // For each validator
@@ -126,16 +138,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 "Validator not registered"
             );
 
-            /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
-             * can sweep funds to.
-             * bytes11(0) to fill up the required zeros
-             * remaining bytes20 are for the address
-             */
-            bytes memory withdrawal_credentials = abi.encodePacked(
-                bytes1(0x01),
-                bytes11(0),
-                address(this)
-            );
             IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
                 value: 32 ether
             }(
@@ -247,4 +249,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             cluster
         );
     }
+
+    /***************************************
+                 Abstract
+    ****************************************/
+
+    /// @dev allows for NativeStakingSSVStrategy contract know how much WETH had been staked
+    function _wethWithdrawnAndStaked(uint256 _amount) internal virtual;
 }

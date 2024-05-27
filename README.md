@@ -1,13 +1,12 @@
 # Origin DeFi's OTokens: Origin Dollar (OUSD) and Origin Ether (OETH)
- 
+
 For more details about the product, checkout [our docs](https://docs.oeth.com).
 
 ---
 
-| Branch    | CI/CD Status                                                                                                                                                                                                      |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `master`  | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml)                                       |
-
+| Branch   | CI/CD Status                                                                                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `master` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml) |
 
 ## Requirements
 
@@ -96,7 +95,7 @@ Head over to [contracts/fork-test.md](contracts/fork-test.md)
 
 Want to contribute to OUSD? Awesome!
 
-OUSD is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing to the code, and helping us improve our community.
+OUSD is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing code, and helping us improve our community.
 
 The best way to get involved is to join the Origin Protocol [discord server](https://discord.gg/jyxpUSe) and head over to the channel named ORIGIN DOLLAR & DEFI
 
@@ -104,14 +103,6 @@ The best way to get involved is to join the Origin Protocol [discord server](htt
 
 ## Git pre-commit hooks (using Husky)
 
-### Setup
-```
-# install Husky
-npx install husky
+[husky](https://typicode.github.io/husky/) is a development dependency in the root project folder. To install, run `yarn` in the project root folder.
 
-# from project root folder install Husky hooks
-npx husky install
-
-```
-
-If the script in .husky/pre-commit returns non 0 exit the pre-commit hook will fail. Currently the script prevents a commit if there is an ".only" in the test scripts. Use "git commit --no-verify" if you have the hook enabled and you'd like to skip pre-commit check.
+If the [.husky/pre-commit](.husky/pre-commit) script returns non-zero, the pre-commit hook will fail. Currently, the script runs the contracts linter. Use `git commit --no-verify` if you have the hook enabled and you'd like to skip the pre-commit check.

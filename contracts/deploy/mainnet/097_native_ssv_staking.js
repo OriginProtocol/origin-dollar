@@ -1,9 +1,11 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { isFork } = require("../../test/helpers.js");
+const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "096_native_ssv_staking",
+    deployName: "097_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -30,13 +32,9 @@ module.exports = deploymentWithGovernanceProposal(
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy the new strategy proxy
-    const dStrategyProxy = await deployWithConfirmation(
+    // 1. Fetch the strategy proxy deployed by relayer
+    const cStrategyProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
-    );
-    const cStrategyProxy = await ethers.getContractAt(
-      "NativeStakingSSVStrategyProxy",
-      dStrategyProxy.address
     );
 
     // 2. Deploy the new fee accumulator proxy
@@ -64,9 +62,10 @@ module.exports = deploymentWithGovernanceProposal(
       "NativeStakingSSVStrategy",
       dStrategyImpl.address
     );
+
     const cStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      dStrategyProxy.address
+      cStrategyProxy.address
     );
 
     // 3. Initialize Proxy with new implementation and strategy initialization
@@ -80,6 +79,31 @@ module.exports = deploymentWithGovernanceProposal(
         [], // asset token addresses
         [], // platform tokens addresses
       ]
+    );
+
+    if (isFork) {
+      const relayerSigner = await impersonateAndFund(
+        addresses.mainnet.validatorRegistrator,
+        "100"
+      );
+      await withConfirmation(
+        cStrategyProxy
+          .connect(relayerSigner)
+          .transferGovernance(deployerAddr, await getTxOpts())
+      );
+    } else {
+      /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+       * of the proxy to the deployer account that shall be deploying this script so it will be able
+       * to initialize the proxy contract
+       *
+       * Run the following to make it happen, and comment this error block out:
+       * yarn run hardhat transferGovernanceNativeStakingProxy --address 0xdeployerAddress  --network mainnet
+       */
+      new Error("Transfer governance not yet ran");
+    }
+
+    await withConfirmation(
+      cStrategyProxy.connect(sDeployer).claimGovernance(await getTxOpts())
     );
 
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
@@ -123,13 +147,15 @@ module.exports = deploymentWithGovernanceProposal(
     ]);
     const dOETHHarvesterImpl = await ethers.getContract("OETHHarvester");
 
+    console.log("Native Staking SSV Strategy proxy: ", cStrategyProxy.address);
     console.log(
-      "Native Staking SSV Strategy address: ",
-      cStrategyProxy.address
+      "Native Staking SSV Strategy implementation: ",
+      dStrategyImpl.address
     );
-    console.log("Fee accumulator address: ", cFeeAccumulator.address);
+    console.log("Fee accumulator proxy: ", cFeeAccumulatorProxy.address);
+    console.log("Fee accumulator implementation: ", cFeeAccumulator.address);
     console.log(
-      "New OETHHarvester implementation address: ",
+      "New OETHHarvester implementation: ",
       dOETHHarvesterImpl.address
     );
 
