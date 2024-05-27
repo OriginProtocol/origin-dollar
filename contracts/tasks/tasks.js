@@ -11,7 +11,7 @@ const { resolveContract } = require("../utils/resolvers");
 const { KeyValueStoreClient } = require("defender-kvstore-client");
 const { operateValidators } = require("./validator");
 const { formatUnits } = require("ethers/lib/utils");
-const { genECDHKey, encrypt, decrypt } = require("./crypto.js");
+const { genECDHKey, decryptValidatorKey } = require("./crypto.js");
 
 const {
   storeStorageLayoutForAllContracts,
@@ -995,33 +995,6 @@ task("genECDHKey").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "encrypt",
-  "Encrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
-)
-  .addParam(
-    "privateKey",
-    "Private key to encrypt the message with in hex format without the 0x prefix",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "publicKey",
-    "Public key of the other party in hex format without the 0x prefix",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "text",
-    "Message that needs to be encrypted",
-    undefined,
-    types.string
-  )
-  .setAction(encrypt);
-task("encrypt").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "decrypt",
   "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
 )
@@ -1032,24 +1005,12 @@ subtask(
     types.string
   )
   .addParam(
-    "publicKey",
-    "Public key of the other party in hex format without the 0x prefix",
+    "encryptedKey",
+    "Encrypted validator key returned form P2P API",
     undefined,
     types.string
   )
-  .addParam(
-    "text",
-    "Encrypted message that needs to be decrypted in base64 format",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "iv",
-    "InitializationVector in hex format without the 0x prefix",
-    undefined,
-    types.string
-  )
-  .setAction(decrypt);
+  .setAction(decryptValidatorKey);
 task("decrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

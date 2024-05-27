@@ -1,12 +1,6 @@
-const {
-  createCipheriv,
-  createECDH,
-  createDecipheriv,
-  randomBytes,
-} = require("node:crypto");
+const { createECDH, createCipheriv } = require("node:crypto");
 
 const ecdhCurveName = "prime256v1";
-const encryptionAlgorithm = "aes-256-cbc";
 
 const genECDHKey = async ({ privateKey }) => {
   const ecdh = createECDH(ecdhCurveName);
@@ -34,61 +28,75 @@ const genECDHKey = async ({ privateKey }) => {
   console.log(`Encoded public key for P2P API:\n${p2pPublicKey}`);
 };
 
-const encrypt = async ({ privateKey, publicKey, text }) => {
-  const ecdh = createECDH(ecdhCurveName);
-  ecdh.setPrivateKey(Buffer.from(privateKey, "base64"));
+const decryptValidatorKey = async ({ privateKey, encryptedMessage }) => {
+  const client = createECDH("prime256v1");
+  client.setPrivateKey(privateKey, "hex");
 
-  console.log(`My private key ${ecdh.getPrivateKey("base64")}`);
-  console.log(`My public key ${ecdh.getPublicKey("base64", "spki")}`);
-
-  const otherPublicKey = Buffer.from(publicKey, "base64");
-
-  const secretKey = ecdh.computeSecret(otherPublicKey, "base64", "base64");
-  console.log("secretKey:", secretKey.toString("base64"));
-
-  const initializationVector = randomBytes(16);
-  console.log(
-    "initialization vector:",
-    initializationVector.toString("base64")
+  const decryptedMessage = decrypt(
+    client.getPrivateKey(),
+    Buffer.from(encryptedMessage, "base64")
   );
 
-  const cipher = createCipheriv(
-    encryptionAlgorithm,
-    secretKey,
-    initializationVector
-  );
-
-  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
-
-  console.log("encrypted content:", encrypted.toString("base64"));
+  console.log(decryptedMessage.toString("utf8"));
 };
 
-const decrypt = async ({ privateKey, publicKey, text, iv }) => {
-  const ecdh = createECDH(ecdhCurveName);
-  ecdh.setPrivateKey(Buffer.from(privateKey, "base64"));
+const decrypt = (privateKey, msg) => {
+  const ecdh = createECDH("prime256v1");
+  ecdh.setPrivateKey(privateKey);
+  const epk = msg.slice(0, 65);
+  const message = msg.slice(65, msg.length - 32);
+  const sharedSecret = ecdh.computeSecret(epk);
+  const { encKey, macKey } = deriveKeys(sharedSecret, Buffer.alloc(0), 16);
+  const tag = messageTag(macKey, message, Buffer.alloc(0));
+  if (tag.toString("hex") !== msg.slice(msg.length - 32).toString("hex")) {
+    throw new Error("tag mismatch");
+  }
+  return symDecrypt(encKey, message);
+};
 
-  console.log(`My private key ${ecdh.getPrivateKey("base64")}`);
-  console.log(`My public key ${ecdh.getPublicKey("base64", "spki")}`);
+const deriveKeys = (secret, s1, keyLen) => {
+  const keys = concatKDF(secret, s1, keyLen * 2);
+  const encKey = keys.slice(0, keyLen);
+  const macKey = crypto
+    .createHash("sha256")
+    .update(keys.slice(keyLen, keyLen * 2))
+    .digest();
+  return { encKey, macKey };
+};
 
-  const otherPublicKey = Buffer.from(publicKey, "base64");
-  const secretKey = ecdh.computeSecret(otherPublicKey, "base64", "base64");
-  console.log("Secret:", secretKey);
+const messageTag = (macKey, message, s2) => {
+  return crypto
+    .createHmac("sha256", macKey)
+    .update(message)
+    .update(s2)
+    .digest();
+};
 
-  const decipher = createDecipheriv(
-    encryptionAlgorithm,
-    secretKey,
-    Buffer.from(iv, "base64")
-  );
+const symDecrypt = (key, ct) => {
+  const c = createCipheriv("aes-128-ctr", key, ct.slice(0, 16));
+  const m = Buffer.alloc(ct.length - 16);
+  c.update(ct.slice(16)).copy(m);
+  return m;
+};
 
-  const decryptedContent = Buffer.concat([
-    decipher.update(Buffer.from(text, "base64")),
-    decipher.final(),
-  ]);
-  console.log(`Decrypted content: ${decryptedContent.toString()}`);
+const concatKDF = (secret, s1, keyLen) => {
+  let hashSum = Buffer.from("");
+  for (let ctr = 1; hashSum.length < keyLen; ctr++) {
+    const ctrs = Buffer.from([ctr >> 24, ctr >> 16, ctr >> 8, ctr]); // Buffer.from([ctr >> 24, ctr >> 16, ctr >> 8, ctr])
+    const tmp = [
+      hashSum,
+      crypto
+        .createHash("sha256")
+        .update(Buffer.concat([ctrs, secret, s1]))
+        .digest(),
+    ];
+    console.log(tmp);
+    hashSum = Buffer.concat(tmp);
+  }
+  return hashSum.slice(0, keyLen);
 };
 
 module.exports = {
   genECDHKey,
-  encrypt,
-  decrypt,
+  decryptValidatorKey,
 };
