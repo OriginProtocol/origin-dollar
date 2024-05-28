@@ -334,5 +334,17 @@ const deployHarvester = async ({
       signature: "setRewardProceedsAddress(address)",
       args: [cDripper.address],
     },
+    {
+      // Set performance fee receiver address
+      contract: cOETHBaseHarvester,
+      signature: "setPerformanceFeeReceiver(address)",
+      args: [guardianAddr],
+    },
+    {
+      // Set performance fee bps
+      contract: cOETHBaseHarvester,
+      signature: "setPerformanceFeeBps(uint256)",
+      args: [2000], //20%
+    },
   ];
 };

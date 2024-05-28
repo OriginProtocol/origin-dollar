@@ -76,4 +76,40 @@ describe("ForkTest: Harvest (Base)", function () {
       10
     );
   });
+  it("should send performance fee", async function () {
+    const { oethBaseHarvester, aerodromeEthStrategy, oethDripper } = fixture;
+    const yieldAccrued = "1000"; // AERO tokens
+
+    // Mock accrue yield
+    const minter = await impersonateAndFund(
+      "0xeB018363F0a9Af8f91F06FEe6613a751b2A33FE5"
+    );
+    const aeroTokenInstance = await ethers.getContractAt(
+      "IERC20MintableBurnable",
+      addresses.base.aeroTokenAddress
+    );
+    await aeroTokenInstance
+      .connect(minter)
+      .mint(oethBaseHarvester.address, parseEther(yieldAccrued));
+
+    // find fee receiver balance before
+    const feeReceiverBalanceBefore = await aeroTokenInstance.balanceOf(
+      addresses.base.governor
+    );
+
+    await oethBaseHarvester["harvestAndSwap(address,address)"](
+      aerodromeEthStrategy.address,
+      oethDripper.address
+    );
+    const feeReceiverBalanceAfter = await aeroTokenInstance.balanceOf(
+      addresses.base.governor
+    );
+
+    const feeAmount = parseEther("200"); //20% 0f 1000
+
+    expect(feeAmount).to.be.equal(
+      feeReceiverBalanceAfter.sub(feeReceiverBalanceBefore),
+      feeAmount
+    );
+  });
 });

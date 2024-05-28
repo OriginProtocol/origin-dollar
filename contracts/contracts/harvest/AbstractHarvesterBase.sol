@@ -192,6 +192,7 @@ abstract contract AbstractHarvesterBase is Governable {
      */
     function _harvestAndSwap(address _strategyAddr, address _rewardTo)
         internal
+        virtual
     {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);

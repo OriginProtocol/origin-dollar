@@ -11,6 +11,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IRouter } from "./../interfaces/aerodrome/IRouter.sol";
 import "../utils/Helpers.sol";
 import { AbstractHarvesterBase } from "./AbstractHarvesterBase.sol";
+import { IStrategy } from "./../interfaces/IStrategy.sol";
 import { IVault } from "./../interfaces/IVault.sol";
 
 contract OETHBaseHarvester is AbstractHarvesterBase {
@@ -23,13 +24,47 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
     }
 
     event PriceProviderAddressChanged(address priceProviderAddress);
+    event PerformanceFeeChanged(uint256 performanceFee);
+    event PerformanceFeeReceiverChanged(address performanceFeeReceiver);
 
     // Aerodrome route to swap using Aerodrome Router
     mapping(address => bytes) public aerodromeRoute;
 
+    // Performance fee config
+    uint256 public performanceFeeBps;
+    address public performanceFeeReceiver;
+
     constructor(address _vaultAddress, address _baseTokenAddress)
         AbstractHarvesterBase(_vaultAddress, _baseTokenAddress)
     {}
+
+    /**
+     * @dev Used to update the performance fee basis points. Eg: 1000 represents 10%
+     *
+     * @param _performanceFee New performance fee.
+     */
+    function setPerformanceFeeBps(uint256 _performanceFee)
+        external
+        onlyGovernor
+    {
+        require(_performanceFee < 1e4, "Fee too high");
+        performanceFeeBps = _performanceFee;
+        emit PerformanceFeeChanged(_performanceFee);
+    }
+
+    /**
+     * @dev Used to update the performance fee receiver address.
+     *
+     * @param _performanceFeeReceiver New address to receive the performance fee.
+     */
+    function setPerformanceFeeReceiver(address _performanceFeeReceiver)
+        external
+        onlyGovernor
+    {
+        require(_performanceFeeReceiver != address(0), "Zero Address");
+        performanceFeeReceiver = _performanceFeeReceiver;
+        emit PerformanceFeeReceiverChanged(_performanceFeeReceiver);
+    }
 
     /**
      * @dev Add/update a reward token configuration that holds harvesting config variables
@@ -118,6 +153,35 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
             // Should never be invoked since we catch invalid values
             // in the `setRewardTokenConfig` function before it's set
             revert InvalidSwapPlatform(swapPlatform);
+        }
+    }
+
+    /**
+     * @dev Collect reward tokens from a specific strategy, send performance fee and swap
+     *      the remaining tokens for base token on the configured swap platform
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
+     *      for executing this function
+     */
+    function _harvestAndSwap(address _strategyAddr, address _rewardTo)
+        internal
+        virtual
+        override
+    {
+        _harvest(_strategyAddr);
+        IStrategy strategy = IStrategy(_strategyAddr);
+        address[] memory rewardTokens = strategy.getRewardTokenAddresses();
+        IOracle priceProvider = IOracle(IVault(vaultAddress).priceProvider());
+        uint256 len = rewardTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            uint256 totalRewards = IERC20(rewardTokens[i]).balanceOf(
+                address(this)
+            );
+            uint256 feeAmount = totalRewards.mul(performanceFeeBps).div(1e4);
+            // Send fee to performance fee receiver
+            IERC20(rewardTokens[i]).transfer(performanceFeeReceiver, feeAmount);
+            // swap the remaining amount
+            _swap(rewardTokens[i], _rewardTo, priceProvider);
         }
     }
 
