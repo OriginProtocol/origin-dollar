@@ -15,6 +15,7 @@
     "node:fork": "./node.sh fork",
     "node:arb": "FORK_NETWORK_NAME=arbitrumOne yarn run node:fork",
     "node:hol": "FORK_NETWORK_NAME=holesky yarn run node:fork",
+    "node:base": "FORK_NETWORK_NAME=base yarn run node:fork",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",

@@ -266,4 +266,6 @@ addresses.base.aeroUsdPriceFeed = "0x4EC5970fC728C5f65ba413992CD5fF6FD70fcfF0";
 addresses.base.wethTokenAddress = "0x4200000000000000000000000000000000000006";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
+addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+
 module.exports = addresses;

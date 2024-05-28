@@ -260,6 +260,7 @@ const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
+const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
@@ -268,6 +269,8 @@ const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
+const isBaseOrFork = isBase || isBaseFork;
+const isBaseForkTest = isForkTest && hre.network.config.chainId == 8543;
 const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
@@ -389,7 +392,7 @@ const getOracleAddresses = async (deployments) => {
 };
 
 const getAssetAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
+  if (isMainnet || isMainnetForkTest) {
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -431,6 +434,11 @@ const getAssetAddresses = async (deployments) => {
       auraWeightedOraclePool: addresses.mainnet.AuraWeightedOraclePool,
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
+    };
+  } else if (isBaseOrFork) {
+    return {
+      WETH: addresses.base.wethTokenAddress,
+      AERO: addresses.base.aeroTokenAddress,
     };
   } else {
     const addressMap = {
@@ -776,6 +784,7 @@ module.exports = {
   isLocalhost,
   isMainnetOrFork,
   isForkTest,
+  isMainnetForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,
@@ -785,6 +794,7 @@ module.exports = {
   isArbFork,
   isBase,
   isBaseFork,
+  isBaseOrFork,
   isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,

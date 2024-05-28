@@ -9,4 +9,7 @@ interface IVoter {
     function createGauge(address _poolFactory, address _pool)
         external
         returns (address);
+
+    /// @dev Pool => Gauge
+    function gauges(address pool) external view returns (address);
 }
