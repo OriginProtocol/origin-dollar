@@ -264,11 +264,32 @@ const stakingContractPaused = async (contracts) => {
 const stakingContractHas32ETH = async (contracts) => {
   const address = contracts.nativeStakingStrategy.address;
   const wethBalance = await contracts.WETH.balanceOf(address);
-
   log(
-    `Native staking contract has ${formatUnits(wethBalance, 18)} WETH in total`
+    `Native Staking Strategy has ${formatUnits(wethBalance, 18)} WETH in total`
   );
-  return wethBalance.gte(parseEther("32"));
+
+  const stakeETHThreshold = contracts.nativeStakingStrategy.stakeETHThreshold();
+  const stakeETHTally = contracts.nativeStakingStrategy.stakeETHTally();
+  const remainingETH = stakeETHThreshold.sub(stakeETHTally);
+  log(
+    `Native Staking Strategy has staked ${formatUnits(
+      stakeETHTally
+    )} of ${formatUnits(stakeETHThreshold)} ETH with ${formatUnits(
+      remainingETH
+    )} ETH remaining`
+  );
+
+  // Take the minimum of the remainingETH and the WETH balance
+  const availableETH = wethBalance.gt(remainingETH)
+    ? remainingETH
+    : wethBalance;
+  log(
+    `Native Staking Strategy has ${formatUnits(
+      availableETH
+    )} ETH available to stake`
+  );
+
+  return availableETH.gte(parseEther("32"));
 };
 
 /* Make a GET or POST request to P2P service
