@@ -1095,7 +1095,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
         if (stakeTresholdErrorTriggered && i == validators - 1) {
           await expect(tx).to.be.revertedWith(
-            "Staking ETH over approved threshold"
+            "Staking ETH over threshold"
           );
         } else {
           await tx;

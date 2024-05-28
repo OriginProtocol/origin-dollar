@@ -148,7 +148,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         require(
             stakeETHTally + requiredETH <= stakeETHThreshold,
-            "Staking ETH over approved threshold"
+            "Staking ETH over threshold"
         );
         stakeETHTally += requiredETH;
 
