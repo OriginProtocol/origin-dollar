@@ -43,7 +43,7 @@ zap -> weth : ETH
 note left : swap ETH for WETH
 weth o-> zap : WETH
 
-vault o-> trust : OETH
+vault o-> buyBack : OETH
 note left : 20% performance\nfee from rebase
 
 zap -> vault : WETH
@@ -57,7 +57,7 @@ end
 
 ' Mint
 group User mint [< 10 OETH]
-vault o-> trust : OETH
+vault o-> buyBack : OETH
 note left : 20% performance\nfee from rebase
 
 user -> vault : WETH
@@ -196,7 +196,7 @@ end
 
 ' Redeem
 group User redeem OETH
-vault o-> trust : OETH
+vault o-> buyBack : OETH
 note left : 20% performance\nfee from rebase
 
 user -x vault : OETH
@@ -309,17 +309,18 @@ group Rebase [increase in underlying assets]
 vault o-> vault : 80% OETH
 note left : 80% of rebased\nto OETH holders
 
-vault o-> trust : 20% OETH
-note left : 20% of rebase\nto trustee as\nperformance fee
+vault o-> buyBack : 20% OETH
+note left : 20% of rebase\nto Buyback as\nperformance fee
 end 
 end
 
 group OETH rewards
 
 group OGV buyback for OGV stakers
-trust -> uniRouter : OETH
-uniRouter -> uniOeth : 50% OETH
-note left : swap 50% OETH for WETH\nusing OETH/WETH V3 pool
+buyBack -> uniRouter : 50% OETH
+note left : transfer to Uniswap Router
+uniRouter -> uniOeth : OETH
+note left : swap OETH for WETH\nusing OETH/WETH V3 pool
 uniOeth -> uniOgv : WETH
 note left : swap WETH for OGV\nusing OGV/WETH V3 pool
 uniOgv -> ogvRewards : OGV
@@ -327,8 +328,10 @@ note left : transfer OGV\nto Staking Rewards
 end
 
 group CVX buyback and locking for increased Convex rewards
-uniRouter -> uniOeth : 50% OETH
-note left : swap 50% OETH for WETH\nusing OETH/WETH V3 pool
+buyBack -> uniRouter : 50% OETH
+note left : transfer to Uniswap Router
+uniRouter -> uniOeth : OETH
+note left : swap OETH for WETH\nusing OETH/WETH V3 pool
 uniOeth -> uniRouter : WETH
 uniRouter -> uniCvx : WETH
 note left : swap WETH for CVX\nusing CVX/WETH V3 pool
