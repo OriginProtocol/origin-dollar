@@ -1060,7 +1060,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .setStakingMonitor(anna.address);
 
       await nativeStakingSSVStrategy
-        .connect(anna)
+        .connect(governor)
         .setStakeETHThreshold(stakeThreshold);
     });
 
@@ -1094,9 +1094,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           ]);
 
         if (stakeTresholdErrorTriggered && i == validators - 1) {
-          await expect(tx).to.be.revertedWith(
-            "Staking ETH over approved threshold"
-          );
+          await expect(tx).to.be.revertedWith("Staking ETH over threshold");
         } else {
           await tx;
         }
@@ -1145,7 +1143,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy
           .connect(josh)
           .setStakeETHThreshold(ethUnits("32"))
-      ).to.be.revertedWith("Caller is not the Monitor");
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 

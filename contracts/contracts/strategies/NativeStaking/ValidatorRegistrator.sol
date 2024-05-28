@@ -109,16 +109,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorRegistrator = _address;
     }
 
-    /// @notice Set the address of the staking monitor that is allowed to modify
-    /// stakeETHThreshold and reset stakeETHTally
+    /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
     function setStakingMonitor(address _address) external onlyGovernor {
         emit StakingMonitorChanged(_address);
         stakingMonitor = _address;
     }
 
-    /// @notice Set the amount of ETH that can be staked before governor needs to a approve
-    /// further staking.
-    function setStakeETHThreshold(uint256 _amount) external onlyStakingMonitor {
+    /// @notice Set the amount of ETH that can be staked before staking monitor
+    // needs to a approve further staking by resetting the stake ETH tally
+    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
         emit StakeETHThresholdChanged(_amount);
         stakeETHThreshold = _amount;
     }
@@ -149,7 +148,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         require(
             stakeETHTally + requiredETH <= stakeETHThreshold,
-            "Staking ETH over approved threshold"
+            "Staking ETH over threshold"
         );
         stakeETHTally += requiredETH;
 

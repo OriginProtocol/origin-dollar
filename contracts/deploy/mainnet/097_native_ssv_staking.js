@@ -202,13 +202,14 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cStrategy,
           signature: "setStakeETHThreshold(uint256)",
           // TODO: confirm this number makes sense
-          args: [ethers.utils.parseEther("32")], // 32ETH * 32
+          args: [ethers.utils.parseEther("1024")], // 32ETH * 32
         },
         // 7. set staking monitor
         {
           contract: cStrategy,
           signature: "setStakingMonitor(address)",
-          args: [addresses.mainnet.Guardian], // 32ETH * 32
+          // The 5/8 multisig
+          args: [addresses.mainnet.Guardian],
         },
         // 8. Upgrade the OETH Harvester
         {
