@@ -84,7 +84,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
       await expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
         addresses.Guardian,
-        "Incorrect validator registrator"
+        "Incorrect staking monitor"
       );
     });
   });

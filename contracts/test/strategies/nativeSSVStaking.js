@@ -1060,7 +1060,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .setStakingMonitor(anna.address);
 
       await nativeStakingSSVStrategy
-        .connect(anna)
+        .connect(governor)
         .setStakeETHThreshold(stakeThreshold);
     });
 
@@ -1145,7 +1145,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy
           .connect(josh)
           .setStakeETHThreshold(ethUnits("32"))
-      ).to.be.revertedWith("Caller is not the Monitor");
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 
