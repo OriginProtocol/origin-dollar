@@ -163,7 +163,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
-        operatorIds: testValidator.operatorIds,
+        operatorids: testValidator.operatorIds,
         chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });
@@ -222,6 +222,69 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       await registerAndStakeEth();
     });
 
+    it("Should fail to register a validator twice", async () => {
+      const {
+        addresses,
+        ssv,
+        nativeStakingSSVStrategy,
+        validatorRegistrator,
+        testValidator,
+      } = await context();
+
+      const stakeAmount = oethUnits("32");
+
+      await depositToStrategy(stakeAmount);
+
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingSSVStrategy.address,
+        operatorids: testValidator.operatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      // Register a new validator the first time
+      await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          stakeAmount,
+          cluster
+        );
+
+      const emptyCluster = {
+        validatorCount: 0,
+        networkFeeIndex: 0,
+        index: 0,
+        active: true,
+        balance: 0,
+      };
+
+      // Try to register the same validator again in a different cluster
+      const tx2 = nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          [1, 20, 300, 4000],
+          testValidator.sharesData,
+          stakeAmount,
+          emptyCluster
+        );
+
+      // Waffle's custom error matcher is not working here.
+      // Checking the trace, the error thrown is ValidatorAlreadyExistsWithData
+      // which is what we expect.
+      await expect(tx2).to.be.reverted;
+    });
+
     it("Should emit correct values in deposit event", async () => {
       const { weth, nativeStakingSSVStrategy } = await context();
 
@@ -267,7 +330,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const { cluster } = await getClusterInfo({
         ownerAddress: nativeStakingSSVStrategy.address,
-        operatorIds: testValidator.operatorIds,
+        operatorids: testValidator.operatorIds,
         chainId: hre.network.config.chainId,
         ssvNetwork: addresses.SSVNetwork,
       });

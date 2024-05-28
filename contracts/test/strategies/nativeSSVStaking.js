@@ -6,6 +6,7 @@ const {
   setStorageAt,
   mine,
 } = require("@nomicfoundation/hardhat-network-helpers");
+const { solidityPack } = require("ethers/lib/utils");
 
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
@@ -1148,16 +1149,34 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     });
   });
 
-  it.skip("Deposit alternate deposit_data_root ", async () => {
+  it("Deposit alternate deposit_data_root ", async () => {
     const { depositContractUtils } = fixture;
 
-    const newDepositDataRoot =
+    const withdrawalCredentials = solidityPack(
+      ["bytes1", "bytes11", "address"],
+      [
+        "0x01",
+        "0x0000000000000000000000",
+        // mainnet Native Staking Strategy proxy
+        "0x34edb2ee25751ee67f68a45813b22811687c0238",
+      ]
+    );
+    expect(withdrawalCredentials).to.equal(
+      "0x01000000000000000000000034edb2ee25751ee67f68a45813b22811687c0238"
+    );
+
+    const expectedDepositDataRoot =
       await depositContractUtils.calculateDepositDataRoot(
-        "0x9254b0fba5173550bcf0950031533e816150167577c15636922406977bafa09ed1a1cc72a148030db977d7091d31c1fa",
-        "0x010000000000000000000000cf4a9e80ddb173cc17128a361b98b9a140e3932e",
-        "0x9144bddd6d969571dd058d9656c9da32cf4b8556e18a16362383d02a93bd0901f100874f7f795165a2162badceb5466811f5cfbce8be21d02a87af1898cbe53f5d160d46cbc0863d8e6e28d5f0becf4804cf728b39d0bae69540df896ce97b8b"
+        // Mainnet fork test public key
+        "0xaba6acd335d524a89fb89b9977584afdb23f34a6742547fa9ec1c656fbd2bfc0e7a234460328c2731828c9a43be06e25",
+        withdrawalCredentials,
+        // Mainnet fork test signature
+        "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0"
       );
-    console.log(`the new newDepositDataRoot is: ${newDepositDataRoot}`);
+
+    expect(
+      "0xf7d704e25a2b5bea06fafa2dfe5c6fa906816e5c1622400339b2088a11d5f446"
+    ).to.equal(expectedDepositDataRoot, "Incorrect deposit data root");
   });
 });
 
