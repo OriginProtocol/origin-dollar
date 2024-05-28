@@ -54,12 +54,25 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
 
-    event RegistratorChanged(address newAddress);
-    event StakingMonitorChanged(address newAddress);
-    event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
-    event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
+    event RegistratorChanged(address indexed newAddress);
+    event StakingMonitorChanged(address indexed newAddress);
+    event ETHStaked(
+        bytes indexed pubkey,
+        uint256 amount,
+        bytes withdrawal_credentials
+    );
+    event SSVValidatorRegistered(
+        bytes indexed pubkey,
+        uint64[] indexed operatorIds
+    );
+    event SSVValidatorExitInitiated(
+        bytes indexed pubkey,
+        uint64[] indexed operatorIds
+    );
+    event SSVValidatorExitCompleted(
+        bytes indexed pubkey,
+        uint64[] indexed operatorIds
+    );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
 
