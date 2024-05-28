@@ -86,6 +86,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.Guardian,
         "Incorrect staking monitor"
       );
+      await expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
+        0,
+        "stake ETH threshold"
+      );
     });
   });
 

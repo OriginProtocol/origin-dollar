@@ -1,5 +1,4 @@
 const { upgradeNativeStakingSSVStrategy } = require("../deployActions");
-const { isFork } = require("../../test/helpers");
 const { withConfirmation } = require("../../utils/deploy");
 const { resolveContract } = require("../../utils/resolvers");
 const addresses = require("../../utils/addresses");
@@ -17,34 +16,24 @@ const mainExport = async () => {
     "NativeStakingSSVStrategy"
   );
 
-  if (isFork) {
-    const { governorAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-    await withConfirmation(
-      cNativeStakingStrategy
-        .connect(sGovernor)
-        // Holesky defender relayer
-        .setStakingMonitor(addresses.holesky.Guardian)
-    );
+  await withConfirmation(
+    cNativeStakingStrategy
+      .connect(sGovernor)
+      // Holesky defender relayer
+      .setStakingMonitor(addresses.holesky.Guardian)
+  );
 
-    await withConfirmation(
-      cNativeStakingStrategy
-        .connect(sGovernor)
-        .setStakeETHThreshold(parseEther("64"))
-    );
-
-    console.log(
-      `Set the staking monitor to ${addresses.holesky.Guardian} and stake ETH threshold to 32 ETH`
-    );
-  } else {
-    console.log(
-      `Set the staking monitor to ${addresses.holesky.Guardian} using Hardhat task`
-    );
-  }
+  await withConfirmation(
+    cNativeStakingStrategy
+      .connect(sGovernor)
+      .setStakeETHThreshold(parseEther("64"))
+  );
 
   console.log(
-    `Staking monitor set to ${await cNativeStakingStrategy.stakingMonitor()}`
+    `Set the staking monitor to ${addresses.holesky.Guardian} and stake ETH threshold to 32 ETH`
   );
 
   console.log("Running 010 deployment done");
