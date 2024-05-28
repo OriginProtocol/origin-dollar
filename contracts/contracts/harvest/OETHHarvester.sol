@@ -28,17 +28,6 @@ contract OETHHarvester is AbstractHarvesterBase {
         Curve
     }
 
-    event RewardTokenConfigUpdated(
-        address tokenAddress,
-        uint16 allowedSlippageBps,
-        uint16 harvestRewardBps,
-        SwapPlatform swapPlatform,
-        address swapPlatformAddr,
-        bytes swapData,
-        uint256 liquidationLimit,
-        bool doSwapRewardToken
-    );
-
     error InvalidUniswapV2PathLength();
     error EmptyBalancerPoolId();
     error InvalidCurvePoolAssetIndex(address token);
@@ -120,7 +109,7 @@ contract OETHHarvester is AbstractHarvesterBase {
             _tokenAddress,
             tokenConfig.allowedSlippageBps,
             tokenConfig.harvestRewardBps,
-            _platform,
+            uint8(_platform),
             newRouterAddress,
             swapData,
             tokenConfig.liquidationLimit,

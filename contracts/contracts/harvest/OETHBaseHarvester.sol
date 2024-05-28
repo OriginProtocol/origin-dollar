@@ -22,21 +22,10 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
         Aerodrome // Only aerodrome is supported for now.
     }
 
-    event RewardTokenConfigUpdated(
-        address tokenAddress,
-        uint16 allowedSlippageBps,
-        uint16 harvestRewardBps,
-        uint8 swapPlatform,
-        address swapPlatformAddr,
-        IRouter.Route[] route,
-        uint256 liquidationLimit,
-        bool doSwapRewardToken
-    );
-
     event PriceProviderAddressChanged(address priceProviderAddress);
 
     // Aerodrome route to swap using Aerodrome Router
-    mapping(address => IRouter.Route[]) public aerodromeRoute;
+    mapping(address => bytes) public aerodromeRoute;
 
     constructor(address _vaultAddress, address _baseTokenAddress)
         AbstractHarvesterBase(_vaultAddress, _baseTokenAddress)
@@ -56,28 +45,20 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
      * @param tokenConfig.doSwapRewardToken bool Disables swapping of the token when set to true,
      *          does not cause it to revert though.
      * @param tokenConfig.swapPlatform SwapPlatform to use for Swapping
-     * @param route Route required for swapping
+     * @param swapData Route required for swapping
      */
     function setRewardTokenConfig(
         address _tokenAddress,
         RewardTokenConfig calldata tokenConfig,
-        IRouter.Route[] memory route
+        bytes calldata swapData
     ) external onlyGovernor {
         _validateConfigAndApproveTokens(_tokenAddress, tokenConfig);
 
         address newRouterAddress = tokenConfig.swapPlatformAddr;
         uint8 _platform = tokenConfig.swapPlatform;
         if (_platform == uint8(SwapPlatform.Aerodrome)) {
-            _validateAerodromeRoute(route, _tokenAddress);
-
-            // Find a better way to do this.
-            IRouter.Route[] storage routes = aerodromeRoute[_tokenAddress];
-            for (uint256 i = 0; i < route.length; ) {
-                routes.push(route[i]);
-                unchecked {
-                    ++i;
-                }
-            }
+            _validateAerodromeRoute(swapData, _tokenAddress);
+            aerodromeRoute[_tokenAddress] = swapData;
         } else {
             // Note: This code is unreachable since Solidity reverts when
             // the value is outside the range of defined values of the enum
@@ -91,7 +72,7 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
             tokenConfig.harvestRewardBps,
             uint8(_platform),
             newRouterAddress,
-            route,
+            swapData,
             tokenConfig.liquidationLimit,
             tokenConfig.doSwapRewardToken
         );
@@ -100,13 +81,14 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
     /**
      * @dev Validates the route to make sure the path is for `token` to `baseToken`
      *
-     * @param route Route passed to the `setRewardTokenConfig`
+     * @param data Route passed to the `setRewardTokenConfig`
      * @param token The address of the reward token
      */
-    function _validateAerodromeRoute(
-        IRouter.Route[] memory route,
-        address token
-    ) internal view {
+    function _validateAerodromeRoute(bytes memory data, address token)
+        internal
+        view
+    {
+        IRouter.Route[] memory route = abi.decode(data, (IRouter.Route[]));
         // Do some validation
         if (route[0].from != token) {
             revert InvalidTokenInSwapPath(route[0].from);
@@ -155,7 +137,10 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
         uint256 amountIn,
         uint256 minAmountOut
     ) internal returns (uint256 amountOut) {
-        IRouter.Route[] memory route = aerodromeRoute[swapToken];
+        IRouter.Route[] memory route = abi.decode(
+            aerodromeRoute[swapToken],
+            (IRouter.Route[])
+        );
 
         uint256[] memory amounts = IRouter(routerAddress)
             .swapExactTokensForTokens(

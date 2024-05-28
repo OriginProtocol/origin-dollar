@@ -280,6 +280,29 @@ const deployHarvester = async ({
 
   console.log("Governance transfer initialized");
 
+  const abiCoder = ethers.utils.defaultAbiCoder;
+  const type = {
+    type: "tuple[]",
+    name: "Route",
+    components: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "stable", type: "bool" },
+      { name: "factory", type: "address" },
+    ],
+  };
+
+  // data for encoding
+  const routes = [
+    {
+      from: addresses.base.aeroTokenAddress,
+      to: addresses.base.wethTokenAddress,
+      stable: true,
+      factory: addresses.base.aeroFactoryAddress,
+    },
+  ];
+  const encodedRoute = abiCoder.encode([type], [routes]);
+
   return [
     {
       // Claim governance
@@ -291,7 +314,7 @@ const deployHarvester = async ({
       // Set reward token config
       contract: cOETHBaseHarvester,
       signature:
-        "setRewardTokenConfig(address,(uint16,uint16,address,bool,uint8,uint256),(address,address,bool,address)[])",
+        "setRewardTokenConfig(address,(uint16,uint16,address,bool,uint8,uint256),bytes)",
       args: [
         assetAddresses.AERO,
         {
@@ -302,14 +325,7 @@ const deployHarvester = async ({
           liquidationLimit: 0,
           doSwapRewardToken: true,
         },
-        [
-          {
-            from: assetAddresses.AERO,
-            to: assetAddresses.WETH,
-            stable: true,
-            factory: addresses.base.aeroFactoryAddress,
-          },
-        ],
+        encodedRoute,
       ],
     },
     {

@@ -35,6 +35,17 @@ abstract contract AbstractHarvesterBase is Governable {
     );
     event RewardProceedsAddressChanged(address newProceedsAddress);
 
+    event RewardTokenConfigUpdated(
+        address tokenAddress,
+        uint16 allowedSlippageBps,
+        uint16 harvestRewardBps,
+        uint8 swapPlatform,
+        address swapPlatformAddr,
+        bytes swapData,
+        uint256 liquidationLimit,
+        bool doSwapRewardToken
+    );
+
     error EmptyAddress();
     error InvalidSlippageBps();
     error InvalidHarvestRewardBps();
