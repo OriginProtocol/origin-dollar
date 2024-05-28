@@ -82,6 +82,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.validatorRegistrator,
         "Incorrect validator registrator"
       );
+      await expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
+        addresses.Guardian,
+        "Incorrect staking monitor"
+      );
+      await expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
+        0,
+        "stake ETH threshold"
+      );
     });
   });
 

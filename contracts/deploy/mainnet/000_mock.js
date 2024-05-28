@@ -136,6 +136,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Mock SSV Network
+  await deploy("MockDepositContract", {
+    from: deployerAddr,
+  });
+
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
@@ -422,10 +427,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
 
   await deploy("MockOracleWeightedPool", {
-    from: deployerAddr,
-  });
-
-  await deploy("BeaconChainDepositContractMock", {
     from: deployerAddr,
   });
 

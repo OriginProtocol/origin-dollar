@@ -37,9 +37,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
-
+    /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
+    address public stakingMonitor;
+    /// @notice Amount of ETH that can be staked before staking on the contract is suspended
+    /// and the governor needs to approve further staking
+    uint256 public stakeETHThreshold;
+    /// @notice Amount of ETH that can has been staked since the last governor approval.
+    uint256 public stakeETHTally;
     // For future use
-    uint256[50] private __gap;
+    uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
         REGISTERED, // validator is registered on the SSV network
@@ -49,10 +55,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     }
 
     event RegistratorChanged(address newAddress);
+    event StakingMonitorChanged(address newAddress);
     event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
     event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
     event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
+    event StakeETHThresholdChanged(uint256 amount);
+    event StakeETHTallyReset();
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -60,6 +69,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             msg.sender == validatorRegistrator,
             "Caller is not the Registrator"
         );
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Staking monitor
+    modifier onlyStakingMonitor() {
+        require(msg.sender == stakingMonitor, "Caller is not the Monitor");
         _;
     }
 
@@ -94,6 +109,25 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorRegistrator = _address;
     }
 
+    /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
+    function setStakingMonitor(address _address) external onlyGovernor {
+        emit StakingMonitorChanged(_address);
+        stakingMonitor = _address;
+    }
+
+    /// @notice Set the amount of ETH that can be staked before staking monitor
+    // needs to a approve further staking by resetting the stake ETH tally
+    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
+        emit StakeETHThresholdChanged(_amount);
+        stakeETHThreshold = _amount;
+    }
+
+    /// @notice Reset the stakeETHTally
+    function resetStakeETHTally() external onlyStakingMonitor {
+        emit StakeETHTallyReset();
+        stakeETHTally = 0;
+    }
+
     /// @notice Stakes WETH to the node validators
     /// @param validators A list of validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
@@ -111,6 +145,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
             "insufficient WETH"
         );
+
+        require(
+            stakeETHTally + requiredETH <= stakeETHThreshold,
+            "Staking ETH over threshold"
+        );
+        stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
