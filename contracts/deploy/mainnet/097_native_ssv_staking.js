@@ -197,7 +197,21 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setRegistrator(address)",
           args: [addresses.mainnet.validatorRegistrator],
         },
-        // 6. Upgrade the OETH Harvester
+        // 6. set staking threshold
+        {
+          contract: cStrategy,
+          signature: "setStakeETHThreshold(uint256)",
+          // TODO: confirm this number makes sense
+          args: [ethers.utils.parseEther("1024")], // 32ETH * 32
+        },
+        // 7. set staking monitor
+        {
+          contract: cStrategy,
+          signature: "setStakingMonitor(address)",
+          // The 5/8 multisig
+          args: [addresses.mainnet.Guardian],
+        },
+        // 8. Upgrade the OETH Harvester
         {
           contract: cOETHHarvesterProxy,
           signature: "upgradeTo(address)",

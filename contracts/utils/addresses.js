@@ -126,7 +126,7 @@ addresses.mainnet.ccipWoethTokenPool =
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 // Deployed OUSD contracts
-addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
+addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // 5/8 multisig.
 addresses.mainnet.VaultProxy = "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70";
 addresses.mainnet.Vault = "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9";
 addresses.mainnet.OUSDProxy = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
@@ -279,8 +279,12 @@ addresses.holesky.NativeStakingSSVStrategyProxy =
   "0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E";
 
 addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
+
+addresses.holesky.Governor = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 // Address of the Holesky defender relayer
 addresses.holesky.validatorRegistrator =
   "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
+// Address of the Holesky defender relayer
+addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 module.exports = addresses;
