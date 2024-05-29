@@ -1975,7 +1975,7 @@ async function aaveVaultFixture() {
 }
 
 /**
- * Configure a Vault hold frxEth to be redeeemed by the frxEthRedeemStrategy
+ * Configure a Vault hold frxEth to be redeemed by the frxEthRedeemStrategy
  */
 async function frxEthRedeemStrategyFixture() {
   const fixture = await oethDefaultFixture();
