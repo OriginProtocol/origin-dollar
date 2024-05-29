@@ -40,7 +40,11 @@ const {
   setStorageAt,
   getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
+const {
+  keccak256,
+  defaultAbiCoder,
+  toUtf8Bytes,
+} = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -163,7 +167,7 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  impersonateAndFund(guardianAddr);
+  await impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
@@ -910,6 +914,84 @@ async function getTimelock() {
   return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
 }
 
+async function useTransitionGovernance() {
+  const { timelockAddr } = await getNamedAccounts();
+
+  const timelock = await ethers.getContractAt(
+    "ITimelockController",
+    timelockAddr
+  );
+
+  const PROPOSER_ROLE =
+    "0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1"; // keccak256("PROPOSER_ROLE");
+
+  const guardianHasAccess = await timelock.hasRole(
+    PROPOSER_ROLE,
+    addresses.mainnet.Guardian
+  );
+
+  return guardianHasAccess;
+}
+
+async function handleTransitionGovernance(propDesc, propArgs) {
+  const { timelockAddr } = await getNamedAccounts();
+
+  const guradian = await impersonateAndFund(addresses.mainnet.Guardian);
+
+  const timelock = await ethers.getContractAt(
+    "ITimelockController",
+    timelockAddr
+  );
+  const payloads = propArgs[2].map((sig, i) => {
+    return `${keccak256(toUtf8Bytes(sig)).slice(0, 10)}${propArgs[3][i].slice(
+      2
+    )}`;
+  });
+  const args = [
+    propArgs[0], // Targets
+    propArgs[1], // Values
+    payloads, // Calldata
+    "0x0000000000000000000000000000000000000000000000000000000000000000", // Predecessor
+    keccak256(toUtf8Bytes(propDesc)), // Salt
+  ];
+
+  console.log(args);
+
+  log(`Reducing required queue time to 60 seconds`);
+  /* contracts/timelock/Timelock.sol storage slot layout:
+   * slot[0] address admin
+   * slot[1] address pendingAdmin
+   * slot[2] uint256 delay
+   */
+  await setStorageAt(
+    timelock.address,
+    "0x2",
+    "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+  );
+
+  log(`Scheduling batch on Timelock...`);
+  await timelock.connect(guradian).scheduleBatch(...args, 60);
+
+  log(`Preparing to execute...`);
+  await advanceTime(60 + 5);
+  await advanceBlocks(2);
+
+  log(`Executing batch on Timelock...`);
+  await timelock.connect(guradian).executeBatch(...args);
+
+  log(`Setting queue time back to 172800 seconds`);
+  /* contracts/timelock/Timelock.sol storage slot layout:
+   * slot[0] address admin
+   * slot[1] address pendingAdmin
+   * slot[2] uint256 delay
+   */
+  await setStorageAt(
+    timelock.address,
+    "0x2",
+    "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+  );
+}
+
 /**
  * Shortcut to create a deployment on decentralized Governance (OGV) for hardhat to use
  * @param {Object} options for deployment
@@ -962,9 +1044,21 @@ function deploymentWithGovernanceProposal(opts, fn) {
     await sanityCheckOgvGovernance({ deployerIsProposer });
 
     const proposal = await fn(tools);
+
+    if (!proposal.actions?.length) {
+      log("No Proposal.");
+      return;
+    }
+
     const propDescription = proposal.name;
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
+
+    if (await useTransitionGovernance()) {
+      // Handle proposal
+      await handleTransitionGovernance(propDescription, propArgs);
+      return;
+    }
 
     if (isMainnet) {
       // On Mainnet, only build the propose transaction for OGV governance
