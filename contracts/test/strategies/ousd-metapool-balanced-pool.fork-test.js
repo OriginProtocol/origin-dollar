@@ -80,7 +80,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem the amount
-      const redeemAmount = ousdUnits("29990");
+      const redeemAmount = ousdUnits("29980");
       await vault.connect(anna).redeem(redeemAmount, 0);
 
       // User balance should be down by 30k
