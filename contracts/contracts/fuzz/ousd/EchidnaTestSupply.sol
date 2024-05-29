@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./EchidnaDebug.sol";
 import "./EchidnaTestTransfer.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 /**
  * @title Mixin for testing supply related functions
