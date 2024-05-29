@@ -85,7 +85,7 @@ jobs:
         run: yarn run test:coverage
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage-${{ github.sha }}
           path: | 
@@ -117,7 +117,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -131,7 +131,7 @@ jobs:
       - run: yarn run test:coverage:fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-coverage-${{ github.sha }}-runner${{ matrix.chunk_id }}
           path: | 
@@ -157,7 +157,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -171,7 +171,7 @@ jobs:
       - run: yarn run test:coverage:arb-fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-arb-coverage-${{ github.sha }}
           path: | 
@@ -198,7 +198,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -210,9 +210,9 @@ jobs:
         working-directory: ./contracts
       
       - name: Download all reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: true
 
