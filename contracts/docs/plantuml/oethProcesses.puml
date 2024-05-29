@@ -8,6 +8,7 @@ title "Origin ETH processes"
 actor "Anyone" as sender
 actor "Registrator\n(Relayer)" as reg <<Origin>>
 actor "Admin\n(5/8 Safe)" as admin <<Origin>>
+actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
@@ -302,6 +303,26 @@ note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return
 
 return
+return
+
+end group
+
+
+group Strategist pauses Native Staking Strategy
+
+strategist -> nativeStrat : pause()
+activate nativeStrat
+return
+
+end group
+
+group Strategist unpauses Native Staking Strategy
+
+strategist -> nativeStrat : manuallyFixAccounting(0, 0, 0)
+activate nativeStrat
+note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
+nativeStrat -> nativeStrat
+note right : unpause
 return
 
 end group
