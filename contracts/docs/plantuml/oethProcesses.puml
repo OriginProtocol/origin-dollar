@@ -6,8 +6,9 @@ hide footbox
 title "Origin ETH processes"
 
 actor "Anyone" as sender
-actor "Registrator" as reg <<Origin>>
-actor "Governor" as gov <<Origin>>
+actor "Registrator\n(Relayer)" as reg <<Origin>>
+actor "Admin\n(5/8 Safe)" as admin <<Origin>>
+actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
 actor "Operators" as ssvOp <<SSV>>
@@ -43,6 +44,24 @@ return
 gov -> ssv : transfer(\nfrom\nto\namount)
 activate ssv
 note right : transfer SSV tokens\nfrom Governor\nto Native Staking Strategy
+return
+
+end group
+
+group Governor sets staked ETH threshold
+
+gov -> nativeStrat : setStakeETHThreshold()
+activate nativeStrat
+note right: set ETH that can be staked before the staking monitor has to reset
+return
+
+end group
+
+group Staking monitor resets staked ETH
+
+admin -> nativeStrat : resetStakeETHTally()
+activate nativeStrat
+note right: resets the ETH that can be staked going forward
 return
 
 end group
@@ -89,6 +108,8 @@ return
 
 reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
 activate nativeStrat
+nativeStrat -> nativeStrat
+note right : validate staked ETH under the threshold
 nativeStrat -> weth : withdraw(32 ETH * number of validators)
 activate weth
 note right : WETH burned for ETH
@@ -115,7 +136,7 @@ dep -> val : 32 ETH
 
 note over val : Pending Activation
 
-... four validators are activated each epoch from the Validator Queue (~1.5 days) ...
+... four validators are activated each epoch from the Validator Queue (1-10 days) ...
 
 note over val : Active
 
