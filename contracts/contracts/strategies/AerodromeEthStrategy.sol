@@ -304,17 +304,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             ? lpTokenAddress.reserve0()
             : lpTokenAddress.reserve1();
 
-        /* K is multiplied by 1e36 which is used for higher precision calculation of required
-         * pool LP tokens. Without it the end value can have rounding errors up to precision of
-         * 10 digits. This way we move the decimal point by 36 places when doing the calculation
-         * and again by 36 places when we are done with it.
-         */
-        uint256 k = (1e36 * IERC20(address(lpTokenAddress)).totalSupply()) /
+        lpToBurn =
+            ((_wethAmount + 1) *
+                IERC20(address(lpTokenAddress)).totalSupply()) /
             poolWETHBalance;
-        // prettier-ignore
-        // slither-disable-next-line divide-before-multiply
-        uint256 diff = (_wethAmount + 1) * k;
-        lpToBurn = diff / 1e36;
     }
 
     /**
@@ -538,7 +531,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 r1 = lpTokenAddress.reserve1();
 
         // Calculate K
-        uint256 K = getK(r0, r1);
+        uint256 K = _getK(r0, r1);
 
         // Calculate fourth root of K/2 then multiply it by 2.
         uint256 lpPrice = 2 *
@@ -558,7 +551,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param r2 The reserve of OETH.
      * @return The calculated constant K.
      */
-    function getK(uint256 r1, uint256 r2) internal pure returns (uint256) {
+    function _getK(uint256 r1, uint256 r2) internal pure returns (uint256) {
         uint256 r1Cube = FixedPointMathLib.rpow(r1, 3, 1e18);
         uint256 r2Cube = FixedPointMathLib.rpow(r2, 3, 1e18);
 

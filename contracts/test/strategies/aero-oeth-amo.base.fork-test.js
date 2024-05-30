@@ -656,7 +656,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       } = fixture;
 
       // deposit first
-      const wethDepositAmount = await units("100", weth);
+      const wethDepositAmount = await units("220", weth);
 
       // Vault transfers WETH to strategy
       await weth.connect(josh).deposit({ value: wethDepositAmount });
@@ -728,6 +728,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       expect(await weth.balanceOf(oethVault.address)).to.equal(
         vaultWethBalanceBefore.add(withdrawAmount)
       );
+      await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, parseUnits("1"));
+      await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, parseUnits("0.0000000001"));
     });
     it("Vault should be able to withdraw all after rebalancing", async () => {
       const {
