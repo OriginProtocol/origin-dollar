@@ -261,6 +261,10 @@ addresses.mainnet.NativeStakingSSVStrategyProxy =
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
+// Lido Withdrawal Queue
+addresses.mainnet.LidoWithdrawalQueue =
+  "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";

@@ -68,6 +68,11 @@ interface IStETHWithdrawal {
         external
         view
         returns (uint256[] memory requestsIds);
+
+    function finalize(
+        uint256 _lastRequestIdToBeFinalized,
+        uint256 _maxShareRate
+    ) external payable;
 }
 
 /**
@@ -129,14 +134,16 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         uint256 stETHStart = stETH.balanceOf(address(this));
         require(stETHStart > 0, "No stETH to withdraw");
 
-        uint256 numWithdrawals = stETHStart / MaxWithdrawalAmount;
+        uint256 numWithdrawals = (stETHStart / MaxWithdrawalAmount) + 1;
         uint256[] memory amounts = new uint256[](numWithdrawals);
 
-        for (uint256 i = 0; i < numWithdrawals; i++) {
-            amounts[i] = i < numWithdrawals - 1
-                ? MaxWithdrawalAmount
-                : stETHStart - (numWithdrawals - 1) * MaxWithdrawalAmount;
+        uint256 stETHRemaining = stETHStart;
+        uint256 i = 0;
+        while (stETHRemaining > MaxWithdrawalAmount) {
+            amounts[i++] = MaxWithdrawalAmount;
+            stETHRemaining -= MaxWithdrawalAmount;
         }
+        amounts[i] = stETHRemaining;
 
         uint256[] memory requestIds = withdrawalQueue.requestWithdrawals(
             amounts,
@@ -145,8 +152,9 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
         emit WithdrawalRequests(requestIds, amounts);
 
+        // Is there any stETH left except 1 wei from each request?
         require(
-            stETH.balanceOf(address(this)) == 0,
+            stETH.balanceOf(address(this)) <= numWithdrawals,
             "Not all stEth in withdraw queue"
         );
         outstandingWithdrawals += stETHStart; // Single set for gas reasons
@@ -207,8 +215,10 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
         uint256 currentBalance = payable(address(this)).balance;
         uint256 withdrawalAmount = currentBalance - startingBalance;
+        // Withdrawal amount should be within 2 wei of expected amount
         require(
-            expectedAmount == withdrawalAmount,
+            withdrawalAmount + 2 >= expectedAmount &&
+                withdrawalAmount <= expectedAmount,
             "Withdrawal amount not expected"
         );
 
