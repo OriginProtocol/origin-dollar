@@ -115,6 +115,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
           store,
           currentState.uuid,
           contracts.nativeStakingStrategy,
+          currentState.metadata.pubkey,
           currentState.metadata.depositData
         );
         currentState = await getState(store);
@@ -268,8 +269,9 @@ const stakingContractHas32ETH = async (contracts) => {
     `Native Staking Strategy has ${formatUnits(wethBalance, 18)} WETH in total`
   );
 
-  const stakeETHThreshold = contracts.nativeStakingStrategy.stakeETHThreshold();
-  const stakeETHTally = contracts.nativeStakingStrategy.stakeETHTally();
+  const stakeETHThreshold =
+    await contracts.nativeStakingStrategy.stakeETHThreshold();
+  const stakeETHTally = await contracts.nativeStakingStrategy.stakeETHTally();
   const remainingETH = stakeETHThreshold.sub(stakeETHTally);
   log(
     `Native Staking Strategy has staked ${formatUnits(
@@ -326,7 +328,8 @@ const p2pRequest = async (url, api_key, method, body) => {
       `Call to P2P has failed: ${JSON.stringify(response.error)}`
     );
   } else {
-    log("Request to P2P service succeeded: ", response);
+    log(`${method} request to P2P service succeeded:`);
+    log(response);
   }
 
   return response;
@@ -385,9 +388,10 @@ const depositEth = async (
   store,
   uuid,
   nativeStakingStrategy,
+  pubkey,
   depositData
 ) => {
-  const { pubkey, signature, depositDataRoot } = depositData;
+  const { signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
     log(`pubkey: ${pubkey}`);
@@ -433,11 +437,9 @@ const broadcastRegisterValidator = async (
   // the publicKey and sharesData params are not encoded correctly by P2P so we will ignore them
   const [, operatorIds, , amount, cluster] = registerTransactionParams;
   // get publicKey and sharesData state storage
-  const publicKey = metadata.depositData.pubkey;
+  const publicKey = metadata.pubkey;
   if (!publicKey) {
-    throw Error(
-      `pubkey not found in metadata.depositData: ${metadata?.depositData}`
-    );
+    throw Error(`pubkey not found in metadata: ${metadata}`);
   }
   const { sharesData } = metadata;
   if (!sharesData) {
@@ -489,28 +491,39 @@ const confirmValidatorCreatedRequest = async (
       "GET"
     );
     if (response.error != null) {
-      log(`Error processing request uuid: ${uuid} error: ${response}`);
-    } else if (response.result.status === "ready") {
+      log(`Error processing request with uuid ${uuid}: ${response.error}`);
+      log(response);
+      throw Error(
+        `Failed to process request ${uuid}. Error: ${response.error}`
+      );
+    } else if (response.result?.status != "ready") {
+      log(
+        `Validators with request uuid ${uuid} are not ready yet. Status: ${response.result?.status}`
+      );
+      return false;
+    } else if (response.result?.status === "ready") {
+      log(`Validators requested with uuid ${uuid} are ready`);
+
+      const pubkey = response.result.encryptedShares[0].publicKey;
       const registerValidatorData =
         response.result.validatorRegistrationTxs[0].data;
-      const depositData = response.result.depositData[0];
       const sharesData = response.result.encryptedShares[0].sharesData;
+      // const depositData = response.result.depositData[0];
       await updateState(uuid, "validator_creation_confirmed", store, {
+        pubkey,
         registerValidatorData,
-        depositData,
+        // depositData,
         sharesData,
       });
-      log(`Validator created using uuid: ${uuid} is ready`);
-      log(`Primary key: ${depositData.pubkey}`);
-      log(`signature: ${depositData.signature}`);
-      log(`depositDataRoot: ${depositData.depositDataRoot}`);
+      log(`Primary key: ${pubkey}`);
+      // log(`signature: ${depositData.signature}`);
+      // log(`depositDataRoot: ${depositData.depositDataRoot}`);
       log(`sharesData: ${sharesData}`);
       return true;
     } else {
-      log(
-        `Validator created using uuid: ${uuid} not yet ready. State: ${response.result.status}`
-      );
-      return false;
+      log(`Error processing request with uuid ${uuid}: ${response.error}`);
+      log(response);
+      throw Error(`Failed to process request ${uuid}.`);
     }
   };
 

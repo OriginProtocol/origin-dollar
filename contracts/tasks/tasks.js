@@ -964,7 +964,6 @@ subtask(
   "operateValidators",
   "Creates the required amount of new SSV validators and stakes ETH"
 )
-  .addOptionalParam("index", "Index of Native Staking contract", 1, types.int)
   .addOptionalParam(
     "stake",
     "Stake 32 ether after registering a new SSV validator",
