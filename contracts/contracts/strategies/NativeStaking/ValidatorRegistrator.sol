@@ -48,6 +48,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
+        NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
