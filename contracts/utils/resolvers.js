@@ -17,10 +17,14 @@ const resolveAsset = async (symbol) => {
   if (process.env.FORK === "true" || hre.network.name != "hardhat") {
     const network =
       hre.network.name != "hardhat"
-        ? hre.network.name != "hardhat"
+        ? hre.network.name
         : hre.network.config.chainId == 17000
         ? "holesky"
         : "mainnet";
+
+    log(`hre.network.name  ${hre.network.name}`);
+    log(`hre.network.config.chainId  ${hre.network.config.chainId}`);
+    log(`network  ${network}`);
 
     const assetAddr =
       addresses[network][symbol + "Proxy"] || addresses[network][symbol];
