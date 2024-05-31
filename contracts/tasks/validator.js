@@ -3,9 +3,10 @@ const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
 
-//const { resolveContract } = require("../utils/resolvers");
+const { getClusterInfo } = require("./ssv");
+const { resolveContract } = require("../utils/resolvers");
 const { sleep } = require("../utils/time");
-//const { getClusterInfo } = require("./ssv");
+const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -32,13 +33,12 @@ const ERROR_THRESHOLD = 5;
  *   - TODO: (implement this) if fuse of the native staking strategy is blown
  *     stop with all the operations
  */
-const operateValidators = async ({ store, signer, contracts, config }) => {
+const registerValidators = async ({ store, signer, contracts, config }) => {
   const {
     feeAccumulatorAddress,
     p2p_api_key,
     p2p_base_url,
     validatorSpawnOperationalPeriodInDays,
-    stake,
     clear,
   } = config;
 
@@ -75,7 +75,7 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
       }
 
       if (currentState.state === "validator_creation_issued") {
-        await confirmValidatorCreatedRequest(
+        await confirmValidatorRegistered(
           p2p_api_key,
           p2p_base_url,
           currentState.uuid,
@@ -107,7 +107,48 @@ const operateValidators = async ({ store, signer, contracts, config }) => {
         currentState = await getState(store);
       }
 
-      if (!stake) break;
+      await sleep(1000);
+    }
+  };
+
+  try {
+    if ((await getErrorCount(store)) >= ERROR_THRESHOLD) {
+      await clearState(
+        currentState.uuid,
+        store,
+        `Errors have reached the threshold(${ERROR_THRESHOLD}) discarding attempt`
+      );
+      return;
+    }
+    await executeOperateLoop();
+  } catch (e) {
+    await increaseErrorCount(currentState ? currentState.uuid : "", store, e);
+    throw e;
+  }
+};
+
+const stakeValidators = async ({ store, signer, contracts }) => {
+  let currentState = await getState(store);
+  log("currentState", currentState);
+
+  if (!currentState) {
+    log(`No pending validator requests in local storage`);
+    return;
+  }
+
+  if (!(await stakingContractHas32ETH(contracts))) {
+    log(`Native staking contract doesn't have enough ETH, exiting`);
+    return;
+  }
+
+  if (await stakingContractPaused(contracts)) {
+    log(`Native staking contract is paused... exiting`);
+    return;
+  }
+
+  const executeOperateLoop = async () => {
+    while (true) {
+      // TODO get deposit data
 
       if (currentState.state === "validator_registered") {
         await depositEth(
@@ -294,8 +335,8 @@ const stakingContractHas32ETH = async (contracts) => {
   return availableETH.gte(parseEther("32"));
 };
 
-/* Make a GET or POST request to P2P service
- * @param api_key: p2p service api key
+/* Make a GET or POST request to P2P API
+ * @param api_key: P2P API key
  * @param method: http method that can either be POST or GET
  * @param body: body object in case of a POST request
  */
@@ -311,7 +352,7 @@ const p2pRequest = async (url, api_key, method, body) => {
 
   const bodyString = JSON.stringify(body);
   log(
-    `Creating a P2P ${method} request with ${url} `,
+    `About to call P2P API: ${method} ${url} `,
     body != undefined ? ` and body: ${bodyString}` : ""
   );
 
@@ -323,12 +364,12 @@ const p2pRequest = async (url, api_key, method, body) => {
 
   const response = await rawResponse.json();
   if (response.error != null) {
-    log("Request to P2P service failed with an error:", response);
+    log("Call to P2P API failed with response:", response);
     throw new Error(
-      `Call to P2P has failed: ${JSON.stringify(response.error)}`
+      `Failed to call to P2P API. Error: ${JSON.stringify(response.error)}`
     );
   } else {
-    log(`${method} request to P2P service succeeded:`);
+    log(`${method} request to P2P API succeeded:`);
     log(response);
   }
 
@@ -478,7 +519,7 @@ const broadcastRegisterValidator = async (
   }
 };
 
-const confirmValidatorCreatedRequest = async (
+const confirmValidatorRegistered = async (
   p2p_api_key,
   p2p_base_url,
   uuid,
@@ -491,11 +532,11 @@ const confirmValidatorCreatedRequest = async (
       "GET"
     );
     if (response.error != null) {
-      log(`Error processing request with uuid ${uuid}: ${response.error}`);
-      log(response);
-      throw Error(
-        `Failed to process request ${uuid}. Error: ${response.error}`
+      log(
+        `Error getting validator status with uuid ${uuid}: ${response.error}`
       );
+      log(response);
+      return false;
     } else if (response.result?.status != "ready") {
       log(
         `Validators with request uuid ${uuid} are not ready yet. Status: ${response.result?.status}`
@@ -527,18 +568,19 @@ const confirmValidatorCreatedRequest = async (
     }
   };
 
+  await retry(doConfirmation, uuid, store);
+};
+
+const retry = async (apiCall, uuid, store, attempts = 20) => {
   let counter = 0;
-  const attempts = 20;
   while (true) {
-    if (await doConfirmation()) {
+    if (await apiCall()) {
       break;
     }
     counter++;
 
     if (counter > attempts) {
-      log(
-        `Tried validating the validator formation with ${attempts} but failed`
-      );
+      log(`Failed P2P API call after ${attempts} attempts.`);
       await clearState(
         uuid,
         store,
@@ -550,42 +592,43 @@ const confirmValidatorCreatedRequest = async (
   }
 };
 
-// async function exitValidator({ publicKey, signer, operatorIds }) {
-//   const strategy = await resolveContract(
-//     "NativeStakingSSVStrategyProxy",
-//     "NativeStakingSSVStrategy"
-//   );
+async function exitValidator({ publicKey, signer, operatorIds }) {
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
 
-//   log(`About to exit validator`);
-//   const tx = await strategy
-//     .connect(signer)
-//     .exitSsvValidator(publicKey, operatorIds);
-//   await logTxDetails(tx, "exitSsvValidator");
-// }
+  log(`About to exit validator`);
+  const tx = await strategy
+    .connect(signer)
+    .exitSsvValidator(publicKey, operatorIds);
+  await logTxDetails(tx, "exitSsvValidator");
+}
 
-// async function removeValidator({ publicKey, signer, operatorIds }) {
-//   const strategy = await resolveContract(
-//     "NativeStakingSSVStrategyProxy",
-//     "NativeStakingSSVStrategy"
-//   );
+async function removeValidator({ publicKey, signer, operatorIds }) {
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
 
-//   // Cluster details
-//   const { cluster } = await getClusterInfo({
-//     chainId: hre.network.config.chainId,
-//     ssvNetwork: hre.network.name.toUpperCase(),
-//     operatorIds,
-//     ownerAddress: strategy.address,
-//   });
+  // Cluster details
+  const { cluster } = await getClusterInfo({
+    chainId: hre.network.config.chainId,
+    ssvNetwork: hre.network.name.toUpperCase(),
+    operatorIds,
+    ownerAddress: strategy.address,
+  });
 
-//   log(`About to exit validator`);
-//   const tx = await strategy
-//     .connect(signer)
-//     .removeSsvValidator(publicKey, operatorIds, cluster);
-//   await logTxDetails(tx, "removeSsvValidator");
-// }
+  log(`About to exit validator`);
+  const tx = await strategy
+    .connect(signer)
+    .removeSsvValidator(publicKey, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidator");
+}
 
 module.exports = {
-  operateValidators,
-  //removeValidator,
-  //exitValidator,
+  registerValidators,
+  stakeValidators,
+  removeValidator,
+  exitValidator,
 };

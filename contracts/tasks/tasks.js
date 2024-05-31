@@ -12,7 +12,7 @@ const { resolveContract } = require("../utils/resolvers");
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { operateValidators } = require("./validator");
+const { registerValidators } = require("./validator");
 const { formatUnits } = require("ethers/lib/utils");
 
 const {
@@ -939,7 +939,7 @@ subtask(
   .setAction(async (taskArgs) => {
     const defenderSigner = await getDefenderSigner();
 
-    log("Tranfer governance of NativeStakingSSVStrategyProxy");
+    log("Transfer governance of NativeStakingSSVStrategyProxy");
 
     const nativeStakingProxyFactory = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
@@ -961,15 +961,9 @@ task("transferGovernanceNativeStakingProxy").setAction(
 
 // Defender
 subtask(
-  "operateValidators",
+  "registerValidators",
   "Creates the required amount of new SSV validators and stakes ETH"
 )
-  .addOptionalParam(
-    "stake",
-    "Stake 32 ether after registering a new SSV validator",
-    true,
-    types.boolean
-  )
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
@@ -1001,7 +995,6 @@ subtask(
     const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
     const SSV = await ethers.getContractAt("IERC20", addressesSet.SSV);
 
-    // TODO: use index to target different native staking strategies when we have more than 1
     const nativeStakingStrategy = await resolveContract(
       "NativeStakingSSVStrategyProxy",
       "NativeStakingSSVStrategy"
@@ -1041,14 +1034,14 @@ subtask(
       clear: taskArgs.clear,
     };
 
-    await operateValidators({
+    await registerValidators({
       signer,
       contracts,
       store,
       config,
     });
   });
-task("operateValidators").setAction(async (_, __, runSuper) => {
+task("registerValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
