@@ -69,26 +69,26 @@ const getDefenderSigner = async () => {
 
   const network = await ethers.provider.getNetwork();
   const isMainnet = network.chainId === 1;
-  const isHolesky = network.chainId === 17000;
 
-  const apiKeyName = isMainnet
-    ? "DEFENDER_API_KEY"
-    : "HOLESKY_DEFENDER_API_KEY";
-  const apiKeySecret = isMainnet
-    ? "DEFENDER_API_SECRET"
-    : "HOLESKY_DEFENDER_API_SECRET";
+  const apiKey = isMainnet
+    ? process.env.DEFENDER_API_KEY
+    : process.env.HOLESKY_DEFENDER_API_KEY || process.env.DEFENDER_API_KEY;
+  const apiSecret = isMainnet
+    ? process.env.DEFENDER_API_SECRET
+    : process.env.HOLESKY_DEFENDER_API_SECRET ||
+      process.env.DEFENDER_API_SECRET;
 
   const credentials = {
-    relayerApiKey: process.env[apiKeyName],
-    relayerApiSecret: process.env[apiKeySecret],
+    relayerApiKey: apiKey,
+    relayerApiSecret: apiSecret,
   };
 
   const client = new Defender(credentials);
   const provider = client.relaySigner.getProvider();
 
-  const signer = client.relaySigner.getSigner(provider, { speed });
+  const signer = await client.relaySigner.getSigner(provider, { speed });
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} from env vars ${apiKeyName} and ${apiKeySecret}`
+    `Using Defender Relayer account ${await signer.getAddress()} with key ${apiKey}`
   );
   return signer;
 };
