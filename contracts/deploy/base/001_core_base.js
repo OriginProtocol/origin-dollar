@@ -263,14 +263,10 @@ const deployHarvester = async ({
     dOETHBaseHarvesterProxy.address
   );
   await withConfirmation(
-    cOETHBaseHarvesterProxy
-      .connect(sDeployer)
+    cOETHBaseHarvesterProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](
-        dOETHBaseHarvester.address,
-        deployerAddr,
-        []
-      )
+      "initialize(address,address,bytes)"
+    ](dOETHBaseHarvester.address, deployerAddr, [])
   );
   console.log("Initialized OETHBaseHarvesterProxy");
 

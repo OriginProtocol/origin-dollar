@@ -127,9 +127,7 @@ const deployAerodromeStrategy = async ({
 
   console.log("Deploy AerodromeEthStrategyProxy");
 
-  await deployWithConfirmation(
-    "AerodromeEthStrategyProxy"
-  );
+  await deployWithConfirmation("AerodromeEthStrategyProxy");
 
   const cAerodromeEthStrategyProxy = await ethers.getContract(
     "AerodromeEthStrategyProxy"

@@ -577,14 +577,10 @@ const deployOETHHarvester = async (oethDripper) => {
     dOETHHarvesterProxy.address
   );
   await withConfirmation(
-    cOETHHarvesterProxy
-      .connect(sDeployer)
+    cOETHHarvesterProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](
-        dOETHHarvester.address,
-        governorAddr,
-        []
-      )
+      "initialize(address,address,bytes)"
+    ](dOETHHarvester.address, governorAddr, [])
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -658,14 +654,10 @@ const deployOETHBaseHarvester = async (oethDripper) => {
     dOETHBaseHarvesterProxy.address
   );
   await withConfirmation(
-    cOETHBaseHarvesterProxy
-      .connect(sDeployer)
+    cOETHBaseHarvesterProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](
-        dOETHBaseHarvester.address,
-        governorAddr,
-        []
-      )
+      "initialize(address,address,bytes)"
+    ](dOETHBaseHarvester.address, governorAddr, [])
   );
 
   log("Initialized OETHBaseHarvesterProxy");
@@ -833,10 +825,10 @@ const deployOETHDripper = async () => {
   // Deploy Dripper Proxy
   const cDripperProxy = await ethers.getContract("OETHDripperProxy");
   await withConfirmation(
-    cDripperProxy
-      .connect(sDeployer)
+    cDripperProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](dDripper.address, governorAddr, [])
+      "initialize(address,address,bytes)"
+    ](dDripper.address, governorAddr, [])
   );
 
   return cDripperProxy;
@@ -1161,22 +1153,18 @@ const deployOETHCore = async () => {
     cOETHVaultProxy.address
   );
   await withConfirmation(
-    cOETHProxy
-      .connect(sDeployer)
+    cOETHProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](dOETH.address, governorAddr, [])
+      "initialize(address,address,bytes)"
+    ](dOETH.address, governorAddr, [])
   );
   log("Initialized OETHProxy");
 
   await withConfirmation(
-    cOETHVaultProxy
-      .connect(sDeployer)
+    cOETHVaultProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      ["initialize(address,address,bytes)"](
-        dOETHVault.address,
-        governorAddr,
-        []
-      )
+      "initialize(address,address,bytes)"
+    ](dOETHVault.address, governorAddr, [])
   );
 
   log("Initialized OETHVaultProxy");
