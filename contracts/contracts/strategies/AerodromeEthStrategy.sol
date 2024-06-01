@@ -372,7 +372,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
 
-        // solhint-disable-next-line uninitialized-local
+        // slither-disable-next-line uninitialized-local
         uint256 oethBalanceBefore;
 
         if (_tokenIn == address(oeth)) {
