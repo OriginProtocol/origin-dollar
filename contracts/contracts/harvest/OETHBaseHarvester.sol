@@ -179,6 +179,7 @@ contract OETHBaseHarvester is AbstractHarvesterBase {
             );
             uint256 feeAmount = totalRewards.mul(performanceFeeBps).div(1e4);
             // Send fee to performance fee receiver
+            // slither-disable-next-line unchecked-transfer unused-return
             IERC20(rewardTokens[i]).transfer(performanceFeeReceiver, feeAmount);
             // swap the remaining amount
             _swap(rewardTokens[i], _rewardTo, priceProvider);
