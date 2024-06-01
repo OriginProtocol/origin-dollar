@@ -142,7 +142,10 @@ async function mint({ amount, asset, symbol, min }, hre) {
   const assetUnits = parseUnits(amount.toString(), await cAsset.decimals());
   const minUnits = parseUnits(min.toString());
 
-  await cAsset.connect(signer).approve(vault.address, assetUnits);
+  const approveTx = await cAsset
+    .connect(signer)
+    .approve(vault.address, assetUnits);
+  await logTxDetails(approveTx, "approve");
 
   log(`About to mint ${symbol} using ${amount} ${asset}`);
   const tx = await vault
