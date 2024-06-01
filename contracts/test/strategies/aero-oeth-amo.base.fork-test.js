@@ -84,11 +84,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         .connect(josh)
         .transfer(aerodromeEthStrategy.address, wethDepositAmount);
 
-      const {
-        oethMintAmount: oethMintAmount,
-        wethDeposited,
-        aeroBalances,
-      } = await calcOethMintAmount(fixture, wethDepositAmount);
+      const { oethMintAmount: oethMintAmount } = await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
 
       let vaultSigner = await impersonateAndFund(oethVault.address, "2");
@@ -337,13 +333,13 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const {
         aerodromeEthStrategy,
         oethVault,
-        strategist,
-        timelock,
+        governor,
+        minter,
+        burner,
         josh,
         weth,
       } = fixture;
-      //  for (const signer of [strategist, timelock, josh]) { <-TODO: Check why this reverts
-      for (const signer of [josh]) {
+      for (const signer of [josh,governor,minter,burner]) {
         const tx = aerodromeEthStrategy
           .connect(signer)
           .withdraw(oethVault.address, weth.address, parseUnits("50"));
@@ -421,7 +417,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const strategistAddress = await oethVault.strategistAddr();
       const sStrategist = await impersonateAndFund(strategistAddress);
       // Rebalance pool
-      tx = await aerodromeEthStrategy
+      const tx = await aerodromeEthStrategy
         .connect(sStrategist)
         .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
 
@@ -453,12 +449,9 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
     it("Should not rebalance pool by making the WETH reserve > OETH reserve", async function () {
       const {
-        oeth,
         weth,
         josh,
-        aeroRouter,
         aerodromeEthStrategy,
-        oethVaultSigner,
         oethVault,
       } = fixture;
 
@@ -476,7 +469,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       const strategistAddress = await oethVault.strategistAddr();
       const sStrategist = await impersonateAndFund(strategistAddress);
       // Rebalance pool should revert with error message
-      tx = aerodromeEthStrategy
+     const tx = aerodromeEthStrategy
         .connect(sStrategist)
         .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
 
@@ -542,13 +535,13 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       }
 
       // Rebalance pool should revert with error message
-      tx = aerodromeEthStrategy
+      const tx = aerodromeEthStrategy
         .connect(sStrategist)
         .swapAndRebalancePool(amountIn2, 0, tokenIn2, josh.address);
       await expect(tx).to.revertedWith("Pool imbalance worsened");
     });
     it("Vault should be able to deposit some WETH to AMO strategy after rebalancing", async function () {
-      const { aerodromeEthStrategy, oeth, pool, weth, josh, oethVault } =
+      const { aerodromeEthStrategy, oeth, weth, josh, oethVault } =
         fixture;
 
       await rebalancePool(fixture);
@@ -563,8 +556,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       const {
         oethMintAmount: oethMintAmount,
-        wethDeposited,
-        aeroBalances,
       } = await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
 
@@ -575,7 +566,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         output: false,
       });
 
-      tx = await aerodromeEthStrategy
+      const tx = await aerodromeEthStrategy
         .connect(vaultSigner)
         .deposit(weth.address, wethDepositAmount);
 
@@ -626,7 +617,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         output: false,
       });
 
-      tx = await aerodromeEthStrategy.connect(oethVaultSigner).depositAll();
+      const tx = await aerodromeEthStrategy.connect(oethVaultSigner).depositAll();
 
       const receipt = await tx.wait();
 
@@ -876,7 +867,6 @@ async function calcWithdrawAllAmounts(fixture) {
     pool,
     oethReserveIndex,
     wethReserveIndex,
-    aeroRouter,
     weth,
     oeth,
   } = fixture;
@@ -941,7 +931,7 @@ async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
 function sqrt(value) {
   const ONE = ethers.BigNumber.from(1);
   const TWO = ethers.BigNumber.from(2);
-  x = ethers.BigNumber.from(value);
+  let x = ethers.BigNumber.from(value);
   let z = x.add(ONE).div(TWO);
   let y = x;
   while (z.sub(y).isNegative()) {
@@ -986,7 +976,6 @@ async function getParamsForPoolRebalance(
     weth,
     aeroRouter,
     pool,
-    josh,
     oethReserveIndex,
     wethReserveIndex,
   } = fixture;
@@ -1122,7 +1111,7 @@ async function rebalancePool(fixture) {
   const strategistAddress = await oethVault.strategistAddr();
   const sStrategist = await impersonateAndFund(strategistAddress);
   // Rebalance pool
-  tx = await aerodromeEthStrategy
+  const tx = await aerodromeEthStrategy
     .connect(sStrategist)
     .swapAndRebalancePool(amountIn, 0, tokenIn, josh.address);
 

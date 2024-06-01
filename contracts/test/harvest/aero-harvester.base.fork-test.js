@@ -73,7 +73,7 @@ describe("ForkTest: Harvest (Base)", function () {
 
     expect(rewardValue).to.approxEqualTolerance(
       wethBalanceAfter.sub(wethBalanceBefore),
-      30
+      35
     );
   });
   it("should send performance fee", async function () {

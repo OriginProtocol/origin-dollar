@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import { IStrategy } from "./../interfaces/IStrategy.sol";
-import "hardhat/console.sol";
 
 interface IERC20MintableBurnable {
     function mintTo(address to, uint256 value) external;

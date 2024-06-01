@@ -136,27 +136,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const oethReserveIndex =
     wethReserveIndex === "_reserve1" ? "_reserve0" : "_reserve1";
 
-  if (config?.wethMintAmount > 0) {
-    const wethAmount = parseUnits(config.wethMintAmount.toString());
-
-    // Set vault balance. This will sit in the vault, not the strategy
-    await weth.connect(josh).transfer(oethVault.address, wethAmount);
-
-    log(`Vault weth balance set to: ${wethAmount}`);
-    // Add ETH to the pool
-    if (config?.depositToStrategy) {
-      // The strategist deposits the WETH to the AMO strategy
-      await oethVault
-        .connect(josh)
-        .depositToStrategy(
-          aerodromeEthStrategy.address,
-          [weth.address],
-          [wethAmount]
-        );
-      log(`Deposited ${wethAmount} WETH to the strategy contract`);
-    }
-  }
-
   return {
     woeth,
     woethProxy,

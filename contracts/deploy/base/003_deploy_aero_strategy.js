@@ -30,7 +30,7 @@ module.exports = deployOnBaseWithGuardian(
       await hardhatSetBalance(deployerAddr);
       if (isBaseForkTest) {
         const signers = await hre.ethers.getSigners();
-
+        // eslint-disable-next-line no-unused-vars
         const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
         const vaultSigner = await impersonateAndFund(oethVaultProxy.address);
 
@@ -113,9 +113,8 @@ const deployAerodromeStrategy = async ({
   ethers,
 }) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
 
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -127,9 +126,11 @@ const deployAerodromeStrategy = async ({
   const oeth = await ethers.getContract("OETHProxy");
 
   console.log("Deploy AerodromeEthStrategyProxy");
-  const dAerodromeEthStrategyProxy = await deployWithConfirmation(
+
+  await deployWithConfirmation(
     "AerodromeEthStrategyProxy"
   );
+
   const cAerodromeEthStrategyProxy = await ethers.getContract(
     "AerodromeEthStrategyProxy"
   );

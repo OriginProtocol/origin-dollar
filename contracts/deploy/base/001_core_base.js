@@ -69,9 +69,9 @@ const deployCore = async ({
     "PriceFeedPair"
   );
   const priceFeedPair = await ethers.getContract("PriceFeedPair");
-  oracleContract = "BaseOETHOracleRouter";
-  contractName = "BaseOETHOracleRouter";
-  args = [priceFeedPair.address];
+  const oracleContract = "BaseOETHOracleRouter";
+  const contractName = "BaseOETHOracleRouter";
+  const args = [priceFeedPair.address];
 
   await deployWithConfirmation(contractName, args, oracleContract);
 
@@ -238,8 +238,7 @@ const deployHarvester = async ({
   ethers,
 }) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -266,6 +265,7 @@ const deployHarvester = async ({
   await withConfirmation(
     cOETHBaseHarvesterProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](
         dOETHBaseHarvester.address,
         deployerAddr,

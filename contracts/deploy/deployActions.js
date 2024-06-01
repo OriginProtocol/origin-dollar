@@ -576,10 +576,10 @@ const deployOETHHarvester = async (oethDripper) => {
     "OETHHarvester",
     dOETHHarvesterProxy.address
   );
-
   await withConfirmation(
     cOETHHarvesterProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](
         dOETHHarvester.address,
         governorAddr,
@@ -660,6 +660,7 @@ const deployOETHBaseHarvester = async (oethDripper) => {
   await withConfirmation(
     cOETHBaseHarvesterProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](
         dOETHBaseHarvester.address,
         governorAddr,
@@ -834,6 +835,7 @@ const deployOETHDripper = async () => {
   await withConfirmation(
     cDripperProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](dDripper.address, governorAddr, [])
   );
 
@@ -1161,6 +1163,7 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](dOETH.address, governorAddr, [])
   );
   log("Initialized OETHProxy");
@@ -1168,6 +1171,7 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVaultProxy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       ["initialize(address,address,bytes)"](
         dOETHVault.address,
         governorAddr,
