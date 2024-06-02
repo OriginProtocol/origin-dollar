@@ -133,7 +133,7 @@ async function capital({ symbol, pause }, hre) {
   }
 }
 
-async function mint({ amount, asset, symbol, min }, hre) {
+async function mint({ amount, asset, symbol, min, approve }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -142,7 +142,12 @@ async function mint({ amount, asset, symbol, min }, hre) {
   const assetUnits = parseUnits(amount.toString(), await cAsset.decimals());
   const minUnits = parseUnits(min.toString());
 
-  await cAsset.connect(signer).approve(vault.address, assetUnits);
+  if (approve) {
+    const approveTx = await cAsset
+      .connect(signer)
+      .approve(vault.address, assetUnits);
+    await logTxDetails(approveTx, "approve");
+  }
 
   log(`About to mint ${symbol} using ${amount} ${asset}`);
   const tx = await vault

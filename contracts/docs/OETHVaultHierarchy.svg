@@ -16,16 +16,16 @@
 <text text-anchor="middle" x="633.33" y="-426.9" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="633.33" y="-410.1" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 205 -->
+<!-- 204 -->
 <g id="node2" class="node">
-<title>205</title>
+<title>204</title>
 <polygon fill="#f2f2f2" stroke="black" points="313.2,-314.9 313.2,-356.5 487.46,-356.5 487.46,-314.9 313.2,-314.9"/>
 <text text-anchor="middle" x="400.33" y="-339.9" font-family="Times,serif" font-size="14.00">OUSD</text>
 <text text-anchor="middle" x="400.33" y="-323.1" font-family="Times,serif" font-size="14.00">../contracts/token/OUSD.sol</text>
 </g>
-<!-- 205&#45;&gt;20 -->
+<!-- 204&#45;&gt;20 -->
 <g id="edge3" class="edge">
-<title>205&#45;&gt;20</title>
+<title>204&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M454.66,-356.52C483.14,-366.91 518.62,-379.85 550.45,-391.46"/>
 <polygon fill="none" stroke="black" points="547.13,-401.43 578.91,-401.85 554.32,-381.7 547.13,-401.43"/>
 </g>
@@ -37,9 +37,9 @@
 <text text-anchor="middle" x="400.33" y="-418.5" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="400.33" y="-401.7" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 205&#45;&gt;213 -->
+<!-- 204&#45;&gt;213 -->
 <g id="edge1" class="edge">
-<title>205&#45;&gt;213</title>
+<title>204&#45;&gt;213</title>
 <path fill="none" stroke="black" d="M400.33,-356.84C400.33,-358.89 400.33,-361.03 400.33,-363.23"/>
 <polygon fill="none" stroke="black" points="389.83,-363.34 400.33,-393.34 410.83,-363.34 389.83,-363.34"/>
 </g>
@@ -51,9 +51,9 @@
 <text text-anchor="middle" x="142.33" y="-418.5" font-family="Times,serif" font-size="14.00">InitializableERC20Detailed</text>
 <text text-anchor="middle" x="142.33" y="-401.7" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableERC20Detailed.sol</text>
 </g>
-<!-- 205&#45;&gt;216 -->
+<!-- 204&#45;&gt;216 -->
 <g id="edge2" class="edge">
-<title>205&#45;&gt;216</title>
+<title>204&#45;&gt;216</title>
 <path fill="none" stroke="black" d="M340.17,-356.52C315.28,-364.72 285.56,-374.51 256.82,-383.98"/>
 <polygon fill="none" stroke="black" points="253.25,-374.1 228.04,-393.46 259.82,-394.05 253.25,-374.1"/>
 </g>
@@ -123,9 +123,9 @@
 <path fill="none" stroke="black" d="M390.86,-121.03C390.91,-123.05 390.96,-125.16 391.02,-127.33"/>
 <polygon fill="none" stroke="black" points="380.53,-127.79 391.81,-157.51 401.52,-127.24 380.53,-127.79"/>
 </g>
-<!-- 225&#45;&gt;205 -->
+<!-- 225&#45;&gt;204 -->
 <g id="edge9" class="edge">
-<title>225&#45;&gt;205</title>
+<title>225&#45;&gt;204</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M393.36,-199.47C394.73,-226.13 397.18,-273.57 398.78,-304.58"/>
 <polygon fill="black" stroke="black" points="395.29,-305 399.3,-314.8 402.28,-304.64 395.29,-305"/>
 </g>
@@ -141,9 +141,9 @@
 <path fill="none" stroke="black" d="M536.82,-278.16C553.19,-302.51 581.3,-344.32 602.97,-376.55"/>
 <polygon fill="none" stroke="black" points="594.45,-382.69 619.9,-401.73 611.88,-370.98 594.45,-382.69"/>
 </g>
-<!-- 226&#45;&gt;205 -->
+<!-- 226&#45;&gt;204 -->
 <g id="edge12" class="edge">
-<title>226&#45;&gt;205</title>
+<title>226&#45;&gt;204</title>
 <path fill="none" stroke="black" d="M491.33,-278.03C475.96,-287.6 457.36,-299.18 440.99,-309.38"/>
 <polygon fill="black" stroke="black" points="438.8,-306.62 432.17,-314.87 442.5,-312.56 438.8,-306.62"/>
 </g>
