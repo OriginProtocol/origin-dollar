@@ -30,6 +30,7 @@ const {
   tokenTransfer,
   tokenTransferFrom,
 } = require("./tokens");
+const { depositWETH, withdrawWETH } = require("./weth");
 const {
   allocate,
   capital,
@@ -72,6 +73,8 @@ const {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
+  resetStakeETHTally,
+  setStakeETHThreshold,
 } = require("./validator");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -211,6 +214,37 @@ subtask("transferFrom", "Transfer tokens from an account or contract")
   )
   .setAction(tokenTransferFrom);
 task("transferFrom").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// WETH tasks
+subtask("depositWETH", "Deposit ETH into WETH")
+  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await depositWETH({ ...taskArgs, weth, signer });
+  });
+task("depositWETH").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("withdrawWETH", "Withdraw ETH from WETH")
+  .addParam("amount", "Amount of ETH to withdraw", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await withdrawWETH({ ...taskArgs, weth, signer });
+  });
+task("withdrawWETH").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -874,16 +908,17 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     types.string
   )
   .setAction(async (taskArgs) => {
-    const network = await ethers.provider.getNetwork();
-    const ssvNetwork = addresses[networkMap[network.chainId]].SSVNetwork;
+    const { chainId } = await ethers.provider.getNetwork();
+    const network = networkMap[chainId];
+    const ssvNetwork = addresses[network].SSVNetwork;
 
     log(
-      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network.name} network using ssvNetworkContract ${ssvNetwork}`
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
     );
     await printClusterInfo({
       ...taskArgs,
       ownerAddress: taskArgs.owner,
-      chainId: network.chainId,
+      chainId: chainId,
       ssvNetwork,
     });
   });
@@ -998,6 +1033,47 @@ subtask(
     await stakeValidators(config);
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(async () => {
+  const signer = await getSigner();
+
+  const nativeStakingProxyFactory = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+
+  await resetStakeETHTally({
+    signer,
+    nativeStakingProxyFactory,
+  });
+});
+task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "setStakeETHThreshold",
+  "Sets the amount of Ether than can be staked before needing a reset"
+)
+  .addParam("amount", "Amount in ether", undefined, types.int)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const nativeStakingProxyFactory = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+
+    await setStakeETHThreshold({
+      ...taskArgs,
+      signer,
+      nativeStakingProxyFactory,
+    });
+  });
+task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

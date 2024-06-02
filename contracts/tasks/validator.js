@@ -124,7 +124,9 @@ const registerValidators = async ({
   }
 
   if (!(await stakingContractHas32ETH(nativeStakingStrategy, WETH))) {
-    console.log(`Native staking contract doesn't have enough ETH, exiting`);
+    console.log(
+      `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
+    );
     return;
   }
 
@@ -436,23 +438,23 @@ const stakingContractHas32ETH = async (nativeStakingStrategy, WETH) => {
 
   const stakeETHThreshold = await nativeStakingStrategy.stakeETHThreshold();
   const stakeETHTally = await nativeStakingStrategy.stakeETHTally();
-  const remainingETH = stakeETHThreshold.sub(stakeETHTally);
+  const remainingWETH = stakeETHThreshold.sub(stakeETHTally);
   log(
     `Native Staking Strategy has staked ${formatUnits(
       stakeETHTally
     )} of ${formatUnits(stakeETHThreshold)} ETH with ${formatUnits(
-      remainingETH
-    )} ETH remaining`
+      remainingWETH
+    )} WETH remaining`
   );
 
   // Take the minimum of the remainingETH and the WETH balance
-  const availableETH = wethBalance.gt(remainingETH)
-    ? remainingETH
+  const availableETH = wethBalance.gt(remainingWETH)
+    ? remainingWETH
     : wethBalance;
   log(
     `Native Staking Strategy has ${formatUnits(
       availableETH
-    )} ETH available to stake`
+    )} WETH available to stake`
   );
 
   return availableETH.gte(parseEther("32"));
@@ -793,10 +795,36 @@ async function removeValidator({ publicKey, signer, operatorIds }) {
   await logTxDetails(tx, "removeSsvValidator");
 }
 
+async function resetStakeETHTally({ signer }) {
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  log(`About to resetStakeETHTally`);
+  const tx = await strategy.connect(signer).resetStakeETHTally();
+  await logTxDetails(tx, "resetStakeETHTally");
+}
+
+async function setStakeETHThreshold({ signer, amount }) {
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  const threshold = parseEther(amount.toString());
+
+  log(`About to setStakeETHThreshold`);
+  const tx = await strategy.connect(signer).setStakeETHThreshold(threshold);
+  await logTxDetails(tx, "setStakeETHThreshold");
+}
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
   removeValidator,
   exitValidator,
+  resetStakeETHTally,
+  setStakeETHThreshold,
 };
