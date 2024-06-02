@@ -280,6 +280,12 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
     types.string
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
+  .addOptionalParam(
+    "approve",
+    "Approve the asset to the OETH Vault before the mint",
+    true,
+    types.boolean
+  )
   .setAction(mint);
 task("mint").setAction(async (_, __, runSuper) => {
   return runSuper();
