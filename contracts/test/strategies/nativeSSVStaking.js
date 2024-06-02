@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { parseEther } = require("ethers").utils;
+const { keccak256, parseEther } = require("ethers").utils;
 const {
   setBalance,
   setStorageAt,
@@ -37,6 +37,14 @@ const testValidator = {
   depositDataRoot:
     "0xdbe778a625c68446f3cc8b2009753a5e7dd7c37b8721ee98a796bb9179dfe8ac",
 };
+const testPublicKeys = [
+  "0xaba6acd335d524a89fb89b9977584afdb23f34a6742547fa9ec1c656fbd2bfc0e7a234460328c2731828c9a43be06e25",
+  "0xa8adaec39a6738b09053a3ed9d44e481d5b2dfafefe0059da48756db951adf4f2956c1149f3bd0634e4cde009a770afb",
+  "0xaa8cdeb9efe0cb2f703332a46051214464796e7de7b882abd243c175b2d96250ad227846f713876445f864b2e2f695c1",
+  "0xb22b68e2a4f524e96c7818dbfca3de0f7fb4e87449fe8166fd310bea3e3e4295db41b21e65612d1d4bd8a14f2d47e49a",
+  "0x92fe1f554b8110fa5c74af8181ca2afaad12f6d22cad933ef1978b5d4d099d75045e4d6d15066c290aee29990858cb90",
+  "0xb27b34f6931ba70a11c2ba82f194e9b98093a5a482bb035a836df9aa4b5f57542354da453538b651c18eefc0ea3a7689",
+];
 
 const emptyCluster = [
   0, // validatorCount
@@ -1064,30 +1072,46 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .setStakeETHThreshold(stakeThreshold);
     });
 
-    const stakeValidator = async (validators, stakeTresholdErrorTriggered) => {
+    const stakeValidator = async (
+      validators,
+      stakeTresholdErrorTriggered,
+      startingIndex = 0
+    ) => {
       const { nativeStakingSSVStrategy, validatorRegistrator } = fixture;
 
       // there is a limitation to this function as it will only check for
       // a failure transaction with the last stake call
-      for (let i = 0; i < validators; i++) {
+      for (let i = startingIndex; i < validators; i++) {
+        expect(
+          await nativeStakingSSVStrategy.validatorsStates(
+            keccak256(testPublicKeys[i])
+          )
+        ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
+
         const stakeAmount = ethUnits("32");
         // Register a new validator with the SSV Network
         await nativeStakingSSVStrategy
           .connect(validatorRegistrator)
           .registerSsvValidator(
-            testValidator.publicKey,
+            testPublicKeys[i],
             testValidator.operatorIds,
             testValidator.sharesData,
             stakeAmount,
             emptyCluster
           );
 
+        expect(
+          await nativeStakingSSVStrategy.validatorsStates(
+            keccak256(testPublicKeys[i])
+          )
+        ).to.equal(1, "Validator state not 1 (REGISTERED)");
+
         // Stake ETH to the new validator
         const tx = nativeStakingSSVStrategy
           .connect(validatorRegistrator)
           .stakeEth([
             {
-              pubkey: testValidator.publicKey,
+              pubkey: testPublicKeys[i],
               signature: testValidator.signature,
               depositDataRoot: testValidator.depositDataRoot,
             },
@@ -1097,6 +1121,12 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           await expect(tx).to.be.revertedWith("Staking ETH over threshold");
         } else {
           await tx;
+
+          expect(
+            await nativeStakingSSVStrategy.validatorsStates(
+              keccak256(testPublicKeys[i])
+            )
+          ).to.equal(2, "Validator state not 2 (STAKED)");
         }
       }
     };
@@ -1113,6 +1143,23 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       await stakeValidator(3, true);
     });
 
+    it("Fail to stake a validator that hasn't been registered", async () => {
+      const { nativeStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      // Stake ETH to the unregistered validator
+      const tx = nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth([
+          {
+            pubkey: testValidator.publicKey,
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositDataRoot,
+          },
+        ]);
+
+      await expect(tx).to.be.revertedWith("Validator not registered");
+    });
+
     it("Should stake to 2 validators continually when threshold is reset", async () => {
       const { anna, nativeStakingSSVStrategy } = fixture;
 
@@ -1120,11 +1167,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         await nativeStakingSSVStrategy.connect(anna).resetStakeETHTally();
       };
 
-      await stakeValidator(2, false);
+      await stakeValidator(2, false, 0);
       await resetThreshold();
-      await stakeValidator(2, false);
+      await stakeValidator(2, false, 2);
       await resetThreshold();
-      await stakeValidator(2, false);
+      await stakeValidator(2, false, 4);
       await resetThreshold();
     });
 

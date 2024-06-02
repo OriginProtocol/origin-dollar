@@ -3,7 +3,6 @@ const { withConfirmation } = require("../../utils/deploy");
 const { resolveContract } = require("../../utils/resolvers");
 const addresses = require("../../utils/addresses");
 const { parseEther } = require("ethers/lib/utils");
-// const { impersonateAndFund } = require("../../utils/signers.js");
 
 const mainExport = async () => {
   console.log("Running 010 deployment on Holesky...");
