@@ -48,6 +48,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
+        NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
@@ -207,6 +208,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
+    // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
@@ -214,6 +216,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 amount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
+        require(
+            validatorsStates[keccak256(publicKey)] ==
+                VALIDATOR_STATE.NON_REGISTERED,
+            "Validator already registered"
+        );
         ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
             publicKey,
             operatorIds,
@@ -224,6 +231,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.REGISTERED;
         emit SSVValidatorRegistered(publicKey, operatorIds);
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
