@@ -84,8 +84,15 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             address(aeroFactoryAddress)
         );
-        // Ensure that the rebalance does not cross the midpoint and that the final ratio better than initial.
-        require(finalRatio > midpoint, "WETH reserves exceeds OETH"); // This means we needed more WETH (not profitable)
+
+        // Ensure that after the rebalance, the WETH reserves do not exceed OETH reserves.
+        // We always aim for OETH reserves > WETH reserves.
+        require(finalRatio > midpoint, "WETH reserves exceeds OETH");
+
+        // Ensure that the pool balance has improved after the rebalance,
+        // meaning the final ratio is closer to 50:50 compared to the initial ratio.
+        // For example, if the initial ratio was 0.6 (60% OETH, 40% WETH) and the final ratio is 0.55,
+        // it means the pool balance has improved towards the 50:50 target.
         require(initialRatio > finalRatio, "Pool imbalance worsened");
     }
 

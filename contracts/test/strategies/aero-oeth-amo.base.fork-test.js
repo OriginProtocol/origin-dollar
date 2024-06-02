@@ -1,14 +1,14 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits, parseEther } = require("ethers/lib/utils");
 const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
-const { units, oethUnits, isCI } = require("../helpers");
+const { units, oethUnits, isCI, advanceTime } = require("../helpers");
 const { aeroOETHAMOFixture } = require("../_fixture");
 const { createFixtureLoader } = require("../_fixture");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { impersonateAndFund } = require("../../utils/signers");
-const { BigNumber, ethers } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
@@ -132,6 +132,73 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       expect(oethSupplyAfter).to.approxEqualTolerance(
         oethSupplyBefore.add(oethMintAmount),
         0.1 // 1% or 10 basis point
+      );
+    });
+    it("should collect reward tokens", async function () {
+      const {
+        oethBaseHarvester,
+        aerodromeEthStrategy,
+        weth,
+        josh,
+        oethVault,
+        aeroGauge,
+      } = fixture;
+
+      // Add rewards to Gauge: STARTS¯
+      const minter = await impersonateAndFund(
+        "0xeB018363F0a9Af8f91F06FEe6613a751b2A33FE5"
+      );
+      const aeroTokenInstance = await ethers.getContractAt(
+        "IERC20MintableBurnable",
+        addresses.base.aeroTokenAddress
+      );
+
+      const voterAddress = await aeroGauge.voter();
+      console.log("voter address", voterAddress);
+
+      const voter = await impersonateAndFund(voterAddress);
+      await aeroTokenInstance
+        .connect(minter)
+        .mint(voterAddress, parseEther("500"));
+
+      await aeroTokenInstance
+        .connect(voter)
+        .approve(aeroGauge.address, parseEther("500"));
+
+      await aeroGauge.connect(voter).notifyRewardAmount(parseEther("500"));
+
+      // Add rewards to Gauge: ENDS
+
+      const wethDepositAmount = await units("10", weth);
+
+      // Vault transfers WETH to strategy
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, wethDepositAmount);
+
+      let vaultSigner = await impersonateAndFund(oethVault.address);
+      await aerodromeEthStrategy
+        .connect(vaultSigner)
+        .deposit(weth.address, wethDepositAmount);
+
+      await advanceTime(10 * 24 * 3600); // fast-forward 10 days
+
+      const rewardsAccrued = await aeroGauge.earned(
+        aerodromeEthStrategy.address
+      );
+      const harvesterSigner = await impersonateAndFund(
+        oethBaseHarvester.address
+      );
+      const harvesterBalanceBefore = await aeroTokenInstance.balanceOf(
+        oethBaseHarvester.address
+      );
+      await aerodromeEthStrategy.connect(harvesterSigner).collectRewardTokens();
+      const harvesterBalanceAfter = await aeroTokenInstance.balanceOf(
+        oethBaseHarvester.address
+      );
+
+      expect(harvesterBalanceAfter.sub(harvesterBalanceBefore)).to.be.equal(
+        rewardsAccrued
       );
     });
     it("Only vault can deposit some WETH to AMO strategy", async function () {

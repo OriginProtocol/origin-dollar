@@ -13,6 +13,8 @@ interface IERC20MintableBurnable {
     function transfer(address account, uint256 value) external;
 
     function balanceOf(address) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external;
 }
 
 contract MockVaultForBase {
