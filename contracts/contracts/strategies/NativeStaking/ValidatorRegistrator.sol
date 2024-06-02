@@ -215,6 +215,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 amount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
+        require(
+            validatorsStates[keccak256(publicKey)] ==
+                VALIDATOR_STATE.NON_REGISTERED,
+            "Validator already registered"
+        );
         ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
             publicKey,
             operatorIds,
