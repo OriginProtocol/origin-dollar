@@ -71,7 +71,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     ) external onlyGovernor {
         require(
             _fuseIntervalStart < _fuseIntervalEnd &&
-                _fuseIntervalStart < 32 ether &&
                 _fuseIntervalEnd < 32 ether &&
                 _fuseIntervalEnd - _fuseIntervalStart >= 4 ether,
             "incorrect fuse interval"
