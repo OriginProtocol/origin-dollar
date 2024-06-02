@@ -6,14 +6,8 @@ const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
-const { getDefenderSigner } = require("../utils/signers");
 const { networkMap } = require("../utils/hardhat-helpers");
-const { resolveContract } = require("../utils/resolvers");
-const {
-  KeyValueStoreClient,
-} = require("@openzeppelin/defender-kvstore-client");
-const { registerValidators } = require("./validator");
-const { formatUnits } = require("ethers/lib/utils");
+const { getSigner } = require("../utils/signers");
 
 const {
   storeStorageLayoutForAllContracts,
@@ -74,6 +68,11 @@ const {
   setRewardTokenAddresses,
   checkBalance,
 } = require("./strategy");
+const {
+  validatorOperationsConfig,
+  registerValidators,
+  stakeValidators,
+} = require("./validator");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -917,15 +916,13 @@ subtask(
   "deployNativeStakingProxy",
   "Deploy the native staking proxy via the Defender Relayer"
 ).setAction(async () => {
-  const defenderSigner = await getDefenderSigner();
+  const signer = await getSigner();
 
   log("Deploy NativeStakingSSVStrategyProxy");
   const nativeStakingProxyFactory = await ethers.getContractFactory(
     "NativeStakingSSVStrategyProxy"
   );
-  const contract = await nativeStakingProxyFactory
-    .connect(defenderSigner)
-    .deploy();
+  const contract = await nativeStakingProxyFactory.connect(signer).deploy();
   await contract.deployed();
   log(`Address of deployed contract is: ${contract.address}`);
 });
@@ -943,7 +940,7 @@ subtask(
 )
   .addParam("address", "Address of the new governor", undefined, types.string)
   .setAction(async (taskArgs) => {
-    const defenderSigner = await getDefenderSigner();
+    const signer = await getSigner();
 
     log("Transfer governance of NativeStakingSSVStrategyProxy");
 
@@ -952,7 +949,7 @@ subtask(
     );
     await withConfirmation(
       nativeStakingProxyFactory
-        .connect(defenderSigner)
+        .connect(signer)
         .transferGovernance(taskArgs.address)
     );
     log(
@@ -965,7 +962,8 @@ task("transferGovernanceNativeStakingProxy").setAction(
   }
 );
 
-// Defender
+// Validator Operations
+
 subtask(
   "registerValidators",
   "Creates the required amount of new SSV validators and stakes ETH"
@@ -976,78 +974,30 @@ subtask(
     40,
     types.int
   )
-  .addOptionalParam("clear", "Clear storage", true, types.boolean)
+  .addOptionalParam("clear", "Clear storage", false, types.boolean)
   .setAction(async (taskArgs) => {
-    const network = await ethers.provider.getNetwork();
-    const isMainnet = network.chainId === 1;
-    const isHolesky = network.chainId === 17000;
-    const addressesSet = isMainnet ? addresses.mainnet : addresses.holesky;
-
-    if (!isMainnet && !isHolesky) {
-      throw new Error(
-        "operate validators is supported on Mainnet and Holesky only"
-      );
-    }
-
-    const storeFilePath = require("path").join(
-      __dirname,
-      "..",
-      `.localKeyValueStorage${isMainnet ? "Mainnet" : "Holesky"}`
-    );
-
-    const store = new KeyValueStoreClient({ path: storeFilePath });
-    const signer = await getDefenderSigner();
-
-    const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
-    const SSV = await ethers.getContractAt("IERC20", addressesSet.SSV);
-
-    const nativeStakingStrategy = await resolveContract(
-      "NativeStakingSSVStrategyProxy",
-      "NativeStakingSSVStrategy"
-    );
-
-    log(
-      "Balance of SSV tokens on the native staking contract: ",
-      formatUnits(await SSV.balanceOf(nativeStakingStrategy.address))
-    );
-
-    const contracts = {
-      nativeStakingStrategy,
-      WETH,
-    };
-    const feeAccumulatorAddress =
-      await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-
-    const p2p_api_key = isMainnet
-      ? process.env.P2P_MAINNET_API_KEY
-      : process.env.P2P_HOLESKY_API_KEY;
-    if (!p2p_api_key) {
-      throw new Error(
-        "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
-      );
-    }
-    const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
-
-    const config = {
-      feeAccumulatorAddress,
-      p2p_api_key,
-      p2p_base_url,
-      // how much SSV (expressed in days of runway) gets deposited into the
-      // SSV Network contract on validator registration. This is calculated
-      // at a Cluster level rather than a single validator.
-      validatorSpawnOperationalPeriodInDays: taskArgs.days,
-      stake: taskArgs.stake,
-      clear: taskArgs.clear,
-    };
-
-    await registerValidators({
-      signer,
-      contracts,
-      store,
-      config,
-    });
+    const config = await validatorOperationsConfig(taskArgs);
+    await registerValidators(config);
   });
 task("registerValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidators",
+  "Creates the required amount of new SSV validators and stakes ETH"
+)
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const config = await validatorOperationsConfig(taskArgs);
+    await stakeValidators(config);
+  });
+task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
