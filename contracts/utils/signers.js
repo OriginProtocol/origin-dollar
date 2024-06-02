@@ -1,5 +1,8 @@
 const { Wallet } = require("ethers");
-const { Defender } = require("@openzeppelin/defender-sdk");
+const {
+  DefenderRelaySigner,
+  DefenderRelayProvider,
+} = require("@openzeppelin/defender-relay-client/lib/ethers");
 
 const { ethereumAddress, privateKey } = require("./regex");
 const { hardhatSetBalance } = require("../test/_fund");
@@ -59,7 +62,7 @@ async function getSigner(address = undefined) {
 }
 
 const getDefenderSigner = async () => {
-  const speed = process.env.SPEED || "fast";
+  const speed = process.env.SPEED || "fastest";
   if (!["safeLow", "average", "fast", "fastest"].includes(speed)) {
     console.error(
       `Defender Relay Speed param must be either 'safeLow', 'average', 'fast' or 'fastest'. Not "${speed}"`
@@ -67,28 +70,26 @@ const getDefenderSigner = async () => {
     process.exit(2);
   }
 
-  const network = await ethers.provider.getNetwork();
-  const isMainnet = network.chainId === 1;
-  const isHolesky = network.chainId === 17000;
+  const { chainId } = await ethers.provider.getNetwork();
+  const isMainnet = chainId === 1;
 
-  const apiKeyName = isMainnet
-    ? "DEFENDER_API_KEY"
-    : "HOLESKY_DEFENDER_API_KEY";
-  const apiKeySecret = isMainnet
-    ? "DEFENDER_API_SECRET"
-    : "HOLESKY_DEFENDER_API_SECRET";
+  const apiKey = isMainnet
+    ? process.env.DEFENDER_API_KEY
+    : process.env.HOLESKY_DEFENDER_API_KEY || process.env.DEFENDER_API_KEY;
+  const apiSecret = isMainnet
+    ? process.env.DEFENDER_API_SECRET
+    : process.env.HOLESKY_DEFENDER_API_SECRET ||
+      process.env.DEFENDER_API_SECRET;
 
-  const credentials = {
-    relayerApiKey: process.env[apiKeyName],
-    relayerApiSecret: process.env[apiKeySecret],
-  };
+  const credentials = { apiKey, apiSecret };
 
-  const client = new Defender(credentials);
-  const provider = client.relaySigner.getProvider();
+  const provider = new DefenderRelayProvider(credentials);
+  const signer = new DefenderRelaySigner(credentials, provider, {
+    speed,
+  });
 
-  const signer = client.relaySigner.getSigner(provider, { speed });
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} from env vars ${apiKeyName} and ${apiKeySecret}`
+    `Using Defender Relayer account ${await signer.getAddress()} with key ${apiKey} and speed ${speed}`
   );
   return signer;
 };
