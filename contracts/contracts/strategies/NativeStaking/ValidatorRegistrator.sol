@@ -208,6 +208,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
+    // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
@@ -230,6 +231,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.REGISTERED;
         emit SSVValidatorRegistered(publicKey, operatorIds);
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
