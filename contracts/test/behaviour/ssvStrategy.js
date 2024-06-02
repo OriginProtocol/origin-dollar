@@ -199,7 +199,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         );
       await expect(regTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
 
       expect(
         await nativeStakingSSVStrategy.validatorsStates(
@@ -221,7 +225,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       await expect(stakeTx)
         .to.emit(nativeStakingSSVStrategy, "ETHStaked")
         .withNamedArgs({
-          pubkey: testValidator.publicKey,
+          pubKeyHash: keccak256(testValidator.publicKey),
+          pubKey: testValidator.publicKey,
           amount: oethUnits("32"),
         });
 
@@ -397,7 +402,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(exitTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
 
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -409,7 +418,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(removeTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
     });
   });
 

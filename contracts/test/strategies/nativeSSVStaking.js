@@ -1090,7 +1090,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
         const stakeAmount = ethUnits("32");
         // Register a new validator with the SSV Network
-        await nativeStakingSSVStrategy
+        const regTx = await nativeStakingSSVStrategy
           .connect(validatorRegistrator)
           .registerSsvValidator(
             testPublicKeys[i],
@@ -1100,6 +1100,14 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             emptyCluster
           );
 
+        await expect(regTx)
+          .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
+          .withArgs(
+            keccak256(testPublicKeys[i]),
+            testPublicKeys[i],
+            testValidator.operatorIds
+          );
+
         expect(
           await nativeStakingSSVStrategy.validatorsStates(
             keccak256(testPublicKeys[i])
@@ -1107,7 +1115,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         ).to.equal(1, "Validator state not 1 (REGISTERED)");
 
         // Stake ETH to the new validator
-        const tx = nativeStakingSSVStrategy
+        const stakeTx = nativeStakingSSVStrategy
           .connect(validatorRegistrator)
           .stakeEth([
             {
@@ -1118,9 +1126,19 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           ]);
 
         if (stakeTresholdErrorTriggered && i == validators - 1) {
-          await expect(tx).to.be.revertedWith("Staking ETH over threshold");
+          await expect(stakeTx).to.be.revertedWith(
+            "Staking ETH over threshold"
+          );
         } else {
-          await tx;
+          await stakeTx;
+
+          await expect(stakeTx)
+            .to.emit(nativeStakingSSVStrategy, "ETHStaked")
+            .withNamedArgs({
+              pubKeyHash: keccak256(testPublicKeys[i]),
+              pubKey: testPublicKeys[i],
+              amount: parseEther("32"),
+            });
 
           expect(
             await nativeStakingSSVStrategy.validatorsStates(
