@@ -57,10 +57,27 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
-    event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
-    event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
+    event ETHStaked(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint256 amount,
+        bytes withdrawal_credentials
+    );
+    event SSVValidatorRegistered(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitInitiated(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitCompleted(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
 
@@ -171,8 +188,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 validatorsLength = validators.length;
         // For each validator
         for (uint256 i = 0; i < validatorsLength; ) {
-            bytes32 pubkeyHash = keccak256(validators[i].pubkey);
-            VALIDATOR_STATE currentState = validatorsStates[pubkeyHash];
+            bytes32 pubKeyHash = keccak256(validators[i].pubkey);
+            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
 
             require(
                 currentState == VALIDATOR_STATE.REGISTERED,
@@ -189,12 +206,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             emit ETHStaked(
+                pubKeyHash,
                 validators[i].pubkey,
                 32 ether,
                 withdrawal_credentials
             );
 
-            validatorsStates[pubkeyHash] = VALIDATOR_STATE.STAKED;
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
             unchecked {
                 ++i;
@@ -216,9 +234,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 amount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
+        bytes32 pubKeyHash = keccak256(publicKey);
         require(
-            validatorsStates[keccak256(publicKey)] ==
-                VALIDATOR_STATE.NON_REGISTERED,
+            validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
             "Validator already registered"
         );
         ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
@@ -228,8 +246,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             amount,
             cluster
         );
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.REGISTERED;
-        emit SSVValidatorRegistered(publicKey, operatorIds);
+        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
+
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -242,13 +261,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds
     ) external onlyRegistrator whenNotPaused {
-        VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
         ISSVNetwork(SSV_NETWORK_ADDRESS).exitValidator(publicKey, operatorIds);
-        emit SSVValidatorExitInitiated(publicKey, operatorIds);
+        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
 
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXITING;
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -263,7 +283,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
-        VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(
             currentState == VALIDATOR_STATE.EXITING,
             "Validator not exiting"
@@ -274,9 +295,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             operatorIds,
             cluster
         );
-        emit SSVValidatorExitCompleted(publicKey, operatorIds);
+        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
 
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXIT_COMPLETE;
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
     }
 
     // slither-disable-end reentrancy-no-eth
