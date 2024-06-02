@@ -226,12 +226,17 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param sharesData The validator shares data
+    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         bytes calldata sharesData,
-        uint256 amount,
+        uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
         bytes32 pubKeyHash = keccak256(publicKey);
@@ -243,7 +248,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             publicKey,
             operatorIds,
             sharesData,
-            amount,
+            ssvAmount,
             cluster
         );
         emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
@@ -256,6 +261,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
     // slither-disable-start reentrancy-no-eth
     function exitSsvValidator(
         bytes calldata publicKey,
@@ -277,6 +284,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function removeSsvValidator(
         bytes calldata publicKey,
@@ -306,16 +316,18 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
     /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
     /// that tries to top up SSV tokens.
-    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
     function depositSSV(
         uint64[] memory operatorIds,
-        uint256 amount,
+        uint256 ssvAmount,
         Cluster memory cluster
     ) external onlyStrategist {
         ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
             address(this),
             operatorIds,
-            amount,
+            ssvAmount,
             cluster
         );
     }

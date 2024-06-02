@@ -6,14 +6,8 @@ const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
-const { getDefenderSigner } = require("../utils/signers");
 const { networkMap } = require("../utils/hardhat-helpers");
-const { resolveContract } = require("../utils/resolvers");
-const {
-  KeyValueStoreClient,
-} = require("@openzeppelin/defender-kvstore-client");
-const { operateValidators } = require("./validator");
-const { formatUnits } = require("ethers/lib/utils");
+const { getSigner } = require("../utils/signers");
 
 const {
   storeStorageLayoutForAllContracts,
@@ -36,6 +30,7 @@ const {
   tokenTransfer,
   tokenTransferFrom,
 } = require("./tokens");
+const { depositWETH, withdrawWETH } = require("./weth");
 const {
   allocate,
   capital,
@@ -74,6 +69,13 @@ const {
   setRewardTokenAddresses,
   checkBalance,
 } = require("./strategy");
+const {
+  validatorOperationsConfig,
+  registerValidators,
+  stakeValidators,
+  resetStakeETHTally,
+  setStakeETHThreshold,
+} = require("./validator");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -215,6 +217,37 @@ task("transferFrom").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+// WETH tasks
+subtask("depositWETH", "Deposit ETH into WETH")
+  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await depositWETH({ ...taskArgs, weth, signer });
+  });
+task("depositWETH").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("withdrawWETH", "Withdraw ETH from WETH")
+  .addParam("amount", "Amount of ETH to withdraw", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await withdrawWETH({ ...taskArgs, weth, signer });
+  });
+task("withdrawWETH").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
@@ -280,6 +313,12 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
     types.string
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
+  .addOptionalParam(
+    "approve",
+    "Approve the asset to the OETH Vault before the mint",
+    true,
+    types.boolean
+  )
   .setAction(mint);
 task("mint").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -869,16 +908,17 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     types.string
   )
   .setAction(async (taskArgs) => {
-    const network = await ethers.provider.getNetwork();
-    const ssvNetwork = addresses[networkMap[network.chainId]].SSVNetwork;
+    const { chainId } = await ethers.provider.getNetwork();
+    const network = networkMap[chainId];
+    const ssvNetwork = addresses[network].SSVNetwork;
 
     log(
-      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network.name} network using ssvNetworkContract ${ssvNetwork}`
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
     );
     await printClusterInfo({
       ...taskArgs,
       ownerAddress: taskArgs.owner,
-      chainId: network.chainId,
+      chainId: chainId,
       ssvNetwork,
     });
   });
@@ -911,15 +951,13 @@ subtask(
   "deployNativeStakingProxy",
   "Deploy the native staking proxy via the Defender Relayer"
 ).setAction(async () => {
-  const defenderSigner = await getDefenderSigner();
+  const signer = await getSigner();
 
   log("Deploy NativeStakingSSVStrategyProxy");
   const nativeStakingProxyFactory = await ethers.getContractFactory(
     "NativeStakingSSVStrategyProxy"
   );
-  const contract = await nativeStakingProxyFactory
-    .connect(defenderSigner)
-    .deploy();
+  const contract = await nativeStakingProxyFactory.connect(signer).deploy();
   await contract.deployed();
   log(`Address of deployed contract is: ${contract.address}`);
 });
@@ -937,16 +975,16 @@ subtask(
 )
   .addParam("address", "Address of the new governor", undefined, types.string)
   .setAction(async (taskArgs) => {
-    const defenderSigner = await getDefenderSigner();
+    const signer = await getSigner();
 
-    log("Tranfer governance of NativeStakingSSVStrategyProxy");
+    log("Transfer governance of NativeStakingSSVStrategyProxy");
 
     const nativeStakingProxyFactory = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
     await withConfirmation(
       nativeStakingProxyFactory
-        .connect(defenderSigner)
+        .connect(signer)
         .transferGovernance(taskArgs.address)
     );
     log(
@@ -959,97 +997,83 @@ task("transferGovernanceNativeStakingProxy").setAction(
   }
 );
 
-// Defender
+// Validator Operations
+
 subtask(
-  "operateValidators",
+  "registerValidators",
   "Creates the required amount of new SSV validators and stakes ETH"
 )
-  .addOptionalParam("index", "Index of Native Staking contract", 1, types.int)
-  .addOptionalParam(
-    "stake",
-    "Stake 32 ether after registering a new SSV validator",
-    true,
-    types.boolean
-  )
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
     40,
     types.int
   )
-  .addOptionalParam("clear", "Clear storage", true, types.boolean)
+  .addOptionalParam("clear", "Clear storage", false, types.boolean)
   .setAction(async (taskArgs) => {
-    const network = await ethers.provider.getNetwork();
-    const isMainnet = network.chainId === 1;
-    const isHolesky = network.chainId === 17000;
-    const addressesSet = isMainnet ? addresses.mainnet : addresses.holesky;
+    const config = await validatorOperationsConfig(taskArgs);
+    await registerValidators(config);
+  });
+task("registerValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
-    if (!isMainnet && !isHolesky) {
-      throw new Error(
-        "operate validators is supported on Mainnet and Holesky only"
-      );
-    }
+subtask(
+  "stakeValidators",
+  "Creates the required amount of new SSV validators and stakes ETH"
+)
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const config = await validatorOperationsConfig(taskArgs);
+    await stakeValidators(config);
+  });
+task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
-    const storeFilePath = require("path").join(
-      __dirname,
-      "..",
-      `.localKeyValueStorage${isMainnet ? "Mainnet" : "Holesky"}`
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(async () => {
+  const signer = await getSigner();
+
+  const nativeStakingProxyFactory = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+
+  await resetStakeETHTally({
+    signer,
+    nativeStakingProxyFactory,
+  });
+});
+task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "setStakeETHThreshold",
+  "Sets the amount of Ether than can be staked before needing a reset"
+)
+  .addParam("amount", "Amount in ether", undefined, types.int)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const nativeStakingProxyFactory = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
     );
 
-    const store = new KeyValueStoreClient({ path: storeFilePath });
-    const signer = await getDefenderSigner();
-
-    const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
-    const SSV = await ethers.getContractAt("IERC20", addressesSet.SSV);
-
-    // TODO: use index to target different native staking strategies when we have more than 1
-    const nativeStakingStrategy = await resolveContract(
-      "NativeStakingSSVStrategyProxy",
-      "NativeStakingSSVStrategy"
-    );
-
-    log(
-      "Balance of SSV tokens on the native staking contract: ",
-      formatUnits(await SSV.balanceOf(nativeStakingStrategy.address))
-    );
-
-    const contracts = {
-      nativeStakingStrategy,
-      WETH,
-    };
-    const feeAccumulatorAddress =
-      await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-
-    const p2p_api_key = isMainnet
-      ? process.env.P2P_MAINNET_API_KEY
-      : process.env.P2P_HOLESKY_API_KEY;
-    if (!p2p_api_key) {
-      throw new Error(
-        "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
-      );
-    }
-    const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
-
-    const config = {
-      feeAccumulatorAddress,
-      p2p_api_key,
-      p2p_base_url,
-      // how much SSV (expressed in days of runway) gets deposited into the
-      // SSV Network contract on validator registration. This is calculated
-      // at a Cluster level rather than a single validator.
-      validatorSpawnOperationalPeriodInDays: taskArgs.days,
-      stake: taskArgs.stake,
-      clear: taskArgs.clear,
-    };
-
-    await operateValidators({
+    await setStakeETHThreshold({
+      ...taskArgs,
       signer,
-      contracts,
-      store,
-      config,
+      nativeStakingProxyFactory,
     });
   });
-task("operateValidators").setAction(async (_, __, runSuper) => {
+task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

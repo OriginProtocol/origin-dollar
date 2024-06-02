@@ -60,8 +60,8 @@ contracts/coverage.json
 contracts/build/
 contracts/dist/
 contracts/.localKeyValueStorage
-contracts/.localKeyValueStorageMainnet
-contracts/.localKeyValueStorageHolesky
+contracts/.localKeyValueStorage.mainnet
+contracts/.localKeyValueStorage.holesky
 contracts/scripts/defender-actions/dist/
 
 todo.txt

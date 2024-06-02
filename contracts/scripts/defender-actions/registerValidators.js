@@ -6,7 +6,7 @@ const {
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { operateValidators } = require("../../tasks/validator");
+const { registerValidators } = require("../../tasks/validator");
 const addresses = require("../../utils/addresses");
 
 const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
@@ -83,7 +83,7 @@ const handler = async (event) => {
     clear: true,
   };
 
-  await operateValidators({
+  await registerValidators({
     signer,
     contracts,
     store,

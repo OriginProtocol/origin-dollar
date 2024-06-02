@@ -83,10 +83,10 @@ api -> api: split(key)
 note right : splits validator key into multiple KeyShares
 return
 
-reg -> api: status(uuid)
+reg -> api: GET\neth/staking/ssv/request/status/uuid
 activate api
-return status,\nvalidatorRegistration,\nshareData
-note right : validatorRegistration contains the pubkey, operatorIds and cluster details
+return status,\npubkey\nvalidatorRegistration,\nshareData
+note right : validatorRegistration contains the operatorIds and cluster details
 
 reg -> nativeStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster)
 activate nativeStrat
@@ -106,6 +106,17 @@ note right: transfer SSV tokens\nfrom NodeDelegator\nto SSV Network
 return
 return
 return
+
+end group
+
+... 60 minutes ...
+
+group Registrator stakes to a new SSV validator
+
+reg -> api: GET\neth/staking/ssv/request/deposit-data/uuid
+activate api
+return status,\ndepositData
+note right : depositData contains the signature and depositDataRoot
 
 reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
 activate nativeStrat
