@@ -17,11 +17,11 @@ const { networkMap } = require("../utils/hardhat-helpers");
 const log = require("../utils/logger")("task:p2p");
 
 const validatorStateEnum = {
-  // 0: "NOT_REGISTERED",
-  0: "REGISTERED",
-  1: "STAKED",
-  2: "EXITED",
-  3: "EXIT_COMPLETE",
+  0: "NOT_REGISTERED",
+  1: "REGISTERED",
+  2: "STAKED",
+  3: "EXITED",
+  4: "EXIT_COMPLETE",
 };
 
 const validatorOperationsConfig = async (taskArgs) => {
