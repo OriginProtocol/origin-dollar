@@ -158,11 +158,13 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         emit WithdrawalRequests(requestIds, amounts);
 
         // Is there any stETH left except 1 wei from each request?
+        // This is because stETH does not transfer all the transfer amount.
+        uint256 stEthDust = stETH.balanceOf(address(this));
         require(
-            stETH.balanceOf(address(this)) <= withdrawalLength,
+            stEthDust <= withdrawalLength,
             "Not all stEth in withdraw queue"
         );
-        outstandingWithdrawals += stETHStart; // Single set for gas reasons
+        outstandingWithdrawals += stETHStart - stEthDust;
 
         // This strategy claims to support WETH, so it is possible for
         // the vault to transfer WETH to it. This returns any deposited WETH
