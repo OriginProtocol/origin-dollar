@@ -6,13 +6,13 @@ const {
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { registerValidators } = require("../../tasks/validator");
+const { stakeValidators } = require("../../tasks/validator");
 const addresses = require("../../utils/addresses");
 
 const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
 const IWETH9Abi = require("../../abi/IWETH9.json");
 
-const log = require("../../utils/logger")("action:registerValidators");
+const log = require("../../utils/logger")("action:stakeValidators");
 
 // Entrypoint for the Defender Action
 const handler = async (event) => {
@@ -45,9 +45,6 @@ const handler = async (event) => {
   log(`Resolved WETH address to ${wethAddress}`);
   const WETH = new ethers.Contract(wethAddress, IWETH9Abi, signer);
 
-  const feeAccumulatorAddress =
-    await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-
   const p2p_api_key =
     network.chainId === 1
       ? event.secrets.P2P_MAINNET_API_KEY
@@ -60,18 +57,13 @@ const handler = async (event) => {
   const p2p_base_url =
     network.chainId === 1 ? "api.p2p.org" : "api-test-holesky.p2p.org";
 
-  await registerValidators({
+  await stakeValidators({
     signer,
     store,
     nativeStakingStrategy,
     WETH,
-    feeAccumulatorAddress,
     p2p_api_key,
     p2p_base_url,
-    // how much SSV (expressed in days of runway) gets deposited into the
-    // SSV Network contract on validator registration. This is calculated
-    // at a Cluster level rather than a single validator.
-    validatorSpawnOperationalPeriodInDays: 1,
   });
 };
 

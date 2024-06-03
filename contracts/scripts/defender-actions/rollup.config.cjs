@@ -32,6 +32,7 @@ module.exports = [
     input: "registerValidators.js",
     output: {
       file: "dist/registerValidators/index.js",
+      inlineDynamicImports: true,
       format: "cjs",
     },
   },
@@ -40,6 +41,16 @@ module.exports = [
     input: "stakeValidators.js",
     output: {
       file: "dist/stakeValidators/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "doAccounting.js",
+    output: {
+      file: "dist/doAccounting/index.js",
+      inlineDynamicImports: true,
       format: "cjs",
     },
   },
