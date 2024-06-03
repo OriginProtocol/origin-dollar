@@ -185,6 +185,13 @@ const registerValidators = async ({
         break;
       }
 
+      if (currentState.state === "validator_registered") {
+        log(
+          `Validator has been registered. Run the stakeValidators task to stake the validator`
+        );
+        break;
+      }
+
       await sleep(1000);
     }
   };
@@ -216,7 +223,7 @@ const stakeValidators = async ({
 }) => {
   let currentState;
   if (!uuid) {
-    let currentState = await getState(store);
+    currentState = await getState(store);
     log("currentState", currentState);
 
     if (!currentState) {
@@ -488,7 +495,8 @@ const p2pRequest = async (url, api_key, method, body) => {
 
   const response = await rawResponse.json();
   if (response.error != null) {
-    log("Call to P2P API failed with response:", response);
+    log(`Call to P2P API failed: ${method} ${url}`);
+    log(`response: `, response);
     throw new Error(
       `Failed to call to P2P API. Error: ${JSON.stringify(response.error)}`
     );
@@ -657,6 +665,9 @@ const confirmValidatorRegistered = async (
   p2p_base_url
 ) => {
   const doConfirmation = async () => {
+    if (!uuid) {
+      throw Error(`UUID is required to get validator status.`);
+    }
     const response = await p2pRequest(
       `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/status/${uuid}`,
       p2p_api_key,
@@ -705,6 +716,9 @@ const getDepositData = async (
   p2p_base_url
 ) => {
   const doConfirmation = async () => {
+    if (!uuid) {
+      throw Error(`UUID is required to get deposit data.`);
+    }
     const response = await p2pRequest(
       `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/deposit-data/${uuid}`,
       p2p_api_key,
