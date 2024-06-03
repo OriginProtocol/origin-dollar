@@ -81,13 +81,18 @@ interface IStETHWithdrawal {
  * @author Origin Protocol Inc
  */
 contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
+    /// @notice Address of the WETH token
     IWETH9 private constant weth =
         IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    /// @notice Address of the stETH token
     IERC20 private constant stETH =
         IERC20(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
+    /// @notice Address of the Lido Withdrawal Queue contract
     IStETHWithdrawal private constant withdrawalQueue =
         IStETHWithdrawal(0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1);
+    /// @notice Maximum amount of stETH that can be withdrawn in a single request
     uint256 public constant MaxWithdrawalAmount = 1000 ether;
+    /// @notice Total amount of stETH that has been requested to be withdrawn for ETH
     uint256 public outstandingWithdrawals;
 
     event WithdrawalRequests(uint256[] requestIds, uint256[] amounts);
@@ -302,6 +307,6 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         return _asset == address(stETH) || _asset == address(weth);
     }
 
-    // Needed to receive ETH when withdrawal requests are claimed
+    /// @notice Needed to receive ETH when withdrawal requests are claimed
     receive() external payable {}
 }
