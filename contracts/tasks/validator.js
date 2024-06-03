@@ -75,7 +75,6 @@ const validatorOperationsConfig = async (taskArgs) => {
     // SSV Network contract on validator registration. This is calculated
     // at a Cluster level rather than a single validator.
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
-    stake: taskArgs.stake,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
   };
@@ -805,7 +804,15 @@ async function removeValidator({ pubkey, operatorids }) {
   await logTxDetails(tx, "removeSsvValidator");
 }
 
-async function resetStakeETHTally({ signer }) {
+async function doAccounting({ signer, nativeStakingStrategy }) {
+  log(`About to doAccounting`);
+  const tx = await nativeStakingStrategy.connect(signer).doAccounting();
+  await logTxDetails(tx, "doAccounting");
+}
+
+async function resetStakeETHTally() {
+  const signer = await getSigner();
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -816,7 +823,9 @@ async function resetStakeETHTally({ signer }) {
   await logTxDetails(tx, "resetStakeETHTally");
 }
 
-async function setStakeETHThreshold({ signer, amount }) {
+async function setStakeETHThreshold({ amount }) {
+  const signer = await getSigner();
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -835,6 +844,7 @@ module.exports = {
   stakeValidators,
   removeValidator,
   exitValidator,
+  doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
 };

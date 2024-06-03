@@ -75,9 +75,12 @@ const {
   stakeValidators,
   exitValidator,
   removeValidator,
+  doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
 } = require("./validator");
+const { resolveContract } = require("../utils/resolvers");
+const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -894,6 +897,23 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
   )
   .setAction(setRewardTokenAddresses);
 
+// Harvester
+
+task("harvest", "Harvest and swap rewards for a strategy")
+  .addParam(
+    "strategy",
+    "Name of the strategy proxy contract or address. eg NativeStakingSSVStrategyProxy",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "harvester",
+    "Name of the harvester proxy contract or address",
+    "OETHHarvesterProxy",
+    types.string
+  )
+  .setAction(harvestAndSwap);
+
 // SSV
 
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
@@ -1078,20 +1098,29 @@ task("removeValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "resetStakeETHTally",
-  "Resets the amount of Ether staked back to zero"
+  "doAccounting",
+  "Account for consensus rewards and validator exits in the Native Staking Strategy"
 ).setAction(async () => {
   const signer = await getSigner();
 
-  const nativeStakingProxyFactory = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
+  const nativeStakingStrategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
   );
 
-  await resetStakeETHTally({
+  await doAccounting({
     signer,
-    nativeStakingProxyFactory,
+    nativeStakingStrategy,
   });
 });
+task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(resetStakeETHTally);
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1101,19 +1130,7 @@ subtask(
   "Sets the amount of Ether than can be staked before needing a reset"
 )
   .addParam("amount", "Amount in ether", undefined, types.int)
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    const nativeStakingProxyFactory = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-
-    await setStakeETHThreshold({
-      ...taskArgs,
-      signer,
-      nativeStakingProxyFactory,
-    });
-  });
+  .setAction(setStakeETHThreshold);
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
