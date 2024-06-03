@@ -838,6 +838,34 @@ async function setStakeETHThreshold({ amount }) {
   await logTxDetails(tx, "setStakeETHThreshold");
 }
 
+async function fixAccounting({ validators, rewards, ether }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  log(`About to fix accounting`);
+  const tx = await strategy
+    .connect(signer)
+    .manuallyFixAccounting(validators, rewards, ether);
+  await logTxDetails(tx, "manuallyFixAccounting");
+}
+
+async function pauseStaking() {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  log(`About to pause the Native Staking Strategy`);
+  const tx = await strategy.connect(signer).pause();
+  await logTxDetails(tx, "pause");
+}
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
@@ -847,4 +875,6 @@ module.exports = {
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  fixAccounting,
+  pauseStaking,
 };

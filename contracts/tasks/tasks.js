@@ -78,6 +78,8 @@ const {
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  fixAccounting,
+  pauseStaking,
 } = require("./validator");
 const { resolveContract } = require("../utils/resolvers");
 const { harvestAndSwap } = require("./harvest");
@@ -1132,6 +1134,38 @@ subtask(
   .addParam("amount", "Amount in ether", undefined, types.int)
   .setAction(setStakeETHThreshold);
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
+  .addOptionalParam(
+    "validators",
+    "The number of validators to adjust up or down (negative)",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The number of consensus rewards to adjust up or down (negative) in ether",
+    0,
+    types.float
+  )
+  .addOptionalParam(
+    "ether",
+    "amount of ether that gets wrapped into WETH and sent to the Vault",
+    0,
+    types.float
+  )
+  .setAction(fixAccounting);
+task("fixAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).setAction(pauseStaking);
+task("pauseStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
