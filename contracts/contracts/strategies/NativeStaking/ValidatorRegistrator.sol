@@ -28,6 +28,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     address public immutable SSV_NETWORK_ADDRESS;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
+    /// @notice Maximum number of validators that can be registered in this strategy
+    uint256 public immutable MAX_VALIDATORS;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
@@ -109,16 +111,19 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
-        address _ssvNetwork
+        address _ssvNetwork,
+        uint256 _maxValidators
     ) {
         WETH_TOKEN_ADDRESS = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK_ADDRESS = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
+        MAX_VALIDATORS = _maxValidators;
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
@@ -162,6 +167,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         require(
             requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
             "insufficient WETH"
+        );
+        require(
+            activeDepositedValidators + validators.length <= MAX_VALIDATORS,
+            "Max validators reached"
         );
 
         require(
