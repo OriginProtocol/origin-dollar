@@ -240,10 +240,6 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         );
     }
 
-    function _abstractSetPToken(address, address) internal override {
-        revert("No pTokens are used");
-    }
-
     /**
      * @notice Withdraw all assets from this strategy, and transfer to the Vault.
      * In correct operation, this strategy should never hold any assets.
@@ -309,4 +305,8 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
     /// @notice Needed to receive ETH when withdrawal requests are claimed
     receive() external payable {}
+
+    function _abstractSetPToken(address, address) internal pure override {
+        revert("No pTokens are used");
+    }
 }
