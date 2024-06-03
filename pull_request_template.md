@@ -5,8 +5,8 @@ To be completed before internal review begins:
 - [ ]  The contract code is complete
 - [ ]  Executable deployment file
 - [ ]  Fork tests that test after the deployment file runs
-- [ ]  Unit tests (When needed)
-- [ ]  The owner has done a full checklist review of the code + tests
+- [ ]  Unit tests *if needed
+- [ ]  The owner has done a [full checklist review](https://github.com/OriginProtocol/security/blob/master/templates/Contract-Code-Review.md) of the code + tests
 
 Internal review:
 
