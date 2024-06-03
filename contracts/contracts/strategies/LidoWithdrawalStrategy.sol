@@ -139,8 +139,8 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         uint256 stETHStart = stETH.balanceOf(address(this));
         require(stETHStart > 0, "No stETH to withdraw");
 
-        uint256 numWithdrawals = (stETHStart / MaxWithdrawalAmount) + 1;
-        uint256[] memory amounts = new uint256[](numWithdrawals);
+        uint256 withdrawalLength = (stETHStart / MaxWithdrawalAmount) + 1;
+        uint256[] memory amounts = new uint256[](withdrawalLength);
 
         uint256 stETHRemaining = stETHStart;
         uint256 i = 0;
@@ -159,7 +159,7 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
         // Is there any stETH left except 1 wei from each request?
         require(
-            stETH.balanceOf(address(this)) <= numWithdrawals,
+            stETH.balanceOf(address(this)) <= withdrawalLength,
             "Not all stEth in withdraw queue"
         );
         outstandingWithdrawals += stETHStart; // Single set for gas reasons
