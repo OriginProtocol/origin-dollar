@@ -258,10 +258,19 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_weth, address(lpTokenAddress), _amount);
 
-        uint256 requiredLpTokens = calcTokenToBurn(_amount);
+        uint256 requiredLpTokens = _calcTokenToBurn(_amount);
 
         _lpWithdraw(requiredLpTokens);
 
+        uint256 oethReserves = oethCoinIndex == 0
+            ? lpTokenAddress.reserve0()
+            : lpTokenAddress.reserve1();
+
+        uint256 oethDesired = requiredLpTokens
+            .mulTruncate(oethReserves)
+            .divPrecisely(lpTokenAddress.totalSupply());
+
+        oethDesired = oethDesired.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
          * in that the strategy receives enough WETH on balanced removal
          */
@@ -271,8 +280,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             true,
             requiredLpTokens,
-            _amount,
-            0,
+            _amount, // weth amount
+            oethDesired,
             address(this),
             block.timestamp
         );
@@ -289,7 +298,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         );
     }
 
-    function calcTokenToBurn(uint256 _wethAmount)
+    function _calcTokenToBurn(uint256 _wethAmount)
         internal
         view
         returns (uint256 lpToBurn)
@@ -325,6 +334,26 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 gaugeTokens = aeroGaugeAddress.balanceOf(address(this));
         _lpWithdraw(gaugeTokens);
 
+        (uint256 wethReserves, uint256 oethReserves) = aeroRouterAddress
+            .getReserves(
+                address(weth),
+                address(oeth),
+                true,
+                aeroFactoryAddress
+            );
+
+        uint256 oethDesired = gaugeTokens
+            .mulTruncate(oethReserves)
+            .divPrecisely(lpTokenAddress.totalSupply());
+
+        oethDesired = oethDesired.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+
+        uint256 wethDesired = gaugeTokens
+            .mulTruncate(wethReserves)
+            .divPrecisely(lpTokenAddress.totalSupply());
+
+        wethDesired = wethDesired.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+
         // Remove liquidity
         // slither-disable-next-line unused-return
         aeroRouterAddress.removeLiquidity(
@@ -332,8 +361,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             true,
             gaugeTokens,
-            0,
-            0,
+            wethDesired,
+            oethDesired,
             address(this),
             block.timestamp
         );
