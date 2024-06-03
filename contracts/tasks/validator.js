@@ -6,7 +6,7 @@ const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
 
-const { getClusterInfo } = require("./ssv");
+const { getClusterInfo } = require("../utils/ssv");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
@@ -75,7 +75,6 @@ const validatorOperationsConfig = async (taskArgs) => {
     // SSV Network contract on validator registration. This is calculated
     // at a Cluster level rather than a single validator.
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
-    stake: taskArgs.stake,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
   };
@@ -186,6 +185,13 @@ const registerValidators = async ({
         break;
       }
 
+      if (currentState.state === "validator_registered") {
+        log(
+          `Validator has been registered. Run the stakeValidators task to stake the validator`
+        );
+        break;
+      }
+
       await sleep(1000);
     }
   };
@@ -217,7 +223,7 @@ const stakeValidators = async ({
 }) => {
   let currentState;
   if (!uuid) {
-    let currentState = await getState(store);
+    currentState = await getState(store);
     log("currentState", currentState);
 
     if (!currentState) {
@@ -489,7 +495,8 @@ const p2pRequest = async (url, api_key, method, body) => {
 
   const response = await rawResponse.json();
   if (response.error != null) {
-    log("Call to P2P API failed with response:", response);
+    log(`Call to P2P API failed: ${method} ${url}`);
+    log(`response: `, response);
     throw new Error(
       `Failed to call to P2P API. Error: ${JSON.stringify(response.error)}`
     );
@@ -658,6 +665,9 @@ const confirmValidatorRegistered = async (
   p2p_base_url
 ) => {
   const doConfirmation = async () => {
+    if (!uuid) {
+      throw Error(`UUID is required to get validator status.`);
+    }
     const response = await p2pRequest(
       `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/status/${uuid}`,
       p2p_api_key,
@@ -706,6 +716,9 @@ const getDepositData = async (
   p2p_base_url
 ) => {
   const doConfirmation = async () => {
+    if (!uuid) {
+      throw Error(`UUID is required to get deposit data.`);
+    }
     const response = await p2pRequest(
       `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/deposit-data/${uuid}`,
       p2p_api_key,
@@ -761,7 +774,12 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
   }
 };
 
-async function exitValidator({ publicKey, signer, operatorIds }) {
+async function exitValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -770,11 +788,16 @@ async function exitValidator({ publicKey, signer, operatorIds }) {
   log(`About to exit validator`);
   const tx = await strategy
     .connect(signer)
-    .exitSsvValidator(publicKey, operatorIds);
+    .exitSsvValidator(pubkey, operatorIds);
   await logTxDetails(tx, "exitSsvValidator");
 }
 
-async function removeValidator({ publicKey, signer, operatorIds }) {
+async function removeValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -784,18 +807,26 @@ async function removeValidator({ publicKey, signer, operatorIds }) {
   const { cluster } = await getClusterInfo({
     chainId: hre.network.config.chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
-    operatorIds,
+    operatorids,
     ownerAddress: strategy.address,
   });
 
   log(`About to exit validator`);
   const tx = await strategy
     .connect(signer)
-    .removeSsvValidator(publicKey, operatorIds, cluster);
+    .removeSsvValidator(pubkey, operatorIds, cluster);
   await logTxDetails(tx, "removeSsvValidator");
 }
 
-async function resetStakeETHTally({ signer }) {
+async function doAccounting({ signer, nativeStakingStrategy }) {
+  log(`About to doAccounting`);
+  const tx = await nativeStakingStrategy.connect(signer).doAccounting();
+  await logTxDetails(tx, "doAccounting");
+}
+
+async function resetStakeETHTally() {
+  const signer = await getSigner();
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -806,7 +837,9 @@ async function resetStakeETHTally({ signer }) {
   await logTxDetails(tx, "resetStakeETHTally");
 }
 
-async function setStakeETHThreshold({ signer, amount }) {
+async function setStakeETHThreshold({ amount }) {
+  const signer = await getSigner();
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -819,12 +852,43 @@ async function setStakeETHThreshold({ signer, amount }) {
   await logTxDetails(tx, "setStakeETHThreshold");
 }
 
+async function fixAccounting({ validators, rewards, ether }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  log(`About to fix accounting`);
+  const tx = await strategy
+    .connect(signer)
+    .manuallyFixAccounting(validators, rewards, ether);
+  await logTxDetails(tx, "manuallyFixAccounting");
+}
+
+async function pauseStaking() {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  log(`About to pause the Native Staking Strategy`);
+  const tx = await strategy.connect(signer).pause();
+  await logTxDetails(tx, "pause");
+}
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
   removeValidator,
   exitValidator,
+  doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  fixAccounting,
+  pauseStaking,
 };
