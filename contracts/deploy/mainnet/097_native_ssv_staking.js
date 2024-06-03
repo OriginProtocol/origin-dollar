@@ -74,6 +74,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.WETH, // wethAddress
         addresses.mainnet.SSV, // ssvToken
         addresses.mainnet.SSVNetwork, // ssvNetwork
+        600, // maxValidators
         dFeeAccumulatorProxy.address, // feeAccumulator
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
       ]
