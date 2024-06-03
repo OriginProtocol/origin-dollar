@@ -50,17 +50,20 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
-        address _ssvNetwork
+        address _ssvNetwork,
+        uint256 _maxValidators
     )
         ValidatorRegistrator(
             _wethAddress,
             _vaultAddress,
             _beaconChainDepositContract,
-            _ssvNetwork
+            _ssvNetwork,
+            _maxValidators
         )
     {}
 
