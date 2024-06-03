@@ -73,9 +73,16 @@ const {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
+  exitValidator,
+  removeValidator,
+  doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  fixAccounting,
+  pauseStaking,
 } = require("./validator");
+const { resolveContract } = require("../utils/resolvers");
+const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -892,6 +899,23 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
   )
   .setAction(setRewardTokenAddresses);
 
+// Harvester
+
+task("harvest", "Harvest and swap rewards for a strategy")
+  .addParam(
+    "strategy",
+    "Name of the strategy proxy contract or address. eg NativeStakingSSVStrategyProxy",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "harvester",
+    "Name of the harvester proxy contract or address",
+    "OETHHarvesterProxy",
+    types.string
+  )
+  .setAction(harvestAndSwap);
+
 // SSV
 
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
@@ -1036,21 +1060,69 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("exitValidator", "Starts the exit process from a validator")
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(exitValidator);
+task("exitValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
-  "resetStakeETHTally",
-  "Resets the amount of Ether staked back to zero"
+  "removeValidator",
+  "Removes a validator from the SSV cluster after it has exited the beacon chain"
+)
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(removeValidator);
+task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "doAccounting",
+  "Account for consensus rewards and validator exits in the Native Staking Strategy"
 ).setAction(async () => {
   const signer = await getSigner();
 
-  const nativeStakingProxyFactory = await ethers.getContract(
-    "NativeStakingSSVStrategyProxy"
+  const nativeStakingStrategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
   );
 
-  await resetStakeETHTally({
+  await doAccounting({
     signer,
-    nativeStakingProxyFactory,
+    nativeStakingStrategy,
   });
 });
+task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(resetStakeETHTally);
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1060,20 +1132,40 @@ subtask(
   "Sets the amount of Ether than can be staked before needing a reset"
 )
   .addParam("amount", "Amount in ether", undefined, types.int)
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    const nativeStakingProxyFactory = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-
-    await setStakeETHThreshold({
-      ...taskArgs,
-      signer,
-      nativeStakingProxyFactory,
-    });
-  });
+  .setAction(setStakeETHThreshold);
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
+  .addOptionalParam(
+    "validators",
+    "The number of validators to adjust up or down (negative)",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The number of consensus rewards to adjust up or down (negative) in ether",
+    0,
+    types.float
+  )
+  .addOptionalParam(
+    "ether",
+    "amount of ether that gets wrapped into WETH and sent to the Vault",
+    0,
+    types.float
+  )
+  .setAction(fixAccounting);
+task("fixAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).setAction(pauseStaking);
+task("pauseStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

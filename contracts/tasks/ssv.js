@@ -34,7 +34,7 @@ const depositSSV = async ({ amount, operatorids }, hre) => {
   const clusterInfo = await getClusterInfo({
     chainId: hre.network.config.chainId,
     ssvNetwork: ssvNetwork.address,
-    operatorIds: operatorids,
+    operatorids,
     ownerAddress: strategy.address,
   });
 
