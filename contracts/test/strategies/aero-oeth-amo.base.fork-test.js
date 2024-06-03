@@ -154,7 +154,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       );
 
       const voterAddress = await aeroGauge.voter();
-      console.log("voter address", voterAddress);
 
       const voter = await impersonateAndFund(voterAddress);
       await aeroTokenInstance

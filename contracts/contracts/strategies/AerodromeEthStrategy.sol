@@ -439,9 +439,6 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     function _lpWithdraw(uint256 _lpTokensAmount) internal {
-        // Claim remaining rwards before withdrawing LP Tokens
-        aeroGaugeAddress.getReward(address(this));
-
         // Withdraw LP tokens from the gauge
         aeroGaugeAddress.withdraw(_lpTokensAmount);
     }
