@@ -258,11 +258,11 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
             weth.transfer(vaultAddress, wethBalance);
             emit Withdrawal(address(weth), address(0), wethBalance);
         }
-        uint256 fraxEthBalance = stETH.balanceOf(address(this));
-        if (fraxEthBalance > 0) {
+        uint256 stEthBalance = stETH.balanceOf(address(this));
+        if (stEthBalance > 0) {
             // slither-disable-next-line unchecked-transfer
-            stETH.transfer(vaultAddress, fraxEthBalance);
-            emit Withdrawal(address(stETH), address(0), fraxEthBalance);
+            stETH.transfer(vaultAddress, stEthBalance);
+            emit Withdrawal(address(stETH), address(0), stEthBalance);
         }
     }
 
