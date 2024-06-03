@@ -73,6 +73,8 @@ const {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
+  exitValidator,
+  removeValidator,
   resetStakeETHTally,
   setStakeETHThreshold,
 } = require("./validator");
@@ -1033,6 +1035,45 @@ subtask(
     await stakeValidators(config);
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("exitValidator", "Starts the exit process from a validator")
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(exitValidator);
+task("exitValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidator",
+  "Removes a validator from the SSV cluster after it has exited the beacon chain"
+)
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(removeValidator);
+task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

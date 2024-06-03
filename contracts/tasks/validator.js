@@ -6,7 +6,7 @@ const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
 
-const { getClusterInfo } = require("./ssv");
+const { getClusterInfo } = require("../utils/ssv");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
@@ -761,7 +761,12 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
   }
 };
 
-async function exitValidator({ publicKey, signer, operatorIds }) {
+async function exitValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -770,11 +775,16 @@ async function exitValidator({ publicKey, signer, operatorIds }) {
   log(`About to exit validator`);
   const tx = await strategy
     .connect(signer)
-    .exitSsvValidator(publicKey, operatorIds);
+    .exitSsvValidator(pubkey, operatorIds);
   await logTxDetails(tx, "exitSsvValidator");
 }
 
-async function removeValidator({ publicKey, signer, operatorIds }) {
+async function removeValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -784,14 +794,14 @@ async function removeValidator({ publicKey, signer, operatorIds }) {
   const { cluster } = await getClusterInfo({
     chainId: hre.network.config.chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
-    operatorIds,
+    operatorids,
     ownerAddress: strategy.address,
   });
 
   log(`About to exit validator`);
   const tx = await strategy
     .connect(signer)
-    .removeSsvValidator(publicKey, operatorIds, cluster);
+    .removeSsvValidator(pubkey, operatorIds, cluster);
   await logTxDetails(tx, "removeSsvValidator");
 }
 
