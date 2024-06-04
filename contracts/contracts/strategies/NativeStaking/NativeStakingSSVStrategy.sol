@@ -75,6 +75,7 @@ contract NativeStakingSSVStrategy is
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _ssvToken Address of the Erc20 SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     constructor(
@@ -82,6 +83,7 @@ contract NativeStakingSSVStrategy is
         address _wethAddress,
         address _ssvToken,
         address _ssvNetwork,
+        uint256 _maxValidators,
         address _feeAccumulator,
         address _beaconChainDepositContract
     )
@@ -90,7 +92,8 @@ contract NativeStakingSSVStrategy is
             _wethAddress,
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
-            _ssvNetwork
+            _ssvNetwork,
+            _maxValidators
         )
     {
         SSV_TOKEN_ADDRESS = _ssvToken;
