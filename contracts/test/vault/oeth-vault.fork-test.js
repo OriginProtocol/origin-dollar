@@ -108,6 +108,33 @@ describe("ForkTest: OETH Vault", function () {
         .withArgs(josh.address, amount);
     });
 
+    it("should mint with WETH and allocate to strategy", async () => {
+      const { oethVault, nativeStakingSSVStrategy, weth, josh, strategist } =
+        fixture;
+
+      oethVault
+        .connect(strategist)
+        .setAssetDefaultStrategy(
+          weth.address,
+          nativeStakingSSVStrategy.address
+        );
+
+      const amount = parseUnits("11", 18);
+      const minOeth = parseUnits("8", 18);
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      const tx = await oethVault
+        .connect(josh)
+        .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
+
+      await expect(tx)
+        .to.emit(oethVault, "Mint")
+        .withArgs(josh.address, amount);
+    });
+
     it("should not mint with any other asset", async () => {
       const { oethVault, frxETH, stETH, reth, josh } = fixture;
 

@@ -16,6 +16,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
+import { IDripper } from "../interfaces/IDripper.sol";
 
 import "./VaultInitializer.sol";
 
@@ -89,6 +90,10 @@ contract VaultCore is VaultInitializer {
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
+            if (dripper != address(0)) {
+                // Stream any harvested rewards that are available
+                IDripper(dripper).collect();
+            }
             _rebase();
         }
 
@@ -286,7 +291,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function _allocate() internal {
+    function _allocate() internal virtual {
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
@@ -414,7 +419,12 @@ contract VaultCore is VaultInitializer {
      * @dev Internal to calculate total value of all assets held in Vault.
      * @return value Total value in USD/ETH (1e18)
      */
-    function _totalValueInVault() internal view returns (uint256 value) {
+    function _totalValueInVault()
+        internal
+        view
+        virtual
+        returns (uint256 value)
+    {
         uint256 assetCount = allAssets.length;
         for (uint256 y = 0; y < assetCount; ++y) {
             address assetAddr = allAssets[y];

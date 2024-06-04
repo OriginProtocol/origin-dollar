@@ -833,8 +833,7 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  const { weth, matt, strategist, domen, frxETH, timelock, oethVault } =
-    fixture;
+  const { reth, stETH, matt, strategist, timelock, oethVault } = fixture;
 
   const bufferBps = await oethVault.vaultBuffer();
   const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
@@ -846,10 +845,7 @@ async function oethCollateralSwapFixture() {
     );
   }
 
-  // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
-  await setFraxOraclePrice(parseUnits("0.999", 18));
-
-  for (const token of [weth]) {
+  for (const token of [reth, stETH]) {
     await token
       .connect(matt)
       .approve(
@@ -857,42 +853,13 @@ async function oethCollateralSwapFixture() {
         parseEther("100000000000000000000000000000000000")
       );
 
-    // Mint some tokens, so it ends up in Vault
-    await oethVault.connect(matt).mint(token.address, parseEther("200"), "0");
+    // Transfer some tokens to the Vault so they can be swapped out
+    await token.connect(matt).transfer(oethVault.address, parseEther("200"));
   }
 
   if (shouldChangeBuffer) {
     // Set it back
     await oethVault.connect(strategist).setVaultBuffer(bufferBps);
-  }
-
-  const allStrats = await oethVault.getAllStrategies();
-  if (
-    allStrats
-      .map((x) => x.toLowerCase())
-      .includes(addresses.mainnet.FraxETHStrategy.toLowerCase())
-  ) {
-    // Remove fraxETH strategy if it exists
-    // Because it no longer holds assets and causes this test to fail
-
-    // Send some dust to that first
-    await frxETH.connect(domen).transfer(oethVault.address, oethUnits("1"));
-
-    // Now make sure it's deposited
-    await oethVault
-      .connect(strategist)
-      .depositToStrategy(
-        addresses.mainnet.FraxETHStrategy,
-        [frxETH.address],
-        [oethUnits("1")]
-      );
-
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(frxETH.address, addresses.zero);
-    await oethVault
-      .connect(timelock)
-      .removeStrategy(addresses.mainnet.FraxETHStrategy);
   }
 
   // Withdraw all from strategies so we have assets to swap

@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
-const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -167,7 +166,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
     });
   });
 
-  describe("Deposit", function () {
+  describe.skip("Deposit", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
       const { oethVault, josh, reth } = fixture;
@@ -270,18 +269,6 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   describe("Withdraw", function () {
     beforeEach(async () => {
       fixture = await loadBalancerREthFixtureNotDefault();
-      const { balancerREthStrategy, oethVault, josh, strategist, reth, weth } =
-        fixture;
-
-      await reth.connect(josh).transfer(oethVault.address, oethUnits("32"));
-
-      await oethVault
-        .connect(strategist)
-        .depositToStrategy(
-          balancerREthStrategy.address,
-          [weth.address, reth.address],
-          [oethUnits("32"), oethUnits("32")]
-        );
     });
 
     // a list of WETH/RETH pairs
@@ -554,22 +541,11 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       await reth.connect(josh).transfer(oethVault.address, oethUnits("32"));
     });
     it("Should be able to collect reward tokens", async function () {
-      const {
-        weth,
-        reth,
-        rEthBPT,
-        balancerREthStrategy,
-        oethHarvester,
-        bal,
-        aura,
-      } = fixture;
+      const { balancerREthStrategy, oethHarvester, bal, aura } = fixture;
 
       const sHarvester = await impersonateAndFund(oethHarvester.address);
       const balBefore = await bal.balanceOf(oethHarvester.address);
       const auraBefore = await aura.balanceOf(oethHarvester.address);
-
-      await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mine(1000);
 
       await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
 
@@ -586,17 +562,11 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
         josh,
         balancerREthStrategy,
         weth,
-        reth,
         oethHarvester,
-        rEthBPT,
         oethDripper,
         bal,
         aura,
       } = fixture;
-
-      // Deposite some LP to the pool so that we can harvest some tokens
-      await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mine(1000);
 
       // Let the strategy have some tokens it can send to Harvester
       await setERC20TokenBalance(

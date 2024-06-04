@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 
@@ -305,6 +306,9 @@ contract NativeStakingSSVStrategy is
 
     function _wethWithdrawnToVault(uint256 _amount) internal override {
         emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+
+        // Add WETH to the withdraw queue if there is a shortfall
+        IVault(vaultAddress).addWithdrawalQueueLiquidity();
     }
 
     function _wethWithdrawnAndStaked(uint256 _amount) internal override {
