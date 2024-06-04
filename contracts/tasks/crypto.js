@@ -1,4 +1,10 @@
-const { createECDH, createCipheriv } = require("node:crypto");
+const bls = require("@rigidity/bls-signatures");
+const {
+  createCipheriv,
+  createECDH,
+  createHash,
+  createHmac,
+} = require("node:crypto");
 
 const ecdhCurveName = "prime256v1";
 
@@ -6,19 +12,27 @@ const genECDHKey = async ({ privateKey }) => {
   const ecdh = createECDH(ecdhCurveName);
 
   if (privateKey) {
-    ecdh.setPrivateKey(Buffer.from(privateKey, "base64"));
+    ecdh.setPrivateKey(Buffer.from(privateKey, "hex"));
   } else {
     ecdh.generateKeys();
   }
 
-  const privateKeyBase64 = ecdh.getPrivateKey("base64");
+  const privateKeyHex = ecdh.getPrivateKey("hex");
   const publicKeyBase64 = ecdh.getPublicKey("base64");
 
-  console.log(`Private key: ${privateKeyBase64}`);
+  console.log(`Private key: ${privateKeyHex}`);
   console.log(`Public  key: ${publicKeyBase64}`);
 
-  // convert the public key to PEM format
-  const publicKeyPEM = `-----BEGIN PUBLIC KEY-----\n${publicKeyBase64
+  const subtleKey = await crypto.subtle.importKey(
+    "raw",
+    ecdh.getPublicKey(),
+    { name: "ECDH", namedCurve: "P-256" },
+    true,
+    []
+  );
+  const fmtKey = await crypto.subtle.exportKey("spki", subtleKey);
+  const publicKeyPEM = `-----BEGIN PUBLIC KEY-----\n${Buffer.from(fmtKey)
+    .toString("base64")
     .replace(/.{64}/g, "$&\n")
     .replace(/\n$/g, "")}\n-----END PUBLIC KEY-----\n`;
   console.log(`Public key in PEM format:\n${publicKeyPEM.toString()}`);
@@ -28,16 +42,17 @@ const genECDHKey = async ({ privateKey }) => {
   console.log(`Encoded public key for P2P API:\n${p2pPublicKey}`);
 };
 
-const decryptValidatorKey = async ({ privateKey, encryptedMessage }) => {
+const decryptValidatorKey = async ({ privateKey, message }) => {
   const client = createECDH("prime256v1");
   client.setPrivateKey(privateKey, "hex");
 
-  const decryptedMessage = decrypt(
+  const validatorPrivateKey = decrypt(
     client.getPrivateKey(),
-    Buffer.from(encryptedMessage, "base64")
+    Buffer.from(message, "base64")
   );
 
-  console.log(decryptedMessage.toString("utf8"));
+  const vsk = bls.PrivateKey.fromBytes(validatorPrivateKey);
+  console.log(`Validator public key: ${vsk.getG1().toHex()}`);
 };
 
 const decrypt = (privateKey, msg) => {
@@ -57,19 +72,14 @@ const decrypt = (privateKey, msg) => {
 const deriveKeys = (secret, s1, keyLen) => {
   const keys = concatKDF(secret, s1, keyLen * 2);
   const encKey = keys.slice(0, keyLen);
-  const macKey = crypto
-    .createHash("sha256")
+  const macKey = createHash("sha256")
     .update(keys.slice(keyLen, keyLen * 2))
     .digest();
   return { encKey, macKey };
 };
 
 const messageTag = (macKey, message, s2) => {
-  return crypto
-    .createHmac("sha256", macKey)
-    .update(message)
-    .update(s2)
-    .digest();
+  return createHmac("sha256", macKey).update(message).update(s2).digest();
 };
 
 const symDecrypt = (key, ct) => {
@@ -85,12 +95,10 @@ const concatKDF = (secret, s1, keyLen) => {
     const ctrs = Buffer.from([ctr >> 24, ctr >> 16, ctr >> 8, ctr]); // Buffer.from([ctr >> 24, ctr >> 16, ctr >> 8, ctr])
     const tmp = [
       hashSum,
-      crypto
-        .createHash("sha256")
+      createHash("sha256")
         .update(Buffer.concat([ctrs, secret, s1]))
         .digest(),
     ];
-    console.log(tmp);
     hashSum = Buffer.concat(tmp);
   }
   return hashSum.slice(0, keyLen);

@@ -1195,7 +1195,7 @@ subtask(
     types.string
   )
   .addParam(
-    "encryptedKey",
+    "message",
     "Encrypted validator key returned form P2P API",
     undefined,
     types.string
