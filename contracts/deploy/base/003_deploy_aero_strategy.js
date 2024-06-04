@@ -4,6 +4,7 @@ const {
   getAssetAddresses,
   isFork,
   oethUnits,
+  isBaseFork,
 } = require("../../test/helpers.js");
 const { deployOnBaseWithGuardian } = require("../../utils/delpoy-l2.js");
 const { isBaseForkTest } = require("../../utils/hardhat-helpers.js");
@@ -28,7 +29,8 @@ module.exports = deployOnBaseWithGuardian(
     );
     if (isFork) {
       await hardhatSetBalance(deployerAddr);
-      if (isBaseForkTest) {
+      await hardhatSetBalance(guardianAddr);
+      if (isBaseForkTest || isBaseFork) {
         const signers = await hre.ethers.getSigners();
         // eslint-disable-next-line no-unused-vars
         const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict

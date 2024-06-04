@@ -1,7 +1,11 @@
 const addresses = require("../../utils/addresses.js");
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
-const { getAssetAddresses } = require("../../test/helpers.js");
+const {
+  getAssetAddresses,
+  isFork,
+  fundAccount,
+} = require("../../test/helpers.js");
 const { deployOnBaseWithGuardian } = require("../../utils/delpoy-l2.js");
 
 // 5/8 multisig
@@ -11,6 +15,9 @@ module.exports = deployOnBaseWithGuardian(
   { deployName: "001_core_base" },
   async ({ deployWithConfirmation, ethers, withConfirmation }) => {
     let actions = [];
+    if (isFork) {
+      await fundAccount(guardianAddr);
+    }
     const coreActions = await deployCore({
       deployWithConfirmation,
       withConfirmation,

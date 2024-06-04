@@ -52,7 +52,7 @@ main()
 
     if $is_local; then
         # Check if any node is running on port 8545
-        defaultNodeUrl=http://localhost:8545
+        defaultNodeUrl=http://127.0.0.1:8545
 
         # If local node is running, $resp is a non empty string
         resp=$(curl -X POST --connect-timeout 3 -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' "$defaultNodeUrl")
