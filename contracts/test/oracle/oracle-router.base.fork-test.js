@@ -5,7 +5,7 @@ const { isCI } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { aeroOETHAMOFixture } = require("../_fixture");
 
-describe("ForkTest: Aero WETH Oracle", function () {
+describe("ForkTest: OETHBase Oracle Router", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -35,5 +35,16 @@ describe("ForkTest: Aero WETH Oracle", function () {
       addresses.base.aeroTokenAddress
     );
     expect(price).to.approxEqualTolerance(ammPrice, 15);
+  });
+  it("should revert with AssetNotAvailable", async () => {
+    const { oracleRouter } = fixture;
+
+    // Using an arbitrary unsupported address
+    const unsupportedAssetAddress =
+      "0x0000000000000000000000000000000000000000";
+
+    await expect(
+      oracleRouter.price(unsupportedAssetAddress)
+    ).to.be.revertedWith("Asset not available");
   });
 });
