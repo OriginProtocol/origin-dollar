@@ -1,5 +1,6 @@
 const addresses = require("./addresses");
 const { ethereumAddress } = require("./regex");
+const { networkMap } = require("./hardhat-helpers");
 
 const log = require("./logger")("task:assets");
 
@@ -15,12 +16,8 @@ const resolveAsset = async (symbol) => {
 
   // Not using helpers here as they import hardhat which won't work for Hardhat tasks
   if (process.env.FORK === "true" || hre.network.name != "hardhat") {
-    const network =
-      hre.network.name != "hardhat"
-        ? hre.network.name != "hardhat"
-        : hre.network.config.chainId == 17000
-        ? "holesky"
-        : "mainnet";
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const network = networkMap[chainId] || "mainnet";
 
     const assetAddr =
       addresses[network][symbol + "Proxy"] || addresses[network][symbol];

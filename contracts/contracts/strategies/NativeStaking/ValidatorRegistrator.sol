@@ -28,6 +28,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     address public immutable SSV_NETWORK_ADDRESS;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
+    /// @notice Maximum number of validators that can be registered in this strategy
+    uint256 public immutable MAX_VALIDATORS;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
@@ -37,22 +39,49 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
-
+    /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
+    address public stakingMonitor;
+    /// @notice Amount of ETH that can be staked before staking on the contract is suspended
+    /// and the governor needs to approve further staking
+    uint256 public stakeETHThreshold;
+    /// @notice Amount of ETH that can has been staked since the last governor approval.
+    uint256 public stakeETHTally;
     // For future use
-    uint256[50] private __gap;
+    uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
+        NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
         EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
 
-    event RegistratorChanged(address newAddress);
-    event ETHStaked(bytes pubkey, uint256 amount, bytes withdrawal_credentials);
-    event SSVValidatorRegistered(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitInitiated(bytes pubkey, uint64[] operatorIds);
-    event SSVValidatorExitCompleted(bytes pubkey, uint64[] operatorIds);
+    event RegistratorChanged(address indexed newAddress);
+    event StakingMonitorChanged(address indexed newAddress);
+    event ETHStaked(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint256 amount,
+        bytes withdrawal_credentials
+    );
+    event SSVValidatorRegistered(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitInitiated(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitCompleted(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event StakeETHThresholdChanged(uint256 amount);
+    event StakeETHTallyReset();
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -60,6 +89,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             msg.sender == validatorRegistrator,
             "Caller is not the Registrator"
         );
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Staking monitor
+    modifier onlyStakingMonitor() {
+        require(msg.sender == stakingMonitor, "Caller is not the Monitor");
         _;
     }
 
@@ -76,22 +111,44 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
-        address _ssvNetwork
+        address _ssvNetwork,
+        uint256 _maxValidators
     ) {
         WETH_TOKEN_ADDRESS = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK_ADDRESS = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
+        MAX_VALIDATORS = _maxValidators;
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
     function setRegistrator(address _address) external onlyGovernor {
         emit RegistratorChanged(_address);
         validatorRegistrator = _address;
+    }
+
+    /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
+    function setStakingMonitor(address _address) external onlyGovernor {
+        emit StakingMonitorChanged(_address);
+        stakingMonitor = _address;
+    }
+
+    /// @notice Set the amount of ETH that can be staked before staking monitor
+    // needs to a approve further staking by resetting the stake ETH tally
+    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
+        emit StakeETHThresholdChanged(_amount);
+        stakeETHThreshold = _amount;
+    }
+
+    /// @notice Reset the stakeETHTally
+    function resetStakeETHTally() external onlyStakingMonitor {
+        emit StakeETHTallyReset();
+        stakeETHTally = 0;
     }
 
     /// @notice Stakes WETH to the node validators
@@ -111,6 +168,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
             "insufficient WETH"
         );
+        require(
+            activeDepositedValidators + validators.length <= MAX_VALIDATORS,
+            "Max validators reached"
+        );
+
+        require(
+            stakeETHTally + requiredETH <= stakeETHThreshold,
+            "Staking ETH over threshold"
+        );
+        stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
         IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
@@ -130,8 +197,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 validatorsLength = validators.length;
         // For each validator
         for (uint256 i = 0; i < validatorsLength; ) {
-            bytes32 pubkeyHash = keccak256(validators[i].pubkey);
-            VALIDATOR_STATE currentState = validatorsStates[pubkeyHash];
+            bytes32 pubKeyHash = keccak256(validators[i].pubkey);
+            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
 
             require(
                 currentState == VALIDATOR_STATE.REGISTERED,
@@ -148,12 +215,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             emit ETHStaked(
+                pubKeyHash,
                 validators[i].pubkey,
                 32 ether,
                 withdrawal_credentials
             );
 
-            validatorsStates[pubkeyHash] = VALIDATOR_STATE.STAKED;
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
             unchecked {
                 ++i;
@@ -167,39 +235,56 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param sharesData The validator shares data
+    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
+    // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         bytes calldata sharesData,
-        uint256 amount,
+        uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
+        bytes32 pubKeyHash = keccak256(publicKey);
+        require(
+            validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
+            "Validator already registered"
+        );
         ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
             publicKey,
             operatorIds,
             sharesData,
-            amount,
+            ssvAmount,
             cluster
         );
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.REGISTERED;
-        emit SSVValidatorRegistered(publicKey, operatorIds);
+        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
+
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
     // slither-disable-start reentrancy-no-eth
     function exitSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds
     ) external onlyRegistrator whenNotPaused {
-        VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
         ISSVNetwork(SSV_NETWORK_ADDRESS).exitValidator(publicKey, operatorIds);
-        emit SSVValidatorExitInitiated(publicKey, operatorIds);
+        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
 
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXITING;
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -208,13 +293,17 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function removeSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
-        VALIDATOR_STATE currentState = validatorsStates[keccak256(publicKey)];
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(
             currentState == VALIDATOR_STATE.EXITING,
             "Validator not exiting"
@@ -225,9 +314,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             operatorIds,
             cluster
         );
-        emit SSVValidatorExitCompleted(publicKey, operatorIds);
+        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
 
-        validatorsStates[keccak256(publicKey)] = VALIDATOR_STATE.EXIT_COMPLETE;
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -236,16 +325,18 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
     /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
     /// that tries to top up SSV tokens.
-    /// @param cluster The SSV cluster details that must be derived from emitted events from the SSVNetwork contract.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
     function depositSSV(
         uint64[] memory operatorIds,
-        uint256 amount,
+        uint256 ssvAmount,
         Cluster memory cluster
     ) external onlyStrategist {
         ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
             address(this),
             operatorIds,
-            amount,
+            ssvAmount,
             cluster
         );
     }

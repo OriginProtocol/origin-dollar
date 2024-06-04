@@ -1617,6 +1617,7 @@ async function nativeStakingSSVStrategyFixture() {
       addresses.mainnet.SSVNetwork
     );
   } else {
+    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -1641,6 +1642,8 @@ async function nativeStakingSSVStrategyFixture() {
     await nativeStakingSSVStrategy
       .connect(sGovernor)
       .setRegistrator(governorAddr);
+
+    fixture.validatorRegistrator = sGovernor;
   }
 
   return fixture;

@@ -854,6 +854,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
+      600, // maxValidators
       cFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
@@ -900,6 +901,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
+      600, // maxValidators
       dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]

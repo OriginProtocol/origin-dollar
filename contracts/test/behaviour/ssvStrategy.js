@@ -9,7 +9,7 @@ const hre = require("hardhat");
 const { oethUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { getClusterInfo } = require("../../utils/ssv");
-const { parseEther } = require("ethers/lib/utils");
+const { parseEther, keccak256 } = require("ethers/lib/utils");
 const { setERC20TokenBalance } = require("../_fund");
 
 /**
@@ -81,6 +81,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       ).to.equal(
         addresses.validatorRegistrator,
         "Incorrect validator registrator"
+      );
+      await expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
+        addresses.Guardian,
+        "Incorrect staking monitor"
+      );
+      await expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
+        0,
+        "stake ETH threshold"
       );
     });
   });
@@ -173,6 +181,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const stakeAmount = oethUnits("32");
 
+      expect(
+        await nativeStakingSSVStrategy.validatorsStates(
+          keccak256(testValidator.publicKey)
+        )
+      ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
+
       // Register a new validator with the SSV Network
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -185,7 +199,17 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         );
       await expect(regTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
+
+      expect(
+        await nativeStakingSSVStrategy.validatorsStates(
+          keccak256(testValidator.publicKey)
+        )
+      ).to.equal(1, "Validator state not 1 (REGISTERED)");
 
       // Stake stakeAmount ETH to the new validator
       const stakeTx = await nativeStakingSSVStrategy
@@ -201,9 +225,16 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       await expect(stakeTx)
         .to.emit(nativeStakingSSVStrategy, "ETHStaked")
         .withNamedArgs({
-          pubkey: testValidator.publicKey,
+          pubKeyHash: keccak256(testValidator.publicKey),
+          pubKey: testValidator.publicKey,
           amount: oethUnits("32"),
         });
+
+      expect(
+        await nativeStakingSSVStrategy.validatorsStates(
+          keccak256(testValidator.publicKey)
+        )
+      ).to.equal(2, "Validator state not 2 (STAKED)");
 
       expect(await weth.balanceOf(nativeStakingSSVStrategy.address)).to.equal(
         strategyWethBalanceBefore.sub(
@@ -275,10 +306,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           emptyCluster
         );
 
-      // Waffle's custom error matcher is not working here.
-      // Checking the trace, the error thrown is ValidatorAlreadyExistsWithData
-      // which is what we expect.
-      await expect(tx2).to.be.reverted;
+      await expect(tx2).to.be.revertedWith("Validator already registered");
     });
 
     it("Should emit correct values in deposit event", async () => {
@@ -374,7 +402,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(exitTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
 
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -386,7 +418,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(removeTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
-        .withArgs(testValidator.publicKey, testValidator.operatorIds);
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
     });
   });
 

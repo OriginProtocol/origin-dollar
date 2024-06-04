@@ -4,7 +4,11 @@ const json = require("@rollup/plugin-json");
 const builtins = require("builtin-modules");
 
 const commonConfig = {
-  plugins: [resolve({ preferBuiltins: true, exportConditions: ["node"] }), commonjs(), json({ compact: true })],
+  plugins: [
+    resolve({ preferBuiltins: true, exportConditions: ["node"] }),
+    commonjs(),
+    json({ compact: true }),
+  ],
   // Do not bundle these packages.
   // ethers is required to be bundled even though its an Autotask package.
   external: [
@@ -25,10 +29,29 @@ const commonConfig = {
 module.exports = [
   {
     ...commonConfig,
-    input: "operateValidators.js",
+    input: "registerValidators.js",
     output: {
-      file: "dist/operateValidators/index.js",
+      file: "dist/registerValidators/index.js",
+      inlineDynamicImports: true,
       format: "cjs",
     },
-  }
+  },
+  {
+    ...commonConfig,
+    input: "stakeValidators.js",
+    output: {
+      file: "dist/stakeValidators/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "doAccounting.js",
+    output: {
+      file: "dist/doAccounting/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];

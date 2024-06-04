@@ -6,8 +6,10 @@ hide footbox
 title "Origin ETH processes"
 
 actor "Anyone" as sender
-actor "Registrator" as reg <<Origin>>
-actor "Governor" as gov <<Origin>>
+actor "Registrator\n(Relayer)" as reg <<Origin>>
+actor "Admin\n(5/8 Safe)" as admin <<Origin>>
+actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
+actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
 actor "Operators" as ssvOp <<SSV>>
@@ -47,6 +49,24 @@ return
 
 end group
 
+group Governor sets staked ETH threshold
+
+gov -> nativeStrat : setStakeETHThreshold()
+activate nativeStrat
+note right: set ETH that can be staked before the staking monitor has to reset
+return
+
+end group
+
+group Staking monitor resets staked ETH
+
+admin -> nativeStrat : resetStakeETHTally()
+activate nativeStrat
+note right: resets the ETH that can be staked going forward
+return
+
+end group
+
 group Registrator creates a new SSV validator
 
 reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays
@@ -63,10 +83,10 @@ api -> api: split(key)
 note right : splits validator key into multiple KeyShares
 return
 
-reg -> api: status(uuid)
+reg -> api: GET\neth/staking/ssv/request/status/uuid
 activate api
-return status,\nvalidatorRegistration,\nshareData
-note right : validatorRegistration contains the pubkey, operatorIds and cluster details
+return status,\npubkey\nvalidatorRegistration,\nshareData
+note right : validatorRegistration contains the operatorIds and cluster details
 
 reg -> nativeStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster)
 activate nativeStrat
@@ -87,8 +107,21 @@ return
 return
 return
 
+end group
+
+... 60 minutes ...
+
+group Registrator stakes to a new SSV validator
+
+reg -> api: GET\neth/staking/ssv/request/deposit-data/uuid
+activate api
+return status,\ndepositData
+note right : depositData contains the signature and depositDataRoot
+
 reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
 activate nativeStrat
+nativeStrat -> nativeStrat
+note right : validate staked ETH under the threshold
 nativeStrat -> weth : withdraw(32 ETH * number of validators)
 activate weth
 note right : WETH burned for ETH
@@ -115,7 +148,7 @@ dep -> val : 32 ETH
 
 note over val : Pending Activation
 
-... four validators are activated each epoch from the Validator Queue (~1.5 days) ...
+... four validators are activated each epoch from the Validator Queue (1-10 days) ...
 
 note over val : Active
 
@@ -281,6 +314,26 @@ note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return
 
 return
+return
+
+end group
+
+
+group Strategist pauses Native Staking Strategy
+
+strategist -> nativeStrat : pause()
+activate nativeStrat
+return
+
+end group
+
+group Strategist unpauses Native Staking Strategy
+
+strategist -> nativeStrat : manuallyFixAccounting(0, 0, 0)
+activate nativeStrat
+note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
+nativeStrat -> nativeStrat
+note right : unpause
 return
 
 end group
