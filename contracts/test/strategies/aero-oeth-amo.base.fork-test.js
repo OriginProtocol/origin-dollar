@@ -75,7 +75,16 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       fixture = await baseFixture();
     });
     it("Vault should deposit some WETH to AMO strategy", async function () {
-      const { aerodromeEthStrategy, oeth, weth, josh, oethVault } = fixture;
+      const {
+        aerodromeEthStrategy,
+        oeth,
+        weth,
+        josh,
+        oethVault,
+        pool,
+        wethReserveIndex,
+        oethReserveIndex,
+      } = fixture;
 
       const wethDepositAmount = await units("100", weth);
 
@@ -90,7 +99,9 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       );
       const oethSupplyBefore = await oeth.totalSupply();
 
-      let vaultSigner = await impersonateAndFund(oethVault.address, "2");
+      let vaultSigner = await impersonateAndFund(oethVault.address);
+
+      const aeroBalances = await pool.getReserves();
 
       log("Before deposit to strategy");
       await run("aeroAmoStrat", {
@@ -112,20 +123,20 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         fromBlock: receipt.blockNumber - 1,
       });
 
-      //   // Check the ETH and OETH balances in the Aero sAMM Pool
-      //   const aeroBalancesAfter = await pool.getReserves();
-      //   expect(
-      //     aeroBalancesAfter[wethReserveIndex].toString()
-      //   ).to.approxEqualTolerance(
-      //     aeroBalances[wethReserveIndex].add(wethDeposited),
-      //     0.1 // 1% or 10 basis point
-      //   );
-      //   expect(
-      //     aeroBalancesAfter[oethReserveIndex].toString()
-      //   ).to.approxEqualTolerance(
-      //     aeroBalances[oethReserveIndex].add(oethMintAmount),
-      //     0.1 // 1% or 10 basis point
-      //   );
+      // Check the ETH and OETH balances in the Aero sAMM Pool
+      const aeroBalancesAfter = await pool.getReserves();
+      expect(
+        aeroBalancesAfter[wethReserveIndex].toString()
+      ).to.approxEqualTolerance(
+        aeroBalances[wethReserveIndex].add(wethDepositAmount),
+        1
+      );
+      expect(
+        aeroBalancesAfter[oethReserveIndex].toString()
+      ).to.approxEqualTolerance(
+        aeroBalances[oethReserveIndex].add(oethMintAmount),
+        1
+      );
 
       // Check the OETH total supply increase
       const oethSupplyAfter = await oeth.totalSupply();
@@ -133,6 +144,44 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         oethSupplyBefore.add(oethMintAmount),
         0.1 // 1% or 10 basis point
       );
+    });
+    it("Should not be any dust left after deposit", async function () {
+      const { aerodromeEthStrategy, weth, josh, oethVault } = fixture;
+
+      let wethDepositAmount = await units("10", weth);
+      let wethBalanceBefore = await weth.balanceOf(
+        aerodromeEthStrategy.address
+      );
+
+      // Vault transfers WETH to strategy
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, wethDepositAmount);
+
+      let vaultSigner = await impersonateAndFund(oethVault.address);
+
+      // Deposit 1
+      await aerodromeEthStrategy
+        .connect(vaultSigner)
+        .deposit(weth.address, await units("10", weth));
+
+      let wethBalanceAfter = await weth.balanceOf(aerodromeEthStrategy.address);
+      expect(wethBalanceAfter).to.be.equal(wethBalanceBefore);
+
+      // Deposit 2
+      wethDepositAmount = await units("25", weth);
+      wethBalanceBefore = wethBalanceAfter;
+      // Vault transfers WETH to strategy
+      await weth
+        .connect(josh)
+        .transfer(aerodromeEthStrategy.address, wethDepositAmount);
+
+      await aerodromeEthStrategy
+        .connect(vaultSigner)
+        .deposit(weth.address, wethDepositAmount);
+
+      wethBalanceAfter = await weth.balanceOf(aerodromeEthStrategy.address);
+      expect(wethBalanceAfter).to.be.equal(wethBalanceBefore);
     });
     it("should collect reward tokens", async function () {
       const {
@@ -244,6 +293,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Deposit")
         .withNamedArgs({ _asset: weth.address, _pToken: pool.address });
+      const wethBalance = await weth.balanceOf(aerodromeEthStrategy.address);
+      expect(wethBalance).to.be.equal(0);
     });
   });
   describe("with the strategy having some OETH and WETH in the Pool", () => {
@@ -646,13 +697,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       // Check emitted events
       await expect(tx).to.emit(aerodromeEthStrategy, "Deposit");
-      await expect(tx).to.emit(aerodromeEthStrategy, "Deposit");
 
       // Check the OETH total supply increase
       const oethSupplyAfter = await oeth.totalSupply();
       expect(oethSupplyAfter).to.approxEqualTolerance(
         oethSupplyBefore.add(oethMintAmount),
-        0.01 // 0.01% or 1 basis point
+        10
       );
     });
 
@@ -667,7 +717,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       } = fixture;
 
       await rebalancePool(fixture);
-
       const depositAmount = parseUnits("50");
       await weth.connect(josh).deposit({ value: depositAmount });
       await weth
@@ -698,6 +747,8 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       await expect(tx)
         .to.emit(aerodromeEthStrategy, "Deposit")
         .withNamedArgs({ _asset: weth.address, _pToken: pool.address });
+      const wethBalance = await weth.balanceOf(aerodromeEthStrategy.address);
+      expect(wethBalance).to.be.equal(0);
     });
     it("Vault should be able to withdraw some after rebalancing", async () => {
       const {

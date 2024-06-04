@@ -173,21 +173,9 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
                 aeroFactoryAddress
             );
 
-        // safe to cast since min value is at least 0
-        uint256 oethDesired = uint256(
-            _max(
-                0,
-                int256(reserveWethAmount) +
-                    int256(_wethAmount) -
-                    int256(reserveOEthAmount)
-            )
-        );
-
-        /* Add so much OETH so that the pool ends up being balanced. And at minimum
-         * add as much OETH as WETH and at maximum twice as much OETH.
-         */
-        oethDesired = Math.max(oethDesired, _wethAmount);
-        oethDesired = Math.min(oethDesired, _wethAmount * 2);
+        // Calculate the oeth amount required for given wethAmount based on pool's reserve ratio.
+        uint256 oethDesired = (reserveOEthAmount * _wethAmount) /
+            reserveWethAmount;
 
         // Query the amount to be added to the pool
         (uint256 wethToAdd, uint256 oethToAdd, ) = aeroRouterAddress
