@@ -46,7 +46,7 @@ contract NativeStakingSSVStrategy is
     using SafeERC20 for IERC20;
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
-    address public immutable SSV_TOKEN_ADDRESS;
+    address public immutable SSV_TOKEN;
     /// @notice Fee collector address
     /// @dev this address will receive Execution layer rewards - These are rewards earned for
     /// executing transactions on the Ethereum network as part of block proposals. They include
@@ -95,7 +95,7 @@ contract NativeStakingSSVStrategy is
             _maxValidators
         )
     {
-        SSV_TOKEN_ADDRESS = _ssvToken;
+        SSV_TOKEN = _ssvToken;
         FEE_ACCUMULATOR_ADDRESS = payable(_feeAccumulator);
     }
 
@@ -272,10 +272,7 @@ contract NativeStakingSSVStrategy is
     /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
-        IERC20(SSV_TOKEN_ADDRESS).approve(
-            SSV_NETWORK_ADDRESS,
-            type(uint256).max
-        );
+        IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
     }
 
     /**

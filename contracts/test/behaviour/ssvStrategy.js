@@ -56,9 +56,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.SSV,
         "Incorrect SSV Token address"
       );
-      await expect(
-        await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS()
-      ).to.equal(addresses.SSVNetwork, "Incorrect SSV Network address");
+      await expect(await nativeStakingSSVStrategy.SSV_NETWORK()).to.equal(
+        addresses.SSVNetwork,
+        "Incorrect SSV Network address"
+      );
       await expect(
         await nativeStakingSSVStrategy.BEACON_CHAIN_DEPOSIT_CONTRACT()
       ).to.equal(

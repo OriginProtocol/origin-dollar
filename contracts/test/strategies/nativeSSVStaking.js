@@ -105,8 +105,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     it("SSV network should have allowance to spend SSV tokens of the strategy", async () => {
       const { nativeStakingSSVStrategy, ssv } = fixture;
 
-      const ssvNetworkAddress =
-        await nativeStakingSSVStrategy.SSV_NETWORK_ADDRESS();
+      const ssvNetworkAddress = await nativeStakingSSVStrategy.SSV_NETWORK();
       await expect(
         await ssv.allowance(nativeStakingSSVStrategy.address, ssvNetworkAddress)
       ).to.equal(MAX_UINT256);

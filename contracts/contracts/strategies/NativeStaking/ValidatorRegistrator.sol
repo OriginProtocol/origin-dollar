@@ -25,7 +25,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The address of the beacon chain deposit contract
     address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
-    address public immutable SSV_NETWORK_ADDRESS;
+    address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
     /// @notice Maximum number of validators that can be registered in this strategy
@@ -121,7 +121,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     ) {
         WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
-        SSV_NETWORK_ADDRESS = _ssvNetwork;
+        SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
         MAX_VALIDATORS = _maxValidators;
     }
@@ -253,7 +253,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
             "Validator already registered"
         );
-        ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
+        ISSVNetwork(SSV_NETWORK).registerValidator(
             publicKey,
             operatorIds,
             sharesData,
@@ -281,7 +281,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
-        ISSVNetwork(SSV_NETWORK_ADDRESS).exitValidator(publicKey, operatorIds);
+        ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
         emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
@@ -309,7 +309,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             "Validator not exiting"
         );
 
-        ISSVNetwork(SSV_NETWORK_ADDRESS).removeValidator(
+        ISSVNetwork(SSV_NETWORK).removeValidator(
             publicKey,
             operatorIds,
             cluster
@@ -333,7 +333,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 ssvAmount,
         Cluster memory cluster
     ) external onlyStrategist {
-        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+        ISSVNetwork(SSV_NETWORK).deposit(
             address(this),
             operatorIds,
             ssvAmount,
