@@ -70,11 +70,12 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.OETHVaultProxy,
         "Incorrect OETH Vault address"
       );
-      await expect(await nativeStakingSSVStrategy.fuseIntervalStart()).to.equal(
+      const fuseInterval = await nativeStakingSSVStrategy.fuseInterval();
+      await expect(fuseInterval.start).to.equal(
         oethUnits("21.6"),
         "Incorrect fuse start"
       );
-      await expect(await nativeStakingSSVStrategy.fuseIntervalEnd()).to.equal(
+      await expect(fuseInterval.end).to.equal(
         oethUnits("25.6"),
         "Incorrect fuse end"
       );

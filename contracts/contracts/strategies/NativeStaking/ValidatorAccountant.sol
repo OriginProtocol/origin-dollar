@@ -19,14 +19,17 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
     uint256 public consensusRewards;
 
-    /// @notice start of fuse interval
-    uint256 public fuseIntervalStart;
-    /// @notice end of fuse interval
-    uint256 public fuseIntervalEnd;
+    struct FuseInterval {
+        uint128 start;
+        uint128 end;
+    }
+
+    /// @notice start and end of the of fuse interval
+    FuseInterval public fuseInterval;
     /// @notice last block number manuallyFixAccounting has been called
     uint256 public lastFixAccountingBlockNumber;
 
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 
     event FuseIntervalUpdated(uint256 start, uint256 end);
     event AccountingFullyWithdrawnValidator(
@@ -69,8 +72,8 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
     /// @notice set fuse interval values
     function setFuseInterval(
-        uint256 _fuseIntervalStart,
-        uint256 _fuseIntervalEnd
+        uint128 _fuseIntervalStart,
+        uint128 _fuseIntervalEnd
     ) external onlyGovernor {
         require(
             _fuseIntervalStart < _fuseIntervalEnd &&
@@ -79,8 +82,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             "Incorrect fuse interval"
         );
 
-        fuseIntervalStart = _fuseIntervalStart;
-        fuseIntervalEnd = _fuseIntervalEnd;
+        fuseInterval = FuseInterval({
+            start: _fuseIntervalStart,
+            end: _fuseIntervalEnd
+        });
 
         emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
     }
@@ -109,10 +114,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     }
 
     // slither-disable-start reentrancy-eth
-    function _doAccounting(bool pauseOnFail)
-        internal
-        returns (bool accountingValid)
-    {
+    function _doAccounting(
+        bool pauseOnFail
+    ) internal returns (bool accountingValid) {
         if (address(this).balance < consensusRewards) {
             return _failAccounting(pauseOnFail);
         }
@@ -145,16 +149,17 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         // should be less than a whole validator stake
         require(ethRemaining < FULL_STAKE, "Unexpected accounting");
 
+        FuseInterval memory fuseIntervalMem = fuseInterval;
         // If no Beacon chain consensus rewards swept
         if (ethRemaining == 0) {
             // do nothing
             return accountingValid;
-        } else if (ethRemaining < fuseIntervalStart) {
+        } else if (ethRemaining < fuseIntervalMem.start) {
             // Beacon chain consensus rewards swept (partial validator withdrawals)
             // solhint-disable-next-line reentrancy
             consensusRewards += ethRemaining;
             emit AccountingConsensusRewards(ethRemaining);
-        } else if (ethRemaining > fuseIntervalEnd) {
+        } else if (ethRemaining > fuseIntervalMem.end) {
             // Beacon chain consensus rewards swept but also a slashed validator fully exited
             IWETH9(WETH).deposit{ value: ethRemaining }();
             // slither-disable-next-line unchecked-transfer
@@ -177,10 +182,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     // slither-disable-end reentrancy-eth
 
     /// @dev pause any further accounting if required and return false
-    function _failAccounting(bool pauseOnFail)
-        internal
-        returns (bool accountingValid)
-    {
+    function _failAccounting(
+        bool pauseOnFail
+    ) internal returns (bool accountingValid) {
         // pause if not already
         if (pauseOnFail) {
             _pause();
