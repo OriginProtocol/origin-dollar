@@ -79,10 +79,10 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             "Incorrect fuse interval"
         );
 
-        emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
-
         fuseIntervalStart = _fuseIntervalStart;
         fuseIntervalEnd = _fuseIntervalEnd;
+
+        emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
     }
 
     /* solhint-disable max-line-length */
@@ -229,12 +229,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         );
         require(_ethToVaultAmount <= 32 ether * 3, "Invalid wethToVaultAmount");
 
-        emit AccountingManuallyFixed(
-            _validatorsDelta,
-            _consensusRewardsDelta,
-            _ethToVaultAmount
-        );
-
         activeDepositedValidators = uint256(
             int256(activeDepositedValidators) + _validatorsDelta
         );
@@ -251,6 +245,12 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             );
             _wethWithdrawnToVault(_ethToVaultAmount);
         }
+
+        emit AccountingManuallyFixed(
+            _validatorsDelta,
+            _consensusRewardsDelta,
+            _ethToVaultAmount
+        );
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
