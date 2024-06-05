@@ -14,7 +14,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
-    uint256 public constant MAX_STAKE = 32 ether;
+    uint256 public constant FULL_STAKE = 32 ether;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
     uint256 public consensusRewards;
@@ -122,13 +122,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         accountingValid = true;
 
         // send the ETH that is from fully withdrawn validators to the Vault
-        if (newSweptETH >= MAX_STAKE) {
+        if (newSweptETH >= FULL_STAKE) {
             uint256 fullyWithdrawnValidators;
             // explicitly cast to uint256 as we want to round to a whole number of validators
-            fullyWithdrawnValidators = uint256(newSweptETH / MAX_STAKE);
+            fullyWithdrawnValidators = uint256(newSweptETH / FULL_STAKE);
             activeDepositedValidators -= fullyWithdrawnValidators;
 
-            uint256 wethToVault = MAX_STAKE * fullyWithdrawnValidators;
+            uint256 wethToVault = FULL_STAKE * fullyWithdrawnValidators;
             IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
             // slither-disable-next-line unchecked-transfer
             IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
