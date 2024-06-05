@@ -143,7 +143,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         uint256 ethRemaining = address(this).balance - consensusRewards;
         // should be less than a whole validator stake
-        require(ethRemaining < 32 ether, "Unexpected accounting");
+        require(ethRemaining < FULL_STAKE, "Unexpected accounting");
 
         // If no Beacon chain consensus rewards swept
         if (ethRemaining == 0) {
