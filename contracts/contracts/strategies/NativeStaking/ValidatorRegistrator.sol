@@ -194,9 +194,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             address(this)
         );
 
-        uint256 validatorsLength = validators.length;
         // For each validator
-        for (uint256 i = 0; i < validatorsLength; ) {
+        for (uint256 i = 0; i < validators.length; ) {
             bytes32 pubKeyHash = keccak256(validators[i].pubkey);
             VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
 
@@ -228,7 +227,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             }
         }
         // save gas by changing this storage variable only once rather each time in the loop.
-        activeDepositedValidators += validatorsLength;
+        activeDepositedValidators += validators.length;
     }
 
     // slither-disable-end reentrancy-eth
