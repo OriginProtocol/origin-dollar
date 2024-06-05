@@ -73,7 +73,7 @@ describe("ForkTest: Harvest (Base)", function () {
 
     expect(rewardValue).to.approxEqualTolerance(
       wethBalanceAfter.sub(wethBalanceBefore),
-      35
+      50 // high tolerance since CL feed will be refreshed only once in 24 hours for AERO
     );
   });
   it("should send performance fee", async function () {

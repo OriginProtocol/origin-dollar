@@ -76,6 +76,9 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(aeroFactoryAddress)
         );
 
+        uint256 initialGap = initialRatio > midpoint
+            ? initialRatio - midpoint
+            : midpoint - initialRatio;
         _;
 
         // Get the ratio of oeth to weth after rebalance.
@@ -85,6 +88,10 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(aeroFactoryAddress)
         );
 
+        uint256 finalGap = finalRatio > midpoint
+            ? finalRatio - midpoint
+            : midpoint - finalRatio;
+
         // Ensure that after the rebalance, the WETH reserves do not exceed OETH reserves.
         // We always aim for OETH reserves > WETH reserves.
         require(finalRatio > midpoint, "WETH reserves exceeds OETH");
@@ -93,7 +100,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // meaning the final ratio is closer to 50:50 compared to the initial ratio.
         // For example, if the initial ratio was 0.6 (60% OETH, 40% WETH) and the final ratio is 0.55,
         // it means the pool balance has improved towards the 50:50 target.
-        require(initialRatio > finalRatio, "Pool imbalance worsened");
+        require(initialGap > finalGap, "Pool imbalance worsened");
     }
 
     constructor(
@@ -380,13 +387,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
      * @param _amountIn Amount of tokens to swap for.
      * @param _minAmountOut Minimum amount of expected output amount (slippage adjusted)
      * @param _tokenIn Address of the input token.
-     * @param _recipient Address of the recipient of weth tokens if we swap oeth for weth.
      */
     function swapAndRebalancePool(
         uint256 _amountIn,
         uint256 _minAmountOut,
-        address _tokenIn,
-        address _recipient
+        address _tokenIn
     ) external onlyStrategist improvePoolBalance nonReentrant {
         // tokenIn should be either oeth or weth.
         require(
@@ -398,7 +403,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         // slither-disable-next-line uninitialized-local
         uint256 oethBalanceBefore;
-
+        address _recipient;
         if (_tokenIn == address(oeth)) {
             IVault(vaultAddress).mintForStrategy(_amountIn);
 
@@ -410,6 +415,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             });
 
             routes[0] = oethToWethRoute;
+            // If tokenIn is OETH, send the recieved WETH to the vault.
+            _recipient = vaultAddress;
         } else {
             // Override recipient address so that the oeth can be burnt.
             _recipient = address(this);
