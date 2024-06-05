@@ -1,5 +1,6 @@
 const bls = require("@rigidity/bls-signatures");
 const {
+  subtle,
   createCipheriv,
   createECDH,
   createHash,
@@ -17,20 +18,18 @@ const genECDHKey = async ({ privateKey }) => {
     ecdh.generateKeys();
   }
 
-  const privateKeyHex = ecdh.getPrivateKey("hex");
   const publicKeyBase64 = ecdh.getPublicKey("base64");
 
-  console.log(`Private key: ${privateKeyHex}`);
   console.log(`Public  key: ${publicKeyBase64}`);
 
-  const subtleKey = await crypto.subtle.importKey(
+  const subtleKey = await subtle.importKey(
     "raw",
     ecdh.getPublicKey(),
     { name: "ECDH", namedCurve: "P-256" },
     true,
     []
   );
-  const fmtKey = await crypto.subtle.exportKey("spki", subtleKey);
+  const fmtKey = await subtle.exportKey("spki", subtleKey);
   const publicKeyPEM = `-----BEGIN PUBLIC KEY-----\n${Buffer.from(fmtKey)
     .toString("base64")
     .replace(/.{64}/g, "$&\n")
@@ -43,21 +42,16 @@ const genECDHKey = async ({ privateKey }) => {
 };
 
 const decryptValidatorKey = async ({ privateKey, message }) => {
-  const client = createECDH("prime256v1");
-  client.setPrivateKey(privateKey, "hex");
+  const ecdh = createECDH(ecdhCurveName);
+  ecdh.setPrivateKey(privateKey, "hex");
 
-  const validatorPrivateKey = decrypt(
-    client.getPrivateKey(),
-    Buffer.from(message, "base64")
-  );
+  const validatorPrivateKey = decrypt(ecdh, Buffer.from(message, "base64"));
 
   const vsk = bls.PrivateKey.fromBytes(validatorPrivateKey);
   console.log(`Validator public key: ${vsk.getG1().toHex()}`);
 };
 
-const decrypt = (privateKey, msg) => {
-  const ecdh = createECDH("prime256v1");
-  ecdh.setPrivateKey(privateKey);
+const decrypt = (ecdh, msg) => {
   const epk = msg.slice(0, 65);
   const message = msg.slice(65, msg.length - 32);
   const sharedSecret = ecdh.computeSecret(epk);
