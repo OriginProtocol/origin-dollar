@@ -98,7 +98,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       };
 
       await expect(signer.sendTransaction(tx)).to.be.revertedWith(
-        "eth not from allowed contracts"
+        "Eth not from allowed contracts"
       );
     });
 
@@ -153,7 +153,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy
           .connect(governor)
           .setFuseInterval(parseEther("25.6"), parseEther("21.6"))
-      ).to.be.revertedWith("incorrect fuse interval");
+      ).to.be.revertedWith("Incorrect fuse interval");
     });
 
     it("There should be at least 4 ETH between interval start and interval end", async () => {
@@ -163,7 +163,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy
           .connect(governor)
           .setFuseInterval(parseEther("21.6"), parseEther("25.5"))
-      ).to.be.revertedWith("incorrect fuse interval");
+      ).to.be.revertedWith("Incorrect fuse interval");
     });
 
     it("Revert when fuse intervals are larger than 32 ether", async () => {
@@ -173,7 +173,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         nativeStakingSSVStrategy
           .connect(governor)
           .setFuseInterval(parseEther("32.1"), parseEther("32.1"))
-      ).to.be.revertedWith("incorrect fuse interval");
+      ).to.be.revertedWith("Incorrect fuse interval");
     });
 
     it("Governor should be able to change fuse interval", async () => {
@@ -605,7 +605,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           0, //_consensusRewardsDelta,
           0 //_ethToVault
         )
-      ).to.be.revertedWith("invalid validatorsDelta");
+      ).to.be.revertedWith("Invalid validatorsDelta");
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
@@ -613,7 +613,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           0, //_consensusRewardsDelta
           0 //_ethToVault
         )
-      ).to.be.revertedWith("invalid validatorsDelta");
+      ).to.be.revertedWith("Invalid validatorsDelta");
     });
 
     it("Consensus rewards delta should not be <-333> and >333 for fix accounting function", async () => {
@@ -628,7 +628,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("-333"), //_consensusRewardsDelta
           0 //_ethToVault
         )
-      ).to.be.revertedWith("invalid consensusRewardsDelta");
+      ).to.be.revertedWith("Invalid consensusRewardsDelta");
 
       await expect(
         nativeStakingSSVStrategy.connect(strategist).manuallyFixAccounting(
@@ -636,7 +636,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("333"), //_consensusRewardsDelta
           0 //_ethToVault
         )
-      ).to.be.revertedWith("invalid consensusRewardsDelta");
+      ).to.be.revertedWith("Invalid consensusRewardsDelta");
     });
 
     it("WETH to Vault amount should not be > 96 for fix accounting function", async () => {
@@ -651,7 +651,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           0, //_consensusRewardsDelta
           parseEther("97") //_ethToVault
         )
-      ).to.be.revertedWith("invalid wethToVaultAmount");
+      ).to.be.revertedWith("Invalid wethToVaultAmount");
     });
 
     describe("Should allow strategist to recover paused contract", async () => {
@@ -858,7 +858,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             0, //_consensusRewardsDelta
             0 //_ethToVault
           )
-        ).to.be.revertedWith("manuallyFixAccounting called too soon");
+        ).to.be.revertedWith("Fix accounting called too soon");
       });
 
       it("Calling manually fix accounting twice with enough blocks in between should pass", async () => {

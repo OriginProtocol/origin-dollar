@@ -76,7 +76,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             _fuseIntervalStart < _fuseIntervalEnd &&
                 _fuseIntervalEnd < 32 ether &&
                 _fuseIntervalEnd - _fuseIntervalStart >= 4 ether,
-            "incorrect fuse interval"
+            "Incorrect fuse interval"
         );
 
         emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
@@ -146,7 +146,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         uint256 ethRemaining = address(this).balance - consensusRewards;
         // should be less than a whole validator stake
-        require(ethRemaining < 32 ether, "unexpected accounting");
+        require(ethRemaining < 32 ether, "Unexpected accounting");
 
         // If no Beacon chain consensus rewards swept
         if (ethRemaining == 0) {
@@ -211,23 +211,23 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         require(
             lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
                 block.number,
-            "manuallyFixAccounting called too soon"
+            "Fix accounting called too soon"
         );
         require(
             _validatorsDelta >= -3 &&
                 _validatorsDelta <= 3 &&
                 // new value must be positive
                 int256(activeDepositedValidators) + _validatorsDelta >= 0,
-            "invalid validatorsDelta"
+            "Invalid validatorsDelta"
         );
         require(
             _consensusRewardsDelta >= -332 ether &&
                 _consensusRewardsDelta <= 332 ether &&
                 // new value must be positive
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
-            "invalid consensusRewardsDelta"
+            "Invalid consensusRewardsDelta"
         );
-        require(_ethToVaultAmount <= 32 ether * 3, "invalid wethToVaultAmount");
+        require(_ethToVaultAmount <= 32 ether * 3, "Invalid wethToVaultAmount");
 
         emit AccountingManuallyFixed(
             _validatorsDelta,
@@ -254,7 +254,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
-        require(_doAccounting(false), "fuse still blown");
+        require(_doAccounting(false), "Fuse still blown");
 
         // unpause since doAccounting was successful
         _unpause();

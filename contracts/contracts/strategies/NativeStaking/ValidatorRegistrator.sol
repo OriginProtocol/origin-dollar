@@ -166,7 +166,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
             requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
-            "insufficient WETH"
+            "Insufficient WETH"
         );
         require(
             activeDepositedValidators + validators.length <= MAX_VALIDATORS,

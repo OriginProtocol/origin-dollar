@@ -127,7 +127,7 @@ contract NativeStakingSSVStrategy is
 
         require(
             address(this).balance >= ethRewards,
-            "insufficient eth balance"
+            "Insufficient eth balance"
         );
 
         if (ethRewards > 0) {
@@ -299,7 +299,7 @@ contract NativeStakingSSVStrategy is
         require(
             msg.sender == FEE_ACCUMULATOR_ADDRESS ||
                 msg.sender == WETH_TOKEN_ADDRESS,
-            "eth not from allowed contracts"
+            "Eth not from allowed contracts"
         );
     }
 
