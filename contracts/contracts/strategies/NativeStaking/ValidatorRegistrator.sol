@@ -63,7 +63,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         bytes pubKey,
         uint256 amount,
-        bytes withdrawal_credentials
+        bytes withdrawalCredentials
     );
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
@@ -188,7 +188,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
-        bytes memory withdrawal_credentials = abi.encodePacked(
+        bytes memory withdrawalCredentials = abi.encodePacked(
             bytes1(0x01),
             bytes11(0),
             address(this)
@@ -209,7 +209,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 value: 32 ether
             }(
                 validators[i].pubkey,
-                withdrawal_credentials,
+                withdrawalCredentials,
                 validators[i].signature,
                 validators[i].depositDataRoot
             );
@@ -218,7 +218,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 pubKeyHash,
                 validators[i].pubkey,
                 32 ether,
-                withdrawal_credentials
+                withdrawalCredentials
             );
 
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
