@@ -6,7 +6,7 @@ const mainExport = async () => {
   console.log("Upgrading native staking strategy");
   await upgradeNativeStakingSSVStrategy();
 
-  console.log("Running 012 deployment done");
+  console.log("Running 013 deployment done");
   return true;
 };
 
