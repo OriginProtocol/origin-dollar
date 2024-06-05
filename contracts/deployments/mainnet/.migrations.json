@@ -84,5 +84,7 @@
   "091_simplified_oeth_vault": 1714138519,
   "092_woeth_ccip_zapper": 1714111493,
   "093_disable_frxeth_strategies": 1714495720,
-  "094_add_multisig_to_timelock": 1715176032
+  "094_add_multisig_to_timelock": 1715176032,
+  "095_ogn_buyback": 1716026320,
+  "096_vault_admin_upgrade": 1715943467
 }
