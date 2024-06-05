@@ -92,6 +92,7 @@ async function constructNewContract(
         addresses.mainnet.WETH,
         addresses.mainnet.SSV,
         addresses.mainnet.SSVNetwork,
+        600,
         feeAccumulatorAddress,
         addresses.mainnet.beaconChainDepositContract,
       ];
