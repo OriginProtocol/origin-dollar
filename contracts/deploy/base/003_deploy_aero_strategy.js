@@ -35,9 +35,9 @@ module.exports = deployOnBaseWithGuardian(
         // eslint-disable-next-line no-unused-vars
         const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
         const vaultSigner = await impersonateAndFund(oethVaultProxy.address);
-
-        await oeth.connect(vaultSigner).mint(josh.address, oethUnits("250"));
-        await weth.connect(josh).deposit({ value: oethUnits("350") });
+        console.log("Josh wallet", josh.address);
+        await oeth.connect(vaultSigner).mint(josh.address, oethUnits("2000"));
+        await weth.connect(josh).deposit({ value: oethUnits("2000") });
 
         // Loading the AeroRouter instance
         const aeroRouter = await ethers.getContractAt(
@@ -45,19 +45,19 @@ module.exports = deployOnBaseWithGuardian(
           addresses.base.aeroRouterAddress
         );
         // Approve the router to spend the tokens
-        await weth.connect(josh).approve(aeroRouter.address, oethUnits("250"));
-        await oeth.connect(josh).approve(aeroRouter.address, oethUnits("250"));
+        await weth.connect(josh).approve(aeroRouter.address, oethUnits("500"));
+        await oeth.connect(josh).approve(aeroRouter.address, oethUnits("500"));
 
         // Add initial liquidity (250 on each side)
         await aeroRouter.connect(josh).addLiquidity(
           weth.address,
           oeth.address,
           true,
-          oethUnits("250"),
-          oethUnits("250"),
+          oethUnits("500"),
+          oethUnits("500"),
           // Slippage adjusted
-          oethUnits("250"),
-          oethUnits("250"),
+          oethUnits("500"),
+          oethUnits("500"),
           josh.address,
           parseInt(Date.now() / 1000)
         );
