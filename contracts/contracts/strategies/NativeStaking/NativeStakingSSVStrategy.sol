@@ -135,17 +135,10 @@ contract NativeStakingSSVStrategy is
             consensusRewards = 0;
 
             // Convert ETH rewards to WETH
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRewards }();
+            IWETH9(WETH).deposit{ value: ethRewards }();
 
-            emit RewardTokenCollected(
-                harvesterAddress,
-                WETH_TOKEN_ADDRESS,
-                ethRewards
-            );
-            IERC20(WETH_TOKEN_ADDRESS).safeTransfer(
-                harvesterAddress,
-                ethRewards
-            );
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
+            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
         }
     }
 
@@ -161,7 +154,7 @@ contract NativeStakingSSVStrategy is
         onlyVault
         nonReentrant
     {
-        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        require(_asset == WETH, "Unsupported asset");
         depositedWethAccountedFor += _amount;
         _deposit(_asset, _amount);
     }
@@ -188,15 +181,13 @@ contract NativeStakingSSVStrategy is
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function depositAll() external override onlyVault nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
-            address(this)
-        );
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
 
         if (newWeth > 0) {
             depositedWethAccountedFor = wethBalance;
 
-            _deposit(WETH_TOKEN_ADDRESS, newWeth);
+            _deposit(WETH, newWeth);
         }
     }
 
@@ -237,11 +228,9 @@ contract NativeStakingSSVStrategy is
     /// ETH from full validator withdrawals is sent to the Vault using `doAccounting`.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
-            address(this)
-        );
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         if (wethBalance > 0) {
-            _withdraw(vaultAddress, WETH_TOKEN_ADDRESS, wethBalance);
+            _withdraw(vaultAddress, WETH, wethBalance);
         }
     }
 
@@ -260,14 +249,14 @@ contract NativeStakingSSVStrategy is
         override
         returns (uint256 balance)
     {
-        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        require(_asset == WETH, "Unsupported asset");
 
         balance =
             // add the ETH that has been staked in validators
             activeDepositedValidators *
             32 ether +
             // add the WETH in the strategy from deposits that are still to be staked
-            IERC20(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+            IERC20(WETH).balanceOf(address(this));
     }
 
     function pause() external onlyStrategist {
@@ -277,7 +266,7 @@ contract NativeStakingSSVStrategy is
     /// @notice Returns bool indicating whether asset is supported by strategy.
     /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == WETH_TOKEN_ADDRESS;
+        return _asset == WETH;
     }
 
     /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
@@ -297,14 +286,13 @@ contract NativeStakingSSVStrategy is
      */
     receive() external payable {
         require(
-            msg.sender == FEE_ACCUMULATOR_ADDRESS ||
-                msg.sender == WETH_TOKEN_ADDRESS,
+            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH,
             "Eth not from allowed contracts"
         );
     }
 
     function _wethWithdrawnToVault(uint256 _amount) internal override {
-        emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+        emit Withdrawal(WETH, address(0), _amount);
     }
 
     function _wethWithdrawnAndStaked(uint256 _amount) internal override {

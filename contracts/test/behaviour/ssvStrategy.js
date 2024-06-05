@@ -48,9 +48,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
       const { nativeStakingSSVStrategy, addresses } = await context();
-      await expect(
-        await nativeStakingSSVStrategy.WETH_TOKEN_ADDRESS()
-      ).to.equal(addresses.WETH, "Incorrect WETH address set");
+      await expect(await nativeStakingSSVStrategy.WETH()).to.equal(
+        addresses.WETH,
+        "Incorrect WETH address set"
+      );
       await expect(await nativeStakingSSVStrategy.SSV_TOKEN_ADDRESS()).to.equal(
         addresses.SSV,
         "Incorrect SSV Token address"

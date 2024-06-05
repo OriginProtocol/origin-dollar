@@ -129,9 +129,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             activeDepositedValidators -= fullyWithdrawnValidators;
 
             uint256 wethToVault = FULL_STAKE * fullyWithdrawnValidators;
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
+            IWETH9(WETH).deposit{ value: wethToVault }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
+            IWETH9(WETH).transfer(VAULT_ADDRESS, wethToVault);
             _wethWithdrawnToVault(wethToVault);
 
             emit AccountingFullyWithdrawnValidator(
@@ -158,9 +158,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         }
         // Beacon chain consensus rewards swept but also a slashed validator fully exited
         else if (ethRemaining > fuseIntervalEnd) {
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+            IWETH9(WETH).deposit{ value: ethRemaining }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
+            IWETH9(WETH).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
             _wethWithdrawnToVault(ethRemaining);
@@ -234,12 +234,9 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         );
         lastFixAccountingBlockNumber = block.number;
         if (_ethToVaultAmount > 0) {
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToVaultAmount }();
+            IWETH9(WETH).deposit{ value: _ethToVaultAmount }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(
-                VAULT_ADDRESS,
-                _ethToVaultAmount
-            );
+            IWETH9(WETH).transfer(VAULT_ADDRESS, _ethToVaultAmount);
             _wethWithdrawnToVault(_ethToVaultAmount);
         }
 

@@ -21,7 +21,7 @@ struct ValidatorStakeData {
  */
 abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The address of the Wrapped ETH (WETH) token contract
-    address public immutable WETH_TOKEN_ADDRESS;
+    address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
     address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
@@ -119,7 +119,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         address _ssvNetwork,
         uint256 _maxValidators
     ) {
-        WETH_TOKEN_ADDRESS = _wethAddress;
+        WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK_ADDRESS = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
@@ -165,7 +165,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
-            requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
+            requiredETH <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
         require(
@@ -180,7 +180,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
-        IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
+        IWETH9(WETH).withdraw(requiredETH);
         _wethWithdrawnAndStaked(requiredETH);
 
         /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
