@@ -128,27 +128,27 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
     function setRegistrator(address _address) external onlyGovernor {
-        emit RegistratorChanged(_address);
         validatorRegistrator = _address;
+        emit RegistratorChanged(_address);
     }
 
     /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
     function setStakingMonitor(address _address) external onlyGovernor {
-        emit StakingMonitorChanged(_address);
         stakingMonitor = _address;
+        emit StakingMonitorChanged(_address);
     }
 
     /// @notice Set the amount of ETH that can be staked before staking monitor
     // needs to a approve further staking by resetting the stake ETH tally
     function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
-        emit StakeETHThresholdChanged(_amount);
         stakeETHThreshold = _amount;
+        emit StakeETHThresholdChanged(_amount);
     }
 
     /// @notice Reset the stakeETHTally
     function resetStakeETHTally() external onlyStakingMonitor {
-        emit StakeETHTallyReset();
         stakeETHTally = 0;
+        emit StakeETHTallyReset();
     }
 
     /// @notice Stakes WETH to the node validators
@@ -214,14 +214,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 validators[i].depositDataRoot
             );
 
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
+
             emit ETHStaked(
                 pubKeyHash,
                 validators[i].pubkey,
                 32 ether,
                 withdrawalCredentials
             );
-
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
             unchecked {
                 ++i;
@@ -260,9 +260,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             ssvAmount,
             cluster
         );
-        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+
+        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -282,9 +283,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
         ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
-        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
+
+        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -314,9 +316,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             operatorIds,
             cluster
         );
-        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+
+        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
