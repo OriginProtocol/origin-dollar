@@ -115,33 +115,6 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    /// Will revert if the strategy is paused for accounting.
-    function _collectRewardTokens() internal override whenNotPaused {
-        // collect ETH from execution rewards from the fee accumulator
-        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
-            .collect();
-
-        // total ETH rewards to be harvested = execution rewards + consensus rewards
-        uint256 ethRewards = executionRewards + consensusRewards;
-
-        require(
-            address(this).balance >= ethRewards,
-            "Insufficient eth balance"
-        );
-
-        if (ethRewards > 0) {
-            // reset the counter keeping track of beacon chain consensus rewards
-            consensusRewards = 0;
-
-            // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{ value: ethRewards }();
-
-            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
-            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
-        }
-    }
-
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just checks the asset is WETH and emits the Deposit event.
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
@@ -234,8 +207,6 @@ contract NativeStakingSSVStrategy is
         }
     }
 
-    function _abstractSetPToken(address _asset, address) internal override {}
-
     /// @notice Returns the total value of (W)ETH that is staked to the validators
     /// and WETH deposits that are still to be staked.
     /// This does not include ETH from consensus rewards sitting in this strategy
@@ -288,6 +259,40 @@ contract NativeStakingSSVStrategy is
         );
     }
 
+    /***************************************
+                Internal functions
+    ****************************************/
+
+    function _abstractSetPToken(address _asset, address) internal override {}
+
+    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
+    /// Will revert if the strategy is paused for accounting.
+    function _collectRewardTokens() internal override whenNotPaused {
+        // collect ETH from execution rewards from the fee accumulator
+        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+            .collect();
+
+        // total ETH rewards to be harvested = execution rewards + consensus rewards
+        uint256 ethRewards = executionRewards + consensusRewards;
+
+        require(
+            address(this).balance >= ethRewards,
+            "Insufficient eth balance"
+        );
+
+        if (ethRewards > 0) {
+            // reset the counter keeping track of beacon chain consensus rewards
+            consensusRewards = 0;
+
+            // Convert ETH rewards to WETH
+            IWETH9(WETH).deposit{ value: ethRewards }();
+
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
+            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
+        }
+    }
+
+    /// @dev emits Withdrawal event from NativeStakingSSVStrategy
     function _wethWithdrawnToVault(uint256 _amount) internal override {
         emit Withdrawal(WETH, address(0), _amount);
     }
