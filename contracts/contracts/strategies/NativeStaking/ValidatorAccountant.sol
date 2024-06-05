@@ -149,15 +149,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         if (ethRemaining == 0) {
             // do nothing
             return accountingValid;
-        }
-        // Beacon chain consensus rewards swept (partial validator withdrawals)
-        else if (ethRemaining < fuseIntervalStart) {
+        } else if (ethRemaining < fuseIntervalStart) {
+            // Beacon chain consensus rewards swept (partial validator withdrawals)
             // solhint-disable-next-line reentrancy
             consensusRewards += ethRemaining;
             emit AccountingConsensusRewards(ethRemaining);
-        }
-        // Beacon chain consensus rewards swept but also a slashed validator fully exited
-        else if (ethRemaining > fuseIntervalEnd) {
+        } else if (ethRemaining > fuseIntervalEnd) {
+            // Beacon chain consensus rewards swept but also a slashed validator fully exited
             IWETH9(WETH).deposit{ value: ethRemaining }();
             // slither-disable-next-line unchecked-transfer
             IWETH9(WETH).transfer(VAULT_ADDRESS, ethRemaining);
