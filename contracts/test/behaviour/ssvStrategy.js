@@ -52,7 +52,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.WETH,
         "Incorrect WETH address set"
       );
-      await expect(await nativeStakingSSVStrategy.SSV_TOKEN_ADDRESS()).to.equal(
+      await expect(await nativeStakingSSVStrategy.SSV_TOKEN()).to.equal(
         addresses.SSV,
         "Incorrect SSV Token address"
       );
