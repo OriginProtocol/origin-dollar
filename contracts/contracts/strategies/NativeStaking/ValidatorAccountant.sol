@@ -256,6 +256,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                  Abstract
     ****************************************/
 
-    /// @dev allows for NativeStakingSSVStrategy contract to emit Withdrawal event
+    /// @dev allows for NativeStakingSSVStrategy contract to emit the Withdrawal event
     function _wethWithdrawnToVault(uint256 _amount) internal virtual;
 }
