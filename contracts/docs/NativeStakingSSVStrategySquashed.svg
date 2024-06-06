@@ -73,7 +73,7 @@
 <text text-anchor="start" x="8" y="-1487.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_msgData(): bytes &lt;&lt;Context&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1470.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_pause() &lt;&lt;whenNotPaused&gt;&gt; &lt;&lt;Pausable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1453.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unpause() &lt;&lt;whenPaused&gt;&gt; &lt;&lt;Pausable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1436.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_wethWithdrawnAndStaked(_amount: uint256) &lt;&lt;NativeStakingSSVStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1436.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_wethWithdrawn(_amount: uint256) &lt;&lt;NativeStakingSSVStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1419.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_doAccounting(pauseOnFail: bool): (accountingValid: bool) &lt;&lt;ValidatorAccountant&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1403.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_failAccounting(pauseOnFail: bool): (accountingValid: bool) &lt;&lt;ValidatorAccountant&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1386.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_wethWithdrawnToVault(_amount: uint256) &lt;&lt;NativeStakingSSVStrategy&gt;&gt;</text>
