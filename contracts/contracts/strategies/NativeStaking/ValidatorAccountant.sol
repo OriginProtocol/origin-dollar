@@ -12,9 +12,6 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @notice The minimum amount of blocks that need to pass between two calls to manuallyFixAccounting
     uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
-    /// @notice The maximum amount of ETH that can be staked by a validator
-    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
-    uint256 public constant FULL_STAKE = 32 ether;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
     uint256 public consensusRewards;
