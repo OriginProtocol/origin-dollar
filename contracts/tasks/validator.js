@@ -122,7 +122,11 @@ const registerValidators = async ({
     currentState = undefined;
   }
 
-  if (!(await stakingContractHas32ETH(nativeStakingStrategy, WETH))) {
+  const validatorsCount = await validatorsThatCanBeStaked(
+    nativeStakingStrategy,
+    WETH
+  );
+  if (validatorsCount == 0) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
@@ -144,7 +148,8 @@ const registerValidators = async ({
           p2p_base_url,
           nativeStakingStrategy.address, // SSV owner address & withdrawal address
           feeAccumulatorAddress, // execution layer fee recipient
-          validatorSpawnOperationalPeriodInDays
+          validatorSpawnOperationalPeriodInDays,
+          validatorsCount
         );
         currentState = await getState(store);
       }
@@ -232,8 +237,12 @@ const stakeValidators = async ({
     }
   }
 
-  if (!(await stakingContractHas32ETH(nativeStakingStrategy, WETH))) {
-    console.log(`Native staking contract doesn't have enough ETH, exiting`);
+  const validatorsCount = await validatorsThatCanBeStaked(
+    nativeStakingStrategy,
+    WETH
+  );
+  if (validatorsCount === 0) {
+    `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`;
     return;
   }
 
@@ -254,8 +263,8 @@ const stakeValidators = async ({
         );
         currentState = await getState(store);
 
-        // Check the validator has not already been staked
-        const hashedPubkey = keccak256(currentState.metadata.pubkey);
+        // Check the first validator has not already been staked
+        const hashedPubkey = keccak256(currentState.metadata.pubkeys[0]);
         const status = await nativeStakingStrategy.validatorsStates(
           hashedPubkey
         );
@@ -263,7 +272,8 @@ const stakeValidators = async ({
           console.log(
             `Validator with pubkey ${currentState.metadata.pubkey} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
           );
-          await clearState(currentState.uuid, store);
+          // await clearState(currentState.uuid, store);
+          // TODO just remove the validator that has already been staked from the metadata
           break;
         }
       }
@@ -435,7 +445,7 @@ const stakingContractPaused = async (nativeStakingStrategy) => {
   return paused;
 };
 
-const stakingContractHas32ETH = async (nativeStakingStrategy, WETH) => {
+const validatorsThatCanBeStaked = async (nativeStakingStrategy, WETH) => {
   const address = nativeStakingStrategy.address;
   const wethBalance = await WETH.balanceOf(address);
   log(
@@ -463,7 +473,10 @@ const stakingContractHas32ETH = async (nativeStakingStrategy, WETH) => {
     )} WETH available to stake`
   );
 
-  return availableETH.gte(parseEther("32"));
+  const validatorCountBN = availableETH.div(parseEther("32"));
+  const validatorCount = parseInt(validatorCountBN.toString());
+  log(`Native Staking Strategy can stake to ${validatorCount} validators`);
+  return validatorCount;
 };
 
 /* Make a GET or POST request to P2P API
@@ -515,15 +528,17 @@ const createValidatorRequest = async (
   p2p_base_url,
   nativeStakingStrategy,
   feeAccumulatorAddress,
-  validatorSpawnOperationalPeriodInDays
+  validatorSpawnOperationalPeriodInDays,
+  validatorsCount
 ) => {
   const uuid = uuidv4();
+  log(`validatorsCount: ${validatorsCount}`);
   await p2pRequest(
     `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/create`,
     p2p_api_key,
     "POST",
     {
-      validatorsCount: 1,
+      validatorsCount,
       id: uuid,
       withdrawalAddress: nativeStakingStrategy,
       feeRecipientAddress: feeAccumulatorAddress,
@@ -616,9 +631,9 @@ const broadcastRegisterValidator = async (
   // the publicKey and sharesData params are not encoded correctly by P2P so we will ignore them
   const [, operatorIds, , amount, cluster] = registerTransactionParams;
   // get publicKey and sharesData state storage
-  const publicKey = metadata.pubkey;
-  if (!publicKey) {
-    throw Error(`pubkey not found in metadata: ${metadata}`);
+  const publicKeys = metadata.pubkeys;
+  if (!publicKeys) {
+    throw Error(`pubkeys not found in metadata: ${metadata}`);
   }
   const { sharesData } = metadata;
   if (!sharesData) {
@@ -626,7 +641,7 @@ const broadcastRegisterValidator = async (
   }
 
   log(`About to register validator with:`);
-  log(`publicKey: ${publicKey}`);
+  log(`publicKeys: ${publicKeys}`);
   log(`operatorIds: ${operatorIds}`);
   log(`sharesData: ${sharesData}`);
   log(`amount: ${amount}`);
@@ -636,9 +651,9 @@ const broadcastRegisterValidator = async (
     const tx = await nativeStakingStrategy
       .connect(signer)
       .registerSsvValidators(
-        [publicKey],
+        publicKeys,
         operatorIds,
-        [sharesData],
+        sharesData,
         amount,
         cluster
       );
@@ -690,17 +705,21 @@ const confirmValidatorRegistered = async (
     } else {
       log(`Validators requested with uuid ${uuid} are ready`);
 
-      const pubkey = response.result.encryptedShares[0].publicKey;
       const registerValidatorData =
         response.result.validatorRegistrationTxs[0].data;
-      const sharesData = response.result.encryptedShares[0].sharesData;
+      const sharesData = [];
+      const pubkeys = [];
+      for (let i = 0; i < response.result.encryptedShares.length; i++) {
+        pubkeys[i] = response.result.encryptedShares[i].publicKey;
+        sharesData[i] = response.result.encryptedShares[i].sharesData;
+      }
       await updateState(uuid, nextState, store, {
-        pubkey,
+        pubkeys,
         registerValidatorData,
         sharesData,
       });
-      log(`Public key: ${pubkey}`);
-      log(`sharesData: ${sharesData}`);
+      log(`Public key: ${pubkeys}`);
+      log(`registerValidatorData: ${registerValidatorData}`);
       return true;
     }
   };
@@ -736,12 +755,12 @@ const getDepositData = async (
     } else if (response.result?.status === "validator-ready") {
       log(`Deposit data with request uuid ${uuid} is ready`);
 
-      const depositData = response.result.depositData[0];
+      const depositData = response.result.depositData;
       await updateState(uuid, nextState, store, {
         depositData,
       });
-      log(`signature: ${depositData.signature}`);
-      log(`depositDataRoot: ${depositData.depositDataRoot}`);
+      log(`signature 0: ${depositData[0].signature}`);
+      log(`depositDataRoot 0: ${depositData[0].depositDataRoot}`);
       return true;
     } else {
       log(`Error getting deposit data with uuid ${uuid}: ${response.error}`);
