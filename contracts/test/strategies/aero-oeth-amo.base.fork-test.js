@@ -9,6 +9,7 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { impersonateAndFund } = require("../../utils/signers");
 const { BigNumber } = require("ethers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 const log = require("../../utils/logger")("test:fork:aero-oeth:metapool");
 
@@ -25,6 +26,12 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
     beforeEach(async () => {
       fixture = await baseFixture();
     });
+
+    shouldBehaveLikeGovernable(() => ({
+      ...fixture,
+      strategy: fixture.aerodromeEthStrategy,
+    }));
+
     it("Should have constants and immutables set", async () => {
       const { aerodromeEthStrategy, oethReserveIndex, wethReserveIndex } =
         fixture;
@@ -526,7 +533,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         54,
         46
       );
-      console.log("Token In", tokenIn == weth.address, amountIn.toString());
       if (tokenIn == weth.address) {
         await weth
           .connect(josh)
