@@ -191,6 +191,8 @@ contract NativeStakingSSVStrategy is
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
+        _wethWithdrawn(_amount);
+
         IERC20(_asset).safeTransfer(_recipient, _amount);
         emit Withdrawal(_asset, address(0), _amount);
     }
@@ -300,11 +302,14 @@ contract NativeStakingSSVStrategy is
         emit Withdrawal(WETH, address(0), _amount);
     }
 
-    function _wethWithdrawnAndStaked(uint256 _amount) internal override {
+    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
+    /// the strategy knows how much WETH it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wethWithdrawn(uint256 _amount) internal override {
         /* In an ideal world we wouldn't need to reduce the deduction amount when the
          * depositedWethAccountedFor is smaller than the _amount.
          *
-         * The reason this is required is that a malicious actor could sent WETH direclty
+         * The reason this is required is that a malicious actor could sent WETH directly
          * to this contract and that would circumvent the increase of depositedWethAccountedFor
          * property. When the ETH would be staked the depositedWethAccountedFor amount could
          * be deducted so much that it would be negative.

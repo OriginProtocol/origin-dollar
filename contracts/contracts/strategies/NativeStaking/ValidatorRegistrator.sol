@@ -180,7 +180,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Convert required ETH from WETH
         IWETH9(WETH).withdraw(requiredETH);
-        _wethWithdrawnAndStaked(requiredETH);
+        _wethWithdrawn(requiredETH);
 
         /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
          * can sweep funds to.
@@ -348,6 +348,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                  Abstract
     ****************************************/
 
-    /// @dev allows for NativeStakingSSVStrategy contract know how much WETH had been staked
-    function _wethWithdrawnAndStaked(uint256 _amount) internal virtual;
+    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
+    /// the strategy knows how much WETH it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wethWithdrawn(uint256 _amount) internal virtual;
 }
