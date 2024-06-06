@@ -164,8 +164,10 @@ contract NativeStakingSSVStrategy is
         }
     }
 
-    /// @notice Withdraw WETH from this contract. Used only if some WETH for is lingering on the contract. That
-    /// can happen when:
+    /// @notice Withdraw WETH from this contract. Used only if some WETH for is lingering on the contract.
+    /// That can happen when:
+    ///   - after mints if the strategy is the default
+    ///   - time between depositToStrategy and stakeEth
     ///   - the deposit was not a multiple of 32 WETH
     ///   - someone sent WETH directly to this contract
     /// Will NOT revert if the strategy is paused from an accounting failure.
@@ -177,6 +179,7 @@ contract NativeStakingSSVStrategy is
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
+        require(_asset == WETH, "Unsupported asset");
         _withdraw(_recipient, _asset, _amount);
     }
 
