@@ -98,7 +98,6 @@ def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1
         raise Exception("Unrecognized 1Inch swap selector {}".format(selector))
 
     if buyback_token == OGN:
-        # print(amount, min_expected, data, std)
         return buyback.swapForOGN(
             amount,
             min_expected,

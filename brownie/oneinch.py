@@ -25,7 +25,7 @@ def get_1inch_price(from_token, to_token, retry_on_ratelimit=True):
 
   if retry_on_ratelimit and res.status_code == 429:
     time.sleep(2) # Wait for 2s and then try again
-    return get_1inch_quote(from_token, to_token, from_amount, False)
+    return get_1inch_price(from_token, to_token, False)
   elif res.status_code != 200:
     print(res.text)
     raise Exception("Error accessing 1inch api, expected status 200 received: %s" % res.status_code)
