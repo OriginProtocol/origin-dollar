@@ -237,10 +237,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
+        require(
+            publicKeys.length == sharesData.length,
+            "Pubkey sharesData mismatch"
+        );
         // Check each public key has not already been used
+        bytes32 pubKeyHash;
+        VALIDATOR_STATE currentState;
         for (uint256 i = 0; i < publicKeys.length; ++i) {
-            bytes32 pubKeyHash = keccak256(publicKeys[i]);
-            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+            pubKeyHash = keccak256(publicKeys[i]);
+            currentState = validatorsStates[pubKeyHash];
             require(
                 currentState == VALIDATOR_STATE.NON_REGISTERED,
                 "Validator already registered"
