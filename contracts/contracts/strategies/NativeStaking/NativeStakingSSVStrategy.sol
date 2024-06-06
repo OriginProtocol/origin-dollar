@@ -228,7 +228,7 @@ contract NativeStakingSSVStrategy is
         balance =
             // add the ETH that has been staked in validators
             activeDepositedValidators *
-            32 ether +
+            FULL_STAKE +
             // add the WETH in the strategy from deposits that are still to be staked
             IERC20(WETH).balanceOf(address(this));
     }
