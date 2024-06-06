@@ -20,6 +20,10 @@ struct ValidatorStakeData {
  * @author Origin Protocol Inc
  */
 abstract contract ValidatorRegistrator is Governable, Pausable {
+    /// @notice The maximum amount of ETH that can be staked by a validator
+    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
+    uint256 public constant FULL_STAKE = 32 ether;
+
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -59,12 +63,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
-    event ETHStaked(
-        bytes32 indexed pubKeyHash,
-        bytes pubKey,
-        uint256 amount,
-        bytes withdrawalCredentials
-    );
+    event ETHStaked(bytes32 indexed pubKeyHash, bytes pubKey, uint256 amount);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         bytes pubKey,
@@ -161,7 +160,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         onlyRegistrator
         whenNotPaused
     {
-        uint256 requiredETH = validators.length * 32 ether;
+        uint256 requiredETH = validators.length * FULL_STAKE;
 
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
@@ -205,7 +204,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-                value: 32 ether
+                value: FULL_STAKE
             }(
                 validators[i].pubkey,
                 withdrawalCredentials,
@@ -215,12 +214,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
-            emit ETHStaked(
-                pubKeyHash,
-                validators[i].pubkey,
-                32 ether,
-                withdrawalCredentials
-            );
+            emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
         // save gas by changing this storage variable only once rather each time in the loop.
         activeDepositedValidators += validators.length;

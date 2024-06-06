@@ -226,11 +226,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       await expect(stakeTx)
         .to.emit(nativeStakingSSVStrategy, "ETHStaked")
-        .withNamedArgs({
-          pubKeyHash: keccak256(testValidator.publicKey),
-          pubKey: testValidator.publicKey,
-          amount: oethUnits("32"),
-        });
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          oethUnits("32")
+        );
 
       expect(
         await nativeStakingSSVStrategy.validatorsStates(
