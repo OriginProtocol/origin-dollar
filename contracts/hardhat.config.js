@@ -105,7 +105,11 @@ module.exports = {
         mnemonic,
       },
       chainId,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
       ...(isForkTest
         ? {
             timeout: 0,
@@ -113,7 +117,9 @@ module.exports = {
             forking: {
               enabled: true,
               url: provider,
-              blockNumber: parseInt(forkBlockNumber),
+              blockNumber: forkBlockNumber
+                ? parseInt(forkBlockNumber)
+                : undefined,
               timeout: 0,
             },
           }
