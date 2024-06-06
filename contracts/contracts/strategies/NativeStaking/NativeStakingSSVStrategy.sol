@@ -191,8 +191,8 @@ contract NativeStakingSSVStrategy is
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        emit Withdrawal(_asset, address(0), _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
+        emit Withdrawal(_asset, address(0), _amount);
     }
 
     /// @notice transfer all WETH deposits back to the vault.
@@ -290,8 +290,8 @@ contract NativeStakingSSVStrategy is
             // Convert ETH rewards to WETH
             IWETH9(WETH).deposit{ value: ethRewards }();
 
-            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
             IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
         }
     }
 
