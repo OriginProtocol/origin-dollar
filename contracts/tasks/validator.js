@@ -635,10 +635,10 @@ const broadcastRegisterValidator = async (
   try {
     const tx = await nativeStakingStrategy
       .connect(signer)
-      .registerSsvValidator(
-        publicKey,
+      .registerSsvValidators(
+        [publicKey],
         operatorIds,
-        sharesData,
+        [sharesData],
         amount,
         cluster
       );

@@ -1087,15 +1087,15 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           )
         ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
-        const stakeAmount = ethUnits("32");
+        const ssvAmount = ethUnits("2");
         // Register a new validator with the SSV Network
         const regTx = await nativeStakingSSVStrategy
           .connect(validatorRegistrator)
-          .registerSsvValidator(
-            testPublicKeys[i],
+          .registerSsvValidators(
+            [testPublicKeys[i]],
             testValidator.operatorIds,
-            testValidator.sharesData,
-            stakeAmount,
+            [testValidator.sharesData],
+            ssvAmount,
             emptyCluster
           );
 

@@ -224,36 +224,40 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
+    /// @param publicKeys The public keys of the validators
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param sharesData The validator shares data
+    /// @param sharesData The shares data for each validator
     /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
-    function registerSsvValidator(
-        bytes calldata publicKey,
+    function registerSsvValidators(
+        bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
-        bytes calldata sharesData,
+        bytes[] calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
-        bytes32 pubKeyHash = keccak256(publicKey);
-        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
-        require(
-            currentState == VALIDATOR_STATE.NON_REGISTERED,
-            "Validator already registered"
-        );
-        ISSVNetwork(SSV_NETWORK).registerValidator(
-            publicKey,
+        // Check each public key has not already been used
+        for (uint256 i = 0; i < publicKeys.length; ++i) {
+            bytes32 pubKeyHash = keccak256(publicKeys[i]);
+            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+            require(
+                currentState == VALIDATOR_STATE.NON_REGISTERED,
+                "Validator already registered"
+            );
+
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+
+            emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
+        }
+
+        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator(
+            publicKeys,
             operatorIds,
             sharesData,
             ssvAmount,
             cluster
         );
-
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
-
-        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth

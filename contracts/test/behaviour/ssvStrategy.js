@@ -137,6 +137,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 
   describe("Validator operations", function () {
+    const stakeAmount = oethUnits("32");
     const depositToStrategy = async (amount) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
@@ -181,8 +182,6 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         hre
       );
 
-      const stakeAmount = oethUnits("32");
-
       expect(
         await nativeStakingSSVStrategy.validatorsStates(
           keccak256(testValidator.publicKey)
@@ -190,13 +189,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
       // Register a new validator with the SSV Network
+      const ssvAmount = oethUnits("2");
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .registerSsvValidator(
-          testValidator.publicKey,
+        .registerSsvValidators(
+          [testValidator.publicKey],
           testValidator.operatorIds,
-          testValidator.sharesData,
-          stakeAmount,
+          [testValidator.sharesData],
+          ssvAmount,
           cluster
         );
       await expect(regTx)
@@ -255,12 +255,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const {
         addresses,
         ssv,
+        ssvNetwork,
         nativeStakingSSVStrategy,
         validatorRegistrator,
         testValidator,
       } = await context();
-
-      const stakeAmount = oethUnits("32");
 
       await depositToStrategy(stakeAmount);
 
@@ -279,33 +278,33 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       });
 
       // Register a new validator the first time
-      await nativeStakingSSVStrategy
+      const ssvAmount = oethUnits("3");
+      const tx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .registerSsvValidator(
-          testValidator.publicKey,
+        .registerSsvValidators(
+          [testValidator.publicKey],
           testValidator.operatorIds,
-          testValidator.sharesData,
-          stakeAmount,
+          [testValidator.sharesData],
+          ssvAmount,
           cluster
         );
 
-      const emptyCluster = {
-        validatorCount: 0,
-        networkFeeIndex: 0,
-        index: 0,
-        active: true,
-        balance: 0,
-      };
+      const receipt = await tx.wait();
+      console.log(receipt.events);
+      const { chainId } = await ethers.provider.getNetwork();
+      const validatorAddedEvent = ssvNetwork.interface.parseLog(
+        receipt.events[chainId === 1 ? 3 : 2]
+      );
 
       // Try to register the same validator again in a different cluster
       const tx2 = nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .registerSsvValidator(
-          testValidator.publicKey,
+        .registerSsvValidators(
+          [testValidator.publicKey],
           [1, 20, 300, 4000],
-          testValidator.sharesData,
-          stakeAmount,
-          emptyCluster
+          [testValidator.sharesData],
+          ssvAmount,
+          validatorAddedEvent.args.cluster
         );
 
       await expect(tx2).to.be.revertedWith("Validator already registered");
@@ -361,7 +360,6 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         ssvNetwork: addresses.SSVNetwork,
       });
 
-      const stakeAmount = oethUnits("32");
       await setERC20TokenBalance(
         nativeStakingSSVStrategy.address,
         ssv,
@@ -370,13 +368,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
 
       // Register a new validator with the SSV network
+      const ssvAmount = oethUnits("4");
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .registerSsvValidator(
-          testValidator.publicKey,
+        .registerSsvValidators(
+          [testValidator.publicKey],
           testValidator.operatorIds,
-          testValidator.sharesData,
-          stakeAmount,
+          [testValidator.sharesData],
+          ssvAmount,
           cluster
         );
       const regReceipt = await regTx.wait();

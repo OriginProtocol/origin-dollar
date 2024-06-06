@@ -12,6 +12,14 @@ contract MockSSVNetwork {
         Cluster memory cluster
     ) external {}
 
+    function bulkRegisterValidator(
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds,
+        bytes[] calldata sharesData,
+        uint256 amount,
+        Cluster memory cluster
+    ) external {}
+
     function exitValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds

@@ -168,6 +168,11 @@ interface ISSVNetwork {
     function exitValidator(bytes memory publicKey, uint64[] memory operatorIds)
         external;
 
+    function bulkExitValidator(
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds
+    ) external;
+
     function getVersion() external pure returns (string memory version);
 
     function initialize(
@@ -216,11 +221,25 @@ interface ISSVNetwork {
         Cluster memory cluster
     ) external;
 
+    function bulkRegisterValidator(
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds,
+        bytes[] calldata sharesData,
+        uint256 amount,
+        Cluster memory cluster
+    ) external;
+
     function removeOperator(uint64 operatorId) external;
 
     function removeValidator(
         bytes memory publicKey,
         uint64[] memory operatorIds,
+        Cluster memory cluster
+    ) external;
+
+    function bulkRemoveValidator(
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds,
         Cluster memory cluster
     ) external;
 
