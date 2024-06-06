@@ -63,12 +63,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
-    event ETHStaked(
-        bytes32 indexed pubKeyHash,
-        bytes pubKey,
-        uint256 amount,
-        bytes withdrawalCredentials
-    );
+    event ETHStaked(bytes32 indexed pubKeyHash, bytes pubKey, uint256 amount);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         bytes pubKey,
@@ -219,12 +214,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
-            emit ETHStaked(
-                pubKeyHash,
-                validators[i].pubkey,
-                FULL_STAKE,
-                withdrawalCredentials
-            );
+            emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
         // save gas by changing this storage variable only once rather each time in the loop.
         activeDepositedValidators += validators.length;

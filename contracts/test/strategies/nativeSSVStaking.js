@@ -1133,11 +1133,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
           await expect(stakeTx)
             .to.emit(nativeStakingSSVStrategy, "ETHStaked")
-            .withNamedArgs({
-              pubKeyHash: keccak256(testPublicKeys[i]),
-              pubKey: testPublicKeys[i],
-              amount: parseEther("32"),
-            });
+            .withArgs(
+              keccak256(testPublicKeys[i]),
+              testPublicKeys[i],
+              parseEther("32")
+            );
 
           expect(
             await nativeStakingSSVStrategy.validatorsStates(
