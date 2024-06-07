@@ -780,7 +780,6 @@ module.exports = {
   isLocalhost,
   isMainnetOrFork,
   isMainnetForkTest,
-
   isForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
