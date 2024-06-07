@@ -44,18 +44,19 @@ mocha.before(function () {
     const isHoleskyTestFile = s.file.endsWith(".holesky.fork-test.js");
     const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
     const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
+    const unitTest = !s.file.endsWith(".fork-test.js");
 
     if (isArbFork) {
       return isArbTestFile;
     } else if (isMainnetForkTest) {
-      return isMainnetForkTestFile && !isArbTestFile;
+      return isMainnetForkTestFile;
     } else if (isBaseFork) {
       return isBaseTestFile;
     } else if (isHoleskyFork) {
       return isHoleskyTestFile;
     } else {
       // else is unit test
-      return !isMainnetForkTestFile && !isHoleskyTestFile;
+      return unitTest;
     }
   });
 
