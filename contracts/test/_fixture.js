@@ -289,6 +289,22 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
+  const nativeStakingStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const nativeStakingSSVStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    nativeStakingStrategyProxy.address
+  );
+
+  const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+  const nativeStakingFeeAccumulator = await ethers.getContractAt(
+    "FeeAccumulator",
+    nativeStakingFeeAccumulatorProxy.address
+  );
+
   let usdt,
     dai,
     tusd,
@@ -361,8 +377,6 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     convexEthMetaStrategy,
     fluxStrategy,
-    nativeStakingSSVStrategy,
-    nativeStakingFeeAccumulator,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -499,22 +513,6 @@ const defaultFixture = deployments.createFixture(async () => {
       fluxStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
-
-    const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
-      "NativeStakingFeeAccumulatorProxy"
-    );
-    nativeStakingFeeAccumulator = await ethers.getContractAt(
-      "FeeAccumulator",
-      nativeStakingFeeAccumulatorProxy.address
-    );
-
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
   } else {
@@ -614,13 +612,6 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
     swapper1Inch = await ethers.getContract("Swapper1InchV5");
