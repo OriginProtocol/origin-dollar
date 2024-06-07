@@ -160,6 +160,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         external
         onlyRegistrator
         whenNotPaused
+        nonReentrant
     {
         uint256 requiredETH = validators.length * FULL_STAKE;
 
