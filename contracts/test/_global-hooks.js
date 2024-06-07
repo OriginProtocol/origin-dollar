@@ -40,11 +40,11 @@ mocha.before(function () {
   // If you are running unit tests, scrape out all fork tests.
   // For fork tests, scrape out all unit tests.
   root.suites = root.suites.filter((s) => {
-    const isMainnetForkTestFile = s.file.endsWith("mainnet.fork-test.js");
-    const isHoleskyTestFile = s.file.endsWith(".holesky.fork-test.js");
-    const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
-    const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
-    const unitTest = !s.file.endsWith(".fork-test.js");
+    const isMainnetForkTestFile = s.file.endsWith("mainnet.fork.js");
+    const isHoleskyTestFile = s.file.endsWith(".holesky.fork.js");
+    const isArbTestFile = s.file.endsWith(".arb.fork.js");
+    const isBaseTestFile = s.file.endsWith(".base.fork.js");
+    const unitTest = !s.file.endsWith(".fork.js");
 
     if (isArbFork) {
       return isArbTestFile;
