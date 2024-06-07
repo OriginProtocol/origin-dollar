@@ -78,7 +78,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
-    validators: taskArgs.validators,
+    requestedValidators: taskArgs.validators,
   };
 };
 
@@ -115,7 +115,7 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
-  validators,
+  requestedValidators,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -125,22 +125,25 @@ const registerValidators = async ({
     currentState = undefined;
   }
 
-  const validatorsCount = await validatorsThatCanBeStaked(
+  const validatorsForEth = await validatorsThatCanBeStaked(
     nativeStakingStrategy,
-    WETH,
-    validators
+    WETH
   );
-  if (validatorsCount == 0 || validatorsCount < validators) {
+  if (validatorsForEth == 0 || validatorsForEth < requestedValidators) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
-    if (validators) {
+    if (requestedValidators) {
       console.log(
-        `Requested to spawn ${validators} validators but only ${validatorsCount} can be spawned.`
+        `Requested to spawn ${requestedValidators} validators but only ${validatorsForEth} can be spawned.`
       );
     }
     return;
   }
+  const validatorsCount =
+    validatorsForEth < requestedValidators
+      ? validatorsForEth
+      : requestedValidators;
 
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -292,13 +295,13 @@ const stakeValidators = async ({
       }
 
       if (currentState.state === "deposit_data_got") {
-        const ethForValidators = await validatorsThatCanBeStaked(
+        const validatorsForEth = await validatorsThatCanBeStaked(
           nativeStakingStrategy,
           WETH
         );
         const validatorsInState = currentState.metadata.pubkeys.length;
-        if (ethForValidators < validatorsInState) {
-          `Native staking contract only has enough WETH to stake to ${ethForValidators} validators, not ${validatorsInState}. Does depositToStrategy or resetStakeETHTally need to be called?`;
+        if (validatorsForEth < validatorsInState) {
+          `Native staking contract only has enough WETH to stake to ${validatorsForEth} validators, not ${validatorsInState}. Does depositToStrategy or resetStakeETHTally need to be called?`;
           return;
         }
 
