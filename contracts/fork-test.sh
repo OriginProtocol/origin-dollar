@@ -69,7 +69,25 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ ! -z "$1" ]; then
+    if [ -z "$1" ]; then
+        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
+            # Run all files with `.holesky.fork.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.holesky.fork.js"
+        elif [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
+            # Run all files with `.arb.fork.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.arb.fork.js"
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+            # Run all files with `.base.fork.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.base.fork.js"
+        else
+            # Run all files with `.fork-test.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.fork.js"
+        fi
+    else
         # Run specifc files when a param is given
         params+="$@"
     fi
