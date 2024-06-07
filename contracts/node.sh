@@ -33,6 +33,10 @@ main()
         elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
           PROVIDER_URL=$HOLESKY_PROVIDER_URL;
           BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+          PROVIDER_URL=$BASE_PROVIDER_URL;
+          BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
+          params+=" --tags base";
         fi
         
         echo "Fork Network: $FORK_NETWORK_NAME"

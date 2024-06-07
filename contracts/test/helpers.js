@@ -258,15 +258,21 @@ const isHolesky = hre.network.name == "holesky";
 const isExternalNet = isMainnet || isHolesky;
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
-const isMainnetOrFork = isMainnet || isFork;
+const isMainnetOrFork =
+  isMainnet || (isFork && hre.network.config.chainId == 1);
 const isForkTest = isFork && isTest;
+const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
-const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
+const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
+const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
+const isBase = hre.network.name == "base";
+const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
+const isBaseOrFork = isBase || isBaseFork;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -773,15 +779,21 @@ module.exports = {
   isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
+  isMainnetForkTest,
+
   isForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,
   isHoleskyFork,
+  isHoleskyOrFork,
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,
   isCI,
+  isBase,
+  isBaseFork,
+  isBaseOrFork,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,
