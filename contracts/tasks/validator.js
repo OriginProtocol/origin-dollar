@@ -235,6 +235,11 @@ const stakeValidators = async ({
   p2p_base_url,
   uuid,
 }) => {
+  if (await stakingContractPaused(nativeStakingStrategy)) {
+    console.log(`Native staking contract is paused... exiting`);
+    return;
+  }
+
   let currentState;
   if (!uuid) {
     currentState = await getState(store);
@@ -246,20 +251,6 @@ const stakeValidators = async ({
       );
       return;
     }
-  }
-
-  const validatorsCount = await validatorsThatCanBeStaked(
-    nativeStakingStrategy,
-    WETH
-  );
-  if (validatorsCount === 0) {
-    `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`;
-    return;
-  }
-
-  if (await stakingContractPaused(nativeStakingStrategy)) {
-    console.log(`Native staking contract is paused... exiting`);
-    return;
   }
 
   const executeOperateLoop = async () => {
@@ -301,6 +292,16 @@ const stakeValidators = async ({
       }
 
       if (currentState.state === "deposit_data_got") {
+        const ethForValidators = await validatorsThatCanBeStaked(
+          nativeStakingStrategy,
+          WETH
+        );
+        const validatorsInState = currentState.metadata.pubkeys.length;
+        if (ethForValidators < validatorsInState) {
+          `Native staking contract only has enough WETH to stake to ${ethForValidators} validators, not ${validatorsInState}. Does depositToStrategy or resetStakeETHTally need to be called?`;
+          return;
+        }
+
         await depositEth(
           store,
           currentState.uuid,
