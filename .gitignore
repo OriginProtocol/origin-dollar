@@ -70,6 +70,8 @@ contracts/.certora_*
 contracts/.last_confs
 **/*.bak
 
+*-gov-tx.json
+
 # Coverage #
 coverage
 coverage.json
