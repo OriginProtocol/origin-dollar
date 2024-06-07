@@ -78,9 +78,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         oethUnits("25.6"),
         "Incorrect fuse end"
       );
-      expect(
-        await nativeStakingSSVStrategy.validatorRegistrator()
-      ).to.equal(
+      expect(await nativeStakingSSVStrategy.validatorRegistrator()).to.equal(
         addresses.validatorRegistrator,
         "Incorrect validator registrator"
       );
@@ -88,8 +86,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         addresses.Guardian,
         "Incorrect staking monitor"
       );
-      expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
-        0,
+      expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.eq(
+        parseEther("512"),
         "stake ETH threshold"
       );
       expect(await nativeStakingSSVStrategy.MAX_VALIDATORS()).to.equal(500);
