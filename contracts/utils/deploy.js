@@ -5,6 +5,9 @@
 const hre = require("hardhat");
 const { BigNumber } = require("ethers");
 
+const fs = require("fs");
+const path = require("path");
+
 const {
   advanceTime,
   advanceBlocks,
@@ -933,6 +936,38 @@ async function useTransitionGovernance() {
   return guardianHasAccess;
 }
 
+function buildAndWriteGnosisJson(targets, calldata, safeAddress) {
+  const json = {
+    version: "1.0",
+    chainId: "1",
+    createdAt: parseInt(Date.now() / 1000),
+    meta: {
+      name: "Transaction Batch",
+      description: "",
+      txBuilderVersion: "1.16.1",
+      createdFromSafeAddress: safeAddress || addresses.mainnet.Guardian,
+      createdFromOwnerAddress: "",
+    },
+    transactions: targets.map((target, i) => ({
+      to: target,
+      value: "0",
+      data: calldata[i],
+      contractMethod: null,
+      contractInputValues: null,
+    })),
+  };
+
+  const fileName = path.join(
+    __dirname,
+    "../build",
+    Date.now().toString() + "-gov-tx.json"
+  );
+
+  fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
+
+  console.log("Wrote Gnosis Safe JSON to ", fileName);
+}
+
 async function handleTransitionGovernance(propDesc, propArgs) {
   const { timelockAddr } = await getNamedAccounts();
 
@@ -955,41 +990,83 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     keccak256(toUtf8Bytes(propDesc)), // Salt
   ];
 
-  console.log(args);
+  const opHash = await timelock.hashOperationBatch(...args);
 
-  log(`Reducing required queue time to 60 seconds`);
-  /* contracts/timelock/Timelock.sol storage slot layout:
-   * slot[0] address admin
-   * slot[1] address pendingAdmin
-   * slot[2] uint256 delay
-   */
-  await setStorageAt(
-    timelock.address,
-    "0x2",
-    "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
-  );
+  if (await timelock.isOperationDone(opHash)) {
+    // Already executed
+    return;
+  }
 
-  log(`Scheduling batch on Timelock...`);
-  await timelock.connect(guradian).scheduleBatch(...args, 60);
+  const isScheduled = await timelock.isOperation(opHash);
+  const reduceTime = !isScheduled;
 
-  log(`Preparing to execute...`);
-  await advanceTime(60 + 5);
-  await advanceBlocks(2);
+  if (!isScheduled) {
+    // Needs to be scheduled
+    const scheduleData = timelock.interface.encodeFunctionData(
+      "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)",
+      [...args, await timelock.getMinDelay()]
+    );
+
+    buildAndWriteGnosisJson(
+      [timelock.address],
+      [scheduleData],
+      addresses.mainnet.Guardian
+    );
+
+    if (reduceTime) {
+      log(`Reducing required queue time to 60 seconds`);
+      /* contracts/timelock/Timelock.sol storage slot layout:
+       * slot[0] address admin
+       * slot[1] address pendingAdmin
+       * slot[2] uint256 delay
+       */
+      await setStorageAt(
+        timelock.address,
+        "0x2",
+        "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+      );
+
+      log(`Scheduling batch on Timelock...`);
+      await timelock.connect(guradian).scheduleBatch(...args, 60);
+    }
+  }
+
+  if (!(await timelock.isOperationReady(opHash))) {
+    log(`Preparing to execute...`);
+    await advanceTime((await timelock.getMinDelay()) + 10);
+    await advanceBlocks(2);
+  }
+
+  if (isScheduled) {
+    // Write execution data
+    const executeData = timelock.interface.encodeFunctionData(
+      "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)",
+      [...args]
+    );
+
+    buildAndWriteGnosisJson(
+      [timelock.address],
+      [executeData],
+      addresses.mainnet.Guardian
+    );
+  }
 
   log(`Executing batch on Timelock...`);
   await timelock.connect(guradian).executeBatch(...args);
 
-  log(`Setting queue time back to 172800 seconds`);
-  /* contracts/timelock/Timelock.sol storage slot layout:
-   * slot[0] address admin
-   * slot[1] address pendingAdmin
-   * slot[2] uint256 delay
-   */
-  await setStorageAt(
-    timelock.address,
-    "0x2",
-    "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
-  );
+  if (reduceTime) {
+    log(`Setting queue time back to 172800 seconds`);
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
+  }
 }
 
 /**

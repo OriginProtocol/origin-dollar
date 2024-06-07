@@ -35,5 +35,13 @@ interface ITimelockController {
         bytes[] calldata payloads,
         bytes32 predecessor,
         bytes32 salt
-    ) external;
+    ) external view returns (bytes32);
+
+    function isOperationDone(bytes32 opHash) external view returns (bool);
+
+    function isOperationReady(bytes32 opHash) external view returns (bool);
+
+    function isOperation(bytes32 opHash) external view returns (bool);
+
+    function getMinDelay() external view returns (uint256);
 }
