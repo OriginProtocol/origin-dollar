@@ -92,6 +92,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         0,
         "stake ETH threshold"
       );
+      expect(await nativeStakingSSVStrategy.MAX_VALIDATORS()).to.equal(500);
     });
   });
 
