@@ -819,10 +819,11 @@ const upgradeNativeStakingFeeAccumulator = async () => {
     "NativeStakingFeeAccumulatorProxy"
   );
 
-  log("Deploy fee accumulator implementation");
+  log("About to deploy FeeAccumulator implementation");
   const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
     strategyProxy.address, // STRATEGY
   ]);
+  log(`New FeeAccumulator implementation: ${dFeeAccumulatorImpl.address}`);
 
   await withConfirmation(
     feeAccumulatorProxy
@@ -847,6 +848,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
     "NativeStakingFeeAccumulatorProxy"
   );
 
+  log("About to deploy NativeStakingSSVStrategy implementation");
   const dStrategyImpl = await deployWithConfirmation(
     "NativeStakingSSVStrategy",
     [
@@ -859,6 +861,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
   );
+  log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
 
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
