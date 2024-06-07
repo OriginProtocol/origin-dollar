@@ -270,6 +270,9 @@ const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
 const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isCI = process.env.GITHUB_ACTIONS;
+const isBase = hre.network.name == "base";
+const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
+const isBaseOrFork = isBase || isBaseFork;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -801,6 +804,9 @@ module.exports = {
   isArbitrumOneOrFork,
   isArbFork,
   isCI,
+  isBase,
+  isBaseFork,
+  isBaseOrFork,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,
