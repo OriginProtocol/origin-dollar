@@ -1032,7 +1032,13 @@ subtask(
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    40,
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)

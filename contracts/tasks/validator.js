@@ -78,6 +78,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
+    validators: taskArgs.validators,
   };
 };
 
@@ -114,6 +115,7 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
+  validators,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -125,12 +127,18 @@ const registerValidators = async ({
 
   const validatorsCount = await validatorsThatCanBeStaked(
     nativeStakingStrategy,
-    WETH
+    WETH,
+    validators
   );
-  if (validatorsCount == 0) {
+  if (validatorsCount == 0 || validatorsCount < validators) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
+    if (validators) {
+      console.log(
+        `Requested to spawn ${validators} validators but only ${validatorsCount} can be spawned.`
+      );
+    }
     return;
   }
 
