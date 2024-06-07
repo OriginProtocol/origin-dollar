@@ -971,9 +971,13 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       describe(`given ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards, ${testCase.deposits} deposits and ${nrOfActiveDepositedValidators} validators`, () => {
         beforeEach(async () => {
-          const { nativeStakingSSVStrategy, governor, weth, josh } = fixture;
-          const feeAccumulatorAddress =
-            await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
+          const {
+            nativeStakingSSVStrategy,
+            nativeStakingFeeAccumulator,
+            governor,
+            weth,
+            josh,
+          } = fixture;
 
           // setup state
           if (consensusRewards.gt(BigNumber.from("0"))) {
@@ -985,7 +989,10 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
           if (feeAccumulatorEth.gt(BigNumber.from("0"))) {
             // set execution layer rewards on the fee accumulator
-            await setBalance(feeAccumulatorAddress, feeAccumulatorEth);
+            await setBalance(
+              nativeStakingFeeAccumulator.address,
+              feeAccumulatorEth
+            );
           }
           if (deposits.gt(BigNumber.from("0"))) {
             // send eth to the strategy as if Vault would send it via a Deposit function
@@ -1006,7 +1013,12 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         });
 
         it(`then should harvest ${testCase.expectedHarvester} WETH`, async () => {
-          const { nativeStakingSSVStrategy, oethHarvester, weth } = fixture;
+          const {
+            nativeStakingSSVStrategy,
+            nativeStakingFeeAccumulator,
+            oethHarvester,
+            weth,
+          } = fixture;
           const sHarvester = await impersonateAndFund(oethHarvester.address);
 
           const harvesterWethBalanceBefore = await weth.balanceOf(
@@ -1024,6 +1036,17 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
               "RewardTokenCollected"
+            );
+          }
+
+          if (feeAccumulatorEth > 0) {
+            await expect(tx)
+              .to.emit(nativeStakingFeeAccumulator, "ExecutionRewardsCollected")
+              .withArgs(nativeStakingSSVStrategy.address, feeAccumulatorEth);
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingFeeAccumulator,
+              "ExecutionRewardsCollected"
             );
           }
 
