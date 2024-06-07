@@ -48,47 +48,47 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
       const { nativeStakingSSVStrategy, addresses } = await context();
-      await expect(await nativeStakingSSVStrategy.WETH()).to.equal(
+      expect(await nativeStakingSSVStrategy.WETH()).to.equal(
         addresses.WETH,
         "Incorrect WETH address set"
       );
-      await expect(await nativeStakingSSVStrategy.SSV_TOKEN()).to.equal(
+      expect(await nativeStakingSSVStrategy.SSV_TOKEN()).to.equal(
         addresses.SSV,
         "Incorrect SSV Token address"
       );
-      await expect(await nativeStakingSSVStrategy.SSV_NETWORK()).to.equal(
+      expect(await nativeStakingSSVStrategy.SSV_NETWORK()).to.equal(
         addresses.SSVNetwork,
         "Incorrect SSV Network address"
       );
-      await expect(
+      expect(
         await nativeStakingSSVStrategy.BEACON_CHAIN_DEPOSIT_CONTRACT()
       ).to.equal(
         addresses.beaconChainDepositContract,
         "Incorrect Beacon deposit contract"
       );
-      await expect(await nativeStakingSSVStrategy.VAULT_ADDRESS()).to.equal(
+      expect(await nativeStakingSSVStrategy.VAULT_ADDRESS()).to.equal(
         addresses.OETHVaultProxy,
         "Incorrect OETH Vault address"
       );
-      await expect(await nativeStakingSSVStrategy.fuseIntervalStart()).to.equal(
+      expect(await nativeStakingSSVStrategy.fuseIntervalStart()).to.equal(
         oethUnits("21.6"),
         "Incorrect fuse start"
       );
-      await expect(await nativeStakingSSVStrategy.fuseIntervalEnd()).to.equal(
+      expect(await nativeStakingSSVStrategy.fuseIntervalEnd()).to.equal(
         oethUnits("25.6"),
         "Incorrect fuse end"
       );
-      await expect(
+      expect(
         await nativeStakingSSVStrategy.validatorRegistrator()
       ).to.equal(
         addresses.validatorRegistrator,
         "Incorrect validator registrator"
       );
-      await expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
+      expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
         addresses.Guardian,
         "Incorrect staking monitor"
       );
-      await expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
+      expect(await nativeStakingSSVStrategy.stakeETHThreshold()).to.gt(
         0,
         "stake ETH threshold"
       );
