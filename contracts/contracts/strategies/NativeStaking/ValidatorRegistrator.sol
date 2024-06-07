@@ -198,10 +198,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // For each validator
         for (uint256 i = 0; i < validators.length; ++i) {
             bytes32 pubKeyHash = keccak256(validators[i].pubkey);
-            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
 
             require(
-                currentState == VALIDATOR_STATE.REGISTERED,
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED,
                 "Validator not registered"
             );
 
