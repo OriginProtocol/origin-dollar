@@ -39,7 +39,6 @@ main()
     if [[ $FORK_NETWORK_NAME == "arbitrumOne" ]]; then
       PROVIDER_URL=$ARBITRUM_PROVIDER_URL;
       BLOCK_NUMBER=$ARBITRUM_BLOCK_NUMBER;
-      params+=" --tags arbitrumOne";
     elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
       PROVIDER_URL=$HOLESKY_PROVIDER_URL;
       BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
