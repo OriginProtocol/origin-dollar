@@ -46,9 +46,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
     address public stakingMonitor;
     /// @notice Amount of ETH that can be staked before staking on the contract is suspended
-    /// and the governor needs to approve further staking
+    /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`
     uint256 public stakeETHThreshold;
-    /// @notice Amount of ETH that can has been staked since the last governor approval.
+    /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
+    /// This can not go above `stakeETHThreshold`.
     uint256 public stakeETHTally;
     // For future use
     uint256[47] private __gap;
