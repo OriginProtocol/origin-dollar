@@ -45,9 +45,14 @@ main()
       BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
     fi
 
+    if [[ $FORK_NETWORK_NAME == "base" ]]; then
+        PROVIDER_URL=$BASE_PROVIDER_URL;
+        BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
+    fi
+
     if $is_local; then
         # Check if any node is running on port 8545
-        defaultNodeUrl=http://localhost:8545
+        defaultNodeUrl=http://127.0.0.1:8545
 
         # If local node is running, $resp is a non empty string
         resp=$(curl -X POST --connect-timeout 3 -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' "$defaultNodeUrl")
@@ -65,7 +70,7 @@ main()
 
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/$FORK_NETWORK_NAME deployments/hardhat
-        echo "No running node detected spinning up a fresh one"
+        echo "No running node detected spinning up a fresh one with ${PROVIDER_URL}"
     else
         cp -r deployments/localhost deployments/hardhat
     fi
@@ -75,6 +80,10 @@ main()
             # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
             # pass all other params along
             params+="test/**/*.holesky.fork-test.js"
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+            # Run all files with `.base.fork-test.js` suffix when no file name param is given
+            # pass all other params along
+            params+="test/**/*.base.fork-test.js"
         else
             # Run all files with `.fork-test.js` suffix when no file name param is given
             # pass all other params along
