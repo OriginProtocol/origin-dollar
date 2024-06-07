@@ -62,6 +62,15 @@ object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
+object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
+}
+
+object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
 ' ' Oracle
 ' object "OETHOracleRouter" as oracle <<Origin>> #$originColor {
 ' pairs:
@@ -150,12 +159,19 @@ oeth <... cvxStrat
 
 harv <..> nativeStrat
 oethv <...> nativeStrat
-nativeStrat <.> feeAcc
+nativeStrat <..> feeAcc
 nativeStrat ..> ssvNet
 nativeStrat ..> bDep
 
-cvxStrat ..> crvPool
-cvxStrat ...> cvxPool
+harv <..> nativeStrat2
+oethv <...> nativeStrat2
+nativeStrat2 <..> feeAcc2
+nativeStrat2 ...> ssvNet
+nativeStrat2 ...> bDep
+
+cvxStrat ...> crvPool
+cvxStrat ....> cvxPool
+cvxStrat ...> cvxBoost
 ' cvxStrat ...> weth
 ' cvxStrat ...> cvx
 ' cvxStrat ...> crv
@@ -164,7 +180,6 @@ cvxStrat ...> cvxPool
 gauge <. cvxPool
 crvPool <.. gauge
 oeth <... crvPool
-cvxStrat ..> cvxBoost
 cvxBoost ..> cvxPool
 
 ' ' Vault to Assets
