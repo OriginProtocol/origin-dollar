@@ -47,6 +47,8 @@ contract MockDepositContract is IDepositContract {
             deposit_data_root != 0,
             "DepositContract: invalid deposit_data_root"
         );
+
+        deposit_count += 1;
     }
 
     function get_deposit_root() external view override returns (bytes32) {
@@ -58,6 +60,11 @@ contract MockDepositContract is IDepositContract {
     /// @return The deposit count encoded as a little endian 64-bit number.
     function get_deposit_count() external view override returns (bytes memory) {
         return to_little_endian_64(uint64(deposit_count));
+    }
+
+    /// @dev Just needed for unit test purposes
+    function get_deposit_count_uint() external view override returns (uint256 count) {
+        count = deposit_count;
     }
 
     function to_little_endian_64(uint64 value)
