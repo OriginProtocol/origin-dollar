@@ -6,6 +6,7 @@ const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
 
+const { getBlock } = require("./block");
 const { getClusterInfo } = require("../utils/ssv");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -232,7 +233,9 @@ const stakeValidators = async ({
     log("currentState", currentState);
 
     if (!currentState) {
-      console.log(`Failed to get state from local storage`);
+      console.log(
+        `There are no registered validators in local storage. Have you run registerValidators?`
+      );
       return;
     }
   }
@@ -899,6 +902,87 @@ async function pauseStaking() {
   await logTxDetails(tx, "pause");
 }
 
+async function snapStaking({ block, admin }) {
+  const blockTag = getBlock(block);
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  const feeAccumulator = await resolveContract(
+    "NativeStakingFeeAccumulatorProxy",
+    "FeeAccumulator"
+  );
+  const vault = await resolveContract("OETHVaultProxy", "IVault");
+
+  const { chainId } = await ethers.provider.getNetwork();
+
+  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const ssvAddress = addresses[networkMap[chainId]].SSV;
+  const ssv = await ethers.getContractAt("IERC20", ssvAddress);
+
+  const checkBalance = await strategy.checkBalance(wethAddress, { blockTag });
+  const wethStrategyBalance = await weth.balanceOf(strategy.address, {
+    blockTag,
+  });
+  const ssvStrategyBalance = await ssv.balanceOf(strategy.address, {
+    blockTag,
+  });
+  const ethStrategyBalance = await ethers.provider.getBalance(strategy.address);
+  const ethFeeAccumulatorBalance = await ethers.provider.getBalance(
+    feeAccumulator.address
+  );
+
+  console.log(
+    `Active validators        : ${await strategy.activeDepositedValidators({
+      blockTag,
+    })}`
+  );
+  console.log(
+    `Strategy balance         : ${formatUnits(
+      checkBalance
+    )} ether, ${checkBalance} wei`
+  );
+  console.log(
+    `Strategy ETH             : ${formatUnits(
+      ethStrategyBalance
+    )} ether, ${ethStrategyBalance} wei`
+  );
+  console.log(
+    `Fee accumulator ETH      : ${formatUnits(
+      ethFeeAccumulatorBalance
+    )} ether, ${ethFeeAccumulatorBalance} wei`
+  );
+  console.log(
+    `Deposited WETH           : ${await strategy.depositedWethAccountedFor({
+      blockTag,
+    })}`
+  );
+  console.log(`Strategy WETH            : ${formatUnits(wethStrategyBalance)}`);
+  console.log(`Strategy SSV             : ${formatUnits(ssvStrategyBalance)}`);
+
+  const stakeETHThreshold = await strategy.stakeETHThreshold({ blockTag });
+  const stakeETHTally = await strategy.stakeETHTally({ blockTag });
+
+  console.log(`Stake ETH Tally          : ${formatUnits(stakeETHTally)}`);
+  console.log(`Stake ETH Threshold      : ${formatUnits(stakeETHThreshold)}`);
+
+  if (admin) {
+    console.log(
+      `Staking monitor          : ${await strategy.stakingMonitor()}`
+    );
+    console.log(
+      `Validator registrator    : ${await strategy.validatorRegistrator()}`
+    );
+    console.log(`Governor                 : ${await strategy.governor()}`);
+    console.log(`Strategist               : ${await vault.strategistAddr()}`);
+    console.log(`Native staking strategy  : ${strategy.address}`);
+    console.log(`Fee accumulator          : ${feeAccumulator.address}`);
+  }
+}
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
@@ -910,4 +994,5 @@ module.exports = {
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 };

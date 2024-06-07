@@ -82,6 +82,7 @@ const {
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 } = require("./validator");
 const { harvestAndSwap } = require("./harvest");
 
@@ -1167,6 +1168,27 @@ subtask(
   "Pause the staking of the Native Staking Strategy"
 ).setAction(pauseStaking);
 task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
