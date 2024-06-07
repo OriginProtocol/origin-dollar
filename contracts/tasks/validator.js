@@ -270,7 +270,7 @@ const stakeValidators = async ({
         );
         if (validatorStateEnum[status] !== "REGISTERED") {
           console.log(
-            `Validator with pubkey ${currentState.metadata.pubkey} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
+            `Validator with pubkey ${currentState.metadata.pubkeys[0]} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
           );
           // await clearState(currentState.uuid, store);
           // TODO just remove the validator that has already been staked from the metadata
@@ -296,7 +296,7 @@ const stakeValidators = async ({
           "deposit_transaction_broadcast", // next state
           signer,
           nativeStakingStrategy,
-          currentState.metadata.pubkey,
+          currentState.metadata.pubkeys,
           currentState.metadata.depositData
         );
         currentState = await getState(store);
@@ -581,22 +581,22 @@ const depositEth = async (
   nextState,
   signer,
   nativeStakingStrategy,
-  pubkey,
+  pubkeys,
   depositData
 ) => {
-  const { signature, depositDataRoot } = depositData;
+  // const { signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
-    log(`pubkey: ${pubkey}`);
-    log(`signature: ${signature}`);
-    log(`depositDataRoot: ${depositDataRoot}`);
-    const tx = await nativeStakingStrategy.connect(signer).stakeEth([
-      {
-        pubkey,
-        signature,
-        depositDataRoot,
-      },
-    ]);
+
+    const validatorsStakeData = depositData.map((d, i) => ({
+      pubkey: pubkeys[i],
+      signature: d.signature,
+      depositDataRoot: d.depositDataRoot,
+    }));
+    log(`validators stake data: ${validatorsStakeData}`);
+    const tx = await nativeStakingStrategy
+      .connect(signer)
+      .stakeEth(validatorsStakeData);
 
     log(`Transaction to stake ETH has been broadcast with hash: ${tx.hash}`);
 
