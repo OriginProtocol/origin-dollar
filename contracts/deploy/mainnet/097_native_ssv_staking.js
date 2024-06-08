@@ -74,7 +74,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.WETH, // wethAddress
         addresses.mainnet.SSV, // ssvToken
         addresses.mainnet.SSVNetwork, // ssvNetwork
-        600, // maxValidators
+        500, // maxValidators
         dFeeAccumulatorProxy.address, // feeAccumulator
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
       ]
@@ -255,18 +255,19 @@ Upgraded the Harvester so ETH rewards can be sent straight to the Dripper as WET
             ethers.utils.parseEther("25.6"),
           ],
         },
-        // 5. set validator registrator
+        // 5. set validator registrator to the Defender Relayer
         {
           contract: cNativeStakingStrategy,
           signature: "setRegistrator(address)",
+          // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
         },
         // 6. set staking threshold
         {
           contract: cNativeStakingStrategy,
           signature: "setStakeETHThreshold(uint256)",
-          // TODO: confirm this number makes sense
-          args: [ethers.utils.parseEther("1024")], // 32ETH * 32
+          // 16 validators before the 5/8 multisig has to call resetStakeETHTally
+          args: [ethers.utils.parseEther("512")], // 16 * 32ETH
         },
         // 7. set staking monitor
         {

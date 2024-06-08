@@ -8,7 +8,7 @@
       },
       {
         "internalType": "address",
-        "name": "_ogv",
+        "name": "_ogn",
         "type": "address"
       },
       {
@@ -81,7 +81,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "minExpected",
+        "name": "amountOut",
         "type": "uint256"
       }
     ],
@@ -174,7 +174,7 @@
   },
   {
     "inputs": [],
-    "name": "balanceForOGV",
+    "name": "balanceForOGN",
     "outputs": [
       {
         "internalType": "uint256",
@@ -312,7 +312,7 @@
   },
   {
     "inputs": [],
-    "name": "ogv",
+    "name": "ogn",
     "outputs": [
       {
         "internalType": "address",
@@ -453,7 +453,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "minOGV",
+        "name": "minOGN",
         "type": "uint256"
       },
       {
@@ -462,7 +462,7 @@
         "type": "bytes"
       }
     ],
-    "name": "swapForOGV",
+    "name": "swapForOGN",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

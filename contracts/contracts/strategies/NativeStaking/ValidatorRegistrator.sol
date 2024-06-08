@@ -20,12 +20,16 @@ struct ValidatorStakeData {
  * @author Origin Protocol Inc
  */
 abstract contract ValidatorRegistrator is Governable, Pausable {
+    /// @notice The maximum amount of ETH that can be staked by a validator
+    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
+    uint256 public constant FULL_STAKE = 32 ether;
+
     /// @notice The address of the Wrapped ETH (WETH) token contract
-    address public immutable WETH_TOKEN_ADDRESS;
+    address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
     address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
-    address public immutable SSV_NETWORK_ADDRESS;
+    address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
     /// @notice Maximum number of validators that can be registered in this strategy
@@ -42,9 +46,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
     address public stakingMonitor;
     /// @notice Amount of ETH that can be staked before staking on the contract is suspended
-    /// and the governor needs to approve further staking
+    /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`
     uint256 public stakeETHThreshold;
-    /// @notice Amount of ETH that can has been staked since the last governor approval.
+    /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
+    /// This can not go above `stakeETHThreshold`.
     uint256 public stakeETHTally;
     // For future use
     uint256[47] private __gap;
@@ -59,12 +64,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
-    event ETHStaked(
-        bytes32 indexed pubKeyHash,
-        bytes pubKey,
-        uint256 amount,
-        bytes withdrawal_credentials
-    );
+    event ETHStaked(bytes32 indexed pubKeyHash, bytes pubKey, uint256 amount);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         bytes pubKey,
@@ -119,36 +119,36 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         address _ssvNetwork,
         uint256 _maxValidators
     ) {
-        WETH_TOKEN_ADDRESS = _wethAddress;
+        WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
-        SSV_NETWORK_ADDRESS = _ssvNetwork;
+        SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
         MAX_VALIDATORS = _maxValidators;
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
     function setRegistrator(address _address) external onlyGovernor {
-        emit RegistratorChanged(_address);
         validatorRegistrator = _address;
+        emit RegistratorChanged(_address);
     }
 
     /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
     function setStakingMonitor(address _address) external onlyGovernor {
-        emit StakingMonitorChanged(_address);
         stakingMonitor = _address;
+        emit StakingMonitorChanged(_address);
     }
 
     /// @notice Set the amount of ETH that can be staked before staking monitor
     // needs to a approve further staking by resetting the stake ETH tally
     function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
-        emit StakeETHThresholdChanged(_amount);
         stakeETHThreshold = _amount;
+        emit StakeETHThresholdChanged(_amount);
     }
 
     /// @notice Reset the stakeETHTally
     function resetStakeETHTally() external onlyStakingMonitor {
-        emit StakeETHTallyReset();
         stakeETHTally = 0;
+        emit StakeETHTallyReset();
     }
 
     /// @notice Stakes WETH to the node validators
@@ -160,13 +160,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         external
         onlyRegistrator
         whenNotPaused
+        nonReentrant
     {
-        uint256 requiredETH = validators.length * 32 ether;
+        uint256 requiredETH = validators.length * FULL_STAKE;
 
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
-            requiredETH <= IWETH9(WETH_TOKEN_ADDRESS).balanceOf(address(this)),
-            "insufficient WETH"
+            requiredETH <= IWETH9(WETH).balanceOf(address(this)),
+            "Insufficient WETH"
         );
         require(
             activeDepositedValidators + validators.length <= MAX_VALIDATORS,
@@ -180,89 +181,90 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
-        IWETH9(WETH_TOKEN_ADDRESS).withdraw(requiredETH);
-        _wethWithdrawnAndStaked(requiredETH);
+        IWETH9(WETH).withdraw(requiredETH);
+        _wethWithdrawn(requiredETH);
 
         /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
          * can sweep funds to.
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
-        bytes memory withdrawal_credentials = abi.encodePacked(
+        bytes memory withdrawalCredentials = abi.encodePacked(
             bytes1(0x01),
             bytes11(0),
             address(this)
         );
 
-        uint256 validatorsLength = validators.length;
         // For each validator
-        for (uint256 i = 0; i < validatorsLength; ) {
+        for (uint256 i = 0; i < validators.length; ++i) {
             bytes32 pubKeyHash = keccak256(validators[i].pubkey);
-            VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
 
             require(
-                currentState == VALIDATOR_STATE.REGISTERED,
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED,
                 "Validator not registered"
             );
 
             IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-                value: 32 ether
+                value: FULL_STAKE
             }(
                 validators[i].pubkey,
-                withdrawal_credentials,
+                withdrawalCredentials,
                 validators[i].signature,
                 validators[i].depositDataRoot
             );
 
-            emit ETHStaked(
-                pubKeyHash,
-                validators[i].pubkey,
-                32 ether,
-                withdrawal_credentials
-            );
-
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
 
-            unchecked {
-                ++i;
-            }
+            emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
         // save gas by changing this storage variable only once rather each time in the loop.
-        activeDepositedValidators += validatorsLength;
+        activeDepositedValidators += validators.length;
     }
 
     // slither-disable-end reentrancy-eth
 
     /// @notice Registers a new validator in the SSV Cluster.
     /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
+    /// @param publicKeys The public keys of the validators
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param sharesData The validator shares data
+    /// @param sharesData The shares data for each validator
     /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
-    function registerSsvValidator(
-        bytes calldata publicKey,
+    function registerSsvValidators(
+        bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
-        bytes calldata sharesData,
+        bytes[] calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
-        bytes32 pubKeyHash = keccak256(publicKey);
         require(
-            validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
-            "Validator already registered"
+            publicKeys.length == sharesData.length,
+            "Pubkey sharesData mismatch"
         );
-        ISSVNetwork(SSV_NETWORK_ADDRESS).registerValidator(
-            publicKey,
+        // Check each public key has not already been used
+        bytes32 pubKeyHash;
+        VALIDATOR_STATE currentState;
+        for (uint256 i = 0; i < publicKeys.length; ++i) {
+            pubKeyHash = keccak256(publicKeys[i]);
+            currentState = validatorsStates[pubKeyHash];
+            require(
+                currentState == VALIDATOR_STATE.NON_REGISTERED,
+                "Validator already registered"
+            );
+
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+
+            emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
+        }
+
+        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator(
+            publicKeys,
             operatorIds,
             sharesData,
             ssvAmount,
             cluster
         );
-        emit SSVValidatorRegistered(pubKeyHash, publicKey, operatorIds);
-
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -281,10 +283,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
-        ISSVNetwork(SSV_NETWORK_ADDRESS).exitValidator(publicKey, operatorIds);
-        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
+        ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
+
+        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -309,14 +312,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             "Validator not exiting"
         );
 
-        ISSVNetwork(SSV_NETWORK_ADDRESS).removeValidator(
+        ISSVNetwork(SSV_NETWORK).removeValidator(
             publicKey,
             operatorIds,
             cluster
         );
-        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+
+        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -333,7 +337,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint256 ssvAmount,
         Cluster memory cluster
     ) external onlyStrategist {
-        ISSVNetwork(SSV_NETWORK_ADDRESS).deposit(
+        ISSVNetwork(SSV_NETWORK).deposit(
             address(this),
             operatorIds,
             ssvAmount,
@@ -345,6 +349,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                  Abstract
     ****************************************/
 
-    /// @dev allows for NativeStakingSSVStrategy contract know how much WETH had been staked
-    function _wethWithdrawnAndStaked(uint256 _amount) internal virtual;
+    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
+    /// the strategy knows how much WETH it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wethWithdrawn(uint256 _amount) internal virtual;
 }

@@ -7,6 +7,8 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { resolveContract } = require("../utils/resolvers");
+const { genECDHKey, decryptValidatorKey } = require("./crypto.js");
 const { getSigner } = require("../utils/signers");
 
 const {
@@ -80,8 +82,8 @@ const {
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 } = require("./validator");
-const { resolveContract } = require("../utils/resolvers");
 const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -1030,7 +1032,13 @@ subtask(
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    40,
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
@@ -1166,6 +1174,62 @@ subtask(
   "Pause the staking of the Native Staking Strategy"
 ).setAction(pauseStaking);
 task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Encryption
+
+subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair")
+  .addOptionalParam(
+    "privateKey",
+    "Private key to encrypt the message with in base64 format",
+    undefined,
+    types.string
+  )
+  .setAction(genECDHKey);
+task("genECDHKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "decrypt",
+  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
+)
+  .addParam(
+    "privateKey",
+    "Private key to decrypt the message with in hex format without the 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "message",
+    "Encrypted validator key returned form P2P API",
+    undefined,
+    types.string
+  )
+  .setAction(decryptValidatorKey);
+task("decrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

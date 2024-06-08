@@ -53,7 +53,7 @@ group Governor sets staked ETH threshold
 
 gov -> nativeStrat : setStakeETHThreshold()
 activate nativeStrat
-note right: set ETH that can be staked before the staking monitor has to reset
+note right: set ETH that can be staked\nbefore the staking monitor has to reset
 return
 
 end group
@@ -62,7 +62,7 @@ group Staking monitor resets staked ETH
 
 admin -> nativeStrat : resetStakeETHTally()
 activate nativeStrat
-note right: resets the ETH that can be staked going forward
+note right: resets the ETH that\ncan be staked going forward
 return
 
 end group
@@ -88,7 +88,7 @@ activate api
 return status,\npubkey\nvalidatorRegistration,\nshareData
 note right : validatorRegistration contains the operatorIds and cluster details
 
-reg -> nativeStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster)
+reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
 activate nativeStrat
 note right
 cluster data:
@@ -98,7 +98,7 @@ The last index calculated for the cluster
 Flag indicating whether the cluster is active
 The SSV balance of the cluster
 end note
-nativeStrat -> ssvNet : registerValidator(\npublicKey,\noperatorIds,\nsharesData,\namount,\ncluster)
+nativeStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
 activate ssvNet
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv

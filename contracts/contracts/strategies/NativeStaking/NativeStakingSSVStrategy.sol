@@ -46,7 +46,7 @@ contract NativeStakingSSVStrategy is
     using SafeERC20 for IERC20;
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
-    address public immutable SSV_TOKEN_ADDRESS;
+    address public immutable SSV_TOKEN;
     /// @notice Fee collector address
     /// @dev this address will receive Execution layer rewards - These are rewards earned for
     /// executing transactions on the Ethereum network as part of block proposals. They include
@@ -95,7 +95,7 @@ contract NativeStakingSSVStrategy is
             _maxValidators
         )
     {
-        SSV_TOKEN_ADDRESS = _ssvToken;
+        SSV_TOKEN = _ssvToken;
         FEE_ACCUMULATOR_ADDRESS = payable(_feeAccumulator);
     }
 
@@ -115,40 +115,6 @@ contract NativeStakingSSVStrategy is
         );
     }
 
-    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    /// Will revert if the strategy is paused for accounting.
-    function _collectRewardTokens() internal override whenNotPaused {
-        // collect ETH from execution rewards from the fee accumulator
-        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
-            .collect();
-
-        // total ETH rewards to be harvested = execution rewards + consensus rewards
-        uint256 ethRewards = executionRewards + consensusRewards;
-
-        require(
-            address(this).balance >= ethRewards,
-            "insufficient eth balance"
-        );
-
-        if (ethRewards > 0) {
-            // reset the counter keeping track of beacon chain consensus rewards
-            consensusRewards = 0;
-
-            // Convert ETH rewards to WETH
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRewards }();
-
-            emit RewardTokenCollected(
-                harvesterAddress,
-                WETH_TOKEN_ADDRESS,
-                ethRewards
-            );
-            IERC20(WETH_TOKEN_ADDRESS).safeTransfer(
-                harvesterAddress,
-                ethRewards
-            );
-        }
-    }
-
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just checks the asset is WETH and emits the Deposit event.
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
@@ -161,7 +127,7 @@ contract NativeStakingSSVStrategy is
         onlyVault
         nonReentrant
     {
-        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        require(_asset == WETH, "Unsupported asset");
         depositedWethAccountedFor += _amount;
         _deposit(_asset, _amount);
     }
@@ -188,20 +154,20 @@ contract NativeStakingSSVStrategy is
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function depositAll() external override onlyVault nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
-            address(this)
-        );
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
 
         if (newWeth > 0) {
             depositedWethAccountedFor = wethBalance;
 
-            _deposit(WETH_TOKEN_ADDRESS, newWeth);
+            _deposit(WETH, newWeth);
         }
     }
 
-    /// @notice Withdraw WETH from this contract. Used only if some WETH for is lingering on the contract. That
-    /// can happen when:
+    /// @notice Withdraw WETH from this contract. Used only if some WETH for is lingering on the contract.
+    /// That can happen when:
+    ///   - after mints if the strategy is the default
+    ///   - time between depositToStrategy and stakeEth
     ///   - the deposit was not a multiple of 32 WETH
     ///   - someone sent WETH directly to this contract
     /// Will NOT revert if the strategy is paused from an accounting failure.
@@ -213,6 +179,7 @@ contract NativeStakingSSVStrategy is
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
+        require(_asset == WETH, "Unsupported asset");
         _withdraw(_recipient, _asset, _amount);
     }
 
@@ -224,8 +191,10 @@ contract NativeStakingSSVStrategy is
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        emit Withdrawal(_asset, address(0), _amount);
+        _wethWithdrawn(_amount);
+
         IERC20(_asset).safeTransfer(_recipient, _amount);
+        emit Withdrawal(_asset, address(0), _amount);
     }
 
     /// @notice transfer all WETH deposits back to the vault.
@@ -237,15 +206,11 @@ contract NativeStakingSSVStrategy is
     /// ETH from full validator withdrawals is sent to the Vault using `doAccounting`.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 wethBalance = IERC20(WETH_TOKEN_ADDRESS).balanceOf(
-            address(this)
-        );
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         if (wethBalance > 0) {
-            _withdraw(vaultAddress, WETH_TOKEN_ADDRESS, wethBalance);
+            _withdraw(vaultAddress, WETH, wethBalance);
         }
     }
-
-    function _abstractSetPToken(address _asset, address) internal override {}
 
     /// @notice Returns the total value of (W)ETH that is staked to the validators
     /// and WETH deposits that are still to be staked.
@@ -260,14 +225,14 @@ contract NativeStakingSSVStrategy is
         override
         returns (uint256 balance)
     {
-        require(_asset == WETH_TOKEN_ADDRESS, "Unsupported asset");
+        require(_asset == WETH, "Unsupported asset");
 
         balance =
             // add the ETH that has been staked in validators
             activeDepositedValidators *
-            32 ether +
+            FULL_STAKE +
             // add the WETH in the strategy from deposits that are still to be staked
-            IERC20(WETH_TOKEN_ADDRESS).balanceOf(address(this));
+            IERC20(WETH).balanceOf(address(this));
     }
 
     function pause() external onlyStrategist {
@@ -277,16 +242,13 @@ contract NativeStakingSSVStrategy is
     /// @notice Returns bool indicating whether asset is supported by strategy.
     /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == WETH_TOKEN_ADDRESS;
+        return _asset == WETH;
     }
 
     /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
         /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
-        IERC20(SSV_TOKEN_ADDRESS).approve(
-            SSV_NETWORK_ADDRESS,
-            type(uint256).max
-        );
+        IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
     }
 
     /**
@@ -297,21 +259,57 @@ contract NativeStakingSSVStrategy is
      */
     receive() external payable {
         require(
-            msg.sender == FEE_ACCUMULATOR_ADDRESS ||
-                msg.sender == WETH_TOKEN_ADDRESS,
-            "eth not from allowed contracts"
+            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH,
+            "Eth not from allowed contracts"
         );
     }
 
-    function _wethWithdrawnToVault(uint256 _amount) internal override {
-        emit Withdrawal(WETH_TOKEN_ADDRESS, address(0), _amount);
+    /***************************************
+                Internal functions
+    ****************************************/
+
+    function _abstractSetPToken(address _asset, address) internal override {}
+
+    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
+    /// Will revert if the strategy is paused for accounting.
+    function _collectRewardTokens() internal override whenNotPaused {
+        // collect ETH from execution rewards from the fee accumulator
+        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+            .collect();
+
+        // total ETH rewards to be harvested = execution rewards + consensus rewards
+        uint256 ethRewards = executionRewards + consensusRewards;
+
+        require(
+            address(this).balance >= ethRewards,
+            "Insufficient eth balance"
+        );
+
+        if (ethRewards > 0) {
+            // reset the counter keeping track of beacon chain consensus rewards
+            consensusRewards = 0;
+
+            // Convert ETH rewards to WETH
+            IWETH9(WETH).deposit{ value: ethRewards }();
+
+            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
+        }
     }
 
-    function _wethWithdrawnAndStaked(uint256 _amount) internal override {
+    /// @dev emits Withdrawal event from NativeStakingSSVStrategy
+    function _wethWithdrawnToVault(uint256 _amount) internal override {
+        emit Withdrawal(WETH, address(0), _amount);
+    }
+
+    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
+    /// the strategy knows how much WETH it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wethWithdrawn(uint256 _amount) internal override {
         /* In an ideal world we wouldn't need to reduce the deduction amount when the
          * depositedWethAccountedFor is smaller than the _amount.
          *
-         * The reason this is required is that a malicious actor could sent WETH direclty
+         * The reason this is required is that a malicious actor could sent WETH directly
          * to this contract and that would circumvent the increase of depositedWethAccountedFor
          * property. When the ETH would be staked the depositedWethAccountedFor amount could
          * be deducted so much that it would be negative.
