@@ -82,6 +82,7 @@ const {
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 } = require("./validator");
 const { harvestAndSwap } = require("./harvest");
 
@@ -1031,7 +1032,13 @@ subtask(
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    40,
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
@@ -1167,6 +1174,27 @@ subtask(
   "Pause the staking of the Native Staking Strategy"
 ).setAction(pauseStaking);
 task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
