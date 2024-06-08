@@ -957,7 +957,11 @@ function buildAndWriteGnosisJson(targets, calldata, safeAddress) {
     })),
   };
 
-  const fileName = path.join(__dirname, Date.now().toString() + "-gov-tx.json");
+  const fileName = path.join(
+    __dirname,
+    "..",
+    Date.now().toString() + "-gov-tx.json"
+  );
 
   fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
 
