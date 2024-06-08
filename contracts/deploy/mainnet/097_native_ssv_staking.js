@@ -148,44 +148,6 @@ module.exports = deploymentWithGovernanceProposal(
     // 10. Safe approve SSV token spending
     await cNativeStakingStrategy.connect(sDeployer).safeApproveAllTokens();
 
-    // 7. Deploy the Lido Withdrawal Strategy
-    const dWithdrawalStrategyStrategyProxy = await deployWithConfirmation(
-      "LidoWithdrawalStrategyProxy"
-    );
-    const cWithdrawalStrategyStrategyProxy = await ethers.getContractAt(
-      "LidoWithdrawalStrategyProxy",
-      dWithdrawalStrategyStrategyProxy.address
-    );
-    const dWithdrawalStrategyImpl = await deployWithConfirmation(
-      "LidoWithdrawalStrategy",
-      [
-        [addresses.zero, cVaultProxy.address], //_baseConfig
-      ]
-    );
-    const cWithdrawalStrategyImpl = await ethers.getContractAt(
-      "LidoWithdrawalStrategy",
-      dWithdrawalStrategyImpl.address
-    );
-
-    // 8. Init the Lido Withdrawal strategy proxy to point at the implementation, set the governor, and call initialize
-    const withdrawalInitData =
-      cWithdrawalStrategyImpl.interface.encodeFunctionData(
-        "initialize(address[],address[],address[])",
-        [
-          [], // reward token addresses
-          [], // asset token addresses
-          [], // platform tokens addresses
-        ]
-      );
-    await withConfirmation(
-      cWithdrawalStrategyStrategyProxy.connect(sDeployer)[proxyInitFunction](
-        cWithdrawalStrategyImpl.address,
-        addresses.mainnet.Timelock, // governance
-        withdrawalInitData, // data for call to the initialize function on the strategy
-        await getTxOpts()
-      )
-    );
-
     // 11. Deploy Harvester
     const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
     await deployWithConfirmation("OETHHarvester", [
@@ -205,14 +167,6 @@ module.exports = deploymentWithGovernanceProposal(
     console.log("Fee accumulator proxy: ", cFeeAccumulatorProxy.address);
     console.log("Fee accumulator implementation: ", cFeeAccumulator.address);
     console.log(
-      "Lido withdrawal strategy proxy: ",
-      cWithdrawalStrategyStrategyProxy.address
-    );
-    console.log(
-      "Lido withdrawal strategy implementation: ",
-      cWithdrawalStrategyImpl.address
-    );
-    console.log(
       "New OETHHarvester implementation: ",
       dOETHHarvesterImpl.address
     );
@@ -223,8 +177,6 @@ module.exports = deploymentWithGovernanceProposal(
       name: `Deploy new OETH Native Staking Strategy.
 
 This is going to become the main strategy to power the reward accrual of OETH by staking ETH in SSV validators.
-
-Deployed a new strategy to convert stETH to WETH at 1:1 using the Lido withdrawal queue.
 
 Upgraded the Harvester so ETH rewards can be sent straight to the Dripper as WETH.`,
       actions: [
@@ -281,12 +233,6 @@ Upgraded the Harvester so ETH rewards can be sent straight to the Dripper as WET
           contract: cOETHHarvesterProxy,
           signature: "upgradeTo(address)",
           args: [dOETHHarvesterImpl.address],
-        },
-        // 9. Add new Lido Withdrawal Strategy to vault
-        {
-          contract: cVaultAdmin,
-          signature: "approveStrategy(address)",
-          args: [cWithdrawalStrategyStrategyProxy.address],
         },
       ],
     };
