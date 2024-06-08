@@ -1,10 +1,16 @@
 const { subtask, task, types } = require("hardhat/config");
-
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
+const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
+const addresses = require("../utils/addresses");
+const { networkMap } = require("../utils/hardhat-helpers");
+const { resolveContract } = require("../utils/resolvers");
+const { genECDHKey, decryptValidatorKey } = require("./crypto.js");
+const { getSigner } = require("../utils/signers");
+
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -26,6 +32,7 @@ const {
   tokenTransfer,
   tokenTransferFrom,
 } = require("./tokens");
+const { depositWETH, withdrawWETH } = require("./weth");
 const {
   allocate,
   capital,
@@ -46,6 +53,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const { depositSSV, printClusterInfo } = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -53,6 +61,46 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const {
+  governor,
+  transferGovernance,
+  claimGovernance,
+} = require("./governable");
+const {
+  getRewardTokenAddresses,
+  setRewardTokenAddresses,
+  checkBalance,
+} = require("./strategy");
+const {
+  validatorOperationsConfig,
+  registerValidators,
+  stakeValidators,
+  exitValidator,
+  removeValidator,
+  doAccounting,
+  resetStakeETHTally,
+  setStakeETHThreshold,
+  fixAccounting,
+  pauseStaking,
+  snapStaking,
+} = require("./validator");
+const { harvestAndSwap } = require("./harvest");
+
+// can not import from utils/deploy since that imports hardhat globally
+const withConfirmation = async (deployOrTransactionPromise) => {
+  const hre = require("hardhat");
+
+  const result = await deployOrTransactionPromise;
+  const receipt = await hre.ethers.provider.waitForTransaction(
+    result.receipt ? result.receipt.transactionHash : result.hash,
+    3
+  );
+
+  result.receipt = receipt;
+  return result;
+};
+
+const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -178,6 +226,37 @@ task("transferFrom").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+// WETH tasks
+subtask("depositWETH", "Deposit ETH into WETH")
+  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await depositWETH({ ...taskArgs, weth, signer });
+  });
+task("depositWETH").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("withdrawWETH", "Withdraw ETH from WETH")
+  .addParam("amount", "Amount of ETH to withdraw", undefined, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const weth = await ethers.getContractAt("IWETH9", wethAddress);
+
+    await withdrawWETH({ ...taskArgs, weth, signer });
+  });
+task("withdrawWETH").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
@@ -243,6 +322,12 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
     types.string
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
+  .addOptionalParam(
+    "approve",
+    "Approve the asset to the OETH Vault before the mint",
+    true,
+    types.boolean
+  )
   .setAction(mint);
 task("mint").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -739,3 +824,427 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
     types.int
   )
   .setAction(proxyUpgrades);
+
+// Governable
+
+task("governor", "Gets the governor of a Governable contract")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(governor);
+
+task(
+  "transferGovernance",
+  "Start transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(transferGovernance);
+
+task(
+  "claimGovernance",
+  "Complete the transfer of governance for a Governable contract"
+)
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(claimGovernance);
+
+// Strategy
+
+task("checkBalance", "Gets the asset balance of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(checkBalance);
+
+task("getRewardTokenAddresses", "Gets the reward tokens of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .setAction(getRewardTokenAddresses);
+
+task("setRewardTokenAddresses", "Sets the reward token of a strategy")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg WETH, CRV, CVX, BAL or AURA",
+    undefined,
+    types.string
+  )
+  .setAction(setRewardTokenAddresses);
+
+// Harvester
+
+task("harvest", "Harvest and swap rewards for a strategy")
+  .addParam(
+    "strategy",
+    "Name of the strategy proxy contract or address. eg NativeStakingSSVStrategyProxy",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "harvester",
+    "Name of the harvester proxy contract or address",
+    "OETHHarvesterProxy",
+    types.string
+  )
+  .setAction(harvestAndSwap);
+
+// SSV
+
+subtask("getClusterInfo", "Print out information regarding SSV cluster")
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    "",
+    types.string
+  )
+  .addParam(
+    "owner",
+    "Address of the cluster owner. Default to NodeDelegator",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const { chainId } = await ethers.provider.getNetwork();
+    const network = networkMap[chainId];
+    const ssvNetwork = addresses[network].SSVNetwork;
+
+    log(
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
+    );
+    await printClusterInfo({
+      ...taskArgs,
+      ownerAddress: taskArgs.owner,
+      chainId: chainId,
+      ssvNetwork,
+    });
+  });
+task("getClusterInfo").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositSSV",
+  "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
+)
+  .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(depositSSV);
+task("depositSSV").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * The native staking proxy needs to be deployed via the defender relayer because the SSV networkd
+ * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
+ * the recipient
+ */
+subtask(
+  "deployNativeStakingProxy",
+  "Deploy the native staking proxy via the Defender Relayer"
+).setAction(async () => {
+  const signer = await getSigner();
+
+  log("Deploy NativeStakingSSVStrategyProxy");
+  const nativeStakingProxyFactory = await ethers.getContractFactory(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const contract = await nativeStakingProxyFactory.connect(signer).deploy();
+  await contract.deployed();
+  log(`Address of deployed contract is: ${contract.address}`);
+});
+task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * Governance of the SSV strategy proxy needs to be transferred to the deployer address so that
+ * the deployer is able to initialize the proxy
+ */
+subtask(
+  "transferGovernanceNativeStakingProxy",
+  "Transfer governance of the proxy from the the Defender Relayer"
+)
+  .addParam(
+    "deployer",
+    "Address of the deployer of NativeStakingSSVStrategy implementation",
+    undefined,
+    types.string
+  )
+  .setAction(async ({ deployer }) => {
+    const signer = await getSigner();
+
+    const nativeStakingProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+    const oldGovernor = await nativeStakingProxy.governor();
+    log(
+      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+    );
+    await withConfirmation(
+      nativeStakingProxy.connect(signer).transferGovernance(deployer)
+    );
+    log(
+      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
+    );
+  });
+task("transferGovernanceNativeStakingProxy").setAction(
+  async (_, __, runSuper) => {
+    return runSuper();
+  }
+);
+
+// Validator Operations
+
+subtask(
+  "registerValidators",
+  "Creates the required amount of new SSV validators and stakes ETH"
+)
+  .addOptionalParam(
+    "days",
+    "SSV Cluster operational time in days",
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
+    types.int
+  )
+  .addOptionalParam("clear", "Clear storage", false, types.boolean)
+  .setAction(async (taskArgs) => {
+    const config = await validatorOperationsConfig(taskArgs);
+    await registerValidators(config);
+  });
+task("registerValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidators",
+  "Creates the required amount of new SSV validators and stakes ETH"
+)
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const config = await validatorOperationsConfig(taskArgs);
+    await stakeValidators(config);
+  });
+task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("exitValidator", "Starts the exit process from a validator")
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(exitValidator);
+task("exitValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidator",
+  "Removes a validator from the SSV cluster after it has exited the beacon chain"
+)
+  .addParam(
+    "pubkey",
+    "Public key of the validator to exit",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 60,79,220,349",
+    undefined,
+    types.string
+  )
+  .setAction(removeValidator);
+task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "doAccounting",
+  "Account for consensus rewards and validator exits in the Native Staking Strategy"
+).setAction(async () => {
+  const signer = await getSigner();
+
+  const nativeStakingStrategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  await doAccounting({
+    signer,
+    nativeStakingStrategy,
+  });
+});
+task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(resetStakeETHTally);
+task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "setStakeETHThreshold",
+  "Sets the amount of Ether than can be staked before needing a reset"
+)
+  .addParam("amount", "Amount in ether", undefined, types.int)
+  .setAction(setStakeETHThreshold);
+task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
+  .addOptionalParam(
+    "validators",
+    "The number of validators to adjust up or down (negative)",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The number of consensus rewards to adjust up or down (negative) in ether",
+    0,
+    types.float
+  )
+  .addOptionalParam(
+    "ether",
+    "amount of ether that gets wrapped into WETH and sent to the Vault",
+    0,
+    types.float
+  )
+  .setAction(fixAccounting);
+task("fixAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).setAction(pauseStaking);
+task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Encryption
+
+subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair")
+  .addOptionalParam(
+    "privateKey",
+    "Private key to encrypt the message with in base64 format",
+    undefined,
+    types.string
+  )
+  .setAction(genECDHKey);
+task("genECDHKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "decrypt",
+  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
+)
+  .addParam(
+    "privateKey",
+    "Private key to decrypt the message with in hex format without the 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "message",
+    "Encrypted validator key returned form P2P API",
+    undefined,
+    types.string
+  )
+  .setAction(decryptValidatorKey);
+task("decrypt").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Defender
+subtask(
+  "setActionVars",
+  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
+)
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .setAction(setActionVars);
+task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

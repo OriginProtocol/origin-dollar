@@ -209,3 +209,28 @@ contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract BridgedWOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice NativeStakingSSVStrategyProxy delegates calls to NativeStakingSSVStrategy implementation
+ */
+contract NativeStakingSSVStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulatorProxy delegates calls to NativeStakingFeeCollector implementation
+ */
+contract NativeStakingFeeAccumulatorProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
+ */
+contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

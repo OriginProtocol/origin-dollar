@@ -477,6 +477,23 @@ abstract contract BaseHarvester is Governable {
         address _rewardTo,
         IOracle _priceProvider
     ) internal virtual {
+        uint256 balance = IERC20(_swapToken).balanceOf(address(this));
+
+        // No need to swap if the reward token is the base token. eg USDT or WETH.
+        // There is also no limit on the transfer. Everything in the harvester will be transferred
+        // to the Dripper regardless of the liquidationLimit config.
+        if (_swapToken == baseTokenAddress) {
+            IERC20(_swapToken).safeTransfer(rewardProceedsAddress, balance);
+            // currently not paying the farmer any rewards as there is no swap
+            emit RewardProceedsTransferred(
+                baseTokenAddress,
+                address(0),
+                balance,
+                0
+            );
+            return;
+        }
+
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
@@ -486,8 +503,6 @@ abstract contract BaseHarvester is Governable {
         if (!tokenConfig.doSwapRewardToken) {
             return;
         }
-
-        uint256 balance = IERC20(_swapToken).balanceOf(address(this));
 
         if (balance == 0) {
             return;
@@ -548,14 +563,14 @@ abstract contract BaseHarvester is Governable {
             tokenConfig.harvestRewardBps,
             1e4
         );
-        uint256 protcolYield = baseTokenBalance - farmerFee;
+        uint256 protocolYield = baseTokenBalance - farmerFee;
 
-        baseToken.safeTransfer(rewardProceedsAddress, protcolYield);
+        baseToken.safeTransfer(rewardProceedsAddress, protocolYield);
         baseToken.safeTransfer(_rewardTo, farmerFee);
         emit RewardProceedsTransferred(
             baseTokenAddress,
             _rewardTo,
-            protcolYield,
+            protocolYield,
             farmerFee
         );
     }

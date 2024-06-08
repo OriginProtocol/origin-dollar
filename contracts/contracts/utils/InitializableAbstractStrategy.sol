@@ -114,7 +114,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Default implementation that transfers reward tokens to the Vault.
+     * @dev Default implementation that transfers reward tokens to the Harvester
      * Implementing strategies need to add custom logic to collect the rewards.
      */
     function _collectRewardTokens() internal virtual {

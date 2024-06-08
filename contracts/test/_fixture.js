@@ -9,7 +9,9 @@ require("./_global-hooks");
 const { hotDeployOption } = require("./_hot-deploy.js");
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
+const { resolveContract } = require("../utils/resolvers");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
+
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -27,6 +29,8 @@ const {
   ousdUnits,
   units,
   isFork,
+  isHolesky,
+  isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
 
@@ -52,6 +56,137 @@ const { impersonateAndFund } = require("../utils/signers");
 const log = require("../utils/logger")("test:fixtures");
 
 let snapshotId;
+
+const simpleOETHFixture = deployments.createFixture(async () => {
+  if (!snapshotId && !isFork) {
+    snapshotId = await nodeSnapshot();
+  }
+
+  log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
+  log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
+  // Run the contract deployments
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true,
+    fallbackToGlobal: true,
+  });
+  log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
+  );
+
+  const oethOracleRouter = await ethers.getContract(
+    isFork ? "OETHOracleRouter" : "OracleRouter"
+  );
+
+  let weth, ssv, nativeStakingSSVStrategy, oethDripper;
+
+  if (isFork) {
+    let addressContext = addresses.mainnet;
+    if (isHolesky || isHoleskyFork) {
+      addressContext = addresses.holesky;
+    }
+
+    weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
+    ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
+
+    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+    oethDripper = await ethers.getContractAt(
+      "OETHDripper",
+      oethDripperProxy.address
+    );
+
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
+  } else {
+    weth = await ethers.getContractAt("MockWETH");
+    ssv = await ethers.getContract("MockSSV");
+
+    const nativeStakingStrategyProxy = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
+    nativeStakingSSVStrategy = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      nativeStakingStrategyProxy.address
+    );
+  }
+
+  if (!isFork) {
+    // Enable capital movement
+    await oethVault.connect(sGovernor).unpauseCapital();
+  }
+
+  const signers = await hre.ethers.getSigners();
+  let governor = signers[1];
+  let strategist = signers[0];
+
+  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
+
+  if (isFork) {
+    governor = await ethers.provider.getSigner(governorAddr);
+    strategist = await ethers.provider.getSigner(strategistAddr);
+
+    for (const user of [matt, josh, anna, domen, daniel, franck]) {
+      // Everyone gets free weth
+      await setERC20TokenBalance(user.address, weth, "1000000", hre);
+      // And vault can rug them all
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  } else {
+    // Fund WETH contract
+    await hardhatSetBalance(weth.address, "999999999999999");
+
+    // Fund all with mockTokens
+    await fundAccountsForOETHUnitTests();
+
+    // Reset allowances
+    for (const user of [matt, josh, domen, daniel, franck]) {
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  }
+
+  return {
+    // Accounts
+    matt,
+    josh,
+    anna,
+    governor,
+    strategist,
+    domen,
+    daniel,
+    franck,
+    // Contracts
+    oethOracleRouter,
+    // Assets
+    ssv,
+    weth,
+    // OETH
+    oethVault,
+    oeth,
+    nativeStakingSSVStrategy,
+    oethDripper,
+    oethHarvester,
+  };
+});
 
 const defaultFixture = deployments.createFixture(async () => {
   if (!snapshotId && !isFork) {
@@ -154,6 +289,22 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
+  const nativeStakingStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const nativeStakingSSVStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    nativeStakingStrategyProxy.address
+  );
+
+  const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+  const nativeStakingFeeAccumulator = await ethers.getContractAt(
+    "FeeAccumulator",
+    nativeStakingFeeAccumulatorProxy.address
+  );
+
   let usdt,
     dai,
     tusd,
@@ -183,6 +334,7 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSD,
     fdai,
     fusdt,
+    ssv,
     fusdc;
 
   let chainlinkOracleFeedDAI,
@@ -201,6 +353,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoCompoundStrategy,
     fraxEthStrategy,
     frxEthRedeemStrategy,
+    lidoWithdrawalStrategy,
     balancerREthStrategy,
     makerDsrStrategy,
     morphoAaveStrategy,
@@ -215,6 +368,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
+    depositContractUtils,
     LUSDMetaStrategy,
     oethDripper,
     oethZapper,
@@ -261,6 +415,7 @@ const defaultFixture = deployments.createFixture(async () => {
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
     ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
+    ssv = await ethers.getContractAt(erc20Abi, addresses.mainnet.SSV);
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -327,6 +482,14 @@ const defaultFixture = deployments.createFixture(async () => {
       frxEthRedeemStrategyProxy.address
     );
 
+    const lidoWithdrawalStrategyProxy = await ethers.getContract(
+      "LidoWithdrawalStrategyProxy"
+    );
+    lidoWithdrawalStrategy = await ethers.getContractAt(
+      "LidoWithdrawalStrategy",
+      lidoWithdrawalStrategyProxy.address
+    );
+
     const balancerRethStrategyProxy = await ethers.getContract(
       "OETHBalancerMetaPoolrEthStrategyProxy"
     );
@@ -376,6 +539,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI = await ethers.getContract("MocksfrxETH");
     stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+    ssv = await ethers.getContract("MockSSV");
 
     cdai = await ethers.getContract("MockCDAI");
     cusdt = await ethers.getContract("MockCUSDT");
@@ -394,6 +558,7 @@ const defaultFixture = deployments.createFixture(async () => {
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
     cvxRewardPool = await ethers.getContract("MockRewardPool");
+    depositContractUtils = await ethers.getContract("DepositContractUtils");
 
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");
@@ -540,6 +705,7 @@ const defaultFixture = deployments.createFixture(async () => {
     tusd,
     usdc,
     ogn,
+    ssv,
     LUSD,
     weth,
     ogv,
@@ -577,6 +743,7 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
+    depositContractUtils,
 
     aaveStrategy,
     aaveToken,
@@ -603,7 +770,10 @@ const defaultFixture = deployments.createFixture(async () => {
     sfrxETH,
     sDAI,
     fraxEthStrategy,
+    nativeStakingSSVStrategy,
+    nativeStakingFeeAccumulator,
     frxEthRedeemStrategy,
+    lidoWithdrawalStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
     woeth,
@@ -1415,6 +1585,72 @@ async function fraxETHStrategyFixture() {
 }
 
 /**
+ * NativeStakingSSVStrategy fixture
+ */
+async function nativeStakingSSVStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "nativeStakingSSVStrategyFixture", {
+    isOethFixture: true,
+  });
+
+  if (isFork) {
+    const { oethVault, weth, nativeStakingSSVStrategy, ssv, timelock } =
+      fixture;
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+
+    // The Defender Relayer
+    fixture.validatorRegistrator = await impersonateAndFund(
+      addresses.mainnet.validatorRegistrator
+    );
+
+    // Fund some SSV to the native staking strategy
+    const ssvWhale = await impersonateAndFund(
+      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
+    );
+    await ssv
+      .connect(ssvWhale)
+      .transfer(nativeStakingSSVStrategy.address, oethUnits("100"));
+
+    fixture.ssvNetwork = await ethers.getContractAt(
+      "ISSVNetwork",
+      addresses.mainnet.SSVNetwork
+    );
+  } else {
+    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
+    const { governorAddr } = await getNamedAccounts();
+    const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    // Approve Strategy
+    await oethVault
+      .connect(sGovernor)
+      .approveStrategy(nativeStakingSSVStrategy.address);
+
+    const fuseStartBn = ethers.utils.parseEther("21.6");
+    const fuseEndBn = ethers.utils.parseEther("25.6");
+
+    // Set as default
+    await oethVault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setFuseInterval(fuseStartBn, fuseEndBn);
+
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setRegistrator(governorAddr);
+
+    fixture.validatorRegistrator = sGovernor;
+  }
+
+  return fixture;
+}
+
+/**
  * Generalized strategy fixture that works only in forked environment
  *
  * @param metapoolAddress -> the address of the metapool
@@ -1740,7 +1976,7 @@ async function aaveVaultFixture() {
 }
 
 /**
- * Configure a Vault hold frxEth to be redeeemed by the frxEthRedeemStrategy
+ * Configure a Vault hold frxEth to be redeemed by the frxEthRedeemStrategy
  */
 async function frxEthRedeemStrategyFixture() {
   const fixture = await oethDefaultFixture();
@@ -1753,6 +1989,29 @@ async function frxEthRedeemStrategyFixture() {
   await fixture.weth
     .connect(fixture.daniel)
     .transfer(fixture.oethVault.address, parseUnits("2000"));
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault hold stEth to be withdrawn by the LidoWithdrawalStrategy
+ */
+async function lidoWithdrawalStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+
+  // Give weth and stETH to the vault
+
+  await fixture.stETH
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2002"));
+  await fixture.weth
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2003"));
+
+  fixture.lidoWithdrawalQueue = await ethers.getContractAt(
+    "IStETHWithdrawal",
+    addresses.mainnet.LidoWithdrawalQueue
+  );
 
   return fixture;
 }
@@ -2137,26 +2396,9 @@ async function harvesterFixture() {
 async function woethCcipZapperFixture() {
   const fixture = await defaultFixture();
 
-  const oethZapper = await ethers.getContractAt(
-    "OETHZapper",
-    addresses.mainnet.OETHZapper
-  );
-
-  const ccipRouter = await ethers.getContractAt(
-    "IRouterClient",
-    addresses.mainnet.ccipRouterMainnet
-  );
-
-  const woethZapper = await ethers.getContract("WOETHCCIPZapper");
-  const woethOnSourceChain = await ethers.getContractAt(
-    "WOETH",
-    addresses.mainnet.WOETHProxy
-  );
-
-  fixture.oethZapper = oethZapper;
-  fixture.woethOnSourceChain = woethOnSourceChain;
-  fixture.woethZapper = woethZapper;
-  fixture.ccipRouter = ccipRouter;
+  fixture.oethZapper = await resolveContract("OETHZapper");
+  fixture.woethOnSourceChain = await resolveContract("WOETHProxy", "WOETH");
+  fixture.woethZapper = await resolveContract("WOETHCCIPZapper");
 
   return fixture;
 }
@@ -2164,7 +2406,7 @@ async function woethCcipZapperFixture() {
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
- * The returned `loadFixture` function is typically inlcuded in the beforeEach().
+ * The returned `loadFixture` function is typically included in the beforeEach().
  * @example
  *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
  *   beforeEach(async () => {
@@ -2200,6 +2442,10 @@ async function loadDefaultFixture() {
   return await defaultFixture();
 }
 
+async function loadSimpleOETHFixture() {
+  return await simpleOETHFixture();
+}
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -2208,7 +2454,9 @@ mocha.after(async () => {
 
 module.exports = {
   createFixtureLoader,
+  simpleOETHFixture,
   loadDefaultFixture,
+  loadSimpleOETHFixture,
   resetAllowance,
   defaultFixture,
   oethDefaultFixture,
@@ -2235,6 +2483,8 @@ module.exports = {
   untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   frxEthRedeemStrategyFixture,
+  lidoWithdrawalStrategyFixture,
+  nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
