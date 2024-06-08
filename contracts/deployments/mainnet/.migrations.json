@@ -86,5 +86,6 @@
   "093_disable_frxeth_strategies": 1714495720,
   "094_add_multisig_to_timelock": 1715176032,
   "095_ogn_buyback": 1716026320,
-  "096_vault_admin_upgrade": 1715943467
+  "096_vault_admin_upgrade": 1715943467,
+  "097_native_ssv_staking": 1717841542
 }
