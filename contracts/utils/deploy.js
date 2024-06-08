@@ -21,6 +21,7 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
+  isCI,
 } = require("../test/helpers.js");
 
 const {
@@ -963,9 +964,12 @@ function buildAndWriteGnosisJson(targets, calldata, safeAddress) {
     Date.now().toString() + "-gov-tx.json"
   );
 
-  fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
+  if (!isCI) {
+    fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
+  
+    console.log("Wrote Gnosis Safe JSON to ", fileName);
+  }
 
-  console.log("Wrote Gnosis Safe JSON to ", fileName);
 }
 
 async function handleTransitionGovernance(propDesc, propArgs) {
