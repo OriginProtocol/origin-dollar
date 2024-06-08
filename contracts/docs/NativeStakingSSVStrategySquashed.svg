@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2448.2)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-2448.2 1396.86,-2448.2 1396.86,4 -4,4"/>
-<!-- 284 -->
+<!-- 288 -->
 <g id="node1" class="node">
-<title>284</title>
+<title>288</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-2443.7 1392.86,-2443.7 1392.86,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="696.43" y="-2427.1" font-family="Times,serif" font-size="14.00">NativeStakingSSVStrategy</text>
 <text text-anchor="middle" x="696.43" y="-2410.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol</text>
@@ -92,7 +92,7 @@
 <text text-anchor="start" x="8" y="-1167.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setStakeETHThreshold(_amount: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;resetStakeETHTally() &lt;&lt;onlyStakingMonitor&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1134.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;stakeEth(validators: ValidatorStakeData[]) &lt;&lt;onlyRegistrator, whenNotPaused, nonReentrant&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;registerSsvValidator(publicKey: bytes, operatorIds: uint64[], sharesData: bytes, ssvAmount: uint256, cluster: Cluster) &lt;&lt;onlyRegistrator, whenNotPaused&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;registerSsvValidators(publicKeys: bytes[], operatorIds: uint64[], sharesData: bytes[], ssvAmount: uint256, cluster: Cluster) &lt;&lt;onlyRegistrator, whenNotPaused&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1100.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;exitSsvValidator(publicKey: bytes, operatorIds: uint64[]) &lt;&lt;onlyRegistrator, whenNotPaused&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1083.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;removeSsvValidator(publicKey: bytes, operatorIds: uint64[], cluster: Cluster) &lt;&lt;onlyRegistrator, whenNotPaused&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1067.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;depositSSV(operatorIds: uint64[], ssvAmount: uint256, cluster: Cluster) &lt;&lt;onlyStrategist&gt;&gt; &lt;&lt;ValidatorRegistrator&gt;&gt;</text>
