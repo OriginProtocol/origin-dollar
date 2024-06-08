@@ -135,7 +135,7 @@ module.exports = deploymentWithGovernanceProposal(
         .claimGovernance(await getTxOpts())
     );
 
-    // 9. Init the proxy to point at the implementation, set the governor, and call initialize
+    // 8. Init the proxy to point at the implementation, set the governor, and call initialize
     await withConfirmation(
       cNativeStakingStrategyProxy.connect(sDeployer)[proxyInitFunction](
         cNativeStakingStrategyImpl.address, // implementation address
@@ -145,10 +145,10 @@ module.exports = deploymentWithGovernanceProposal(
       )
     );
 
-    // 10. Safe approve SSV token spending
+    // 9. Safe approve SSV token spending
     await cNativeStakingStrategy.connect(sDeployer).safeApproveAllTokens();
 
-    // 11. Deploy Harvester
+    // 10. Deploy Harvester
     const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
     await deployWithConfirmation("OETHHarvester", [
       cVaultProxy.address,
