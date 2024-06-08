@@ -33,11 +33,11 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Fetch the strategy proxy deployed by relayer
-    const cStrategyProxy = await ethers.getContract(
+    const cNativeStakingStrategyProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
 
-    // 2. Deploy the new fee accumulator proxy
+    // 2. Deploy the new FeeAccumulator proxy
     const dFeeAccumulatorProxy = await deployWithConfirmation(
       "NativeStakingFeeAccumulatorProxy"
     );
@@ -46,8 +46,28 @@ module.exports = deploymentWithGovernanceProposal(
       dFeeAccumulatorProxy.address
     );
 
-    // 3. Deploy the new strategy implementation
-    const dStrategyImpl = await deployWithConfirmation(
+    // 3. Deploy the new FeeAccumulator implementation
+    const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
+      cNativeStakingStrategyProxy.address, // _collector
+    ]);
+    const cFeeAccumulator = await ethers.getContractAt(
+      "FeeAccumulator",
+      dFeeAccumulator.address
+    );
+
+    // 4. Init the FeeAccumulator proxy to point at the implementation, set the governor
+    const proxyInitFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cFeeAccumulatorProxy.connect(sDeployer)[proxyInitFunction](
+        cFeeAccumulator.address, // implementation address
+        addresses.mainnet.Timelock, // governance
+        "0x", // do not call any initialize functions
+        await getTxOpts()
+      )
+    );
+
+    // 5. Deploy the new Native Staking Strategy implementation
+    const dNativeStakingStrategyImpl = await deployWithConfirmation(
       "NativeStakingSSVStrategy",
       [
         [addresses.zero, cVaultProxy.address], //_baseConfig
@@ -59,18 +79,18 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
       ]
     );
-    const cStrategyImpl = await ethers.getContractAt(
+    const cNativeStakingStrategyImpl = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      dStrategyImpl.address
+      dNativeStakingStrategyImpl.address
     );
 
-    const cStrategy = await ethers.getContractAt(
+    const cNativeStakingStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      cStrategyProxy.address
+      cNativeStakingStrategyProxy.address
     );
 
-    // 3. Initialize Proxy with new implementation and strategy initialization
-    const initData = cStrategyImpl.interface.encodeFunctionData(
+    // 6. Initialize Native Staking Proxy with new implementation and strategy initialization
+    const initData = cNativeStakingStrategyImpl.interface.encodeFunctionData(
       "initialize(address[],address[],address[])",
       [
         [addresses.mainnet.WETH], // reward token addresses
@@ -88,7 +108,7 @@ module.exports = deploymentWithGovernanceProposal(
         "100"
       );
       await withConfirmation(
-        cStrategyProxy
+        cNativeStakingStrategyProxy
           .connect(relayerSigner)
           .transferGovernance(deployerAddr, await getTxOpts())
       );
@@ -100,47 +120,73 @@ module.exports = deploymentWithGovernanceProposal(
        * Run the following to make it happen, and comment this error block out:
        * yarn run hardhat transferGovernanceNativeStakingProxy --address 0xdeployerAddress  --network mainnet
        */
-      new Error("Transfer governance not yet ran");
+      const proxyGovernor = await cNativeStakingStrategyProxy.governor();
+      if (proxyGovernor != sDeployer.address) {
+        throw new Error(
+          `Native Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${sDeployer.address}`
+        );
+      }
     }
 
+    // 7. Transfer governance of the Native Staking Strategy proxy to the deployer
     await withConfirmation(
-      cStrategyProxy.connect(sDeployer).claimGovernance(await getTxOpts())
+      cNativeStakingStrategyProxy
+        .connect(sDeployer)
+        .claimGovernance(await getTxOpts())
     );
 
-    // 4. Init the proxy to point at the implementation, set the governor, and call initialize
-    const proxyInitFunction = "initialize(address,address,bytes)";
+    // 9. Init the proxy to point at the implementation, set the governor, and call initialize
     await withConfirmation(
-      cStrategyProxy.connect(sDeployer)[proxyInitFunction](
-        cStrategyImpl.address, // implementation address
+      cNativeStakingStrategyProxy.connect(sDeployer)[proxyInitFunction](
+        cNativeStakingStrategyImpl.address, // implementation address
         addresses.mainnet.Timelock, // governance
         initData, // data for call to the initialize function on the strategy
         await getTxOpts()
       )
     );
 
-    // 5. Deploy the new fee accumulator implementation
-    const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
-      cStrategyProxy.address, // _collector
-    ]);
-    const cFeeAccumulator = await ethers.getContractAt(
-      "FeeAccumulator",
-      dFeeAccumulator.address
+    // 10. Safe approve SSV token spending
+    await cNativeStakingStrategy.connect(sDeployer).safeApproveAllTokens();
+
+    // 7. Deploy the Lido Withdrawal Strategy
+    const dWithdrawalStrategyStrategyProxy = await deployWithConfirmation(
+      "LidoWithdrawalStrategyProxy"
+    );
+    const cWithdrawalStrategyStrategyProxy = await ethers.getContractAt(
+      "LidoWithdrawalStrategyProxy",
+      dWithdrawalStrategyStrategyProxy.address
+    );
+    const dWithdrawalStrategyImpl = await deployWithConfirmation(
+      "LidoWithdrawalStrategy",
+      [
+        [addresses.zero, cVaultProxy.address], //_baseConfig
+      ]
+    );
+    const cWithdrawalStrategyImpl = await ethers.getContractAt(
+      "LidoWithdrawalStrategy",
+      dWithdrawalStrategyImpl.address
     );
 
-    // 6. Init the fee accumulator proxy to point at the implementation, set the governor
+    // 8. Init the Lido Withdrawal strategy proxy to point at the implementation, set the governor, and call initialize
+    const withdrawalInitData =
+      cWithdrawalStrategyImpl.interface.encodeFunctionData(
+        "initialize(address[],address[],address[])",
+        [
+          [], // reward token addresses
+          [], // asset token addresses
+          [], // platform tokens addresses
+        ]
+      );
     await withConfirmation(
-      cFeeAccumulatorProxy.connect(sDeployer)[proxyInitFunction](
-        cFeeAccumulator.address, // implementation address
+      cWithdrawalStrategyStrategyProxy.connect(sDeployer)[proxyInitFunction](
+        cWithdrawalStrategyImpl.address,
         addresses.mainnet.Timelock, // governance
-        "0x", // do not call any initialize functions
+        withdrawalInitData, // data for call to the initialize function on the strategy
         await getTxOpts()
       )
     );
 
-    // 7. Safe approve SSV token spending
-    await cStrategy.connect(sDeployer).safeApproveAllTokens();
-
-    // 8. Deploy Harvester
+    // 11. Deploy Harvester
     const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
     await deployWithConfirmation("OETHHarvester", [
       cVaultProxy.address,
@@ -148,13 +194,24 @@ module.exports = deploymentWithGovernanceProposal(
     ]);
     const dOETHHarvesterImpl = await ethers.getContract("OETHHarvester");
 
-    console.log("Native Staking SSV Strategy proxy: ", cStrategyProxy.address);
+    console.log(
+      "Native Staking SSV Strategy proxy: ",
+      cNativeStakingStrategyProxy.address
+    );
     console.log(
       "Native Staking SSV Strategy implementation: ",
-      dStrategyImpl.address
+      cNativeStakingStrategyImpl.address
     );
     console.log("Fee accumulator proxy: ", cFeeAccumulatorProxy.address);
     console.log("Fee accumulator implementation: ", cFeeAccumulator.address);
+    console.log(
+      "Lido withdrawal strategy proxy: ",
+      cWithdrawalStrategyStrategyProxy.address
+    );
+    console.log(
+      "Lido withdrawal strategy implementation: ",
+      cWithdrawalStrategyImpl.address
+    );
     console.log(
       "New OETHHarvester implementation: ",
       dOETHHarvesterImpl.address
@@ -163,29 +220,35 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new OETH Native Staking Strategy\n\nThis is going to become the main strategy to power the reward accrual of OETH by staking ETH into SSV validators.",
+      name: `Deploy new OETH Native Staking Strategy.
+
+This is going to become the main strategy to power the reward accrual of OETH by staking ETH in SSV validators.
+
+Deployed a new strategy to convert stETH to WETH at 1:1 using the Lido withdrawal queue.
+
+Upgraded the Harvester so ETH rewards can be sent straight to the Dripper as WETH.`,
       actions: [
         // 1. Add new strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cStrategyProxy.address],
+          args: [cNativeStakingStrategyProxy.address],
         },
         // 2. configure Harvester to support the strategy
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cStrategyProxy.address, true],
+          args: [cNativeStakingStrategyProxy.address, true],
         },
         // 3. set harvester to the strategy
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
         // 4. configure the fuse interval
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setFuseInterval(uint256,uint256)",
           args: [
             ethers.utils.parseEther("21.6"),
@@ -194,21 +257,21 @@ module.exports = deploymentWithGovernanceProposal(
         },
         // 5. set validator registrator to the Defender Relayer
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setRegistrator(address)",
           // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
         },
         // 6. set staking threshold
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setStakeETHThreshold(uint256)",
           // 16 validators before the 5/8 multisig has to call resetStakeETHTally
           args: [ethers.utils.parseEther("512")], // 16 * 32ETH
         },
         // 7. set staking monitor
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setStakingMonitor(address)",
           // The 5/8 multisig
           args: [addresses.mainnet.Guardian],
@@ -218,6 +281,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHHarvesterProxy,
           signature: "upgradeTo(address)",
           args: [dOETHHarvesterImpl.address],
+        },
+        // 9. Add new Lido Withdrawal Strategy to vault
+        {
+          contract: cVaultAdmin,
+          signature: "approveStrategy(address)",
+          args: [cWithdrawalStrategyStrategyProxy.address],
         },
       ],
     };

@@ -227,3 +227,10 @@ contract NativeStakingFeeAccumulatorProxy is
 {
 
 }
+
+/**
+ * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
+ */
+contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

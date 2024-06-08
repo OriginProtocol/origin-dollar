@@ -353,6 +353,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoCompoundStrategy,
     fraxEthStrategy,
     frxEthRedeemStrategy,
+    lidoWithdrawalStrategy,
     balancerREthStrategy,
     makerDsrStrategy,
     morphoAaveStrategy,
@@ -479,6 +480,14 @@ const defaultFixture = deployments.createFixture(async () => {
     frxEthRedeemStrategy = await ethers.getContractAt(
       "FrxEthRedeemStrategy",
       frxEthRedeemStrategyProxy.address
+    );
+
+    const lidoWithdrawalStrategyProxy = await ethers.getContract(
+      "LidoWithdrawalStrategyProxy"
+    );
+    lidoWithdrawalStrategy = await ethers.getContractAt(
+      "LidoWithdrawalStrategy",
+      lidoWithdrawalStrategyProxy.address
     );
 
     const balancerRethStrategyProxy = await ethers.getContract(
@@ -764,6 +773,7 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingSSVStrategy,
     nativeStakingFeeAccumulator,
     frxEthRedeemStrategy,
+    lidoWithdrawalStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
     woeth,
@@ -1966,7 +1976,7 @@ async function aaveVaultFixture() {
 }
 
 /**
- * Configure a Vault hold frxEth to be redeeemed by the frxEthRedeemStrategy
+ * Configure a Vault hold frxEth to be redeemed by the frxEthRedeemStrategy
  */
 async function frxEthRedeemStrategyFixture() {
   const fixture = await oethDefaultFixture();
@@ -1979,6 +1989,29 @@ async function frxEthRedeemStrategyFixture() {
   await fixture.weth
     .connect(fixture.daniel)
     .transfer(fixture.oethVault.address, parseUnits("2000"));
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault hold stEth to be withdrawn by the LidoWithdrawalStrategy
+ */
+async function lidoWithdrawalStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+
+  // Give weth and stETH to the vault
+
+  await fixture.stETH
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2002"));
+  await fixture.weth
+    .connect(fixture.daniel)
+    .transfer(fixture.oethVault.address, parseUnits("2003"));
+
+  fixture.lidoWithdrawalQueue = await ethers.getContractAt(
+    "IStETHWithdrawal",
+    addresses.mainnet.LidoWithdrawalQueue
+  );
 
   return fixture;
 }
@@ -2450,6 +2483,7 @@ module.exports = {
   untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   frxEthRedeemStrategyFixture,
+  lidoWithdrawalStrategyFixture,
   nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
