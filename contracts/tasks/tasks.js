@@ -999,22 +999,27 @@ subtask(
   "transferGovernanceNativeStakingProxy",
   "Transfer governance of the proxy from the the Defender Relayer"
 )
-  .addParam("address", "Address of the new governor", undefined, types.string)
-  .setAction(async (taskArgs) => {
+  .addParam(
+    "deployer",
+    "Address of the deployer of NativeStakingSSVStrategy implementation",
+    undefined,
+    types.string
+  )
+  .setAction(async ({ deployer }) => {
     const signer = await getSigner();
 
-    log("Transfer governance of NativeStakingSSVStrategyProxy");
-
-    const nativeStakingProxyFactory = await ethers.getContract(
+    const nativeStakingProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
+    const oldGovernor = await nativeStakingProxy.governor();
+    log(
+      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+    );
     await withConfirmation(
-      nativeStakingProxyFactory
-        .connect(signer)
-        .transferGovernance(taskArgs.address)
+      nativeStakingProxy.connect(signer).transferGovernance(deployer)
     );
     log(
-      `Governance of NativeStakingSSVStrategyProxy transferred to  ${taskArgs.address}`
+      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
     );
   });
 task("transferGovernanceNativeStakingProxy").setAction(
