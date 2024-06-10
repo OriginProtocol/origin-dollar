@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "098_remove_reth_strategy",
+    deployName: "099_remove_reth_strategy",
     forceDeploy: false,
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
