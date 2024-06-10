@@ -82,6 +82,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("DepositContractUtils", {
+    args: [],
+    contract: "DepositContractUtils",
+    from: deployerAddr,
+  });
+
   await deploy("MockCUSDC", {
     args: [
       (await ethers.getContract("MockUSDC")).address,
@@ -118,6 +124,21 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
+  });
+
+  // Mock SSV token
+  await deploy("MockSSV", {
+    from: deployerAddr,
+  });
+
+  // Mock SSV Network
+  await deploy("MockSSVNetwork", {
+    from: deployerAddr,
+  });
+
+  // Mock SSV Network
+  await deploy("MockDepositContract", {
+    from: deployerAddr,
   });
 
   const dai = await ethers.getContract("MockDAI");

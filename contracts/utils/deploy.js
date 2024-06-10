@@ -937,7 +937,26 @@ async function useTransitionGovernance() {
   return guardianHasAccess;
 }
 
-function buildAndWriteGnosisJson(targets, calldata, safeAddress) {
+function constructContractMethod(contract, functionSignature) {
+  const functionFragment = contract.interface.getFunction(functionSignature);
+
+  const functionJson = JSON.parse(
+    functionFragment.format(ethers.utils.FormatTypes.json)
+  );
+  return {
+    inputs: functionJson.inputs,
+    name: functionJson.name,
+    payable: functionJson.payable,
+  };
+}
+
+function buildAndWriteGnosisJson(
+  safeAddress,
+  targets,
+  contractMethods,
+  contractInputsValues,
+  name
+) {
   const json = {
     version: "1.0",
     chainId: "1",
@@ -952,16 +971,16 @@ function buildAndWriteGnosisJson(targets, calldata, safeAddress) {
     transactions: targets.map((target, i) => ({
       to: target,
       value: "0",
-      data: calldata[i],
-      contractMethod: null,
-      contractInputValues: null,
+      data: null,
+      contractMethod: contractMethods[i],
+      contractInputsValues: contractInputsValues[i],
     })),
   };
 
   const fileName = path.join(
     __dirname,
-    "../build",
-    Date.now().toString() + "-gov-tx.json"
+    "..",
+    Date.now().toString() + `-${name}-gov-tx.json`
   );
 
   if (!isCI) {
@@ -1002,18 +1021,32 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const isScheduled = await timelock.isOperation(opHash);
   const reduceTime = !isScheduled;
+  const delay = await timelock.getMinDelay();
 
   if (!isScheduled) {
     // Needs to be scheduled
-    const scheduleData = timelock.interface.encodeFunctionData(
-      "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)",
-      [...args, await timelock.getMinDelay()]
+
+    const contractMethod = constructContractMethod(
+      timelock,
+      "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)"
     );
 
+    // construct contractInputsValues
+    const contractInputsValues = {
+      targets: JSON.stringify(propArgs[0]),
+      values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+      payloads: JSON.stringify(payloads),
+      predecessor: args[3],
+      salt: args[4],
+      delay: delay.toString(),
+    };
+
     buildAndWriteGnosisJson(
+      addresses.mainnet.Guardian,
       [timelock.address],
-      [scheduleData],
-      addresses.mainnet.Guardian
+      [contractMethod],
+      [contractInputsValues],
+      "scheduleBatch"
     );
 
     if (reduceTime) {
@@ -1040,19 +1073,28 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     await advanceBlocks(2);
   }
 
-  if (isScheduled) {
-    // Write execution data
-    const executeData = timelock.interface.encodeFunctionData(
-      "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)",
-      [...args]
-    );
+  // Write execution data
+  const executionContractMethod = constructContractMethod(
+    timelock,
+    "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)"
+  );
 
-    buildAndWriteGnosisJson(
-      [timelock.address],
-      [executeData],
-      addresses.mainnet.Guardian
-    );
-  }
+  // construct contractInputsValues
+  const executionContractInputsValues = {
+    targets: JSON.stringify(propArgs[0]),
+    values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+    payloads: JSON.stringify(payloads),
+    predecessor: args[3],
+    salt: args[4],
+  };
+
+  buildAndWriteGnosisJson(
+    addresses.mainnet.Guardian,
+    [timelock.address],
+    [executionContractMethod],
+    [executionContractInputsValues],
+    "executeBatch"
+  );
 
   log(`Executing batch on Timelock...`);
   await timelock.connect(guradian).executeBatch(...args);

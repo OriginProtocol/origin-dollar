@@ -82,6 +82,12 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
 sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b NativeStakingSSVStrategy -o NativeStakingSSVStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b NativeStakingSSVStrategy -o NativeStakingSSVStrategySquashed.svg
+sol2uml storage .. -c NativeStakingSSVStrategy -o NativeStakingSSVStrategyStorage.svg --hideExpand __gap,______gap,_reserved
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b FeeAccumulator -o FeeAccumulatorHierarchy.svg
+sol2uml .. -s -d 0 -b FeeAccumulator -o FeeAccumulatorSquashed.svg
+
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
 sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg --hideExpand ______gap,_reserved

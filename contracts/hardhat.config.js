@@ -28,7 +28,7 @@ const { accounts } = require("./tasks/account");
 
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
-  "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
+  "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
 // Mainnet decentralized OGV Governor
 const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 // Mainnet decentralized OGV Timelock

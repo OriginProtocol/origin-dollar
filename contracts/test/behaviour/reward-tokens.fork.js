@@ -14,6 +14,7 @@ const { BigNumber } = require("ethers");
     shouldHaveRewardTokensConfigured(() => ({
         harvester: fixture.harvester,
         vault: fixture.vault,
+        ignoreTokens: [fixture.weth.address.toLowerCase()],
         expectedConfigs: {
           [fixture.cvx.address]: {
             allowedSlippageBps: 300,
@@ -46,7 +47,7 @@ const shouldHaveRewardTokensConfigured = (context) => {
 
   describe("Reward Tokens", () => {
     it("Should have swap config for all reward tokens from strategies", async () => {
-      let { vault, harvester, expectedConfigs } = context();
+      let { vault, harvester, expectedConfigs, ignoreTokens } = context();
       const strategies = await vault.getAllStrategies();
 
       expectedConfigs = Object.keys(expectedConfigs).reduce(
@@ -57,7 +58,7 @@ const shouldHaveRewardTokensConfigured = (context) => {
         {}
       );
 
-      const checkedConfigs = [];
+      const checkedConfigs = ignoreTokens || [];
 
       for (const strategyAddr of strategies) {
         const strategy = await ethers.getContractAt("IStrategy", strategyAddr);

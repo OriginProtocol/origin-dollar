@@ -1,0 +1,341 @@
+@startuml
+
+skinparam tabSize 2
+hide footbox
+
+title "Origin ETH processes"
+
+actor "Anyone" as sender
+actor "Registrator\n(Relayer)" as reg <<Origin>>
+actor "Admin\n(5/8 Safe)" as admin <<Origin>>
+actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
+actor "Governor\n(Timelock)" as gov <<Origin>>
+actor "Treasury" as treasury <<Origin>>
+participant "API" as api <<P2P>>
+actor "Operators" as ssvOp <<SSV>>
+
+box "Execution Chain"
+participant "Harvester" as harv <<Origin>>
+participant "Native\nStaking SSV\nStrategy" as nativeStrat <<Origin>>
+participant "Fee\nAccumulator" as feeAccum <<Origin>>
+participant "SSV Network" as ssvNet <<SSV>>
+participant "Token" as ssv <<SSV>>
+participant "WETH" as weth <<Wrapped ETH>>
+participant "Deposit" as dep <<Beacon>>
+end box
+
+box "Beacon chain"
+participant "Validator" as val <<Beacon>>
+end box
+
+group Governor initializes the Native Staking Strategy
+
+gov -> nativeStrat : initialize()
+activate nativeStrat
+nativeStrat -> ssv : approve(\nSSV Network,\namount)
+activate ssv
+note right : Native Staking Strategy approves\nSSV Network to spend\nSSV tokens
+return
+' nativeStrat -> ssvNet : setFeeRecipientAddress(\nrecipient)
+' activate ssvNet
+' note right : NodeDelegator set as the fee recipient
+' return
+return
+
+gov -> ssv : transfer(\nfrom\nto\namount)
+activate ssv
+note right : transfer SSV tokens\nfrom Governor\nto Native Staking Strategy
+return
+
+end group
+
+group Governor sets staked ETH threshold
+
+gov -> nativeStrat : setStakeETHThreshold()
+activate nativeStrat
+note right: set ETH that can be staked\nbefore the staking monitor has to reset
+return
+
+end group
+
+group Staking monitor resets staked ETH
+
+admin -> nativeStrat : resetStakeETHTally()
+activate nativeStrat
+note right: resets the ETH that\ncan be staked going forward
+return
+
+end group
+
+group Registrator creates a new SSV validator
+
+reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays
+activate api
+note right
+withdrawalAddress is Native Staking Strategy
+feeRecipientAddress is FeeAccumulator contract
+ssvOwnerAddress is Native Staking Strategy
+type is without-encrypt-key
+end note
+api -> api: private key
+note right : generate a validator private key
+api -> api: split(key)
+note right : splits validator key into multiple KeyShares
+return
+
+reg -> api: GET\neth/staking/ssv/request/status/uuid
+activate api
+return status,\npubkey\nvalidatorRegistration,\nshareData
+note right : validatorRegistration contains the operatorIds and cluster details
+
+reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
+activate nativeStrat
+note right
+cluster data:
+The number of validators in the cluster
+The index of network fees related to this cluster
+The last index calculated for the cluster
+Flag indicating whether the cluster is active
+The SSV balance of the cluster
+end note
+nativeStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
+activate ssvNet
+ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
+activate ssv
+note right: transfer SSV tokens\nfrom NodeDelegator\nto SSV Network
+return
+return
+return
+
+end group
+
+... 60 minutes ...
+
+group Registrator stakes to a new SSV validator
+
+reg -> api: GET\neth/staking/ssv/request/deposit-data/uuid
+activate api
+return status,\ndepositData
+note right : depositData contains the signature and depositDataRoot
+
+reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
+activate nativeStrat
+nativeStrat -> nativeStrat
+note right : validate staked ETH under the threshold
+nativeStrat -> weth : withdraw(32 ETH * number of validators)
+activate weth
+note right : WETH burned for ETH
+return ETH
+
+loop for each validator
+
+nativeStrat -> dep : stake(\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot)
+activate dep
+note left
+32 ETH from Native Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Native Staking Strategy
+end note
+return
+end
+return
+
+note over val : Pending Deposit
+
+... 1024 execution blocks (~4 hours) ...
+... 32 consensus epochs (~3.5 hours) ...
+
+dep -> val : 32 ETH
+
+note over val : Pending Activation
+
+... four validators are activated each epoch from the Validator Queue (1-10 days) ...
+
+note over val : Active
+
+end group
+
+
+group Registrator deposits more SSV to SSV cluster
+
+treasury -> ssv : transfer(\nto\namount)
+activate ssv
+note right : transfer SSV tokens\nfrom Treasury\nto Native Staking Strategy
+return
+
+group SSV ClusterScanner
+reg -> ssvNet : getPastEvents(filter)
+activate ssvNet
+note right : get all events where the ownerAddress\nis the Native Staking Strategy
+return events
+
+reg -> reg : getCluster(events):\n cluster
+note right
+cluster data:
+  validatorCount
+  networkFeeIndex
+  index
+  active
+  balance
+end note
+end group
+
+reg -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
+activate nativeStrat
+nativeStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
+activate ssvNet
+note right
+clusterOwner is Native Staking Strategy
+operatorIds are the SSV Operators
+amount of SSV tokens
+end note
+ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
+activate ssv
+note right: transfer SSV tokens\nfrom Native Staking Strategy\nto SSV Network
+return
+return
+return
+end group
+
+group Consensus Rewards
+
+note over val
+attesting to blocks
+proposing blocks
+participating in sync committees
+end note
+val -> val : ETH
+
+... swept every 8-10 days ...
+
+note over val : partial withdraw of excess ETH\nfrom validator to the Native Staking Strategy
+val -> nativeStrat : ETH
+
+note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+
+end group
+
+group Registrator full withdraw from validator
+
+reg -> nativeStrat : exitSsvValidator(\npublicKey\noperatorIds)
+activate nativeStrat
+nativeStrat -> ssvNet : exitValidator(\npublicKey\noperatorIds)
+activate ssvNet
+return
+return
+
+ssvOp -> ssvOp : sign(\npk,\nexit message)
+note right : voluntary exit message signed by the validator private key
+ssvOp -> val : signed voluntary exit message
+activate val
+return
+
+... wait until validator has exited.\nmin four epochs (~25 min), currently 1.5 hours but can take a number of days depending on the number of validators in the exit queue ...
+
+reg -> nativeStrat : removeSsvValidator(\npublicKey,\noperatorIds,\ncluster)
+activate nativeStrat
+nativeStrat -> ssvNet : removeValidator(\npublicKey\noperatorIds,\ncluster)
+activate ssvNet
+note right : stop paying SSV to Operators\n and reduce required SSV collateral
+return
+return
+
+... wait for the validator to be swept on the Beacon chain\ncurrent time is every 8.5 days ...
+
+val -> nativeStrat : ETH
+note left : transfer staked ETH and rewards\nfrom Beacon Deposit\nto Native Staking Strategy
+
+note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+
+end group
+
+group Registrator does accounting of consensus rewards and validator withdrawals
+
+reg -> nativeStrat : doAccounting()
+activate nativeStrat
+
+note over nativeStrat
+ETH received since last accounting = current ETH balance - previous consensus rewards
+validator withdrawals = ETH received / 32 ETH
+end note
+
+nativeStrat -> weth : deposit(\nwithdrawn ETH)
+activate weth
+note left : convert ETH from full withdrawals to WETH
+return
+
+nativeStrat -> weth : transfer(\nvault,\nwithdrawn ETH)
+activate weth
+note left : transfer withdrawn WETH\nfrom Native Staking Strategy\nto OETH Vault
+return
+
+note over nativeStrat
+Add remaining ETH to consensus rewards.
+ETH from consensus rewards stays in the Native Staking Strategy.
+end note
+
+return accounting valid flag
+
+end group
+
+group Execution Rewards
+
+sender -> feeAccum : ETH
+note right : tx fees and MEV rewards
+
+note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+
+end group
+
+group Harvester collects ETH rewards
+
+sender -> harv : harvestAndSwap(\nstrtaegy)
+activate harv
+harv -> nativeStrat : collectRewardTokens()
+activate nativeStrat
+
+nativeStrat -> feeAccum : collect()
+activate feeAccum
+feeAccum -> nativeStrat : ETH
+note right : send all execution rewards in the FeeAccumulator\nto the Native Staking Stragegy
+return execution rewards
+
+note over nativeStrat : total rewards = execution rewards + consensus rewards
+
+note over nativeStrat : reset consensus rewards to zero
+
+nativeStrat -> weth : deposit(\ntotal rewards)
+activate weth
+note left : convert ETH rewards to WETH
+return
+
+nativeStrat -> weth : transfer(\nHarvester,\ntotal ETH rewards)
+activate weth
+note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
+return
+
+return
+return
+
+end group
+
+
+group Strategist pauses Native Staking Strategy
+
+strategist -> nativeStrat : pause()
+activate nativeStrat
+return
+
+end group
+
+group Strategist unpauses Native Staking Strategy
+
+strategist -> nativeStrat : manuallyFixAccounting(0, 0, 0)
+activate nativeStrat
+note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
+nativeStrat -> nativeStrat
+note right : unpause
+return
+
+end group
+
+@enduml
