@@ -82,6 +82,7 @@ const {
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 } = require("./validator");
 const { harvestAndSwap } = require("./harvest");
 
@@ -998,22 +999,27 @@ subtask(
   "transferGovernanceNativeStakingProxy",
   "Transfer governance of the proxy from the the Defender Relayer"
 )
-  .addParam("address", "Address of the new governor", undefined, types.string)
-  .setAction(async (taskArgs) => {
+  .addParam(
+    "deployer",
+    "Address of the deployer of NativeStakingSSVStrategy implementation",
+    undefined,
+    types.string
+  )
+  .setAction(async ({ deployer }) => {
     const signer = await getSigner();
 
-    log("Transfer governance of NativeStakingSSVStrategyProxy");
-
-    const nativeStakingProxyFactory = await ethers.getContract(
+    const nativeStakingProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
+    const oldGovernor = await nativeStakingProxy.governor();
+    log(
+      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+    );
     await withConfirmation(
-      nativeStakingProxyFactory
-        .connect(signer)
-        .transferGovernance(taskArgs.address)
+      nativeStakingProxy.connect(signer).transferGovernance(deployer)
     );
     log(
-      `Governance of NativeStakingSSVStrategyProxy transferred to  ${taskArgs.address}`
+      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
     );
   });
 task("transferGovernanceNativeStakingProxy").setAction(
@@ -1031,7 +1037,13 @@ subtask(
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    40,
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
@@ -1167,6 +1179,27 @@ subtask(
   "Pause the staking of the Native Staking Strategy"
 ).setAction(pauseStaking);
 task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

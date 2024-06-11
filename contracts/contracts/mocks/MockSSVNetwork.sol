@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { Cluster } from "./../interfaces/ISSVNetwork.sol";
 
 contract MockSSVNetwork {
+
     uint256 public registeredValidators;
     uint256 public exitedValidators;
     uint256 public removedValidators;
@@ -17,6 +18,14 @@ contract MockSSVNetwork {
     ) external {
         registeredValidators += 1;
     }
+
+    function bulkRegisterValidator(
+        bytes[] calldata publicKeys,
+        uint64[] calldata operatorIds,
+        bytes[] calldata sharesData,
+        uint256 amount,
+        Cluster memory cluster
+    ) external {}
 
     function exitValidator(
         bytes calldata publicKey,

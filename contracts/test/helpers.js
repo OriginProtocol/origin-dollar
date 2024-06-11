@@ -793,6 +793,7 @@ module.exports = {
   isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
+  isMainnetForkTest,
   isForkTest,
   isMainnetForkTest,
   isForkWithLocalNode,

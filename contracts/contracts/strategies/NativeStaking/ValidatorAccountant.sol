@@ -99,6 +99,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         external
         onlyRegistrator
         whenNotPaused
+        nonReentrant
         returns (bool accountingValid)
     {
         // pause the accounting on failure
@@ -199,7 +200,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         int256 _validatorsDelta,
         int256 _consensusRewardsDelta,
         uint256 _ethToVaultAmount
-    ) external onlyStrategist whenPaused {
+    ) external onlyStrategist whenPaused nonReentrant {
         require(
             lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
                 block.number,

@@ -15,6 +15,7 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
+    console.log(`Using deployer account: ${deployerAddr}`);
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -33,11 +34,12 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Fetch the strategy proxy deployed by relayer
-    const cStrategyProxy = await ethers.getContract(
+    const cNativeStakingStrategyProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
 
-    // 2. Deploy the new fee accumulator proxy
+    // 2. Deploy the new FeeAccumulator proxy
+    console.log(`About to deploy FeeAccumulator proxy`);
     const dFeeAccumulatorProxy = await deployWithConfirmation(
       "NativeStakingFeeAccumulatorProxy"
     );
@@ -46,8 +48,31 @@ module.exports = deploymentWithGovernanceProposal(
       dFeeAccumulatorProxy.address
     );
 
-    // 3. Deploy the new strategy implementation
-    const dStrategyImpl = await deployWithConfirmation(
+    // 3. Deploy the new FeeAccumulator implementation
+    console.log(`About to deploy FeeAccumulator implementation`);
+    const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
+      cNativeStakingStrategyProxy.address, // _collector
+    ]);
+    const cFeeAccumulator = await ethers.getContractAt(
+      "FeeAccumulator",
+      dFeeAccumulator.address
+    );
+
+    // 4. Init the FeeAccumulator proxy to point at the implementation, set the governor
+    console.log(`About to initialize FeeAccumulator`);
+    const proxyInitFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cFeeAccumulatorProxy.connect(sDeployer)[proxyInitFunction](
+        cFeeAccumulator.address, // implementation address
+        addresses.mainnet.Timelock, // governance
+        "0x", // do not call any initialize functions
+        await getTxOpts()
+      )
+    );
+
+    // 5. Deploy the new Native Staking Strategy implementation
+    console.log(`About to deploy NativeStakingSSVStrategy implementation`);
+    const dNativeStakingStrategyImpl = await deployWithConfirmation(
       "NativeStakingSSVStrategy",
       [
         [addresses.zero, cVaultProxy.address], //_baseConfig
@@ -59,18 +84,19 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
       ]
     );
-    const cStrategyImpl = await ethers.getContractAt(
+    const cNativeStakingStrategyImpl = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      dStrategyImpl.address
+      dNativeStakingStrategyImpl.address
     );
 
-    const cStrategy = await ethers.getContractAt(
+    const cNativeStakingStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      cStrategyProxy.address
+      cNativeStakingStrategyProxy.address
     );
 
-    // 3. Initialize Proxy with new implementation and strategy initialization
-    const initData = cStrategyImpl.interface.encodeFunctionData(
+    // 6. Initialize Native Staking Proxy with new implementation and strategy initialization
+    console.log(`About to initialize NativeStakingSSVStrategy`);
+    const initData = cNativeStakingStrategyImpl.interface.encodeFunctionData(
       "initialize(address[],address[],address[])",
       [
         [addresses.mainnet.WETH], // reward token addresses
@@ -82,13 +108,14 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
 
-    if (isFork) {
+    const proxyGovernor = await cNativeStakingStrategyProxy.governor();
+    if (isFork && proxyGovernor != deployerAddr) {
       const relayerSigner = await impersonateAndFund(
         addresses.mainnet.validatorRegistrator,
         "100"
       );
       await withConfirmation(
-        cStrategyProxy
+        cNativeStakingStrategyProxy
           .connect(relayerSigner)
           .transferGovernance(deployerAddr, await getTxOpts())
       );
@@ -100,47 +127,38 @@ module.exports = deploymentWithGovernanceProposal(
        * Run the following to make it happen, and comment this error block out:
        * yarn run hardhat transferGovernanceNativeStakingProxy --address 0xdeployerAddress  --network mainnet
        */
-      new Error("Transfer governance not yet ran");
+      if (proxyGovernor != deployerAddr) {
+        throw new Error(
+          `Native Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${deployerAddr}`
+        );
+      }
     }
 
+    // 7. Transfer governance of the Native Staking Strategy proxy to the deployer
+    console.log(`About to claimGovernance of NativeStakingStrategyProxy`);
     await withConfirmation(
-      cStrategyProxy.connect(sDeployer).claimGovernance(await getTxOpts())
+      cNativeStakingStrategyProxy
+        .connect(sDeployer)
+        .claimGovernance(await getTxOpts())
     );
 
-    // 4. Init the proxy to point at the implementation, set the governor, and call initialize
-    const proxyInitFunction = "initialize(address,address,bytes)";
+    // 8. Init the proxy to point at the implementation, set the governor, and call initialize
+    console.log(`About to initialize of NativeStakingStrategy`);
     await withConfirmation(
-      cStrategyProxy.connect(sDeployer)[proxyInitFunction](
-        cStrategyImpl.address, // implementation address
+      cNativeStakingStrategyProxy.connect(sDeployer)[proxyInitFunction](
+        cNativeStakingStrategyImpl.address, // implementation address
         addresses.mainnet.Timelock, // governance
         initData, // data for call to the initialize function on the strategy
         await getTxOpts()
       )
     );
 
-    // 5. Deploy the new fee accumulator implementation
-    const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
-      cStrategyProxy.address, // _collector
-    ]);
-    const cFeeAccumulator = await ethers.getContractAt(
-      "FeeAccumulator",
-      dFeeAccumulator.address
-    );
+    // 9. Safe approve SSV token spending
+    console.log(`About to safeApproveAllTokens of NativeStakingStrategy`);
+    await cNativeStakingStrategy.connect(sDeployer).safeApproveAllTokens();
 
-    // 6. Init the fee accumulator proxy to point at the implementation, set the governor
-    await withConfirmation(
-      cFeeAccumulatorProxy.connect(sDeployer)[proxyInitFunction](
-        cFeeAccumulator.address, // implementation address
-        addresses.mainnet.Timelock, // governance
-        "0x", // do not call any initialize functions
-        await getTxOpts()
-      )
-    );
-
-    // 7. Safe approve SSV token spending
-    await cStrategy.connect(sDeployer).safeApproveAllTokens();
-
-    // 8. Deploy Harvester
+    // 10. Deploy Harvester
+    console.log(`About to deploy of OETHHarvester implementation`);
     const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
     await deployWithConfirmation("OETHHarvester", [
       cVaultProxy.address,
@@ -148,10 +166,13 @@ module.exports = deploymentWithGovernanceProposal(
     ]);
     const dOETHHarvesterImpl = await ethers.getContract("OETHHarvester");
 
-    console.log("Native Staking SSV Strategy proxy: ", cStrategyProxy.address);
+    console.log(
+      "Native Staking SSV Strategy proxy: ",
+      cNativeStakingStrategyProxy.address
+    );
     console.log(
       "Native Staking SSV Strategy implementation: ",
-      dStrategyImpl.address
+      cNativeStakingStrategyImpl.address
     );
     console.log("Fee accumulator proxy: ", cFeeAccumulatorProxy.address);
     console.log("Fee accumulator implementation: ", cFeeAccumulator.address);
@@ -163,29 +184,33 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new OETH Native Staking Strategy\n\nThis is going to become the main strategy to power the reward accrual of OETH by staking ETH into SSV validators.",
+      name: `Deploy new OETH Native Staking Strategy.
+
+This is going to become the main strategy to power the reward accrual of OETH by staking ETH in SSV validators.
+
+Upgraded the Harvester so ETH rewards can be sent straight to the Dripper as WETH.`,
       actions: [
         // 1. Add new strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cStrategyProxy.address],
+          args: [cNativeStakingStrategyProxy.address],
         },
         // 2. configure Harvester to support the strategy
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cStrategyProxy.address, true],
+          args: [cNativeStakingStrategyProxy.address, true],
         },
         // 3. set harvester to the strategy
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
         // 4. configure the fuse interval
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setFuseInterval(uint256,uint256)",
           args: [
             ethers.utils.parseEther("21.6"),
@@ -194,21 +219,21 @@ module.exports = deploymentWithGovernanceProposal(
         },
         // 5. set validator registrator to the Defender Relayer
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setRegistrator(address)",
           // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
         },
         // 6. set staking threshold
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setStakeETHThreshold(uint256)",
           // 16 validators before the 5/8 multisig has to call resetStakeETHTally
           args: [ethers.utils.parseEther("512")], // 16 * 32ETH
         },
         // 7. set staking monitor
         {
-          contract: cStrategy,
+          contract: cNativeStakingStrategy,
           signature: "setStakingMonitor(address)",
           // The 5/8 multisig
           args: [addresses.mainnet.Guardian],

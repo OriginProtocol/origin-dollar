@@ -14,6 +14,8 @@ contract FeeAccumulator {
     /// @notice The address of the Native Staking Strategy
     address public immutable STRATEGY;
 
+    event ExecutionRewardsCollected(address indexed strategy, uint256 amount);
+
     /**
      * @param _strategy Address of the Native Staking Strategy
      */
@@ -32,6 +34,8 @@ contract FeeAccumulator {
         if (eth > 0) {
             // Send the ETH to the Native Staking Strategy
             Address.sendValue(payable(STRATEGY), eth);
+
+            emit ExecutionRewardsCollected(STRATEGY, eth);
         }
     }
 

@@ -971,9 +971,13 @@ describe("Unit test: Native SSV Staking Strategy", function () {
 
       describe(`given ${testCase.feeAccumulatorEth} execution rewards, ${testCase.consensusRewards} consensus rewards, ${testCase.deposits} deposits and ${nrOfActiveDepositedValidators} validators`, () => {
         beforeEach(async () => {
-          const { nativeStakingSSVStrategy, governor, weth, josh } = fixture;
-          const feeAccumulatorAddress =
-            await nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
+          const {
+            nativeStakingSSVStrategy,
+            nativeStakingFeeAccumulator,
+            governor,
+            weth,
+            josh,
+          } = fixture;
 
           // setup state
           if (consensusRewards.gt(BigNumber.from("0"))) {
@@ -985,7 +989,10 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           }
           if (feeAccumulatorEth.gt(BigNumber.from("0"))) {
             // set execution layer rewards on the fee accumulator
-            await setBalance(feeAccumulatorAddress, feeAccumulatorEth);
+            await setBalance(
+              nativeStakingFeeAccumulator.address,
+              feeAccumulatorEth
+            );
           }
           if (deposits.gt(BigNumber.from("0"))) {
             // send eth to the strategy as if Vault would send it via a Deposit function
@@ -1006,7 +1013,12 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         });
 
         it(`then should harvest ${testCase.expectedHarvester} WETH`, async () => {
-          const { nativeStakingSSVStrategy, oethHarvester, weth } = fixture;
+          const {
+            nativeStakingSSVStrategy,
+            nativeStakingFeeAccumulator,
+            oethHarvester,
+            weth,
+          } = fixture;
           const sHarvester = await impersonateAndFund(oethHarvester.address);
 
           const harvesterWethBalanceBefore = await weth.balanceOf(
@@ -1024,6 +1036,17 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             await expect(tx).to.not.emit(
               nativeStakingSSVStrategy,
               "RewardTokenCollected"
+            );
+          }
+
+          if (feeAccumulatorEth > 0) {
+            await expect(tx)
+              .to.emit(nativeStakingFeeAccumulator, "ExecutionRewardsCollected")
+              .withArgs(nativeStakingSSVStrategy.address, feeAccumulatorEth);
+          } else {
+            await expect(tx).to.not.emit(
+              nativeStakingFeeAccumulator,
+              "ExecutionRewardsCollected"
             );
           }
 
@@ -1071,7 +1094,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .setStakeETHThreshold(stakeThreshold);
     });
 
-    const stakeValidator = async (
+    const stakeValidatorsSingle = async (
       validators,
       stakeTresholdErrorTriggered,
       startingIndex = 0
@@ -1087,15 +1110,15 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           )
         ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
-        const stakeAmount = ethUnits("32");
+        const ssvAmount = ethUnits("2");
         // Register a new validator with the SSV Network
         const regTx = await nativeStakingSSVStrategy
           .connect(validatorRegistrator)
-          .registerSsvValidator(
-            testPublicKeys[i],
+          .registerSsvValidators(
+            [testPublicKeys[i]],
             testValidator.operatorIds,
-            testValidator.sharesData,
-            stakeAmount,
+            [testValidator.sharesData],
+            ssvAmount,
             emptyCluster
           );
 
@@ -1148,16 +1171,82 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       }
     };
 
+    const stakeValidatorsBulk = async (
+      validators,
+      stakeTresholdErrorTriggered,
+      startingIndex = 0
+    ) => {
+      const { nativeStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      const publicKeys = testPublicKeys.slice(startingIndex, validators);
+      const sharesData = new Array(validators)
+        .fill()
+        .map(() => testValidator.sharesData);
+      const ssvAmount = ethUnits("2");
+
+      // Register a new validator with the SSV Network
+      const regTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidators(
+          publicKeys,
+          testValidator.operatorIds,
+          sharesData,
+          ssvAmount,
+          emptyCluster
+        );
+
+      for (const pubKey of publicKeys) {
+        await expect(regTx)
+          .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
+          .withArgs(keccak256(pubKey), pubKey, testValidator.operatorIds);
+
+        expect(
+          await nativeStakingSSVStrategy.validatorsStates(keccak256(pubKey))
+        ).to.equal(1, "Validator state not 1 (REGISTERED)");
+      }
+      // Stake ETH to the new validator
+      const stakeValidators = publicKeys.map((pubKey) => ({
+        pubkey: pubKey,
+        signature: testValidator.signature,
+        depositDataRoot: testValidator.depositDataRoot,
+      }));
+      const stakeTx = nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(stakeValidators);
+
+      if (stakeTresholdErrorTriggered) {
+        await expect(stakeTx).to.be.revertedWith("Staking ETH over threshold");
+      } else {
+        await stakeTx;
+
+        for (const pubKey of publicKeys) {
+          await expect(stakeTx)
+            .to.emit(nativeStakingSSVStrategy, "ETHStaked")
+            .withArgs(keccak256(pubKey), pubKey, parseEther("32"));
+          expect(
+            await nativeStakingSSVStrategy.validatorsStates(keccak256(pubKey))
+          ).to.equal(2, "Validator state not 2 (STAKED)");
+        }
+      }
+    };
+
     it("Should stake to a validator", async () => {
-      await stakeValidator(1, false);
+      await stakeValidatorsSingle(1, false);
     });
 
     it("Should stake to 2 validators", async () => {
-      await stakeValidator(2, false);
+      await stakeValidatorsSingle(2, false);
     });
 
     it("Should not stake to 3 validators as stake threshold is triggered", async () => {
-      await stakeValidator(3, true);
+      await stakeValidatorsSingle(3, true);
+    });
+
+    it("Should register and stake 2 validators together", async () => {
+      await stakeValidatorsBulk(2, false);
+    });
+    it("Should register 3 but not stake 3 validators together", async () => {
+      await stakeValidatorsBulk(3, true);
     });
 
     it("Fail to stake a validator that hasn't been registered", async () => {
@@ -1184,11 +1273,11 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         await nativeStakingSSVStrategy.connect(anna).resetStakeETHTally();
       };
 
-      await stakeValidator(2, false, 0);
+      await stakeValidatorsSingle(2, false, 0);
       await resetThreshold();
-      await stakeValidator(2, false, 2);
+      await stakeValidatorsSingle(2, false, 2);
       await resetThreshold();
-      await stakeValidator(2, false, 4);
+      await stakeValidatorsSingle(2, false, 4);
       await resetThreshold();
     });
 
@@ -1264,10 +1353,4 @@ const setConsensusRewards = async (
     consensusRewards,
     "consensusRewards no set properly"
   );
-};
-
-module.exports = {
-  testValidator,
-  testPublicKeys,
-  emptyCluster
 };
