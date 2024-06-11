@@ -1,6 +1,6 @@
 # Origin DeFi's OTokens: Origin Dollar (OUSD) and Origin Ether (OETH)
 
-For more details about the product, checkout [our docs](https://docs.oeth.com).
+For more details about the product, check out [our docs](https://docs.oeth.com).
 
 ---
 
