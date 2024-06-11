@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IDepositContract } from "./../interfaces/IDepositContract.sol";
 
 contract MockDepositContract is IDepositContract {
-    uint256 deposit_count;
+    uint256 public deposit_count;
 
     function deposit(
         bytes calldata pubkey,
@@ -60,11 +60,6 @@ contract MockDepositContract is IDepositContract {
     /// @return The deposit count encoded as a little endian 64-bit number.
     function get_deposit_count() external view override returns (bytes memory) {
         return to_little_endian_64(uint64(deposit_count));
-    }
-
-    /// @dev Just needed for unit test purposes
-    function get_deposit_count_uint() external view override returns (uint256 count) {
-        count = deposit_count;
     }
 
     function to_little_endian_64(uint64 value)

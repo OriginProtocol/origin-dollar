@@ -1265,3 +1265,9 @@ const setConsensusRewards = async (
     "consensusRewards no set properly"
   );
 };
+
+module.exports = {
+  testValidator,
+  testPublicKeys,
+  emptyCluster
+};
