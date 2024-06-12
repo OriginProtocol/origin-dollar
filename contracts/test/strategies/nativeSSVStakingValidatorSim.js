@@ -1,4 +1,4 @@
-//const { expect } = require("chai");
+tasks/tasks.js//const { expect } = require("chai");
 const { isCI } = require("../helpers");
 const ValidatorSimulator = require("../../utils/ValidatorSimulator")
 const {
@@ -26,7 +26,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     validatorSimulator = new ValidatorSimulator(nativeStakingSSVStrategy, depositContract, ssvNetwork);
   });
 
-  describe("Native SSV Staking validator simulations", function () {
+  describe.only("Native SSV Staking validator simulations", function () {
     it("Should what?!", async () => {
       await validatorSimulator.startSimulation();
 

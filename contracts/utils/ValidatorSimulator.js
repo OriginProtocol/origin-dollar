@@ -6,6 +6,8 @@ class ValidatorSimulator {
   depositContract;
   ssvNetworkContract;
 
+  // simulation data
+
   constructor(_nativeStakingContract, _depositContract, _ssvNetworkContract) {
     this.nativeStakingContract = _nativeStakingContract;
     this.depositContract = _depositContract;
@@ -13,7 +15,7 @@ class ValidatorSimulator {
   }
   
   async startSimulation() {
-    console.log("stats", await this.fetchStats());
+    const []
   }
 
   async fetchStats() {
@@ -26,6 +28,7 @@ class ValidatorSimulator {
 
     return [depositCount, registeredValidators, exitedValidators, removedValidators];
   }
+
 
 }
 

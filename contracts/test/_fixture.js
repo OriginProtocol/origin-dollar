@@ -380,8 +380,6 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     convexEthMetaStrategy,
     fluxStrategy,
-    nativeStakingSSVStrategy,
-    nativeStakingFeeAccumulator,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -526,14 +524,6 @@ const defaultFixture = deployments.createFixture(async () => {
       fluxStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
-
     const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
       "NativeStakingFeeAccumulatorProxy"
     );
@@ -642,13 +632,6 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const nativeStakingStrategyProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
-    );
-    nativeStakingSSVStrategy = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      nativeStakingStrategyProxy.address
-    );
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
     swapper1Inch = await ethers.getContract("Swapper1InchV5");
@@ -1720,34 +1703,43 @@ async function nativeStakingValidatorDepositsFixture() {
     .connect(josh)
     .transfer(nativeStakingSSVStrategy.address, parseEther("19200")); // 32 * 600 = 19200
 
-  // there is a limitation to this function as it will only check for
-  // a failure transaction with the last stake call
+
+  const pubKeys = [];
+  const sharesData = [];
+  const stakeData = [];
+
   for (let i = 0; i < 600; i++) {
     // this just creates incrementally bigger validator pubKeys that are of sufficient length 
     const pubkey = "0x" + (i + 1).toString(16).padStart(96, "0");
 
-    const stakeAmount = ethUnits("32");
+    pubKeys[i] = pubkey;
+    sharesData[i] = testValidator.sharesData;
+    stakeData[i] = {
+      pubkey,
+      signature: testValidator.signature,
+      depositDataRoot:testValidator.depositDataRoot
+    }
+  }
+
+  const ssvAmount = ethUnits("10");
+
+  for (let i = 0; i < 3; i++) {
     // Register a new validator with the SSV Network
     await nativeStakingSSVStrategy
       .connect(validatorRegistrator)
-      .registerSsvValidator(
-        pubkey,
+      .registerSsvValidators(
+        pubKeys.slice(i * 200, (i + 1) * 200),
         testValidator.operatorIds,
-        testValidator.sharesData,
-        stakeAmount,
+        sharesData.slice(i * 200, (i + 1) * 200),
+        ssvAmount,
         emptyCluster
       );
 
     // Stake ETH to the new validator
     nativeStakingSSVStrategy
       .connect(validatorRegistrator)
-      .stakeEth([
-        {
-          pubkey,
-          signature: testValidator.signature,
-          depositDataRoot: testValidator.depositDataRoot,
-        },
-      ]);
+      .stakeEth(stakeData.slice(i * 200, (i + 1) * 200));
+
   }
 
   return fixture;

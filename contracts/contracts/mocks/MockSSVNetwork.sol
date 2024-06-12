@@ -25,7 +25,9 @@ contract MockSSVNetwork {
         bytes[] calldata sharesData,
         uint256 amount,
         Cluster memory cluster
-    ) external {}
+    ) external {
+        registeredValidators += publicKeys.length;
+    }
 
     function exitValidator(
         bytes calldata publicKey,
