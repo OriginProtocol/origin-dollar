@@ -795,7 +795,6 @@ module.exports = {
   isMainnetOrFork,
   isMainnetForkTest,
   isForkTest,
-  isMainnetForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,

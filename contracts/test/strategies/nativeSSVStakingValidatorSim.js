@@ -1,6 +1,5 @@
-tasks/tasks.js//const { expect } = require("chai");
 const { isCI } = require("../helpers");
-const ValidatorSimulator = require("../../utils/ValidatorSimulator")
+const ValidatorSimulator = require("../../utils/ValidatorSimulator");
 const {
   createFixtureLoader,
   nativeStakingValidatorDepositsFixture,
@@ -20,21 +19,32 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     const {
       nativeStakingSSVStrategy,
       depositContract,
-      ssvNetwork
+      ssvNetwork,
+      validatorRegistrator,
     } = fixture;
 
-    validatorSimulator = new ValidatorSimulator(nativeStakingSSVStrategy, depositContract, ssvNetwork);
+    validatorSimulator = new ValidatorSimulator(
+      nativeStakingSSVStrategy,
+      depositContract,
+      ssvNetwork,
+      validatorRegistrator
+    );
   });
 
-  describe.only("Native SSV Staking validator simulations", function () {
-    it("Should what?!", async () => {
-      await validatorSimulator.startSimulation();
+  describe("Native SSV Staking validator simulations", function () {
+    const maxSlashedValidators = 5;
+    const maxWithdrawnValidators = 50;
 
-    });
-
-    it("Should what again", async () => {
-      await validatorSimulator.startSimulation();
-
-    });
+    // loop through possible combinations of slashed and withdrawn validators
+    for (let i = 0; i < maxSlashedValidators + 1; i++) {
+      for (let j = 0; j < maxWithdrawnValidators + 1; j++) {
+        it(`Should correctly do accounting when ${i} validators are slashed and ${j} validators are fully withdrawn`, async () => {
+          await validatorSimulator.executeSimulation({
+            validatorSlashes: i,
+            validatorFullWithdrawals: j,
+          });
+        });
+      }
+    }
   });
 });

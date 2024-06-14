@@ -301,7 +301,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
     "NativeStakingFeeAccumulatorProxy"
   );
-  const nativeStakingFeeAccumulator = await ethers.getContractAt(
+  let nativeStakingFeeAccumulator = await ethers.getContractAt(
     "FeeAccumulator",
     nativeStakingFeeAccumulatorProxy.address
   );
@@ -1672,7 +1672,7 @@ async function nativeStakingValidatorDepositsFixture() {
     validatorRegistrator,
     governor,
     weth,
-    josh
+    josh,
   } = fixture;
 
   const testValidator = {
@@ -1703,13 +1703,12 @@ async function nativeStakingValidatorDepositsFixture() {
     .connect(josh)
     .transfer(nativeStakingSSVStrategy.address, parseEther("19200")); // 32 * 600 = 19200
 
-
   const pubKeys = [];
   const sharesData = [];
   const stakeData = [];
 
   for (let i = 0; i < 600; i++) {
-    // this just creates incrementally bigger validator pubKeys that are of sufficient length 
+    // this just creates incrementally bigger validator pubKeys that are of sufficient length
     const pubkey = "0x" + (i + 1).toString(16).padStart(96, "0");
 
     pubKeys[i] = pubkey;
@@ -1717,8 +1716,8 @@ async function nativeStakingValidatorDepositsFixture() {
     stakeData[i] = {
       pubkey,
       signature: testValidator.signature,
-      depositDataRoot:testValidator.depositDataRoot
-    }
+      depositDataRoot: testValidator.depositDataRoot,
+    };
   }
 
   const ssvAmount = ethUnits("10");
@@ -1739,7 +1738,6 @@ async function nativeStakingValidatorDepositsFixture() {
     nativeStakingSSVStrategy
       .connect(validatorRegistrator)
       .stakeEth(stakeData.slice(i * 200, (i + 1) * 200));
-
   }
 
   return fixture;
