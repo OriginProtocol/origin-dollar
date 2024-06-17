@@ -64,6 +64,12 @@ main()
         i=0
         until grep -q -i 'Started HTTP and WebSocket JSON-RPC server at' $nodeOutput
         do
+          if grep -q -i 'VM Exception while processing transaction' $nodeOutput; then
+            printf "\n"
+            echo "🔴 Error detected node exiting."
+            exit 1
+          fi
+
           let i++
           sleep 1
           if (( i > nodeWaitTimeout )); then
