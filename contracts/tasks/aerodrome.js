@@ -277,9 +277,10 @@ function displayPortion(amount, total, units, comparison, precision = 2) {
 
 function displayRatio(a, b, aBefore, bBefore, precision = 6) {
   const diff = a.sub(b);
-  const diffPercentage = a.gt(0)
-    ? diff.mul(BigNumber.from(10).pow(2 + precision)).div(b)
-    : BigNumber.from(0);
+  const diffPercentage =
+    a.gt(0) && b.gt(0)
+      ? diff.mul(BigNumber.from(10).pow(2 + precision)).div(b)
+      : BigNumber.from(0);
 
   let diffBeforeDisplay = "";
   if (aBefore && bBefore) {
@@ -306,6 +307,7 @@ function sqrt(value) {
 }
 
 // Calculate the LPToken price of the given sAMM pool
+// Calculate the LPToken price of the given sAMM pool
 async function calcLPTokenPrice(fixture) {
   const { pool } = fixture;
 
@@ -314,16 +316,11 @@ async function calcLPTokenPrice(fixture) {
   const x = aeroBalances._reserve0;
   const y = aeroBalances._reserve1;
 
-  // invariant = (x^3 * y) + (y^3 * x)
-  const invariant = x
-    .pow(3)
-    .mul(y)
-    .div(ethers.constants.WeiPerEther.pow(3))
-    .add(y.pow(3).mul(x).div(ethers.constants.WeiPerEther.pow(3)));
   // price = 2 * fourthroot of (invariant/2)
-  const lpPrice = sqrt(
-    sqrt(invariant.div(ethers.constants.WeiPerEther).div(2))
-  ).mul(2);
+  const lpPrice = 2 * sqrt(x.mul(y)).div(await pool.totalSupply());
+
+  log(`LP Price :  ${lpPrice} `);
+
   return BigNumber.from(lpPrice).mul(ethers.constants.WeiPerEther);
 }
 

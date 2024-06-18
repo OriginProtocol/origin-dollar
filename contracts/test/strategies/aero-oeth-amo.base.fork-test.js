@@ -378,6 +378,106 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         0.05 // 0.01% or 5 basis point
       );
     });
+    it("withdrawAll() should be able to withdraw an amount atleast what checkBalances() report: Balanced pool", async () => {
+      const { aerodromeEthStrategy, oeth, oethVaultSigner, weth, oethVault } =
+        fixture;
+      let checkBalance = await aerodromeEthStrategy.checkBalance(weth.address);
+      let wethBalanceBefore = await weth.balanceOf(oethVault.address);
+      let oethTotalSupplyBefore = await oeth.totalSupply();
+      await aerodromeEthStrategy.connect(oethVaultSigner).withdrawAll();
+      let wethBalanceAfter = await weth.balanceOf(oethVault.address);
+      let oethTotalSupplyAfter = await oeth.totalSupply();
+      expect(checkBalance).to.be.lte(
+        oethTotalSupplyBefore
+          .sub(oethTotalSupplyAfter)
+          .add(wethBalanceAfter.sub(wethBalanceBefore))
+      );
+    });
+    it("withdrawAll() should be able to withdraw an amount atleast what checkBalances() report: Tilt - More OETH", async () => {
+      const {
+        aerodromeEthStrategy,
+        aeroRouter,
+        oeth,
+        oethVaultSigner,
+        weth,
+        josh,
+        oethVault,
+      } = fixture;
+
+      let wethBalanceBefore = await weth.balanceOf(oethVault.address);
+
+      await oeth.connect(oethVaultSigner).mint(josh.address, oethUnits("300"));
+      await oeth.connect(josh).approve(aeroRouter.address, oethUnits("300"));
+      let oethTotalSupplyBefore = await oeth.totalSupply();
+
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          parseUnits("300"),
+          0,
+          [
+            [
+              oeth.address,
+              weth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+      let checkBalance = await aerodromeEthStrategy.checkBalance(weth.address);
+      await aerodromeEthStrategy.connect(oethVaultSigner).withdrawAll();
+      let wethBalanceAfter = await weth.balanceOf(oethVault.address);
+      let oethTotalSupplyAfter = await oeth.totalSupply();
+      expect(checkBalance).to.be.lte(
+        oethTotalSupplyBefore
+          .sub(oethTotalSupplyAfter)
+          .add(wethBalanceAfter.sub(wethBalanceBefore))
+      );
+    });
+    it("withdrawAll() should be able to withdraw an amount atleast what checkBalances() report: Tilt - More WETH", async () => {
+      const {
+        aerodromeEthStrategy,
+        aeroRouter,
+        oeth,
+        oethVaultSigner,
+        weth,
+        josh,
+        oethVault,
+      } = fixture;
+
+      let wethBalanceBefore = await weth.balanceOf(oethVault.address);
+
+      await weth.connect(josh).approve(aeroRouter.address, oethUnits("300"));
+      let oethTotalSupplyBefore = await oeth.totalSupply();
+
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          parseUnits("300"),
+          0,
+          [
+            [
+              weth.address,
+              oeth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+      let checkBalance = await aerodromeEthStrategy.checkBalance(weth.address);
+      await aerodromeEthStrategy.connect(oethVaultSigner).withdrawAll();
+      let wethBalanceAfter = await weth.balanceOf(oethVault.address);
+      let oethTotalSupplyAfter = await oeth.totalSupply();
+      expect(checkBalance).to.be.lte(
+        oethTotalSupplyBefore
+          .sub(oethTotalSupplyAfter)
+          .add(wethBalanceAfter.sub(wethBalanceBefore))
+      );
+    });
     it("Vault should be able to withdraw some", async () => {
       const {
         aerodromeEthStrategy,
@@ -1067,15 +1167,8 @@ async function calcLPTokenPrice(fixture) {
   const x = aeroBalances._reserve0;
   const y = aeroBalances._reserve1;
 
-  // invariant = (x^3 * y) + (y^3 * x)
-  const invariant = x
-    .pow(3)
-    .mul(y)
-    .div(ethers.constants.WeiPerEther.pow(3))
-    .add(y.pow(3).mul(x).div(ethers.constants.WeiPerEther.pow(3)));
   // price = 2 * fourthroot of (invariant/2)
-  const lpPrice =
-    2 * sqrt(sqrt(invariant.div(ethers.constants.WeiPerEther).div(2)));
+  const lpPrice = 2 * sqrt(x.mul(y)).div(await pool.totalSupply());
 
   log(`LP Price :  ${lpPrice} `);
 

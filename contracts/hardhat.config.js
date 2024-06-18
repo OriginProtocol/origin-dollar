@@ -113,7 +113,9 @@ module.exports = {
             forking: {
               enabled: true,
               url: provider,
-              blockNumber: forkBlockNumber,
+              blockNumber: forkBlockNumber
+                ? parseInt(forkBlockNumber)
+                : undefined,
               timeout: 0,
             },
           }
