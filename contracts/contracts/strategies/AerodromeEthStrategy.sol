@@ -198,6 +198,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 minWethToAdd = wethToAdd.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
+
         // Do the deposit to the Aerodrome pool
         // slither-disable-next-line arbitrary-send
         (, , uint256 lpReceived) = aeroRouterAddress.addLiquidity(
@@ -259,6 +260,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             .divPrecisely(lpTokenAddress.totalSupply());
 
         oethDesired = oethDesired.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
          * in that the strategy receives enough WETH on balanced removal
          */
@@ -363,6 +365,7 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         // This includes all that was removed from the AERO pool and
         // any ether that was sitting in the strategy contract before the removal.
         uint256 wethBalance = weth.balanceOf(address(this));
+
         // Convert all the strategy contract's ether to WETH
         require(
             weth.transfer(vaultAddress, wethBalance),
@@ -475,9 +478,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         // WEth balance needed here for the balance check that happens from vault during depositing.
         balance = weth.balanceOf(address(this));
+
         uint256 lpTokens = aeroGaugeAddress.balanceOf(address(this));
+
         if (lpTokens > 0) {
-            balance += (lpTokens * getLPTokenPrice()) / 1e18;
+            balance += lpTokens.mulTruncate(getLPTokenPrice());
         }
     }
 
@@ -552,33 +557,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
         uint256 r0 = lpTokenAddress.reserve0();
         uint256 r1 = lpTokenAddress.reserve1();
 
-        // Calculate K
-        uint256 K = _getK(r0, r1);
-
-        // Calculate fourth root of K/2 then multiply it by 2.
-        uint256 lpPrice = 2 *
-            (
-                FixedPointMathLib.sqrt(
-                    FixedPointMathLib.sqrt(K.divPrecisely(2)) * 1e18
-                )
-            );
-
-        return lpPrice;
-    }
-
-    /**
-     * @dev Calculates the constant K for the sAMM pool based on the reserves r1 and r2.
-     * The formula for K is: K = (r1^3 * r2) + (r2^3 * r1)
-     * @param r1 The reserve of wETH.
-     * @param r2 The reserve of OETH.
-     * @return The calculated constant K.
-     */
-    function _getK(uint256 r1, uint256 r2) internal pure returns (uint256) {
-        uint256 r1Cube = FixedPointMathLib.rpow(r1, 3, 1e18);
-        uint256 r2Cube = FixedPointMathLib.rpow(r2, 3, 1e18);
-
+        // SqRoot of (r0 * r1) / totalSupply
         return
-            FixedPointMathLib.mulWad(r1Cube, r2) +
-            FixedPointMathLib.mulWad(r2Cube, r1);
+            2 *
+            FixedPointMathLib.sqrtWad((r0 * r1) / 1e18).divPrecisely(
+                lpTokenAddress.totalSupply()
+            );
     }
 }
