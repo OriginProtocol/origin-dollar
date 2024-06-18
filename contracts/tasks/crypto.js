@@ -9,7 +9,7 @@ const {
 
 const ecdhCurveName = "prime256v1";
 
-const genECDHKey = async ({ privateKey }) => {
+const genECDHKey = async ({ privateKey, displayPk }) => {
   const ecdh = createECDH(ecdhCurveName);
 
   if (privateKey) {
@@ -20,6 +20,9 @@ const genECDHKey = async ({ privateKey }) => {
 
   const publicKeyBase64 = ecdh.getPublicKey("base64");
 
+  if (displayPk) {
+    console.log(`Private key: ${ecdh.getPrivateKey("hex")}`);
+  }
   console.log(`Public  key: ${publicKeyBase64}`);
 
   const subtleKey = await subtle.importKey(

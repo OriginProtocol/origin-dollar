@@ -1212,6 +1212,12 @@ subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair"
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "displayPk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
+  )
   .setAction(genECDHKey);
 task("genECDHKey").setAction(async (_, __, runSuper) => {
   return runSuper();
