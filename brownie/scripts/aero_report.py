@@ -24,19 +24,20 @@ class AerodromeWeth:
         self.vault_core = oeth_vault_core
         self.vault_admin = oeth_vault_admin
         self.base_size = 200
-
+        self.oeth= oeth
+ 
     def setup(self):
         oeth.approve(self.aero_router, 1e70, {"from": JOSH})
         weth.approve(self.aero_router, 1e70, {"from": JOSH})
         weth.transfer(OETH_VAULT, 1000e18, {"from":JOSH})
-        self.aero_router.swapExactTokensForTokens(
-                100e18,           # amountIn
-                0,                # amountOutMin 
-                [['0xa0ba4fa6c1E25DCEEAE90B56da024376FDb34efB', '0x4200000000000000000000000000000000000006', True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
-                JOSH,      
-                1749091044,        # one year from now
-                {"from": JOSH},
-            )
+        # self.aero_router.swapExactTokensForTokens(
+        #         50e18,           # amountIn
+        #         0,                # amountOutMin 
+        #         [['0xa0ba4fa6c1E25DCEEAE90B56da024376FDb34efB', '0x4200000000000000000000000000000000000006', True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
+        #         JOSH,      
+        #         1749091044,        # one year from now
+        #         {"from": JOSH},
+        #     )
         
         
 
@@ -108,7 +109,7 @@ def _load_data(filename):
         base["after_pool_0"] + base["after_pool_1"]
     )
     base["before_profit"] = base["before_vault"] - base["pre_vault"]
-    base["after_profit"] = base["after_vault"] - base["before_vault"]
+    base["after_profit"] = (base["after_vault"] - base["before_vault"]) + (base["before_oeth_supply"] - base["after_oeth_supply"])
     return base
 
 
@@ -119,7 +120,7 @@ def main():
 
 def run_complete(strategy_name):
     run_simulations(strategy_name)
-    #run_report(strategy_name)
+    run_report(strategy_name)
 
 
 def run_simulations(strategy_name):
@@ -138,7 +139,7 @@ def run_simulations(strategy_name):
 
     print("withdrawAllFromStrategies done");
 
-    # Test Deposits
+  #  Test Deposits
     deposit_stats = []
     for initial_tilt in [0.0, -1, 1, 0.5, -0.5, 0.25, -0.25, 0.75, -0.75]:
         for deposit_x in range(0, NUM_DEPOSIT_TESTS_EACH + 1):
@@ -175,12 +176,14 @@ def run_simulations(strategy_name):
 
                 deposit = harness.pool_create_mix(deposit_mix, size=1)
                 print("pool_create_mix 2", deposit);
+                stat["before_oeth_supply"] = harness.oeth.totalSupply()
                 harness.vault_admin.depositToStrategy(
                     harness.strat,
                     list(deposit.keys()),
                     list(deposit.values()),
                     {"from": STRATEGIST},
                 )
+                stat["after_oeth_supply"] = harness.oeth.totalSupply()
                 print("depositToStrategy 2 ends");
 
                 stat["after_vault"] = harness.vault_core.totalValue()
@@ -206,12 +209,15 @@ def run_simulations(strategy_name):
                     stat["action_mix"] = test_tilt
 
                     initial_deposit = harness.pool_create_mix(tilt=0.5, size=1.5)
+
+                    stat["before_oeth_supply"] = harness.oeth.totalSupply()
                     harness.vault_admin.depositToStrategy(
                         harness.strat,
                         list(initial_deposit.keys()),
                         list(initial_deposit.values()),
                         {"from": STRATEGIST},
                     )
+                    stat["after_oeth_supply"] = harness.oeth.totalSupply()
 
                     stat["pre_vault"] = harness.vault_core.totalValue()
                     pb = list(harness.pool_balances().values())
@@ -275,12 +281,14 @@ def run_simulations(strategy_name):
 
                 print("Withdraw Withdraw", deposit_mix)
                 withdraw = harness.pool_create_mix(deposit_mix, size=0.3)
+                stat["before_oeth_supply"] = harness.oeth.totalSupply()
                 harness.vault_admin.withdrawFromStrategy(
                     harness.strat,
                     list(withdraw.keys()),
                     list(withdraw.values()),
                     {"from": STRATEGIST, "allow_revert": True},
                 )
+                stat["after_oeth_supply"] = harness.oeth.totalSupply()
 
                 stat["after_vault"] = harness.vault_core.totalValue()
                 pb = list(harness.pool_balances().values())
@@ -310,6 +318,7 @@ def run_simulations(strategy_name):
                 list(initial_deposit.values()),
                 {"from": STRATEGIST},
             )
+            #harness.vault_core.rebase({"from":GOVERNOR})
 
             stat["pre_vault"] = harness.vault_core.totalValue()
             pb = list(harness.pool_balances().values())
@@ -323,9 +332,12 @@ def run_simulations(strategy_name):
             stat["before_pool_0"] = pb[0]
             stat["before_pool_1"] = pb[1]
 
+            stat["before_oeth_supply"] = harness.oeth.totalSupply()
+
             harness.vault_admin.withdrawAllFromStrategy(
                 harness.strat, {"from": STRATEGIST}
             )
+            stat["after_oeth_supply"] = harness.oeth.totalSupply()
 
             stat["after_vault"] = harness.vault_core.totalValue()
             pb = list(harness.pool_balances().values())
@@ -344,14 +356,14 @@ def run_report(strategy_name):
     workspace = _getWorkspace(strategy_name)
     harness = _getHarness(strategy_name)
 
-    deposit_base = _load_data(workspace + "deposit_stats.csv")
+    # deposit_base = _load_data(workspace + "deposit_stats.csv")
     balance_base = _load_data(workspace + "balance_stats.csv")
-    withdraw_base = _load_data(workspace + "withdraw_stats.csv")
+    # withdraw_base = _load_data(workspace + "withdraw_stats.csv")
     withdrawall_base = _load_data(workspace + "withdrawall_stats.csv")
 
     sections = []
 
-    # Balance Section
+   # Balance Section
     df = balance_base
     for before_mix, rows in df.groupby(df["before_mix"]):
         plt.plot(rows["action_mix"], rows["after_profit"])
@@ -362,41 +374,41 @@ def run_report(strategy_name):
     )
 
     # Deposit Section
-    df = deposit_base
-    plt.title("Deposit profit")
-    plt.axhline(0, c="black", linewidth=0.4)
-    for before_mix, rows in df.groupby(df["before_mix"]):
-        plt.plot(
-            rows["action_mix"] * 100,
-            rows["after_profit"],
-            label="{:.1f}%".format(100 * float(before_mix)),
-        )
-    plt.ylim([-1e18, 1e18])
-    plt.xlabel("Deposit Mix")
-    plt.ylabel("Deposit Profit")
-    plt.legend()
-    plt.savefig(workspace + "deposit.svg")
-    plt.close()
-    sections.append('<h2>Deposit</h2><img src="deposit.svg">')
+    # df = deposit_base
+    # plt.title("Deposit profit")
+    # plt.axhline(0, c="black", linewidth=0.4)
+    # for before_mix, rows in df.groupby(df["before_mix"]):
+    #     plt.plot(
+    #         rows["action_mix"] * 100,
+    #         rows["after_profit"],
+    #         label="{:.1f}%".format(100 * float(before_mix)),
+    #     )
+    # plt.ylim([-1e18, 1e18])
+    # plt.xlabel("Deposit Mix")
+    # plt.ylabel("Deposit Profit")
+    # plt.legend()
+    # plt.savefig(workspace + "deposit.svg")
+    # plt.close()
+    # sections.append('<h2>Deposit</h2><img src="deposit.svg">')
 
     # Withdraw Section
-    df = withdraw_base
-    df = df[df.before_mix != df.after_mix]
-    plt.title("Withdraw profit")
-    plt.axhline(0, c="black", linewidth=0.4)
-    for before_mix, rows in df.groupby(df["before_mix"]):
-        plt.plot(
-            rows["action_mix"] * 100,
-            rows["after_profit"],
-            label="{:.1f}%".format(100 * float(before_mix)),
-        )
-    plt.ylim([-1e18, 1e18])
-    plt.xlabel("Pool Mix")
-    plt.ylabel("Withdraw Profit")
-    plt.legend()
-    plt.savefig(workspace + "withdraw.svg")
-    plt.close()
-    sections.append('<h2>Withdraw</h2><img src="withdraw.svg">')
+    # df = withdraw_base
+    # df = df[df.before_mix != df.after_mix]
+    # plt.title("Withdraw profit")
+    # plt.axhline(0, c="black", linewidth=0.4)
+    # for before_mix, rows in df.groupby(df["before_mix"]):
+    #     plt.plot(
+    #         rows["action_mix"] * 100,
+    #         rows["after_profit"],
+    #         label="{:.1f}%".format(100 * float(before_mix)),
+    #     )
+    # plt.ylim([-1e18, 1e18])
+    # plt.xlabel("Pool Mix")
+    # plt.ylabel("Withdraw Profit")
+    # plt.legend()
+    # plt.savefig(workspace + "withdraw.svg")
+    # plt.close()
+    # sections.append('<h2>Withdraw</h2><img src="withdraw.svg">')
 
     # Withdraw All
     df = withdrawall_base
