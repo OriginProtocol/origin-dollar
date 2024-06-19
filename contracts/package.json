@@ -44,6 +44,8 @@
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
+    "@aws-lite/s3": "^0.2.1",
+    "@aws-sdk/client-kms": "^3.598.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",

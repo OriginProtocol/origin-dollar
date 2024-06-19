@@ -357,6 +357,35 @@ npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/re
 
 `rollup` and `defender-autotask-client` can be installed globally to avoid the `npx` prefix.
 
+### Encrypting / decrypting validator private keys
+
+When handling secrets it is important that those can not get compromised. For that reason we have put the security in place to make sure that private keys of validators can only be securely obtained. 
+
+All our validator private keys are encrypted using `p2pApiEncodedKey` that is present in constants.js. That is the encoded public key pair of the asymmetric key created to encrypt the validator private keys. 
+
+
+#### Encrypting validator private keys
+
+Defender action that operates the validators will by default request a validator with encoded private key and store those keys to the `validator-keys` S3 bucket. Each validator is one s3 object and the name of the object is the pubkey of the validator. The s3 bucket has a `write once` policy and objects can not be re-written.
+
+#### Decrypting validator private keys
+
+In order to obtain the private key (for decrypting validator private keys) on needs to obtain the AWS KMS encrypted private key and store it into an `VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY` env var (ask around in smart contract engineering to get it). 
+
+Then fetch api keys for AWS IAM user `validator_key_manager` and set them under env vars `AWS_ACCESS_KEY_ID` &
+`AWS_SECRET_ACCESS_KEY`. Now you should be able to decrypt validator private keys that are stored in the `validator-keys` S3 bucket by running `npx hardhat masterDecrypt --message [ENCRYPTED_PRIVATE_KEY_FROM_BUCKET]`
+
+
+**Example**: to test that the decryption works correctly and master key is setup right run the following
+```
+npx hardhat masterDecrypt --message BC8uniIOqEqqdt6/5MFtZRFpw9jCvVQsGpl893hQTo/MAMDefyyjGkngH39qBHPClDDdUFa9sEPJcS0qUrHJc9SXatYRvINprXTEPSUqbTAAUpBfiuX0gHyAW5cLJp5SAYsgU4rMxZAjtSof56oHQ0c3PGzz/9CBhEeSbFiboz7a/CDYm4adDUt1CbQdN0tKaQ==
+
+#should produce
+Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a973fc1d9d9b400cd38a2bfa337cc594cf060437
+```
+
+
+
 ## Contract Verification
 
 The Hardhat plug-in [@nomiclabs/hardhat-etherscan](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan.

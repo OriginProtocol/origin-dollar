@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require("uuid");
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
+const { PutObject } = require("@aws-lite/s3");
 
 const { getBlock } = require("./block");
 const { getClusterInfo } = require("../utils/ssv");
@@ -14,6 +15,7 @@ const { getSigner } = require("../utils/signers");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { p2pApiEncodedKey } = require("./amazon");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -166,7 +168,9 @@ const registerValidators = async ({
         currentState = await getState(store);
       }
 
-      if (currentState.state === "validator_creation_issued") {
+      // TODO change back
+      //if (currentState.state === "validator_creation_issued") {
+      if (true) {
         await confirmValidatorRegistered(
           store,
           currentState.uuid,
@@ -177,6 +181,7 @@ const registerValidators = async ({
         currentState = await getState(store);
       }
 
+      return;
       if (currentState.state === "validator_creation_confirmed") {
         await broadcastRegisterValidator(
           store,
@@ -558,9 +563,9 @@ const createValidatorRequest = async (
       withdrawalAddress: nativeStakingStrategy,
       feeRecipientAddress: feeAccumulatorAddress,
       ssvOwnerAddress: nativeStakingStrategy,
-      // TODO: we need to alter this and store the key somewhere
-      type: "without-encrypt-key",
+      type: "with-encrypt-key",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
+      ecdhPublicKey: p2pApiEncodedKey,
     }
   );
 
