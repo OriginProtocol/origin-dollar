@@ -94,9 +94,6 @@
     "uuid": "^9.0.1",
     "web3-utils": "^1.5.2"
   },
-  "resolutions": {
-    "graceful-fs": "4.x.x"
-  },
   "husky": {
     "hooks": {
       "pre-push": "yarn run prettier:check"
