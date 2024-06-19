@@ -42,6 +42,7 @@ module.exports = {
   aura_rETH_WETH_PID,
   balancer_rETH_WETH_PID,
   ccip_arbChainSelector,
+  p2pApiEncodedKey,
 };
 
 // These are all the metapool ids. For easier future reference
