@@ -17,7 +17,10 @@ const genECDHKey = async ({ privateKey }) => {
     ecdh.setPrivateKey(Buffer.from(privateKey, "hex"));
   } else {
     ecdh.generateKeys();
-    console.log("Generated private key (hex format):", ecdh.getPrivateKey('hex'));
+    console.log(
+      "Generated private key (hex format):",
+      ecdh.getPrivateKey("hex")
+    );
   }
 
   const publicKeyBase64 = ecdh.getPublicKey("base64");
