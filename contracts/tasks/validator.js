@@ -558,8 +558,9 @@ const createValidatorRequest = async (
       withdrawalAddress: nativeStakingStrategy,
       feeRecipientAddress: feeAccumulatorAddress,
       ssvOwnerAddress: nativeStakingStrategy,
-      // TODO: we need to alter this and store the key somewhere
-      type: "without-encrypt-key",
+      type: "with-encrypt-key",
+      ecdhPublicKey:
+        "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFYjA1MHk1TXpDK1JkeDBpSEdzSVg1QndxWGF3eQpQcWRPTk9pMVUydHhPNFdlcnAwUVNBSitGNXdyUTNtUC9FeXJiOXZOMTQzT1NQcHNMeTgyOEhDL1dnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
     }
   );
@@ -837,9 +838,11 @@ async function removeValidator({ pubkey, operatorids }) {
     "NativeStakingSSVStrategy"
   );
 
+  const { chainId } = await ethers.provider.getNetwork();
+
   // Cluster details
   const { cluster } = await getClusterInfo({
-    chainId: hre.network.config.chainId,
+    chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     ownerAddress: strategy.address,
@@ -968,9 +971,11 @@ async function snapStaking({ block, admin }) {
     )} ether, ${ethFeeAccumulatorBalance} wei`
   );
   console.log(
-    `Deposited WETH           : ${await strategy.depositedWethAccountedFor({
-      blockTag,
-    })}`
+    `Deposited WETH           : ${formatUnits(
+      await strategy.depositedWethAccountedFor({
+        blockTag,
+      })
+    )}`
   );
   console.log(`Strategy WETH            : ${formatUnits(wethStrategyBalance)}`);
   console.log(`Strategy SSV             : ${formatUnits(ssvStrategyBalance)}`);

@@ -4,6 +4,7 @@ const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { getClusterInfo } = require("../utils/ssv");
+const { networkMap } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:ssv");
@@ -16,7 +17,7 @@ const printClusterInfo = async (options) => {
   // console.log("Next Nonce:", nextNonce);
 };
 
-const depositSSV = async ({ amount, operatorids }, hre) => {
+const depositSSV = async ({ amount, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
@@ -27,12 +28,14 @@ const depositSSV = async ({ amount, operatorids }, hre) => {
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
   );
-  const ssvNetworkAddress = addresses[hre.network.name].SSVNetwork;
+  const { chainId } = await ethers.provider.getNetwork();
+  const network = networkMap[chainId];
+  const ssvNetworkAddress = addresses[network].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
   const clusterInfo = await getClusterInfo({
-    chainId: hre.network.config.chainId,
+    chainId,
     ssvNetwork: ssvNetwork.address,
     operatorids,
     ownerAddress: strategy.address,
