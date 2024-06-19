@@ -544,24 +544,35 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Returns the largest of two numbers int256 version
-     */
-    function _max(int256 a, int256 b) internal pure returns (int256) {
-        return a >= b ? a : b;
-    }
-
-    /**
      * @dev Returns the price of a LP token of the sAMM pool.
      */
     function getLPTokenPrice() public view returns (uint256) {
         uint256 r0 = lpTokenAddress.reserve0();
         uint256 r1 = lpTokenAddress.reserve1();
 
-        // SqRoot of (r0 * r1) / totalSupply
+        // Calculate K
+        uint256 K = _getK(r0, r1);
+
+        // Calculate fourth root of K/2 then multiply it by 2.
+        uint256 fourthRootK = (
+            FixedPointMathLib.sqrtWad((FixedPointMathLib.sqrtWad(K / 2)))
+        );
+
+        return 2 * fourthRootK.divPrecisely(lpTokenAddress.totalSupply());
+    }
+
+    /**
+     * @dev Calculates the constant K for the sAMM pool based on the reserves r1 and r2.
+     * The formula for K is: K = (r1^3 * r2) + (r2^3 * r1)
+     * @param r1 The reserve of wETH.
+     * @param r2 The reserve of OETH.
+     * @return The calculated constant K.
+     */
+    function _getK(uint256 r1, uint256 r2) internal pure returns (uint256) {
+        uint256 r1Cube = uint256(FixedPointMathLib.powWad(int256(r1), 3e18));
+        uint256 r2Cube = uint256(FixedPointMathLib.powWad(int256(r2), 3e18));
         return
-            2 *
-            FixedPointMathLib.sqrtWad((r0 * r1) / 1e18).divPrecisely(
-                lpTokenAddress.totalSupply()
-            );
+            FixedPointMathLib.mulWad(r1Cube, r2) +
+            FixedPointMathLib.mulWad(r2Cube, r1);
     }
 }

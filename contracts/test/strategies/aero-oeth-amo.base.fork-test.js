@@ -52,8 +52,11 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
 
       const lpPrice = await calcLPTokenPrice(fixture);
 
-      expect(await aerodromeEthStrategy.getLPTokenPrice()).to.equal(
-        BigNumber.from(ethers.constants.WeiPerEther.mul(lpPrice))
+      expect(
+        await aerodromeEthStrategy.getLPTokenPrice()
+      ).to.approxEqualTolerance(
+        BigNumber.from(ethers.constants.WeiPerEther.mul(lpPrice)),
+        0.1
       );
     });
     it("Should be able to check balance", async () => {
@@ -1168,7 +1171,11 @@ async function calcLPTokenPrice(fixture) {
   const y = aeroBalances._reserve1;
 
   // price = 2 * fourthroot of (invariant/2)
-  const lpPrice = 2 * sqrt(x.mul(y)).div(await pool.totalSupply());
+  const lpPrice =
+    2 *
+    sqrt(sqrt(x.pow(3).mul(y).add(y.pow(3).mul(x)).div(2))).div(
+      await pool.totalSupply()
+    );
 
   log(`LP Price :  ${lpPrice} `);
 
