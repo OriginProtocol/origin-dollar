@@ -1047,6 +1047,12 @@ subtask(
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
+  .addOptionalParam(
+    "ssv",
+    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    undefined,
+    types.float
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
     await registerValidators(config);

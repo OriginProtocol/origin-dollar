@@ -79,6 +79,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
     requestedValidators: taskArgs.validators,
+    ssvAmount: taskArgs.ssv,
   };
 };
 
@@ -116,6 +117,7 @@ const registerValidators = async ({
   validatorSpawnOperationalPeriodInDays,
   clear,
   requestedValidators,
+  ssvAmount,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -184,7 +186,8 @@ const registerValidators = async ({
           "register_transaction_broadcast", // next state
           signer,
           currentState.metadata,
-          nativeStakingStrategy
+          nativeStakingStrategy,
+          ssvAmount
         );
         currentState = await getState(store);
       }
@@ -632,7 +635,8 @@ const broadcastRegisterValidator = async (
   nextState,
   signer,
   metadata,
-  nativeStakingStrategy
+  nativeStakingStrategy,
+  ssvAmount
 ) => {
   const registerTransactionParams = defaultAbiCoder.decode(
     [
@@ -656,11 +660,13 @@ const broadcastRegisterValidator = async (
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
+  ssvAmount = ssvAmount || amount;
+
   log(`About to register validator with:`);
   log(`publicKeys: ${publicKeys}`);
   log(`operatorIds: ${operatorIds}`);
   log(`sharesData: ${sharesData}`);
-  log(`amount: ${amount}`);
+  log(`ssvAmount: ${ssvAmount}`);
   log(`cluster: ${cluster}`);
 
   try {
@@ -670,7 +676,7 @@ const broadcastRegisterValidator = async (
         publicKeys,
         operatorIds,
         sharesData,
-        amount,
+        ssvAmount,
         cluster
       );
 
