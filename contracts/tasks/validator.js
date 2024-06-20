@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require("uuid");
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
+const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const { getBlock } = require("./block");
 const { getClusterInfo } = require("../utils/ssv");
@@ -14,6 +15,7 @@ const { getSigner } = require("../utils/signers");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { p2pApiEncodedKey } = require("../utils/constants");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -562,9 +564,8 @@ const createValidatorRequest = async (
       feeRecipientAddress: feeAccumulatorAddress,
       ssvOwnerAddress: nativeStakingStrategy,
       type: "with-encrypt-key",
-      ecdhPublicKey:
-        "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFYjA1MHk1TXpDK1JkeDBpSEdzSVg1QndxWGF3eQpQcWRPTk9pMVUydHhPNFdlcnAwUVNBSitGNXdyUTNtUC9FeXJiOXZOMTQzT1NQcHNMeTgyOEhDL1dnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
+      ecdhPublicKey: p2pApiEncodedKey,
     }
   );
 
@@ -694,6 +695,41 @@ const broadcastRegisterValidator = async (
   }
 };
 
+const getS3Context = async () => {
+  const apiKey = process.env.AWS_ACCESS_KEY_ID;
+  const apiSecret = process.env.AWS_SECRET_ACCESS_KEY;
+  const bucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
+
+  if (!apiKey || !apiSecret || !bucketName) {
+    throw new Error(
+      "AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY & VALIDATOR_KEYS_S3_BUCKET_NAME need to all be set."
+    );
+  }
+
+  return [new S3Client({}), bucketName];
+};
+
+const storePrivateKeyToS3 = async (pubkey, encryptedPrivateKey) => {
+  const [s3Client, bucketName] = await getS3Context();
+  log("Attempting to store encrypted private key to S3");
+
+  const fileName = `${pubkey}.json`;
+  const putCommand = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: fileName,
+    Body: JSON.stringify({
+      encryptedPrivateKey,
+    }),
+  });
+
+  try {
+    await s3Client.send(putCommand);
+    log(`Private key stored under s3://${bucketName}/${fileName}`);
+  } catch (err) {
+    log("Error uploading file to S3", err);
+  }
+};
+
 const confirmValidatorRegistered = async (
   store,
   uuid,
@@ -705,11 +741,13 @@ const confirmValidatorRegistered = async (
     if (!uuid) {
       throw Error(`UUID is required to get validator status.`);
     }
+
     const response = await p2pRequest(
       `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/status/${uuid}`,
       p2p_api_key,
       "GET"
     );
+
     const isReady =
       response.result?.status === "ready" ||
       response.result?.status === "validator-ready";
@@ -732,10 +770,17 @@ const confirmValidatorRegistered = async (
       const sharesData = [];
       const pubkeys = [];
       const nonces = [];
-      for (let i = 0; i < response.result.encryptedShares.length; i++) {
-        pubkeys[i] = response.result.encryptedShares[i].publicKey;
-        nonces[i] = response.result.encryptedShares[i].nonce;
-        sharesData[i] = response.result.encryptedShares[i].sharesData;
+      const result = response.result;
+      for (let i = 0; i < result.encryptedShares.length; i++) {
+        const encryptedShare = result.encryptedShares[i];
+        pubkeys[i] = encryptedShare.publicKey;
+        nonces[i] = encryptedShare.nonce;
+        sharesData[i] = encryptedShare.sharesData;
+
+        await storePrivateKeyToS3(
+          pubkeys[i],
+          encryptedShare.ecdhEncryptedPrivateKey
+        );
       }
       await updateState(uuid, nextState, store, {
         pubkeys,
