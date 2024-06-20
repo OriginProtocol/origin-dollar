@@ -12,6 +12,7 @@ actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
+participant "S3" as s3 <<Origin>><<AWS>>
 actor "Operators" as ssvOp <<SSV>>
 
 box "Execution Chain"
@@ -69,13 +70,14 @@ end group
 
 group Registrator creates a new SSV validator
 
-reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays
+reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays,\ntype,\necdhPublicKey
 activate api
 note right
 withdrawalAddress is Native Staking Strategy
 feeRecipientAddress is FeeAccumulator contract
 ssvOwnerAddress is Native Staking Strategy
-type is without-encrypt-key
+type is with-encrypt-key
+ecdhPublicKey is Origin's encoded elliptic-curve Diffie-Hellman public key
 end note
 api -> api: private key
 note right : generate a validator private key
@@ -85,8 +87,16 @@ return
 
 reg -> api: GET\neth/staking/ssv/request/status/uuid
 activate api
-return status,\npubkey\nvalidatorRegistration,\nshareData
-note right : validatorRegistration contains the operatorIds and cluster details
+return status,\npubkey\nvalidatorRegistration,\nshareData,\necdhEncryptedPrivateKey
+note right
+validatorRegistration contains the operatorIds and cluster details.
+ecdhEncryptedPrivateKey is the validator private key encrypted with the Origin's public key 
+end note
+
+reg -> s3 : send(ecdhEncryptedPrivateKey)
+activate s3
+note right : store the validator's encrypted private key\nin Origin's S3 validator-keys bucket.
+return
 
 reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
 activate nativeStrat
