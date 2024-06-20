@@ -8,7 +8,15 @@ const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { resolveContract } = require("../utils/resolvers");
-const { genECDHKey, decryptValidatorKey } = require("./crypto.js");
+const {
+  genECDHKey,
+  decryptValidatorKey,
+  decryptValidatorKeyWithMasterKey,
+} = require("./crypto");
+const {
+  encryptMasterPrivateKey,
+  decryptMasterPrivateKey,
+} = require("./amazon");
 const { getSigner } = require("../utils/signers");
 
 const {
@@ -1204,6 +1212,32 @@ task("snapStaking").setAction(async (_, __, runSuper) => {
 });
 
 // Encryption
+subtask(
+  "encryptMasterPrivateKey",
+  "Encrypt the master validator private key whose public key pair is used " +
+    "by the P2P service to encrypt each validator private key."
+)
+  .addParam(
+    "privateKey",
+    "Private key to be encrypted and if needed used for validator private key decryption",
+    undefined,
+    types.string
+  )
+  .setAction(encryptMasterPrivateKey);
+task("encryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/* only needed in critical situation where we need access to the master private key to decrypt
+ * the P2P encoded validator private keys.
+ */
+subtask(
+  "decryptMasterPrivateKey",
+  "Decrypt the master validator private key."
+).setAction(decryptMasterPrivateKey);
+task("decryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair")
   .addOptionalParam(
@@ -1235,6 +1269,22 @@ subtask(
   )
   .setAction(decryptValidatorKey);
 task("decrypt").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "masterDecrypt",
+  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair by using the " +
+    "master validator encoding key decrypted by AWS KMS service."
+)
+  .addParam(
+    "message",
+    "Encrypted validator key returned form P2P API",
+    undefined,
+    types.string
+  )
+  .setAction(decryptValidatorKeyWithMasterKey);
+task("masterDecrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
