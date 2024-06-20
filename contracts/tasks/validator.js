@@ -731,8 +731,10 @@ const confirmValidatorRegistered = async (
         response.result.validatorRegistrationTxs[0].data;
       const sharesData = [];
       const pubkeys = [];
+      const nonces = [];
       for (let i = 0; i < response.result.encryptedShares.length; i++) {
         pubkeys[i] = response.result.encryptedShares[i].publicKey;
+        nonces[i] = response.result.encryptedShares[i].nonce;
         sharesData[i] = response.result.encryptedShares[i].sharesData;
       }
       await updateState(uuid, nextState, store, {
@@ -740,7 +742,8 @@ const confirmValidatorRegistered = async (
         registerValidatorData,
         sharesData,
       });
-      log(`Public key: ${pubkeys}`);
+      log(`Public keys: ${pubkeys}`);
+      log(`nonces: ${nonces}`);
       log(`registerValidatorData: ${registerValidatorData}`);
       return true;
     }
