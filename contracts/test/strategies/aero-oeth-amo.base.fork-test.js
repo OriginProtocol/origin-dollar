@@ -439,6 +439,83 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
           .add(wethBalanceAfter.sub(wethBalanceBefore))
       );
     });
+    it("withdraw() should be able to withdraw amount specified: Tilt - More OETH", async () => {
+      const {
+        aerodromeEthStrategy,
+        aeroRouter,
+        oeth,
+        oethVaultSigner,
+        weth,
+        josh,
+        oethVault,
+      } = fixture;
+
+      const requiredWeth = oethUnits("20");
+      await oeth.connect(oethVaultSigner).mint(josh.address, oethUnits("300"));
+      await oeth.connect(josh).approve(aeroRouter.address, oethUnits("300"));
+      let wethBalanceBefore = await weth.balanceOf(oethVault.address);
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          parseUnits("300"),
+          0,
+          [
+            [
+              oeth.address,
+              weth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+
+      await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, requiredWeth);
+      let wethBalanceAfter = await weth.balanceOf(oethVault.address);
+
+      expect(requiredWeth).to.be.lte(wethBalanceAfter.sub(wethBalanceBefore));
+    });
+    it("withdraw() should be able to withdraw amount specified: Tilt - More WETH", async () => {
+      const {
+        aerodromeEthStrategy,
+        aeroRouter,
+        oeth,
+        oethVaultSigner,
+        weth,
+        josh,
+        oethVault,
+      } = fixture;
+
+      const requiredWeth = oethUnits("25");
+      await weth.connect(josh).approve(aeroRouter.address, oethUnits("300"));
+      let wethBalanceBefore = await weth.balanceOf(oethVault.address);
+      await aeroRouter
+        .connect(josh)
+        .swapExactTokensForTokens(
+          parseUnits("300"),
+          0,
+          [
+            [
+              weth.address,
+              oeth.address,
+              true,
+              addresses.base.aeroFactoryAddress,
+            ],
+          ],
+          josh.address,
+          parseInt(Date.now() / 1000) + 5 * 360
+        );
+
+      await aerodromeEthStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethVault.address, weth.address, requiredWeth);
+      let wethBalanceAfter = await weth.balanceOf(oethVault.address);
+
+      expect(requiredWeth).to.be.lte(wethBalanceAfter.sub(wethBalanceBefore));
+    });
     it("withdrawAll() should be able to withdraw an amount atleast what checkBalances() report: Tilt - More WETH", async () => {
       const {
         aerodromeEthStrategy,

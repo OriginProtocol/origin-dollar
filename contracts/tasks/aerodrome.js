@@ -307,7 +307,6 @@ function sqrt(value) {
 }
 
 // Calculate the LPToken price of the given sAMM pool
-// Calculate the LPToken price of the given sAMM pool
 async function calcLPTokenPrice(fixture) {
   const { pool } = fixture;
 
@@ -317,7 +316,11 @@ async function calcLPTokenPrice(fixture) {
   const y = aeroBalances._reserve1;
 
   // price = 2 * fourthroot of (invariant/2)
-  const lpPrice = 2 * sqrt(x.mul(y)).div(await pool.totalSupply());
+  const lpPrice =
+    2 *
+    sqrt(sqrt(x.pow(3).mul(y).add(y.pow(3).mul(x)).div(2))).div(
+      await pool.totalSupply()
+    );
 
   log(`LP Price :  ${lpPrice} `);
 

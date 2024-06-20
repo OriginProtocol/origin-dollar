@@ -251,15 +251,19 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         _lpWithdraw(requiredLpTokens);
 
-        uint256 oethReserves = oethCoinIndex == 0
-            ? lpTokenAddress.reserve0()
-            : lpTokenAddress.reserve1();
+        (uint256 wethWithdrawable, uint256 oethWithdrawable) = aeroRouterAddress
+            .quoteRemoveLiquidity(
+                address(weth),
+                address(oeth),
+                true,
+                address(aeroFactoryAddress),
+                requiredLpTokens
+            );
 
-        uint256 oethDesired = requiredLpTokens
-            .mulTruncate(oethReserves)
-            .divPrecisely(lpTokenAddress.totalSupply());
-
-        oethDesired = oethDesired.mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+        require(
+            wethWithdrawable >= _amount,
+            "Cannot withdraw required WETH amount"
+        );
 
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
          * in that the strategy receives enough WETH on balanced removal
@@ -270,8 +274,8 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
             address(oeth),
             true,
             requiredLpTokens,
-            _amount, // weth amount
-            oethDesired,
+            wethWithdrawable, // weth amount
+            oethWithdrawable,
             address(this),
             block.timestamp
         );
