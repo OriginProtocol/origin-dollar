@@ -1055,6 +1055,12 @@ subtask(
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
+  .addOptionalParam(
+    "ssv",
+    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    undefined,
+    types.float
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
     await registerValidators(config);
@@ -1245,6 +1251,12 @@ subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair"
     "Private key to encrypt the message with in base64 format",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "displayPk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
   )
   .setAction(genECDHKey);
 task("genECDHKey").setAction(async (_, __, runSuper) => {

@@ -81,6 +81,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
     requestedValidators: taskArgs.validators,
+    ssvAmount: taskArgs.ssv,
   };
 };
 
@@ -118,6 +119,7 @@ const registerValidators = async ({
   validatorSpawnOperationalPeriodInDays,
   clear,
   requestedValidators,
+  ssvAmount,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -186,7 +188,8 @@ const registerValidators = async ({
           "register_transaction_broadcast", // next state
           signer,
           currentState.metadata,
-          nativeStakingStrategy
+          nativeStakingStrategy,
+          ssvAmount
         );
         currentState = await getState(store);
       }
@@ -633,7 +636,8 @@ const broadcastRegisterValidator = async (
   nextState,
   signer,
   metadata,
-  nativeStakingStrategy
+  nativeStakingStrategy,
+  ssvAmount
 ) => {
   const registerTransactionParams = defaultAbiCoder.decode(
     [
@@ -657,11 +661,13 @@ const broadcastRegisterValidator = async (
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
+  ssvAmount = ssvAmount || amount;
+
   log(`About to register validator with:`);
   log(`publicKeys: ${publicKeys}`);
   log(`operatorIds: ${operatorIds}`);
   log(`sharesData: ${sharesData}`);
-  log(`amount: ${amount}`);
+  log(`ssvAmount: ${ssvAmount}`);
   log(`cluster: ${cluster}`);
 
   try {
@@ -671,7 +677,7 @@ const broadcastRegisterValidator = async (
         publicKeys,
         operatorIds,
         sharesData,
-        amount,
+        ssvAmount,
         cluster
       );
 
@@ -763,10 +769,12 @@ const confirmValidatorRegistered = async (
         response.result.validatorRegistrationTxs[0].data;
       const sharesData = [];
       const pubkeys = [];
+      const nonces = [];
       const result = response.result;
       for (let i = 0; i < result.encryptedShares.length; i++) {
         const encryptedShare = result.encryptedShares[i];
         pubkeys[i] = encryptedShare.publicKey;
+        nonces[i] = encryptedShare.nonce;
         sharesData[i] = encryptedShare.sharesData;
 
         await storePrivateKeyToS3(
@@ -779,7 +787,8 @@ const confirmValidatorRegistered = async (
         registerValidatorData,
         sharesData,
       });
-      log(`Public key: ${pubkeys}`);
+      log(`Public keys: ${pubkeys}`);
+      log(`nonces: ${nonces}`);
       log(`registerValidatorData: ${registerValidatorData}`);
       return true;
     }
@@ -883,9 +892,11 @@ async function removeValidator({ pubkey, operatorids }) {
     "NativeStakingSSVStrategy"
   );
 
+  const { chainId } = await ethers.provider.getNetwork();
+
   // Cluster details
   const { cluster } = await getClusterInfo({
-    chainId: hre.network.config.chainId,
+    chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     ownerAddress: strategy.address,
@@ -1014,9 +1025,11 @@ async function snapStaking({ block, admin }) {
     )} ether, ${ethFeeAccumulatorBalance} wei`
   );
   console.log(
-    `Deposited WETH           : ${await strategy.depositedWethAccountedFor({
-      blockTag,
-    })}`
+    `Deposited WETH           : ${formatUnits(
+      await strategy.depositedWethAccountedFor({
+        blockTag,
+      })
+    )}`
   );
   console.log(`Strategy WETH            : ${formatUnits(wethStrategyBalance)}`);
   console.log(`Strategy SSV             : ${formatUnits(ssvStrategyBalance)}`);

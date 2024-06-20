@@ -6,12 +6,12 @@
 !$changedColor = Orange
 !$thirdPartyColor = WhiteSmoke
 
-legend
-blue - Origin
-' green - new
-' orange - changed
-white - 3rd Party
-end legend
+' legend
+' blue - Origin
+' ' green - new
+' ' orange - changed
+' white - 3rd Party
+' end legend
 
 title "Origin Ether Contract Dependencies"
 
@@ -23,8 +23,8 @@ object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-' object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
-' }
+object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+}
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
@@ -83,35 +83,35 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
 '     pairs: CRV/ETH, CVX/ETH
 ' }
 
-' Curve
-object "Gauge" as gauge <<Curve>> {
-    asset: OETHCRV-f
-    symbol: OETHCRV-f-gauge
-    name: Curve.fi OETHCRV-f Gauge Deposit
-}
-object "StableSwap" as crvPool <<Curve>> {
-    assets: [ETH, OETH]
-    symbol: OETHCRV-f
-    name: Curve.fi Factory Pool: OETH
-}
-' Convex
-object "Booster" as cvxBoost <<Convex>> {
-}
-object "BaseRewardPool" as cvxPool <<Convex>> {
-}
+' ' Curve
+' object "Gauge" as gauge <<Curve>> {
+'     asset: OETHCRV-f
+'     symbol: OETHCRV-f-gauge
+'     name: Curve.fi OETHCRV-f Gauge Deposit
+' }
+' object "StableSwap" as crvPool <<Curve>> {
+'     assets: [ETH, OETH]
+'     symbol: OETHCRV-f
+'     name: Curve.fi Factory Pool: OETH
+' }
+' ' Convex
+' object "Booster" as cvxBoost <<Convex>> {
+' }
+' object "BaseRewardPool" as cvxPool <<Convex>> {
+' }
 ' object "DepositToken" as cvxPoolLp <<Convex>> {
 '     symbol: cvxOUSD3CRV-f
 '     name: Origin Dollar Convex Deposit
 ' }
 
-' SSV
-object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
-assets: ETH, SSV
-}
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
+' }
 
-object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
-assets: ETH
-}
+' object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
+' assets: ETH
+' }
 
 
 ' ' Assets
@@ -138,8 +138,8 @@ zap ..> oethv
 ' drip .....> weth
 oethv <. drip
 
-' checker ..> oeth
-' checker ..> oethv
+checker ..> oeth
+checker ..> oethv
 
 oethv <.. harv 
 drip <.. harv 
@@ -160,27 +160,27 @@ oeth <... cvxStrat
 harv <..> nativeStrat
 oethv <...> nativeStrat
 nativeStrat <..> feeAcc
-nativeStrat ..> ssvNet
-nativeStrat ..> bDep
+' nativeStrat ..> ssvNet
+' nativeStrat ..> bDep
 
 harv <..> nativeStrat2
 oethv <...> nativeStrat2
 nativeStrat2 <..> feeAcc2
-nativeStrat2 ...> ssvNet
-nativeStrat2 ...> bDep
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
 
-cvxStrat ...> crvPool
-cvxStrat ....> cvxPool
-cvxStrat ...> cvxBoost
+' cvxStrat ...> crvPool
+' cvxStrat ....> cvxPool
+' cvxStrat ...> cvxBoost
 ' cvxStrat ...> weth
 ' cvxStrat ...> cvx
 ' cvxStrat ...> crv
 ' cvxPool ..> cvxPoolLp
 ' cvxPool ..> crv
-gauge <. cvxPool
-crvPool <.. gauge
-oeth <... crvPool
-cvxBoost ..> cvxPool
+' gauge <. cvxPool
+' crvPool <.. gauge
+' oeth <... crvPool
+' cvxBoost ..> cvxPool
 
 ' ' Vault to Assets
 ' oethv ....> weth
