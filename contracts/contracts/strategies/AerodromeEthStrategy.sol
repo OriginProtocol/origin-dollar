@@ -249,6 +249,11 @@ contract AerodromeEthStrategy is InitializableAbstractStrategy {
 
         uint256 requiredLpTokens = _calcTokenToBurn(_amount);
 
+        require(
+            requiredLpTokens <= aeroGaugeAddress.balanceOf(address(this)),
+            "Insufficient LP tokens"
+        );
+
         _lpWithdraw(requiredLpTokens);
 
         (uint256 wethWithdrawable, uint256 oethWithdrawable) = aeroRouterAddress
