@@ -24,21 +24,12 @@ class AerodromeWeth:
         self.vault_core = oeth_vault_core
         self.vault_admin = oeth_vault_admin
         self.base_size = 200
-        self.oeth= oeth
+        self.oeth = oeth
  
     def setup(self):
         oeth.approve(self.aero_router, 1e70, {"from": JOSH})
         weth.approve(self.aero_router, 1e70, {"from": JOSH})
         weth.transfer(OETH_VAULT, 1000e18, {"from":JOSH})
-        # self.aero_router.swapExactTokensForTokens(
-        #         50e18,           # amountIn
-        #         0,                # amountOutMin 
-        #         [['0xa0ba4fa6c1E25DCEEAE90B56da024376FDb34efB', '0x4200000000000000000000000000000000000006', True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
-        #         JOSH,      
-        #         1749091044,        # one year from now
-        #         {"from": JOSH},
-        #     )
-        
         
 
     def pool_balances(self):
@@ -56,7 +47,7 @@ class AerodromeWeth:
             self.aero_router.swapExactTokensForTokens(
                 amount,           # amountIn
                 0,                # amountOutMin 
-                [['0x4200000000000000000000000000000000000006', '0xa0ba4fa6c1E25DCEEAE90B56da024376FDb34efB', True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
+                [[WETH, OETH, True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
                 JOSH,      
                 1749091044,        # one year from now
                 {"from": JOSH},
@@ -65,7 +56,7 @@ class AerodromeWeth:
             self.aero_router.swapExactTokensForTokens(
                 amount,           # amountIn
                 0,                # amountOutMin
-                [['0xa0ba4fa6c1E25DCEEAE90B56da024376FDb34efB', '0x4200000000000000000000000000000000000006', True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
+                [[OETH, WETH, True, '0x420DD381b31aEf6683db6B902084cB0FFECe40Da']],
                 JOSH,      
                 1749091044,       # one year from now
                 {"from": JOSH},
@@ -73,8 +64,8 @@ class AerodromeWeth:
 
     def pool_create_mix(self, tilt=0.5, size=1):
         return {
-          #  OETH: 2 + int(size * self.base_size * (int(1e18) - (int(1e18) * tilt))),
-            WETH: 2 + int(size * self.base_size * int(1e18) * tilt),
+            # WETH: 2 + int(size * self.base_size * (int(1e18) - (int(1e18) * tilt))),
+           WETH: 2 + int(size * self.base_size * int(1e18) * tilt),
         }
 
 
@@ -94,7 +85,11 @@ def _getWorkspace(name):
     return str(workspace.absolute()) + "/"
 
 
-def _load_data(filename):
+def _load_data_with_supply_diff(base):
+    base["after_profit"] = (base["after_vault"] - base["before_vault"]) + (base["before_oeth_supply"] - base["after_oeth_supply"])
+    return base
+
+def _load_data(filename, with_supply_diff=False):
     base = pd.read_csv(filename)
     for x in base:
         if " " in x or "action" in x:
@@ -109,7 +104,10 @@ def _load_data(filename):
         base["after_pool_0"] + base["after_pool_1"]
     )
     base["before_profit"] = base["before_vault"] - base["pre_vault"]
-    base["after_profit"] = (base["after_vault"] - base["before_vault"]) + (base["before_oeth_supply"] - base["after_oeth_supply"])
+    if with_supply_diff:
+        base = _load_data_with_supply_diff(base)
+    else:
+        base["after_profit"] = (base["after_vault"] - base["before_vault"])
     return base
 
 
@@ -356,10 +354,10 @@ def run_report(strategy_name):
     workspace = _getWorkspace(strategy_name)
     harness = _getHarness(strategy_name)
 
-    # deposit_base = _load_data(workspace + "deposit_stats.csv")
+    deposit_base = _load_data(workspace + "deposit_stats.csv")
     balance_base = _load_data(workspace + "balance_stats.csv")
-    # withdraw_base = _load_data(workspace + "withdraw_stats.csv")
-    withdrawall_base = _load_data(workspace + "withdrawall_stats.csv")
+    withdraw_base = _load_data(workspace + "withdraw_stats.csv", True) # with oeth supply difference
+    withdrawall_base = _load_data(workspace + "withdrawall_stats.csv", True) # with oeth supply difference
 
     sections = []
 
@@ -374,41 +372,41 @@ def run_report(strategy_name):
     )
 
     # Deposit Section
-    # df = deposit_base
-    # plt.title("Deposit profit")
-    # plt.axhline(0, c="black", linewidth=0.4)
-    # for before_mix, rows in df.groupby(df["before_mix"]):
-    #     plt.plot(
-    #         rows["action_mix"] * 100,
-    #         rows["after_profit"],
-    #         label="{:.1f}%".format(100 * float(before_mix)),
-    #     )
-    # plt.ylim([-1e18, 1e18])
-    # plt.xlabel("Deposit Mix")
-    # plt.ylabel("Deposit Profit")
-    # plt.legend()
-    # plt.savefig(workspace + "deposit.svg")
-    # plt.close()
-    # sections.append('<h2>Deposit</h2><img src="deposit.svg">')
+    df = deposit_base
+    plt.title("Deposit profit")
+    plt.axhline(0, c="black", linewidth=0.4)
+    for before_mix, rows in df.groupby(df["before_mix"]):
+        plt.plot(
+            rows["action_mix"] * 100,
+            rows["after_profit"],
+            label="{:.1f}%".format(100 * float(before_mix)),
+        )
+    #plt.ylim([-1e18, 1e18])
+    plt.xlabel("Deposit Mix")
+    plt.ylabel("Deposit Profit")
+    plt.legend()
+    plt.savefig(workspace + "deposit.svg")
+    plt.close()
+    sections.append('<h2>Deposit</h2><img src="deposit.svg">')
 
     # Withdraw Section
-    # df = withdraw_base
+    df = withdraw_base
     # df = df[df.before_mix != df.after_mix]
-    # plt.title("Withdraw profit")
-    # plt.axhline(0, c="black", linewidth=0.4)
-    # for before_mix, rows in df.groupby(df["before_mix"]):
-    #     plt.plot(
-    #         rows["action_mix"] * 100,
-    #         rows["after_profit"],
-    #         label="{:.1f}%".format(100 * float(before_mix)),
-    #     )
-    # plt.ylim([-1e18, 1e18])
-    # plt.xlabel("Pool Mix")
-    # plt.ylabel("Withdraw Profit")
-    # plt.legend()
-    # plt.savefig(workspace + "withdraw.svg")
-    # plt.close()
-    # sections.append('<h2>Withdraw</h2><img src="withdraw.svg">')
+    plt.title("Withdraw profit")
+    plt.axhline(0, c="black", linewidth=0.4)
+    for before_mix, rows in df.groupby(df["before_mix"]):
+        plt.plot(
+            rows["action_mix"] * 100,
+            rows["after_profit"],
+            label="{:.1f}%".format(100 * float(before_mix)),
+        )
+    plt.ylim([-1e18, 1e18])
+    plt.xlabel("Pool Mix")
+    plt.ylabel("Withdraw Profit")
+    plt.legend()
+    plt.savefig(workspace + "withdraw.svg")
+    plt.close()
+    sections.append('<h2>Withdraw</h2><img src="withdraw.svg">')
 
     # Withdraw All
     df = withdrawall_base
