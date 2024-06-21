@@ -1,4 +1,4 @@
-const { parseUnits, formatUnits } = require("ethers/lib/utils");
+const { parseUnits, formatUnits, solidityPack } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -55,7 +55,38 @@ const depositSSV = async ({ amount, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
+const calcDepositRoot = async ({ pubkey, sig }, hre) => {
+  if (hre.network.name !== "hardhat") {
+    throw new Error("This task can only be run in hardhat network");
+  }
+
+  const factory = await ethers.getContractFactory("DepositContractUtils");
+  const depositContractUtils = await factory.deploy();
+
+  const withdrawalCredentials = solidityPack(
+    ["bytes1", "bytes11", "address"],
+    [
+      "0x01",
+      "0x0000000000000000000000",
+      addresses.mainnet.NativeStakingSSVStrategyProxy,
+    ]
+  );
+  log(`Withdrawal Credentials: ${withdrawalCredentials}`);
+
+  log(
+    `About to calculate deposit data root for pubkey ${pubkey} and sig ${sig}`
+  );
+  const depositDataRoot = await depositContractUtils.calculateDepositDataRoot(
+    pubkey,
+    withdrawalCredentials,
+    sig
+  );
+
+  console.log(`Deposit Root Data: ${depositDataRoot}`);
+};
+
 module.exports = {
   printClusterInfo,
   depositSSV,
+  calcDepositRoot,
 };

@@ -61,7 +61,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { depositSSV, printClusterInfo } = require("./ssv");
+const { calcDepositRoot, depositSSV, printClusterInfo } = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -1214,6 +1214,27 @@ subtask(
   )
   .setAction(snapStaking);
 task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositRoot",
+  "Calculates the Beacon chain deposit root for a validator"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "sig",
+    "The validator's signature in hex format",
+    undefined,
+    types.string
+  )
+  .setAction(calcDepositRoot);
+task("depositRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
