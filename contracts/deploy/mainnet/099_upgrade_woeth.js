@@ -1,5 +1,4 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -10,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: false,
     // proposalId:
   },
-  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+  async ({ deployWithConfirmation, ethers }) => {
     const cOETHProxy = await ethers.getContract("OETHProxy");
     const cWOETHProxy = await ethers.getContract("WOETHProxy");
 
@@ -19,6 +18,8 @@ module.exports = deploymentWithGovernanceProposal(
       "Wrapped OETH",
       "WOETH",
     ]);
+
+    const cWOETH = await ethers.getContractAt("WOETH", cWOETHProxy.address);
 
     // Governance Actions
     // ----------------
@@ -30,6 +31,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cWOETHProxy,
           signature: "upgradeTo(address)",
           args: [dWOETHImpl.address],
+        },
+        // 2. Run the second initializer
+        {
+          contract: cWOETH,
+          signature: "initialize2()",
+          args: [],
         },
       ],
     };
