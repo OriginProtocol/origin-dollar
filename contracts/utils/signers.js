@@ -56,7 +56,7 @@ async function getSigner(address = undefined) {
 
   const signers = await hre.ethers.getSigners();
   const signer = signers[0];
-  log(`Using signer ${await signer.getAddress()}`);
+  log(`Using first hardhat signer ${await signer.getAddress()}`);
 
   return signer;
 }

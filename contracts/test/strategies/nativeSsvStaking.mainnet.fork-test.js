@@ -1,7 +1,7 @@
 const {
   createFixtureLoader,
   nativeStakingSSVStrategyFixture,
-} = require("./../_fixture");
+} = require("../_fixture");
 
 const addresses = require("../../utils/addresses");
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
