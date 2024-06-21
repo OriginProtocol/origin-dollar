@@ -85,11 +85,16 @@ def _getWorkspace(name):
     return str(workspace.absolute()) + "/"
 
 
-def _load_data_with_supply_diff(base):
+def _load_data_for_deposit(base):
+    base["after_profit"] = (base["after_oeth_supply"] - base["before_oeth_supply"]) - (base["after_vault"] - base["before_vault"]) 
+    return base
+
+def _load_data_for_withdraw(base):
     base["after_profit"] = (base["after_vault"] - base["before_vault"]) + (base["before_oeth_supply"] - base["after_oeth_supply"])
     return base
 
-def _load_data(filename, with_supply_diff=False):
+
+def _load_data(filename, mode="balance"):
     base = pd.read_csv(filename)
     for x in base:
         if " " in x or "action" in x:
@@ -104,8 +109,10 @@ def _load_data(filename, with_supply_diff=False):
         base["after_pool_0"] + base["after_pool_1"]
     )
     base["before_profit"] = base["before_vault"] - base["pre_vault"]
-    if with_supply_diff:
-        base = _load_data_with_supply_diff(base)
+    if mode=="withdraw":
+        base = _load_data_for_withdraw(base)
+    elif mode=="deposit":
+        base = _load_data_for_deposit(base)
     else:
         base["after_profit"] = (base["after_vault"] - base["before_vault"])
     return base
@@ -354,10 +361,10 @@ def run_report(strategy_name):
     workspace = _getWorkspace(strategy_name)
     harness = _getHarness(strategy_name)
 
-    deposit_base = _load_data(workspace + "deposit_stats.csv")
-    balance_base = _load_data(workspace + "balance_stats.csv")
-    withdraw_base = _load_data(workspace + "withdraw_stats.csv", True) # with oeth supply difference
-    withdrawall_base = _load_data(workspace + "withdrawall_stats.csv", True) # with oeth supply difference
+    deposit_base = _load_data(workspace + "deposit_stats.csv", "deposit")
+    balance_base = _load_data(workspace + "balance_stats.csv", "balance")
+    withdraw_base = _load_data(workspace + "withdraw_stats.csv", "withdraw") # with oeth supply difference
+    withdrawall_base = _load_data(workspace + "withdrawall_stats.csv", "withdraw") # with oeth supply difference
 
     sections = []
 
