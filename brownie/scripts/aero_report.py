@@ -146,57 +146,56 @@ def run_simulations(strategy_name):
 
   #  Test Deposits
     deposit_stats = []
-    for initial_tilt in [0.0, -1, 1, 0.5, -0.5, 0.25, -0.25, 0.75, -0.75]:
-        for deposit_x in range(0, NUM_DEPOSIT_TESTS_EACH + 1):
-            print("TemporaryFork starts");
+    for initial_tilt in [-1, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1]:
+        print("TemporaryFork starts");
 
-            with TemporaryFork():
-                stat = {}
+        with TemporaryFork():
+            stat = {}
 
-                deposit_mix = deposit_x / NUM_DEPOSIT_TESTS_EACH
+            stat["action"] = "deposit"
+            stat["action_mix"] = initial_tilt
+            print("pool_create_mix starts");
+            initial_deposit = harness.pool_create_mix(tilt=0.5, size=1.5)
+            print("pool_create_mix ends", initial_deposit);
+            harness.vault_admin.depositToStrategy(
+                harness.strat,
+                list(initial_deposit.keys()),
+                list(initial_deposit.values()),
+                {"from": STRATEGIST},
+            )
+            print("depositToStrategy ends");
+            stat["pre_vault"] = harness.vault_core.totalValue()
+            pb = list(harness.pool_balances().values())
+            stat["pre_pool_0"] = pb[0]
+            stat["pre_pool_1"] = pb[1]
 
-                stat["action"] = "deposit"
-                stat["action_mix"] = deposit_mix
-                print("pool_create_mix starts");
-                initial_deposit = harness.pool_create_mix(tilt=0.5, size=1.5)
-                print("pool_create_mix ends", initial_deposit);
-                harness.vault_admin.depositToStrategy(
-                    harness.strat,
-                    list(initial_deposit.keys()),
-                    list(initial_deposit.values()),
-                    {"from": STRATEGIST},
-                )
-                print("depositToStrategy ends");
-                stat["pre_vault"] = harness.vault_core.totalValue()
-                pb = list(harness.pool_balances().values())
-                stat["pre_pool_0"] = pb[0]
-                stat["pre_pool_1"] = pb[1]
+            harness.tilt_pool(initial_tilt)
 
-                harness.tilt_pool(initial_tilt)
+            stat["before_vault"] = harness.vault_core.totalValue()
+            pb = list(harness.pool_balances().values())
+            stat["before_pool_0"] = pb[0]
+            stat["before_pool_1"] = pb[1]
 
-                stat["before_vault"] = harness.vault_core.totalValue()
-                pb = list(harness.pool_balances().values())
-                stat["before_pool_0"] = pb[0]
-                stat["before_pool_1"] = pb[1]
+            deposit = {WETH:harness.base_size * 1e18} #harness.pool_create_mix(harness.base_size, size=1)
+            print("pool_create_mix 2", deposit);
+            stat["before_oeth_supply"] = harness.oeth.totalSupply()
+            harness.vault_admin.depositToStrategy(
+                harness.strat,
+                list(deposit.keys()),
+                list(deposit.values()),
+                #list(harness.base_size),
+                {"from": STRATEGIST},
+            )
+            stat["after_oeth_supply"] = harness.oeth.totalSupply()
+            print("depositToStrategy 2 ends");
 
-                deposit = harness.pool_create_mix(deposit_mix, size=1)
-                print("pool_create_mix 2", deposit);
-                stat["before_oeth_supply"] = harness.oeth.totalSupply()
-                harness.vault_admin.depositToStrategy(
-                    harness.strat,
-                    list(deposit.keys()),
-                    list(deposit.values()),
-                    {"from": STRATEGIST},
-                )
-                stat["after_oeth_supply"] = harness.oeth.totalSupply()
-                print("depositToStrategy 2 ends");
+            stat["after_vault"] = harness.vault_core.totalValue()
+            pb = list(harness.pool_balances().values())
+            stat["after_pool_0"] = pb[0]
+            stat["after_pool_1"] = pb[1]
 
-                stat["after_vault"] = harness.vault_core.totalValue()
-                pb = list(harness.pool_balances().values())
-                stat["after_pool_0"] = pb[0]
-                stat["after_pool_1"] = pb[1]
+            deposit_stats.append(stat)
 
-                deposit_stats.append(stat)
     pd.DataFrame.from_records(deposit_stats).to_csv(workspace + "deposit_stats.csv")
 
     # Test Balances
@@ -382,13 +381,7 @@ def run_report(strategy_name):
     df = deposit_base
     plt.title("Deposit profit")
     plt.axhline(0, c="black", linewidth=0.4)
-    for before_mix, rows in df.groupby(df["before_mix"]):
-        plt.plot(
-            rows["action_mix"] * 100,
-            rows["after_profit"],
-            label="{:.1f}%".format(100 * float(before_mix)),
-        )
-    #plt.ylim([-1e18, 1e18])
+    plt.plot(df["before_mix"], df["after_profit"])
     plt.xlabel("Deposit Mix")
     plt.ylabel("Deposit Profit")
     plt.legend()
