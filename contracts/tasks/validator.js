@@ -661,7 +661,7 @@ const broadcastRegisterValidator = async (
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
-  ssvAmount = ssvAmount || amount;
+  ssvAmount = ssvAmount !== undefined ? ssvAmount : amount;
 
   log(`About to register validator with:`);
   log(`publicKeys: ${publicKeys}`);
@@ -706,7 +706,17 @@ const getS3Context = async () => {
     );
   }
 
-  return [new S3Client({}), bucketName];
+  return [
+    new S3Client({
+      region: "us-east-1",
+      // in case at some point we want to simplify the names of env variables
+      // credentials: {
+      //     accessKeyId: ACCESS_KEY_ID,
+      //     secretAccessKey: ACCESS_KEY_SECRET
+      // }
+    }),
+    bucketName,
+  ];
 };
 
 const storePrivateKeyToS3 = async (pubkey, encryptedPrivateKey) => {
