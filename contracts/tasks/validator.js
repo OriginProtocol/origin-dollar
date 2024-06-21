@@ -608,12 +608,12 @@ const depositEth = async (
   try {
     log(`About to stake ETH with:`);
 
-    const validatorsStakeData = depositData.map((d, i) => ({
-      pubkey: pubkeys[i],
+    const validatorsStakeData = depositData.map((d) => ({
+      pubkey: d.pubkey,
       signature: d.signature,
       depositDataRoot: d.depositDataRoot,
     }));
-    log(`validators stake data: ${validatorsStakeData}`);
+    log(`validators stake data: ${JSON.stringify(validatorsStakeData)}`);
     const tx = await nativeStakingStrategy
       .connect(signer)
       .stakeEth(validatorsStakeData);
