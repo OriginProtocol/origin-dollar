@@ -1141,7 +1141,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       } = fixture;
       await weth.connect(josh).approve(aeroRouter.address, MAX_UINT256);
       await oeth.connect(josh).approve(aeroRouter.address, MAX_UINT256);
-      for (i = 0; i < poolTilts.length; i++) {
+      for (let i = 0; i < poolTilts.length; i++) {
         let oethReservePct = poolTilts[i].oeth;
         let wethReservePct = poolTilts[i].weth;
         let { tokenIn, amountIn } = await getParamsForPoolRebalance(
@@ -1239,7 +1239,6 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
         aerodromeEthStrategy,
         pool,
         oeth,
-        oethVault,
         oethVaultSigner,
         weth,
         aeroRouter,
@@ -1249,7 +1248,7 @@ describe("ForkTest: OETH AMO Aerodrome Strategy", function () {
       } = fixture;
       await weth.connect(josh).approve(aeroRouter.address, MAX_UINT256);
       await oeth.connect(josh).approve(aeroRouter.address, MAX_UINT256);
-      for (i = 0; i < poolTilts.length; i++) {
+      for (let i = 0; i < poolTilts.length; i++) {
         let oethReservePct = poolTilts[i].oeth;
         let wethReservePct = poolTilts[i].weth;
         let { tokenIn, amountIn } = await getParamsForPoolRebalance(
@@ -1490,7 +1489,7 @@ async function getParamsForPoolRebalance(
   desiredWethReservePct = 49
 ) {
   const ONE_PERCENT = BigNumber.from(100000);
-  const { oeth, weth, aeroRouter, pool, oethReserveIndex, wethReserveIndex } =
+  const { oeth, weth, pool, oethReserveIndex, wethReserveIndex } =
     fixture;
 
   let reserves = await pool.getReserves();
