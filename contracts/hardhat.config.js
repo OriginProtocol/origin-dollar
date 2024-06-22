@@ -105,7 +105,11 @@ module.exports = {
         mnemonic,
       },
       chainId,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
       ...(isForkTest
         ? {
             timeout: 0,

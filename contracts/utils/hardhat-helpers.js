@@ -40,7 +40,7 @@ const adjustTheForkBlockNumber = () => {
         : undefined;
     } else if (isBaseForkTest) {
       forkBlockNumber = process.env.BASE_BLOCK_NUMBER
-        ? process.env.BASE_BLOCK_NUMBER_BLOCK_NUMBER
+        ? process.env.BASE_BLOCK_NUMBER
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
