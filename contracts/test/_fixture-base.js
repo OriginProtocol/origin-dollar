@@ -86,7 +86,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   const signers = await hre.ethers.getSigners();
 
-  const [minter, burner, josh, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
+  const [minter, burner, josh, anna, matt, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const governor = await ethers.getSigner(await woeth.governor());
 
   if (isBaseFork) {
@@ -114,6 +114,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const aeroRouter = await ethers.getContractAt(
     "IRouter",
     addresses.base.aeroRouterAddress
+  );
+  const aeroToken = await ethers.getContractAt(
+    "IERC20",
+    addresses.base.aeroTokenAddress
   );
   let poolAddress = await aeroRouter.poolFor(
     weth.address,
@@ -154,11 +158,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     governor,
     minter,
     burner,
-
+    strategist: governor,
+    dai: aeroToken, // for governable behavior test.
+    anna,
+    matt,
+    josh,
     rafael,
     nick,
-    josh,
-
     pool,
     wethReserveIndex,
     oethReserveIndex,
