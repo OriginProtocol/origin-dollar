@@ -64,7 +64,6 @@ class AerodromeWeth:
 
     def pool_create_mix(self, tilt=0.5, size=1):
         return {
-            # WETH: 2 + int(size * self.base_size * (int(1e18) - (int(1e18) * tilt))),
            WETH: 2 + int(size * self.base_size * int(1e18) * tilt),
         }
 
@@ -73,7 +72,7 @@ class AerodromeWeth:
 
 
 def _getHarness(name):
-    return AerodromeWeth()  # YAGNI
+    return AerodromeWeth()  
 
 
 def _getWorkspace(name):
@@ -136,13 +135,11 @@ def run_simulations(strategy_name):
 
     # Run setup
     harness.setup()
-    print("Harness setup done");
     try:
         harness.vault_admin.withdrawAllFromStrategies({"from": STRATEGIST})
     except:
         pass
 
-    print("withdrawAllFromStrategies done");
 
   #  Test Deposits
     deposit_stats = []
@@ -154,16 +151,13 @@ def run_simulations(strategy_name):
 
             stat["action"] = "deposit"
             stat["action_mix"] = initial_tilt
-            print("pool_create_mix starts");
             initial_deposit = harness.pool_create_mix(tilt=0.5, size=1.5)
-            print("pool_create_mix ends", initial_deposit);
             harness.vault_admin.depositToStrategy(
                 harness.strat,
                 list(initial_deposit.keys()),
                 list(initial_deposit.values()),
                 {"from": STRATEGIST},
             )
-            print("depositToStrategy ends");
             stat["pre_vault"] = harness.vault_core.totalValue()
             pb = list(harness.pool_balances().values())
             stat["pre_pool_0"] = pb[0]
@@ -176,18 +170,16 @@ def run_simulations(strategy_name):
             stat["before_pool_0"] = pb[0]
             stat["before_pool_1"] = pb[1]
 
-            deposit = {WETH:harness.base_size * 1e18} #harness.pool_create_mix(harness.base_size, size=1)
+            deposit = {WETH:harness.base_size * 1e18} 
             print("pool_create_mix 2", deposit);
             stat["before_oeth_supply"] = harness.oeth.totalSupply()
             harness.vault_admin.depositToStrategy(
                 harness.strat,
                 list(deposit.keys()),
                 list(deposit.values()),
-                #list(harness.base_size),
                 {"from": STRATEGIST},
             )
             stat["after_oeth_supply"] = harness.oeth.totalSupply()
-            print("depositToStrategy 2 ends");
 
             stat["after_vault"] = harness.vault_core.totalValue()
             pb = list(harness.pool_balances().values())
@@ -322,7 +314,6 @@ def run_simulations(strategy_name):
                 list(initial_deposit.values()),
                 {"from": STRATEGIST},
             )
-            #harness.vault_core.rebase({"from":GOVERNOR})
 
             stat["pre_vault"] = harness.vault_core.totalValue()
             pb = list(harness.pool_balances().values())
@@ -381,10 +372,9 @@ def run_report(strategy_name):
     df = deposit_base
     plt.title("Deposit profit")
     plt.axhline(0, c="black", linewidth=0.4)
-    plt.plot(df["before_mix"], df["after_profit"])
-    plt.xlabel("Deposit Mix")
+    plt.plot(df["action_mix"], df["after_profit"])
+    plt.xlabel("Pool Mix")
     plt.ylabel("Deposit Profit")
-    plt.legend()
     plt.savefig(workspace + "deposit.svg")
     plt.close()
     sections.append('<h2>Deposit</h2><img src="deposit.svg">')
@@ -457,4 +447,3 @@ def run_report(strategy_name):
         f.write(html)
 
 
-# #run_report("BalancerRethEth")
