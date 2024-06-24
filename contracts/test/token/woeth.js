@@ -37,6 +37,14 @@ describe("WOETH", function () {
     // josh account starts each test with 100 OETH
   });
 
+  describe("General functionality", async () => {
+    it("Initialize2 should not be called twice", async () => {
+      await expect(woeth.connect(governor).initialize2()).to.be.revertedWith(
+        "Initialize2 already called"
+      );
+    });
+  });
+
   describe("Funds in, Funds out", async () => {
     it("should deposit at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");

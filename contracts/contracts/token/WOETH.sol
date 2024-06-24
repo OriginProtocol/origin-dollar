@@ -40,12 +40,14 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     function initialize2() external onlyGovernor {
-        if (!oethCreditsInitialized) {
-            oethCreditsInitialized = true;
-            (uint256 oethCreditsHighres, , ) = OETH(asset())
-                .creditsBalanceOfHighres(address(this));
-            oethCredits = oethCreditsHighres / OETH_RESOLUTION_INCREASE;
+        if (oethCreditsInitialized) {
+            require(false, "Initialize2 already called");
         }
+
+        oethCreditsInitialized = true;
+        (uint256 oethCreditsHighres, , ) = OETH(asset())
+            .creditsBalanceOfHighres(address(this));
+        oethCredits = oethCreditsHighres / OETH_RESOLUTION_INCREASE;
     }
 
     function name() public view override returns (string memory) {
