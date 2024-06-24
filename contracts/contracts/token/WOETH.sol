@@ -19,7 +19,10 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    uint256 private constant OETH_RESOLUTION_INCREASE = 1e9;
 
+    /* - Add extensive comments on how this works
+     */
     uint256 oethCredits;
     bool oethCreditsInitialized;
 
@@ -39,7 +42,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     function initialize2() external onlyGovernor {
         if (!oethCreditsInitialized) {
             oethCreditsInitialized = true;
-            (oethCredits, ) = OETH(asset()).creditsBalanceOf(address(this));
+            (uint256 oethCreditsHighres, , ) = OETH(asset())
+                .creditsBalanceOfHighres(address(this));
+            oethCredits = oethCreditsHighres / OETH_RESOLUTION_INCREASE;
         }
     }
 
@@ -61,27 +66,53 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
+        //@dev TODO: we could implement a feature where if anyone sends OETH direclty to
+        // the contract, that we can let the governor transfer the excess of the token.
         require(asset_ != address(asset()), "Cannot collect OETH");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    function _oethToOethCredits(uint256 oethAmount) internal returns(uint256){
-        (,uint256 creditsPerToken) = OETH(asset()).creditsBalanceOf(address(this));
-        return oethAmount.mulTruncate(creditsPerToken);   
+    function _oethToOethCredits(uint256 oethAmount) internal returns (uint256) {
+        (, uint256 creditsPerToken, ) = OETH(asset()).creditsBalanceOfHighres(
+            address(this)
+        );
+        return
+            oethAmount.mulTruncate(creditsPerToken / OETH_RESOLUTION_INCREASE);
     }
 
     /** @dev See {IERC4262-deposit} */
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
-        require(assets <= maxDeposit(receiver), "ERC4626: deposit more then max");
+    function deposit(uint256 assets, address receiver)
+        public
+        virtual
+        override
+        returns (uint256)
+    {
+        require(
+            assets <= maxDeposit(receiver),
+            "ERC4626: deposit more then max"
+        );
 
         address caller = _msgSender();
         uint256 shares = previewDeposit(assets);
 
         // if _asset is ERC777, transferFrom can call reenter BEFORE the transfer happens through
         // the tokensToSend hook, so we need to transfer before we mint to keep the invariants.
-        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
+        SafeERC20.safeTransferFrom(
+            IERC20(asset()),
+            caller,
+            address(this),
+            assets
+        );
         _mint(receiver, shares);
         oethCredits += _oethToOethCredits(assets);
+
+        uint256 credits1;
+        uint256 cpt1;
+        bool upgraded;
+
+        (credits1, cpt1, upgraded) = OETH(asset()).creditsBalanceOfHighres(
+            address(this)
+        );
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -89,7 +120,12 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     /** @dev See {IERC4262-mint} */
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {
+    function mint(uint256 shares, address receiver)
+        public
+        virtual
+        override
+        returns (uint256)
+    {
         require(shares <= maxMint(receiver), "ERC4626: mint more then max");
 
         address caller = _msgSender();
@@ -97,7 +133,12 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         // if _asset is ERC777, transferFrom can call reenter BEFORE the transfer happens through
         // the tokensToSend hook, so we need to transfer before we mint to keep the invariants.
-        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
+        SafeERC20.safeTransferFrom(
+            IERC20(asset()),
+            caller,
+            address(this),
+            assets
+        );
         _mint(receiver, shares);
         oethCredits += _oethToOethCredits(assets);
 
@@ -112,7 +153,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public virtual override returns (uint256) {
-        require(assets <= maxWithdraw(owner), "ERC4626: withdraw more then max");
+        require(
+            assets <= maxWithdraw(owner),
+            "ERC4626: withdraw more then max"
+        );
 
         address caller = _msgSender();
         uint256 shares = previewWithdraw(assets);
@@ -158,9 +202,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         return assets;
     }
 
-        /** @dev See {IERC4262-totalAssets} */
+    /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view virtual override returns (uint256) {
-        (,uint256 creditsPerToken) = OETH(asset()).creditsBalanceOf(address(this));
+        (, uint256 creditsPerToken) = OETH(asset()).creditsBalanceOf(
+            address(this)
+        );
 
         return oethCredits.divPrecisely(creditsPerToken);
     }
