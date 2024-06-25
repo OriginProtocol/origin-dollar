@@ -190,11 +190,11 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    it("OETH whale redeem 100 OETH", async () => {
+    it("OETH whale redeem 50 OETH", async () => {
       const { oethVault } = fixture;
 
-      const amount = parseUnits("100", 18);
-      const minEth = parseUnits("99.4", 18);
+      const amount = parseUnits("50", 18);
+      const minEth = parseUnits("49.7", 18);
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
