@@ -931,7 +931,7 @@ task("harvest", "Harvest and swap rewards for a strategy")
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     "",
     types.string
   )
@@ -967,7 +967,7 @@ subtask(
   .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -1096,7 +1096,7 @@ subtask("exitValidator", "Starts the exit process from a validator")
   )
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -1117,7 +1117,7 @@ subtask(
   )
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -1299,6 +1299,12 @@ subtask(
     "Encrypted validator key returned form P2P API",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "displayPk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
   )
   .setAction(decryptValidatorKey);
 task("decrypt").setAction(async (_, __, runSuper) => {
