@@ -1256,7 +1256,6 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const olderProposal =
       Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
 
-    console.log(networkName, migrations, deployName);
     if (isFork && proposalId && !olderProposal) {
       /** Just for context of fork env change the id of the deployment script. This is required
        * in circumstances when:
