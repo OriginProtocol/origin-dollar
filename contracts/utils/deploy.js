@@ -919,7 +919,6 @@ async function getTimelock() {
 }
 
 async function useTransitionGovernance() {
-  return false;
   const { timelockAddr } = await getNamedAccounts();
 
   const timelock = await ethers.getContractAt(
@@ -1183,11 +1182,11 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    if (await useTransitionGovernance()) {
-      // Handle proposal
-      await handleTransitionGovernance(propDescription, propArgs);
-      return;
-    }
+    // if (await useTransitionGovernance()) {
+    //   // Handle proposal
+    //   await handleTransitionGovernance(propDescription, propArgs);
+    //   return;
+    // }
 
     if (isMainnet) {
       // On Mainnet, only build the propose transaction for OGV governance
