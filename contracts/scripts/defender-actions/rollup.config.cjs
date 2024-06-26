@@ -9,7 +9,7 @@ const commonConfig = {
     resolve({ preferBuiltins: true, exportConditions: ["node"] }),
     commonjs(),
     json({ compact: true }),
-    visualizer()
+    visualizer(),
   ],
   // Do not bundle these packages.
   // ethers is required to be bundled even though its an Autotask package.
@@ -25,6 +25,10 @@ const commonConfig = {
     "@nomicfoundation/solidity-analyzer-darwin-arm64",
     "@nomicfoundation/solidity-analyzer-darwin-x64",
     "fsevents",
+    "ethers",
+    "web3",
+    "mocha",
+    "hardhat",
   ],
 };
 
