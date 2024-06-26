@@ -85,21 +85,32 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
+    /**
+     * @dev This function converts requested OETH token amount to its underlying OETH
+     * credits value that is stored internally in OETH.sol and is required in order to
+     * be able to rebase.
+     *
+     * @param oethAmount Amount of OETH to be converted to OETH credits
+     * @return amount of OETH credits the OETH amount corresponds to
+     */
     function _oethToOethCredits(uint256 oethAmount) internal returns (uint256) {
-        (, uint256 creditsPerTokenHighres, ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
+        (, uint256 creditsPerTokenHighres, ) = OETH(asset())
+            .creditsBalanceOfHighres(address(this));
         return
-            oethAmount.mulTruncate(creditsPerTokenHighres / OETH_RESOLUTION_INCREASE);
+            oethAmount.mulTruncate(
+                creditsPerTokenHighres / OETH_RESOLUTION_INCREASE
+            );
     }
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view virtual override returns (uint256) {
-        (, uint256 creditsPerTokenHighres, ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
+        (, uint256 creditsPerTokenHighres, ) = OETH(asset())
+            .creditsBalanceOfHighres(address(this));
 
-        return oethCredits.divPrecisely(creditsPerTokenHighres / OETH_RESOLUTION_INCREASE);
+        return
+            oethCredits.divPrecisely(
+                creditsPerTokenHighres / OETH_RESOLUTION_INCREASE
+            );
     }
 
     /** @dev See {IERC4262-deposit} */
