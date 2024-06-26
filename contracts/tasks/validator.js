@@ -1,4 +1,4 @@
-const axios = require("axios");
+const fetch = require("node-fetch");
 const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther, keccak256 } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
@@ -519,11 +519,10 @@ const p2pRequest = async (url, api_key, method, body) => {
     body != undefined ? ` and body: ${bodyString}` : ""
   );
 
-  const rawResponse = await axios({
+  const rawResponse = await fetch(url, {
     method,
-    url,
     headers,
-    data: bodyString,
+    body: bodyString,
   });
 
   const response = await rawResponse.json();

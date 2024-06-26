@@ -9,7 +9,7 @@ const commonConfig = {
     resolve({ preferBuiltins: true, exportConditions: ["node"] }),
     commonjs(),
     json({ compact: true }),
-    visualizer()
+    visualizer(),
   ],
   // Do not bundle these packages.
   // ethers is required to be bundled even though its an Autotask package.
@@ -27,6 +27,8 @@ const commonConfig = {
     "fsevents",
     "ethers",
     "web3",
+    "mocha",
+    "hardhat",
   ],
 };
 
