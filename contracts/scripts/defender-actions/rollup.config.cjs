@@ -23,6 +23,8 @@ const commonConfig = {
     "@nomicfoundation/solidity-analyzer-darwin-arm64",
     "@nomicfoundation/solidity-analyzer-darwin-x64",
     "fsevents",
+    "ethers",
+    "web3",
   ],
 };
 
