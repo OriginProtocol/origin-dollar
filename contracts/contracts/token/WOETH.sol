@@ -27,8 +27,9 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    uint256 oethCreditsHighres;
-    bool oethCreditsInitialized;
+    // doesn't need to be public, but convenient to be able to confirm the state on the mainnet
+    uint256 public oethCreditsHighres;
+    bool _oethCreditsInitialized;
 
     constructor(
         ERC20 underlying_,
@@ -44,11 +45,11 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     function initialize2() external onlyGovernor {
-        if (oethCreditsInitialized) {
+        if (_oethCreditsInitialized) {
             require(false, "Initialize2 already called");
         }
 
-        oethCreditsInitialized = true;
+        _oethCreditsInitialized = true;
         /*
          * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
          * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
