@@ -14,15 +14,21 @@ import { OETH } from "./OETH.sol";
 /**
  * @title OETH Token Contract
  * @author Origin Protocol Inc
+ *
+ * @dev An important capability of this contract is that it isn't susceptible to changes of the
+ * exchange rate of WOETH/OETH if/when someone sends the underlying asset (OETH) to the contract.
+ * If OETH weren't rebasing this could be achieved by solely tracking the ERC20 transfers of the OETH
+ * token on mint, deposit, redeem, withdraw. The issue is that OETH is rebasing and OETH balances
+ * will change when the token rebases. For that reason we are tracking the WOETH contract credits and
+ * credits per token in those 4 actions. That way WOETH can keep an accurate track of the OETH balance
+ * ignoring any unexpected transfers of OETH to this contract.
+ *
  */
 
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     uint256 private constant OETH_RESOLUTION_INCREASE = 1e9;
-
-    /* - Add extensive comments on how this works
-     */
     uint256 oethCredits;
     bool oethCreditsInitialized;
 
@@ -45,6 +51,12 @@ contract WOETH is ERC4626, Governable, Initializable {
         }
 
         oethCreditsInitialized = true;
+        /*
+         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since the
+         * latter will report the same values as creditsBalanceOfHighres if the account holding
+         * OETH is a new one. On mainnet this isn't a problem, but in unit test environment
+         * it is.
+         */
         (uint256 oethCreditsHighres, , ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
         oethCredits = oethCreditsHighres / OETH_RESOLUTION_INCREASE;
