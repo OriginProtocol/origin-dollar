@@ -50,10 +50,12 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         oethCreditsInitialized = true;
         /*
-         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since the
-         * latter will report the same values as creditsBalanceOfHighres if the account holding
-         * OETH is a new one. On mainnet this isn't a problem, but in unit test environment
-         * it is.
+         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
+         * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
+         * finicky since it reports Highres version of credits and creditsPerToken
+         * when the account is a fresh one. That doesn't have an effect on mainnet since 
+         * WOETH has already seen transactions. But it is rather annoying in unit test
+         * environment.
          */
         (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
             address(this)
