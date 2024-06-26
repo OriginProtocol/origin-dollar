@@ -203,9 +203,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
         oethCreditsHighres -= _oethToOethCreditsHighres(assets);
 
+        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
+        
         emit Withdraw(caller, receiver, owner, assets, shares);
 
         return shares;
@@ -229,8 +230,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
         oethCreditsHighres -= _oethToOethCreditsHighres(assets);
+
+        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
 
