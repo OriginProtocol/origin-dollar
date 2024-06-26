@@ -5,7 +5,11 @@ const { v4: uuidv4 } = require("uuid");
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
+const {
+  PutObjectCommand,
+  GetObjectCommand,
+  S3Client,
+} = require("@aws-sdk/client-s3");
 
 const { getBlock } = require("./block");
 const addresses = require("../utils/addresses");
@@ -695,27 +699,47 @@ const broadcastRegisterValidator = async (
 };
 
 const getS3Context = async () => {
-  const apiKey = process.env.AWS_ACCESS_KEY_ID;
-  const apiSecret = process.env.AWS_SECRET_ACCESS_KEY;
+  const apiKey = process.env.AWS_ACCESS_S3_KEY_ID;
+  const apiSecret = process.env.AWS_SECRET_S3_ACCESS_KEY;
   const bucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
 
   if (!apiKey || !apiSecret || !bucketName) {
     throw new Error(
-      "AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY & VALIDATOR_KEYS_S3_BUCKET_NAME need to all be set."
+      "AWS_ACCESS_S3_KEY_ID & AWS_SECRET_S3_ACCESS_KEY & VALIDATOR_KEYS_S3_BUCKET_NAME need to all be set."
     );
   }
 
   return [
     new S3Client({
       region: "us-east-1",
-      // in case at some point we want to simplify the names of env variables
-      // credentials: {
-      //     accessKeyId: ACCESS_KEY_ID,
-      //     secretAccessKey: ACCESS_KEY_SECRET
-      // }
+      credentials: {
+        accessKeyId: apiKey,
+        secretAccessKey: apiSecret,
+      },
     }),
     bucketName,
   ];
+};
+
+const getPrivateKeyFromS3 = async (pubkey) => {
+  const [s3Client, bucketName] = await getS3Context();
+  log("Attempting to fetch encrypted private key from S3");
+  const fileName = `${pubkey}.json`;
+
+  const input = {
+    Bucket: bucketName,
+    Key: fileName,
+  };
+
+  const command = new GetObjectCommand(input);
+
+  try {
+    const response = await s3Client.send(command);
+    return await response.Body.transformToString();
+  } catch (err) {
+    log("Error fetching file from S3", err);
+    throw err;
+  }
 };
 
 const storePrivateKeyToS3 = async (pubkey, encryptedPrivateKey) => {
@@ -1046,4 +1070,5 @@ module.exports = {
   fixAccounting,
   pauseStaking,
   snapStaking,
+  getPrivateKeyFromS3,
 };

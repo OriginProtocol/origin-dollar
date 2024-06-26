@@ -12,6 +12,7 @@ const {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  decryptValidatorKeyFromStorage,
 } = require("./crypto");
 const {
   encryptMasterPrivateKey,
@@ -1312,6 +1313,33 @@ subtask(
   )
   .setAction(decryptValidatorKey);
 task("decrypt").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "decryptFromStorage",
+  "Decrypt an encrypted private key from S3 using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
+)
+  .addOptionalParam(
+    "privatekey",
+    "Private key to decrypt the message with in hex format without the 0x prefix. If not provided, the encrypted private key in VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY will be used.",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "pubkey",
+    "Public key of the validator whose private key is to be fetched.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "displaypk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
+  )
+  .setAction(decryptValidatorKeyFromStorage);
+task("decryptFromStorage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

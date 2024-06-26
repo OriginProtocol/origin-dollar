@@ -7,6 +7,8 @@ const {
   createHmac,
 } = require("node:crypto");
 
+const { getPrivateKeyFromS3 } = require("./validator");
+
 const { decryptMasterPrivateKey } = require("./amazon");
 const ecdhCurveName = "prime256v1";
 
@@ -66,11 +68,34 @@ const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
 
   const vsk = bls.PrivateKey.fromBytes(validatorPrivateKey);
   console.log(`Validator public key: ${vsk.getG1().toHex()}`);
+  return validatorPrivateKey.toString("hex");
 };
 
 const decryptValidatorKeyWithMasterKey = async ({ message }) => {
   const privateKey = await decryptMasterPrivateKey();
   return decryptValidatorKey({ privateKey, message });
+};
+
+const decryptValidatorKeyFromStorage = async ({
+  privatekey,
+  pubkey,
+  displaypk,
+}) => {
+  const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+  const encryptedKey = json.encryptedPrivateKey;
+
+  if (!privatekey) {
+    privatekey = await decryptMasterPrivateKey();
+  }
+
+  const privateValidatorKey = await decryptValidatorKey({
+    privateKey: privatekey,
+    message: encryptedKey,
+  });
+
+  if (displaypk) {
+    console.log("Private validator key: ", privateValidatorKey);
+  }
 };
 
 const decrypt = (ecdh, msg) => {
@@ -124,4 +149,5 @@ module.exports = {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  decryptValidatorKeyFromStorage,
 };
