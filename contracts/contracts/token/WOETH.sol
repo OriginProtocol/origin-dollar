@@ -54,7 +54,7 @@ contract WOETH is ERC4626, Governable, Initializable {
          * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
          * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
          * finicky since it reports Highres version of credits and creditsPerToken
-         * when the account is a fresh one. That doesn't have an effect on mainnet since 
+         * when the account is a fresh one. That doesn't have an effect on mainnet since
          * WOETH has already seen transactions. But it is rather annoying in unit test
          * environment.
          */
@@ -106,7 +106,7 @@ contract WOETH is ERC4626, Governable, Initializable {
          * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
          * is internally being done in OETH:
          */
-         // solhint-disable-next-line max-line-length
+        // solhint-disable-next-line max-line-length
         /** https://github.com/OriginProtocol/origin-dollar/blob/2314cccf2933f5c1f76a6549c1f5c9cc935b6f05/contracts/contracts/token/OUSD.sol#L242-L249
          *
          * This should make sure that the rounding will always be correct / mimic the rounding
@@ -206,7 +206,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         oethCreditsHighres -= _oethToOethCreditsHighres(assets);
 
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-        
+
         emit Withdraw(caller, receiver, owner, assets, shares);
 
         return shares;
