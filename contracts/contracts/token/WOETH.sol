@@ -27,8 +27,7 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    uint256 private constant OETH_RESOLUTION_INCREASE = 1e9;
-    uint256 oethCredits;
+    uint256 oethCreditsHighres;
     bool oethCreditsInitialized;
 
     constructor(
@@ -56,9 +55,9 @@ contract WOETH is ERC4626, Governable, Initializable {
          * OETH is a new one. On mainnet this isn't a problem, but in unit test environment
          * it is.
          */
-        (uint256 oethCreditsHighres, , ) = OETH(asset())
-            .creditsBalanceOfHighres(address(this));
-        oethCredits = oethCreditsHighres / OETH_RESOLUTION_INCREASE;
+        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
+            address(this)
+        );
     }
 
     function name() public view override returns (string memory) {
@@ -93,11 +92,19 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @param oethAmount Amount of OETH to be converted to OETH credits
      * @return amount of OETH credits the OETH amount corresponds to
      */
-    function _oethToOethCredits(uint256 oethAmount) internal returns (uint256) {
+    function _oethToOethCreditsHighres(uint256 oethAmount)
+        internal
+        returns (uint256)
+    {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
-        return
-            oethAmount.mulTruncate(creditsPerTokenHighres) / OETH_RESOLUTION_INCREASE;
+
+        /**
+         * Multiplying OETH amount with the creditsPerToken, dividing by resolution 
+         * 
+         TODOOOOO
+         */
+        return oethAmount.mulTruncate(creditsPerTokenHighres);
     }
 
     /** @dev See {IERC4262-totalAssets} */
@@ -105,8 +112,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
 
-        return
-            (oethCredits * OETH_RESOLUTION_INCREASE).divPrecisely(creditsPerTokenHighres);
+        return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
 
     /** @dev See {IERC4262-deposit} */
@@ -133,7 +139,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             assets
         );
         _mint(receiver, shares);
-        oethCredits += _oethToOethCredits(assets);
+        oethCreditsHighres += _oethToOethCreditsHighres(assets);
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -161,7 +167,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             assets
         );
         _mint(receiver, shares);
-        oethCredits += _oethToOethCredits(assets);
+        oethCreditsHighres += _oethToOethCreditsHighres(assets);
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -190,7 +196,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-        oethCredits -= _oethToOethCredits(assets);
+        oethCreditsHighres -= _oethToOethCreditsHighres(assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
 
@@ -216,7 +222,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-        oethCredits -= _oethToOethCredits(assets);
+        oethCreditsHighres -= _oethToOethCreditsHighres(assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
 

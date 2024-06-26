@@ -3,7 +3,6 @@ from world import *
 def expect_approximate(woeth_holder, expected_balance):
 	balance = woeth.balanceOf(woeth_holder)
 	diff = abs(expected_balance - balance)
-	#if (diff/expected_balance > 0.00000001):
 	if (diff != 0):
 		raise Exception("Unexpected balance for account: %s".format(woeth_holder))
 
