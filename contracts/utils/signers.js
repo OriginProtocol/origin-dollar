@@ -1,12 +1,12 @@
 const { Wallet } = require("ethers");
+const { parseEther } = require("ethers/lib/utils");
 const {
   DefenderRelaySigner,
   DefenderRelayProvider,
 } = require("@openzeppelin/defender-relay-client/lib/ethers");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const { ethereumAddress, privateKey } = require("./regex");
-const { hardhatSetBalance } = require("../test/_fund");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("./logger")("utils:signers");
 
@@ -117,7 +117,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await hardhatSetBalance(account, amount.toString());
+  await hhHelpers.setBalance(account, parseEther(amount.toString()));
 
   return signer;
 }

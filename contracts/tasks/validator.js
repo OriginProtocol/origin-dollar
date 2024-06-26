@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+const axios = require("axios");
 const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther, keccak256 } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
@@ -8,7 +8,6 @@ const {
 const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const { getBlock } = require("./block");
-const { getClusterInfo } = require("../utils/ssv");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
@@ -520,10 +519,11 @@ const p2pRequest = async (url, api_key, method, body) => {
     body != undefined ? ` and body: ${bodyString}` : ""
   );
 
-  const rawResponse = await fetch(url, {
+  const rawResponse = await axios({
     method,
+    url,
     headers,
-    body: bodyString,
+    data: bodyString,
   });
 
   const response = await rawResponse.json();
@@ -891,34 +891,6 @@ async function exitValidator({ pubkey, operatorids }) {
   await logTxDetails(tx, "exitSsvValidator");
 }
 
-async function removeValidator({ pubkey, operatorids }) {
-  const signer = await getSigner();
-
-  log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
-
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
-
-  const { chainId } = await ethers.provider.getNetwork();
-
-  // Cluster details
-  const { cluster } = await getClusterInfo({
-    chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
-    operatorids,
-    ownerAddress: strategy.address,
-  });
-
-  log(`About to exit validator`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
-}
-
 async function doAccounting({ signer, nativeStakingStrategy }) {
   log(`About to doAccounting`);
   const tx = await nativeStakingStrategy.connect(signer).doAccounting();
@@ -1068,7 +1040,6 @@ module.exports = {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
-  removeValidator,
   exitValidator,
   doAccounting,
   resetStakeETHTally,

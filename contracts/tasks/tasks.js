@@ -61,7 +61,12 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { calcDepositRoot, depositSSV, printClusterInfo } = require("./ssv");
+const {
+  calcDepositRoot,
+  depositSSV,
+  printClusterInfo,
+  removeValidator,
+} = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -84,7 +89,6 @@ const {
   registerValidators,
   stakeValidators,
   exitValidator,
-  removeValidator,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,

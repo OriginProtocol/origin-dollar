@@ -9,6 +9,34 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:ssv");
 
+async function removeValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  const { chainId } = await ethers.provider.getNetwork();
+
+  // Cluster details
+  const { cluster } = await getClusterInfo({
+    chainId,
+    ssvNetwork: hre.network.name.toUpperCase(),
+    operatorids,
+    ownerAddress: strategy.address,
+  });
+
+  log(`About to exit validator`);
+  const tx = await strategy
+    .connect(signer)
+    .removeSsvValidator(pubkey, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidator");
+}
+
 const printClusterInfo = async (options) => {
   const cluster = await getClusterInfo(options);
   // const nextNonce = await getClusterNonce(options);
@@ -89,4 +117,5 @@ module.exports = {
   printClusterInfo,
   depositSSV,
   calcDepositRoot,
+  removeValidator,
 };
