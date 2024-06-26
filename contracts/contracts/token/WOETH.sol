@@ -100,9 +100,12 @@ contract WOETH is ERC4626, Governable, Initializable {
             .creditsBalanceOfHighres(address(this));
 
         /**
-         * Multiplying OETH amount with the creditsPerToken, dividing by resolution 
-         * 
-         TODOOOOO
+         * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
+         * is internally being done in OETH:
+         * https://github.com/OriginProtocol/origin-dollar/blob/2314cccf2933f5c1f76a6549c1f5c9cc935b6f05/contracts/contracts/token/OUSD.sol#L242-L249
+         *
+         * This should make sure that the rounding will always be correct / mimic the rounding
+         * of OETH.
          */
         return oethAmount.mulTruncate(creditsPerTokenHighres);
     }
