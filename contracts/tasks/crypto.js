@@ -51,6 +51,10 @@ const genECDHKey = async ({ privateKey, displayPk }) => {
 
 const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
   const ecdh = createECDH(ecdhCurveName);
+
+  if (!privateKey) {
+    privateKey = decryptMasterPrivateKey();
+  }
   ecdh.setPrivateKey(privateKey, "hex");
 
   const validatorPrivateKey = decrypt(ecdh, Buffer.from(message, "base64"));

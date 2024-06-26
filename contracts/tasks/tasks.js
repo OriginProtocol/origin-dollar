@@ -1288,15 +1288,15 @@ subtask(
   "decrypt",
   "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
 )
-  .addParam(
+  .addOptionalParam(
     "privateKey",
-    "Private key to decrypt the message with in hex format without the 0x prefix",
+    "Private key to decrypt the message with in hex format without the 0x prefix. If not provided, the encrypted private key in VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY will be used.",
     undefined,
     types.string
   )
   .addParam(
     "message",
-    "Encrypted validator key returned form P2P API",
+    "Encrypted validator private key returned form P2P API",
     undefined,
     types.string
   )
