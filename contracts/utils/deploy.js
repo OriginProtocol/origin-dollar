@@ -21,6 +21,7 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
+  isCI,
 } = require("../test/helpers.js");
 
 const {
@@ -982,15 +983,15 @@ function buildAndWriteGnosisJson(
     Date.now().toString() + `-${name}-gov-tx.json`
   );
 
-  fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
+  if (!isCI) {
+    fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
 
-  console.log("Wrote Gnosis Safe JSON to ", fileName);
+    console.log("Wrote Gnosis Safe JSON to ", fileName);
+  }
 }
 
 async function handleTransitionGovernance(propDesc, propArgs) {
   const { timelockAddr } = await getNamedAccounts();
-
-  const guradian = await impersonateAndFund(addresses.mainnet.Guardian);
 
   const timelock = await ethers.getContractAt(
     "ITimelockController",
@@ -1020,6 +1021,10 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   const reduceTime = !isScheduled;
   const delay = await timelock.getMinDelay();
 
+  const guardian = !isFork
+    ? undefined
+    : await impersonateAndFund(addresses.mainnet.Guardian);
+
   if (!isScheduled) {
     // Needs to be scheduled
 
@@ -1046,25 +1051,27 @@ async function handleTransitionGovernance(propDesc, propArgs) {
       "scheduleBatch"
     );
 
-    if (reduceTime) {
-      log(`Reducing required queue time to 60 seconds`);
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      await setStorageAt(
-        timelock.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
-      );
+    if (isFork && guardian) {
+      if (reduceTime) {
+        log(`Reducing required queue time to 60 seconds`);
+        /* contracts/timelock/Timelock.sol storage slot layout:
+         * slot[0] address admin
+         * slot[1] address pendingAdmin
+         * slot[2] uint256 delay
+         */
+        await setStorageAt(
+          timelock.address,
+          "0x2",
+          "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+        );
+      }
 
       log(`Scheduling batch on Timelock...`);
-      await timelock.connect(guradian).scheduleBatch(...args, 60);
+      await timelock.connect(guardian).scheduleBatch(...args, 60);
     }
   }
 
-  if (!(await timelock.isOperationReady(opHash))) {
+  if (isFork && guardian && !(await timelock.isOperationReady(opHash))) {
     log(`Preparing to execute...`);
     await advanceTime((await timelock.getMinDelay()) + 10);
     await advanceBlocks(2);
@@ -1093,21 +1100,23 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     "executeBatch"
   );
 
-  log(`Executing batch on Timelock...`);
-  await timelock.connect(guradian).executeBatch(...args);
+  if (isFork && guardian) {
+    log(`Executing batch on Timelock...`);
+    await timelock.connect(guardian).executeBatch(...args);
 
-  if (reduceTime) {
-    log(`Setting queue time back to 172800 seconds`);
-    /* contracts/timelock/Timelock.sol storage slot layout:
-     * slot[0] address admin
-     * slot[1] address pendingAdmin
-     * slot[2] uint256 delay
-     */
-    await setStorageAt(
-      timelock.address,
-      "0x2",
-      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
-    );
+    if (reduceTime) {
+      log(`Setting queue time back to 172800 seconds`);
+      /* contracts/timelock/Timelock.sol storage slot layout:
+       * slot[0] address admin
+       * slot[1] address pendingAdmin
+       * slot[2] uint256 delay
+       */
+      await setStorageAt(
+        timelock.address,
+        "0x2",
+        "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+      );
+    }
   }
 }
 

@@ -84,6 +84,7 @@
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "1.0.0-beta.17",
     "rollup": "^4.18.0",
+    "rollup-plugin-visualizer": "^5.12.0",
     "solc": "0.8.6",
     "solhint": "^3.4.1",
     "solidifier": "^2.2.3",

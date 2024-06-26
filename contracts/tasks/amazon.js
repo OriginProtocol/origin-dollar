@@ -20,9 +20,15 @@ const { p2pApiEncodedKey } = require("../utils/constants");
  */
 const amazonKMSKeyId = "2db3f148-ffda-43d3-8099-7a9f5bab09cc";
 //const hexPublicKey = "BExtrXKUJRoST70MPo5IEn0nMBdAjU+BP5FVomlclimQxBMf/Xlc7B7GkADZpQTFmS5cVgF0Gc+gv1wHLZjc3D0=";
+const region = "us-east-1";
 
 const encryptMasterPrivateKey = async ({ privateKey }) => {
-  const client = new KMSClient();
+  if (!privateKey) {
+    throw new Error("Please provide a private key");
+  }
+  const client = new KMSClient({
+    region,
+  });
   const input = {
     KeyId: amazonKMSKeyId,
     Plaintext: Buffer.from(privateKey),
@@ -40,8 +46,15 @@ const encryptMasterPrivateKey = async ({ privateKey }) => {
 const decryptMasterPrivateKey = async () => {
   const hexEncodedMasterPrivateKey =
     process.env.VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY;
+  if (!hexEncodedMasterPrivateKey) {
+    throw new Error(
+      "Please set VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY environment variable"
+    );
+  }
 
-  const client = new KMSClient();
+  const client = new KMSClient({
+    region,
+  });
   const uintArrayHex = Uint8Array.from(
     Buffer.from(hexEncodedMasterPrivateKey, "hex")
   );

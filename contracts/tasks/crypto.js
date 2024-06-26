@@ -49,11 +49,20 @@ const genECDHKey = async ({ privateKey, displayPk }) => {
   console.log(`Encoded public key for P2P API:\n${p2pPublicKey}`);
 };
 
-const decryptValidatorKey = async ({ privateKey, message }) => {
+const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
   const ecdh = createECDH(ecdhCurveName);
+
+  if (!privateKey) {
+    privateKey = decryptMasterPrivateKey();
+  }
   ecdh.setPrivateKey(privateKey, "hex");
 
   const validatorPrivateKey = decrypt(ecdh, Buffer.from(message, "base64"));
+  if (displayPk) {
+    console.log(
+      `Validator private key: ${validatorPrivateKey.toString("hex")}`
+    );
+  }
 
   const vsk = bls.PrivateKey.fromBytes(validatorPrivateKey);
   console.log(`Validator public key: ${vsk.getG1().toHex()}`);

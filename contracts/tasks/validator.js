@@ -8,7 +8,6 @@ const {
 const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const { getBlock } = require("./block");
-const { getClusterInfo } = require("../utils/ssv");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
@@ -608,12 +607,12 @@ const depositEth = async (
   try {
     log(`About to stake ETH with:`);
 
-    const validatorsStakeData = depositData.map((d, i) => ({
-      pubkey: pubkeys[i],
+    const validatorsStakeData = depositData.map((d) => ({
+      pubkey: d.pubkey,
       signature: d.signature,
       depositDataRoot: d.depositDataRoot,
     }));
-    log(`validators stake data: ${validatorsStakeData}`);
+    log(`validators stake data: ${JSON.stringify(validatorsStakeData)}`);
     const tx = await nativeStakingStrategy
       .connect(signer)
       .stakeEth(validatorsStakeData);
@@ -661,7 +660,7 @@ const broadcastRegisterValidator = async (
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
-  ssvAmount = ssvAmount || amount;
+  ssvAmount = ssvAmount !== undefined ? ssvAmount : amount;
 
   log(`About to register validator with:`);
   log(`publicKeys: ${publicKeys}`);
@@ -706,7 +705,17 @@ const getS3Context = async () => {
     );
   }
 
-  return [new S3Client({}), bucketName];
+  return [
+    new S3Client({
+      region: "us-east-1",
+      // in case at some point we want to simplify the names of env variables
+      // credentials: {
+      //     accessKeyId: ACCESS_KEY_ID,
+      //     secretAccessKey: ACCESS_KEY_SECRET
+      // }
+    }),
+    bucketName,
+  ];
 };
 
 const storePrivateKeyToS3 = async (pubkey, encryptedPrivateKey) => {
@@ -881,34 +890,6 @@ async function exitValidator({ pubkey, operatorids }) {
   await logTxDetails(tx, "exitSsvValidator");
 }
 
-async function removeValidator({ pubkey, operatorids }) {
-  const signer = await getSigner();
-
-  log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
-
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
-
-  const { chainId } = await ethers.provider.getNetwork();
-
-  // Cluster details
-  const { cluster } = await getClusterInfo({
-    chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
-    operatorids,
-    ownerAddress: strategy.address,
-  });
-
-  log(`About to exit validator`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
-}
-
 async function doAccounting({ signer, nativeStakingStrategy }) {
   log(`About to doAccounting`);
   const tx = await nativeStakingStrategy.connect(signer).doAccounting();
@@ -1058,7 +1039,6 @@ module.exports = {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
-  removeValidator,
   exitValidator,
   doAccounting,
   resetStakeETHTally,

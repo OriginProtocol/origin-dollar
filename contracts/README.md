@@ -300,11 +300,11 @@ unset DEFENDER_API_SECRET
 Actions are used to run operational jobs are specific times or intervals.
 
 [rollup](https://rollupjs.org/) is used to bundle Actions source code in
-[/script/defender-actions](./script/defender-actions) into a single file that can be uploaded to Defender. The
+[/scripts/defender-actions](./scripts/defender-actions) into a single file that can be uploaded to Defender. The
 implementation was based off
 [Defender Actions example using Rollup](https://github.com/OpenZeppelin/defender-autotask-examples/tree/master/rollup).
-The rollup config is in [/scripts/defender-actions/rollup.config.cjs](./script/defender-actions/rollup.config.cjs). The
-outputs are written to task specific folders under [/scripts/defender-actions/dist](./script/defender-actions/dist/).
+The rollup config is in [/scripts/defender-actions/rollup.config.cjs](./scripts/defender-actions/rollup.config.cjs). The
+outputs are written to task specific folders under [/scripts/defender-actions/dist](./scripts/defender-actions/dist/).
 
 The [defender-autotask CLI](https://www.npmjs.com/package/@openzeppelin/defender-autotask-client) is used to upload the
 Action code to Defender. For this to work, a Defender Team API key with `Manage Actions` capabilities is needed. This
@@ -322,7 +322,7 @@ DEFENDER_TEAM_SECRET=
 The following will bundle the Actions code ready for upload.
 
 ```
-cd ./script/defender-actions
+cd ./scripts/defender-actions
 
 npx rollup -c
 ```
@@ -331,7 +331,7 @@ The following will upload the different Action bundles to Defender.
 
 ```sh
 # change to the defender-actions folder
-cd ./script/defender-actions
+cd ./scripts/defender-actions
 npx rollup -c
 
 # Export the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables
