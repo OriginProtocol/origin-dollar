@@ -22,7 +22,6 @@ import { OETH } from "./OETH.sol";
  * will change when the token rebases. For that reason we are tracking the WOETH contract credits and
  * credits per token in those 4 actions. That way WOETH can keep an accurate track of the OETH balance
  * ignoring any unexpected transfers of OETH to this contract.
- *
  */
 
 contract WOETH is ERC4626, Governable, Initializable {
@@ -87,11 +86,20 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     function _oethToOethCredits(uint256 oethAmount) internal returns (uint256) {
-        (, uint256 creditsPerToken, ) = OETH(asset()).creditsBalanceOfHighres(
+        (, uint256 creditsPerTokenHighres, ) = OETH(asset()).creditsBalanceOfHighres(
             address(this)
         );
         return
-            oethAmount.mulTruncate(creditsPerToken / OETH_RESOLUTION_INCREASE);
+            oethAmount.mulTruncate(creditsPerTokenHighres / OETH_RESOLUTION_INCREASE);
+    }
+
+    /** @dev See {IERC4262-totalAssets} */
+    function totalAssets() public view virtual override returns (uint256) {
+        (, uint256 creditsPerTokenHighres) = OETH(asset()).creditsBalanceOfHighres(
+            address(this)
+        );
+
+        return oethCredits.divPrecisely(creditsPerTokenHighres / RESOLUTION_INCREASE);
     }
 
     /** @dev See {IERC4262-deposit} */
@@ -119,14 +127,6 @@ contract WOETH is ERC4626, Governable, Initializable {
         );
         _mint(receiver, shares);
         oethCredits += _oethToOethCredits(assets);
-
-        uint256 credits1;
-        uint256 cpt1;
-        bool upgraded;
-
-        (credits1, cpt1, upgraded) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -214,14 +214,5 @@ contract WOETH is ERC4626, Governable, Initializable {
         emit Withdraw(caller, receiver, owner, assets, shares);
 
         return assets;
-    }
-
-    /** @dev See {IERC4262-totalAssets} */
-    function totalAssets() public view virtual override returns (uint256) {
-        (, uint256 creditsPerToken) = OETH(asset()).creditsBalanceOf(
-            address(this)
-        );
-
-        return oethCredits.divPrecisely(creditsPerToken);
     }
 }
