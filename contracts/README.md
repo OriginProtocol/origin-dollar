@@ -322,7 +322,7 @@ DEFENDER_TEAM_SECRET=
 The following will bundle the Actions code ready for upload.
 
 ```
-cd ./script/defender-actions
+cd ./scripts/defender-actions
 
 npx rollup -c
 ```
