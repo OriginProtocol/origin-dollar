@@ -97,9 +97,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
         return
-            oethAmount.mulTruncate(
-                creditsPerTokenHighres / OETH_RESOLUTION_INCREASE
-            );
+            oethAmount.mulTruncate(creditsPerTokenHighres) / OETH_RESOLUTION_INCREASE;
     }
 
     /** @dev See {IERC4262-totalAssets} */
@@ -108,9 +106,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             .creditsBalanceOfHighres(address(this));
 
         return
-            oethCredits.divPrecisely(
-                creditsPerTokenHighres / OETH_RESOLUTION_INCREASE
-            );
+            (oethCredits * OETH_RESOLUTION_INCREASE).divPrecisely(creditsPerTokenHighres);
     }
 
     /** @dev See {IERC4262-deposit} */
