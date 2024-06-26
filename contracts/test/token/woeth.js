@@ -22,6 +22,11 @@ describe("WOETH", function () {
     weth = fixture.weth;
     governor = fixture.governor;
 
+    // mint some OETH
+    for (const user of [matt, josh]) {
+      await oethVault.connect(user).mint(weth.address, oethUnits("100"), 0);
+    }
+
     // Josh wraps 50 OETH to WOETH
     await oeth.connect(josh).approve(woeth.address, oethUnits("1000"));
     await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
