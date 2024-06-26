@@ -39,8 +39,15 @@ describe("WOETH", function () {
 
   describe("General functionality", async () => {
     it("Initialize2 should not be called twice", async () => {
+      // this function is already called by the fixture
       await expect(woeth.connect(governor).initialize2()).to.be.revertedWith(
         "Initialize2 already called"
+      );
+    });
+
+    it("Initialize2 should not be called by non governor", async () => {
+      await expect(woeth.connect(josh).initialize2()).to.be.revertedWith(
+        "Caller is not the Governor"
       );
     });
   });
