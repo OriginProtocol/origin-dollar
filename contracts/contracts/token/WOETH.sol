@@ -95,11 +95,11 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view virtual override returns (uint256) {
-        (, uint256 creditsPerTokenHighres) = OETH(asset()).creditsBalanceOfHighres(
+        (, uint256 creditsPerTokenHighres, ) = OETH(asset()).creditsBalanceOfHighres(
             address(this)
         );
 
-        return oethCredits.divPrecisely(creditsPerTokenHighres / RESOLUTION_INCREASE);
+        return oethCredits.divPrecisely(creditsPerTokenHighres / OETH_RESOLUTION_INCREASE);
     }
 
     /** @dev See {IERC4262-deposit} */
