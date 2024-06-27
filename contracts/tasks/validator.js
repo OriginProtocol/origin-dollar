@@ -835,7 +835,6 @@ async function verifyMinActivationTime({ pubkey }) {
   const validator = await getValidator(pubkey);
 
   const epochDiff = latestEpoch.epoch - validator.activationepoch;
-  console.log("epochDiff", epochDiff);
 
   if (epochDiff < 256) {
     throw new Error(

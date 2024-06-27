@@ -30,7 +30,7 @@ const beaconchainRequest = async (endpoint) => {
     log(`response: `, response);
     throw new Error(
       `Call to Beaconcha.in API failed. Error: ${JSON.stringify(
-        response.error
+        response.status
       )}`
     );
   } else {
