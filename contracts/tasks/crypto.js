@@ -7,9 +7,8 @@ const {
   createHmac,
 } = require("node:crypto");
 
-const { getPrivateKeyFromS3 } = require("./validator");
-
 const { decryptMasterPrivateKey } = require("./amazon");
+const { getPrivateKeyFromS3 } = require("../utils/amazon");
 const ecdhCurveName = "prime256v1";
 
 const genECDHKey = async ({ privateKey, displayPk }) => {
@@ -51,15 +50,35 @@ const genECDHKey = async ({ privateKey, displayPk }) => {
   console.log(`Encoded public key for P2P API:\n${p2pPublicKey}`);
 };
 
-const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
+const decryptValidatorKey = async ({
+  privateKey,
+  encryptedKey,
+  pubkey,
+  displayPk,
+}) => {
+  if (pubkey) {
+    const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+    encryptedKey = json.encryptedPrivateKey;
+    if (!encryptedKey) {
+      throw new Error("No encrypted key found in S3.");
+    }
+  } else if (!encryptedKey) {
+    throw new Error(
+      "encryptedKey option must be used if no pubkey is provided."
+    );
+  }
+
   const ecdh = createECDH(ecdhCurveName);
 
   if (!privateKey) {
-    privateKey = decryptMasterPrivateKey();
+    privateKey = await decryptMasterPrivateKey();
   }
   ecdh.setPrivateKey(privateKey, "hex");
 
-  const validatorPrivateKey = decrypt(ecdh, Buffer.from(message, "base64"));
+  const validatorPrivateKey = decrypt(
+    ecdh,
+    Buffer.from(encryptedKey, "base64")
+  );
   if (displayPk) {
     console.log(
       `Validator private key: ${validatorPrivateKey.toString("hex")}`
