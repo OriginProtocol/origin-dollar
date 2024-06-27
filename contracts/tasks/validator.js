@@ -7,6 +7,7 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
+const { getValidator, getEpoch } = require("./beaconchain");
 const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -827,7 +828,25 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
   }
 };
 
+// @dev check validator is eligible for exit -
+// has been active for at least 256 epochs
+async function verifyMinActivationTime({ pubkey }) {
+  const latestEpoch = await getEpoch("latest");
+  const validator = await getValidator(pubkey);
+
+  const epochDiff = latestEpoch.epoch - validator.activationepoch;
+  console.log("epochDiff", epochDiff);
+
+  if (epochDiff < 256) {
+    throw new Error(
+      `Can not exit validator. Validator needs to be ` +
+        `active for 256 epoch. Current one active for ${epochDiff}`
+    );
+  }
+}
+
 async function exitValidator({ pubkey, operatorids }) {
+  await verifyMinActivationTime({ pubkey });
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
