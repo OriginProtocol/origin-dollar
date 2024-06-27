@@ -980,9 +980,14 @@ async function snapStaking({ block, admin }) {
   const ssvStrategyBalance = await ssv.balanceOf(strategy.address, {
     blockTag,
   });
-  const ethStrategyBalance = await ethers.provider.getBalance(strategy.address);
+  const consensusRewards = await strategy.consensusRewards({ blockTag });
+  const ethStrategyBalance = await ethers.provider.getBalance(
+    strategy.address,
+    blockTag
+  );
   const ethFeeAccumulatorBalance = await ethers.provider.getBalance(
-    feeAccumulator.address
+    feeAccumulator.address,
+    blockTag
   );
 
   console.log(
@@ -1004,6 +1009,11 @@ async function snapStaking({ block, admin }) {
     `Fee accumulator ETH      : ${formatUnits(
       ethFeeAccumulatorBalance
     )} ether, ${ethFeeAccumulatorBalance} wei`
+  );
+  console.log(
+    `Consensus rewards        : ${formatUnits(
+      consensusRewards
+    )} ether, ${consensusRewards} wei`
   );
   console.log(
     `Deposited WETH           : ${formatUnits(
