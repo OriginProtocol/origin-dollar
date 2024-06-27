@@ -122,6 +122,7 @@ describe("WOETH", function () {
 
       await expect(josh).to.have.a.balanceOf("0", woeth);
       await expect(woeth).to.have.approxBalanceOf("50", oeth);
+      await expect(await woeth.totalAssets()).to.equal("0");
       await expect(woeth).to.have.a.totalSupply("0");
     });
   });
