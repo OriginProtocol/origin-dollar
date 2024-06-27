@@ -29,7 +29,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     using StableMath for uint256;
     // doesn't need to be public, but convenient to be able to confirm the state on the mainnet
     uint256 public oethCreditsHighres;
-    bool _oethCreditsInitialized;
+    bool private _oethCreditsInitialized;
 
     constructor(
         ERC20 underlying_,
