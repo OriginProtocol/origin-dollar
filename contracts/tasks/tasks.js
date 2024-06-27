@@ -1298,9 +1298,15 @@ subtask(
     undefined,
     types.string
   )
-  .addParam(
-    "message",
-    "Encrypted validator private key returned form P2P API",
+  .addOptionalParam(
+    "encryptedKey",
+    "Used if pubkey is not provided. The encrypted validator private key returned from P2P API in base64 format.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Public key of the validator whose private key is to be fetched in hex format. If not provided, the encryptedKey option must be used.",
     undefined,
     types.string
   )

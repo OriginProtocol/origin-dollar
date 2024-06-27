@@ -8,6 +8,7 @@ const {
 } = require("node:crypto");
 
 const { decryptMasterPrivateKey } = require("./amazon");
+const { getPrivateKeyFromS3 } = require("../utils/amazon");
 const ecdhCurveName = "prime256v1";
 
 const genECDHKey = async ({ privateKey, displayPk }) => {
@@ -49,15 +50,35 @@ const genECDHKey = async ({ privateKey, displayPk }) => {
   console.log(`Encoded public key for P2P API:\n${p2pPublicKey}`);
 };
 
-const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
+const decryptValidatorKey = async ({
+  privateKey,
+  encryptedKey,
+  pubkey,
+  displayPk,
+}) => {
+  if (pubkey) {
+    const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+    encryptedKey = json.encryptedPrivateKey;
+    if (!encryptedKey) {
+      throw new Error("No encrypted key found in S3.");
+    }
+  } else if (!encryptedKey) {
+    throw new Error(
+      "encryptedKey option must be used if no pubkey is provided."
+    );
+  }
+
   const ecdh = createECDH(ecdhCurveName);
 
   if (!privateKey) {
-    privateKey = decryptMasterPrivateKey();
+    privateKey = await decryptMasterPrivateKey();
   }
   ecdh.setPrivateKey(privateKey, "hex");
 
-  const validatorPrivateKey = decrypt(ecdh, Buffer.from(message, "base64"));
+  const validatorPrivateKey = decrypt(
+    ecdh,
+    Buffer.from(encryptedKey, "base64")
+  );
   if (displayPk) {
     console.log(
       `Validator private key: ${validatorPrivateKey.toString("hex")}`
@@ -66,11 +87,34 @@ const decryptValidatorKey = async ({ privateKey, message, displayPk }) => {
 
   const vsk = bls.PrivateKey.fromBytes(validatorPrivateKey);
   console.log(`Validator public key: ${vsk.getG1().toHex()}`);
+  return validatorPrivateKey.toString("hex");
 };
 
 const decryptValidatorKeyWithMasterKey = async ({ message }) => {
   const privateKey = await decryptMasterPrivateKey();
   return decryptValidatorKey({ privateKey, message });
+};
+
+const decryptValidatorKeyFromStorage = async ({
+  privatekey,
+  pubkey,
+  displaypk,
+}) => {
+  const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+  const encryptedKey = json.encryptedPrivateKey;
+
+  if (!privatekey) {
+    privatekey = await decryptMasterPrivateKey();
+  }
+
+  const privateValidatorKey = await decryptValidatorKey({
+    privateKey: privatekey,
+    message: encryptedKey,
+  });
+
+  if (displaypk) {
+    console.log("Private validator key: ", privateValidatorKey);
+  }
 };
 
 const decrypt = (ecdh, msg) => {
@@ -124,4 +168,5 @@ module.exports = {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  decryptValidatorKeyFromStorage,
 };
