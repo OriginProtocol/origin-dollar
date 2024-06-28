@@ -13,14 +13,13 @@ const log = require("../utils/logger")("task:curve");
 /**
  * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
  */
-async function curvePoolTask(taskArguments, hre) {
+async function curvePoolTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;
 
   const output = taskArguments.output ? console.log : log;
 
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
-    taskArguments,
-    hre
+    taskArguments
   );
 
   await curvePool({

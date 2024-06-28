@@ -7,10 +7,11 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
+const { checkPubkeyFormat } = require("./taskUtils");
 const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
-const { resolveContract } = require("../utils/resolvers");
-const { getSigner } = require("../utils/signers");
+const { resolveContract } = require("../utils/resolversNoHardhat");
+const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
@@ -38,7 +39,7 @@ const validatorOperationsConfig = async (taskArgs) => {
   const addressesSet = addresses[network];
   const isMainnet = network === "mainnet";
 
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   const storeFilePath = require("path").join(
     __dirname,
@@ -828,7 +829,7 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
 };
 
 async function exitValidator({ pubkey, operatorids }) {
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
@@ -839,6 +840,8 @@ async function exitValidator({ pubkey, operatorids }) {
   );
 
   log(`About to exit validator`);
+  pubkey = checkPubkeyFormat(pubkey);
+
   const tx = await strategy
     .connect(signer)
     .exitSsvValidator(pubkey, operatorIds);
@@ -852,7 +855,7 @@ async function doAccounting({ signer, nativeStakingStrategy }) {
 }
 
 async function resetStakeETHTally() {
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
@@ -865,7 +868,7 @@ async function resetStakeETHTally() {
 }
 
 async function setStakeETHThreshold({ amount }) {
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
@@ -880,7 +883,7 @@ async function setStakeETHThreshold({ amount }) {
 }
 
 async function fixAccounting({ validators, rewards, ether }) {
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
@@ -895,7 +898,7 @@ async function fixAccounting({ validators, rewards, ether }) {
 }
 
 async function pauseStaking() {
-  const signer = await getSigner();
+  const signer = await getDefenderSigner();
 
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
