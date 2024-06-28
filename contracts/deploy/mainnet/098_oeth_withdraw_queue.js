@@ -33,7 +33,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 2. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
     const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
-    const cDripperProxy = await ethers.getContract("DripperProxy");
+    const cDripperProxy = await ethers.getContract("OETHDripperProxy");
 
     // Governance Actions
     // ----------------
