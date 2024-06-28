@@ -5,7 +5,8 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "099_remove_reth_strategy",
     forceDeploy: false,
-    // forceSkip: true,
+    // Scheduled and Executed through transition governance
+    forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId: "",
