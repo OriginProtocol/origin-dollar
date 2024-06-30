@@ -354,6 +354,7 @@ npx defender-autotask update-code 38e44420-f38b-4d4a-86b0-6012a8897ad9 ./dist/re
 npx defender-autotask update-code 191d9631-70b9-43c5-9db4-1dd985fde05c ./dist/doAccounting
 # Mainnet
 npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/registerValidators
+npx defender-autotask update-code 12c153c8-c5ca-420b-9696-e80c827996d1 ./dist/stakeValidators
 npx defender-autotask update-code e2929f53-db56-49b2-b054-35f7df7fc4fb ./dist/doAccounting
 ```
 

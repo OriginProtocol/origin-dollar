@@ -57,6 +57,27 @@ const handler = async (event) => {
   const p2p_base_url =
     network.chainId === 1 ? "api.p2p.org" : "api-test-holesky.p2p.org";
 
+  const awsS3AccessKeyId = event.secrets.AWS_ACCESS_S3_KEY_ID;
+  const awsS3SexcretAccessKeyId = event.secrets.AWS_SECRET_S3_ACCESS_KEY;
+  const s3BucketName = event.secrets.VALIDATOR_KEYS_S3_BUCKET_NAME;
+
+  if (!awsS3AccessKeyId) {
+    throw new Error(
+      "Secret AWS_ACCESS_S3_KEY_ID not set"
+    ); 
+  }
+  if (!awsS3SexcretAccessKeyId) {
+    throw new Error(
+      "Secret AWS_SECRET_S3_ACCESS_KEY not set"
+    ); 
+  }
+  if (!s3BucketName) {
+    throw new Error(
+      "Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set"
+    ); 
+  }
+
+
   await stakeValidators({
     signer,
     store,
@@ -64,6 +85,9 @@ const handler = async (event) => {
     WETH,
     p2p_api_key,
     p2p_base_url,
+    awsS3AccessKeyId,
+    awsS3SexcretAccessKeyId,
+    s3BucketName,
   });
 };
 

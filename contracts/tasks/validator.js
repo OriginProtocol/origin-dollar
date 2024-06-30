@@ -66,6 +66,26 @@ const validatorOperationsConfig = async (taskArgs) => {
   }
   const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
 
+  const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
+  const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
+  const s3BucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
+
+    if (!awsS3AccessKeyId) {
+    throw new Error(
+      "Secret AWS_ACCESS_S3_KEY_ID not set"
+    ); 
+  }
+  if (!awsS3SexcretAccessKeyId) {
+    throw new Error(
+      "Secret AWS_SECRET_S3_ACCESS_KEY not set"
+    ); 
+  }
+  if (!s3BucketName) {
+    throw new Error(
+      "Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set"
+    ); 
+  }
+
   return {
     store: new KeyValueStoreClient({ path: storeFilePath }),
     signer,
@@ -82,6 +102,9 @@ const validatorOperationsConfig = async (taskArgs) => {
     uuid: taskArgs.uuid,
     requestedValidators: taskArgs.validators,
     ssvAmount: taskArgs.ssv,
+    awsS3AccessKeyId,
+    awsS3SexcretAccessKeyId,
+    s3BucketName,
   };
 };
 
@@ -120,6 +143,9 @@ const registerValidators = async ({
   clear,
   requestedValidators,
   ssvAmount,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -176,7 +202,10 @@ const registerValidators = async ({
           currentState.uuid,
           "validator_creation_confirmed", // next state
           p2p_api_key,
-          p2p_base_url
+          p2p_base_url,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName,
         );
         currentState = await getState(store);
       }
@@ -242,6 +271,9 @@ const stakeValidators = async ({
   p2p_api_key,
   p2p_base_url,
   uuid,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
 }) => {
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -269,7 +301,10 @@ const stakeValidators = async ({
           uuid,
           "validator_registered", // next state
           p2p_api_key,
-          p2p_base_url
+          p2p_base_url,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName,
         );
         currentState = await getState(store);
 
@@ -529,13 +564,15 @@ const p2pRequest = async (url, api_key, method, body) => {
   const response = await rawResponse.json();
   if (response.error != null) {
     log(`Call to P2P API failed: ${method} ${url}`);
-    log(`response: `, response);
+    // TODO: response might be too big for the logs to handle?
+    //log(`response: `, response);
     throw new Error(
       `Failed to call to P2P API. Error: ${JSON.stringify(response.error)}`
     );
   } else {
     log(`${method} request to P2P API succeeded:`);
-    log(response);
+    // TODO: response might be too big for the logs to handle?
+    //log(response);
   }
 
   return response;
@@ -700,7 +737,10 @@ const confirmValidatorRegistered = async (
   uuid,
   nextState,
   p2p_api_key,
-  p2p_base_url
+  p2p_base_url,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
 ) => {
   const doConfirmation = async () => {
     if (!uuid) {
@@ -742,10 +782,13 @@ const confirmValidatorRegistered = async (
         nonces[i] = encryptedShare.nonce;
         sharesData[i] = encryptedShare.sharesData;
 
-        await storePrivateKeyToS3(
-          pubkeys[i],
-          encryptedShare.ecdhEncryptedPrivateKey
-        );
+        await storePrivateKeyToS3({
+          pubkey: pubkeys[i],
+          encryptedPrivateKey: encryptedShare.ecdhEncryptedPrivateKey,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName,
+        });
       }
       await updateState(uuid, nextState, store, {
         pubkeys,

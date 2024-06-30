@@ -57,7 +57,12 @@ const decryptValidatorKey = async ({
   displayPk,
 }) => {
   if (pubkey) {
-    const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+    const json = JSON.parse(await getPrivateKeyFromS3({
+      pubkey,
+      awsS3AccessKeyId: process.env.AWS_ACCESS_S3_KEY_ID,
+      awsS3SexcretAccessKeyId: process.env.AWS_SECRET_S3_ACCESS_KEY,
+      s3BucketName: process.env.VALIDATOR_KEYS_S3_BUCKET_NAME
+    }));
     encryptedKey = json.encryptedPrivateKey;
     if (!encryptedKey) {
       throw new Error("No encrypted key found in S3.");
@@ -100,7 +105,12 @@ const decryptValidatorKeyFromStorage = async ({
   pubkey,
   displaypk,
 }) => {
-  const json = JSON.parse(await getPrivateKeyFromS3(pubkey));
+  const json = JSON.parse(await getPrivateKeyFromS3({
+    pubkey,
+    awsS3AccessKeyId: process.env.AWS_ACCESS_S3_KEY_ID,
+    awsS3SexcretAccessKeyId: process.env.AWS_SECRET_S3_ACCESS_KEY,
+    s3BucketName: process.env.VALIDATOR_KEYS_S3_BUCKET_NAME
+  }));
   const encryptedKey = json.encryptedPrivateKey;
 
   if (!privatekey) {
