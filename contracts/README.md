@@ -345,6 +345,7 @@ npx hardhat setActionVars --id 38e44420-f38b-4d4a-86b0-6012a8897ad9
 npx hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
 npx hardhat setActionVars --id 191d9631-70b9-43c5-9db4-1dd985fde05c
 npx hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
+npx hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
 
 # The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
 export API_KEY=${DEFENDER_TEAM_KEY}
