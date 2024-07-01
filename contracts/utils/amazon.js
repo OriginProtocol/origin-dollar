@@ -7,7 +7,11 @@ const {
 
 const log = require("../utils/logger")("task:aws");
 
-const getS3Context = async ({awsS3AccessKeyId, awsS3SexcretAccessKeyId, s3BucketName}) => {
+const getS3Context = async ({
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
+}) => {
   return [
     new S3Client({
       region: "us-east-1",
@@ -24,7 +28,7 @@ const getPrivateKeyFromS3 = async ({
   pubkey,
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
-  s3BucketName
+  s3BucketName,
 }) => {
   const [s3Client, bucketName] = await getS3Context();
   log("Attempting to fetch encrypted private key from S3");

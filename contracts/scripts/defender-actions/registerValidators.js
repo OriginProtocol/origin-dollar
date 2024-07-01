@@ -65,19 +65,13 @@ const handler = async (event) => {
   const s3BucketName = event.secrets.VALIDATOR_KEYS_S3_BUCKET_NAME;
 
   if (!awsS3AccessKeyId) {
-    throw new Error(
-      "Secret AWS_ACCESS_S3_KEY_ID not set"
-    ); 
+    throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
   }
   if (!awsS3SexcretAccessKeyId) {
-    throw new Error(
-      "Secret AWS_SECRET_S3_ACCESS_KEY not set"
-    ); 
+    throw new Error("Secret AWS_SECRET_S3_ACCESS_KEY not set");
   }
   if (!s3BucketName) {
-    throw new Error(
-      "Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set"
-    ); 
+    throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
   }
 
   await registerValidators({
@@ -95,7 +89,7 @@ const handler = async (event) => {
     // this overrides validatorSpawnOperationalPeriodInDays
     ssvAmount: 0,
     clear: false,
-    requestedValidators: 1,
+    maxValidatorsToRegister: 2,
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
     s3BucketName,

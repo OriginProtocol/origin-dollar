@@ -70,20 +70,14 @@ const validatorOperationsConfig = async (taskArgs) => {
   const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
   const s3BucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
 
-    if (!awsS3AccessKeyId) {
-    throw new Error(
-      "Secret AWS_ACCESS_S3_KEY_ID not set"
-    ); 
+  if (!awsS3AccessKeyId) {
+    throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
   }
   if (!awsS3SexcretAccessKeyId) {
-    throw new Error(
-      "Secret AWS_SECRET_S3_ACCESS_KEY not set"
-    ); 
+    throw new Error("Secret AWS_SECRET_S3_ACCESS_KEY not set");
   }
   if (!s3BucketName) {
-    throw new Error(
-      "Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set"
-    ); 
+    throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
   }
 
   return {
@@ -100,7 +94,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
-    requestedValidators: taskArgs.validators,
+    maxValidatorsToRegister: taskArgs.validators,
     ssvAmount: taskArgs.ssv,
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
@@ -141,7 +135,7 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
-  requestedValidators,
+  maxValidatorsToRegister,
   ssvAmount,
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
@@ -159,21 +153,21 @@ const registerValidators = async ({
     nativeStakingStrategy,
     WETH
   );
-  if (validatorsForEth == 0 || validatorsForEth < requestedValidators) {
+  if (validatorsForEth == 0 || validatorsForEth < maxValidatorsToRegister) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
-    if (requestedValidators) {
+    if (maxValidatorsToRegister) {
       console.log(
-        `Requested to spawn ${requestedValidators} validators but only ${validatorsForEth} can be spawned.`
+        `Requested to spawn ${maxValidatorsToRegister} validators but only ${validatorsForEth} can be spawned.`
       );
     }
     return;
   }
   const validatorsCount =
-    validatorsForEth < requestedValidators
+    validatorsForEth < maxValidatorsToRegister
       ? validatorsForEth
-      : requestedValidators;
+      : maxValidatorsToRegister;
 
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -205,7 +199,7 @@ const registerValidators = async ({
           p2p_base_url,
           awsS3AccessKeyId,
           awsS3SexcretAccessKeyId,
-          s3BucketName,
+          s3BucketName
         );
         currentState = await getState(store);
       }
@@ -276,7 +270,7 @@ const stakeValidators = async ({
   s3BucketName,
 }) => {
   if (await stakingContractPaused(nativeStakingStrategy)) {
-    console.log(`Native staking contract is paused... exiting`);
+    log(`Native staking contract is paused... exiting`);
     return;
   }
 
@@ -286,7 +280,7 @@ const stakeValidators = async ({
     log("currentState", currentState);
 
     if (!currentState) {
-      console.log(
+      log(
         `There are no registered validators in local storage. Have you run registerValidators?`
       );
       return;
@@ -304,7 +298,7 @@ const stakeValidators = async ({
           p2p_base_url,
           awsS3AccessKeyId,
           awsS3SexcretAccessKeyId,
-          s3BucketName,
+          s3BucketName
         );
         currentState = await getState(store);
 
@@ -314,12 +308,16 @@ const stakeValidators = async ({
           hashedPubkey
         );
         if (validatorStateEnum[status] !== "REGISTERED") {
-          console.log(
+          log(
             `Validator with pubkey ${currentState.metadata.pubkeys[0]} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
           );
           // await clearState(currentState.uuid, store);
           // TODO just remove the validator that has already been staked from the metadata
           break;
+        } else {
+          log(
+            `Validator with pubkey ${currentState.metadata.pubkeys[0]} is in the expected REGISTERED state.`
+          );
         }
       }
 
@@ -740,7 +738,7 @@ const confirmValidatorRegistered = async (
   p2p_base_url,
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
-  s3BucketName,
+  s3BucketName
 ) => {
   const doConfirmation = async () => {
     if (!uuid) {
@@ -823,7 +821,8 @@ const getDepositData = async (
     );
     if (response.error != null) {
       log(`Error getting deposit data with uuid ${uuid}: ${response.error}`);
-      log(response);
+      // TODO: we shouldn't log full P2P responses. They break the logs
+      //log(response);
       return false;
     } else if (response.result?.status != "validator-ready") {
       log(
