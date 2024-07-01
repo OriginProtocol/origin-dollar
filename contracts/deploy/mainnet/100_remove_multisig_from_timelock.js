@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true, // just to solve the issue of later active proposals failing
     proposalId:
-      "69085549828104010152509596999979309525574542460232172842186049358698872965097",
+      "13686486068088024919790175650189843988847888498567080584391484834887187306764",
   },
   async ({ ethers }) => {
     const PROPOSER_ROLE =
