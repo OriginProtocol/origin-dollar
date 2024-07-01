@@ -285,6 +285,8 @@ const stakeValidators = async ({
       );
       return;
     }
+  } else {
+    log(`Processing uuid: ${uuid}`);
   }
 
   const executeOperateLoop = async () => {
