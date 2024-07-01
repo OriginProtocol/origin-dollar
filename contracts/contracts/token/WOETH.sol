@@ -95,7 +95,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @param oethAmount Amount of OETH to be converted to OETH credits
      * @return amount of OETH credits the OETH amount corresponds to
      */
-    function _oethToOethCreditsHighres(uint256 oethAmount)
+    function _creditsPerAsset(uint256 oethAmount)
         internal
         returns (uint256)
     {
@@ -147,7 +147,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             assets
         );
         _mint(receiver, shares);
-        oethCreditsHighres += _oethToOethCreditsHighres(assets);
+        oethCreditsHighres += _creditsPerAsset(assets);
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -175,7 +175,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             assets
         );
         _mint(receiver, shares);
-        oethCreditsHighres += _oethToOethCreditsHighres(assets);
+        oethCreditsHighres += _creditsPerAsset(assets);
 
         emit Deposit(caller, receiver, assets, shares);
 
@@ -203,7 +203,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
-        oethCreditsHighres -= _oethToOethCreditsHighres(assets);
+        oethCreditsHighres -= _creditsPerAsset(assets);
 
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
 
@@ -230,7 +230,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
         // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
         _burn(owner, shares);
-        oethCreditsHighres -= _oethToOethCreditsHighres(assets);
+        oethCreditsHighres -= _creditsPerAsset(assets);
 
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
 
