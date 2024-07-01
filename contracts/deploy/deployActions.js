@@ -6,7 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
-} = require("../test/helpers.js");
+} = require("../test/helpers");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
@@ -904,7 +904,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
-      500, // maxValidators
+      600, // maxValidators
       dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
