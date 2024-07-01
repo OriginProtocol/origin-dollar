@@ -27,7 +27,6 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    // doesn't need to be public, but convenient to be able to confirm the state on the mainnet
     uint256 public oethCreditsHighres;
     bool private _oethCreditsInitialized;
 
