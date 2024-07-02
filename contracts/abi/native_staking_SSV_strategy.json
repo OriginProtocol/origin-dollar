@@ -34,6 +34,11 @@
           "type": "address"
         },
         {
+          "internalType": "uint256",
+          "name": "_maxValidators",
+          "type": "uint256"
+        },
+        {
           "internalType": "address",
           "name": "_feeAccumulator",
           "type": "address"
@@ -158,9 +163,15 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "pubKeyHash",
+          "type": "bytes32"
+        },
+        {
           "indexed": false,
           "internalType": "bytes",
-          "name": "pubkey",
+          "name": "pubKey",
           "type": "bytes"
         },
         {
@@ -168,12 +179,6 @@
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes",
-          "name": "withdrawal_credentials",
-          "type": "bytes"
         }
       ],
       "name": "ETHStaked",
@@ -310,7 +315,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "newAddress",
           "type": "address"
@@ -367,9 +372,15 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "pubKeyHash",
+          "type": "bytes32"
+        },
+        {
           "indexed": false,
           "internalType": "bytes",
-          "name": "pubkey",
+          "name": "pubKey",
           "type": "bytes"
         },
         {
@@ -386,9 +397,15 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "pubKeyHash",
+          "type": "bytes32"
+        },
+        {
           "indexed": false,
           "internalType": "bytes",
-          "name": "pubkey",
+          "name": "pubKey",
           "type": "bytes"
         },
         {
@@ -405,9 +422,15 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "pubKeyHash",
+          "type": "bytes32"
+        },
+        {
           "indexed": false,
           "internalType": "bytes",
-          "name": "pubkey",
+          "name": "pubKey",
           "type": "bytes"
         },
         {
@@ -418,6 +441,38 @@
         }
       ],
       "name": "SSVValidatorRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "StakeETHTallyReset",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "StakeETHThresholdChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "StakingMonitorChanged",
       "type": "event"
     },
     {
@@ -486,7 +541,7 @@
     },
     {
       "inputs": [],
-      "name": "MAX_STAKE",
+      "name": "FULL_STAKE",
       "outputs": [
         {
           "internalType": "uint256",
@@ -499,7 +554,33 @@
     },
     {
       "inputs": [],
-      "name": "SSV_NETWORK_ADDRESS",
+      "name": "MAX_VALIDATORS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_FIX_ACCOUNTING_CADENCE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SSV_NETWORK",
       "outputs": [
         {
           "internalType": "address",
@@ -512,7 +593,7 @@
     },
     {
       "inputs": [],
-      "name": "SSV_TOKEN_ADDRESS",
+      "name": "SSV_TOKEN",
       "outputs": [
         {
           "internalType": "address",
@@ -538,7 +619,7 @@
     },
     {
       "inputs": [],
-      "name": "WETH_TOKEN_ADDRESS",
+      "name": "WETH",
       "outputs": [
         {
           "internalType": "address",
@@ -661,7 +742,7 @@
         },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "ssvAmount",
           "type": "uint256"
         },
         {
@@ -700,6 +781,19 @@
       "name": "depositSSV",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "depositedWethAccountedFor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -835,6 +929,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "lastFixAccountingBlockNumber",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "int256",
@@ -848,7 +955,7 @@
         },
         {
           "internalType": "uint256",
-          "name": "_wethToVaultAmount",
+          "name": "_ethToVaultAmount",
           "type": "uint256"
         }
       ],
@@ -893,9 +1000,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes",
-          "name": "publicKey",
-          "type": "bytes"
+          "internalType": "bytes[]",
+          "name": "publicKeys",
+          "type": "bytes[]"
         },
         {
           "internalType": "uint64[]",
@@ -903,13 +1010,13 @@
           "type": "uint64[]"
         },
         {
-          "internalType": "bytes",
+          "internalType": "bytes[]",
           "name": "sharesData",
-          "type": "bytes"
+          "type": "bytes[]"
         },
         {
           "internalType": "uint256",
-          "name": "amount",
+          "name": "ssvAmount",
           "type": "uint256"
         },
         {
@@ -945,7 +1052,7 @@
           "type": "tuple"
         }
       ],
-      "name": "registerSsvValidator",
+      "name": "registerSsvValidators",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1009,6 +1116,13 @@
         }
       ],
       "name": "removeSsvValidator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "resetStakeETHTally",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1117,6 +1231,58 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setStakeETHThreshold",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "setStakingMonitor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakeETHTally",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakeETHThreshold",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "components": [
             {
               "internalType": "bytes",
@@ -1142,6 +1308,19 @@
       "name": "stakeEth",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakingMonitor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {

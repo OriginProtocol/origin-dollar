@@ -7,11 +7,11 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
+const { checkPubkeyFormat } = require("./taskUtils");
 const { getValidator, getEpoch } = require("./beaconchain");
 const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
-const { getSigner } = require("../utils/signers");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
@@ -39,8 +39,6 @@ const validatorOperationsConfig = async (taskArgs) => {
   const addressesSet = addresses[network];
   const isMainnet = network === "mainnet";
 
-  const signer = await getSigner();
-
   const storeFilePath = require("path").join(
     __dirname,
     "..",
@@ -66,9 +64,22 @@ const validatorOperationsConfig = async (taskArgs) => {
   }
   const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
 
+  const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
+  const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
+  const s3BucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
+
+  if (!awsS3AccessKeyId) {
+    throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
+  }
+  if (!awsS3SexcretAccessKeyId) {
+    throw new Error("Secret AWS_SECRET_S3_ACCESS_KEY not set");
+  }
+  if (!s3BucketName) {
+    throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
+  }
+
   return {
     store: new KeyValueStoreClient({ path: storeFilePath }),
-    signer,
     p2p_api_key,
     p2p_base_url,
     nativeStakingStrategy,
@@ -80,8 +91,11 @@ const validatorOperationsConfig = async (taskArgs) => {
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
-    requestedValidators: taskArgs.validators,
+    maxValidatorsToRegister: taskArgs.validators,
     ssvAmount: taskArgs.ssv,
+    awsS3AccessKeyId,
+    awsS3SexcretAccessKeyId,
+    s3BucketName,
   };
 };
 
@@ -118,8 +132,11 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
-  requestedValidators,
+  maxValidatorsToRegister,
   ssvAmount,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -133,21 +150,21 @@ const registerValidators = async ({
     nativeStakingStrategy,
     WETH
   );
-  if (validatorsForEth == 0 || validatorsForEth < requestedValidators) {
+  if (validatorsForEth == 0 || validatorsForEth < maxValidatorsToRegister) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
-    if (requestedValidators) {
+    if (maxValidatorsToRegister) {
       console.log(
-        `Requested to spawn ${requestedValidators} validators but only ${validatorsForEth} can be spawned.`
+        `Requested to spawn ${maxValidatorsToRegister} validators but only ${validatorsForEth} can be spawned.`
       );
     }
     return;
   }
   const validatorsCount =
-    validatorsForEth < requestedValidators
+    validatorsForEth < maxValidatorsToRegister
       ? validatorsForEth
-      : requestedValidators;
+      : maxValidatorsToRegister;
 
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -176,7 +193,10 @@ const registerValidators = async ({
           currentState.uuid,
           "validator_creation_confirmed", // next state
           p2p_api_key,
-          p2p_base_url
+          p2p_base_url,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName
         );
         currentState = await getState(store);
       }
@@ -242,9 +262,12 @@ const stakeValidators = async ({
   p2p_api_key,
   p2p_base_url,
   uuid,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
 }) => {
   if (await stakingContractPaused(nativeStakingStrategy)) {
-    console.log(`Native staking contract is paused... exiting`);
+    log(`Native staking contract is paused... exiting`);
     return;
   }
 
@@ -254,11 +277,13 @@ const stakeValidators = async ({
     log("currentState", currentState);
 
     if (!currentState) {
-      console.log(
+      log(
         `There are no registered validators in local storage. Have you run registerValidators?`
       );
       return;
     }
+  } else {
+    log(`Processing uuid: ${uuid}`);
   }
 
   const executeOperateLoop = async () => {
@@ -269,7 +294,10 @@ const stakeValidators = async ({
           uuid,
           "validator_registered", // next state
           p2p_api_key,
-          p2p_base_url
+          p2p_base_url,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName
         );
         currentState = await getState(store);
 
@@ -279,12 +307,16 @@ const stakeValidators = async ({
           hashedPubkey
         );
         if (validatorStateEnum[status] !== "REGISTERED") {
-          console.log(
+          log(
             `Validator with pubkey ${currentState.metadata.pubkeys[0]} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
           );
           // await clearState(currentState.uuid, store);
           // TODO just remove the validator that has already been staked from the metadata
           break;
+        } else {
+          log(
+            `Validator with pubkey ${currentState.metadata.pubkeys[0]} is in the expected REGISTERED state.`
+          );
         }
       }
 
@@ -529,13 +561,15 @@ const p2pRequest = async (url, api_key, method, body) => {
   const response = await rawResponse.json();
   if (response.error != null) {
     log(`Call to P2P API failed: ${method} ${url}`);
-    log(`response: `, response);
+    // TODO: response might be too big for the logs to handle?
+    //log(`response: `, response);
     throw new Error(
       `Failed to call to P2P API. Error: ${JSON.stringify(response.error)}`
     );
   } else {
     log(`${method} request to P2P API succeeded:`);
-    log(response);
+    // TODO: response might be too big for the logs to handle?
+    //log(response);
   }
 
   return response;
@@ -700,7 +734,10 @@ const confirmValidatorRegistered = async (
   uuid,
   nextState,
   p2p_api_key,
-  p2p_base_url
+  p2p_base_url,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName
 ) => {
   const doConfirmation = async () => {
     if (!uuid) {
@@ -742,10 +779,13 @@ const confirmValidatorRegistered = async (
         nonces[i] = encryptedShare.nonce;
         sharesData[i] = encryptedShare.sharesData;
 
-        await storePrivateKeyToS3(
-          pubkeys[i],
-          encryptedShare.ecdhEncryptedPrivateKey
-        );
+        await storePrivateKeyToS3({
+          pubkey: pubkeys[i],
+          encryptedPrivateKey: encryptedShare.ecdhEncryptedPrivateKey,
+          awsS3AccessKeyId,
+          awsS3SexcretAccessKeyId,
+          s3BucketName,
+        });
       }
       await updateState(uuid, nextState, store, {
         pubkeys,
@@ -780,7 +820,8 @@ const getDepositData = async (
     );
     if (response.error != null) {
       log(`Error getting deposit data with uuid ${uuid}: ${response.error}`);
-      log(response);
+      // TODO: we shouldn't log full P2P responses. They break the logs
+      //log(response);
       return false;
     } else if (response.result?.status != "validator-ready") {
       log(
@@ -844,9 +885,8 @@ async function verifyMinActivationTime({ pubkey }) {
   }
 }
 
-async function exitValidator({ pubkey, operatorids }) {
+async function exitValidator({ pubkey, operatorids, signer }) {
   await verifyMinActivationTime({ pubkey });
-  const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
@@ -857,6 +897,8 @@ async function exitValidator({ pubkey, operatorids }) {
   );
 
   log(`About to exit validator`);
+  pubkey = checkPubkeyFormat(pubkey);
+
   const tx = await strategy
     .connect(signer)
     .exitSsvValidator(pubkey, operatorIds);
@@ -869,9 +911,7 @@ async function doAccounting({ signer, nativeStakingStrategy }) {
   await logTxDetails(tx, "doAccounting");
 }
 
-async function resetStakeETHTally() {
-  const signer = await getSigner();
-
+async function resetStakeETHTally({ signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -882,9 +922,7 @@ async function resetStakeETHTally() {
   await logTxDetails(tx, "resetStakeETHTally");
 }
 
-async function setStakeETHThreshold({ amount }) {
-  const signer = await getSigner();
-
+async function setStakeETHThreshold({ amount, signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -897,9 +935,7 @@ async function setStakeETHThreshold({ amount }) {
   await logTxDetails(tx, "setStakeETHThreshold");
 }
 
-async function fixAccounting({ validators, rewards, ether }) {
-  const signer = await getSigner();
-
+async function fixAccounting({ validators, rewards, ether, signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -912,9 +948,7 @@ async function fixAccounting({ validators, rewards, ether }) {
   await logTxDetails(tx, "manuallyFixAccounting");
 }
 
-async function pauseStaking() {
-  const signer = await getSigner();
-
+async function pauseStaking({ signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
