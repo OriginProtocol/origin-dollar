@@ -537,13 +537,6 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-async function fundAccount(address, balance = "1000") {
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    parseEther(balance).toHexString(),
-  ]);
-}
-
 /**
  * Calculates the change in balance after a function has been executed on a contract
  * @param {Function} functionChangingBalance - The function that changes the balance
@@ -827,5 +820,4 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
-  fundAccount,
 };
