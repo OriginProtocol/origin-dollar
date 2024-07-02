@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
