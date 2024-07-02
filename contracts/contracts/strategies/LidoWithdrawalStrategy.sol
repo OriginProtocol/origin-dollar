@@ -100,9 +100,7 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
     constructor(BaseStrategyConfig memory _stratConfig)
         InitializableAbstractStrategy(_stratConfig)
-    {
-        require(MaxWithdrawalAmount < type(uint120).max);
-    }
+    {}
 
     /**
      * @notice initialize function, to set up initial internal state
