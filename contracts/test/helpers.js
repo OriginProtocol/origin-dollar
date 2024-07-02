@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
@@ -288,9 +288,14 @@ const getBlockTimestamp = async () => {
 
 /// Advances the blockchain forward by the specified number of blocks
 const advanceBlocks = async (numBlocks) => {
-  for (let i = 0; i < numBlocks; i++) {
-    await hre.ethers.provider.send("evm_mine");
-  }
+  let blocksHex = BigNumber.from(numBlocks).toHexString();
+
+  // Note: Hardhat's `QUANTITY` type doesn't support leading zeros
+  // Not sure why but it seems to be a bug. So we gotta remove
+  // any leading zeros from hex values
+  blocksHex = blocksHex.replace(/^0x0+/, "0x");
+
+  await hre.network.provider.send("hardhat_mine", [blocksHex]);
 };
 
 const getOracleAddress = async (deployments) => {
@@ -531,13 +536,6 @@ const getAssetAddresses = async (deployments) => {
     return addressMap;
   }
 };
-
-async function fundAccount(address, balance = "1000") {
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    parseEther(balance).toHexString(),
-  ]);
-}
 
 /**
  * Calculates the change in balance after a function has been executed on a contract
@@ -822,5 +820,4 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
-  fundAccount,
 };
