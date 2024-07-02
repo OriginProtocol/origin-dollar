@@ -288,9 +288,14 @@ const getBlockTimestamp = async () => {
 
 /// Advances the blockchain forward by the specified number of blocks
 const advanceBlocks = async (numBlocks) => {
-  for (let i = 0; i < numBlocks; i++) {
-    await hre.ethers.provider.send("evm_mine");
-  }
+  let blocksHex = BigNumber.from(numBlocks).toHexString();
+
+  // Note: Hardhat's `QUANTITY` type doesn't support leading zeros
+  // Not sure why but it seems to be a bug. So we gotta remove
+  // any leading zeros from hex values
+  blocksHex = blocksHex.replace(/^0x0+/, "0x");
+
+  await hre.network.provider.send("hardhat_mine", [blocksHex]);
 };
 
 const getOracleAddress = async (deployments) => {
