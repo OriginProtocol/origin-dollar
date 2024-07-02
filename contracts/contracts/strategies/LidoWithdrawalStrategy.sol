@@ -164,7 +164,7 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
             stEthDust <= withdrawalLength,
             "Not all stEth in withdraw queue"
         );
-        outstandingWithdrawals += stETHStart - stEthDust;
+        outstandingWithdrawals += stETHStart;
 
         // This strategy claims to support WETH, so it is possible for
         // the vault to transfer WETH to it. This returns any deposited WETH

@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const {
   createFixtureLoader,
   lidoWithdrawalStrategyFixture,
-} = require("./../_fixture");
+} = require("../_fixture");
 const { ousdUnits, isCI } = require("../helpers");
 const { impersonateAccount } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
