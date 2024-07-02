@@ -343,7 +343,9 @@ const executeGovernanceProposalOnFork = async ({
    * contract is set to 1 block
    */
   if (proposalState === "Pending") {
-    const votingDelay = Number((await governorSix.votingDelay()).toString());
+    const votingDelay = Number(
+      (await governorSix.proposalSnapshot(proposalIdBn)).toString()
+    );
     log(
       `Advancing ${
         votingDelay + 1
