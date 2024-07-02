@@ -12,7 +12,6 @@ const { getValidator, getEpoch } = require("./beaconchain");
 const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
-const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
@@ -39,8 +38,6 @@ const validatorOperationsConfig = async (taskArgs) => {
   }
   const addressesSet = addresses[network];
   const isMainnet = network === "mainnet";
-
-  const signer = await getDefenderSigner();
 
   const storeFilePath = require("path").join(
     __dirname,
@@ -83,7 +80,6 @@ const validatorOperationsConfig = async (taskArgs) => {
 
   return {
     store: new KeyValueStoreClient({ path: storeFilePath }),
-    signer,
     p2p_api_key,
     p2p_base_url,
     nativeStakingStrategy,
@@ -889,9 +885,8 @@ async function verifyMinActivationTime({ pubkey }) {
   }
 }
 
-async function exitValidator({ pubkey, operatorids }) {
+async function exitValidator({ pubkey, operatorids, signer }) {
   await verifyMinActivationTime({ pubkey });
-  const signer = await getDefenderSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
@@ -916,9 +911,7 @@ async function doAccounting({ signer, nativeStakingStrategy }) {
   await logTxDetails(tx, "doAccounting");
 }
 
-async function resetStakeETHTally() {
-  const signer = await getDefenderSigner();
-
+async function resetStakeETHTally({ signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -929,9 +922,7 @@ async function resetStakeETHTally() {
   await logTxDetails(tx, "resetStakeETHTally");
 }
 
-async function setStakeETHThreshold({ amount }) {
-  const signer = await getDefenderSigner();
-
+async function setStakeETHThreshold({ amount, signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -944,9 +935,7 @@ async function setStakeETHThreshold({ amount }) {
   await logTxDetails(tx, "setStakeETHThreshold");
 }
 
-async function fixAccounting({ validators, rewards, ether }) {
-  const signer = await getDefenderSigner();
-
+async function fixAccounting({ validators, rewards, ether, signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
@@ -959,9 +948,7 @@ async function fixAccounting({ validators, rewards, ether }) {
   await logTxDetails(tx, "manuallyFixAccounting");
 }
 
-async function pauseStaking() {
-  const signer = await getDefenderSigner();
-
+async function pauseStaking({ signer }) {
   const strategy = await resolveContract(
     "NativeStakingSSVStrategyProxy",
     "NativeStakingSSVStrategy"
