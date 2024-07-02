@@ -8,6 +8,7 @@ const {
 
 const { getBlock } = require("./block");
 const { checkPubkeyFormat } = require("./taskUtils");
+const { getValidator, getEpoch } = require("./beaconchain");
 const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolversNoHardhat");
@@ -872,7 +873,24 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
   }
 };
 
+// @dev check validator is eligible for exit -
+// has been active for at least 256 epochs
+async function verifyMinActivationTime({ pubkey }) {
+  const latestEpoch = await getEpoch("latest");
+  const validator = await getValidator(pubkey);
+
+  const epochDiff = latestEpoch.epoch - validator.activationepoch;
+
+  if (epochDiff < 256) {
+    throw new Error(
+      `Can not exit validator. Validator needs to be ` +
+        `active for 256 epoch. Current one active for ${epochDiff}`
+    );
+  }
+}
+
 async function exitValidator({ pubkey, operatorids }) {
+  await verifyMinActivationTime({ pubkey });
   const signer = await getDefenderSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
@@ -982,9 +1000,14 @@ async function snapStaking({ block, admin }) {
   const ssvStrategyBalance = await ssv.balanceOf(strategy.address, {
     blockTag,
   });
-  const ethStrategyBalance = await ethers.provider.getBalance(strategy.address);
+  const consensusRewards = await strategy.consensusRewards({ blockTag });
+  const ethStrategyBalance = await ethers.provider.getBalance(
+    strategy.address,
+    blockTag
+  );
   const ethFeeAccumulatorBalance = await ethers.provider.getBalance(
-    feeAccumulator.address
+    feeAccumulator.address,
+    blockTag
   );
 
   console.log(
@@ -1006,6 +1029,11 @@ async function snapStaking({ block, admin }) {
     `Fee accumulator ETH      : ${formatUnits(
       ethFeeAccumulatorBalance
     )} ether, ${ethFeeAccumulatorBalance} wei`
+  );
+  console.log(
+    `Consensus rewards        : ${formatUnits(
+      consensusRewards
+    )} ether, ${consensusRewards} wei`
   );
   console.log(
     `Deposited WETH           : ${formatUnits(
