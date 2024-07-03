@@ -1,3 +1,5 @@
+const { formatUnits } = require("ethers/lib/utils");
+
 const addresses = require("../../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
@@ -35,24 +37,58 @@ module.exports = deploymentWithGovernanceProposal(
     const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
     const cDripperProxy = await ethers.getContract("OETHDripperProxy");
 
+    const cLidoWithdrawStrategyProxy = await ethers.getContract(
+      "LidoWithdrawalStrategyProxy"
+    );
+
+    const stETH = await ethers.getContractAt("IERC20", addresses.mainnet.stETH);
+    const stEthInVault = await stETH.balanceOf(cVault.address);
+    console.log(
+      `There is ${formatUnits(stEthInVault)} stETH in the OETH Vault`
+    );
+
+    // If there is more than 1 wei of stETH in the Vault, we need to remove it using the Lido Withdrawal Strategy
+    const removeStEthActions = stEthInVault.gt(1)
+      ? [
+          // 1. Deposit all stETH in the Vault to the Lido Withdrawal Strategy
+          {
+            contract: cVault,
+            signature: "depositToStrategy(address,address[],uint256[])",
+            args: [
+              cLidoWithdrawStrategyProxy.address,
+              [stETH.address],
+              [stEthInVault],
+            ],
+          },
+          // 2. Remove stETH from the OETH Vault
+          {
+            contract: cVault,
+            signature: "removeAsset(address)",
+            args: [stETH.address],
+          },
+        ]
+      : [];
+
     // Governance Actions
     // ----------------
     return {
       name: "Upgrade OETH Vault to support queued withdrawals",
       actions: [
-        // 1. Upgrade the OETH Vault proxy to the new core vault implementation
+        // Remove stETH if not done already
+        ...removeStEthActions,
+        // 3. Upgrade the OETH Vault proxy to the new core vault implementation
         {
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
-        // 2. set OETH Vault proxy to the new admin vault implementation
+        // 4. set OETH Vault proxy to the new admin vault implementation
         {
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // 3. Set the Dripper contract
+        // 5. Set the Dripper contract
         {
           contract: cVault,
           signature: "setDripper(address)",

@@ -7,7 +7,8 @@ const { ousdUnits, isCI } = require("../helpers");
 const { impersonateAccount } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
 
-describe("ForkTest: Lido Withdrawal Strategy", function () {
+// Skipping as Lido Withdrawal Strategy has already been used
+describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
   this.timeout(360 * 1000);
 
   // Retry up to 3 times on CI
