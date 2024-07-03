@@ -849,10 +849,11 @@ const upgradeNativeStakingFeeAccumulator = async () => {
     "NativeStakingFeeAccumulatorProxy"
   );
 
-  log("Deploy fee accumulator implementation");
+  log("About to deploy FeeAccumulator implementation");
   const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
     strategyProxy.address, // STRATEGY
   ]);
+  log(`New FeeAccumulator implementation: ${dFeeAccumulatorImpl.address}`);
 
   await withConfirmation(
     feeAccumulatorProxy
@@ -877,6 +878,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
     "NativeStakingFeeAccumulatorProxy"
   );
 
+  log("About to deploy NativeStakingSSVStrategy implementation");
   const dStrategyImpl = await deployWithConfirmation(
     "NativeStakingSSVStrategy",
     [
@@ -884,11 +886,12 @@ const upgradeNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
-      600, // maxValidators
+      500, // maxValidators
       cFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
   );
+  log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
 
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
@@ -931,7 +934,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
-      600, // maxValidators
+      500, // maxValidators
       dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]

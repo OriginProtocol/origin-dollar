@@ -33,6 +33,10 @@ main()
         elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
           PROVIDER_URL=$HOLESKY_PROVIDER_URL;
           BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
+        elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+          PROVIDER_URL=$BASE_PROVIDER_URL;
+          BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
+          params+=" --tags base";
         fi
         
         echo "Fork Network: $FORK_NETWORK_NAME"
@@ -60,6 +64,12 @@ main()
         i=0
         until grep -q -i 'Started HTTP and WebSocket JSON-RPC server at' $nodeOutput
         do
+          if grep -q -i 'VM Exception while processing transaction' $nodeOutput; then
+            printf "\n"
+            echo "🔴 Error detected node exiting."
+            exit 1
+          fi
+
           let i++
           sleep 1
           if (( i > nodeWaitTimeout )); then

@@ -71,6 +71,11 @@ addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
 addresses.mainnet.veOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9";
 // RewardsSource
 addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
+// OGNRewardsSource
+addresses.mainnet.OGNRewardsSource =
+  "0x7609c88E5880e934dd3A75bCFef44E31b1Badb8b";
+// xOGN
+addresses.mainnet.xOGN = "0x63898b3b6Ef3d39332082178656E9862bee45C57";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -176,10 +181,13 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
-// OUSD Governance
-addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+// Governance
 addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 addresses.mainnet.OldTimelock = "0x72426BA137DEC62657306b12B1E869d43FeC6eC7";
+// OGV Governance
+addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+// OGN Governance
+addresses.mainnet.GovernorSix = "0x1D3Fbd4d129Ddd2372EA85c5Fa00b2682081c9EC";
 
 // OETH
 addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
@@ -192,7 +200,8 @@ addresses.mainnet.FraxETHRedeemStrategy =
   "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
-
+addresses.mainnet.BalancerRETHStrategy =
+  "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";
@@ -260,6 +269,10 @@ addresses.mainnet.NativeStakingSSVStrategyProxy =
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
   "0x4b91827516f79d6F6a1F292eD99671663b09169a";
+
+// Lido Withdrawal Queue
+addresses.mainnet.LidoWithdrawalQueue =
+  "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";
 
 // Arbitrum One
 addresses.arbitrumOne = {};

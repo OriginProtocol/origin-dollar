@@ -12,9 +12,6 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @notice The minimum amount of blocks that need to pass between two calls to manuallyFixAccounting
     uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
-    /// @notice The maximum amount of ETH that can be staked by a validator
-    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
-    uint256 public constant MAX_STAKE = 32 ether;
 
     /// @notice Keeps track of the total consensus rewards swept from the beacon chain
     uint256 public consensusRewards;
@@ -76,13 +73,13 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
             _fuseIntervalStart < _fuseIntervalEnd &&
                 _fuseIntervalEnd < 32 ether &&
                 _fuseIntervalEnd - _fuseIntervalStart >= 4 ether,
-            "incorrect fuse interval"
+            "Incorrect fuse interval"
         );
-
-        emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
 
         fuseIntervalStart = _fuseIntervalStart;
         fuseIntervalEnd = _fuseIntervalEnd;
+
+        emit FuseIntervalUpdated(_fuseIntervalStart, _fuseIntervalEnd);
     }
 
     /* solhint-disable max-line-length */
@@ -102,6 +99,7 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         external
         onlyRegistrator
         whenNotPaused
+        nonReentrant
         returns (bool accountingValid)
     {
         // pause the accounting on failure
@@ -122,19 +120,16 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         accountingValid = true;
 
         // send the ETH that is from fully withdrawn validators to the Vault
-        if (newSweptETH >= MAX_STAKE) {
+        if (newSweptETH >= FULL_STAKE) {
             uint256 fullyWithdrawnValidators;
-            // safe since MAX_STAKE is hardcoded to 32ETH
-            unchecked {
-                // explicitly cast to uint256 as we want to round to a whole number of validators
-                fullyWithdrawnValidators = uint256(newSweptETH / MAX_STAKE);
-            }
+            // explicitly cast to uint256 as we want to round to a whole number of validators
+            fullyWithdrawnValidators = uint256(newSweptETH / FULL_STAKE);
             activeDepositedValidators -= fullyWithdrawnValidators;
 
-            uint256 wethToVault = MAX_STAKE * fullyWithdrawnValidators;
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: wethToVault }();
+            uint256 wethToVault = FULL_STAKE * fullyWithdrawnValidators;
+            IWETH9(WETH).deposit{ value: wethToVault }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, wethToVault);
+            IWETH9(WETH).transfer(VAULT_ADDRESS, wethToVault);
             _wethWithdrawnToVault(wethToVault);
 
             emit AccountingFullyWithdrawnValidator(
@@ -146,24 +141,22 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
 
         uint256 ethRemaining = address(this).balance - consensusRewards;
         // should be less than a whole validator stake
-        require(ethRemaining < 32 ether, "unexpected accounting");
+        require(ethRemaining < FULL_STAKE, "Unexpected accounting");
 
         // If no Beacon chain consensus rewards swept
         if (ethRemaining == 0) {
             // do nothing
             return accountingValid;
-        }
-        // Beacon chain consensus rewards swept (partial validator withdrawals)
-        else if (ethRemaining < fuseIntervalStart) {
+        } else if (ethRemaining < fuseIntervalStart) {
+            // Beacon chain consensus rewards swept (partial validator withdrawals)
             // solhint-disable-next-line reentrancy
             consensusRewards += ethRemaining;
             emit AccountingConsensusRewards(ethRemaining);
-        }
-        // Beacon chain consensus rewards swept but also a slashed validator fully exited
-        else if (ethRemaining > fuseIntervalEnd) {
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: ethRemaining }();
+        } else if (ethRemaining > fuseIntervalEnd) {
+            // Beacon chain consensus rewards swept but also a slashed validator fully exited
+            IWETH9(WETH).deposit{ value: ethRemaining }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(VAULT_ADDRESS, ethRemaining);
+            IWETH9(WETH).transfer(VAULT_ADDRESS, ethRemaining);
             activeDepositedValidators -= 1;
 
             _wethWithdrawnToVault(ethRemaining);
@@ -207,33 +200,27 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         int256 _validatorsDelta,
         int256 _consensusRewardsDelta,
         uint256 _ethToVaultAmount
-    ) external onlyStrategist whenPaused {
+    ) external onlyStrategist whenPaused nonReentrant {
         require(
             lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
                 block.number,
-            "manuallyFixAccounting called too soon"
+            "Fix accounting called too soon"
         );
         require(
             _validatorsDelta >= -3 &&
                 _validatorsDelta <= 3 &&
                 // new value must be positive
                 int256(activeDepositedValidators) + _validatorsDelta >= 0,
-            "invalid validatorsDelta"
+            "Invalid validatorsDelta"
         );
         require(
             _consensusRewardsDelta >= -332 ether &&
                 _consensusRewardsDelta <= 332 ether &&
                 // new value must be positive
                 int256(consensusRewards) + _consensusRewardsDelta >= 0,
-            "invalid consensusRewardsDelta"
+            "Invalid consensusRewardsDelta"
         );
-        require(_ethToVaultAmount <= 32 ether * 3, "invalid wethToVaultAmount");
-
-        emit AccountingManuallyFixed(
-            _validatorsDelta,
-            _consensusRewardsDelta,
-            _ethToVaultAmount
-        );
+        require(_ethToVaultAmount <= 32 ether * 3, "Invalid wethToVaultAmount");
 
         activeDepositedValidators = uint256(
             int256(activeDepositedValidators) + _validatorsDelta
@@ -243,18 +230,21 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         );
         lastFixAccountingBlockNumber = block.number;
         if (_ethToVaultAmount > 0) {
-            IWETH9(WETH_TOKEN_ADDRESS).deposit{ value: _ethToVaultAmount }();
+            IWETH9(WETH).deposit{ value: _ethToVaultAmount }();
             // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH_TOKEN_ADDRESS).transfer(
-                VAULT_ADDRESS,
-                _ethToVaultAmount
-            );
+            IWETH9(WETH).transfer(VAULT_ADDRESS, _ethToVaultAmount);
             _wethWithdrawnToVault(_ethToVaultAmount);
         }
 
+        emit AccountingManuallyFixed(
+            _validatorsDelta,
+            _consensusRewardsDelta,
+            _ethToVaultAmount
+        );
+
         // rerun the accounting to see if it has now been fixed.
         // Do not pause the accounting on failure as it is already paused
-        require(_doAccounting(false), "fuse still blown");
+        require(_doAccounting(false), "Fuse still blown");
 
         // unpause since doAccounting was successful
         _unpause();
@@ -264,6 +254,6 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
                  Abstract
     ****************************************/
 
-    /// @dev allows for NativeStakingSSVStrategy contract to emit Withdrawal event
+    /// @dev allows for NativeStakingSSVStrategy contract to emit the Withdrawal event
     function _wethWithdrawnToVault(uint256 _amount) internal virtual;
 }

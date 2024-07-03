@@ -72,6 +72,10 @@ const handler = async (event) => {
     // SSV Network contract on validator registration. This is calculated
     // at a Cluster level rather than a single validator.
     validatorSpawnOperationalPeriodInDays: 1,
+    // this overrides validatorSpawnOperationalPeriodInDays
+    ssvAmount: 0,
+    clear: false,
+    requestedValidators: 1,
   });
 };
 

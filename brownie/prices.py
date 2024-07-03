@@ -18,6 +18,7 @@ decimalsMap = {
 
     CVX: 18,
     OGV: 18,
+    OGN: 18,
     OUSD: 18,
     OETH: 18,
 
@@ -49,6 +50,7 @@ def get_cmc_quote(from_token, to_token, from_amount):
         USDC: 3408,
 
         OGV: 20949,
+        OGN: 5117,
         CVX: 9903,
         OUSD: 7189,
         OETH: 24277,
@@ -88,6 +90,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
         USDC: ['usd-coin', 'usd'],
 
         OGV: ['origin-dollar-governance', 'usd'],
+        OGN: ['origin-protocol', 'usd'],
         CVX: ['convex-finance', 'usd'],
         OETH: ['origin-ether', 'usd'],
         OUSD: ['origin-dollar', 'usd'],

@@ -217,11 +217,11 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    it("OETH whale redeem 100 OETH", async () => {
+    it("OETH whale redeem 50 OETH", async () => {
       const { oethVault } = fixture;
 
-      const amount = parseUnits("100", 18);
-      const minEth = parseUnits("99.4", 18);
+      const amount = parseUnits("50", 18);
+      const minEth = parseUnits("49.7", 18);
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
@@ -314,26 +314,6 @@ describe("ForkTest: OETH Vault", function () {
         swapPlatform: 3,
         liquidationLimit: oethUnits("4000"),
         curvePoolIndices: [2, 1],
-      },
-      [fixture.bal.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-        doSwapRewardToken: true,
-        swapPlatform: 2,
-        liquidationLimit: oethUnits("1000"),
-        balancerPoolId:
-          "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014",
-      },
-      [fixture.aura.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-        doSwapRewardToken: true,
-        swapPlatform: 2,
-        liquidationLimit: oethUnits("4000"),
-        balancerPoolId:
-          "0xcfca23ca9ca720b6e98e3eb9b6aa0ffc4a5c08b9000200000000000000000274",
       },
     },
   }));

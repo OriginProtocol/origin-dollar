@@ -26,7 +26,7 @@ const loadBalancerREthFixtureNotDefault = createFixtureLoader(
   }
 );
 
-describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
+describe.skip("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 

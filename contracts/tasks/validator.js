@@ -6,13 +6,16 @@ const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
 
-const { getClusterInfo } = require("../utils/ssv");
+const { getBlock } = require("./block");
+const { getValidator, getEpoch } = require("./beaconchain");
+const { storePrivateKeyToS3 } = require("../utils/amazon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { sleep } = require("../utils/time");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { p2pApiEncodedKey } = require("../utils/constants");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -77,6 +80,8 @@ const validatorOperationsConfig = async (taskArgs) => {
     validatorSpawnOperationalPeriodInDays: taskArgs.days,
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
+    requestedValidators: taskArgs.validators,
+    ssvAmount: taskArgs.ssv,
   };
 };
 
@@ -113,6 +118,8 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
+  requestedValidators,
+  ssvAmount,
 }) => {
   let currentState = await getState(store);
   log("currentState", currentState);
@@ -122,12 +129,25 @@ const registerValidators = async ({
     currentState = undefined;
   }
 
-  if (!(await stakingContractHas32ETH(nativeStakingStrategy, WETH))) {
+  const validatorsForEth = await validatorsThatCanBeStaked(
+    nativeStakingStrategy,
+    WETH
+  );
+  if (validatorsForEth == 0 || validatorsForEth < requestedValidators) {
     console.log(
       `Native staking contract doesn't have enough WETH available to stake. Does depositToStrategy or resetStakeETHTally need to be called?`
     );
+    if (requestedValidators) {
+      console.log(
+        `Requested to spawn ${requestedValidators} validators but only ${validatorsForEth} can be spawned.`
+      );
+    }
     return;
   }
+  const validatorsCount =
+    validatorsForEth < requestedValidators
+      ? validatorsForEth
+      : requestedValidators;
 
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -144,7 +164,8 @@ const registerValidators = async ({
           p2p_base_url,
           nativeStakingStrategy.address, // SSV owner address & withdrawal address
           feeAccumulatorAddress, // execution layer fee recipient
-          validatorSpawnOperationalPeriodInDays
+          validatorSpawnOperationalPeriodInDays,
+          validatorsCount
         );
         currentState = await getState(store);
       }
@@ -167,7 +188,8 @@ const registerValidators = async ({
           "register_transaction_broadcast", // next state
           signer,
           currentState.metadata,
-          nativeStakingStrategy
+          nativeStakingStrategy,
+          ssvAmount
         );
         currentState = await getState(store);
       }
@@ -221,25 +243,22 @@ const stakeValidators = async ({
   p2p_base_url,
   uuid,
 }) => {
+  if (await stakingContractPaused(nativeStakingStrategy)) {
+    console.log(`Native staking contract is paused... exiting`);
+    return;
+  }
+
   let currentState;
   if (!uuid) {
     currentState = await getState(store);
     log("currentState", currentState);
 
     if (!currentState) {
-      console.log(`Failed to get state from local storage`);
+      console.log(
+        `There are no registered validators in local storage. Have you run registerValidators?`
+      );
       return;
     }
-  }
-
-  if (!(await stakingContractHas32ETH(nativeStakingStrategy, WETH))) {
-    console.log(`Native staking contract doesn't have enough ETH, exiting`);
-    return;
-  }
-
-  if (await stakingContractPaused(nativeStakingStrategy)) {
-    console.log(`Native staking contract is paused... exiting`);
-    return;
   }
 
   const executeOperateLoop = async () => {
@@ -254,16 +273,17 @@ const stakeValidators = async ({
         );
         currentState = await getState(store);
 
-        // Check the validator has not already been staked
-        const hashedPubkey = keccak256(currentState.metadata.pubkey);
+        // Check the first validator has not already been staked
+        const hashedPubkey = keccak256(currentState.metadata.pubkeys[0]);
         const status = await nativeStakingStrategy.validatorsStates(
           hashedPubkey
         );
         if (validatorStateEnum[status] !== "REGISTERED") {
           console.log(
-            `Validator with pubkey ${currentState.metadata.pubkey} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
+            `Validator with pubkey ${currentState.metadata.pubkeys[0]} not in REGISTERED state. Current state: ${validatorStateEnum[status]}`
           );
-          await clearState(currentState.uuid, store);
+          // await clearState(currentState.uuid, store);
+          // TODO just remove the validator that has already been staked from the metadata
           break;
         }
       }
@@ -280,13 +300,23 @@ const stakeValidators = async ({
       }
 
       if (currentState.state === "deposit_data_got") {
+        const validatorsForEth = await validatorsThatCanBeStaked(
+          nativeStakingStrategy,
+          WETH
+        );
+        const validatorsInState = currentState.metadata.pubkeys.length;
+        if (validatorsForEth < validatorsInState) {
+          `Native staking contract only has enough WETH to stake to ${validatorsForEth} validators, not ${validatorsInState}. Does depositToStrategy or resetStakeETHTally need to be called?`;
+          return;
+        }
+
         await depositEth(
           store,
           currentState.uuid,
           "deposit_transaction_broadcast", // next state
           signer,
           nativeStakingStrategy,
-          currentState.metadata.pubkey,
+          currentState.metadata.pubkeys,
           currentState.metadata.depositData
         );
         currentState = await getState(store);
@@ -435,7 +465,7 @@ const stakingContractPaused = async (nativeStakingStrategy) => {
   return paused;
 };
 
-const stakingContractHas32ETH = async (nativeStakingStrategy, WETH) => {
+const validatorsThatCanBeStaked = async (nativeStakingStrategy, WETH) => {
   const address = nativeStakingStrategy.address;
   const wethBalance = await WETH.balanceOf(address);
   log(
@@ -463,7 +493,10 @@ const stakingContractHas32ETH = async (nativeStakingStrategy, WETH) => {
     )} WETH available to stake`
   );
 
-  return availableETH.gte(parseEther("32"));
+  const validatorCountBN = availableETH.div(parseEther("32"));
+  const validatorCount = parseInt(validatorCountBN.toString());
+  log(`Native Staking Strategy can stake to ${validatorCount} validators`);
+  return validatorCount;
 };
 
 /* Make a GET or POST request to P2P API
@@ -515,22 +548,24 @@ const createValidatorRequest = async (
   p2p_base_url,
   nativeStakingStrategy,
   feeAccumulatorAddress,
-  validatorSpawnOperationalPeriodInDays
+  validatorSpawnOperationalPeriodInDays,
+  validatorsCount
 ) => {
   const uuid = uuidv4();
+  log(`validatorsCount: ${validatorsCount}`);
   await p2pRequest(
     `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/create`,
     p2p_api_key,
     "POST",
     {
-      validatorsCount: 1,
+      validatorsCount,
       id: uuid,
       withdrawalAddress: nativeStakingStrategy,
       feeRecipientAddress: feeAccumulatorAddress,
       ssvOwnerAddress: nativeStakingStrategy,
-      // TODO: we need to alter this and store the key somewhere
-      type: "without-encrypt-key",
+      type: "with-encrypt-key",
       operationPeriodInDays: validatorSpawnOperationalPeriodInDays,
+      ecdhPublicKey: p2pApiEncodedKey,
     }
   );
 
@@ -566,22 +601,22 @@ const depositEth = async (
   nextState,
   signer,
   nativeStakingStrategy,
-  pubkey,
+  pubkeys,
   depositData
 ) => {
-  const { signature, depositDataRoot } = depositData;
+  // const { signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
-    log(`pubkey: ${pubkey}`);
-    log(`signature: ${signature}`);
-    log(`depositDataRoot: ${depositDataRoot}`);
-    const tx = await nativeStakingStrategy.connect(signer).stakeEth([
-      {
-        pubkey,
-        signature,
-        depositDataRoot,
-      },
-    ]);
+
+    const validatorsStakeData = depositData.map((d) => ({
+      pubkey: d.pubkey,
+      signature: d.signature,
+      depositDataRoot: d.depositDataRoot,
+    }));
+    log(`validators stake data: ${JSON.stringify(validatorsStakeData)}`);
+    const tx = await nativeStakingStrategy
+      .connect(signer)
+      .stakeEth(validatorsStakeData);
 
     log(`Transaction to stake ETH has been broadcast with hash: ${tx.hash}`);
 
@@ -601,7 +636,8 @@ const broadcastRegisterValidator = async (
   nextState,
   signer,
   metadata,
-  nativeStakingStrategy
+  nativeStakingStrategy,
+  ssvAmount
 ) => {
   const registerTransactionParams = defaultAbiCoder.decode(
     [
@@ -616,30 +652,32 @@ const broadcastRegisterValidator = async (
   // the publicKey and sharesData params are not encoded correctly by P2P so we will ignore them
   const [, operatorIds, , amount, cluster] = registerTransactionParams;
   // get publicKey and sharesData state storage
-  const publicKey = metadata.pubkey;
-  if (!publicKey) {
-    throw Error(`pubkey not found in metadata: ${metadata}`);
+  const publicKeys = metadata.pubkeys;
+  if (!publicKeys) {
+    throw Error(`pubkeys not found in metadata: ${metadata}`);
   }
   const { sharesData } = metadata;
   if (!sharesData) {
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
+  ssvAmount = ssvAmount !== undefined ? ssvAmount : amount;
+
   log(`About to register validator with:`);
-  log(`publicKey: ${publicKey}`);
+  log(`publicKeys: ${publicKeys}`);
   log(`operatorIds: ${operatorIds}`);
   log(`sharesData: ${sharesData}`);
-  log(`amount: ${amount}`);
+  log(`ssvAmount: ${ssvAmount}`);
   log(`cluster: ${cluster}`);
 
   try {
     const tx = await nativeStakingStrategy
       .connect(signer)
-      .registerSsvValidator(
-        publicKey,
+      .registerSsvValidators(
+        publicKeys,
         operatorIds,
         sharesData,
-        amount,
+        ssvAmount,
         cluster
       );
 
@@ -690,17 +728,31 @@ const confirmValidatorRegistered = async (
     } else {
       log(`Validators requested with uuid ${uuid} are ready`);
 
-      const pubkey = response.result.encryptedShares[0].publicKey;
       const registerValidatorData =
         response.result.validatorRegistrationTxs[0].data;
-      const sharesData = response.result.encryptedShares[0].sharesData;
+      const sharesData = [];
+      const pubkeys = [];
+      const nonces = [];
+      const result = response.result;
+      for (let i = 0; i < result.encryptedShares.length; i++) {
+        const encryptedShare = result.encryptedShares[i];
+        pubkeys[i] = encryptedShare.publicKey;
+        nonces[i] = encryptedShare.nonce;
+        sharesData[i] = encryptedShare.sharesData;
+
+        await storePrivateKeyToS3(
+          pubkeys[i],
+          encryptedShare.ecdhEncryptedPrivateKey
+        );
+      }
       await updateState(uuid, nextState, store, {
-        pubkey,
+        pubkeys,
         registerValidatorData,
         sharesData,
       });
-      log(`Public key: ${pubkey}`);
-      log(`sharesData: ${sharesData}`);
+      log(`Public keys: ${pubkeys}`);
+      log(`nonces: ${nonces}`);
+      log(`registerValidatorData: ${registerValidatorData}`);
       return true;
     }
   };
@@ -736,12 +788,12 @@ const getDepositData = async (
     } else if (response.result?.status === "validator-ready") {
       log(`Deposit data with request uuid ${uuid} is ready`);
 
-      const depositData = response.result.depositData[0];
+      const depositData = response.result.depositData;
       await updateState(uuid, nextState, store, {
         depositData,
       });
-      log(`signature: ${depositData.signature}`);
-      log(`depositDataRoot: ${depositData.depositDataRoot}`);
+      log(`signature 0: ${depositData[0].signature}`);
+      log(`depositDataRoot 0: ${depositData[0].depositDataRoot}`);
       return true;
     } else {
       log(`Error getting deposit data with uuid ${uuid}: ${response.error}`);
@@ -774,7 +826,24 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
   }
 };
 
+// @dev check validator is eligible for exit -
+// has been active for at least 256 epochs
+async function verifyMinActivationTime({ pubkey }) {
+  const latestEpoch = await getEpoch("latest");
+  const validator = await getValidator(pubkey);
+
+  const epochDiff = latestEpoch.epoch - validator.activationepoch;
+
+  if (epochDiff < 256) {
+    throw new Error(
+      `Can not exit validator. Validator needs to be ` +
+        `active for 256 epoch. Current one active for ${epochDiff}`
+    );
+  }
+}
+
 async function exitValidator({ pubkey, operatorids }) {
+  await verifyMinActivationTime({ pubkey });
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
@@ -790,32 +859,6 @@ async function exitValidator({ pubkey, operatorids }) {
     .connect(signer)
     .exitSsvValidator(pubkey, operatorIds);
   await logTxDetails(tx, "exitSsvValidator");
-}
-
-async function removeValidator({ pubkey, operatorids }) {
-  const signer = await getSigner();
-
-  log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
-
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
-
-  // Cluster details
-  const { cluster } = await getClusterInfo({
-    chainId: hre.network.config.chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
-    operatorids,
-    ownerAddress: strategy.address,
-  });
-
-  log(`About to exit validator`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
 }
 
 async function doAccounting({ signer, nativeStakingStrategy }) {
@@ -880,15 +923,108 @@ async function pauseStaking() {
   await logTxDetails(tx, "pause");
 }
 
+async function snapStaking({ block, admin }) {
+  const blockTag = getBlock(block);
+
+  const strategy = await resolveContract(
+    "NativeStakingSSVStrategyProxy",
+    "NativeStakingSSVStrategy"
+  );
+
+  const feeAccumulator = await resolveContract(
+    "NativeStakingFeeAccumulatorProxy",
+    "FeeAccumulator"
+  );
+  const vault = await resolveContract("OETHVaultProxy", "IVault");
+
+  const { chainId } = await ethers.provider.getNetwork();
+
+  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const ssvAddress = addresses[networkMap[chainId]].SSV;
+  const ssv = await ethers.getContractAt("IERC20", ssvAddress);
+
+  const checkBalance = await strategy.checkBalance(wethAddress, { blockTag });
+  const wethStrategyBalance = await weth.balanceOf(strategy.address, {
+    blockTag,
+  });
+  const ssvStrategyBalance = await ssv.balanceOf(strategy.address, {
+    blockTag,
+  });
+  const consensusRewards = await strategy.consensusRewards({ blockTag });
+  const ethStrategyBalance = await ethers.provider.getBalance(
+    strategy.address,
+    blockTag
+  );
+  const ethFeeAccumulatorBalance = await ethers.provider.getBalance(
+    feeAccumulator.address,
+    blockTag
+  );
+
+  console.log(
+    `Active validators        : ${await strategy.activeDepositedValidators({
+      blockTag,
+    })}`
+  );
+  console.log(
+    `Strategy balance         : ${formatUnits(
+      checkBalance
+    )} ether, ${checkBalance} wei`
+  );
+  console.log(
+    `Strategy ETH             : ${formatUnits(
+      ethStrategyBalance
+    )} ether, ${ethStrategyBalance} wei`
+  );
+  console.log(
+    `Fee accumulator ETH      : ${formatUnits(
+      ethFeeAccumulatorBalance
+    )} ether, ${ethFeeAccumulatorBalance} wei`
+  );
+  console.log(
+    `Consensus rewards        : ${formatUnits(
+      consensusRewards
+    )} ether, ${consensusRewards} wei`
+  );
+  console.log(
+    `Deposited WETH           : ${formatUnits(
+      await strategy.depositedWethAccountedFor({
+        blockTag,
+      })
+    )}`
+  );
+  console.log(`Strategy WETH            : ${formatUnits(wethStrategyBalance)}`);
+  console.log(`Strategy SSV             : ${formatUnits(ssvStrategyBalance)}`);
+
+  const stakeETHThreshold = await strategy.stakeETHThreshold({ blockTag });
+  const stakeETHTally = await strategy.stakeETHTally({ blockTag });
+
+  console.log(`Stake ETH Tally          : ${formatUnits(stakeETHTally)}`);
+  console.log(`Stake ETH Threshold      : ${formatUnits(stakeETHThreshold)}`);
+
+  if (admin) {
+    console.log(
+      `Staking monitor          : ${await strategy.stakingMonitor()}`
+    );
+    console.log(
+      `Validator registrator    : ${await strategy.validatorRegistrator()}`
+    );
+    console.log(`Governor                 : ${await strategy.governor()}`);
+    console.log(`Strategist               : ${await vault.strategistAddr()}`);
+    console.log(`Native staking strategy  : ${strategy.address}`);
+    console.log(`Fee accumulator          : ${feeAccumulator.address}`);
+  }
+}
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
   stakeValidators,
-  removeValidator,
   exitValidator,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 };

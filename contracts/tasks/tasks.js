@@ -7,6 +7,16 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { resolveContract } = require("../utils/resolvers");
+const {
+  genECDHKey,
+  decryptValidatorKey,
+  decryptValidatorKeyWithMasterKey,
+} = require("./crypto");
+const {
+  encryptMasterPrivateKey,
+  decryptMasterPrivateKey,
+} = require("./amazon");
 const { getSigner } = require("../utils/signers");
 
 const {
@@ -51,7 +61,12 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { depositSSV, printClusterInfo } = require("./ssv");
+const {
+  calcDepositRoot,
+  depositSSV,
+  printClusterInfo,
+  removeValidator,
+} = require("./ssv");
 const {
   amoStrategyTask,
   mintAndAddOTokensTask,
@@ -74,14 +89,13 @@ const {
   registerValidators,
   stakeValidators,
   exitValidator,
-  removeValidator,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
+  snapStaking,
 } = require("./validator");
-const { resolveContract } = require("../utils/resolvers");
 const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -921,7 +935,7 @@ task("harvest", "Harvest and swap rewards for a strategy")
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     "",
     types.string
   )
@@ -957,7 +971,7 @@ subtask(
   .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -997,22 +1011,27 @@ subtask(
   "transferGovernanceNativeStakingProxy",
   "Transfer governance of the proxy from the the Defender Relayer"
 )
-  .addParam("address", "Address of the new governor", undefined, types.string)
-  .setAction(async (taskArgs) => {
+  .addParam(
+    "deployer",
+    "Address of the deployer of NativeStakingSSVStrategy implementation",
+    undefined,
+    types.string
+  )
+  .setAction(async ({ deployer }) => {
     const signer = await getSigner();
 
-    log("Transfer governance of NativeStakingSSVStrategyProxy");
-
-    const nativeStakingProxyFactory = await ethers.getContract(
+    const nativeStakingProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
     );
+    const oldGovernor = await nativeStakingProxy.governor();
+    log(
+      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+    );
     await withConfirmation(
-      nativeStakingProxyFactory
-        .connect(signer)
-        .transferGovernance(taskArgs.address)
+      nativeStakingProxy.connect(signer).transferGovernance(deployer)
     );
     log(
-      `Governance of NativeStakingSSVStrategyProxy transferred to  ${taskArgs.address}`
+      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
     );
   });
 task("transferGovernanceNativeStakingProxy").setAction(
@@ -1030,10 +1049,22 @@ subtask(
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    40,
+    2,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The number of validators to register. defaults to the max that can be registered",
+    undefined,
     types.int
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
+  .addOptionalParam(
+    "ssv",
+    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    undefined,
+    types.float
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
     await registerValidators(config);
@@ -1069,7 +1100,7 @@ subtask("exitValidator", "Starts the exit process from a validator")
   )
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -1090,7 +1121,7 @@ subtask(
   )
   .addParam(
     "operatorids",
-    "Comma separated operator ids. E.g. 60,79,220,349",
+    "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
@@ -1166,6 +1197,143 @@ subtask(
   "Pause the staking of the Native Staking Strategy"
 ).setAction(pauseStaking);
 task("pauseStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapStaking",
+  "Takes a snapshot of the key Native Staking Strategy data at a block"
+)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "admin",
+    "Include addresses of admin accounts",
+    true,
+    types.boolean
+  )
+  .setAction(snapStaking);
+task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositRoot",
+  "Calculates the Beacon chain deposit root for a validator"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "sig",
+    "The validator's signature in hex format",
+    undefined,
+    types.string
+  )
+  .setAction(calcDepositRoot);
+task("depositRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Encryption
+subtask(
+  "encryptMasterPrivateKey",
+  "Encrypt the master validator private key whose public key pair is used " +
+    "by the P2P service to encrypt each validator private key."
+)
+  .addParam(
+    "privateKey",
+    "Private key to be encrypted and if needed used for validator private key decryption",
+    undefined,
+    types.string
+  )
+  .setAction(encryptMasterPrivateKey);
+task("encryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/* only needed in critical situation where we need access to the master private key to decrypt
+ * the P2P encoded validator private keys.
+ */
+subtask(
+  "decryptMasterPrivateKey",
+  "Decrypt the master validator private key."
+).setAction(decryptMasterPrivateKey);
+task("decryptMasterPrivateKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("genECDHKey", "Generate Elliptic-curve Diffie–Hellman (ECDH) key pair")
+  .addOptionalParam(
+    "privateKey",
+    "Private key to encrypt the message with in base64 format",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "displayPk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
+  )
+  .setAction(genECDHKey);
+task("genECDHKey").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "decrypt",
+  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair"
+)
+  .addOptionalParam(
+    "privateKey",
+    "Private key to decrypt the message with in hex format without the 0x prefix. If not provided, the encrypted private key in VALIDATOR_MASTER_ENCRYPTED_PRIVATE_KEY will be used.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "encryptedKey",
+    "Used if pubkey is not provided. The encrypted validator private key returned from P2P API in base64 format.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Public key of the validator whose private key is to be fetched in hex format. If not provided, the encryptedKey option must be used.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "displayPk",
+    "Display the private key in hex format in the console",
+    false,
+    types.boolean
+  )
+  .setAction(decryptValidatorKey);
+task("decrypt").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "masterDecrypt",
+  "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair by using the " +
+    "master validator encoding key decrypted by AWS KMS service."
+)
+  .addParam(
+    "message",
+    "Encrypted validator key returned form P2P API",
+    undefined,
+    types.string
+  )
+  .setAction(decryptValidatorKeyWithMasterKey);
+task("masterDecrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

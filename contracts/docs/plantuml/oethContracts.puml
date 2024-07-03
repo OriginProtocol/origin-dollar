@@ -6,20 +6,18 @@
 !$changedColor = Orange
 !$thirdPartyColor = WhiteSmoke
 
-legend
-blue - Origin
-green - new
-orange - changed
+' legend
+' blue - Origin
+' ' green - new
+' ' orange - changed
 ' white - 3rd Party
-end legend
+' end legend
 
 title "Origin Ether Contract Dependencies"
 
 object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
-
-
 
 ' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
 ' }
@@ -33,8 +31,8 @@ object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-' object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
-' }
+object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+}
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
@@ -47,7 +45,7 @@ object "OETH" as oeth <<Origin>><<Proxy>> #$originColor {
     name: Origin Ether
 }
 
-object "OETH Vault" as oethv <<Origin>><<Proxy>> #$changedColor {
+object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
 asset: WETH
 }
 
@@ -63,12 +61,21 @@ object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
     Rewards: CRV, CVX
 }
 
-object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$changedColor {
+object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
     Rewards: ETH, SSV
 }
 
 object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
+object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
+}
+
+object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
@@ -104,6 +111,11 @@ object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
 ' '     symbol: cvxOUSD3CRV-f
 ' '     name: Origin Dollar Convex Deposit
 ' ' }
+
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
+' }
 
 ' ' SSV
 ' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
@@ -163,21 +175,27 @@ oeth <... cvxStrat
 
 harv <..> nativeStrat
 oethv <...> nativeStrat
-nativeStrat <.> feeAcc
+nativeStrat <..> feeAcc
 ' nativeStrat ..> ssvNet
 ' nativeStrat ..> bDep
 
-' cvxStrat ..> crvPool
-' cvxStrat ...> cvxPool
-' ' cvxStrat ...> weth
-' ' cvxStrat ...> cvx
-' ' cvxStrat ...> crv
-' ' cvxPool ..> cvxPoolLp
-' ' cvxPool ..> crv
+harv <..> nativeStrat2
+oethv <...> nativeStrat2
+nativeStrat2 <..> feeAcc2
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
+
+' cvxStrat ...> crvPool
+' cvxStrat ....> cvxPool
+' cvxStrat ...> cvxBoost
+' cvxStrat ...> weth
+' cvxStrat ...> cvx
+' cvxStrat ...> crv
+' cvxPool ..> cvxPoolLp
+' cvxPool ..> crv
 ' gauge <. cvxPool
 ' crvPool <.. gauge
 ' oeth <... crvPool
-' cvxStrat ..> cvxBoost
 ' cvxBoost ..> cvxPool
 
 ' ' Vault to Assets

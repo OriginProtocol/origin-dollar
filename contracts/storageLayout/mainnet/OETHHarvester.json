@@ -5,7 +5,7 @@
       "label": "rewardTokenConfigs",
       "offset": 0,
       "slot": "0",
-      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)7881_storage)",
+      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)9355_storage)",
       "contract": "BaseHarvester",
       "src": "contracts/harvest/BaseHarvester.sol:95"
     },
@@ -53,7 +53,7 @@
       "label": "curvePoolIndices",
       "offset": 0,
       "slot": "6",
-      "type": "t_mapping(t_address,t_struct(CurvePoolIndices)7918_storage)",
+      "type": "t_mapping(t_address,t_struct(CurvePoolIndices)9392_storage)",
       "contract": "BaseHarvester",
       "src": "contracts/harvest/BaseHarvester.sol:127"
     }
@@ -79,7 +79,7 @@
       "label": "bytes",
       "numberOfBytes": "32"
     },
-    "t_enum(SwapPlatform)7776": {
+    "t_enum(SwapPlatform)9250": {
       "label": "enum BaseHarvester.SwapPlatform",
       "members": [
         "UniswapV2Compatible",
@@ -105,15 +105,15 @@
       "label": "mapping(address => bytes)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_struct(CurvePoolIndices)7918_storage)": {
+    "t_mapping(t_address,t_struct(CurvePoolIndices)9392_storage)": {
       "label": "mapping(address => struct BaseHarvester.CurvePoolIndices)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_struct(RewardTokenConfig)7881_storage)": {
+    "t_mapping(t_address,t_struct(RewardTokenConfig)9355_storage)": {
       "label": "mapping(address => struct BaseHarvester.RewardTokenConfig)",
       "numberOfBytes": "32"
     },
-    "t_struct(CurvePoolIndices)7918_storage": {
+    "t_struct(CurvePoolIndices)9392_storage": {
       "label": "struct BaseHarvester.CurvePoolIndices",
       "members": [
         {
@@ -131,7 +131,7 @@
       ],
       "numberOfBytes": "32"
     },
-    "t_struct(RewardTokenConfig)7881_storage": {
+    "t_struct(RewardTokenConfig)9355_storage": {
       "label": "struct BaseHarvester.RewardTokenConfig",
       "members": [
         {
@@ -160,7 +160,7 @@
         },
         {
           "label": "swapPlatform",
-          "type": "t_enum(SwapPlatform)7776",
+          "type": "t_enum(SwapPlatform)9250",
           "offset": 25,
           "slot": "0"
         },

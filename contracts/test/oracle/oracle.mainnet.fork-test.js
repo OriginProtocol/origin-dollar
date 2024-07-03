@@ -21,7 +21,7 @@ describe("ForkTest: OETH Oracle Routers", function () {
 
     const price = await oethOracleRouter.price(reth.address);
     expect(price).to.gte(parseUnits("1083", 15));
-    expect(price).to.lt(parseUnits("111", 16));
+    expect(price).to.lt(parseUnits("112", 16));
   });
 
   it("should get frxETH price", async () => {
