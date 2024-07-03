@@ -88,5 +88,6 @@
   "095_ogn_buyback": 1716026320,
   "096_vault_admin_upgrade": 1715943467,
   "097_native_ssv_staking": 1717841542,
-  "098_lido_withdrawal_strategy": 1719998574
+  "099_remove_reth_strategy": 1719822421,
+  "100_remove_multisig_from_timelock": 1719822421
 }
