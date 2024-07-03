@@ -188,7 +188,8 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    it("should not do full redeem by OETH whale", async () => {
+    // Skipping as this depends on the WETH available in the Vault
+    it.skip("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
@@ -198,6 +199,25 @@ describe("ForkTest: OETH Vault", function () {
 
       const tx = oethVault.connect(oethWhaleSigner).redeem(oethWhaleBalance, 0);
       await expect(tx).to.revertedWith("Liquidity error");
+    });
+    it("should request a withdraw by OETH whale", async () => {
+      const { oeth, oethVault } = fixture;
+
+      const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+      expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+        parseUnits("100", 18)
+      );
+
+      const tx = await oethVault
+        .connect(oethWhaleSigner)
+        .requestWithdrawal(oethWhaleBalance);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalRequested")
+        .withNamedArgs({
+          _withdrawer: await oethWhaleSigner.getAddress(),
+          _amount: oethWhaleBalance,
+        });
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock } = fixture;
