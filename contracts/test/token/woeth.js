@@ -111,7 +111,9 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(oeth).to.have.a.totalSupply("400");
       // simulate a negative rebase of 1/4 of the supply.
-      await oeth.connect(await impersonateAndFund(oethVault.address)).changeSupply(oethUnits("300"));
+      await oeth
+        .connect(await impersonateAndFund(oethVault.address))
+        .changeSupply(oethUnits("300"));
       await expect(oeth).to.have.a.totalSupply("300");
       await expect(woeth).to.have.a.totalSupply("50"); // same total supply
       await expect(woeth).to.have.approxBalanceOf("75", oeth); // 25% less than before
