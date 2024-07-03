@@ -99,7 +99,7 @@ jobs:
     strategy:
       matrix:
         chunk_id: [0,1,2,3]
-    continue-on-error: true
+    continue-on-error: false
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
