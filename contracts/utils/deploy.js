@@ -630,7 +630,7 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     await setStorageAt(
       governorSix.address,
       "0x4",
-      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 1 block
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
     // slot[5] uint256 votingPeriod
     await setStorageAt(
