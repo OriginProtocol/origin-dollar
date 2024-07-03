@@ -99,7 +99,6 @@ jobs:
     strategy:
       matrix:
         chunk_id: [0,1,2,3]
-    continue-on-error: false
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
@@ -130,6 +129,7 @@ jobs:
 
       - run: yarn run test:coverage:fork
         working-directory: ./contracts
+        continue-on-error: true
 
       - uses: actions/upload-artifact@v4
         with:
