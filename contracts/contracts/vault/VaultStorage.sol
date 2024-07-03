@@ -96,7 +96,7 @@ contract VaultStorage is Initializable, Governable {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
     }
-    /// @dev mapping of strategy contracts to their configiration
+    /// @dev mapping of strategy contracts to their configuration
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -189,9 +189,9 @@ contract VaultStorage is Initializable, Governable {
     /// Withdrawal Queue Storage /////
 
     struct WithdrawalQueueMetadata {
-        // cumulative total of all withdrawal requests included the ones that have already bene claimed
+        // cumulative total of all withdrawal requests included the ones that have already been claimed
         uint128 queued;
-        // cumulative total of all the requests that can be claimed included the ones that have already bene claimed
+        // cumulative total of all the requests that can be claimed included the ones that have already been claimed
         uint128 claimable;
         // total of all the requests that have been claimed
         uint128 claimed;
