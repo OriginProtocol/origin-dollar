@@ -5,7 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "098_lido_withdrawal_strategy",
     forceDeploy: false,
-    //forceSkip: true,
+    // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId:
