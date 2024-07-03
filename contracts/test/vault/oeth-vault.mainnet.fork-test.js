@@ -188,7 +188,9 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
-    // Skipping as this depends on the WETH available in the Vault
+
+    // Skipping this test since right now we have too much of
+    // WETH sitting in the Vault waiting to be deposited
     it.skip("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
