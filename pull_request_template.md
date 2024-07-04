@@ -1,10 +1,27 @@
-If you made a contract change, make sure to complete the checklist below before merging it in master.
+## Code Change Checklist
 
-Refer to our [documentation](https://github.com/OriginProtocol/security) for more details about contract security best practices.
+To be completed before internal review begins:
 
-Contract change checklist:
-  - [ ] Code reviewed by 2 reviewers. 
-  - [ ] Copy & paste code review [security checklist](https://github.com/OriginProtocol/security/blob/master/templates/Contract-Code-Review-Example.md) below this checklist.
-  - [ ] Unit tests pass
-  - [ ] Slither tests pass with no warning
-  - [ ] Echidna tests pass if PR includes changes to OUSD contract (not automated, run manually on local)
+- [ ]  The contract code is complete
+- [ ]  Executable deployment file
+- [ ]  Fork tests that test after the deployment file runs
+- [ ]  Unit tests *if needed
+- [ ]  The owner has done a [full checklist review](https://github.com/OriginProtocol/security/blob/master/templates/Contract-Code-Review.md) of the code + tests
+
+Internal review:
+
+- [ ] Two approvals by internal reviewers
+
+
+## Deploy checklist
+
+Two reviewers complete the following checklist:
+
+```
+- [ ] All deployed contracts are listed in the deploy PR's description
+- [ ] Deployed contract's verified code (and all dependencies) match the code in master
+- [ ] The transactions that interacted with the newly deployed contract match the deploy script.
+- [ ] Governance proposal matches the deploy script
+- [ ] Smoke tests pass after fork test execution of the governance proposal
+```
+

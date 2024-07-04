@@ -60,12 +60,17 @@ main()
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
         FORK_NETWORK_NAME=$FORK_NETWORK_NAME FORK=true npx --no-install hardhat node --no-reset ${params[@]} > $nodeOutput 2>&1 &
-
         tail -f $nodeOutput &
 
         i=0
         until grep -q -i 'Started HTTP and WebSocket JSON-RPC server at' $nodeOutput
         do
+          if grep -q -i 'VM Exception while processing transaction' $nodeOutput; then
+            printf "\n"
+            echo "🔴 Error detected node exiting."
+            exit 1
+          fi
+
           let i++
           sleep 1
           if (( i > nodeWaitTimeout )); then

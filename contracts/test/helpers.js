@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
@@ -258,14 +258,16 @@ const isHolesky = hre.network.name == "holesky";
 const isExternalNet = isMainnet || isHolesky;
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
-const isMainnetOrFork = isMainnet || isFork;
+const isMainnetOrFork =
+  isMainnet || (isFork && hre.network.config.chainId == 1);
 const isForkTest = isFork && isTest;
 const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
 const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
-const isHoleskyFork = isFork && process.env.FORK_NETWORK_NAME == "holesky";
+const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
+const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
@@ -286,9 +288,14 @@ const getBlockTimestamp = async () => {
 
 /// Advances the blockchain forward by the specified number of blocks
 const advanceBlocks = async (numBlocks) => {
-  for (let i = 0; i < numBlocks; i++) {
-    await hre.ethers.provider.send("evm_mine");
-  }
+  let blocksHex = BigNumber.from(numBlocks).toHexString();
+
+  // Note: Hardhat's `QUANTITY` type doesn't support leading zeros
+  // Not sure why but it seems to be a bug. So we gotta remove
+  // any leading zeros from hex values
+  blocksHex = blocksHex.replace(/^0x0+/, "0x");
+
+  await hre.network.provider.send("hardhat_mine", [blocksHex]);
 };
 
 const getOracleAddress = async (deployments) => {
@@ -433,6 +440,16 @@ const getAssetAddresses = async (deployments) => {
       auraWeightedOraclePool: addresses.mainnet.AuraWeightedOraclePool,
       AURA: addresses.mainnet.AURA,
       BAL: addresses.mainnet.BAL,
+      SSV: addresses.mainnet.SSV,
+      SSVNetwork: addresses.mainnet.SSVNetwork,
+      beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
+    };
+  } else if (isHoleskyOrFork) {
+    return {
+      WETH: addresses.holesky.WETH,
+      SSV: addresses.holesky.SSV,
+      SSVNetwork: addresses.holesky.SSVNetwork,
+      beaconChainDepositContract: addresses.holesky.beaconChainDepositContract,
     };
   } else if (isBaseOrFork) {
     return {
@@ -483,6 +500,10 @@ const getAssetAddresses = async (deployments) => {
         .address,
       AURA: (await deployments.get("MockAura")).address,
       BAL: (await deployments.get("MockBAL")).address,
+      SSV: (await deployments.get("MockSSV")).address,
+      SSVNetwork: (await deployments.get("MockSSVNetwork")).address,
+      beaconChainDepositContract: (await deployments.get("MockDepositContract"))
+        .address,
     };
 
     try {
@@ -520,13 +541,6 @@ const getAssetAddresses = async (deployments) => {
     return addressMap;
   }
 };
-
-async function fundAccount(address, balance = "1000") {
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    parseEther(balance).toHexString(),
-  ]);
-}
 
 /**
  * Calculates the change in balance after a function has been executed on a contract
@@ -782,12 +796,14 @@ module.exports = {
   isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
+  isMainnetForkTest,
   isForkTest,
   isMainnetForkTest,
   isForkWithLocalNode,
   isArbitrumOne,
   isHolesky,
   isHoleskyFork,
+  isHoleskyOrFork,
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,
@@ -795,6 +811,9 @@ module.exports = {
   isBaseFork,
   isBaseOrFork,
   isCI,
+  isBase,
+  isBaseFork,
+  isBaseOrFork,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,
@@ -810,5 +829,4 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
-  fundAccount,
 };

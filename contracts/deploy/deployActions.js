@@ -5,7 +5,6 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isMainnetOrFork,
   isHolesky,
   isBaseOrFork,
 } = require("../test/helpers.js");
@@ -553,6 +552,22 @@ const deployOUSDHarvester = async (ousdDripper) => {
   return dHarvesterProxy;
 };
 
+const upgradeOETHHarvester = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
+    cOETHVaultProxy.address,
+    assetAddresses.WETH,
+  ]);
+
+  await withConfirmation(cOETHHarvesterProxy.upgradeTo(dOETHHarvester.address));
+
+  log("Upgraded OETHHarvesterProxy");
+  return cOETHHarvesterProxy;
+};
+
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -620,7 +635,7 @@ const deployOETHHarvester = async (oethDripper) => {
       .setRewardProceedsAddress(rewardProceedsAddress)
   );
 
-  return dOETHHarvesterProxy;
+  return cOETHHarvester;
 };
 
 const deployOETHBaseHarvester = async (oethDripper) => {
@@ -780,6 +795,20 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
       .connect(sGovernor)
       .setHarvesterAddress(oethHarvesterProxy.address)
   );
+
+  const nativeStakingSSVStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const nativeStakingSSVStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    nativeStakingSSVStrategyProxy.address
+  );
+
+  await withConfirmation(
+    nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(oethHarvesterProxy.address)
+  );
 };
 
 const deployOUSDDripper = async () => {
@@ -884,6 +913,33 @@ const deployFraxEthStrategy = async () => {
 };
 
 /**
+ * upgradeNativeStakingFeeAccumulator
+ */
+const upgradeNativeStakingFeeAccumulator = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const strategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
+  const feeAccumulatorProxy = await ethers.getContract(
+    "NativeStakingFeeAccumulatorProxy"
+  );
+
+  log("About to deploy FeeAccumulator implementation");
+  const dFeeAccumulatorImpl = await deployWithConfirmation("FeeAccumulator", [
+    strategyProxy.address, // STRATEGY
+  ]);
+  log(`New FeeAccumulator implementation: ${dFeeAccumulatorImpl.address}`);
+
+  await withConfirmation(
+    feeAccumulatorProxy
+      .connect(sDeployer)
+      .upgradeTo(dFeeAccumulatorImpl.address)
+  );
+};
+
+/**
  * Upgrade NativeStakingSSVStrategy
  */
 const upgradeNativeStakingSSVStrategy = async () => {
@@ -899,6 +955,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
     "NativeStakingFeeAccumulatorProxy"
   );
 
+  log("About to deploy NativeStakingSSVStrategy implementation");
   const dStrategyImpl = await deployWithConfirmation(
     "NativeStakingSSVStrategy",
     [
@@ -906,10 +963,12 @@ const upgradeNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
+      500, // maxValidators
       cFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
   );
+  log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
 
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
@@ -952,6 +1011,7 @@ const deployNativeStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
+      500, // maxValidators
       dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
     ]
@@ -1410,8 +1470,8 @@ const deployBuyback = async () => {
   // Deploy proxy and implementation
   const dOUSDBuybackProxy = await deployWithConfirmation("BuybackProxy");
   const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
-  const ousdContractName = isMainnetOrFork ? "OUSDBuyback" : "MockBuyback";
-  const oethContractName = isMainnetOrFork ? "OETHBuyback" : "MockBuyback";
+  const ousdContractName = "OUSDBuyback";
+  const oethContractName = "OETHBuyback";
   const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
     ousd.address,
     assetAddresses.OGN,
@@ -1718,6 +1778,7 @@ module.exports = {
   deployHarvesters,
   deployOETHHarvester,
   deployOUSDHarvester,
+  upgradeOETHHarvester,
   configureVault,
   configureOETHVault,
   configureStrategies,
@@ -1731,4 +1792,5 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   deployAerodromeStrategy,
   deployOETHBaseHarvester,
+  upgradeNativeStakingFeeAccumulator,
 };

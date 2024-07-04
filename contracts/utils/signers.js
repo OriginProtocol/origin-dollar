@@ -1,9 +1,12 @@
-const { Wallet } = require("ethers").utils;
-const { Defender } = require("@openzeppelin/defender-sdk");
+const { Wallet } = require("ethers");
+const { parseEther } = require("ethers/lib/utils");
+const {
+  DefenderRelaySigner,
+  DefenderRelayProvider,
+} = require("@openzeppelin/defender-relay-client/lib/ethers");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const { ethereumAddress, privateKey } = require("./regex");
-const { hardhatSetBalance } = require("../test/_fund");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("./logger")("utils:signers");
 
@@ -53,29 +56,40 @@ async function getSigner(address = undefined) {
 
   const signers = await hre.ethers.getSigners();
   const signer = signers[0];
-  log(`Using signer ${await signer.getAddress()}`);
+  log(`Using first hardhat signer ${await signer.getAddress()}`);
 
   return signer;
 }
 
 const getDefenderSigner = async () => {
-  const speed = process.env.SPEED || "fast";
+  const speed = process.env.SPEED || "fastest";
   if (!["safeLow", "average", "fast", "fastest"].includes(speed)) {
     console.error(
       `Defender Relay Speed param must be either 'safeLow', 'average', 'fast' or 'fastest'. Not "${speed}"`
     );
     process.exit(2);
   }
-  const credentials = {
-    relayerApiKey: process.env.DEFENDER_API_KEY,
-    relayerApiSecret: process.env.DEFENDER_API_SECRET,
-  };
-  const client = new Defender(credentials);
-  const provider = client.relaySigner.getProvider();
 
-  const signer = client.relaySigner.getSigner(provider, { speed });
+  const { chainId } = await ethers.provider.getNetwork();
+  const isMainnet = chainId === 1;
+
+  const apiKey = isMainnet
+    ? process.env.DEFENDER_API_KEY
+    : process.env.HOLESKY_DEFENDER_API_KEY || process.env.DEFENDER_API_KEY;
+  const apiSecret = isMainnet
+    ? process.env.DEFENDER_API_SECRET
+    : process.env.HOLESKY_DEFENDER_API_SECRET ||
+      process.env.DEFENDER_API_SECRET;
+
+  const credentials = { apiKey, apiSecret };
+
+  const provider = new DefenderRelayProvider(credentials);
+  const signer = new DefenderRelaySigner(credentials, provider, {
+    speed,
+  });
+
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} from env vars DEFENDER_API_KEY and DEFENDER_API_SECRET`
+    `Using Defender Relayer account ${await signer.getAddress()} with key ${apiKey} and speed ${speed}`
   );
   return signer;
 };
@@ -103,7 +117,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await hardhatSetBalance(account, amount);
+  await hhHelpers.setBalance(account, parseEther(amount.toString()));
 
   return signer;
 }
@@ -112,4 +126,5 @@ module.exports = {
   getSigner,
   impersonateAccount,
   impersonateAndFund,
+  getDefenderSigner,
 };

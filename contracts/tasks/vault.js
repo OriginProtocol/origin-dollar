@@ -1,7 +1,7 @@
 const { parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { resolveAsset } = require("../utils/assets");
+const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
@@ -26,8 +26,7 @@ async function getContract(hre, symbol) {
   };
 }
 
-async function allocate(taskArguments, hre) {
-  const symbol = taskArguments.symbol;
+async function allocate({ symbol }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -39,8 +38,7 @@ async function allocate(taskArguments, hre) {
   await logTxDetails(tx, "allocate");
 }
 
-async function rebase(taskArguments, hre) {
-  const symbol = taskArguments.symbol;
+async function rebase({ symbol }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -55,7 +53,7 @@ async function rebase(taskArguments, hre) {
 /**
  * Artificially generate yield on the vault by sending it USDT.
  */
-async function yieldTask(taskArguments, hre) {
+async function yieldTask(_, hre) {
   const usdtAbi = require("../test/abi/usdt.json").abi;
   const {
     ousdUnitsFormat,
@@ -106,12 +104,10 @@ async function yieldTask(taskArguments, hre) {
 /**
  * Call the Vault's admin pauseCapital method.
  */
-async function capital(taskArguments, hre) {
-  const symbol = taskArguments.symbol;
+async function capital({ symbol, pause }, hre) {
   const { isMainnet } = require("../test/helpers");
   const { proposeArgs } = require("../utils/governor");
 
-  const pause = taskArguments.pause;
   log("Setting Vault capitalPause to", pause);
 
   const sGovernor = await getSigner();
@@ -137,8 +133,7 @@ async function capital(taskArguments, hre) {
   }
 }
 
-async function mint(taskArguments, hre) {
-  const { amount, asset, symbol, min } = taskArguments;
+async function mint({ amount, asset, symbol, min, approve }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -147,7 +142,12 @@ async function mint(taskArguments, hre) {
   const assetUnits = parseUnits(amount.toString(), await cAsset.decimals());
   const minUnits = parseUnits(min.toString());
 
-  await cAsset.connect(signer).approve(vault.address, assetUnits);
+  if (approve) {
+    const approveTx = await cAsset
+      .connect(signer)
+      .approve(vault.address, assetUnits);
+    await logTxDetails(approveTx, "approve");
+  }
 
   log(`About to mint ${symbol} using ${amount} ${asset}`);
   const tx = await vault
@@ -156,8 +156,7 @@ async function mint(taskArguments, hre) {
   await logTxDetails(tx, "mint");
 }
 
-async function redeem(taskArguments, hre) {
-  const { amount, min, symbol } = taskArguments;
+async function redeem({ amount, min, symbol }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -170,8 +169,7 @@ async function redeem(taskArguments, hre) {
   await logTxDetails(tx, "redeem");
 }
 
-async function redeemAll(taskArguments, hre) {
-  const { min, symbol } = taskArguments;
+async function redeemAll({ min, symbol }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -231,8 +229,7 @@ async function resolveAmounts(amounts, assetContracts) {
   return amountUnits;
 }
 
-async function depositToStrategy(taskArguments, hre) {
-  const { amounts, assets, symbol, strategy } = taskArguments;
+async function depositToStrategy({ amounts, assets, symbol, strategy }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -252,8 +249,10 @@ async function depositToStrategy(taskArguments, hre) {
   await logTxDetails(tx, "depositToStrategy");
 }
 
-async function withdrawFromStrategy(taskArguments, hre) {
-  const { amounts, assets, symbol, strategy } = taskArguments;
+async function withdrawFromStrategy(
+  { amounts, assets, symbol, strategy },
+  hre
+) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -273,8 +272,7 @@ async function withdrawFromStrategy(taskArguments, hre) {
   await logTxDetails(tx, "withdrawFromStrategy");
 }
 
-async function withdrawAllFromStrategy(taskArguments, hre) {
-  const { symbol, strategy } = taskArguments;
+async function withdrawAllFromStrategy({ symbol, strategy }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);
@@ -286,8 +284,7 @@ async function withdrawAllFromStrategy(taskArguments, hre) {
   await logTxDetails(tx, "withdrawAllFromStrategy");
 }
 
-async function withdrawAllFromStrategies(taskArguments, hre) {
-  const { symbol } = taskArguments;
+async function withdrawAllFromStrategies({ symbol }, hre) {
   const signer = await getSigner();
 
   const { vault } = await getContract(hre, symbol);

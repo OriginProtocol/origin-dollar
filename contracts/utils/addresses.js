@@ -6,6 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 addresses.mainnet = {};
+addresses.holesky = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
 
@@ -70,6 +71,11 @@ addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
 addresses.mainnet.veOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9";
 // RewardsSource
 addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
+// OGNRewardsSource
+addresses.mainnet.OGNRewardsSource =
+  "0x7609c88E5880e934dd3A75bCFef44E31b1Badb8b";
+// xOGN
+addresses.mainnet.xOGN = "0x63898b3b6Ef3d39332082178656E9862bee45C57";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -125,7 +131,7 @@ addresses.mainnet.ccipWoethTokenPool =
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 // Deployed OUSD contracts
-addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
+addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // 5/8 multisig.
 addresses.mainnet.VaultProxy = "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70";
 addresses.mainnet.Vault = "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9";
 addresses.mainnet.OUSDProxy = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
@@ -175,15 +181,18 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
-// OUSD Governance
-addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+// Governance
 addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 addresses.mainnet.OldTimelock = "0x72426BA137DEC62657306b12B1E869d43FeC6eC7";
+// OGV Governance
+addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+// OGN Governance
+addresses.mainnet.GovernorSix = "0x1D3Fbd4d129Ddd2372EA85c5Fa00b2682081c9EC";
 
 // OETH
 addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
 addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
-addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
+addresses.mainnet.OETHVaultProxy = "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab";
 addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
 addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
@@ -191,7 +200,8 @@ addresses.mainnet.FraxETHRedeemStrategy =
   "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
-
+addresses.mainnet.BalancerRETHStrategy =
+  "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";
@@ -246,6 +256,24 @@ addresses.mainnet.FrxEthWethDualOracle =
 addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 
+// SSV network
+addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
+addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+addresses.mainnet.beaconChainDepositContract =
+  "0x00000000219ab540356cBB839Cbe05303d7705Fa";
+
+// Native Staking Strategy
+addresses.mainnet.NativeStakingSSVStrategyProxy =
+  "0x34edb2ee25751ee67f68a45813b22811687c0238";
+
+// Defender relayer
+addresses.mainnet.validatorRegistrator =
+  "0x4b91827516f79d6F6a1F292eD99671663b09169a";
+
+// Lido Withdrawal Queue
+addresses.mainnet.LidoWithdrawalQueue =
+  "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
@@ -267,5 +295,27 @@ addresses.base.wethTokenAddress = "0x4200000000000000000000000000000000000006";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
 addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+
+// Holesky
+addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
+
+// SSV network
+addresses.holesky.SSV = "0xad45A78180961079BFaeEe349704F411dfF947C6";
+addresses.holesky.SSVNetwork = "0x38A4794cCEd47d3baf7370CcC43B560D3a1beEFA";
+addresses.holesky.beaconChainDepositContract =
+  "0x4242424242424242424242424242424242424242";
+
+// Native Staking Strategy
+addresses.holesky.NativeStakingSSVStrategyProxy =
+  "0xcf4a9e80Ddb173cc17128A361B98B9A140e3932E";
+
+addresses.holesky.OETHVaultProxy = "0x19d2bAaBA949eFfa163bFB9efB53ed8701aA5dD9";
+
+addresses.holesky.Governor = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
+// Address of the Holesky defender relayer
+addresses.holesky.validatorRegistrator =
+  "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
+// Address of the Holesky defender relayer
+addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 module.exports = addresses;

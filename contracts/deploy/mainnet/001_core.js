@@ -11,6 +11,7 @@ const {
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
   deployConvexLUSDMetaStrategy,
+  deployNativeStakingSSVStrategy,
   deployFraxEthStrategy,
   deployDrippers,
   deployHarvesters,
@@ -38,6 +39,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployNativeStakingSSVStrategy();
   await deployFraxEthStrategy();
   const [ousdDripper, oethDripper] = await deployDrippers();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(

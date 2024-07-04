@@ -37,6 +37,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
         bytes calldata _data
     ) public payable onlyGovernor {
         require(_implementation() == address(0));
+        require(_logic != address(0), "Implementation not set");
         assert(
             IMPLEMENTATION_SLOT ==
                 bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)

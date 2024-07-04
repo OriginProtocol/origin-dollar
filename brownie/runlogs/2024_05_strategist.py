@@ -146,3 +146,131 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------------
+# May 17, 2024 - frxETH to WETH
+# -------------------------------------
+from collateralSwap import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    try:
+      # Before
+      txs.append(vault_oeth_core.rebase(std))
+      txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+      # Swap all frxETH to WETH
+      # Full sweep fails, so leaves some dust
+      frxeth_balance = frxeth.balanceOf(VAULT_OETH_PROXY_ADDRESS) 
+      print("frxETH to swap", "{:.6f}".format(frxeth_balance / 10**18))
+      _, swap_data = build_swap_tx(FRXETH, WETH, frxeth_balance, 0.1, False)
+      decoded_input = oeth_vault_core.swapCollateral.decode_input(swap_data)
+      txs.append(
+        oeth_vault_core.swapCollateral(*decoded_input, std)
+      )
+
+      # After
+      vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+      supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+      profit = vault_change - supply_change
+      txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), std))
+      print("-----")
+      print("Profit", "{:.6f}".format(profit / 10**18), profit)
+      print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+      print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    except:
+      brownie.chain.revert()
+
+# -------------------------------------
+# May 21, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogv, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGV,
+        oeth_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        1
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# May 21, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogv, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGV,
+        ousd_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# May 21, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogv, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGV,
+        ousd_for_ogv,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))

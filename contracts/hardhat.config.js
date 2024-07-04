@@ -2,14 +2,11 @@ require("dotenv").config();
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
-  isFork,
   isArbitrumFork,
   isHoleskyFork,
   isHolesky,
   isForkTest,
-  isArbForkTest,
   isHoleskyForkTest,
-  providerUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
@@ -34,9 +31,11 @@ require("@openzeppelin/hardhat-upgrades");
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
 
+const addresses = require("./utils/addresses.js");
+
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
-  "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
+  "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
 // Mainnet decentralized OGV Governor
 const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 // Mainnet decentralized OGV Timelock
@@ -247,7 +246,21 @@ module.exports = {
           : ethers.constants.AddressZero,
       mainnet: MAINNET_GOVERNOR_FIVE,
     },
-    // above governorFiveAddr comment applies to timelock as well
+    // Above governorFiveAddr comment applies to governorSix as well
+    governorSixAddr: {
+      default: ethers.constants.AddressZero,
+      // On Mainnet and fork, the governor is the Governor contract.
+      localhost:
+        process.env.FORK === "true"
+          ? addresses.mainnet.GovernorSix
+          : ethers.constants.AddressZero,
+      hardhat:
+        process.env.FORK === "true"
+          ? addresses.mainnet.GovernorSix
+          : ethers.constants.AddressZero,
+      mainnet: addresses.mainnet.GovernorSix,
+    },
+    // Above governorFiveAddr comment applies to timelock as well
     timelockAddr: {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.

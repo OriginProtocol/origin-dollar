@@ -1,79 +1,81 @@
 @startuml
 
+!$originColor = DeepSkyBlue
+' !$originColor = WhiteSmoke
+!$newColor = LightGreen
+!$changedColor = Orange
+!$thirdPartyColor = WhiteSmoke
+
+' legend
+' blue - Origin
+' ' green - new
+' ' orange - changed
+' white - 3rd Party
+' end legend
+
 title "Origin Ether Contract Dependencies"
 
-object "OETHZapper" as zap <<Origin>> #DeepSkyBlue {
-    assets: ETH, sfrxETH
+object "OETHZapper" as zap <<Origin>> #$originColor {
+    assets: ETH
 }
 
-object "OETHDripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
+object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-object "OETHVaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
+object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
 }
 
-object "WOETH" as woeth <<Origin>><<Proxy>> #DeepSkyBlue {
+object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
     symbol: WOETH
     name: Wrapped OETH
 }
 
-object "OETH" as oeth <<Origin>><<Proxy>> #DeepSkyBlue {
+object "OETH" as oeth <<Origin>><<Proxy>> #$originColor {
     symbol: OETH
     name: Origin Ether
 }
 
-object "OETH Vault" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
-assets:
-  WETH
-  frxETH
-  stETH
-  rETH
+object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
+asset: WETH
 }
 
-object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
-    asset: any
-}
-
-object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX, BAL, AURA
+object "OETHHarvester" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: CRV, CVX
 }
 
 ' Strategies
-object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: frxETH, WETH
-    vault: sfrxETH
-}
-object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
     asset: WETH
     Curve metapool: OETHCRV-f
     Convex pool: cvxOETHCRV-f
     Rewards: CRV, CVX
 }
-object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: WETH
-    Aave token: aWETH
+
+object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
 }
 
-object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: rETH, WETH
-    Balancer Pool Token: B-rETH-STABLE
-    Rewards: BAL, AURA
+object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
 }
 
-' Oracle
-object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
-pairs:
-    frxETH/ETH
-    stETH/ETH
-    rETH/ETH
-    CRV/ETH
-    CVX/ETH 
+object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
 }
 
-' object "EACAggregatorProxy" as chain <<Chainlink>> {
-'     prices: CVX/ETH, CRV/ETH,\nrETH/ETH, stETH/ETH, frxETH/ETH,\nWETH/ETH 
+object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
+' ' Oracle
+' object "OETHOracleRouter" as oracle <<Origin>> #$originColor {
+' pairs:
+'     CRV/ETH
+'     CVX/ETH 
 ' }
 
 ' ' SushiSwap
@@ -93,8 +95,8 @@ pairs:
 '     name: Curve.fi Factory Pool: OETH
 ' }
 ' ' Convex
-' ' object "Booster" as cvxBoost <<Convex>> {
-' ' }
+' object "Booster" as cvxBoost <<Convex>> {
+' }
 ' object "BaseRewardPool" as cvxPool <<Convex>> {
 ' }
 ' object "DepositToken" as cvxPoolLp <<Convex>> {
@@ -102,47 +104,20 @@ pairs:
 '     name: Origin Dollar Convex Deposit
 ' }
 
-' ' Aave Morpho
-' object "Morpho\nAave V2" as morphoV2 <<Morpho>> {
-' }
-' object "Morpho\nLens" as morphoLens <<Morpho>> {
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
 ' }
 
-' object "aWETH" as aweth <<Aave>> {
-'     symbol: aWETH
-'     name: Aave interest bearing WETH
+' object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
+' assets: ETH
 ' }
-' object "variableDebtWETH" as vdweth <<Aave>> {
-'     symbol: variableDebtWETH
-'     name: Aave variable debt bearing WETH
-' }
+
 
 ' ' Assets
-
-' object "sfrxETH" as sfrxeth <<FRAX>> {
-'     asset: frxETH
-'     symbol: sfrxETH
-'     name: Staked Frax Ether
-' }
-
-' object "frxETH" as frxeth <<FRAX>> {
-'     symbol: frxETH
-'     name: Frax Ether
-' }
-
 ' object "WETH9" as weth <<Dapphub>> {
 '     symbol: WETH
 '     name: Wrapped Ether
-' }
-
-' object "RocketTokenRETH" as reth <<Rocket Pool>> {
-'     symbol: rETH
-'     name: Rocket Pool ETH
-' }
-
-' object "Lido" as steth <<Lido>><<Proxy>> {
-'     symbol: stETH
-'     name: Liquid staked Ether 2.0
 ' }
 
 ' ' Rewards 
@@ -158,8 +133,6 @@ pairs:
 
 zap ..> oeth
 zap ..> oethv
-' zap ....> sfrxeth
-' zap .....> frxeth
 ' zap .....> weth
 
 ' drip .....> weth
@@ -176,51 +149,40 @@ drip <.. harv
 
 woeth ..> oeth
 oeth <.> oethv
-oethv ..> oracle
-oethv .> swap
+' oethv ..> oracle
 ' oracle ...> chain
-
-
-' Staked FRAX ETH Strategy
-oethv ...> frxethstrat
-' frxethstrat ..> sfrxeth
 
 ' Convex ETH Metapool Strategy
 harv <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
 
-' cvxStrat ..> crvPool
-' cvxStrat ..> cvxPool
+harv <..> nativeStrat
+oethv <...> nativeStrat
+nativeStrat <..> feeAcc
+' nativeStrat ..> ssvNet
+' nativeStrat ..> bDep
+
+harv <..> nativeStrat2
+oethv <...> nativeStrat2
+nativeStrat2 <..> feeAcc2
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
+
+' cvxStrat ...> crvPool
+' cvxStrat ....> cvxPool
+' cvxStrat ...> cvxBoost
 ' cvxStrat ...> weth
 ' cvxStrat ...> cvx
 ' cvxStrat ...> crv
 ' cvxPool ..> cvxPoolLp
 ' cvxPool ..> crv
-' cvxPool .> gauge
-' gauge .> crvPool
+' gauge <. cvxPool
+' crvPool <.. gauge
 ' oeth <... crvPool
-
-' Morpho Aave Strategy
-oethv <...> morphAaveStrat
-oeth <... morphAaveStrat
-' morphAaveStrat ..> morphoV2
-' morphAaveStrat ..> morphoLens
-' morphoLens .> morphoV2
-' morphoV2 ..> aweth
-' morphoV2 ..> vdweth
-
-' Balancer Strategy
-oethv <...> balancerStrat
-oeth <... balancerStrat
-harv <..> balancerStrat
+' cvxBoost ..> cvxPool
 
 ' ' Vault to Assets
-' oethv .....> frxeth
-' oethv .....> weth
-' oethv .....> reth
-' oethv .....> steth
-
-' sfrxeth ..> frxeth
+' oethv ....> weth
 
 @enduml
