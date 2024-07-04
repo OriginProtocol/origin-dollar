@@ -273,6 +273,7 @@ contract OETHVaultCore is VaultCore {
     /// @notice Collects harvested rewards from the Dripper as WETH then
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
+    /// It also called before any WETH is allocated to a strategy.
     function addWithdrawalQueueLiquidity() external {
         // Stream any harvested rewards (WETH) that are available to the Vault
         IDripper(dripper).collect();
@@ -293,8 +294,6 @@ contract OETHVaultCore is VaultCore {
         // No need to get WETH balance if all the withdrawal requests are claimable
         if (queueShortfall > 0) {
             uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-            // TODO do we also need to look for WETH in the default strategy?
 
             // Of the claimable withdrawal requests, how much is unclaimed?
             uint256 unclaimed = queue.claimable - queue.claimed;
