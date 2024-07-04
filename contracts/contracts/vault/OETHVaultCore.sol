@@ -158,12 +158,16 @@ contract OETHVaultCore is VaultCore {
     }
 
     /**
-     * @notice Request an asynchronous withdrawal of the underlying asset. eg WETH
-     * @param _amount Amount of oTokens to burn. eg OETH
+     * @notice Request an asynchronous withdrawal of WETH in exchange for OETH.
+     * The OETH is burned on request and the WETH is transferred to the withdrawer on claim.
+     * This request can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal this request's `queued` amount.
+     * There is no minimum time or block number before a request can be claimed. It just needs
+     * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
+     * OETH is converted to WETH at 1:1.
+     * @param _amount Amount of OETH to burn.
      * @param requestId Unique ID for the withdrawal request
      * @param queued Cumulative total of all WETH queued including already claimed requests.
-     * This request can be claimed once the withdrawal queue's claimable amount
-     * is greater than or equal this request's queued amount.
      */
     function requestWithdrawal(uint256 _amount)
         external
@@ -194,16 +198,21 @@ contract OETHVaultCore is VaultCore {
 
     /**
      * @notice Claim a previously requested withdrawal once it is claimable.
-     * @param requestId Unique ID for the withdrawal request
+     * This request can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal this request's `queued` amount.
+     * There is no minimum time or block number before a request can be claimed. It just needs
+     * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
+     * OETH is converted to WETH at 1:1.
+     * @param _requestId Unique ID for the withdrawal request
      * @return amount Amount of WETH transferred to the withdrawer
      */
-    function claimWithdrawal(uint256 requestId)
+    function claimWithdrawal(uint256 _requestId)
         external
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 amount)
     {
-        amount = _claimWithdrawal(requestId);
+        amount = _claimWithdrawal(_requestId);
 
         // transfer WETH from the vault to the withdrawer
         IERC20(weth).safeTransfer(msg.sender, amount);
@@ -211,18 +220,22 @@ contract OETHVaultCore is VaultCore {
 
     /**
      * @notice Claim a previously requested withdrawals once they are claimable.
-     * @param requestIds Unique ID of each withdrawal request
+     * This requests can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal each request's `queued` amount.
+     * If one of the requests is not claimable, the whole transaction will revert with `queue pending liquidity`.
+     * @param _requestIds Unique ID of each withdrawal request
      * @return amounts Amount of WETH received for each request
+     * @return totalAmount Total amount of WETH transferred to the withdrawer
      */
-    function claimWithdrawals(uint256[] memory requestIds)
+    function claimWithdrawals(uint256[] memory _requestIds)
         external
         whenNotCapitalPaused
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
-        amounts = new uint256[](requestIds.length);
-        for (uint256 i = 0; i < requestIds.length; ++i) {
-            amounts[i] = _claimWithdrawal(requestIds[i]);
+        amounts = new uint256[](_requestIds.length);
+        for (uint256 i = 0; i < _requestIds.length; ++i) {
+            amounts[i] = _claimWithdrawal(_requestIds[i]);
             totalAmount += amounts[i];
         }
 
@@ -282,6 +295,7 @@ contract OETHVaultCore is VaultCore {
     }
 
     /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
+    /// This assumes 1 WETH equal 1 OETH.
     function _addWithdrawalQueueLiquidity()
         internal
         returns (uint256 addedClaimable)

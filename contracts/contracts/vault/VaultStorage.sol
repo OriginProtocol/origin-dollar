@@ -191,7 +191,7 @@ contract VaultStorage is Initializable, Governable {
     struct WithdrawalQueueMetadata {
         // cumulative total of all withdrawal requests included the ones that have already been claimed
         uint128 queued;
-        // cumulative total of all the requests that can be claimed included the ones that have already been claimed
+        // cumulative total of all the requests that can be claimed including the ones that have already been claimed
         uint128 claimable;
         // total of all the requests that have been claimed
         uint128 claimed;
@@ -199,20 +199,25 @@ contract VaultStorage is Initializable, Governable {
         uint128 nextWithdrawalIndex;
     }
 
+    /// @notice Global metadata for the withdrawal queue including:
+    /// queued - cumulative total of all withdrawal requests included the ones that have already been claimed
+    /// claimable - cumulative total of all the requests that can be claimed including the ones already claimed
+    /// claimed - total of all the requests that have been claimed
+    /// nextWithdrawalIndex - index of the next withdrawal request starting at 0
     // slither-disable-next-line uninitialized-state
     WithdrawalQueueMetadata public withdrawalQueueMetadata;
 
     struct WithdrawalRequest {
         address withdrawer;
         bool claimed;
-        // Amount of oTokens to redeem
+        // Amount of oTokens to redeem. eg OETH
         uint128 amount;
         // cumulative total of all withdrawal requests including this one.
         // this request can be claimed when this queued amount is less than or equal to the queue's claimable amount.
         uint128 queued;
     }
 
-    // Mapping of withdrawal requests indexes to the user withdrawal request data
+    /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
     // For future use
