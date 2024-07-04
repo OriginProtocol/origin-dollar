@@ -294,6 +294,37 @@ async function withdrawAllFromStrategies({ symbol }, hre) {
   await logTxDetails(tx, "withdrawAllFromStrategies");
 }
 
+async function requestWithdrawal({ amount, symbol }, hre) {
+  const signer = await getSigner();
+
+  const oTokenUnits = parseUnits(amount.toString());
+
+  const { vault } = await getContract(hre, symbol);
+
+  // Get the withdrawal request ID by statically calling requestWithdrawal
+  const { requestId } = await vault
+    .connect(signer)
+    .callStatic.requestWithdrawal(oTokenUnits);
+
+  log(`About to request withdrawal from the ${symbol} vault`);
+  const tx = await vault.connect(signer).requestWithdrawal(oTokenUnits);
+  await logTxDetails(tx, "requestWithdrawal");
+
+  console.log(`Withdrawal request id: ${requestId}`);
+}
+
+async function claimWithdrawal({ requestId, symbol }, hre) {
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  log(
+    `About to claim withdrawal from the ${symbol} vault for request ${requestId}`
+  );
+  const tx = await vault.connect(signer).claimWithdrawal(requestId);
+  await logTxDetails(tx, "claimWithdrawal");
+}
+
 module.exports = {
   allocate,
   capital,
@@ -302,6 +333,8 @@ module.exports = {
   rebase,
   redeem,
   redeemAll,
+  requestWithdrawal,
+  claimWithdrawal,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,

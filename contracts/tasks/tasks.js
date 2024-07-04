@@ -17,6 +17,7 @@ const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
+const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
 
 const {
@@ -49,6 +50,8 @@ const {
   rebase,
   redeem,
   redeemAll,
+  requestWithdrawal,
+  claimWithdrawal,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
@@ -475,6 +478,77 @@ subtask(
   )
   .setAction(withdrawAllFromStrategies);
 task("withdrawAllFromStrategies").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("requestWithdrawal", "Request a withdrawal from a vault")
+  .addParam(
+    "amount",
+    "The amount of oTokens to withdraw",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(requestWithdrawal);
+task("requestWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "claimWithdrawal",
+  "Claim a previously requested withdrawal from a vault"
+)
+  .addParam(
+    "requestId",
+    "The id from the previous withdrawal request",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(claimWithdrawal);
+task("claimWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Dripper
+
+subtask("collect", "Collect harvested rewards from the Dripper to the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(collect);
+task("collect").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setDripDuration", "Set the Dripper duration")
+  .addParam(
+    "duration",
+    "The number of seconds to drip harvested rewards",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(setDripDuration);
+task("setDripDuration").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
