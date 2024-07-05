@@ -81,10 +81,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         onlyGovernor
     {
         if (asset_ == address(asset())) {
-            uint256 surplus = OETH(asset()).balanceOf(address(this)) - totalAssets();
+            uint256 surplus = OETH(asset()).balanceOf(address(this)) -
+                totalAssets();
             require(amount_ <= surplus, "Can only collect surplus");
         }
-        
+
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
@@ -97,8 +98,8 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @return amount of OETH credits the OETH amount corresponds to
      */
     function _creditsPerAsset(uint256 oethAmount)
-        internal 
-        view 
+        internal
+        view
         returns (uint256)
     {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
