@@ -172,12 +172,31 @@ describe("WOETH", function () {
       await expect(governor).to.have.a.balanceOf("2", oeth);
       await expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
     });
-    it("should not a allow governor to collect more than OETH surplus", async () => {
+    it("should not a allow governor to collect more than OETH surplus before rebase", async () => {
       await oeth.connect(josh).transfer(woeth.address, oethUnits("2"));
       await expect(woeth).to.have.a.balanceOf("102", oeth);
       await expect(
         woeth.connect(governor).transferToken(oeth.address, oethUnits("3"))
       ).to.be.revertedWith("Can only collect surplus");
+    });
+    it("should not a allow governor to collect more than OETH surplus after rebase", async () => {
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("2"));
+      await expect(woeth).to.have.a.balanceOf("102", oeth);
+
+      // OETH rebase to increase the worth of WOETH by x2.
+      const oethSupply = await oeth.totalSupply();
+      await hardhatSetBalance(josh.address, (oethSupply * 1.1).toString());
+      await weth.connect(josh).deposit({ value: oethSupply });
+      await weth.connect(josh).transfer(oethVault.address, oethSupply);
+      await oethVault.rebase();
+      await expect(woeth).to.have.a.balanceOf("204", oeth);
+
+      // Governor cannot collect more than 4 OETH (2x the original 2 OETH transferred)
+      await expect(
+        woeth.connect(governor).transferToken(oeth.address, oethUnits("4") + 1)
+      ).to.be.revertedWith("Can only collect surplus");
+      await woeth.connect(governor).transferToken(oeth.address, oethUnits("4"));
+      await expect(woeth).to.have.a.balanceOf("200", oeth);
     });
     it("should not allow a non governor to recover tokens ", async () => {
       await expect(
