@@ -326,6 +326,7 @@ const executeGovernanceProposalOnFork = async ({
   proposalState,
   reduceQueueTime,
   executeGasLimit = null,
+  existingProposal = false,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -343,7 +344,14 @@ const executeGovernanceProposalOnFork = async ({
    * contract is set to 1 block
    */
   if (proposalState === "Pending") {
-    const votingDelay = Number((await governorSix.votingDelay()).toString());
+    // NOTE: If proposal already existing on mainnet,
+    // You still gotta wait for a day until it's ready for voting.
+    // Changing `votingDelay` for existing proposals won't work.
+
+    const votingDelay = existingProposal
+      ? 7200
+      : (await governorSix.votingDelay()).toNumber();
+
     log(
       `Advancing ${
         votingDelay + 1
@@ -622,7 +630,7 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     await setStorageAt(
       governorSix.address,
       "0x4",
-      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
     // slot[5] uint256 votingPeriod
     await setStorageAt(
@@ -800,6 +808,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         proposalState,
         reduceQueueTime,
         executeGasLimit,
+        existingProposal: true,
       });
 
       // proposal executed skip deployment
@@ -1217,6 +1226,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         proposalState,
         reduceQueueTime,
         executeGasLimit,
+        existingProposal: false,
       });
       log("Proposal executed.");
     } else {
