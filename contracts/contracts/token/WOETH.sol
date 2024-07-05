@@ -80,9 +80,12 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        //@dev TODO: we could implement a feature where if anyone sends OETH direclty to
-        // the contract, that we can let the governor transfer the excess of the token.
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        if (asset_ == address(asset())) {
+            uint256 surplus = OETH(asset()).balanceOf(address(this)) -
+                totalAssets();
+            require(amount_ <= surplus, "Can only collect surplus");
+        }
+
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
@@ -96,6 +99,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      */
     function _creditsPerAsset(uint256 oethAmount)
         internal
+        view
         returns (uint256)
     {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
