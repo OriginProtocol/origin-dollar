@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 
 const { simpleOETHFixture, createFixtureLoader } = require("./../_fixture");
+const { hardhatSetBalance } = require("../_fund");
 const { oethUnits } = require("../helpers");
 
 const oethWhaleFixture = async () => {
@@ -26,6 +27,15 @@ describe("ForkTest: wOETH", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
+  });
+
+  it("Should prevent total asset manipulation by donations", async () => {
+    const { oeth, woeth, domen } = fixture;
+    const totalAssetsBefore = await woeth.totalAssets();
+    await oeth.connect(domen).transfer(woeth.address, oethUnits("100"));
+    const totalAssetsAfter = await woeth.totalAssets();
+
+    expect(totalAssetsBefore).to.be.equal(totalAssetsAfter);
   });
 
   it("Deposit should not be manipulated by donations", async () => {
@@ -214,6 +224,42 @@ describe("ForkTest: wOETH", function () {
       await expect(await oeth.balanceOf(domen.address)).to.be.approxEqual(
         balanceBefore.add(assetTransfered)
       );
+    });
+    it("should redeem at the correct ratio after rebase", async () => {
+      const { weth, oethVault, woeth, domen, josh } = fixture;
+
+      // Mint some WOETH
+      const initialDeposit = oethUnits("50");
+      await woeth.connect(domen).deposit(initialDeposit, domen.address);
+
+      const totalAssetsBefore = await woeth.totalAssets();
+      // Rebase
+      await hardhatSetBalance(josh.address, "250");
+      await weth.connect(josh).deposit({ value: oethUnits("200") });
+      await weth.connect(josh).transfer(oethVault.address, oethUnits("200"));
+      await oethVault.rebase();
+
+      const totalAssetsAfter = await woeth.totalAssets();
+      expect(totalAssetsAfter > totalAssetsBefore).to.be.true;
+
+      // Then unwrap some WOETH
+      const txResponse = await woeth
+        .connect(domen)
+        .redeem(
+          await woeth.maxRedeem(domen.address),
+          domen.address,
+          domen.address
+        );
+
+      const txReceipt = await txResponse.wait();
+      const burnedShares = txReceipt.events[2].args.shares; // 0. transfer oeth, 1. transfer woeth, 2. redeem
+      const assetTransfered = txReceipt.events[2].args.assets; // 0. transfer oeth, 1. transfer woeth, 2. redeem
+
+      await expect(assetTransfered > initialDeposit);
+      await expect(burnedShares).to.be.approxEqual(
+        await woeth.convertToShares(assetTransfered)
+      );
+      await expect(domen).to.have.a.balanceOf("0", woeth);
     });
   });
 });
