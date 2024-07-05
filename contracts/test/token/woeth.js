@@ -177,7 +177,7 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.balanceOf("102", oeth);
       await expect(
         woeth.connect(governor).transferToken(oeth.address, oethUnits("3"))
-      ).to.be.revertedWith("Cannot collect OETH more than surplus");
+      ).to.be.revertedWith("Can only collect surplus");
     });
     it("should not allow a non governor to recover tokens ", async () => {
       await expect(
