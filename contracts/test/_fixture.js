@@ -82,6 +82,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
+  const cWOETHProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
+
   const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const oethHarvester = await ethers.getContractAt(
     "OETHHarvester",
@@ -182,6 +185,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     // OETH
     oethVault,
     oeth,
+    woeth,
     nativeStakingSSVStrategy,
     oethDripper,
     oethHarvester,
