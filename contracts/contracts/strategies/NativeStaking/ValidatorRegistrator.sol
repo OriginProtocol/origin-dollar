@@ -156,12 +156,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
     // slither-disable-start reentrancy-eth
-    function stakeEth(ValidatorStakeData[] calldata validators)
-        external
-        onlyRegistrator
-        whenNotPaused
-        nonReentrant
-    {
+    function stakeEth(
+        ValidatorStakeData[] calldata validators
+    ) external onlyRegistrator whenNotPaused nonReentrant {
         uint256 requiredETH = validators.length * FULL_STAKE;
 
         // Check there is enough WETH from the deposits sitting in this strategy contract
@@ -307,8 +304,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     ) external onlyRegistrator whenNotPaused {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.EXITING,
+            currentState == VALIDATOR_STATE.EXITING ||
+                currentState == VALIDATOR_STATE.REGISTERED,
             "Validator not exiting"
         );
 

@@ -424,6 +424,68 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           testValidator.operatorIds
         );
     });
+
+    it("Should remove registered validator by validator registrator", async () => {
+      const {
+        ssv,
+        nativeStakingSSVStrategy,
+        ssvNetwork,
+        validatorRegistrator,
+        addresses,
+        testValidator,
+      } = await context();
+      await depositToStrategy(oethUnits("32"));
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingSSVStrategy.address,
+        operatorids: testValidator.operatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
+
+      // Register a new validator with the SSV network
+      const ssvAmount = oethUnits("4");
+      const regTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidators(
+          [testValidator.publicKey],
+          testValidator.operatorIds,
+          [testValidator.sharesData],
+          ssvAmount,
+          cluster
+        );
+      const regReceipt = await regTx.wait();
+      const ValidatorAddedRawEvent = regReceipt.events.find(
+        (e) => e.address.toLowerCase() == ssvNetwork.address.toLowerCase()
+      );
+      const ValidatorAddedEvent = ssvNetwork.interface.parseLog(
+        ValidatorAddedRawEvent
+      );
+      const { cluster: newCluster } = ValidatorAddedEvent.args;
+
+      const removeTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          newCluster
+        );
+
+      await expect(removeTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
+    });
   });
 
   describe("Accounting for ETH", function () {
