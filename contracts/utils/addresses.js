@@ -265,6 +265,8 @@ addresses.mainnet.beaconChainDepositContract =
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =
   "0x34edb2ee25751ee67f68a45813b22811687c0238";
+addresses.mainnet.NativeStakingSSVStrategy2Proxy =
+  "0xD116aF9ea99A86b52B2D3b98BFFeDF9A06f454ea";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =

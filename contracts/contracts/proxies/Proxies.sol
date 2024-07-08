@@ -220,9 +220,27 @@ contract NativeStakingSSVStrategyProxy is
 }
 
 /**
- * @notice NativeStakingFeeAccumulatorProxy delegates calls to NativeStakingFeeCollector implementation
+ * @notice NativeStakingFeeAccumulatorProxy delegates calls to FeeAccumulator implementation
  */
 contract NativeStakingFeeAccumulatorProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingSSVStrategy2Proxy delegates calls to NativeStakingSSVStrategy2 implementation
+ */
+contract NativeStakingSSVStrategy2Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulator2Proxy delegates calls to FeeAccumulator2 implementation
+ */
+contract NativeStakingFeeAccumulator2Proxy is
     InitializeGovernedUpgradeabilityProxy
 {
 

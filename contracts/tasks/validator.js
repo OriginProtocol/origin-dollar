@@ -49,9 +49,8 @@ const validatorOperationsConfig = async (taskArgs) => {
 
   const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
 
-  const nativeStakingStrategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
+  const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+    taskArgs.index
   );
   const feeAccumulatorAddress =
     await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
@@ -844,17 +843,14 @@ async function verifyMinActivationTime({ pubkey }) {
   }
 }
 
-async function exitValidator({ pubkey, operatorids }) {
+async function exitValidator({ index, pubkey, operatorids }) {
   await verifyMinActivationTime({ pubkey });
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   log(`About to exit validator`);
   const tx = await strategy
@@ -869,26 +865,20 @@ async function doAccounting({ signer, nativeStakingStrategy }) {
   await logTxDetails(tx, "doAccounting");
 }
 
-async function resetStakeETHTally() {
+async function resetStakeETHTally({ index }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   log(`About to resetStakeETHTally`);
   const tx = await strategy.connect(signer).resetStakeETHTally();
   await logTxDetails(tx, "resetStakeETHTally");
 }
 
-async function setStakeETHThreshold({ amount }) {
+async function setStakeETHThreshold({ amount, index }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const threshold = parseEther(amount.toString());
 
@@ -897,13 +887,10 @@ async function setStakeETHThreshold({ amount }) {
   await logTxDetails(tx, "setStakeETHThreshold");
 }
 
-async function fixAccounting({ validators, rewards, ether }) {
+async function fixAccounting({ index, validators, rewards, ether }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   log(`About to fix accounting`);
   const tx = await strategy
@@ -912,31 +899,21 @@ async function fixAccounting({ validators, rewards, ether }) {
   await logTxDetails(tx, "manuallyFixAccounting");
 }
 
-async function pauseStaking() {
+async function pauseStaking({ index }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   log(`About to pause the Native Staking Strategy`);
   const tx = await strategy.connect(signer).pause();
   await logTxDetails(tx, "pause");
 }
 
-async function snapStaking({ block, admin }) {
+async function snapStaking({ block, admin, index }) {
   const blockTag = getBlock(block);
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
-
-  const feeAccumulator = await resolveContract(
-    "NativeStakingFeeAccumulatorProxy",
-    "FeeAccumulator"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
+  const feeAccumulator = await resolveFeeAccumulatorProxy(index);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
   const { chainId } = await ethers.provider.getNetwork();
@@ -1018,6 +995,28 @@ async function snapStaking({ block, admin }) {
   }
 }
 
+const resolveNativeStakingStrategyProxy = async (index) => {
+  const proxyNumber = index === undefined ? "" : index.toString();
+
+  const strategy = await resolveContract(
+    `NativeStakingSSVStrategy${proxyNumber}Proxy`,
+    "NativeStakingSSVStrategy"
+  );
+
+  return strategy;
+};
+
+const resolveFeeAccumulatorProxy = async (index) => {
+  const proxyNumber = index === undefined ? "" : index.toString();
+
+  const feeAccumulator = await resolveContract(
+    `NativeStakingFeeAccumulator${proxyNumber}Proxy`,
+    "FeeAccumulator"
+  );
+
+  return feeAccumulator;
+};
+
 module.exports = {
   validatorOperationsConfig,
   registerValidators,
@@ -1029,4 +1028,6 @@ module.exports = {
   fixAccounting,
   pauseStaking,
   snapStaking,
+  resolveNativeStakingStrategyProxy,
+  resolveFeeAccumulatorProxy,
 };

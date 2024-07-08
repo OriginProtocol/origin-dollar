@@ -318,3 +318,36 @@ contract NativeStakingSSVStrategy is
         depositedWethAccountedFor -= deductAmount;
     }
 }
+
+/// @title Second Native Staking SSV Strategy
+/// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
+/// @author Origin Protocol Inc
+contract NativeStakingSSVStrategy2 is NativeStakingSSVStrategy {
+    /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
+    /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
+    /// @param _wethAddress Address of the Erc20 WETH Token contract
+    /// @param _ssvToken Address of the Erc20 SSV Token contract
+    /// @param _ssvNetwork Address of the SSV Network contract
+    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
+    /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
+    /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        address _wethAddress,
+        address _ssvToken,
+        address _ssvNetwork,
+        uint256 _maxValidators,
+        address _feeAccumulator,
+        address _beaconChainDepositContract
+    )
+        NativeStakingSSVStrategy(
+            _baseConfig,
+            _wethAddress,
+            _ssvToken,
+            _ssvNetwork,
+            _maxValidators,
+            _feeAccumulator,
+            _beaconChainDepositContract
+        )
+    {}
+}

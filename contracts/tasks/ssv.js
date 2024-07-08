@@ -6,19 +6,17 @@ const { getSigner } = require("../utils/signers");
 const { getClusterInfo } = require("../utils/ssv");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ pubkey, operatorids }) {
+async function removeValidator({ index, pubkey, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
 
@@ -45,17 +43,15 @@ const printClusterInfo = async (options) => {
   // console.log("Next Nonce:", nextNonce);
 };
 
-const depositSSV = async ({ amount, operatorids }) => {
+const depositSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+  const strategy = await resolveNativeStakingStrategyProxy(index);
+
   const { chainId } = await ethers.provider.getNetwork();
   const network = networkMap[chainId];
   const ssvNetworkAddress = addresses[network].SSVNetwork;

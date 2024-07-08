@@ -44,3 +44,17 @@ contract FeeAccumulator {
      */
     receive() external payable {}
 }
+
+/**
+ * @title Second Fee Accumulator for Native Staking SSV Strategy
+ * @notice Receives execution rewards which includes tx fees and
+ * MEV rewards like tx priority and tx ordering.
+ * It does NOT include swept ETH from beacon chain consensus rewards or full validator withdrawals.
+ * @author Origin Protocol Inc
+ */
+contract FeeAccumulator2 is FeeAccumulator {
+    /**
+     * @param _strategy Address of the Native Staking Strategy
+     */
+    constructor(address _strategy) FeeAccumulator(_strategy) {}
+}
