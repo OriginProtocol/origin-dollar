@@ -100,9 +100,7 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
 
     constructor(BaseStrategyConfig memory _stratConfig)
         InitializableAbstractStrategy(_stratConfig)
-    {
-        require(MaxWithdrawalAmount < type(uint120).max);
-    }
+    {}
 
     /**
      * @notice initialize function, to set up initial internal state
@@ -164,7 +162,7 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
             stEthDust <= withdrawalLength,
             "Not all stEth in withdraw queue"
         );
-        outstandingWithdrawals += stETHStart - stEthDust;
+        outstandingWithdrawals += stETHStart;
 
         // This strategy claims to support WETH, so it is possible for
         // the vault to transfer WETH to it. This returns any deposited WETH
@@ -201,11 +199,11 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
      * @notice Claim previously requested withdrawals that have now finalized.
      * Called by the Strategist.
      * @param _requestIds Array of withdrawal request identifiers
-     * @param expectedAmount Total amount of ETH expect to be withdrawn
+     * @param _expectedAmount Total amount of ETH expect to be withdrawn
      */
     function claimWithdrawals(
         uint256[] memory _requestIds,
-        uint256 expectedAmount
+        uint256 _expectedAmount
     ) external nonReentrant {
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
@@ -224,8 +222,8 @@ contract LidoWithdrawalStrategy is InitializableAbstractStrategy {
         uint256 withdrawalAmount = currentBalance - startingBalance;
         // Withdrawal amount should be within 2 wei of expected amount
         require(
-            withdrawalAmount + 2 >= expectedAmount &&
-                withdrawalAmount <= expectedAmount,
+            withdrawalAmount + 2 >= _expectedAmount &&
+                withdrawalAmount <= _expectedAmount,
             "Withdrawal amount not expected"
         );
 

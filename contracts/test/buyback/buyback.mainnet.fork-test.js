@@ -39,6 +39,7 @@ describe("ForkTest: OETH Buyback", function () {
       // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
       slippage: 5,
+      protocols: ["UNISWAP", "UNISWAP_V3"],
     });
     data = await recodeSwapData(data);
 
@@ -77,6 +78,7 @@ describe("ForkTest: OETH Buyback", function () {
       // 5%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
       slippage: 5,
+      protocols: ["UNISWAP", "UNISWAP_V3"],
     });
     data = await recodeSwapData(data);
 
@@ -127,6 +129,7 @@ describe("ForkTest: OUSD Buyback", function () {
       // 20%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
       slippage: 20,
+      protocols: ["UNISWAP", "UNISWAP_V3"],
     });
     data = await recodeSwapData(data);
 
@@ -164,6 +167,7 @@ describe("ForkTest: OUSD Buyback", function () {
       // 20%, just so that fork-tests don't fail on
       // CI randomly due to price volatility.
       slippage: 20,
+      protocols: ["UNISWAP", "UNISWAP_V3"],
     });
     data = await recodeSwapData(data);
 
