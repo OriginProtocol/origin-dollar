@@ -86,8 +86,6 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  registerValidators,
-  stakeValidators,
   exitValidator,
   doAccounting,
   resetStakeETHTally,
@@ -96,6 +94,7 @@ const {
   pauseStaking,
   snapStaking,
 } = require("./validator");
+const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally

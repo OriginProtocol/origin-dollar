@@ -67,7 +67,7 @@ async function impersonateAccount(account) {
 
   await hhHelpers.impersonateAccount(account);
 
-  return await ethers.provider.getSigner(account);
+  return await hre.ethers.provider.getSigner(account);
 }
 
 /**

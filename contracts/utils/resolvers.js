@@ -6,10 +6,12 @@ const log = require("./logger")("task:assets");
 
 /**
  * Resolves a token symbol to a ERC20 token contract.
+ * This relies on Hardhat so can't be used for Defender Actions.
  * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
  */
 const resolveAsset = async (symbol) => {
-  const { chainId } = await ethers.getDefaultProvider().getNetwork();
+  // This uses the Hardhat Runtime Environment (HRE)
+  const { chainId } = await hre.ethers.provider.getNetwork();
 
   // If not a unit test or task running against the hardhat network
   if (chainId != networkMap.hardhat) {
@@ -38,12 +40,14 @@ const resolveAsset = async (symbol) => {
 
 /**
  * Returns a contract instance.
+ * This relies on Hardhat so can't be used for Defender Actions.
  * @param {string} proxy Address or name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper
  * @param {string} [abiName=proxy] ABI name. Will default to proxy is not used. eg VaultAdmin, VaultCore, Governable or IERC20Metadata
  * @returns
  */
 const resolveContract = async (proxy, abiName) => {
-  const { chainId } = await ethers.getDefaultProvider().getNetwork();
+  // This uses the Hardhat Runtime Environment (HRE)
+  const { chainId } = await hre.ethers.provider.getNetwork();
   const networkName = networkMap[chainId];
 
   // If proxy is an address

@@ -6,7 +6,7 @@ const {
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { registerValidators } = require("../../tasks/validator");
+const { registerValidators } = require("../../utils/validator");
 const addresses = require("../../utils/addresses");
 
 const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
