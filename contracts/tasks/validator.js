@@ -234,7 +234,8 @@ const registerValidators = async ({
         break;
       }
 
-      await sleep(1000);
+      log(`Waiting for 30 seconds...`)
+      await sleep(30000);
     }
   };
 
@@ -604,6 +605,9 @@ const createValidatorRequest = async (
   );
 
   await updateState(uuid, nextState, store);
+
+  // Wait 20 seconds for the P2P API to process the request
+  await sleep(20000);
 };
 
 const waitForTransactionAndUpdateStateOnSuccess = async (
@@ -857,13 +861,8 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
     counter++;
 
     if (counter > attempts) {
-      log(`Failed P2P API call after ${attempts} attempts.`);
-      await clearState(
-        uuid,
-        store,
-        `Too may attempts(${attempts}) to waiting for validator to be ready.`
-      );
-      break;
+      // Will not clear the state
+      throw new Error(`Failed P2P API call after ${attempts} attempts.`);
     }
     await sleep(3000);
   }
