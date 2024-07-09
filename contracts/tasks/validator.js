@@ -234,7 +234,7 @@ const registerValidators = async ({
         break;
       }
 
-      log(`Waiting for 30 seconds...`)
+      log(`Waiting for 30 seconds...`);
       await sleep(30000);
     }
   };
