@@ -98,7 +98,7 @@ describe("ForkTest: Lido Withdrawal Strategy", function () {
         .depositToStrategy(
           lidoWithdrawalStrategy.address,
           [weth.address, stETH.address],
-          [ousdUnits("1000"), ousdUnits("1000")]
+          [ousdUnits("1000"), ousdUnits("1010")]
         );
       const afterWeth = await weth.balanceOf(oethVault.address);
       expect(afterWeth).to.equal(initialWeth);
