@@ -54,23 +54,23 @@ describe("ForkTest: Lido Withdrawal Strategy", function () {
           stethRemaining,
         ],
         20,
-        12
+        6
       );
     });
     it("Should redeem a 2/3 of the stETH for WETH (multiple requests)", async function () {
       await _testWithdrawalCycle([ousdUnits("11999")], 12);
     });
     it("Should redeem a 11/18 of the stETH for WETH (multiple requests)", async function () {
-      await _testWithdrawalCycle([ousdUnits("10999")], 11);
+      await _testWithdrawalCycle([ousdUnits("10999")], 11, 2);
     });
     it("Should redeem over half stETH for WETH (multiple requests)", async function () {
-      await _testWithdrawalCycle([ousdUnits("9999")], 10);
+      await _testWithdrawalCycle([ousdUnits("9999")], 10, 2);
     });
     it("Should redeem stETH for WETH (1 request)", async function () {
       await _testWithdrawalCycle([ousdUnits("250")], 1);
     });
     it("Should redeem stETH for WETH (2 request)", async function () {
-      await _testWithdrawalCycle([ousdUnits("1999.99")], 2);
+      await _testWithdrawalCycle([ousdUnits("1999.99")], 2, 2);
     });
     it.skip("Should redeem stETH for WETH (1 small request)", async function () {
       await _testWithdrawalCycle([ousdUnits("0.03")], 1);
