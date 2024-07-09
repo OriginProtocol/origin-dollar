@@ -2,13 +2,10 @@ const log = require("../utils/logger")("task:block");
 
 async function getBlock(block) {
   // Get the block to get all the data from
-  if (!block) {
-    const currentBlock = await hre.ethers.provider.getBlock();
-    block = currentBlock.number;
-  }
-  log(`block: ${block}`);
+  const blockTag = !block ? await hre.ethers.provider.getBlockNumber() : block;
+  log(`block: ${blockTag}`);
 
-  return block;
+  return blockTag;
 }
 
 async function getDiffBlocks(taskArguments) {
@@ -16,7 +13,7 @@ async function getDiffBlocks(taskArguments) {
 
   // Get the block to get all the data from
   const blockTag = !taskArguments.block
-    ? await ethers.getDefaultProvider().getBlockNumber()
+    ? await hre.ethers.provider.getBlockNumber()
     : taskArguments.block;
   output(`block: ${blockTag}`);
   const fromBlockTag = taskArguments.fromBlock || 0;
