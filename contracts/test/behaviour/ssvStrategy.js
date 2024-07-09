@@ -7,10 +7,7 @@ const {
 const hre = require("hardhat");
 
 const { oethUnits } = require("../helpers");
-const {
-  impersonateAndFund,
-  impersonateAccount,
-} = require("../../utils/signers");
+const { impersonateAndFund } = require("../../utils/signers");
 const { getClusterInfo } = require("../../utils/ssv");
 const { parseEther, keccak256 } = require("ethers/lib/utils");
 const { setERC20TokenBalance } = require("../_fund");
@@ -251,7 +248,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     beforeEach(async () => {
       const { addresses, nativeStakingSSVStrategy } = await context();
 
-      const stakingMonitorSigner = await impersonateAccount(addresses.Guardian);
+      const stakingMonitorSigner = await impersonateAndFund(addresses.Guardian);
       await nativeStakingSSVStrategy
         .connect(stakingMonitorSigner)
         .resetStakeETHTally();
