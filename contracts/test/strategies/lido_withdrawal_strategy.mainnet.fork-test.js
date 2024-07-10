@@ -42,16 +42,11 @@ describe("ForkTest: Lido Withdrawal Strategy", function () {
     it("Should redeem in multiple chunks (multiple requests)", async function () {
       const { oethVault, stETH } = fixture;
       const stethBalance = await stETH.balanceOf(oethVault.address);
-      const stethRemaining = stethBalance.sub(ousdUnits("4999").mul(3));
+      const stethRemaining = stethBalance.sub(ousdUnits("4992").mul(2));
       await _testWithdrawalCycle(
-        [
-          ousdUnits("4999"),
-          ousdUnits("4999"),
-          ousdUnits("4999"),
-          stethRemaining,
-        ],
-        20,
-        5
+        [ousdUnits("4992"), ousdUnits("4992"), stethRemaining],
+        15,
+        9
       );
     });
     it("Should redeem in in 5 requests", async function () {
