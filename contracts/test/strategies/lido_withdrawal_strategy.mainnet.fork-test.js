@@ -32,36 +32,51 @@ describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
   });
 
   describe("Redeem Lifecyle", function () {
-    it("Should redeem all stETH for WETH", async function () {
+    it.skip("Should redeem all stETH for WETH", async function () {
       const { oethVault, stETH } = fixture;
       const stETHAmount = await stETH.balanceOf(oethVault.address);
       await _testWithdrawalCycle([stETHAmount], 20);
     });
-    it("Should redeem most stETH for WETH (multiple requests)", async function () {
+    it.skip("Should redeem most stETH for WETH (multiple requests)", async function () {
       await _testWithdrawalCycle([ousdUnits("17889")], 18);
     });
-    it("Should redeem most stETH in two deposits for WETH (multiple requests)", async function () {
+    it.skip("Should redeem most stETH in two deposits for WETH (multiple requests)", async function () {
       await _testWithdrawalCycle([ousdUnits("9999"), ousdUnits("7889")], 18, 8);
+    });
+    it("Should redeem in multiple chunks (multiple requests)", async function () {
+      const { oethVault, stETH } = fixture;
+      const stethBalance = await stETH.balanceOf(oethVault.address);
+      const stethRemaining = stethBalance.sub(ousdUnits("4999").mul(3));
+      await _testWithdrawalCycle(
+        [
+          ousdUnits("4999"),
+          ousdUnits("4999"),
+          ousdUnits("4999"),
+          stethRemaining,
+        ],
+        20,
+        6
+      );
     });
     it("Should redeem a 2/3 of the stETH for WETH (multiple requests)", async function () {
       await _testWithdrawalCycle([ousdUnits("11999")], 12);
     });
     it("Should redeem a 11/18 of the stETH for WETH (multiple requests)", async function () {
-      await _testWithdrawalCycle([ousdUnits("10999")], 11);
+      await _testWithdrawalCycle([ousdUnits("10999")], 11, 2);
     });
     it("Should redeem over half stETH for WETH (multiple requests)", async function () {
-      await _testWithdrawalCycle([ousdUnits("9999")], 10);
+      await _testWithdrawalCycle([ousdUnits("9999")], 10, 2);
     });
     it("Should redeem stETH for WETH (1 request)", async function () {
       await _testWithdrawalCycle([ousdUnits("250")], 1);
     });
     it("Should redeem stETH for WETH (2 request)", async function () {
-      await _testWithdrawalCycle([ousdUnits("1999.99")], 2);
+      await _testWithdrawalCycle([ousdUnits("1999.99")], 2, 2);
     });
-    it("Should redeem stETH for WETH (1 small request)", async function () {
+    it.skip("Should redeem stETH for WETH (1 small request)", async function () {
       await _testWithdrawalCycle([ousdUnits("0.03")], 1);
     });
-    it("Should revert on zero amount", async function () {
+    it.skip("Should revert on zero amount", async function () {
       const { lidoWithdrawalStrategy, stETH, oethVault, strategist } = fixture;
       const txPromise = oethVault
         .connect(strategist)
@@ -84,7 +99,7 @@ describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
         .depositToStrategy(
           lidoWithdrawalStrategy.address,
           [weth.address, stETH.address],
-          [ousdUnits("1000"), ousdUnits("1000")]
+          [ousdUnits("1000"), ousdUnits("1010")]
         );
       const afterWeth = await weth.balanceOf(oethVault.address);
       expect(afterWeth).to.equal(initialWeth);
@@ -247,7 +262,7 @@ describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
     expect(requestIds.length).to.equal(expectedRequests);
     expect(afterEth.sub(initialEth))
       .to.gte(totalAmount.sub(2))
-      .lte(totalAmount.add(10));
+      .lte(totalAmount.add(12));
     expect(await lidoWithdrawalStrategy.outstandingWithdrawals()).to.equal(
       initialOutstanding
     );

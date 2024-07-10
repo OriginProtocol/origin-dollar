@@ -81,7 +81,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // send some CRV to the strategy to partly simulate reward harvesting
       await crv
         .connect(josh)
-        .transfer(convexEthMetaStrategy.address, parseUnits("1000"));
+        .transfer(convexEthMetaStrategy.address, parseUnits("2000"));
 
       const wethBefore = await weth.balanceOf(oethDripper.address);
 

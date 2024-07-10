@@ -6,6 +6,7 @@ const { getSigner } = require("../utils/signers");
 const { getClusterInfo } = require("../utils/ssv");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const { checkPubkeyFormat } = require("./taskUtils");
 
 const log = require("../utils/logger")("task:ssv");
 
@@ -30,7 +31,8 @@ async function removeValidator({ pubkey, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`About to exit validator`);
+  log(`About to remove validator`);
+  pubkey = checkPubkeyFormat(pubkey);
   const tx = await strategy
     .connect(signer)
     .removeSsvValidator(pubkey, operatorIds, cluster);

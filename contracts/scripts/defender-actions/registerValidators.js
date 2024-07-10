@@ -6,7 +6,7 @@ const {
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
-const { registerValidators } = require("../../tasks/validator");
+const { registerValidators } = require("../../utils/validator");
 const addresses = require("../../utils/addresses");
 
 const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
@@ -60,6 +60,20 @@ const handler = async (event) => {
   const p2p_base_url =
     network.chainId === 1 ? "api.p2p.org" : "api-test-holesky.p2p.org";
 
+  const awsS3AccessKeyId = event.secrets.AWS_ACCESS_S3_KEY_ID;
+  const awsS3SexcretAccessKeyId = event.secrets.AWS_SECRET_S3_ACCESS_KEY;
+  const s3BucketName = event.secrets.VALIDATOR_KEYS_S3_BUCKET_NAME;
+
+  if (!awsS3AccessKeyId) {
+    throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
+  }
+  if (!awsS3SexcretAccessKeyId) {
+    throw new Error("Secret AWS_SECRET_S3_ACCESS_KEY not set");
+  }
+  if (!s3BucketName) {
+    throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
+  }
+
   await registerValidators({
     signer,
     store,
@@ -75,7 +89,10 @@ const handler = async (event) => {
     // this overrides validatorSpawnOperationalPeriodInDays
     ssvAmount: 0,
     clear: false,
-    requestedValidators: 1,
+    // maxValidatorsToRegister: 1,
+    awsS3AccessKeyId,
+    awsS3SexcretAccessKeyId,
+    s3BucketName,
   });
 };
 

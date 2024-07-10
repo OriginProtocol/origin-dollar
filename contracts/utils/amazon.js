@@ -7,30 +7,29 @@ const {
 
 const log = require("../utils/logger")("task:aws");
 
-const getS3Context = async () => {
-  const apiKey = process.env.AWS_ACCESS_S3_KEY_ID;
-  const apiSecret = process.env.AWS_SECRET_S3_ACCESS_KEY;
-  const bucketName = process.env.VALIDATOR_KEYS_S3_BUCKET_NAME;
-
-  if (!apiKey || !apiSecret || !bucketName) {
-    throw new Error(
-      "AWS_ACCESS_S3_KEY_ID & AWS_SECRET_S3_ACCESS_KEY & VALIDATOR_KEYS_S3_BUCKET_NAME need to all be set."
-    );
-  }
-
+const getS3Context = async ({
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
+}) => {
   return [
     new S3Client({
       region: "us-east-1",
       credentials: {
-        accessKeyId: apiKey,
-        secretAccessKey: apiSecret,
+        accessKeyId: awsS3AccessKeyId,
+        secretAccessKey: awsS3SexcretAccessKeyId,
       },
     }),
-    bucketName,
+    s3BucketName,
   ];
 };
 
-const getPrivateKeyFromS3 = async (pubkey) => {
+const getPrivateKeyFromS3 = async ({
+  pubkey,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
+}) => {
   const [s3Client, bucketName] = await getS3Context();
   log("Attempting to fetch encrypted private key from S3");
   const fileName = `${pubkey}.json`;
@@ -51,8 +50,18 @@ const getPrivateKeyFromS3 = async (pubkey) => {
   }
 };
 
-const storePrivateKeyToS3 = async (pubkey, encryptedPrivateKey) => {
-  const [s3Client, bucketName] = await getS3Context();
+const storePrivateKeyToS3 = async ({
+  pubkey,
+  encryptedPrivateKey,
+  awsS3AccessKeyId,
+  awsS3SexcretAccessKeyId,
+  s3BucketName,
+}) => {
+  const [s3Client, bucketName] = await getS3Context({
+    awsS3AccessKeyId,
+    awsS3SexcretAccessKeyId,
+    s3BucketName,
+  });
   log("Attempting to store encrypted private key to S3");
 
   const fileName = `${pubkey}.json`;
