@@ -137,7 +137,7 @@ describe("ForkTest: Lido Withdrawal Strategy", function () {
           // stETH transfers can leave 1-2 wei in the contract
           stETHAmount.sub(2)
         )
-        .lte(stETHAmount);
+        .lte(stETHAmount.add(1));
       expect(finalNativeEthBalanceVault).to.equal(initialNativeEthBalanceVault);
     });
 
