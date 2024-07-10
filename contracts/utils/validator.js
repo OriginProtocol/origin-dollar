@@ -80,9 +80,11 @@ const registerValidators = async ({
     return;
   }
   const validatorsCount =
+    maxValidatorsToRegister === undefined ||
     validatorsForEth < maxValidatorsToRegister
       ? validatorsForEth
       : maxValidatorsToRegister;
+  log(`validatorsCount: ${validatorsCount}`);
 
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
@@ -505,7 +507,6 @@ const createValidatorRequest = async (
   validatorsCount
 ) => {
   const uuid = uuidv4();
-  log(`validatorsCount: ${validatorsCount}`);
   await p2pRequest(
     `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/create`,
     p2p_api_key,
@@ -789,5 +790,5 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
 module.exports = {
   registerValidators,
   stakeValidators,
-  validatorsThatCanBeStaked
+  validatorsThatCanBeStaked,
 };

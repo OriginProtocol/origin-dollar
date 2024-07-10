@@ -89,7 +89,7 @@ const handler = async (event) => {
     // this overrides validatorSpawnOperationalPeriodInDays
     ssvAmount: 0,
     clear: false,
-    maxValidatorsToRegister: 2,
+    // maxValidatorsToRegister: 1,
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
     s3BucketName,
