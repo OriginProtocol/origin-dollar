@@ -524,9 +524,8 @@ const createValidatorRequest = async (
 
   await updateState(uuid, nextState, store);
 
-  // Wait 30 seconds for the P2P API to process the request
-  log(`About to wait for 30 seconds for the P2P API to process the request...`);
-  await sleep(30000);
+  log(`About to wait for 60 seconds for the P2P API to process the request...`);
+  await sleep(60000);
 };
 
 const waitForTransactionAndUpdateStateOnSuccess = async (
