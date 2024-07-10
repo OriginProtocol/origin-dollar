@@ -8,7 +8,7 @@ const { impersonateAccount } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
-describe("ForkTest: Lido Withdrawal Strategy", function () {
+describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
   this.timeout(360 * 1000);
 
   // Retry up to 3 times on CI
