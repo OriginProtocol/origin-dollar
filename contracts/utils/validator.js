@@ -789,4 +789,5 @@ const retry = async (apiCall, uuid, store, attempts = 20) => {
 module.exports = {
   registerValidators,
   stakeValidators,
+  validatorsThatCanBeStaked
 };

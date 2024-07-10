@@ -10,6 +10,7 @@ const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { validatorsThatCanBeStaked } = require("../utils/validator");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -216,6 +217,7 @@ async function snapStaking({ block, admin }) {
     feeAccumulator.address,
     blockTag
   );
+  const validatorsForEth = await validatorsThatCanBeStaked(strategy, weth);
 
   console.log(
     `Active validators        : ${await strategy.activeDepositedValidators({
@@ -257,6 +259,7 @@ async function snapStaking({ block, admin }) {
 
   console.log(`Stake ETH Tally          : ${formatUnits(stakeETHTally)}`);
   console.log(`Stake ETH Threshold      : ${formatUnits(stakeETHThreshold)}`);
+  console.log(`Validators can be staked : ${validatorsForEth}`);
 
   if (admin) {
     console.log(
