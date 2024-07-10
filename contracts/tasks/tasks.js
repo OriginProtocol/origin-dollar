@@ -86,8 +86,6 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  registerValidators,
-  stakeValidators,
   exitValidator,
   doAccounting,
   resetStakeETHTally,
@@ -96,6 +94,7 @@ const {
   pauseStaking,
   snapStaking,
 } = require("./validator");
+const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -1067,7 +1066,8 @@ subtask(
   )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await registerValidators(config);
+    const signer = await getSigner();
+    await registerValidators({ ...config, signer });
   });
 task("registerValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1085,7 +1085,8 @@ subtask(
   )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await stakeValidators(config);
+    const signer = await getSigner();
+    await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1104,7 +1105,10 @@ subtask("exitValidator", "Starts the exit process from a validator")
     undefined,
     types.string
   )
-  .setAction(exitValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await exitValidator({ ...taskArgs, signer });
+  });
 task("exitValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1125,7 +1129,10 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(removeValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidator({ ...taskArgs, signer });
+  });
 task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1153,7 +1160,10 @@ task("doAccounting").setAction(async (_, __, runSuper) => {
 subtask(
   "resetStakeETHTally",
   "Resets the amount of Ether staked back to zero"
-).setAction(resetStakeETHTally);
+).setAction(async () => {
+  const signer = await getSigner();
+  await resetStakeETHTally({ signer });
+});
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1163,7 +1173,10 @@ subtask(
   "Sets the amount of Ether than can be staked before needing a reset"
 )
   .addParam("amount", "Amount in ether", undefined, types.int)
-  .setAction(setStakeETHThreshold);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakeETHThreshold({ ...taskArgs, signer });
+  });
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1187,7 +1200,10 @@ subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
     0,
     types.float
   )
-  .setAction(fixAccounting);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await fixAccounting({ ...taskArgs, signer });
+  });
 task("fixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1195,7 +1211,10 @@ task("fixAccounting").setAction(async (_, __, runSuper) => {
 subtask(
   "pauseStaking",
   "Pause the staking of the Native Staking Strategy"
-).setAction(pauseStaking);
+).setAction(async () => {
+  const signer = await getSigner();
+  await pauseStaking({ signer });
+});
 task("pauseStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1216,7 +1235,10 @@ subtask(
     true,
     types.boolean
   )
-  .setAction(snapStaking);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await snapStaking({ ...taskArgs, signer });
+  });
 task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

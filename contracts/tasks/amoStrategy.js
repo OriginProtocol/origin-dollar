@@ -19,14 +19,13 @@ const log = require("../utils/logger")("task:curve");
 /**
  * hardhat task that dumps the current state of a AMO Strategy
  */
-async function amoStrategyTask(taskArguments, hre) {
+async function amoStrategyTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;
 
   const output = taskArguments.output ? console.log : log;
 
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
-    taskArguments,
-    hre
+    taskArguments
   );
 
   const { totalLPsBefore, totalLPs, poolBalancesBefore, poolBalances } =
