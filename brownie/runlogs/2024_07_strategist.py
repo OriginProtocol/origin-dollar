@@ -267,6 +267,16 @@ def main():
     txs.append(vault_oeth_core.rebase(std))
     txs.append(oeth_vault_value_checker.takeSnapshot(std))
     
+    # Deposit 156 validators * 32 ETH = 4992 WETH
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_LIDO_WITHDRAWAL_STRAT, 
+        [STETH], 
+        [4992 * 10 **18],
+        std
+      )
+    )
+    
     steth_remaining = steth.balanceOf(OETH_VAULT)
 
     # deposit of the remaining stETH
