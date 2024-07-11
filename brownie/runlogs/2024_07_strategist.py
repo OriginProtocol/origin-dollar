@@ -322,6 +322,17 @@ def main():
       )
     )
 
+    # Deposit WETH to Native Staking Strategy
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_NATIVE_STAKING_STRAT, 
+        [WETH], 
+        # (500 max validators - 243 existing validators) * 32 = 8,224 ETH
+        [8224 * 10**18],
+        std
+      )
+    )
+
     # After
     vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
     supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
