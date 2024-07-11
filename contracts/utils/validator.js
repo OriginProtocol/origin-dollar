@@ -524,7 +524,7 @@ const createValidatorRequest = async (
   validatorsCount
 ) => {
   const uuid = uuidv4();
-  log(`About to create a SSV validator request with uuid: ${uuid}`)
+  log(`About to create a SSV validator request with uuid: ${uuid}`);
   await p2pRequest(
     `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/create`,
     p2p_api_key,
