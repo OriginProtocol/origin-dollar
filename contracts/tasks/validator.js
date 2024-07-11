@@ -224,6 +224,10 @@ async function snapStaking({ block, admin }) {
     blockTag
   );
   const validatorsForEth = await validatorsThatCanBeStaked(strategy, weth);
+  const idleWethValidatorsBN = wethStrategyBalance
+    .mul(10)
+    .div(parseEther("32"));
+  const idleWethRequestsBN = idleWethValidatorsBN.div(16);
 
   console.log(
     `Active validators        : ${await strategy.activeDepositedValidators({
@@ -266,6 +270,12 @@ async function snapStaking({ block, admin }) {
   console.log(`Stake ETH Tally          : ${formatUnits(stakeETHTally)}`);
   console.log(`Stake ETH Threshold      : ${formatUnits(stakeETHThreshold)}`);
   console.log(`Validators can be staked : ${validatorsForEth}`);
+  console.log(
+    `Validators from WETH     : ${formatUnits(
+      idleWethValidatorsBN,
+      1
+    )} (${formatUnits(idleWethRequestsBN, 1)} requests)`
+  );
 
   if (admin) {
     console.log(
