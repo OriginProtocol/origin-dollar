@@ -312,11 +312,12 @@ def main():
     txs.append(oeth_vault_value_checker.takeSnapshot(std))
     
     # Claim the withdrawal requests from the Lido Withdrawal Queue
+    expected_amount = (4992 + 7000) * 10**18 + 914635193689940225665 + 5
     txs.append(
       lido_withdrawal_strat.claimWithdrawals(
         # withdrawal NFT IDs in tx 0x3d43421cc03b8c6580eba42e4e3f85b1e9b7c82d94c5d28a9f62777775ed2dc9
         [45345, 45346, 45347, 45348, 45349, 45350, 45351, 45352, 45353, 45354, 45355, 45356, 45357],
-        4992 * 10**18,
+        expected_amount,
         std
       )
     )
@@ -327,6 +328,7 @@ def main():
     profit = vault_change - supply_change
     txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), std))
     print("-----")
+    print("Expected amount", "{:.6f}".format(expected_amount / 10**18), expected_amount)
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
