@@ -1064,6 +1064,12 @@ subtask(
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
+    undefined,
+    types.string
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
     const signer = await getSigner();
