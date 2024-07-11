@@ -250,4 +250,8 @@ interface IVault {
         external
         view
         returns (VaultStorage.WithdrawalRequest memory);
+
+    function setEnableWhitelist(bool _enabled) external;
+
+    function setWhitelistedWithdrawer(address _user, bool _enabled) external;
 }
