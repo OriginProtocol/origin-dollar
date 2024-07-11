@@ -269,7 +269,8 @@ async function snapStaking({ block, admin, index }) {
 }
 
 const resolveNativeStakingStrategyProxy = async (index) => {
-  const proxyNumber = index === undefined ? "" : index.toString();
+  const proxyNumber =
+    index === undefined || index === 1 ? "" : index.toString();
 
   const strategy = await resolveContract(
     `NativeStakingSSVStrategy${proxyNumber}Proxy`,

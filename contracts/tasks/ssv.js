@@ -81,7 +81,7 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const calcDepositRoot = async ({ pubkey, sig }, hre) => {
+const calcDepositRoot = async ({ index, pubkey, sig }, hre) => {
   if (hre.network.name !== "hardhat") {
     throw new Error("This task can only be run in hardhat network");
   }
@@ -89,12 +89,20 @@ const calcDepositRoot = async ({ pubkey, sig }, hre) => {
   const factory = await ethers.getContractFactory("DepositContractUtils");
   const depositContractUtils = await factory.deploy();
 
+  const proxyNumber =
+    index === undefined || index === 1 ? "" : index.toString();
+  const strategyAddress =
+    addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`];
+  log(
+    `Resolved Native Staking Strategy with index ${index} to address to ${strategyAddress}`
+  );
+
   const withdrawalCredentials = solidityPack(
     ["bytes1", "bytes11", "address"],
     [
       "0x01",
       "0x0000000000000000000000",
-      addresses.mainnet.NativeStakingSSVStrategyProxy,
+      addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`],
     ]
   );
   log(`Withdrawal Credentials: ${withdrawalCredentials}`);

@@ -1342,6 +1342,12 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(calcDepositRoot);
 task("depositRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
