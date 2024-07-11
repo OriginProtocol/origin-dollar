@@ -191,6 +191,7 @@ contract OETHVaultCore is VaultCore {
         withdrawalRequests[requestId] = WithdrawalRequest({
             withdrawer: msg.sender,
             claimed: false,
+            timestamp: uint40(block.timestamp),
             amount: uint128(_amount),
             queued: uint128(queued)
         });
@@ -255,6 +256,10 @@ contract OETHVaultCore is VaultCore {
 
         require(request.claimed == false, "already claimed");
         require(request.withdrawer == msg.sender, "not requester");
+        require(
+            request.timestamp + CLAIM_DELAY <= block.timestamp,
+            "claim delay not met"
+        );
 
         // Try and get more liquidity in the withdrawal queue if there is not enough
         if (request.queued > queue.claimable) {

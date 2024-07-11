@@ -210,6 +210,7 @@ contract VaultStorage is Initializable, Governable {
     struct WithdrawalRequest {
         address withdrawer;
         bool claimed;
+        uint40 timestamp; // timestamp of the withdrawal request
         // Amount of oTokens to redeem. eg OETH
         uint128 amount;
         // cumulative total of all withdrawal requests including this one.
@@ -219,6 +220,8 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
+
+    uint256 constant CLAIM_DELAY = 30 minutes;
 
     // For future use
     uint256[46] private __gap;
