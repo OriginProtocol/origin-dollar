@@ -50,20 +50,36 @@ const registerValidators = async ({
   WETH,
   validatorSpawnOperationalPeriodInDays,
   clear,
+  uuid,
   maxValidatorsToRegister,
   ssvAmount,
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
   s3BucketName,
 }) => {
-  let currentState = await getState(store);
-  log("currentState", currentState);
+  if (uuid && clear) {
+    throw new Error(`Can not clear state and use a uuid at the same time.`);
+  }
+  let currentState;
+  if (!uuid) {
+    // If starting a new registration or restarting a failed one
+    currentState = await getState(store);
+    log("currentState", currentState);
+  } else {
+    // If restarting a registration that failed to get the SSV request status
+    await clearState(uuid, store);
+    await updateState(uuid, "validator_creation_issued", store);
+    currentState = await getState(store);
+    log(`Processing uuid: ${uuid}`);
+  }
 
+  // If clearing the local storage so a new registration can be started
   if (clear && currentState?.uuid) {
     await clearState(currentState.uuid, store);
     currentState = undefined;
   }
 
+  // Calculate how many validators can be staked to
   const validatorsForEth = await validatorsThatCanBeStaked(
     nativeStakingStrategy,
     WETH
@@ -86,6 +102,7 @@ const registerValidators = async ({
       : maxValidatorsToRegister;
   log(`validatorsCount: ${validatorsCount}`);
 
+  // Check if this Native Staking Contract is not paused
   if (await stakingContractPaused(nativeStakingStrategy)) {
     console.log(`Native staking contract is paused... exiting`);
     return;
@@ -507,6 +524,7 @@ const createValidatorRequest = async (
   validatorsCount
 ) => {
   const uuid = uuidv4();
+  log(`About to create a SSV validator request with uuid: ${uuid}`);
   await p2pRequest(
     `https://${p2p_base_url}/api/v1/eth/staking/ssv/request/create`,
     p2p_api_key,
@@ -619,6 +637,18 @@ const broadcastRegisterValidator = async (
   }
 
   ssvAmount = ssvAmount !== undefined ? ssvAmount : amount;
+
+  // Check the first validator has not already been registered
+  const hashedPubkey = keccak256(metadata.pubkeys[0]);
+  const status = await nativeStakingStrategy.validatorsStates(hashedPubkey);
+  if (validatorStateEnum[status] !== "NOT_REGISTERED") {
+    log(
+      `Validator with pubkey ${metadata.pubkeys[0]} is not in NOT_REGISTERED state. Current state: ${validatorStateEnum[status]}`
+    );
+    throw Error(
+      `public key has already been registered for uuid ${uuid}: ${metadata.pubkeys[0]} `
+    );
+  }
 
   log(`About to register validator with:`);
   log(`publicKeys: ${publicKeys}`);
