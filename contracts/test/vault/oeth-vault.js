@@ -5,6 +5,7 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { oethUnits, advanceTime } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
 const oethFixture = createFixtureLoader(oethDefaultFixture);
@@ -374,6 +375,9 @@ describe("OETH Vault", function () {
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
       await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setEnableWhitelist(false);
     });
     const firstRequestAmount = oethUnits("5");
     const secondRequestAmount = oethUnits("18");
@@ -514,6 +518,25 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
+    it("should request first withdrawal as whitelisted user", async () => {
+      const { oethVault, matt } = fixture;
+
+      // Enable whitelist
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setEnableWhitelist(false);
+
+      // Add matt to whitelist
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setWhitelistedWithdrawer(matt.address, true);
+
+      const tx = oethVault.connect(matt).requestWithdrawal(firstRequestAmount);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalRequested")
+        .withArgs(matt.address, 0, firstRequestAmount, firstRequestAmount);
+    });
     it("Should add claimable liquidity to the withdrawal queue", async () => {
       const { oethVault, daniel, josh } = fixture;
       const fixtureWithUser = { ...fixture, user: josh };
@@ -632,6 +655,20 @@ describe("OETH Vault", function () {
       const tx = oethVault.connect(daniel).claimWithdrawal(requestId);
 
       await expect(tx).to.revertedWith("claim delay not met");
+    });
+    it("Should fail request because not withlisted", async () => {
+      const { oethVault, daniel } = fixture;
+
+      // Enable whitelist
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setEnableWhitelist(true);
+
+      const tx = oethVault
+        .connect(daniel)
+        .requestWithdrawal(firstRequestAmount);
+
+      await expect(tx).to.revertedWith("Only whitelisted withdrawers");
     });
 
     describe("when deposit some WETH to a strategy", () => {
