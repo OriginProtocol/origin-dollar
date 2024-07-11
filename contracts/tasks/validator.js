@@ -69,6 +69,12 @@ const validatorOperationsConfig = async (taskArgs) => {
     throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
   }
 
+  // Convert the SSV amount to wei in string format if it is provided
+  const ssvAmount =
+    taskArgs.ssv >= 0
+      ? parseEther(taskArgs.ssv.toString()).toString()
+      : undefined;
+
   return {
     store: new KeyValueStoreClient({ path: storeFilePath }),
     p2p_api_key,
@@ -83,7 +89,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
     maxValidatorsToRegister: taskArgs.validators,
-    ssvAmount: taskArgs.ssv,
+    ssvAmount,
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
     s3BucketName,
