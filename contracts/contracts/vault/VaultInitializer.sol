@@ -35,5 +35,7 @@ contract VaultInitializer is VaultStorage {
         rebaseThreshold = 1000e18;
         // Initialize all strategies
         allStrategies = new address[](0);
+        // Enable whitelist by default
+        whitelistEnabled = true;
     }
 }

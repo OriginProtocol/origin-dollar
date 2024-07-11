@@ -171,6 +171,7 @@ contract OETHVaultCore is VaultCore {
      */
     function requestWithdrawal(uint256 _amount)
         external
+        onlyWhitelistedWithdrawers
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 requestId, uint256 queued)
