@@ -4,7 +4,7 @@ const hre = require("hardhat");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { oethUnits } = require("../helpers");
+const { oethUnits, advanceTime } = require("../helpers");
 const addresses = require("../../utils/addresses");
 
 const oethFixture = createFixtureLoader(oethDefaultFixture);
@@ -377,6 +377,7 @@ describe("OETH Vault", function () {
     });
     const firstRequestAmount = oethUnits("5");
     const secondRequestAmount = oethUnits("18");
+    const delayPeriod = 30 * 60; // 30 minutes
     it("should request first withdrawal by Daniel", async () => {
       const { oethVault, daniel } = fixture;
       const fixtureWithUser = { ...fixture, user: daniel };
@@ -552,6 +553,8 @@ describe("OETH Vault", function () {
       const requestId = 1; // ids start at 0 so the second request is at index 1
       const dataBefore = await snapData(fixtureWithUser);
 
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
       const tx = await oethVault.connect(josh).claimWithdrawal(requestId);
 
       await expect(tx)
@@ -586,6 +589,8 @@ describe("OETH Vault", function () {
       await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
       const dataBefore = await snapData(fixtureWithUser);
 
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
       const tx = await oethVault.connect(matt).claimWithdrawals([0, 1]);
 
       await expect(tx)
@@ -615,6 +620,18 @@ describe("OETH Vault", function () {
         },
         fixtureWithUser
       );
+    });
+    it("Should fail claim request because of not enough time passed", async () => {
+      const { oethVault, daniel } = fixture;
+
+      // Daniel requests 5 OETH to be withdrawn
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+      const requestId = 0;
+
+      // Daniel claimWithdraw request in the same block as the request
+      const tx = oethVault.connect(daniel).claimWithdrawal(requestId);
+
+      await expect(tx).to.revertedWith("claim delay not met");
     });
 
     describe("when deposit some WETH to a strategy", () => {
@@ -679,6 +696,8 @@ describe("OETH Vault", function () {
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
 
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
         const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
         await expect(tx)
@@ -715,6 +734,8 @@ describe("OETH Vault", function () {
 
         const dataBefore = await snapData(fixtureWithUser);
 
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
         const tx = await oethVault.connect(matt).claimWithdrawal(2);
 
         await expect(tx)
@@ -742,6 +763,8 @@ describe("OETH Vault", function () {
         // Matt request 23 OETH to be withdrawn when only 22 WETH is unallocated to existing requests
         const requestAmount = oethUnits("23");
         await oethVault.connect(matt).requestWithdrawal(requestAmount);
+
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         const tx = oethVault.connect(matt).claimWithdrawal(2);
         await expect(tx).to.be.revertedWith("queue pending liquidity");
@@ -786,6 +809,8 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
 
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
         await oethVault.connect(matt).claimWithdrawal(2);
       });
       it("Should claim a new request after withdrawAllFromStrategy adds enough liquidity", async () => {
@@ -826,6 +851,8 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
 
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
         await oethVault.connect(matt).claimWithdrawal(2);
       });
       it("Should claim a new request after withdrawAll from strategies adds enough liquidity", async () => {
@@ -864,6 +891,8 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
 
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
         await oethVault.connect(matt).claimWithdrawal(2);
       });
       it("Should fail to claim a new request after mint with NOT enough liquidity", async () => {
@@ -877,6 +906,8 @@ describe("OETH Vault", function () {
         // unallocated WETH in the Vault = 45 - 23 = 22 WETH
         // Add another 6 WETH so the unallocated WETH is 22 + 6 = 28 WETH
         await oethVault.connect(daniel).mint(weth.address, oethUnits("6"), 0);
+
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         const tx = oethVault.connect(matt).claimWithdrawal(2);
         await expect(tx).to.be.revertedWith("queue pending liquidity");
@@ -914,6 +945,8 @@ describe("OETH Vault", function () {
           },
           fixtureWithUser
         );
+
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         await oethVault.connect(matt).claimWithdrawal(2);
       });
