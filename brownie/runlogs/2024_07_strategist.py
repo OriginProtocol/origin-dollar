@@ -256,7 +256,7 @@ def main():
     print("-----")
 
 # -------------------------------------
-# Jul 13, 2024 - Deposit all stETH to Lido Withdrawal Strategy
+# Jul 10, 2024 - Deposit all stETH to Lido Withdrawal Strategy
 # -------------------------------------
 from world import *
 
@@ -301,7 +301,7 @@ def main():
     print("-----")
 
 # -------------------------------------
-# Jul 10, 2024 - Claim withdrawals from Lido Withdrawal Strategy
+# Jul 11, 2024 - Claim withdrawals from Lido Withdrawal Strategy
 # -------------------------------------
 from world import *
 
