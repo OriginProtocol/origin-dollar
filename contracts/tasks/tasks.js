@@ -85,8 +85,6 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  registerValidators,
-  stakeValidators,
   exitValidator,
   doAccounting,
   resetStakeETHTally,
@@ -96,6 +94,7 @@ const {
   snapStaking,
   resolveNativeStakingStrategyProxy,
 } = require("./validator");
+const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -1088,9 +1087,16 @@ subtask(
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
+    undefined,
+    types.string
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await registerValidators(config);
+    const signer = await getSigner();
+    await registerValidators({ ...config, signer });
   });
 task("registerValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1108,7 +1114,8 @@ subtask(
   )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await stakeValidators(config);
+    const signer = await getSigner();
+    await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1133,7 +1140,10 @@ subtask("exitValidator", "Starts the exit process from a validator")
     undefined,
     types.int
   )
-  .setAction(exitValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await exitValidator({ ...taskArgs, signer });
+  });
 task("exitValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1160,7 +1170,10 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(removeValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidator({ ...taskArgs, signer });
+  });
 task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1191,14 +1204,22 @@ task("doAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("resetStakeETHTally", "Resets the amount of Ether staked back to zero")
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(resetStakeETHTally);
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(async () => {
+  const signer = await getSigner();
+  await resetStakeETHTally({ signer });
+});
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1214,7 +1235,10 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(setStakeETHThreshold);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakeETHThreshold({ ...taskArgs, signer });
+  });
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1244,19 +1268,30 @@ subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
     undefined,
     types.int
   )
-  .setAction(fixAccounting);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await fixAccounting({ ...taskArgs, signer });
+  });
 task("fixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("pauseStaking", "Pause the staking of the Native Staking Strategy")
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(pauseStaking);
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).setAction(async () => {
+  const signer = await getSigner();
+  await pauseStaking({ signer });
+});
 task("pauseStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1283,7 +1318,10 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(snapStaking);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await snapStaking({ ...taskArgs, signer });
+  });
 task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

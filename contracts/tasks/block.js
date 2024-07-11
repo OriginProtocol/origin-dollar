@@ -8,7 +8,7 @@ async function getBlock(block) {
   return blockTag;
 }
 
-async function getDiffBlocks(taskArguments, hre) {
+async function getDiffBlocks(taskArguments) {
   const output = taskArguments.output ? console.log : log;
 
   // Get the block to get all the data from

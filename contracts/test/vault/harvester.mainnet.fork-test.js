@@ -40,7 +40,7 @@ describe("ForkTest: Harvester", function () {
       const wethBefore = await weth.balanceOf(oethDripper.address);
 
       // Send some rewards to the strategy
-      await setERC20TokenBalance(convexEthMetaStrategy.address, crv, "1000");
+      await setERC20TokenBalance(convexEthMetaStrategy.address, crv, "2000");
 
       // prettier-ignore
       const tx = await oethHarvester

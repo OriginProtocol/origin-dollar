@@ -245,6 +245,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
     };
 
+    beforeEach(async () => {
+      const { addresses, nativeStakingSSVStrategy } = await context();
+
+      const stakingMonitorSigner = await impersonateAndFund(addresses.Guardian);
+      await nativeStakingSSVStrategy
+        .connect(stakingMonitorSigner)
+        .resetStakeETHTally();
+    });
+
     it("Should register and stake 32 ETH by validator registrator", async () => {
       await depositToStrategy(oethUnits("32"));
       await registerAndStakeEth();
