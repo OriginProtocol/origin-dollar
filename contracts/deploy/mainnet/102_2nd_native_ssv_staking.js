@@ -52,17 +52,17 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Deploy the new FeeAccumulator implementation
-    console.log(`About to deploy FeeAccumulator2 implementation`);
-    const dFeeAccumulator2 = await deployWithConfirmation("FeeAccumulator2", [
+    console.log(`About to deploy FeeAccumulator implementation`);
+    const dFeeAccumulator2 = await deployWithConfirmation("FeeAccumulator", [
       cNativeStakingStrategy2Proxy.address, // _collector
     ]);
     const cFeeAccumulator2 = await ethers.getContractAt(
-      "FeeAccumulator2",
+      "FeeAccumulator",
       dFeeAccumulator2.address
     );
 
     // 4. Init the Second FeeAccumulator proxy to point at the implementation, set the governor
-    console.log(`About to initialize FeeAccumulator2`);
+    console.log(`About to initialize FeeAccumulator`);
     const proxyInitFunction = "initialize(address,address,bytes)";
     await withConfirmation(
       cFeeAccumulator2Proxy.connect(sDeployer)[proxyInitFunction](
@@ -74,9 +74,9 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 5. Deploy the new Native Staking Strategy implementation
-    console.log(`About to deploy NativeStakingSSVStrategy2 implementation`);
+    console.log(`About to deploy NativeStakingSSVStrategy implementation`);
     const dNativeStakingStrategy2Impl = await deployWithConfirmation(
-      "NativeStakingSSVStrategy2",
+      "NativeStakingSSVStrategy",
       [
         [addresses.zero, cVaultProxy.address], //_baseConfig
         addresses.mainnet.WETH, // wethAddress
@@ -88,12 +88,12 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
     const cNativeStakingStrategy2Impl = await ethers.getContractAt(
-      "NativeStakingSSVStrategy2",
+      "NativeStakingSSVStrategy",
       dNativeStakingStrategy2Impl.address
     );
 
     const cNativeStakingStrategy2 = await ethers.getContractAt(
-      "NativeStakingSSVStrategy2",
+      "NativeStakingSSVStrategy",
       cNativeStakingStrategy2Proxy.address
     );
 

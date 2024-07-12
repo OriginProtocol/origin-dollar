@@ -57,11 +57,11 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
     fixture = await loadFixture();
     nativeStakingSSVStrategy = await resolveContract(
       "NativeStakingSSVStrategy2Proxy",
-      "NativeStakingSSVStrategy2"
+      "NativeStakingSSVStrategy"
     );
     nativeStakingFeeAccumulator = await resolveContract(
       "NativeStakingFeeAccumulator2Proxy",
-      "FeeAccumulator2"
+      "FeeAccumulator"
     );
   });
 
