@@ -202,6 +202,7 @@ addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 addresses.mainnet.BalancerRETHStrategy =
   "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
+addresses.mainnet.OETHARM = "0x0000000000000000000000000000000000012345";
 // OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";

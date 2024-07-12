@@ -8,7 +8,7 @@ import "../utils/Helpers.sol";
 contract MockOETHVault is OETHVaultCore {
     using StableMath for uint256;
 
-    constructor(address _weth) OETHVaultCore(_weth) {}
+    constructor(address _weth, address _wl) OETHVaultCore(_weth, _wl) {}
 
     function supportAsset(address asset) external {
         assets[asset] = Asset({

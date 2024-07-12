@@ -53,27 +53,6 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
-    modifier onlyWhitelistedWithdrawers() {
-        if (whitelistEnabled) {
-            require(
-                whitelistedWithdrawers[msg.sender],
-                "Only whitelisted withdrawers"
-            );
-        }
-        _;
-    }
-
-    function setEnableWhitelist(bool _enabled) external onlyGovernor {
-        whitelistEnabled = _enabled;
-    }
-
-    function setWhitelistedWithdrawer(address _user, bool _enabled)
-        external
-        onlyGovernor
-    {
-        whitelistedWithdrawers[_user] = _enabled;
-    }
-
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited

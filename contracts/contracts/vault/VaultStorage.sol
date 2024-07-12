@@ -224,14 +224,8 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Minimum time between withdrawal requests and claims
     uint256 public constant CLAIM_DELAY = 30 minutes;
 
-    /// @notice Mapping of addresses that are allowed to withdraw, when the whitelist is enabled
-    mapping(address => bool) public whitelistedWithdrawers;
-
-    /// @notice Status of the whitelist
-    bool public whitelistEnabled;
-
     // For future use
-    uint256[44] private __gap;
+    uint256[46] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

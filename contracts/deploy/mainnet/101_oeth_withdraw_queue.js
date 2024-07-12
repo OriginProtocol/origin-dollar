@@ -21,7 +21,7 @@ module.exports = deploymentWithGovernanceProposal(
     // internal assets mapping to just use 1 storage slot
     const dVaultCore = await deployWithConfirmation(
       "OETHVaultCore",
-      [addresses.mainnet.WETH],
+      [addresses.mainnet.WETH, addresses.mainnet.OETHARM],
       null,
       true
     );

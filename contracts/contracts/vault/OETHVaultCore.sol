@@ -18,10 +18,12 @@ contract OETHVaultCore is VaultCore {
     using StableMath for uint256;
 
     address public immutable weth;
+    address public immutable whitelistedWithdrawer;
     uint256 public wethAssetIndex;
 
-    constructor(address _weth) {
+    constructor(address _weth, address _wl) {
         weth = _weth;
+        whitelistedWithdrawer = _wl;
     }
 
     /**
@@ -171,11 +173,11 @@ contract OETHVaultCore is VaultCore {
      */
     function requestWithdrawal(uint256 _amount)
         external
-        onlyWhitelistedWithdrawers
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
+        require(whitelistedWithdrawer == msg.sender, "Not whitelisted");
         // Burn the user's OETH
         // This also checks the requester has enough OETH to burn
         oUSD.burn(msg.sender, _amount);

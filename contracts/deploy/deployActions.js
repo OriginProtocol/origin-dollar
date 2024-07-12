@@ -1095,6 +1095,7 @@ const deployOETHCore = async () => {
   const dOETHVault = await deployWithConfirmation("OETHVault");
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
     assetAddresses.WETH,
+    addresses.mainnet.OETHARM,
   ]);
   const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
     assetAddresses.WETH,
