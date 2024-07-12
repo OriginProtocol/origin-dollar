@@ -96,8 +96,8 @@ contract OETHVaultAdmin is VaultAdmin {
         uint256 _minToAssetAmount,
         bytes calldata _data
     ) internal override returns (uint256 toAssetAmount) {
-        require(_fromAsset != weth, "swap from WETH not supported");
-        require(_toAsset == weth, "only swap to WETH");
+        require(_fromAsset != weth, "Swap from WETH not supported");
+        require(_toAsset == weth, "Only swap to WETH");
         toAssetAmount = super._swapCollateral(
             _fromAsset,
             _toAsset,

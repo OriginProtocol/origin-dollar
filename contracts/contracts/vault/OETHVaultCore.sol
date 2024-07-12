@@ -255,11 +255,11 @@ contract OETHVaultCore is VaultCore {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
         WithdrawalRequest memory request = withdrawalRequests[requestId];
 
-        require(request.claimed == false, "already claimed");
-        require(request.withdrawer == msg.sender, "not requester");
+        require(request.claimed == false, "Already claimed");
+        require(request.withdrawer == msg.sender, "Not requester");
         require(
             request.timestamp + CLAIM_DELAY <= block.timestamp,
-            "claim delay not met"
+            "Claim delay not met"
         );
 
         // Try and get more liquidity in the withdrawal queue if there is not enough
@@ -273,7 +273,7 @@ contract OETHVaultCore is VaultCore {
             // If there still isn't enough liquidity in the queue to claim, revert
             require(
                 request.queued <= queue.claimable + addedClaimable,
-                "queue pending liquidity"
+                "Queue pending liquidity"
             );
         }
 
