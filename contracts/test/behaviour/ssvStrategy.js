@@ -253,6 +253,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         await nativeStakingSSVStrategy.activeDepositedValidators();
       if (activeValidators.gte(500)) {
         this.skip();
+        return;
       }
 
       const stakingMonitorSigner = await impersonateAndFund(addresses.Guardian);
