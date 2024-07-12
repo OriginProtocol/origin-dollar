@@ -221,8 +221,6 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
-    uint256 constant CLAIM_DELAY = 30 minutes;
-
     // For future use
     uint256[46] private __gap;
 
