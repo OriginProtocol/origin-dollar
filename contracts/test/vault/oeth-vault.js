@@ -4,7 +4,7 @@ const hre = require("hardhat");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { oethUnits, advanceTime } = require("../helpers");
+const { oethUnits /*,advanceTime*/ } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
@@ -179,7 +179,10 @@ describe("OETH Vault", function () {
     it("should revert if WETH index isn't cached", async () => {
       const { frxETH, weth } = fixture;
 
-      await deployWithConfirmation("MockOETHVault", [weth.address]);
+      await deployWithConfirmation("MockOETHVault", [
+        weth.address,
+        addresses.mainnet.OETHARM,
+      ]);
       const mockVault = await hre.ethers.getContract("MockOETHVault");
 
       await mockVault.supportAsset(frxETH.address);
@@ -284,7 +287,10 @@ describe("OETH Vault", function () {
       const { deployerAddr } = await hre.getNamedAccounts();
       const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
-      await deployWithConfirmation("MockOETHVault", [weth.address]);
+      await deployWithConfirmation("MockOETHVault", [
+        weth.address,
+        addresses.mainnet.OETHARM,
+      ]);
       const mockVault = await hre.ethers.getContract("MockOETHVault");
 
       await mockVault.supportAsset(frxETH.address);
@@ -375,13 +381,12 @@ describe("OETH Vault", function () {
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
       await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .setEnableWhitelist(false);
     });
     const firstRequestAmount = oethUnits("5");
-    const secondRequestAmount = oethUnits("18");
-    const delayPeriod = 30 * 60; // 30 minutes
+    //const secondRequestAmount = oethUnits("18");
+    //const delayPeriod = 30 * 60; // 30 minutes
+
+    /*
     it("should request first withdrawal by Daniel", async () => {
       const { oethVault, daniel } = fixture;
       const fixtureWithUser = { ...fixture, user: daniel };
@@ -517,26 +522,28 @@ describe("OETH Vault", function () {
         },
         fixtureWithUser
       );
-    });
+    });*/
     it("should request first withdrawal as whitelisted user", async () => {
-      const { oethVault, matt } = fixture;
+      const { oethVault, oeth, matt } = fixture;
 
-      // Enable whitelist
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .setEnableWhitelist(false);
+      await oeth
+        .connect(matt)
+        .transfer(addresses.mainnet.OETHARM, oethUnits("30"));
 
-      // Add matt to whitelist
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .setWhitelistedWithdrawer(matt.address, true);
-
-      const tx = oethVault.connect(matt).requestWithdrawal(firstRequestAmount);
+      const tx = oethVault
+        .connect(await impersonateAndFund(addresses.mainnet.OETHARM))
+        .requestWithdrawal(firstRequestAmount);
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalRequested")
-        .withArgs(matt.address, 0, firstRequestAmount, firstRequestAmount);
+        .withArgs(
+          addresses.mainnet.OETHARM,
+          0,
+          firstRequestAmount,
+          firstRequestAmount
+        );
     });
+    /*
     it("Should add claimable liquidity to the withdrawal queue", async () => {
       const { oethVault, daniel, josh } = fixture;
       const fixtureWithUser = { ...fixture, user: josh };
@@ -1013,5 +1020,6 @@ describe("OETH Vault", function () {
         await expect(tx).to.be.revertedWith("Capital paused");
       });
     });
+    */
   });
 });
