@@ -626,17 +626,29 @@ describe("OETH Vault", function () {
       );
     });
     it("Should claim single big request as a whale", async () => {
-      const { oethVault, matt } = fixture;
+      const { oethVault, oeth, matt } = fixture;
+
+      const oethBalanceBefore = await oeth.balanceOf(matt.address);
+      const totalValueBefore = await oethVault.totalValue();
 
       await oethVault.connect(matt).requestWithdrawal(oethUnits("30"));
 
-      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+      const oethBalanceAfter = await oeth.balanceOf(matt.address);
+      const totalValueAfter = await oethVault.totalValue();
+      await expect(oethBalanceBefore).to.equal(oethUnits("30"));
+      await expect(oethBalanceAfter).to.equal(oethUnits("0"));
+      await expect(totalValueBefore.sub(totalValueAfter)).to.equal(oethUnits("30"));
 
+      const oethTotalSupply = await oeth.totalSupply();
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
       const tx = await oethVault.connect(matt).claimWithdrawal(0); // Claim withdrawal for 50% of the supply
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimed")
         .withArgs(matt.address, 0, oethUnits("30"));
+
+      await expect(oethTotalSupply).to.equal(await oeth.totalSupply());
+      await expect(totalValueAfter).to.equal(await oethVault.totalValue());
     });
 
     it("Should fail claim request because of not enough time passed", async () => {
