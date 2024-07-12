@@ -188,7 +188,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.be.revertedWith("WETH Asset index not cached");
     });
 
-    it("should update total supply correctly", async () => {
+    it("should update total supply correctly without redeem fee", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -205,6 +205,34 @@ describe("OETH Vault", function () {
       // Make sure the total supply went down
       expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(oethUnits("10"));
       expect(vaultBalanceBefore.sub(vaultBalanceAfter)).to.eq(oethUnits("10"));
+      expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
+    });
+
+    it("should update total supply correctly with redeem fee", async () => {
+      const { oethVault, oeth, weth, daniel } = fixture;
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setRedeemFeeBps(100);
+
+      const userBalanceBefore = await weth.balanceOf(daniel.address);
+      const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
+      const supplyBefore = await oeth.totalSupply();
+
+      await oethVault.connect(daniel).redeem(oethUnits("10"), "0");
+
+      const userBalanceAfter = await weth.balanceOf(daniel.address);
+      const vaultBalanceAfter = await weth.balanceOf(oethVault.address);
+      const supplyAfter = await oeth.totalSupply();
+
+      // Make sure the total supply went down
+      expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(
+        oethUnits("10").sub(oethUnits("0.1"))
+      );
+      expect(vaultBalanceBefore.sub(vaultBalanceAfter)).to.eq(
+        oethUnits("10").sub(oethUnits("0.1"))
+      );
       expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
     });
 
