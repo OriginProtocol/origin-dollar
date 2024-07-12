@@ -637,7 +637,9 @@ describe("OETH Vault", function () {
       const totalValueAfter = await oethVault.totalValue();
       await expect(oethBalanceBefore).to.equal(oethUnits("30"));
       await expect(oethBalanceAfter).to.equal(oethUnits("0"));
-      await expect(totalValueBefore.sub(totalValueAfter)).to.equal(oethUnits("30"));
+      await expect(totalValueBefore.sub(totalValueAfter)).to.equal(
+        oethUnits("30")
+      );
 
       const oethTotalSupply = await oeth.totalSupply();
       await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
