@@ -311,7 +311,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         require(
             currentState == VALIDATOR_STATE.EXITING ||
                 currentState == VALIDATOR_STATE.REGISTERED,
-            "Validator not exiting"
+            "Validator not regd or exiting"
         );
 
         ISSVNetwork(SSV_NETWORK).removeValidator(
