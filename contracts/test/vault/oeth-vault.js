@@ -5,6 +5,7 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { oethUnits, advanceTime } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
 const oethFixture = createFixtureLoader(oethDefaultFixture);
@@ -374,6 +375,9 @@ describe("OETH Vault", function () {
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
       await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setMaxSupplyDiff(oethUnits("0.03"));
     });
     const firstRequestAmount = oethUnits("5");
     const secondRequestAmount = oethUnits("18");
@@ -621,6 +625,20 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
+    it("Should claim single big request as a whale", async () => {
+      const { oethVault, matt } = fixture;
+
+      await oethVault.connect(matt).requestWithdrawal(oethUnits("30"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      const tx = await oethVault.connect(matt).claimWithdrawal(0); // Claim withdrawal for 50% of the supply
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(matt.address, 0, oethUnits("30"));
+    });
+
     it("Should fail claim request because of not enough time passed", async () => {
       const { oethVault, daniel } = fixture;
 
@@ -632,6 +650,65 @@ describe("OETH Vault", function () {
       const tx = oethVault.connect(daniel).claimWithdrawal(requestId);
 
       await expect(tx).to.revertedWith("Claim delay not met");
+    });
+    it("Should fail request withdrawal because of solvency check too high", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      await weth.connect(daniel).transfer(oethVault.address, oethUnits("10"));
+
+      const tx = oethVault
+        .connect(daniel)
+        .requestWithdrawal(firstRequestAmount);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+    it("Should fail claim request because of solvency check too high", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      // Request withdrawal of 5 OETH
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+
+      // Transfer 10 WETH to the vault
+      await weth.connect(daniel).transfer(oethVault.address, oethUnits("10"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Claim the withdrawal
+      const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+    it("Should fail multiple claim requests because of solvency check too high", async () => {
+      const { oethVault, matt, weth } = fixture;
+
+      // Request withdrawal of 5 OETH
+      await oethVault.connect(matt).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+
+      // Transfer 10 WETH to the vault
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Claim the withdrawal
+      const tx = oethVault.connect(matt).claimWithdrawals([0, 1]);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+
+    it("Should fail request withdrawal because of solvency check too low", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      // Simulate a loss of funds from the vault
+      await weth
+        .connect(await impersonateAndFund(oethVault.address))
+        .transfer(daniel.address, oethUnits("10"));
+
+      const tx = oethVault
+        .connect(daniel)
+        .requestWithdrawal(firstRequestAmount);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
     });
 
     describe("when deposit some WETH to a strategy", () => {
