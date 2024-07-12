@@ -17,6 +17,7 @@ contract OETHVaultCore is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    uint256 constant CLAIM_DELAY = 30 minutes;
     address public immutable weth;
     uint256 public wethAssetIndex;
 
@@ -191,6 +192,7 @@ contract OETHVaultCore is VaultCore {
         withdrawalRequests[requestId] = WithdrawalRequest({
             withdrawer: msg.sender,
             claimed: false,
+            timestamp: uint40(block.timestamp),
             amount: uint128(_amount),
             queued: uint128(queued)
         });
@@ -253,8 +255,12 @@ contract OETHVaultCore is VaultCore {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
         WithdrawalRequest memory request = withdrawalRequests[requestId];
 
-        require(request.claimed == false, "already claimed");
-        require(request.withdrawer == msg.sender, "not requester");
+        require(request.claimed == false, "Already claimed");
+        require(request.withdrawer == msg.sender, "Not requester");
+        require(
+            request.timestamp + CLAIM_DELAY <= block.timestamp,
+            "Claim delay not met"
+        );
 
         // Try and get more liquidity in the withdrawal queue if there is not enough
         if (request.queued > queue.claimable) {
@@ -267,7 +273,7 @@ contract OETHVaultCore is VaultCore {
             // If there still isn't enough liquidity in the queue to claim, revert
             require(
                 request.queued <= queue.claimable + addedClaimable,
-                "queue pending liquidity"
+                "Queue pending liquidity"
             );
         }
 
