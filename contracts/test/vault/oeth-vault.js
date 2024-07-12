@@ -631,7 +631,7 @@ describe("OETH Vault", function () {
       // Daniel claimWithdraw request in the same block as the request
       const tx = oethVault.connect(daniel).claimWithdrawal(requestId);
 
-      await expect(tx).to.revertedWith("claim delay not met");
+      await expect(tx).to.revertedWith("Claim delay not met");
     });
 
     describe("when deposit some WETH to a strategy", () => {
@@ -767,7 +767,7 @@ describe("OETH Vault", function () {
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         const tx = oethVault.connect(matt).claimWithdrawal(2);
-        await expect(tx).to.be.revertedWith("queue pending liquidity");
+        await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
       it("Should claim a new request after withdraw from strategy adds enough liquidity", async () => {
         const { oethVault, daniel, matt, strategist, weth } = fixture;
@@ -910,7 +910,7 @@ describe("OETH Vault", function () {
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         const tx = oethVault.connect(matt).claimWithdrawal(2);
-        await expect(tx).to.be.revertedWith("queue pending liquidity");
+        await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
       it("Should claim a new request after mint adds enough liquidity", async () => {
         const { oethVault, daniel, matt, weth } = fixture;
