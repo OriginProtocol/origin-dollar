@@ -231,7 +231,7 @@ contract VaultStorage is Initializable, Governable {
     function setAdminImpl(address newImpl) external onlyGovernor {
         require(
             Address.isContract(newImpl),
-            "New implementation is not a contract"
+            "new implementation is not a contract"
         );
         bytes32 position = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
