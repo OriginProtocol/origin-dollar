@@ -245,8 +245,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
     };
 
-    beforeEach(async () => {
+    beforeEach(async function () {
       const { addresses, nativeStakingSSVStrategy } = await context();
+
+      // Skip these tests if the Native Staking Strategy is full
+      const activeValidators =
+        await nativeStakingSSVStrategy.activeDepositedValidators();
+      if (activeValidators.gte(500)) {
+        this.skip();
+      }
 
       const stakingMonitorSigner = await impersonateAndFund(addresses.Guardian);
       await nativeStakingSSVStrategy
