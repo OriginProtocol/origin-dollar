@@ -286,7 +286,7 @@ describe("1Inch Swapper", () => {
         .connect(strategist)
         .swapCollateral(stETH.address, dai.address, fromAmount, toAmount, []);
 
-      await expect(tx).to.be.revertedWith("only swap to WETH");
+      await expect(tx).to.be.revertedWith("Only swap to WETH");
     });
 
     it("Should swap if capital is paused", async () => {
