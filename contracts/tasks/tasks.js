@@ -7,7 +7,6 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { networkMap } = require("../utils/hardhat-helpers");
-const { resolveContract } = require("../utils/resolvers");
 const {
   genECDHKey,
   decryptValidatorKey,
@@ -96,6 +95,7 @@ const {
   fixAccounting,
   pauseStaking,
   snapStaking,
+  resolveNativeStakingStrategyProxy,
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
@@ -1042,6 +1042,12 @@ subtask(
   "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
 )
   .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .addParam(
     "operatorids",
     "Comma separated operator ids. E.g. 342,343,344,345",
@@ -1054,24 +1060,35 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * The native staking proxy needs to be deployed via the defender relayer because the SSV networkd
+ * The native staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
  * the recipient
  */
 subtask(
   "deployNativeStakingProxy",
   "Deploy the native staking proxy via the Defender Relayer"
-).setAction(async () => {
-  const signer = await getSigner();
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ index }) => {
+    const signer = await getSigner();
 
-  log("Deploy NativeStakingSSVStrategyProxy");
-  const nativeStakingProxyFactory = await ethers.getContractFactory(
-    "NativeStakingSSVStrategyProxy"
-  );
-  const contract = await nativeStakingProxyFactory.connect(signer).deploy();
-  await contract.deployed();
-  log(`Address of deployed contract is: ${contract.address}`);
-});
+    if (!index) {
+      throw new Error("Index is required and must be a positive integer");
+    }
+
+    log(`Deploy NativeStakingSSVStrategy${index}Proxy`);
+    const nativeStakingProxyFactory = await ethers.getContractFactory(
+      `NativeStakingSSVStrategy${index}Proxy`
+    );
+    const contract = await nativeStakingProxyFactory.connect(signer).deploy();
+    await contract.deployed();
+    log(`Address of deployed contract is: ${contract.address}`);
+  });
 task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1090,21 +1107,27 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(async ({ deployer }) => {
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ deployer, index }) => {
     const signer = await getSigner();
 
     const nativeStakingProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
+      `NativeStakingSSVStrategy${index}Proxy`
     );
     const oldGovernor = await nativeStakingProxy.governor();
     log(
-      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+      `About to transfer governance of NativeStakingSSVStrategy${index}Proxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
     );
     await withConfirmation(
       nativeStakingProxy.connect(signer).transferGovernance(deployer)
     );
     log(
-      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
+      `Transferred governance of NativeStakingSSVStrategy${index}Proxy from ${oldGovernor} to ${deployer}`
     );
   });
 task("transferGovernanceNativeStakingProxy").setAction(
@@ -1185,6 +1208,12 @@ subtask("exitValidator", "Starts the exit process from a validator")
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await exitValidator({ ...taskArgs, signer });
@@ -1197,6 +1226,12 @@ subtask(
   "removeValidator",
   "Removes a validator from the SSV cluster after it has exited the beacon chain"
 )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .addParam(
     "pubkey",
     "Public key of the validator to exit",
@@ -1220,23 +1255,38 @@ task("removeValidator").setAction(async (_, __, runSuper) => {
 subtask(
   "doAccounting",
   "Account for consensus rewards and validator exits in the Native Staking Strategy"
-).setAction(async () => {
-  const signer = await getSigner();
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ index }) => {
+    const signer = await getSigner();
 
-  const nativeStakingStrategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
 
-  await doAccounting({
-    signer,
-    nativeStakingStrategy,
+    await doAccounting({
+      signer,
+      nativeStakingStrategy,
+    });
   });
-});
 task("doAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
 subtask(
   "resetStakeETHTally",
   "Resets the amount of Ether staked back to zero"
@@ -1253,6 +1303,12 @@ subtask(
   "Sets the amount of Ether than can be staked before needing a reset"
 )
   .addParam("amount", "Amount in ether", undefined, types.int)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await setStakeETHThreshold({ ...taskArgs, signer });
@@ -1280,6 +1336,12 @@ subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
     0,
     types.float
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await fixAccounting({ ...taskArgs, signer });
@@ -1288,6 +1350,15 @@ task("fixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
 subtask(
   "pauseStaking",
   "Pause the staking of the Native Staking Strategy"
@@ -1315,6 +1386,12 @@ subtask(
     true,
     types.boolean
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await snapStaking({ ...taskArgs, signer });
@@ -1338,6 +1415,12 @@ subtask(
     "The validator's signature in hex format",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
   )
   .setAction(calcDepositRoot);
 task("depositRoot").setAction(async (_, __, runSuper) => {

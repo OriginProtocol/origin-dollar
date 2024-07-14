@@ -67,10 +67,10 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
     /**
      * @dev Upgrade the backing implementation of the proxy.
      * Only the admin can call this function.
-     * @param newImplementation Address of the new implementation.
+     * @param _newImplementation Address of the new implementation.
      */
-    function upgradeTo(address newImplementation) external onlyGovernor {
-        _upgradeTo(newImplementation);
+    function upgradeTo(address _newImplementation) external onlyGovernor {
+        _upgradeTo(_newImplementation);
     }
 
     /**
