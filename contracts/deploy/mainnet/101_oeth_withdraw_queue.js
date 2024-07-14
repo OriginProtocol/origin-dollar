@@ -40,6 +40,9 @@ module.exports = deploymentWithGovernanceProposal(
     const cLidoWithdrawStrategyProxy = await ethers.getContract(
       "LidoWithdrawalStrategyProxy"
     );
+    const cOETHMorphoAaveStrategyProxy = await ethers.getContract(
+      "OETHMorphoAaveStrategyProxy"
+    );
 
     const stETH = await ethers.getContractAt("IERC20", addresses.mainnet.stETH);
     const stEthInVault = await stETH.balanceOf(cVault.address);
@@ -47,48 +50,53 @@ module.exports = deploymentWithGovernanceProposal(
       `There is ${formatUnits(stEthInVault)} stETH in the OETH Vault`
     );
 
-    // If there is more than 1 wei of stETH in the Vault, we need to remove it using the Lido Withdrawal Strategy
-    const removeStEthActions = stEthInVault.gt(1)
-      ? [
-          // 1. Deposit all stETH in the Vault to the Lido Withdrawal Strategy
-          {
-            contract: cVault,
-            signature: "depositToStrategy(address,address[],uint256[])",
-            args: [
-              cLidoWithdrawStrategyProxy.address,
-              [stETH.address],
-              [stEthInVault],
-            ],
-          },
-          // 2. Remove stETH from the OETH Vault
-          {
-            contract: cVault,
-            signature: "removeAsset(address)",
-            args: [stETH.address],
-          },
-        ]
-      : [];
+    const rETH = await ethers.getContractAt("IERC20", addresses.mainnet.rETH);
+    const rEthInVault = await rETH.balanceOf(cVault.address);
+    console.log(`There is ${formatUnits(rEthInVault)} rETH in the OETH Vault`);
 
     // Governance Actions
     // ----------------
     return {
       name: "Upgrade OETH Vault to support queued withdrawals",
       actions: [
-        // Remove stETH if not done already
-        ...removeStEthActions,
-        // 3. Upgrade the OETH Vault proxy to the new core vault implementation
+        // 1. Remove the Lido Withdraw Strategy
+        {
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cLidoWithdrawStrategyProxy.address],
+        },
+        // 2. Remove the Morpho Strategy
+        {
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cOETHMorphoAaveStrategyProxy.address],
+        },
+        // 3. Remove stETH from the OETH Vault
+        {
+          contract: cVault,
+          signature: "removeAsset(address)",
+          args: [stETH.address],
+        },
+        // TODO add after all rETH has been swapped out of the Vault
+        // // 4. Remove rETH from the OETH Vault
+        // {
+        //   contract: cVault,
+        //   signature: "removeAsset(address)",
+        //   args: [rETH.address],
+        // },
+        // 5. Upgrade the OETH Vault proxy to the new core vault implementation
         {
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
-        // 4. set OETH Vault proxy to the new admin vault implementation
+        // 6. set OETH Vault proxy to the new admin vault implementation
         {
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // 5. Set the Dripper contract
+        // 7. Set the Dripper contract
         {
           contract: cVault,
           signature: "setDripper(address)",
