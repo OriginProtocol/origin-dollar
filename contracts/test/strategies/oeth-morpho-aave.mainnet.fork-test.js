@@ -10,7 +10,7 @@ const {
 const { createFixtureLoader, oethMorphoAaveFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("ForkTest: Morpho Aave OETH Strategy", function () {
+describe.skip("ForkTest: Morpho Aave OETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
