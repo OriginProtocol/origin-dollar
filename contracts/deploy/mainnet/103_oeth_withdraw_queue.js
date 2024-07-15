@@ -5,7 +5,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "101_oeth_withdraw_queue",
+    deployName: "103_oeth_withdraw_queue",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -53,6 +53,10 @@ module.exports = deploymentWithGovernanceProposal(
     const rETH = await ethers.getContractAt("IERC20", addresses.mainnet.rETH);
     const rEthInVault = await rETH.balanceOf(cVault.address);
     console.log(`There is ${formatUnits(rEthInVault)} rETH in the OETH Vault`);
+
+    const cNativeStakingStrategy2Proxy = await ethers.getContract(
+      "NativeStakingSSVStrategy2Proxy"
+    );
 
     // Governance Actions
     // ----------------
@@ -107,6 +111,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVault,
           signature: "setDripper(address)",
           args: [cDripperProxy.address],
+        },
+        // 9. Set the second Native Staking Strategy as the default for WETH
+        {
+          contract: cVault,
+          signature: "setAssetDefaultStrategy(address,address)",
+          args: [addresses.mainnet.WETH, cNativeStakingStrategy2Proxy.address],
         },
       ],
     };
