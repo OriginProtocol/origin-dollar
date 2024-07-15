@@ -1,4 +1,5 @@
 const { ethers } = require("ethers");
+const { parseEther, formatUnits } = require("ethers/lib/utils");
 const {
   DefenderRelaySigner,
   DefenderRelayProvider,
@@ -7,8 +8,9 @@ const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 
 const harvesterAbi = require("../../abi/harvester.json");
+const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
 
-const log = require("../../utils/logger")("action:doAccounting");
+const log = require("../../utils/logger")("action:harvest");
 
 // Entrypoint for the Defender Action
 const handler = async (event) => {
@@ -33,22 +35,38 @@ const handler = async (event) => {
   log(
     `Resolved first Native Staking Strategy address to ${firstNativeStakingProxyAddress}`
   );
+  await harvest(harvester, firstNativeStakingProxyAddress, signer, "first");
 
   const secondNativeStakingProxyAddress =
     addresses[networkName].NativeStakingSSVStrategy2Proxy;
   log(
     `Resolved second Native Staking Strategy address to ${secondNativeStakingProxyAddress}`
   );
+  // TODO uncomment once second strategy is deployed
+  // await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
+};
 
-  const tx1 = await harvester
-    .connect(signer)
-    .harvestAndSwap(firstNativeStakingProxyAddress);
-  await logTxDetails(tx1, "first harvestAndSwap");
-
-  // const tx2 = await harvester
-  //   .connect(signer)
-  //   .harvestAndSwap(secondNativeStakingProxyAddress);
-  // await logTxDetails(tx2, "second harvestAndSwap");
+const harvest = async (
+  harvester,
+  nativeStakingProxyAddress,
+  signer,
+  stratDesc
+) => {
+  const nativeStakingStrategy1 = new ethers.Contract(
+    nativeStakingProxyAddress,
+    nativeStakingStrategyAbi,
+    signer
+  );
+  const consensusRewards = await nativeStakingStrategy1.consensusRewards();
+  log(`Consensus rewards for ${stratDesc}: ${formatUnits(consensusRewards)}`);
+  if (consensusRewards.gt(parseEther("1"))) {
+    const tx1 = await harvester
+      .connect(signer)
+      .harvestAndSwap(nativeStakingProxyAddress);
+    await logTxDetails(tx1, `${stratDesc} harvestAndSwap`);
+  } else {
+    log(`Skipping ${stratDesc} harvestAndSwap due to low consensus rewards`);
+  }
 };
 
 module.exports = { handler };
