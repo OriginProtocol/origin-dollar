@@ -32,7 +32,7 @@ const commonConfig = {
 };
 
 module.exports = [
-   {
+  {
     ...commonConfig,
     input: "doAccounting.js",
     output: {
@@ -41,7 +41,16 @@ module.exports = [
       format: "cjs",
     },
   },
-  { 
+  {
+    ...commonConfig,
+    input: "harvest.js",
+    output: {
+      file: "dist/harvest/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
     ...commonConfig,
     input: "stakeValidators.js",
     output: {

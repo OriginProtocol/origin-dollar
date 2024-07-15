@@ -346,6 +346,7 @@ npx hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
 npx hardhat setActionVars --id 191d9631-70b9-43c5-9db4-1dd985fde05c
 npx hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
 npx hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
+npx hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
 
 # The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
 export API_KEY=${DEFENDER_TEAM_KEY}
@@ -357,6 +358,7 @@ npx defender-autotask update-code 191d9631-70b9-43c5-9db4-1dd985fde05c ./dist/do
 npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/registerValidators
 npx defender-autotask update-code 12c153c8-c5ca-420b-9696-e80c827996d1 ./dist/stakeValidators
 npx defender-autotask update-code e2929f53-db56-49b2-b054-35f7df7fc4fb ./dist/doAccounting
+npx defender-autotask update-code 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 ./dist/harvest
 ```
 
 `rollup` and `defender-autotask-client` can be installed globally to avoid the `npx` prefix.

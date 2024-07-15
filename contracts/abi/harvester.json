@@ -1,0 +1,490 @@
+[
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_vault", "type": "address" },
+      { "internalType": "address", "name": "_wethAddress", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "actualBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "minExpected", "type": "uint256" }
+    ],
+    "name": "BalanceMismatchAfterSwap",
+    "type": "error"
+  },
+  { "inputs": [], "name": "EmptyAddress", "type": "error" },
+  { "inputs": [], "name": "EmptyBalancerPoolId", "type": "error" },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "token", "type": "address" }
+    ],
+    "name": "InvalidCurvePoolAssetIndex",
+    "type": "error"
+  },
+  { "inputs": [], "name": "InvalidHarvestRewardBps", "type": "error" },
+  { "inputs": [], "name": "InvalidSlippageBps", "type": "error" },
+  {
+    "inputs": [
+      {
+        "internalType": "enum BaseHarvester.SwapPlatform",
+        "name": "swapPlatform",
+        "type": "uint8"
+      }
+    ],
+    "name": "InvalidSwapPlatform",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "token", "type": "address" }
+    ],
+    "name": "InvalidTokenInSwapPath",
+    "type": "error"
+  },
+  { "inputs": [], "name": "InvalidUniswapV2PathLength", "type": "error" },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "actualBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "minExpected", "type": "uint256" }
+    ],
+    "name": "SlippageError",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "strategyAddress",
+        "type": "address"
+      }
+    ],
+    "name": "UnsupportedStrategy",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousGovernor",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newGovernor",
+        "type": "address"
+      }
+    ],
+    "name": "GovernorshipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousGovernor",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newGovernor",
+        "type": "address"
+      }
+    ],
+    "name": "PendingGovernorshipTransfer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newProceedsAddress",
+        "type": "address"
+      }
+    ],
+    "name": "RewardProceedsAddressChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "farmer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "protcolYield",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "farmerFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "RewardProceedsTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "allowedSlippageBps",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "harvestRewardBps",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum BaseHarvester.SwapPlatform",
+        "name": "swapPlatform",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "swapPlatformAddr",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "swapData",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "liquidationLimit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "doSwapRewardToken",
+        "type": "bool"
+      }
+    ],
+    "name": "RewardTokenConfigUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "rewardToken",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "swappedInto",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum BaseHarvester.SwapPlatform",
+        "name": "swapPlatform",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amountIn",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amountOut",
+        "type": "uint256"
+      }
+    ],
+    "name": "RewardTokenSwapped",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "strategyAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isSupported",
+        "type": "bool"
+      }
+    ],
+    "name": "SupportedStrategyUpdate",
+    "type": "event"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "balancerPoolId",
+    "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "baseTokenAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "baseTokenDecimals",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "claimGovernance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "curvePoolIndices",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "rewardTokenIndex",
+        "type": "uint128"
+      },
+      { "internalType": "uint128", "name": "baseTokenIndex", "type": "uint128" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "governor",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_strategyAddr", "type": "address" }
+    ],
+    "name": "harvestAndSwap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isGovernor",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewardProceedsAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "rewardTokenConfigs",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "allowedSlippageBps",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "harvestRewardBps",
+        "type": "uint16"
+      },
+      {
+        "internalType": "address",
+        "name": "swapPlatformAddr",
+        "type": "address"
+      },
+      { "internalType": "bool", "name": "doSwapRewardToken", "type": "bool" },
+      {
+        "internalType": "enum BaseHarvester.SwapPlatform",
+        "name": "swapPlatform",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liquidationLimit",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_rewardProceedsAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setRewardProceedsAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_tokenAddress", "type": "address" },
+      {
+        "components": [
+          {
+            "internalType": "uint16",
+            "name": "allowedSlippageBps",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint16",
+            "name": "harvestRewardBps",
+            "type": "uint16"
+          },
+          {
+            "internalType": "address",
+            "name": "swapPlatformAddr",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "doSwapRewardToken",
+            "type": "bool"
+          },
+          {
+            "internalType": "enum BaseHarvester.SwapPlatform",
+            "name": "swapPlatform",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidationLimit",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct BaseHarvester.RewardTokenConfig",
+        "name": "tokenConfig",
+        "type": "tuple"
+      },
+      { "internalType": "bytes", "name": "swapData", "type": "bytes" }
+    ],
+    "name": "setRewardTokenConfig",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_strategyAddress",
+        "type": "address"
+      },
+      { "internalType": "bool", "name": "_isSupported", "type": "bool" }
+    ],
+    "name": "setSupportedStrategy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "supportedStrategies",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_newGovernor", "type": "address" }
+    ],
+    "name": "transferGovernance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_asset", "type": "address" },
+      { "internalType": "uint256", "name": "_amount", "type": "uint256" }
+    ],
+    "name": "transferToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "uniswapV2Path",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "uniswapV3Path",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "vaultAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
