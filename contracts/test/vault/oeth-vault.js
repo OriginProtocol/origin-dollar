@@ -327,7 +327,7 @@ describe("OETH Vault", function () {
       const { oethVault, weth, governor } = fixture;
 
       // Empty list
-      await expect(await oethVault.getAllStrategies()).to.equal([]);
+      await expect((await oethVault.getAllStrategies()).length).to.equal(0);
 
       // Add a strategy
       await oethVault.connect(governor).approveStrategy(weth.address);
