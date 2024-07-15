@@ -34,7 +34,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 2. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
+    const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
     const cDripperProxy = await ethers.getContract("OETHDripperProxy");
 
     const cLidoWithdrawStrategyProxy = await ethers.getContract(
@@ -83,19 +83,26 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "removeAsset(address)",
           args: [rETH.address],
         },
-        // 5. Upgrade the OETH Vault proxy to the new core vault implementation
+        // 5. Cache WETH asset index now stETH has been removed
+        // the WETH index should go from 1 to 0
+        {
+          contract: cVault,
+          signature: "cacheWETHAssetIndex()",
+          args: [],
+        },
+        // 6. Upgrade the OETH Vault proxy to the new core vault implementation
         {
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
-        // 6. set OETH Vault proxy to the new admin vault implementation
+        // 7. set OETH Vault proxy to the new admin vault implementation
         {
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // 7. Set the Dripper contract
+        // 8. Set the Dripper contract
         {
           contract: cVault,
           signature: "setDripper(address)",
