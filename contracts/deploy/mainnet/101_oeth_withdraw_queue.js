@@ -77,13 +77,12 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "removeAsset(address)",
           args: [stETH.address],
         },
-        // TODO add after all rETH has been swapped out of the Vault
-        // // 4. Remove rETH from the OETH Vault
-        // {
-        //   contract: cVault,
-        //   signature: "removeAsset(address)",
-        //   args: [rETH.address],
-        // },
+        // 4. Remove rETH from the OETH Vault
+        {
+          contract: cVault,
+          signature: "removeAsset(address)",
+          args: [rETH.address],
+        },
         // 5. Upgrade the OETH Vault proxy to the new core vault implementation
         {
           contract: cVaultProxy,
