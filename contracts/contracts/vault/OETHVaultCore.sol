@@ -375,8 +375,15 @@ contract OETHVaultCore is VaultCore {
         super._allocate();
     }
 
-    function _totalValue() internal view override returns (uint256 value) {
-        value = super._totalValue();
+    function _totalValueInVault()
+        internal
+        view
+        virtual
+        override
+        returns (uint256 value)
+    {
+        // Only WETH is counted
+        value = IERC20(weth).balanceOf(address(this));
 
         // Need to remove WETH that is reserved for the withdrawal queue.
         // reserved for the withdrawal queue = cumulative queued total - total claimed
