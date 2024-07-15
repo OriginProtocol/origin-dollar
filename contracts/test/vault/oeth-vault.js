@@ -394,6 +394,53 @@ describe("OETH Vault", function () {
 
       await expect(tx).to.not.be.revertedWith("Vault still holds asset");
     });
+
+    it("should allow strategy to burnForStrategy", async () => {
+      const { oethVault, oeth, weth, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+
+      // First increase netOusdMintForStrategyThreshold
+      await oethVault
+        .connect(governor)
+        .setNetOusdMintForStrategyThreshold(oethUnits("100"));
+
+      // Then mint for strategy
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+
+      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+        oethUnits("10")
+      );
+
+      // Then burn for strategy
+      await oethVault.connect(daniel).burnForStrategy(oethUnits("10"));
+
+      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+        oethUnits("0")
+      );
+    });
+
+    it("should fail when burnForStrategy because Amoount too high", async () => {
+      const { oethVault, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      const tx = oethVault
+        .connect(daniel)
+        .burnForStrategy(parseUnits("10", 76));
+
+      await expect(tx).to.be.revertedWith("Amount too high");
+    });
+
+    it("should fail when burnForStrategy because Attempting to burn too much OUSD.", async () => {
+      const { oethVault, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+
+      // Then try to burn more than authorized
+      const tx = oethVault.connect(daniel).burnForStrategy(oethUnits("0"));
+
+      await expect(tx).to.be.revertedWith("Attempting to burn too much OUSD.");
+    });
   });
 
   describe("with withdrawal queue", () => {
