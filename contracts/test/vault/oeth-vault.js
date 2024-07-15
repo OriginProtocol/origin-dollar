@@ -320,6 +320,23 @@ describe("OETH Vault", function () {
       const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
+
+    it("should return all strategies", async () => {
+      // Mostly to increase coverage
+
+      const { oethVault, weth, governor } = fixture;
+
+      // Empty list
+      await expect(await oethVault.getAllStrategies()).to.equal([]);
+
+      // Add a strategy
+      await oethVault.connect(governor).approveStrategy(weth.address);
+
+      // Check the strategy list
+      await expect(await oethVault.getAllStrategies()).to.deep.equal([
+        weth.address,
+      ]);
+    });
   });
 
   describe("Remove Asset", () => {
