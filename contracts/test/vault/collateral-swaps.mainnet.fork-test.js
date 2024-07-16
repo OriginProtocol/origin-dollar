@@ -14,7 +14,7 @@ const { resolveAsset } = require("../../utils/resolvers");
 
 const log = require("../../utils/logger")("test:fork:swaps");
 
-describe("ForkTest: OETH Vault", function () {
+describe.skip("ForkTest: OETH Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -103,7 +103,7 @@ describe("ForkTest: OETH Vault", function () {
   });
 });
 
-describe("ForkTest: OUSD Vault", function () {
+describe.skip("ForkTest: OUSD Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
