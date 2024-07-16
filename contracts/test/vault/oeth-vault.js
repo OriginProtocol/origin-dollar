@@ -1525,12 +1525,27 @@ describe("OETH Vault", function () {
 
           await expect(tx).to.be.revertedWith("Not enough WETH available");
         });
-        it.skip("Should allocate 3 WETH to the default strategy", async () => {
-          const { oethVault, domen } = fixture;
+        it("Should allocate 3 WETH to the default strategy", async () => {
+          const { oethVault, governor, domen, weth } = fixture;
+
+          await oethVault
+            .connect(governor)
+            .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+
+          const vaultBalance = await weth.balanceOf(oethVault.address);
+          const stratBalance = await weth.balanceOf(mockStrategy.address);
 
           const tx = await oethVault.connect(domen).allocate();
 
           await expect(tx).to.emit(oethVault, "AssetAllocated");
+
+          expect(
+            await weth.balanceOf(oethVault.address)
+          ).to.approxEqualTolerance(vaultBalance.sub(oethUnits("3")), 5);
+
+          expect(
+            await weth.balanceOf(mockStrategy.address)
+          ).to.approxEqualTolerance(stratBalance.add(oethUnits("3")), 5);
         });
       });
     });
