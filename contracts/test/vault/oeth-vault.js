@@ -1426,7 +1426,7 @@ describe("OETH Vault", function () {
             fixtureWithUser
           );
         });
-        it("Fail to deposit 1 WETH to the default strategy", async () => {
+        it("Fail to deposit 1 WETH to a strategy", async () => {
           const { oethVault, weth, governor } = fixture;
 
           const tx = oethVault
@@ -1447,26 +1447,91 @@ describe("OETH Vault", function () {
           await expect(tx).to.not.emit(oethVault, "AssetAllocated");
         });
       });
-      describe("when mint covers exactly outstanding requests and vault buffer (31 OETH)", () => {
+      describe("when mint covers exactly outstanding requests and vault buffer (17 + 1 WETH)", () => {
         beforeEach(async () => {
           const { oethVault, daniel, weth } = fixture;
           await oethVault
             .connect(daniel)
-            .mint(weth.address, oethUnits("31"), "0");
+            .mint(weth.address, oethUnits("18"), "0");
         });
-        it("Fail to deposit 1 WETH to the default strategy", async () => {});
-        it("Should not allocate any WETH to the default strategy", async () => {});
+        it("Should deposit 1 WETH to a strategy which is the vault buffer", async () => {
+          const { oethVault, weth, governor } = fixture;
+
+          const tx = await oethVault
+            .connect(governor)
+            .depositToStrategy(
+              mockStrategy.address,
+              [weth.address],
+              [oethUnits("1")]
+            );
+
+          expect(tx)
+            .to.emit(weth, "Transfer")
+            .withArgs(oethVault.address, mockStrategy.address, oethUnits("1"));
+        });
+        it("Fail to deposit 1.1 WETH to the default strategy", async () => {
+          const { oethVault, weth, governor } = fixture;
+
+          const tx = oethVault
+            .connect(governor)
+            .depositToStrategy(
+              mockStrategy.address,
+              [weth.address],
+              [oethUnits("1.1")]
+            );
+
+          await expect(tx).to.be.revertedWith("Not enough WETH available");
+        });
+        it("Should not allocate any WETH to the default strategy", async () => {
+          const { oethVault, domen } = fixture;
+
+          const tx = await oethVault.connect(domen).allocate();
+
+          await expect(tx).to.not.emit(oethVault, "AssetAllocated");
+        });
       });
-      describe("when mint more than covers outstanding requests and vault buffer (40 OETH)", () => {
+      describe("when mint more than covers outstanding requests and vault buffer (17 + 1 + 3 WETH)", () => {
         beforeEach(async () => {
           const { oethVault, daniel, weth } = fixture;
           await oethVault
             .connect(daniel)
-            .mint(weth.address, oethUnits("40"), "0");
+            .mint(weth.address, oethUnits("21"), "0");
         });
-        it("Should deposit 1 WETH to the default strategy", async () => {});
-        it("Fail to deposit 10 WETH to the default strategy", async () => {});
-        it("Should allocate WETH to the default strategy", async () => {});
+        it("Should deposit 4 WETH to a strategy", async () => {
+          const { oethVault, weth, governor } = fixture;
+
+          const tx = await oethVault
+            .connect(governor)
+            .depositToStrategy(
+              mockStrategy.address,
+              [weth.address],
+              [oethUnits("4")]
+            );
+
+          expect(tx)
+            .to.emit(weth, "Transfer")
+            .withArgs(oethVault.address, mockStrategy.address, oethUnits("4"));
+        });
+        it("Fail to deposit 5 WETH to the default strategy", async () => {
+          const { oethVault, weth, governor } = fixture;
+
+          const tx = oethVault
+            .connect(governor)
+            .depositToStrategy(
+              mockStrategy.address,
+              [weth.address],
+              [oethUnits("5")]
+            );
+
+          await expect(tx).to.be.revertedWith("Not enough WETH available");
+        });
+        it.skip("Should allocate 3 WETH to the default strategy", async () => {
+          const { oethVault, domen } = fixture;
+
+          const tx = await oethVault.connect(domen).allocate();
+
+          await expect(tx).to.emit(oethVault, "AssetAllocated");
+        });
       });
     });
   });
