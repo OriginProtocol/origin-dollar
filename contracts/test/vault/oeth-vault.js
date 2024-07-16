@@ -16,6 +16,23 @@ describe("OETH Vault", function () {
     fixture = await oethFixture();
   });
 
+  const deployMockDefaultStrategy = async (fixture) => {
+    const { oethVault, weth } = fixture;
+
+    const defaultStrat = await oethVault.assetDefaultStrategies(weth.address);
+
+    if (defaultStrat == addresses.zero) {
+      // Deploy default strategy
+      const dMockStrategy = await deployWithConfirmation("MockStrategy");
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .approveStrategy(dMockStrategy.address);
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setAssetDefaultStrategy(weth.address, dMockStrategy.address);
+    }
+  };
+
   const snapData = async (fixture) => {
     const { oeth, oethVault, weth, user } = fixture;
 
@@ -324,6 +341,14 @@ describe("OETH Vault", function () {
         .connect(daniel)
         .redeem(oethUnits("1023232323232"), "0");
       await expect(tx).to.be.revertedWith("Liquidity error");
+    });
+    it("should allow every user to redeem", async () => {
+      const { oethVault, weth, daniel } = fixture;
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+
+      await oethVault.connect(daniel).redeem(oethUnits("10"), oethUnits("0"));
+
+      await expect(await weth.balanceOf(oethVault.address)).to.equal(0);
     });
   });
 
@@ -871,6 +896,43 @@ describe("OETH Vault", function () {
         .requestWithdrawal(firstRequestAmount);
 
       await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+
+    it("Shoudl test a mass slashing event", async () => {
+      const { oethVault, weth, daniel, matt, domen, josh } = fixture;
+
+      // Bypass solvency check
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setMaxSupplyDiff(0);
+
+      // Add default strategy
+      await deployMockDefaultStrategy(fixture);
+      const defaultStrategy = await oethVault.assetDefaultStrategies(
+        weth.address
+      );
+
+      // Then Allocate
+      await oethVault.connect(daniel).allocate();
+
+      // Request withdraw for all 3 users
+      await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+      await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
+      await oethVault.connect(matt).requestWithdrawal(oethUnits("30"));
+
+      // Simulate mass slashing event -> default strategy loses half of the funds
+      await weth
+        .connect(await impersonateAndFund(defaultStrategy))
+        .transfer(domen.address, oethUnits("30"));
+
+      // Simulate strategiest pull funds from the strategy to the vault
+      await weth
+        .connect(await impersonateAndFund(defaultStrategy))
+        .transfer(oethVault.address, oethUnits("30"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      await oethVault.connect(daniel).claimWithdrawal(0);
     });
 
     describe("when deposit some WETH to a strategy", () => {
