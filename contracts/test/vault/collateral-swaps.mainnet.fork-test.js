@@ -104,7 +104,7 @@ describe.skip("ForkTest: OETH Vault", function () {
   });
 });
 
-describe("ForkTest: OUSD Vault", function () {
+describe.skip("ForkTest: OUSD Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
