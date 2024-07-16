@@ -74,7 +74,7 @@ contract OETHVaultAdmin is VaultAdmin {
         IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 
-    // TODO move to a library?
+    /// @dev Calculates the amount of WETH in the Vault that is not reserved for the withdrawal queue.
     function _wethAvailable() internal view returns (uint256 wethAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
