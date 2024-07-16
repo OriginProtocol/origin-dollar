@@ -413,4 +413,17 @@ contract OETHVaultCore is VaultCore {
             return value + queue.claimed - queue.queued;
         }
     }
+
+    /// @dev Only WETH is supported in the OETH Vault so return the WETH balance only
+    /// Any ETH balances in the Vault will be ignored.
+    /// Amounts from previously supported vault assets will also be ignored.
+    /// For example, there is 1 wei left of stETH in the OETH Vault but is will be ignored.
+    function _totalValueInVault()
+        internal
+        view
+        override
+        returns (uint256 value)
+    {
+        value = IERC20(weth).balanceOf(address(this));
+    }
 }
