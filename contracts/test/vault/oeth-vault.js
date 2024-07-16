@@ -1408,7 +1408,13 @@ describe("OETH Vault", function () {
 
           await expect(tx).to.be.revertedWith("Not enough WETH available");
         });
-        it("Should not allocate any WETH to the default strategy", async () => {});
+        it("Should not allocate any WETH to the default strategy", async () => {
+          const { oethVault, domen } = fixture;
+
+          const tx = await oethVault.connect(domen).allocate();
+
+          await expect(tx).to.not.emit(oethVault, "AssetAllocated");
+        });
       });
       describe("when mint covers exactly outstanding requests and vault buffer (31 OETH)", () => {
         beforeEach(async () => {
