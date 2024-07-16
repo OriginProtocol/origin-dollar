@@ -404,7 +404,7 @@ contract OETHVaultCore is VaultCore {
     // If there is not enough WETH in the vault and all strategies to cover all outstanding
     // withdrawal requests then return a total value of 0.
     function _totalValue() internal view override returns (uint256 value) {
-        value = super._totalValue();
+        value = _totalValueInVault() + _totalValueInStrategies();
 
         // Need to remove WETH that is reserved for the withdrawal queue.
         // reserved for the withdrawal queue = cumulative queued total - total claimed
