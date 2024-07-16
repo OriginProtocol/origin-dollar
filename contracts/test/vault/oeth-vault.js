@@ -1557,6 +1557,90 @@ describe("OETH Vault", function () {
         });
       });
     });
+    describe("with 40 WETH in the queue, 10 WETH in the vault, 30 WETH already claimed", async () => {
+      beforeEach(async () => {
+        const { oethVault, weth, daniel, josh, matt } = fixture;
+
+        // Mint 60 OETH to three users
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
+        await oethVault.connect(matt).mint(weth.address, oethUnits("10"), "0");
+
+        // Request and claim 10 WETH from Vault
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        // Claim 10 + 20 = 30 WETH from Vault
+        await oethVault.connect(daniel).claimWithdrawal(0);
+        await oethVault.connect(josh).claimWithdrawal(1);
+      });
+      it("should allow the last user to request the remaining 10 WETH", async () => {
+        const { oethVault, matt } = fixture;
+        const fixtureWithUser = { ...fixture, user: matt };
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault
+          .connect(matt)
+          .requestWithdrawal(oethUnits("10"));
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalRequested")
+          .withArgs(matt.address, 2, oethUnits("10"), oethUnits("40"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: oethUnits("10").mul(-1),
+            oethTotalValue: oethUnits("10").mul(-1),
+            vaultCheckBalance: oethUnits("10").mul(-1),
+            userOeth: oethUnits("10").mul(-1),
+            userWeth: 0,
+            vaultWeth: 0,
+            queued: oethUnits("10").mul(1),
+            claimable: 0,
+            claimed: 0,
+            nextWithdrawalIndex: 1,
+          },
+          fixtureWithUser
+        );
+      });
+      it("should allow the last user to claim the request of 10 WETH", async () => {
+        const { oethVault, matt } = fixture;
+        const fixtureWithUser = { ...fixture, user: matt };
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(matt).claimWithdrawal(2);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(matt.address, 2, oethUnits("10"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
+            vaultCheckBalance: 0,
+            userOeth: 0,
+            userWeth: oethUnits("10"),
+            vaultWeth: oethUnits("10").mul(-1),
+            queued: 0,
+            claimable: oethUnits("10"),
+            claimed: oethUnits("10"),
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+
+        expect(await oethVault.totalValue()).to.equal(0);
+      });
+    });
     describe("with 40 WETH in the queue, 10 WETH in the vault, 10 WETH in the strategy => Slash event", () => {
       beforeEach(async () => {
         const { governor, oethVault, weth, daniel, josh, matt } = fixture;
@@ -1646,90 +1730,6 @@ describe("OETH Vault", function () {
         const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
 
         await expect(tx).to.be.revertedWith("Backing supply liquidity error");
-      });
-    });
-    describe("with 40 WETH in the queue, 10 WETH in the vault, 30 WETH already claimed", async () => {
-      beforeEach(async () => {
-        const { oethVault, weth, daniel, josh, matt } = fixture;
-
-        // Mint 60 OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("10"), "0");
-
-        // Request and claim 10 WETH from Vault
-        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
-        await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
-        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
-
-        // Claim 10 + 20 = 30 WETH from Vault
-        await oethVault.connect(daniel).claimWithdrawal(0);
-        await oethVault.connect(josh).claimWithdrawal(1);
-      });
-      it("should allow the last user to request the remaining 10 WETH", async () => {
-        const { oethVault, matt } = fixture;
-        const fixtureWithUser = { ...fixture, user: matt };
-        const dataBefore = await snapData(fixtureWithUser);
-
-        const tx = await oethVault
-          .connect(matt)
-          .requestWithdrawal(oethUnits("10"));
-
-        await expect(tx)
-          .to.emit(oethVault, "WithdrawalRequested")
-          .withArgs(matt.address, 2, oethUnits("10"), oethUnits("40"));
-
-        await assertChangedData(
-          dataBefore,
-          {
-            oethTotalSupply: oethUnits("10").mul(-1),
-            oethTotalValue: oethUnits("10").mul(-1),
-            vaultCheckBalance: oethUnits("10").mul(-1),
-            userOeth: oethUnits("10").mul(-1),
-            userWeth: 0,
-            vaultWeth: 0,
-            queued: oethUnits("10").mul(1),
-            claimable: 0,
-            claimed: 0,
-            nextWithdrawalIndex: 1,
-          },
-          fixtureWithUser
-        );
-      });
-      it("should allow the last user to claim the request of 10 WETH", async () => {
-        const { oethVault, matt } = fixture;
-        const fixtureWithUser = { ...fixture, user: matt };
-        await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
-        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
-
-        const dataBefore = await snapData(fixtureWithUser);
-
-        const tx = await oethVault.connect(matt).claimWithdrawal(2);
-
-        await expect(tx)
-          .to.emit(oethVault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, oethUnits("10"));
-
-        await assertChangedData(
-          dataBefore,
-          {
-            oethTotalSupply: 0,
-            oethTotalValue: 0,
-            vaultCheckBalance: 0,
-            userOeth: 0,
-            userWeth: oethUnits("10"),
-            vaultWeth: oethUnits("10").mul(-1),
-            queued: 0,
-            claimable: oethUnits("10"),
-            claimed: oethUnits("10"),
-            nextWithdrawalIndex: 0,
-          },
-          fixtureWithUser
-        );
-
-        expect(await oethVault.totalValue()).to.equal(0);
       });
     });
   });
