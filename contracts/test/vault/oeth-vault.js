@@ -1557,7 +1557,7 @@ describe("OETH Vault", function () {
         });
       });
     });
-    describe("with 40 WETH in the queue, 10 WETH in the vault, 30 WETH already claimed", async () => {
+    describe("with 40 WETH in the queue, 10 WETH in the vault, 30 WETH already claimed", () => {
       beforeEach(async () => {
         const { oethVault, weth, daniel, josh, matt } = fixture;
 
@@ -1639,6 +1639,114 @@ describe("OETH Vault", function () {
         );
 
         expect(await oethVault.totalValue()).to.equal(0);
+      });
+    });
+    describe("with 40 WETH in the queue, 100 WETH in the vault, 0 WETH in the strategy", () => {
+      beforeEach(async () => {
+        const { oethVault, weth, daniel, josh, matt } = fixture;
+        // Mint 100 OETH to three users
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
+        await oethVault.connect(matt).mint(weth.address, oethUnits("70"), "0");
+
+        // Request 40 WETH from Vault
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("40"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+      });
+      it("should allow user to claim the request of 40 WETH", async () => {
+        const { oethVault, matt } = fixture;
+        const fixtureWithUser = { ...fixture, user: matt };
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(matt).claimWithdrawal(0);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(matt.address, 0, oethUnits("40"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
+            vaultCheckBalance: 0,
+            userOeth: 0,
+            userWeth: oethUnits("40"),
+            vaultWeth: oethUnits("40").mul(-1),
+            queued: 0,
+            claimable: oethUnits("40"),
+            claimed: oethUnits("40"),
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+      });
+      it("should allow user to perform a new request and claim a smaller than the WETH available", async () => {
+        const { oethVault, josh } = fixture;
+
+        await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        const tx = await oethVault.connect(josh).claimWithdrawal(1);
+
+        await expect(tx).to.emit(oethVault, "WithdrawalClaimed");
+      });
+      it("should allow user to perform a new request and claim exactly the WETH available", async () => {
+        const { oethVault, oeth, josh, matt, daniel } = fixture;
+        await oethVault.connect(matt).claimWithdrawal(0);
+        // All user give OETH to another user
+        await oeth.connect(josh).transfer(matt.address, oethUnits("20"));
+        await oeth.connect(daniel).transfer(matt.address, oethUnits("10"));
+
+        const fixtureWithUser = { ...fixture, user: matt };
+
+        // Matt request the remaining 60 OETH to be withdrawn
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("60"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(matt).claimWithdrawal(1);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(matt.address, 1, oethUnits("60"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
+            vaultCheckBalance: 0,
+            userOeth: 0,
+            userWeth: oethUnits("60"),
+            vaultWeth: oethUnits("60").mul(-1),
+            queued: 0,
+            claimable: oethUnits("60"),
+            claimed: oethUnits("60"),
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+      });
+      it("shouldn't allow user to perform a new request and claim more than the WETH available", async () => {
+        const { oethVault, oeth, weth, josh, matt, daniel } = fixture;
+        await oethVault.connect(matt).claimWithdrawal(0);
+        // All user give OETH to another user
+        await oeth.connect(josh).transfer(matt.address, oethUnits("20"));
+        await oeth.connect(daniel).transfer(matt.address, oethUnits("10"));
+
+        // Matt request more than the remaining 60 OETH to be withdrawn
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("60"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+        await weth
+          .connect(await impersonateAndFund(oethVault.address))
+          .transfer(addresses.dead, oethUnits("50")); // Vault loses 50 WETH
+
+        const tx = oethVault.connect(matt).claimWithdrawal(1);
+        await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
     });
     describe("with 40 WETH in the queue, 10 WETH in the vault, 10 WETH in the strategy => Slash event", () => {
