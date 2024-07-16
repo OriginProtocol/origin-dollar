@@ -18,14 +18,16 @@ describe("OETH Vault", function () {
   const snapData = async (fixture) => {
     const { oeth, oethVault, weth, user } = fixture;
 
-    const oethTotal = await oeth.totalSupply();
+    const oethTotalSupply = await oeth.totalSupply();
+    const oethTotalValue = await oethVault.totalValue();
     const userOeth = await oeth.balanceOf(user.address);
     const userWeth = await weth.balanceOf(user.address);
     const vaultWeth = await weth.balanceOf(oethVault.address);
     const queue = await oethVault.withdrawalQueueMetadata();
 
     return {
-      oethTotal,
+      oethTotalSupply,
+      oethTotalValue,
       userOeth,
       userWeth,
       vaultWeth,
@@ -37,8 +39,12 @@ describe("OETH Vault", function () {
     const { oeth, oethVault, weth, user } = fixture;
 
     expect(await oeth.totalSupply()).to.equal(
-      dataBefore.oethTotal.add(delta.oethTotal),
+      dataBefore.oethTotalSupply.add(delta.oethTotalSupply),
       "OETH Total Supply"
+    );
+    expect(await oethVault.totalValue()).to.equal(
+      dataBefore.oethTotalValue.add(delta.oethTotalValue),
+      "OETH Total Value"
     );
     expect(await oeth.balanceOf(user.address)).to.equal(
       dataBefore.userOeth.add(delta.userOeth),
@@ -91,7 +97,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: amount,
+          oethTotalSupply: amount,
+          oethTotalValue: amount,
           userOeth: amount,
           userWeth: amount.mul(-1),
           vaultWeth: amount,
@@ -394,7 +401,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: firstRequestAmount.mul(-1),
+          oethTotalSupply: firstRequestAmount.mul(-1),
+          oethTotalValue: firstRequestAmount.mul(-1),
           userOeth: firstRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -421,7 +429,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: 0,
+          oethTotalSupply: 0,
+          oethTotalValue: 0,
           userOeth: 0,
           userWeth: 0,
           vaultWeth: 0,
@@ -468,7 +477,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: firstRequestAmount.add(secondRequestAmount).mul(-1),
+          oethTotalSupply: firstRequestAmount.add(secondRequestAmount).mul(-1),
+          oethTotalValue: firstRequestAmount.add(secondRequestAmount).mul(-1),
           userOeth: firstRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -502,7 +512,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: secondRequestAmount.mul(-1),
+          oethTotalSupply: secondRequestAmount.mul(-1),
+          oethTotalValue: secondRequestAmount.mul(-1),
           userOeth: secondRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -533,7 +544,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: 0,
+          oethTotalSupply: 0,
+          oethTotalValue: 0,
           userOeth: 0,
           userWeth: 0,
           vaultWeth: 0,
@@ -570,7 +582,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: 0,
+          oethTotalSupply: 0,
+          oethTotalValue: 0,
           userOeth: 0,
           userWeth: secondRequestAmount,
           vaultWeth: secondRequestAmount.mul(-1),
@@ -609,7 +622,8 @@ describe("OETH Vault", function () {
       await assertChangedData(
         dataBefore,
         {
-          oethTotal: 0,
+          oethTotalSupply: 0,
+          oethTotalValue: 0,
           userOeth: 0,
           userWeth: firstRequestAmount.add(secondRequestAmount),
           vaultWeth: firstRequestAmount.add(secondRequestAmount).mul(-1),
@@ -707,7 +721,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBefore,
           {
-            oethTotal: 0,
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
             userOeth: 0,
             userWeth: firstRequestAmount,
             vaultWeth: firstRequestAmount.mul(-1),
@@ -745,7 +760,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBefore,
           {
-            oethTotal: 0,
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
             userOeth: 0,
             userWeth: requestAmount,
             vaultWeth: requestAmount.mul(-1),
@@ -797,7 +813,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBeforeMint,
           {
-            oethTotal: 0,
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: withdrawAmount,
@@ -839,7 +856,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBeforeMint,
           {
-            oethTotal: 0,
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: strategyBalanceBefore,
@@ -879,7 +897,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBeforeMint,
           {
-            oethTotal: 0,
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: strategyBalanceBefore,
@@ -934,7 +953,8 @@ describe("OETH Vault", function () {
         await assertChangedData(
           dataBeforeMint,
           {
-            oethTotal: mintAmount,
+            oethTotalSupply: mintAmount,
+            oethTotalValue: mintAmount,
             userOeth: mintAmount,
             userWeth: mintAmount.mul(-1),
             vaultWeth: mintAmount,
