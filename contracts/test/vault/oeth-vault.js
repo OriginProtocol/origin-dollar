@@ -68,16 +68,20 @@ describe("OETH Vault", function () {
 
     const queueAfter = await oethVault.withdrawalQueueMetadata();
     expect(queueAfter.queued).to.equal(
-      dataBefore.queue.queued.add(delta.queued)
+      dataBefore.queue.queued.add(delta.queued),
+      "WithdrawalQueueMetadata.queued mismatch"
     );
     expect(queueAfter.claimable).to.equal(
-      dataBefore.queue.claimable.add(delta.claimable)
+      dataBefore.queue.claimable.add(delta.claimable),
+      "WithdrawalQueueMetadata.claimable mismatch"
     );
     expect(queueAfter.claimed).to.equal(
-      dataBefore.queue.claimed.add(delta.claimed)
+      dataBefore.queue.claimed.add(delta.claimed),
+      "WithdrawalQueueMetadata.claimed mismatch"
     );
     expect(queueAfter.nextWithdrawalIndex).to.equal(
-      dataBefore.queue.nextWithdrawalIndex.add(delta.nextWithdrawalIndex)
+      dataBefore.queue.nextWithdrawalIndex.add(delta.nextWithdrawalIndex),
+      "WithdrawalQueueMetadata.queued nextWithdrawalInded"
     );
   };
 
@@ -912,6 +916,38 @@ describe("OETH Vault", function () {
           );
         await expect(tx).to.be.revertedWith("Not enough WETH available");
       });
+      it("should not deposit allocated WETH during allocate", async () => {
+        const { oethVault, governor, weth } = fixture;
+
+        // Set mock strategy as default strategy
+        await oethVault
+          .connect(governor)
+          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+
+        // and buffer to 10%
+        await oethVault.connect(governor).setVaultBuffer(oethUnits("0.1"));
+
+        // WETH in strategy = 15  WETH
+        // WETH in the vault = 60 - 15 = 45 WETH
+        // Unallocated WETH in the vault = 45 - 23 = 22 WETH
+
+        await oethVault.connect(governor).allocate();
+
+        expect(await weth.balanceOf(mockStrategy.address)).to.approxEqual(
+          // 60 - 23 = 37 Unreserved WETH
+          // 90% of 37 = 33.3 WETH for allocation
+          oethUnits("33.3"),
+          "Strategy has the reserved WETH"
+        );
+
+        expect(await weth.balanceOf(oethVault.address)).to.approxEqual(
+          // 10% of 37 = 3.7 WETH for Vault buffer
+          // + 23 reserved WETH
+          oethUnits("23").add(oethUnits("3.7")),
+          "Vault doesn't have enough WETH"
+        );
+      });
+
       it("Should deposit unallocated WETH to a strategy", async () => {
         const { oethVault, weth, governor } = fixture;
 
