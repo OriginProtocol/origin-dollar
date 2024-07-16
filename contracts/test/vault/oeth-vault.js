@@ -21,6 +21,7 @@ describe("OETH Vault", function () {
 
     const oethTotalSupply = await oeth.totalSupply();
     const oethTotalValue = await oethVault.totalValue();
+    const vaultCheckBalance = await oethVault.checkBalance(weth.address);
     const userOeth = await oeth.balanceOf(user.address);
     const userWeth = await weth.balanceOf(user.address);
     const vaultWeth = await weth.balanceOf(oethVault.address);
@@ -29,6 +30,7 @@ describe("OETH Vault", function () {
     return {
       oethTotalSupply,
       oethTotalValue,
+      vaultCheckBalance,
       userOeth,
       userWeth,
       vaultWeth,
@@ -45,7 +47,11 @@ describe("OETH Vault", function () {
     );
     expect(await oethVault.totalValue()).to.equal(
       dataBefore.oethTotalValue.add(delta.oethTotalValue),
-      "OETH Total Value"
+      "Vault Total Value"
+    );
+    expect(await oethVault.checkBalance(weth.address)).to.equal(
+      dataBefore.vaultCheckBalance.add(delta.vaultCheckBalance),
+      "Vault Check Balance of WETH"
     );
     expect(await oeth.balanceOf(user.address)).to.equal(
       dataBefore.userOeth.add(delta.userOeth),
@@ -100,6 +106,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: amount,
           oethTotalValue: amount,
+          vaultCheckBalance: amount,
           userOeth: amount,
           userWeth: amount.mul(-1),
           vaultWeth: amount,
@@ -154,12 +161,34 @@ describe("OETH Vault", function () {
         .connect(governor)
         .setAssetDefaultStrategy(weth.address, mockStrategy.address);
 
+      const fixtureWithUser = { ...fixture, user: domen };
+      const dataBefore = await snapData(fixtureWithUser);
+
       // Mint some WETH
       await weth.connect(domen).approve(oethVault.address, oethUnits("10000"));
-      await oethVault.connect(domen).mint(weth.address, oethUnits("100"), "0");
+      const mintAmount = oethUnits("100");
+      await oethVault.connect(domen).mint(weth.address, mintAmount, "0");
 
       expect(await weth.balanceOf(mockStrategy.address)).to.eq(
-        oethUnits("100")
+        mintAmount,
+        "Strategy has the WETH"
+      );
+
+      await assertChangedData(
+        dataBefore,
+        {
+          oethTotalSupply: mintAmount,
+          oethTotalValue: mintAmount,
+          vaultCheckBalance: mintAmount,
+          userOeth: mintAmount,
+          userWeth: mintAmount.mul(-1),
+          vaultWeth: 0,
+          queued: 0,
+          claimable: 0,
+          claimed: 0,
+          nextWithdrawalIndex: 0,
+        },
+        fixtureWithUser
       );
     });
   });
@@ -499,6 +528,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: firstRequestAmount.mul(-1),
           oethTotalValue: firstRequestAmount.mul(-1),
+          vaultCheckBalance: firstRequestAmount.mul(-1),
           userOeth: firstRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -527,6 +557,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: 0,
           oethTotalValue: 0,
+          vaultCheckBalance: 0,
           userOeth: 0,
           userWeth: 0,
           vaultWeth: 0,
@@ -575,6 +606,9 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: firstRequestAmount.add(secondRequestAmount).mul(-1),
           oethTotalValue: firstRequestAmount.add(secondRequestAmount).mul(-1),
+          vaultCheckBalance: firstRequestAmount
+            .add(secondRequestAmount)
+            .mul(-1),
           userOeth: firstRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -610,6 +644,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: secondRequestAmount.mul(-1),
           oethTotalValue: secondRequestAmount.mul(-1),
+          vaultCheckBalance: secondRequestAmount.mul(-1),
           userOeth: secondRequestAmount.mul(-1),
           userWeth: 0,
           vaultWeth: 0,
@@ -642,6 +677,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: 0,
           oethTotalValue: 0,
+          vaultCheckBalance: 0,
           userOeth: 0,
           userWeth: 0,
           vaultWeth: 0,
@@ -680,6 +716,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: 0,
           oethTotalValue: 0,
+          vaultCheckBalance: 0,
           userOeth: 0,
           userWeth: secondRequestAmount,
           vaultWeth: secondRequestAmount.mul(-1),
@@ -720,6 +757,7 @@ describe("OETH Vault", function () {
         {
           oethTotalSupply: 0,
           oethTotalValue: 0,
+          vaultCheckBalance: 0,
           userOeth: 0,
           userWeth: firstRequestAmount.add(secondRequestAmount),
           vaultWeth: firstRequestAmount.add(secondRequestAmount).mul(-1),
@@ -906,6 +944,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: 0,
             oethTotalValue: 0,
+            vaultCheckBalance: 0,
             userOeth: 0,
             userWeth: firstRequestAmount,
             vaultWeth: firstRequestAmount.mul(-1),
@@ -945,6 +984,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: 0,
             oethTotalValue: 0,
+            vaultCheckBalance: 0,
             userOeth: 0,
             userWeth: requestAmount,
             vaultWeth: requestAmount.mul(-1),
@@ -998,6 +1038,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: 0,
             oethTotalValue: 0,
+            vaultCheckBalance: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: withdrawAmount,
@@ -1041,6 +1082,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: 0,
             oethTotalValue: 0,
+            vaultCheckBalance: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: strategyBalanceBefore,
@@ -1082,6 +1124,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: 0,
             oethTotalValue: 0,
+            vaultCheckBalance: 0,
             userOeth: 0,
             userWeth: 0,
             vaultWeth: strategyBalanceBefore,
@@ -1138,6 +1181,7 @@ describe("OETH Vault", function () {
           {
             oethTotalSupply: mintAmount,
             oethTotalValue: mintAmount,
+            vaultCheckBalance: mintAmount,
             userOeth: mintAmount,
             userWeth: mintAmount.mul(-1),
             vaultWeth: mintAmount,
