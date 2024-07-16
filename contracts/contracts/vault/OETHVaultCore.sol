@@ -365,6 +365,14 @@ contract OETHVaultCore is VaultCore {
         }
     }
 
+    /// @dev Get the balance of an asset held in Vault and all strategies
+    /// less any WETH that is reserved for the withdrawal queue.
+    /// This will only return a non-zero balance for WETH.
+    /// All other assets will return 0 even if there is some dust amounts left in the Vault.
+    /// For example, there is 1 wei left of stETH in the OETH Vault but will return 0 in this function.
+    ///
+    /// If there is not enough WETH in the vault and all strategies to cover all outstanding
+    /// withdrawal requests then return a WETH balance of 0
     function _checkBalance(address _asset)
         internal
         view
@@ -376,7 +384,9 @@ contract OETHVaultCore is VaultCore {
         if (_asset == weth) {
             WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
             // Need to remove WETH that is reserved for the withdrawal queue
-            return balance + queue.claimed - queue.queued;
+            if (balance + queue.claimed >= queue.queued) {
+                return balance + queue.claimed - queue.queued;
+            }
         }
     }
 
@@ -387,12 +397,20 @@ contract OETHVaultCore is VaultCore {
         super._allocate();
     }
 
+    /// @dev The total value of all assets held by the vault and all its strategies
+    /// less any WETH that is reserved for the withdrawal queue.
+    /// For OETH, this is just WETH in the vault and strategies.
+    ///
+    // If there is not enough WETH in the vault and all strategies to cover all outstanding
+    // withdrawal requests then return a total value of 0.
     function _totalValue() internal view override returns (uint256 value) {
         value = super._totalValue();
 
         // Need to remove WETH that is reserved for the withdrawal queue.
         // reserved for the withdrawal queue = cumulative queued total - total claimed
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-        value = value + queue.claimed - queue.queued;
+        if (value + queue.claimed >= queue.queued) {
+            return value + queue.claimed - queue.queued;
+        }
     }
 }
