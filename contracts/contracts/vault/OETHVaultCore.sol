@@ -155,6 +155,7 @@ contract OETHVaultCore is VaultCore {
         // Burn OETH from user (including fees)
         oUSD.burn(msg.sender, _amount);
 
+        // Prevent insolvency
         _postRedeem(_amount);
     }
 
@@ -196,6 +197,9 @@ contract OETHVaultCore is VaultCore {
             amount: uint128(_amount),
             queued: uint128(queued)
         });
+
+        // Prevent insolvency
+        _postRedeem(_amount);
     }
 
     /**
@@ -218,6 +222,9 @@ contract OETHVaultCore is VaultCore {
 
         // transfer WETH from the vault to the withdrawer
         IERC20(weth).safeTransfer(msg.sender, amount);
+
+        // Prevent insolvency
+        _postRedeem(amount);
     }
 
     /**
@@ -244,6 +251,9 @@ contract OETHVaultCore is VaultCore {
 
         // transfer all the claimed WETH from the vault to the withdrawer
         IERC20(weth).safeTransfer(msg.sender, totalAmount);
+
+        // Prevent insolvency
+        _postRedeem(totalAmount);
     }
 
     // slither-disable-start reentrancy-no-eth

@@ -5,6 +5,7 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { oethUnits, advanceTime } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
 const oethFixture = createFixtureLoader(oethDefaultFixture);
@@ -194,7 +195,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.be.revertedWith("WETH Asset index not cached");
     });
 
-    it("should update total supply correctly", async () => {
+    it("should update total supply correctly without redeem fee", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -211,6 +212,34 @@ describe("OETH Vault", function () {
       // Make sure the total supply went down
       expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(oethUnits("10"));
       expect(vaultBalanceBefore.sub(vaultBalanceAfter)).to.eq(oethUnits("10"));
+      expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
+    });
+
+    it("should update total supply correctly with redeem fee", async () => {
+      const { oethVault, oeth, weth, daniel } = fixture;
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setRedeemFeeBps(100);
+
+      const userBalanceBefore = await weth.balanceOf(daniel.address);
+      const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
+      const supplyBefore = await oeth.totalSupply();
+
+      await oethVault.connect(daniel).redeem(oethUnits("10"), "0");
+
+      const userBalanceAfter = await weth.balanceOf(daniel.address);
+      const vaultBalanceAfter = await weth.balanceOf(oethVault.address);
+      const supplyAfter = await oeth.totalSupply();
+
+      // Make sure the total supply went down
+      expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(
+        oethUnits("10").sub(oethUnits("0.1"))
+      );
+      expect(vaultBalanceBefore.sub(vaultBalanceAfter)).to.eq(
+        oethUnits("10").sub(oethUnits("0.1"))
+      );
       expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
     });
 
@@ -298,6 +327,23 @@ describe("OETH Vault", function () {
       const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
+
+    it("should return all strategies", async () => {
+      // Mostly to increase coverage
+
+      const { oethVault, weth, governor } = fixture;
+
+      // Empty list
+      await expect((await oethVault.getAllStrategies()).length).to.equal(0);
+
+      // Add a strategy
+      await oethVault.connect(governor).approveStrategy(weth.address);
+
+      // Check the strategy list
+      await expect(await oethVault.getAllStrategies()).to.deep.equal([
+        weth.address,
+      ]);
+    });
   });
 
   describe("Remove Asset", () => {
@@ -372,6 +418,53 @@ describe("OETH Vault", function () {
 
       await expect(tx).to.not.be.revertedWith("Vault still holds asset");
     });
+
+    it("should allow strategy to burnForStrategy", async () => {
+      const { oethVault, oeth, weth, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+
+      // First increase netOusdMintForStrategyThreshold
+      await oethVault
+        .connect(governor)
+        .setNetOusdMintForStrategyThreshold(oethUnits("100"));
+
+      // Then mint for strategy
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+
+      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+        oethUnits("10")
+      );
+
+      // Then burn for strategy
+      await oethVault.connect(daniel).burnForStrategy(oethUnits("10"));
+
+      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+        oethUnits("0")
+      );
+    });
+
+    it("should fail when burnForStrategy because Amoount too high", async () => {
+      const { oethVault, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      const tx = oethVault
+        .connect(daniel)
+        .burnForStrategy(parseUnits("10", 76));
+
+      await expect(tx).to.be.revertedWith("Amount too high");
+    });
+
+    it("should fail when burnForStrategy because Attempting to burn too much OUSD.", async () => {
+      const { oethVault, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+
+      // Then try to burn more than authorized
+      const tx = oethVault.connect(daniel).burnForStrategy(oethUnits("0"));
+
+      await expect(tx).to.be.revertedWith("Attempting to burn too much OUSD.");
+    });
   });
 
   describe("with withdrawal queue", () => {
@@ -381,6 +474,9 @@ describe("OETH Vault", function () {
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
       await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
       await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setMaxSupplyDiff(oethUnits("0.03"));
     });
     const firstRequestAmount = oethUnits("5");
     const secondRequestAmount = oethUnits("18");
@@ -635,6 +731,34 @@ describe("OETH Vault", function () {
         fixtureWithUser
       );
     });
+    it("Should claim single big request as a whale", async () => {
+      const { oethVault, oeth, matt } = fixture;
+
+      const oethBalanceBefore = await oeth.balanceOf(matt.address);
+      const totalValueBefore = await oethVault.totalValue();
+
+      await oethVault.connect(matt).requestWithdrawal(oethUnits("30"));
+
+      const oethBalanceAfter = await oeth.balanceOf(matt.address);
+      const totalValueAfter = await oethVault.totalValue();
+      await expect(oethBalanceBefore).to.equal(oethUnits("30"));
+      await expect(oethBalanceAfter).to.equal(oethUnits("0"));
+      await expect(totalValueBefore.sub(totalValueAfter)).to.equal(
+        oethUnits("30")
+      );
+
+      const oethTotalSupply = await oeth.totalSupply();
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+      const tx = await oethVault.connect(matt).claimWithdrawal(0); // Claim withdrawal for 50% of the supply
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(matt.address, 0, oethUnits("30"));
+
+      await expect(oethTotalSupply).to.equal(await oeth.totalSupply());
+      await expect(totalValueAfter).to.equal(await oethVault.totalValue());
+    });
+
     it("Should fail claim request because of not enough time passed", async () => {
       const { oethVault, daniel } = fixture;
 
@@ -646,6 +770,65 @@ describe("OETH Vault", function () {
       const tx = oethVault.connect(daniel).claimWithdrawal(requestId);
 
       await expect(tx).to.revertedWith("Claim delay not met");
+    });
+    it("Should fail request withdrawal because of solvency check too high", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      await weth.connect(daniel).transfer(oethVault.address, oethUnits("10"));
+
+      const tx = oethVault
+        .connect(daniel)
+        .requestWithdrawal(firstRequestAmount);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+    it("Should fail claim request because of solvency check too high", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      // Request withdrawal of 5 OETH
+      await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
+
+      // Transfer 10 WETH to the vault
+      await weth.connect(daniel).transfer(oethVault.address, oethUnits("10"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Claim the withdrawal
+      const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+    it("Should fail multiple claim requests because of solvency check too high", async () => {
+      const { oethVault, matt, weth } = fixture;
+
+      // Request withdrawal of 5 OETH
+      await oethVault.connect(matt).requestWithdrawal(firstRequestAmount);
+      await oethVault.connect(matt).requestWithdrawal(secondRequestAmount);
+
+      // Transfer 10 WETH to the vault
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10"));
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Claim the withdrawal
+      const tx = oethVault.connect(matt).claimWithdrawals([0, 1]);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
+    });
+
+    it("Should fail request withdrawal because of solvency check too low", async () => {
+      const { oethVault, daniel, weth } = fixture;
+
+      // Simulate a loss of funds from the vault
+      await weth
+        .connect(await impersonateAndFund(oethVault.address))
+        .transfer(daniel.address, oethUnits("10"));
+
+      const tx = oethVault
+        .connect(daniel)
+        .requestWithdrawal(firstRequestAmount);
+
+      await expect(tx).to.revertedWith("Backing supply liquidity error");
     });
 
     describe("when deposit some WETH to a strategy", () => {
