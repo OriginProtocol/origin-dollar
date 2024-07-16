@@ -232,7 +232,8 @@ contract OETHVaultCore is VaultCore {
      * This requests can be claimed once the withdrawal queue's `claimable` amount
      * is greater than or equal each request's `queued` amount and 30 minutes has passed.
      * If one of the requests is not claimable, the whole transaction will revert with `Queue pending liquidity`.
-     * If one of the requests is not older than 30 minutes, the whole transaction will revert with `Claim delay not met`.
+     * If one of the requests is not older than 30 minutes,
+     * the whole transaction will revert with `Claim delay not met`.
      * @param _requestIds Unique ID of each withdrawal request
      * @return amounts Amount of WETH received for each request
      * @return totalAmount Total amount of WETH transferred to the withdrawer
