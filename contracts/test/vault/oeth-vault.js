@@ -16,23 +16,6 @@ describe("OETH Vault", function () {
     fixture = await oethFixture();
   });
 
-  const deployMockDefaultStrategy = async (fixture) => {
-    const { oethVault, weth } = fixture;
-
-    const defaultStrat = await oethVault.assetDefaultStrategies(weth.address);
-
-    if (defaultStrat == addresses.zero) {
-      // Deploy default strategy
-      const dMockStrategy = await deployWithConfirmation("MockStrategy");
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .approveStrategy(dMockStrategy.address);
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .setAssetDefaultStrategy(weth.address, dMockStrategy.address);
-    }
-  };
-
   const snapData = async (fixture) => {
     const { oeth, oethVault, weth, user } = fixture;
 
@@ -1572,6 +1555,97 @@ describe("OETH Vault", function () {
             await weth.balanceOf(mockStrategy.address)
           ).to.approxEqualTolerance(stratBalance.add(oethUnits("3")), 5);
         });
+      });
+    });
+    describe("with 40 WETH in the queue, 10 WETH in the vault, 10 WETH in the strategy => Slash event, no solvency check", () => {
+      beforeEach(async () => {
+        const { governor, oethVault, weth, daniel, josh, matt } = fixture;
+        // Deploy a mock strategy
+        const mockStrategy = await deployWithConfirmation("MockStrategy");
+        await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+        await oethVault
+          .connect(governor)
+          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+
+        // Mint 60 OETH to three users
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
+        await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+
+        // Request and claim 10 + 20 + 10 = 40 WETH from Vault
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        // Simulate slash event of 10 ethers
+        await weth
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(addresses.dead, oethUnits("20"));
+
+        // Simulate strategist sending 20 WETH to the vault
+        await weth
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(oethVault.address, oethUnits("20"));
+
+        await oethVault.connect(josh).addWithdrawalQueueLiquidity();
+      });
+      it("should allow first user to claim the request of 10 WETH, no loss", async () => {
+        const { oethVault, daniel } = fixture;
+        const fixtureWithUser = { ...fixture, user: daniel };
+        const dataBefore = await snapData(fixtureWithUser);
+
+        const tx = await oethVault.connect(daniel).claimWithdrawal(0);
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalClaimed")
+          .withArgs(daniel.address, 0, oethUnits("10"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: 0,
+            oethTotalValue: 0,
+            vaultCheckBalance: 0,
+            userOeth: 0,
+            userWeth: oethUnits("10"),
+            vaultWeth: oethUnits("10").mul(-1),
+            queued: 0,
+            claimable: 0,
+            claimed: oethUnits("10"),
+            nextWithdrawalIndex: 0,
+          },
+          fixtureWithUser
+        );
+      });
+      it("shouldn't allow second user to claim the request of 20 WETH, due to loss", async () => {
+        const { oethVault, josh } = fixture;
+
+        const tx = oethVault.connect(josh).claimWithdrawal(1);
+
+        await expect(tx).to.be.revertedWith("Queue pending liquidity");
+      });
+      it("should allow a user to create a new request, even if the vault is insolvent", async () => {
+        const { oethVault, matt } = fixture;
+
+        const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+
+        await expect(tx)
+          .to.emit(oethVault, "WithdrawalRequested")
+          .withArgs(matt.address, 3, oethUnits("10"), oethUnits("50"));
+      });
+      it("should not allow user to create a new request, as insolvent with solvency check", async () => {
+        const { oethVault, matt } = fixture;
+
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .setMaxSupplyDiff(oethUnits("0.03"));
+
+        const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+
+        await expect(tx).to.be.revertedWith("Backing supply liquidity error");
       });
     });
   });
