@@ -224,7 +224,7 @@ contract VaultCore is VaultInitializer {
         }
 
         // Check that the OTokens are backed by enough assets
-        if (maxSupplyDiff > 0) {
+        if (maxSupplyDiff > 0 && totalUnits > 0) {
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
