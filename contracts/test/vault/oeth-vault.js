@@ -501,7 +501,7 @@ describe("OETH Vault", function () {
   });
 
   describe("Withdrawal Queue", () => {
-    const delayPeriod = 30 * 60; // 30 minutes
+    const delayPeriod = 10 * 60; // 10 minutes
     describe("with all 60 WETH in the vault", () => {
       beforeEach(async () => {
         const { oethVault, weth, daniel, josh, matt } = fixture;
