@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
-const { isCI, oethUnits } = require("../helpers");
+const { isCI, oethUnits, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { logTxDetails } = require("../../utils/txLogger");
 const {
@@ -66,6 +66,7 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("user operations", () => {
     let oethWhaleSigner;
+    const delayPeriod = 30 * 60; // 30 minutes
     beforeEach(async () => {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
@@ -220,6 +221,31 @@ describe("ForkTest: OETH Vault", function () {
           _withdrawer: await oethWhaleSigner.getAddress(),
           _amount: oethWhaleBalance,
         });
+    });
+    it("should claim withdraw by a OETH whale", async () => {
+      const { oeth, oethVault } = fixture;
+
+      let oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+
+      expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+        parseUnits("100", 18)
+      );
+
+      oethWhaleBalance = oethUnits("50");
+
+      // First Request withdrawal
+      await oethVault
+        .connect(oethWhaleSigner)
+        .requestWithdrawal(oethWhaleBalance);
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Then Claim withdrawal
+      const tx = await oethVault.connect(oethWhaleSigner).claimWithdrawal(0);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(oethWhaleAddress, 0, oethWhaleBalance);
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock } = fixture;
