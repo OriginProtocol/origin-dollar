@@ -501,6 +501,7 @@ describe("OETH Vault", function () {
   });
 
   describe("Allocate", () => {
+    const delayPeriod = 10 * 60; // 10mins
     it("Shouldn't allocate as minted amount is lower than autoAllocateThreshold", async () => {
       const { oethVault, weth, daniel } = fixture;
 
@@ -605,7 +606,7 @@ describe("OETH Vault", function () {
           oethUnits("9.5")
         );
       });
-      it("buffer is 0%, 10 WETH in the queue", async () => {
+      it("buffer is 0%, 10 WETH in queue", async () => {
         const { oethVault, daniel, weth } = fixture;
         await oethVault
           .connect(daniel)
@@ -620,7 +621,71 @@ describe("OETH Vault", function () {
           .to.emit(oethVault, "AssetAllocated")
           .withArgs(weth.address, mockStrategy.address, oethUnits("10"));
         expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
-          oethUnits("10")
+          oethUnits("20")
+        );
+      });
+      it("buffer is 0%, 20 WETH in queue, 10 WETH claimed", async () => {
+        const { oethVault, daniel, weth } = fixture;
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("30"), "0");
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        await advanceTime(delayPeriod);
+        // Simulate strategist pulling back WETH to the vault.
+        await weth
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(oethVault.address, oethUnits("10"));
+        await oethVault.connect(daniel).claimWithdrawal(0);
+        // So far, 10 WETH queued, 10 WETH claimed, 0 WETH available, 20 WETH in strat
+
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        // So far, 20 WETH queued, 10 WETH claimed, 0 WETH available, 20 WETH in strat
+
+        // Deposit 35 WETH, 10 WETH should remain in the vault for withdraw, so strat should have 45WETH.
+        const tx = oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("35"), "0");
+        await expect(tx)
+          .to.emit(oethVault, "AssetAllocated")
+          .withArgs(weth.address, mockStrategy.address, oethUnits("25"));
+
+        expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
+          oethUnits("45")
+        );
+      });
+      it("buffer is 5%, 20 WETH in queue, 10 WETH claimed", async () => {
+        const { oethVault, daniel, weth } = fixture;
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("40"), "0");
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        await advanceTime(delayPeriod);
+        // Simulate strategist pulling back WETH to the vault.
+        await weth
+          .connect(await impersonateAndFund(mockStrategy.address))
+          .transfer(oethVault.address, oethUnits("10"));
+        await oethVault.connect(daniel).claimWithdrawal(0);
+        // So far, 10 WETH queued, 10 WETH claimed, 0 WETH available, 30 WETH in strat
+
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        // So far, 20 WETH queued, 10 WETH claimed, 0 WETH available, 30 WETH in strat
+
+        // Set vault buffer to 5%
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .setVaultBuffer(oethUnits("0.05"));
+
+        // Deposit 40 WETH, 10 WETH should remain in the vault for withdraw + 3 (i.e. 20+40 *5%)
+        // So strat should have 57WETH.
+        const tx = oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("40"), "0");
+        await expect(tx)
+          .to.emit(oethVault, "AssetAllocated")
+          .withArgs(weth.address, mockStrategy.address, oethUnits("27"));
+
+        expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
+          oethUnits("57")
         );
       });
     });
