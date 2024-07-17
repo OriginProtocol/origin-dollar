@@ -398,40 +398,20 @@ contract OETHVaultCore is VaultCore {
         uint256 wethAvailableInVault = _wethAvailable();
         // Nothing in vault to allocate
         if (wethAvailableInVault == 0) return;
-        uint256 strategiesValue = _totalValueInStrategies();
-        // We have a method that does the same as this, gas optimisation
-        uint256 calculatedTotalValue = wethAvailableInVault + strategiesValue;
 
-        // We want to maintain a buffer on the Vault so calculate a percentage
-        // modifier to multiply each amount being allocated by to enforce the
-        // vault buffer
-        uint256 vaultBufferModifier;
-        if (strategiesValue == 0) {
-            // Nothing in Strategies, allocate 100% minus the vault buffer to
-            // strategies
-            vaultBufferModifier = uint256(1e18) - vaultBuffer;
-        } else {
-            vaultBufferModifier =
-                (vaultBuffer * calculatedTotalValue) /
-                wethAvailableInVault;
-            if (1e18 > vaultBufferModifier) {
-                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = uint256(1e18) - vaultBufferModifier;
-            } else {
-                // We need to let the buffer fill
-                return;
-            }
-        }
-        if (vaultBufferModifier == 0) return;
+        // Calculate the target buffer for the vault using the total supply
+        uint256 totalSupply = oUSD.totalSupply();
+        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer);
 
-        uint256 allocateAmount = wethAvailableInVault.mulTruncate(
-            vaultBufferModifier
-        );
+        // If available WETH in the Vault is below the target buffer then there's nothing to allocate
+        if (wethAvailableInVault <= targetBuffer) return;
+
+        // The amount of assets to allocate to the default strategy
+        uint256 allocateAmount = wethAvailableInVault - targetBuffer;
 
         address depositStrategyAddr = assetDefaultStrategies[weth];
 
-        if (depositStrategyAddr != address(0) && allocateAmount > 0) {
+        if (depositStrategyAddr != address(0)) {
             IStrategy strategy = IStrategy(depositStrategyAddr);
             // Transfer asset to Strategy and call deposit method to
             // mint or take required action
