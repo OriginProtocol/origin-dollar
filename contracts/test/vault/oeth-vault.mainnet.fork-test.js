@@ -66,7 +66,7 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("user operations", () => {
     let oethWhaleSigner;
-    const delayPeriod = 30 * 60; // 30 minutes
+    const delayPeriod = 10 * 60; // 10 minutes
     beforeEach(async () => {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
