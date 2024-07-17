@@ -500,6 +500,132 @@ describe("OETH Vault", function () {
     });
   });
 
+  describe("Allocate", () => {
+    it("Shouldn't allocate as minted amount is lower than autoAllocateThreshold", async () => {
+      const { oethVault, weth, daniel } = fixture;
+
+      // Set auto allocate threshold to 100 WETH
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setAutoAllocateThreshold(oethUnits("100"));
+
+      // Mint for 10 WETH
+      const tx = oethVault
+        .connect(daniel)
+        .mint(weth.address, oethUnits("10"), "0");
+
+      await expect(tx).to.not.emit(oethVault, "AssetAllocated");
+    });
+    it("Shouldn't allocate as no WETH available", async () => {
+      const { oethVault, weth, daniel } = fixture;
+
+      // Deploy default strategy
+      const mockStrategy = await deployWithConfirmation("MockStrategy");
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .approveStrategy(mockStrategy.address);
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+
+      // Mint will allocate all to default strategy bc no buffer, no threshold
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+      await oethVault.connect(daniel).requestWithdrawal(oethUnits("5"));
+
+      // Deposit less than queued amount (5 WETH) => _wethAvailable() return 0
+      const tx = oethVault
+        .connect(daniel)
+        .mint(weth.address, oethUnits("3", "0"));
+      expect(tx).to.not.emit(oethVault, "AssetAllocated");
+    });
+    it("Shouldn't allocate as WETH available is lower than buffer", async () => {
+      const { oethVault, weth, daniel } = fixture;
+
+      await oethVault.connect(daniel).mint(weth.address, oethUnits("100"), "0");
+
+      // Set vault buffer to 5%
+      await oethVault
+        .connect(await impersonateAndFund(await oethVault.governor()))
+        .setVaultBuffer(oethUnits("0.05"));
+
+      // OETH total supply = 100(first deposit) + 5(second deposit) = 105
+      // Buffer = 105 * 5% = 5.25 WETH
+      // Second deposit should remain in the vault as below vault buffer
+      const tx = oethVault.connect(daniel).mint(oethUnits("5"), "0");
+      expect(tx).to.not.emit(oethVault, "AssetAllocated");
+    });
+    it("Shouldn't allocate as default strategy is address null", async () => {
+      const { oethVault, weth, daniel } = fixture;
+
+      const tx = oethVault
+        .connect(daniel)
+        .mint(weth.address, oethUnits("100"), "0");
+
+      expect(tx).to.not.emit(oethVault, "AssetAllocated");
+    });
+    describe("Should allocate WETH available to default strategy when: ", () => {
+      let mockStrategy;
+      beforeEach(async () => {
+        // Deploy default strategy
+        const { oethVault, weth } = fixture;
+        mockStrategy = await deployWithConfirmation("MockStrategy");
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .approveStrategy(mockStrategy.address);
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+      });
+      it("buffer is 0%, 0 WETH in queue", async () => {
+        const { oethVault, daniel, weth } = fixture;
+        const tx = oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await expect(tx)
+          .to.emit(oethVault, "AssetAllocated")
+          .withArgs(weth.address, mockStrategy.address, oethUnits("10"));
+        expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
+          oethUnits("10")
+        );
+      });
+      it("buffer is 5%", async () => {
+        const { oethVault, daniel, weth } = fixture;
+        // Set vault buffer to 5%
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .setVaultBuffer(oethUnits("0.05"));
+
+        const tx = oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await expect(tx)
+          .to.emit(oethVault, "AssetAllocated")
+          .withArgs(weth.address, mockStrategy.address, oethUnits("9.5"));
+        expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
+          oethUnits("9.5")
+        );
+      });
+      it("buffer is 0%, 10 WETH in the queue", async () => {
+        const { oethVault, daniel, weth } = fixture;
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+        const tx = oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("20"), "0");
+
+        // 10 WETH in the queue, 10 WETH in strat. New deposit of 20, only 10 WETH available to allocate to strategy.
+        await expect(tx)
+          .to.emit(oethVault, "AssetAllocated")
+          .withArgs(weth.address, mockStrategy.address, oethUnits("10"));
+        expect(await weth.balanceOf(mockStrategy.address)).to.be.equal(
+          oethUnits("10")
+        );
+      });
+    });
+  });
+
   describe("Withdrawal Queue", () => {
     const delayPeriod = 10 * 60; // 10 minutes
     describe("with all 60 WETH in the vault", () => {
