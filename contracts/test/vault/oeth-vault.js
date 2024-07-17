@@ -1306,6 +1306,7 @@ describe("OETH Vault", function () {
         await oethVault.connect(governor).setVaultBuffer(oethUnits("0.01"));
 
         // Have 4 + 12 + 16 = 32 WETH outstanding requests
+        // So a total supply of 100 - 32 = 68 OETH
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("4"));
         await oethVault.connect(josh).requestWithdrawal(oethUnits("12"));
         await oethVault.connect(matt).requestWithdrawal(oethUnits("16"));
@@ -1498,7 +1499,7 @@ describe("OETH Vault", function () {
           await expect(tx).to.not.emit(oethVault, "AssetAllocated");
         });
       });
-      describe("when mint more than covers outstanding requests and vault buffer (17 + 1 + 3 WETH)", () => {
+      describe("when mint more than covers outstanding requests and vault buffer (17 + 1 + 3 = 21 OETH)", () => {
         beforeEach(async () => {
           const { oethVault, daniel, weth } = fixture;
           await oethVault
@@ -1545,15 +1546,20 @@ describe("OETH Vault", function () {
 
           const tx = await oethVault.connect(domen).allocate();
 
-          await expect(tx).to.emit(oethVault, "AssetAllocated");
+          // total supply is 68 starting + 21 minted = 89 OETH
+          // Vault buffer is 1% of 89 = 0.89 WETH
+          // WETH transfer amount = 4 WETH available in vault - 0.89 WETH buffer = 3.11 WETH
+          await expect(tx)
+            .to.emit(oethVault, "AssetAllocated")
+            .withArgs(weth.address, mockStrategy.address, oethUnits("3.11"));
 
-          expect(
-            await weth.balanceOf(oethVault.address)
-          ).to.approxEqualTolerance(vaultBalance.sub(oethUnits("3")), 5);
+          expect(await weth.balanceOf(oethVault.address)).to.eq(
+            vaultBalance.sub(oethUnits("3.11"))
+          );
 
-          expect(
-            await weth.balanceOf(mockStrategy.address)
-          ).to.approxEqualTolerance(stratBalance.add(oethUnits("3")), 5);
+          expect(await weth.balanceOf(mockStrategy.address)).to.eq(
+            stratBalance.add(oethUnits("3.11"))
+          );
         });
       });
     });
