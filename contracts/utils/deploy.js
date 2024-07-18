@@ -121,7 +121,7 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (process.env.PROVIDER_URL.includes("rpc.tenderly.co")) {
+  if (process.env.PROVIDER_URL?.includes("rpc.tenderly.co")) {
     // Skip on Tenderly
     return result;
   }
