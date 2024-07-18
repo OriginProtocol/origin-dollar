@@ -1093,6 +1093,12 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
     const signer = await getSigner();
@@ -1111,6 +1117,12 @@ subtask(
     "uuid of P2P's request SSV validator API call",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
   )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
