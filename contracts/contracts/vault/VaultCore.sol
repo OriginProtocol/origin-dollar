@@ -284,7 +284,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() external whenNotCapitalPaused nonReentrant {
+    function allocate() external virtual whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 

@@ -390,35 +390,44 @@ contract OETHVaultCore is VaultCore {
         }
     }
 
-    // @inheritdoc VaultCore
-    function _allocate() internal override {
+    /**
+     * @notice Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate() external override whenNotCapitalPaused nonReentrant {
         // Add any unallocated WETH to the withdrawal queue first
         _addWithdrawalQueueLiquidity();
 
+        _allocate();
+    }
+
+    /// @dev Allocate WETH to the default WETH strategy if there is excess to the Vault buffer.
+    /// This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
+    /// has been called before this function.
+    function _allocate() internal override {
+        // No need to do anything if no default strategy for WETH
+        address depositStrategyAddr = assetDefaultStrategies[weth];
+        if (depositStrategyAddr == address(0)) return;
+
         uint256 wethAvailableInVault = _wethAvailable();
-        // Nothing in vault to allocate
+        // No need to do anything if there isn't any WETH in the vault to allocate
         if (wethAvailableInVault == 0) return;
 
         // Calculate the target buffer for the vault using the total supply
         uint256 totalSupply = oUSD.totalSupply();
         uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer);
 
-        // If available WETH in the Vault is below the target buffer then there's nothing to allocate
+        // If available WETH in the Vault is below or equal the target buffer then there's nothing to allocate
         if (wethAvailableInVault <= targetBuffer) return;
 
         // The amount of assets to allocate to the default strategy
         uint256 allocateAmount = wethAvailableInVault - targetBuffer;
 
-        address depositStrategyAddr = assetDefaultStrategies[weth];
+        IStrategy strategy = IStrategy(depositStrategyAddr);
+        // Transfer WETH to the strategy and call the strategy's deposit function
+        IERC20(weth).safeTransfer(address(strategy), allocateAmount);
+        strategy.deposit(weth, allocateAmount);
 
-        if (depositStrategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(depositStrategyAddr);
-            // Transfer asset to Strategy and call deposit method to
-            // mint or take required action
-            IERC20(weth).safeTransfer(address(strategy), allocateAmount);
-            strategy.deposit(weth, allocateAmount);
-            emit AssetAllocated(weth, depositStrategyAddr, allocateAmount);
-        }
+        emit AssetAllocated(weth, depositStrategyAddr, allocateAmount);
     }
 
     /// @dev The total value of all assets held by the vault and all its strategies
