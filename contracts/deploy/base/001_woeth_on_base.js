@@ -1,39 +1,25 @@
-const { deployOnArb } = require("../../utils/delpoy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
 
-module.exports = deployOnArb(
+module.exports = deployOnBase(
   {
-    deployName: "084_delpoy_woeth_on_arb",
+    deployName: "001_woeth_on_base",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Deploy Proxy
-    await deployWithConfirmation(
-      "BridgedWOETHProxy",
-      [],
-      undefined,
-      undefined,
-      undefined,
-      20000000
-    );
-    const cWOETHProxy = await ethers.getContract("BridgedWOETHProxy");
-    console.log("BridgedWOETHProxy address:", cWOETHProxy.address);
+    await deployWithConfirmation("BridgedBaseWOETHProxy", []);
+    const cWOETHProxy = await ethers.getContract("BridgedBaseWOETHProxy");
+    console.log("BridgedBaseWOETHProxy address:", cWOETHProxy.address);
 
     // Deploy Bridged WOETH Token implementation
-    await deployWithConfirmation(
-      "BridgedWOETH",
-      [],
-      undefined,
-      undefined,
-      undefined,
-      20000000
-    );
+    await deployWithConfirmation("BridgedWOETH", []);
     const cWOETHImpl = await ethers.getContract("BridgedWOETH");
     console.log("BridgedWOETH address:", cWOETHImpl.address);
 
@@ -54,6 +40,6 @@ module.exports = deployOnArb(
           await getTxOpts()
         )
     );
-    console.log("Initialized BridgedWOETHProxy");
+    console.log("Initialized BridgedBaseWOETHProxy");
   }
 );

@@ -278,6 +278,29 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
+// Base
+addresses.base = {};
+addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
+addresses.base.aeroRouterAddress = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
+addresses.base.aeroVoterAddress = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5";
+addresses.base.aeroFactoryAddress =
+  "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";
+addresses.base.aeroGaugeGovernorAddress =
+  "0xE6A41fE61E7a1996B59d508661e3f524d6A32075";
+
+addresses.base.ethUsdPriceFeed = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70";
+
+addresses.base.aeroUsdPriceFeed = "0x4EC5970fC728C5f65ba413992CD5fF6FD70fcfF0";
+addresses.base.WETH = "0x4200000000000000000000000000000000000006";
+addresses.base.wethAeroPoolAddress =
+  "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
+addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+
+// Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
+addresses.base.BridgedWOETHOracleFeed =
+  "0xe96EB1EDa83d18cbac224233319FA5071464e1b9";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 

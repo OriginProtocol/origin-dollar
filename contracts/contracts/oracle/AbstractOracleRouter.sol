@@ -8,7 +8,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // @notice Abstract functionality that is shared between various Oracle Routers
-abstract contract OracleRouterBase is IOracle {
+abstract contract AbstractOracleRouter is IOracle {
     using StableMath for uint256;
     using SafeCast for int256;
 

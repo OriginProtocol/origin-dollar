@@ -21,7 +21,7 @@
 <polyline fill="none" stroke="black" points="49.61,-0.5 49.61,-50.1 "/>
 <text text-anchor="middle" x="309.65" y="-33.5" font-family="Courier New" font-size="14.00">type: &lt;inherited contract&gt;.variable (bytes)</text>
 <polyline fill="none" stroke="black" points="49.61,-25.3 569.69,-25.3 "/>
-<text text-anchor="middle" x="309.65" y="-8.7" font-family="Courier New" font-size="14.00">mapping(address=&gt;uint8): OracleRouterBase.decimalsCache (32)</text>
+<text text-anchor="middle" x="309.65" y="-8.7" font-family="Courier New" font-size="14.00">mapping(address=&gt;uint8): AbstractOracleRouter.decimalsCache (32)</text>
 </g>
 </g>
 </svg>

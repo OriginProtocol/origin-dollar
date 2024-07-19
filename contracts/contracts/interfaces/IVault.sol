@@ -145,6 +145,9 @@ interface IVault {
 
     function mintForStrategy(uint256 _amount) external;
 
+    function mintForStrategyAndTransfer(address receiver, uint256 _amount)
+        external;
+
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
     function burnForStrategy(uint256 _amount) external;
