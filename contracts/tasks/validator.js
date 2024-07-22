@@ -188,6 +188,9 @@ async function snapStaking({ block, admin, index }) {
   const wethStrategyBalance = await weth.balanceOf(strategy.address, {
     blockTag,
   });
+  const wethVaultBalance = await weth.balanceOf(vault.address, {
+    blockTag,
+  });
   const ssvStrategyBalance = await ssv.balanceOf(strategy.address, {
     blockTag,
   });
@@ -239,6 +242,7 @@ async function snapStaking({ block, admin, index }) {
     )}`
   );
   console.log(`Strategy WETH            : ${formatUnits(wethStrategyBalance)}`);
+  console.log(`Vault    WETH            : ${formatUnits(wethVaultBalance)}`);
   console.log(`Strategy SSV             : ${formatUnits(ssvStrategyBalance)}`);
 
   const stakeETHThreshold = await strategy.stakeETHThreshold({ blockTag });

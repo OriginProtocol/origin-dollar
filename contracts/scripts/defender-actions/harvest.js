@@ -42,8 +42,7 @@ const handler = async (event) => {
   log(
     `Resolved second Native Staking Strategy address to ${secondNativeStakingProxyAddress}`
   );
-  // TODO uncomment once second strategy is deployed
-  // await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
+  await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
 };
 
 const harvest = async (
