@@ -52,6 +52,7 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
+const { defaultBaseFixture } = require("./_fixture-base.js");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -1952,6 +1953,48 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
+ * Configure a Vault with only the oETH/WETH Aero Metastrategy
+ * TODO:Revisit and Improve the fixture, currently it mocks stuff
+ */
+async function aeroOETHAMOFixture(
+  config = {
+    wethMintAmount: 0,
+    depositToStrategy: false,
+    poolAddEthAmount: 0,
+    poolAddOethAmount: 0,
+    balancePool: false,
+  }
+) {
+  const baseFixture = createFixtureLoader(defaultBaseFixture);
+  const fixture = await baseFixture();
+  const { josh, oethVault, weth, aerodromeEthStrategy, sGovernor } = fixture;
+  // Conditional actions based on input params
+  // mint some OETH using WETH is configured
+  if (config?.wethMintAmount > 0) {
+    const wethAmount = parseUnits(config.wethMintAmount.toString());
+
+    // Set vault balance. This will sit in the vault, not the strategy
+    await weth.connect(josh).transfer(oethVault.address, wethAmount);
+
+    log(`OETHVault weth balance set to: ${wethAmount}`);
+    // Add ETH to the pool
+    if (config?.depositToStrategy) {
+      // The governor deposits the WETH to the AMO strategy
+      await oethVault
+        .connect(sGovernor)
+        .depositToStrategy(
+          aerodromeEthStrategy.address,
+          [weth.address],
+          [wethAmount]
+        );
+      log(`Deposited ${wethAmount} WETH to the strategy contract`);
+    }
+  }
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with only the Aave strategy.
  */
 async function aaveVaultFixture() {
@@ -2466,6 +2509,7 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  aeroOETHAMOFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,

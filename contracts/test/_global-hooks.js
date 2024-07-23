@@ -1,10 +1,10 @@
 const mocha = require("mocha");
 
 const {
-  isMainnetForkTest,
   isArbFork,
   isHoleskyFork,
   isBaseFork,
+  isMainnetForkTest,
 } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);

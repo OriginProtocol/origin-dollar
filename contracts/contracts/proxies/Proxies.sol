@@ -252,3 +252,24 @@ contract NativeStakingFeeAccumulator2Proxy is
 contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice BridgedBaseWOETHProxy delegates calls to BridgedWOETH implementation
+ */
+contract BridgedBaseWOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice AerodromeEthStrategyProxy delegates calls to AerodromEthStrategy implementation
+ */
+contract AerodromeEthStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHBaseHarvesterProxy delegates calls to a Harvester implementation
+ */
+contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

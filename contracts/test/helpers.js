@@ -269,10 +269,10 @@ const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
 const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
 const isHoleskyOrFork = isHolesky || isHoleskyFork;
 const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
-const isCI = process.env.GITHUB_ACTIONS;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isBaseOrFork = isBase || isBaseFork;
+const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -398,7 +398,7 @@ const getOracleAddresses = async (deployments) => {
 };
 
 const getAssetAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
+  if (isMainnet || isMainnetForkTest) {
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -450,6 +450,11 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.holesky.SSV,
       SSVNetwork: addresses.holesky.SSVNetwork,
       beaconChainDepositContract: addresses.holesky.beaconChainDepositContract,
+    };
+  } else if (isBaseOrFork) {
+    return {
+      WETH: addresses.base.wethTokenAddress,
+      AERO: addresses.base.aeroTokenAddress,
     };
   } else {
     const addressMap = {
@@ -801,10 +806,10 @@ module.exports = {
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
   isArbFork,
-  isCI,
   isBase,
   isBaseFork,
   isBaseOrFork,
+  isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

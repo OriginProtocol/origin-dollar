@@ -38,6 +38,7 @@ main()
           BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
           params+=" --tags base";
         fi
+
         
         echo "Fork Network: $FORK_NETWORK_NAME"
 

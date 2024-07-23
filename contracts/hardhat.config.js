@@ -1,3 +1,4 @@
+require("dotenv").config();
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
@@ -10,6 +11,10 @@ const {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
+  isBaseFork,
+  baseProviderUrl,
+  isBase,
+  isBaseForkTest,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
@@ -42,7 +47,8 @@ const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
-
+const BASE_DEPLOYER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -65,10 +71,13 @@ const paths = {};
 if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   // holesky deployment files are in contracts/deploy/holesky
   paths.deploy = "deploy/holesky";
+} else if (isBase || isBaseForkTest || isBaseFork) {
+  // base deployment files are in contracts/deploy/base
+  paths.deploy = "deploy/base";
 } else {
-  // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
 }
+
 if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
@@ -95,7 +104,11 @@ module.exports = {
         mnemonic,
       },
       chainId,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
       ...(isForkTest
         ? {
             timeout: 0,
@@ -103,7 +116,9 @@ module.exports = {
             forking: {
               enabled: true,
               url: provider,
-              blockNumber: forkBlockNumber,
+              blockNumber: forkBlockNumber
+                ? parseInt(forkBlockNumber)
+                : undefined,
               timeout: 0,
             },
           }
@@ -115,7 +130,11 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork ? { tags: ["arbitrumOne"] } : {}),
+      ...(isArbitrumFork
+        ? { tags: ["arbitrumOne"] }
+        : isBaseFork
+        ? { tags: ["base"] }
+        : {}),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -147,6 +166,17 @@ module.exports = {
       gas: 20000000,
       // initialBaseFeePerGas: 0,
     },
+    base: {
+      url: baseProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 8453,
+      tags: ["base"],
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -171,6 +201,7 @@ module.exports = {
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
+      base: BASE_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -179,16 +210,21 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
+      base: BASE_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -237,6 +273,7 @@ module.exports = {
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
+      base: MAINNET_TIMELOCK, // TODO: change this
     },
     guardianAddr: {
       default: 1,
@@ -267,6 +304,7 @@ module.exports = {
           : 0,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
+      base: BASE_GOVERNOR,
     },
   },
   contractSizer: {
@@ -278,6 +316,7 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
+      base: process.env.BASESCAN_API_KEY,
     },
     customChains: [
       {
@@ -286,6 +325,14 @@ module.exports = {
         urls: {
           apiURL: "https://api-holesky.etherscan.io/api",
           browserURL: "https://holesky.etherscan.io",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8543,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org",
         },
       },
     ],

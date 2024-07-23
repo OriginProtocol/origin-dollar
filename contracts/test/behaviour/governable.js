@@ -22,15 +22,17 @@ const shouldBehaveLikeGovernable = (context) => {
       expect(await strategy.connect(governor).isGovernor()).to.be.true;
 
       for (const signer of [strategist, anna]) {
+        if (signer.address == governor.address) continue; // for base, governor is strategist
         expect(await strategy.connect(signer).isGovernor()).to.be.false;
       }
     });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      const { strategist, anna, dai, strategy } = context();
+      const { governor, strategist, anna, dai, strategy } = context();
 
       const recoveryAmount = daiUnits("800");
       for (const signer of [strategist, anna]) {
+        if (signer.address == governor.address) continue; // for base, governor is strategist
         // Naughty signer
         await expect(
           strategy.connect(signer).transferToken(dai.address, recoveryAmount)
@@ -56,6 +58,7 @@ const shouldBehaveLikeGovernable = (context) => {
       expect(await strategy.governor()).to.equal(governor.address);
 
       for (const signer of [strategist, anna]) {
+        if (signer.address == governor.address) continue; // for base, governor is strategist
         // Naughty signer
         await expect(
           strategy.connect(signer).transferGovernance(signer.address)

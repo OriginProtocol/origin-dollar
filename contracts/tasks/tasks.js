@@ -73,6 +73,7 @@ const {
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
 const { proxyUpgrades } = require("./proxy");
+const { aeroAmoStrategyTask } = require("./aeroAmoStrategy");
 const {
   governor,
   transferGovernance,
@@ -837,7 +838,6 @@ task("proxyUpgrades", "Lists all proxy implementation changes")
   .setAction(proxyUpgrades);
 
 // Governable
-
 task("governor", "Gets the governor of a Governable contract")
   .addParam(
     "proxy",
@@ -1468,5 +1468,32 @@ subtask(
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Aero AMO
+subtask("aeroAmoStrat", "Dumps the current state of a Aero AMO strategy")
+  .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "fromBlock",
+    "Block number to compare back to. (default: no diff)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
+  .addOptionalParam("fixture", "Deployed contracts")
+  .setAction(aeroAmoStrategyTask);
+task("aeroAmoStrat").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
