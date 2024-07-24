@@ -24,7 +24,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      */
     modifier onlyGovernorOrStrategist() {
         require(
-            msg.sender == IVault(vaultAddress).strategistAddr() || isGovernor(),
+            isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Strategist or Governor"
         );
         _;
@@ -73,18 +73,38 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         oethValue = (amount * oethValue) / 1 ether;
     }
 
-    function depositBridgedWOETH(uint256 amount)
+    // TODO: Add minAmount
+    function depositBridgedWOETH(uint256 woethAmount)
         external
         onlyGovernorOrStrategist
     {
         // Transfer in all bridged wOETH tokens
-        bridgedWOETH.transferFrom(msg.sender, address(this), amount);
+        bridgedWOETH.transferFrom(msg.sender, address(this), woethAmount);
 
         // Figure out how much they are worth
-        uint256 oethToMint = getBridgedWOETHValue(amount);
+        uint256 oethToMint = getBridgedWOETHValue(woethAmount);
+
+        // There's no pToken, however, it just uses WOETH address in the event
+        emit Deposit(address(weth), address(bridgedWOETH), oethToMint);
 
         // Mint OETHb tokens and transfer it to the caller
-        IVault(vaultAddress).mintForStrategyAndTransfer(msg.sender, oethToMint);
+        IVault(vaultAddress).mintToForStrategy(msg.sender, oethToMint);
+    }
+
+    function withdrawBridgedWOETH(uint256 woethAmount, address receiver)
+        external
+        onlyGovernorOrStrategist
+    {
+        uint256 oethToBurn = getBridgedWOETHValue(woethAmount);
+
+        // There's no pToken, however, it just uses WOETH address in the event
+        emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);
+
+        // Burn OETHb
+        IVault(vaultAddress).burnFromForStrategy(msg.sender, oethToBurn);
+
+        // Transfer WOETH back
+        bridgedWOETH.transfer(receiver, woethAmount);
     }
 
     /**

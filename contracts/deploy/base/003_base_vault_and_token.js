@@ -44,8 +44,6 @@ module.exports = deployOnBaseWithGuardian(
     );
     const cOracleRouter = await ethers.getContract("OETHBaseOracleRouter");
 
-    console.log(await cOETHbProxy.governor(), deployerAddr);
-
     // Init OETHb
     const resolution = ethers.utils.parseUnits("1", 27);
     const initDataOETHb = cOETHb.interface.encodeFunctionData(
@@ -53,7 +51,7 @@ module.exports = deployOnBaseWithGuardian(
       [
         "Origin Ether", // TODO: Confirm token name
         "OETH", // Token Symbol
-        cOracleRouter.address, // OracleRouter
+        cOETHbVaultProxy.address, // OETHb Vault
         resolution, // HighRes
       ]
     );
@@ -149,6 +147,13 @@ module.exports = deployOnBaseWithGuardian(
             0, // Decimal
           ],
         },
+        {
+          // 4. Unpause Capital
+          contract: cOETHbVault,
+          signature: "unpauseCapital()",
+          args: [],
+        },
+        // TODO: set auto allocate and rebase thresholds
       ],
     };
   }

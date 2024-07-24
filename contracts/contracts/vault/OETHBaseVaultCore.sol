@@ -18,7 +18,7 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
     constructor(address _weth) OETHVaultCore(_weth) {}
 
-    function _mintForStrategy(address receiver, uint256 amount)
+    function _mintToForStrategy(address receiver, uint256 amount)
         internal
         whenNotCapitalPaused
     {
@@ -37,21 +37,17 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
     // @inheritdoc VaultCore
     function mintForStrategy(uint256 amount) external override {
-        _mintForStrategy(msg.sender, amount);
+        _mintToForStrategy(msg.sender, amount);
     }
 
     // Same as mintForStrategy(uint256) but transfers
     // minted tokens to a different address
-    function mintForStrategyAndTransfer(address receiver, uint256 amount)
-        external
-    {
-        _mintForStrategy(receiver, amount);
+    function mintToForStrategy(address receiver, uint256 amount) external {
+        _mintToForStrategy(receiver, amount);
     }
 
-    // @inheritdoc VaultCore
-    function burnForStrategy(uint256 amount)
-        external
-        override
+    function _burnFromForStrategy(address receiver, uint256 amount)
+        internal
         whenNotCapitalPaused
     {
         require(
@@ -61,9 +57,18 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
         require(amount < MAX_INT, "Amount too high");
 
-        emit Redeem(msg.sender, amount);
+        emit Redeem(receiver, amount);
 
         // Burn OTokens
-        oUSD.burn(msg.sender, amount);
+        oUSD.burn(receiver, amount);
+    }
+
+    function burnFromForStrategy(address user, uint256 amount) external {
+        _burnFromForStrategy(user, amount);
+    }
+
+    // @inheritdoc VaultCore
+    function burnForStrategy(uint256 amount) external override {
+        _burnFromForStrategy(msg.sender, amount);
     }
 }
