@@ -1,10 +1,12 @@
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
+const { getBlock } = require("./block");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
+const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:vault");
 
@@ -24,6 +26,54 @@ async function getContract(hre, symbol) {
     vault,
     oToken,
   };
+}
+
+async function snapVault({ block }, hre) {
+  const blockTag = getBlock(block);
+
+  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  const { chainId } = await hre.ethers.provider.getNetwork();
+  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+
+  const wethBalance = await weth.balanceOf(vault.address, {
+    blockTag,
+  });
+
+  const queue = await vault.withdrawalQueueMetadata({
+    blockTag,
+  });
+  const shortfall = queue.queued.sub(queue.claimable);
+  const unclaimed = queue.queued.sub(queue.claimed);
+  const available = wethBalance.sub(unclaimed).sub(shortfall);
+
+  console.log(`Vault WETH : ${formatUnits(wethBalance)}, ${wethBalance} wei`);
+
+  console.log(`Queued     : ${formatUnits(queue.queued)}, ${queue.queued} wei`);
+  console.log(
+    `Claimable  : ${formatUnits(queue.claimable)}, ${queue.claimable} wei`
+  );
+  console.log(
+    `Claimed    : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+  );
+  console.log(`Shortfall  : ${formatUnits(shortfall)}, ${shortfall} wei`);
+  console.log(`Unclaimed  : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
+  console.log(`Available  : ${formatUnits(available)}, ${available} wei`);
+}
+
+async function addWithdrawalQueueLiquidity(_, hre) {
+  const signer = await getSigner();
+
+  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  log(
+    `About to call addWithdrawalQueueLiquidity() on the vault with address ${vault.address}`
+  );
+  const tx = await vault.connect(signer).addWithdrawalQueueLiquidity();
+  await logTxDetails(tx, "addWithdrawalQueueLiquidity");
 }
 
 async function allocate({ symbol }, hre) {
@@ -326,6 +376,7 @@ async function claimWithdrawal({ requestId, symbol }, hre) {
 }
 
 module.exports = {
+  addWithdrawalQueueLiquidity,
   allocate,
   capital,
   depositToStrategy,
@@ -335,6 +386,7 @@ module.exports = {
   redeemAll,
   requestWithdrawal,
   claimWithdrawal,
+  snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,

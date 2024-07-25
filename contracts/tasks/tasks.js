@@ -42,6 +42,7 @@ const {
 } = require("./tokens");
 const { depositWETH, withdrawWETH } = require("./weth");
 const {
+  addWithdrawalQueueLiquidity,
   allocate,
   capital,
   depositToStrategy,
@@ -51,6 +52,7 @@ const {
   redeemAll,
   requestWithdrawal,
   claimWithdrawal,
+  snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
@@ -272,6 +274,15 @@ task("withdrawWETH").setAction(async (_, __, runSuper) => {
 });
 
 // Vault tasks.
+
+task(
+  "queueLiquidity",
+  "Call addWithdrawalQueueLiquidity() on the Vault to add WETH to the withdrawal queue"
+).setAction(addWithdrawalQueueLiquidity);
+task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
     "symbol",
@@ -1409,6 +1420,18 @@ subtask(
     await snapStaking({ ...taskArgs, signer });
   });
 task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapVault", "Takes a snapshot of a OETH Vault")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapVault);
+task("snapVault").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
