@@ -11,11 +11,11 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveMetaPool } from "./ICurveMetaPool.sol";
-import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20, AbstractCurveStrategy, InitializableAbstractStrategy } from "./AbstractCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
-abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
+abstract contract AbstractConvexMetaStrategy is AbstractCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -138,7 +138,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev This function is completely analogous to _calcCurveTokenAmount[BaseCurveStrategy]
+     * @dev This function is completely analogous to _calcCurveTokenAmount[AbstractCurveStrategy]
      * and just utilizes different Curve (meta)pool API
      */
     function _calcCurveMetaTokenAmount(uint128 _coinIndex, uint256 _amount)

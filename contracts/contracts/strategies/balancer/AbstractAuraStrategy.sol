@@ -6,21 +6,21 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
+import { AbstractBalancerStrategy } from "./AbstractBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import { IRewardStaking } from "../IRewardStaking.sol";
 
-abstract contract BaseAuraStrategy is BaseBalancerStrategy {
+abstract contract AbstractAuraStrategy is AbstractBalancerStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
     /// @notice Address of the Aura rewards pool
     address public immutable auraRewardPoolAddress;
 
-    // renamed from __reserved to not shadow BaseBalancerStrategy.__reserved,
+    // renamed from __reserved to not shadow AbstractBalancerStrategy.__reserved,
     int256[50] private __reserved_baseAuraStrategy;
 
     constructor(address _auraRewardPoolAddress) {
