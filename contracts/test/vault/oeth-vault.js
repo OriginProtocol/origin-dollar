@@ -1946,9 +1946,10 @@ describe("OETH Vault", function () {
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
     });
-    describe("with 40 WETH in the queue, 10 WETH in the vault, 10 WETH in the strategy => Slash event", () => {
+    describe("with 40 WETH in the queue, 15 WETH in the vault, 44 WETH in the strategy, vault insolvent by 5% => Slash 1 ether (1/20 = 5%), 19 WETH total value", () => {
       beforeEach(async () => {
-        const { governor, oethVault, weth, daniel, josh, matt } = fixture;
+        const { governor, oethVault, weth, daniel, josh, matt, strategist } =
+          fixture;
         // Deploy a mock strategy
         const mockStrategy = await deployWithConfirmation("MockStrategy");
         await oethVault.connect(governor).approveStrategy(mockStrategy.address);
@@ -1969,19 +1970,23 @@ describe("OETH Vault", function () {
         await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-        // Simulate slash event of 10 ethers
+        // Simulate slash event of 1 ethers
         await weth
           .connect(await impersonateAndFund(mockStrategy.address))
-          .transfer(addresses.dead, oethUnits("20"));
+          .transfer(addresses.dead, oethUnits("1"));
 
-        // Simulate strategist sending 20 WETH to the vault
-        await weth
-          .connect(await impersonateAndFund(mockStrategy.address))
-          .transfer(oethVault.address, oethUnits("20"));
+        // Strategist sends 15 WETH to the vault
+        await oethVault
+          .connect(strategist)
+          .withdrawFromStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [oethUnits("15")]
+          );
 
         await oethVault.connect(josh).addWithdrawalQueueLiquidity();
       });
-      it("should allow first user to claim the request of 10 WETH, no loss", async () => {
+      it("Should allow first user to claim the request of 10 WETH, no loss", async () => {
         const { oethVault, daniel } = fixture;
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
@@ -2009,14 +2014,15 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("shouldn't allow second user to claim the request of 20 WETH, due to loss", async () => {
+      it("Fail to allow second user to claim the request of 20 WETH, due to liquidity", async () => {
         const { oethVault, josh } = fixture;
 
         const tx = oethVault.connect(josh).claimWithdrawal(1);
 
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
-      it("should allow a user to create a new request, even if the vault is insolvent", async () => {
+      it("Should allow a user to create a new request, with the vault insolvent and solvency check off", async () => {
+        // maxSupplyDiff is set to 0 so no insolvency check
         const { oethVault, matt } = fixture;
 
         const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
@@ -2025,14 +2031,15 @@ describe("OETH Vault", function () {
           .to.emit(oethVault, "WithdrawalRequested")
           .withArgs(matt.address, 3, oethUnits("10"), oethUnits("50"));
       });
-      it("should not allow user to create a new request, as insolvent with solvency check", async () => {
+      it("Fail to allow user to create a new request, with the vault insolvent and solvency check at 3%", async () => {
         const { oethVault, matt } = fixture;
 
+        // Turn on insolvency check with 3% buffer
         await oethVault
           .connect(await impersonateAndFund(await oethVault.governor()))
           .setMaxSupplyDiff(oethUnits("0.03"));
 
-        const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
+        const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
 
         await expect(tx).to.be.revertedWith("Backing supply liquidity error");
       });
