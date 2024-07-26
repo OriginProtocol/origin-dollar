@@ -12,8 +12,24 @@ module.exports = deployOnBaseWithGuardian(
   async ({ ethers }) => {
     // TODO: Proxy for OracleRouter?
 
+    // Deploy PriceFeedPair for Aero/WETH
+    await deployWithConfirmation(
+      "AeroETHPriceFeed",
+      [
+        addresses.base.aeroUsdPriceFeed,
+        addresses.base.ethUsdPriceFeed,
+        false,
+        true,
+      ],
+      "PriceFeedPair"
+    );
+    const aeroPriceFeed = await ethers.getContract("AeroETHPriceFeed");
+    console.log("Deployed PriceFeedPair for Aero/USD and Aero/ETH pair");
+
     // Deploy OETHb Oracle Router
-    await deployWithConfirmation("OETHBaseOracleRouter", []);
+    await deployWithConfirmation("OETHBaseOracleRouter", [
+      aeroPriceFeed.address,
+    ]);
 
     const cOracleRouter = await ethers.getContract("OETHBaseOracleRouter");
 
@@ -21,6 +37,7 @@ module.exports = deployOnBaseWithGuardian(
     await withConfirmation(
       cOracleRouter.cacheDecimals(addresses.base.BridgedWOETH)
     );
+    await withConfirmation(cOracleRouter.cacheDecimals(addresses.base.AERO));
 
     return {
       actions: [],

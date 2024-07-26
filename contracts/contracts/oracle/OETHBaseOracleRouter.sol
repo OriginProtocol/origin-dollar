@@ -9,7 +9,11 @@ import { StableMath } from "../utils/StableMath.sol";
 contract OETHBaseOracleRouter is AbstractOracleRouter {
     using StableMath for uint256;
 
-    constructor() {}
+    address public immutable aeroPriceFeed;
+
+    constructor(address _aeroPriceFeed) {
+        aeroPriceFeed = _aeroPriceFeed;
+    }
 
     /**
      * @notice Returns the total price in 18 digit units for a given asset.
@@ -67,6 +71,10 @@ contract OETHBaseOracleRouter is AbstractOracleRouter {
             // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
             // Bridged wOETH/OETH
             feedAddress = 0xe96EB1EDa83d18cbac224233319FA5071464e1b9;
+            maxStaleness = 1 days + STALENESS_BUFFER;
+        } else if (asset == 0x940181a94A35A4569E4529A3CDfB74e38FD98631) {
+            // AERO/ETH (PriceFeedPair instance)
+            feedAddress = aeroPriceFeed;
             maxStaleness = 1 days + STALENESS_BUFFER;
         } else {
             revert("Asset not available");

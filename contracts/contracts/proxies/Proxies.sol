@@ -280,3 +280,10 @@ contract OETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHBaseProxy delegates calls to OETH implementation
+ */
+contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
