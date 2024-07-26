@@ -195,6 +195,8 @@ contract OETHVaultCore is VaultCore {
         _postRedeem(_amount);
     }
 
+
+    // slither-disable-start reentrancy-no-eth
     /**
      * @notice Claim a previously requested withdrawal once it is claimable.
      * This request can be claimed once the withdrawal queue's `claimable` amount
@@ -231,6 +233,8 @@ contract OETHVaultCore is VaultCore {
         // Prevent insolvency
         _postRedeem(amount);
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @notice Claim a previously requested withdrawals once they are claimable.
