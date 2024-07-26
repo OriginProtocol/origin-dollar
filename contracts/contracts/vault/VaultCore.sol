@@ -224,7 +224,12 @@ contract VaultCore is VaultInitializer {
         }
 
         // Check that the OTokens are backed by enough assets
-        if (maxSupplyDiff > 0 && totalUnits > 0) {
+        if (maxSupplyDiff > 0) {
+            // If there are more outstanding withdrawal requests than assets in the vault and strategies
+            // then the available assets will be negative and totalUnits will be rounded up to zero.
+            // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
+            require(totalUnits > 0, "Too many outstanding requests");
+
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);

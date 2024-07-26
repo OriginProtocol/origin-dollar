@@ -2105,5 +2105,151 @@ describe("OETH Vault", function () {
         });
       });
     });
+    describe("with 99 WETH in the queue, 40 WETH in the vault, total supply 1, 1% insolvency buffer", () => {
+      let mockStrategy;
+      beforeEach(async () => {
+        const { governor, oethVault, weth, daniel, josh, matt, strategist } =
+          fixture;
+        // Deploy a mock strategy
+        mockStrategy = await deployWithConfirmation("MockStrategy");
+        await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+        await oethVault
+          .connect(governor)
+          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+
+        // Mint 100 OETH to three users
+        await oethVault
+          .connect(daniel)
+          .mint(weth.address, oethUnits("20"), "0");
+        await oethVault.connect(josh).mint(weth.address, oethUnits("30"), "0");
+        await oethVault.connect(matt).mint(weth.address, oethUnits("50"), "0");
+
+        // Request and claim 20 + 30 + 49 = 99 WETH from Vault
+        await oethVault.connect(daniel).requestWithdrawal(oethUnits("20"));
+        await oethVault.connect(josh).requestWithdrawal(oethUnits("30"));
+        await oethVault.connect(matt).requestWithdrawal(oethUnits("49"));
+
+        await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+        // Strategist sends 40 WETH to the vault
+        await oethVault
+          .connect(strategist)
+          .withdrawFromStrategy(
+            mockStrategy.address,
+            [weth.address],
+            [oethUnits("40")]
+          );
+
+        await oethVault.connect(josh).addWithdrawalQueueLiquidity();
+
+        // Turn on insolvency check with 10% buffer
+        await oethVault
+          .connect(await impersonateAndFund(await oethVault.governor()))
+          .setMaxSupplyDiff(oethUnits("0.01"));
+      });
+      describe("with 2 ether slashed leaving 100 - 40 - 2 = 58 WETH in the strategy", () => {
+        beforeEach(async () => {
+          const { weth } = fixture;
+
+          // Simulate slash event of 2 ethers
+          await weth
+            .connect(await impersonateAndFund(mockStrategy.address))
+            .transfer(addresses.dead, oethUnits("2"));
+        });
+        it("Should have total value of zero", async () => {
+          // 100 from mints - 99 outstanding withdrawals - 2 from slashing = -1 value which is rounder up to zero
+          expect(await fixture.oethVault.totalValue()).to.equal(0);
+        });
+        it("Fail to allow user to create a new request due to too many outstanding requests", async () => {
+          const { oethVault, matt } = fixture;
+
+          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
+
+          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+        });
+        it("Fail to allow first user to claim a withdrawal due to too many outstanding requests", async () => {
+          const { oethVault, daniel } = fixture;
+
+          await advanceTime(delayPeriod);
+
+          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+        });
+      });
+      describe("with 1 ether slashed leaving 100 - 40 - 1 = 59 WETH in the strategy", () => {
+        beforeEach(async () => {
+          const { weth } = fixture;
+
+          // Simulate slash event of 1 ethers
+          await weth
+            .connect(await impersonateAndFund(mockStrategy.address))
+            .transfer(addresses.dead, oethUnits("1"));
+        });
+        it("Should have total value of zero", async () => {
+          // 100 from mints - 99 outstanding withdrawals - 1 from slashing = 0 value
+          expect(await fixture.oethVault.totalValue()).to.equal(0);
+        });
+        it("Fail to allow user to create a new request due to too many outstanding requests", async () => {
+          const { oethVault, matt } = fixture;
+
+          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
+
+          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+        });
+        it("Fail to allow first user to claim a withdrawal due to too many outstanding requests", async () => {
+          const { oethVault, daniel } = fixture;
+
+          await advanceTime(delayPeriod);
+
+          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+        });
+      });
+      describe("with 0.02 ether slashed leaving 100 - 40 - 0.02 = 59.98 WETH in the strategy", () => {
+        beforeEach(async () => {
+          const { weth } = fixture;
+
+          // Simulate slash event of 0.001 ethers
+          await weth
+            .connect(await impersonateAndFund(mockStrategy.address))
+            .transfer(addresses.dead, oethUnits("0.02"));
+        });
+        it("Should have total value of zero", async () => {
+          // 100 from mints - 99 outstanding withdrawals - 0.001 from slashing = 0.999 total value
+          expect(await fixture.oethVault.totalValue()).to.equal(
+            oethUnits("0.98")
+          );
+        });
+        it("Fail to allow user to create a new 1 WETH request due to too many outstanding requests", async () => {
+          const { oethVault, matt } = fixture;
+
+          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
+
+          await expect(tx).to.be.revertedWith("Too many outstanding requests");
+        });
+
+        it("Fail to allow user to create a new 0.01 WETH request due to insolvency check", async () => {
+          const { oethVault, matt } = fixture;
+
+          const tx = oethVault
+            .connect(matt)
+            .requestWithdrawal(oethUnits("0.01"));
+
+          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+        });
+        it("Fail to allow first user to claim a withdrawal due to insolvency check", async () => {
+          const { oethVault, daniel } = fixture;
+
+          await advanceTime(delayPeriod);
+
+          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+          // diff = 1 total supply / 0.98 assets = 1.020408163265306122 which is > 1 maxSupplyDiff
+          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+        });
+      });
+    });
   });
 });
