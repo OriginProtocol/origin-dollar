@@ -100,7 +100,7 @@
 <text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeem(_amount: uint256, _minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1100.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;burnForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1083.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeemAll(_minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1067.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allocate() &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1067.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allocate() &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;OETHVaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1050.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebase() &lt;&lt;nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1033.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;totalValue(): (value: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1016.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;checkBalance(_asset: address): uint256 &lt;&lt;VaultCore&gt;&gt;</text>
