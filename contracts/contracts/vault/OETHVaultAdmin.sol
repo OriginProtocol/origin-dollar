@@ -78,14 +78,15 @@ contract OETHVaultAdmin is VaultAdmin {
     function _wethAvailable() internal view returns (uint256 wethAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        // Check if the claimable WETH is less than the queued amount
-        uint256 queueShortfall = queue.queued - queue.claimable;
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-        // Of the claimable withdrawal requests, how much is unclaimed?
-        uint256 unclaimed = queue.claimable - queue.claimed;
+        // The amount of WETH that is still to be claimed in the withdrawal queue
+        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
 
-        if (wethBalance > queueShortfall + unclaimed) {
-            wethAvailable = wethBalance - queueShortfall - unclaimed;
+        // The amount of sitting in WETH in the vault
+        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
+
+        // If there is more WETH in the vault than the outstanding withdrawals
+        if (wethBalance > outstandingWithdrawals) {
+            wethAvailable = wethBalance - outstandingWithdrawals;
         }
     }
 
