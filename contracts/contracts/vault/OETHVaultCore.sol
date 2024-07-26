@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { StableMath } from "../utils/StableMath.sol";
-import { VaultCore } from "./VaultCore.sol";
-
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
+import { VaultCore } from "./VaultCore.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IDripper } from "../interfaces/IDripper.sol";
 
@@ -185,7 +186,9 @@ contract OETHVaultCore is VaultCore {
         queued = withdrawalQueueMetadata.queued + _amount;
 
         // store the next withdrawal request
-        withdrawalQueueMetadata.nextWithdrawalIndex = uint128(requestId + 1);
+        withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
+            requestId + 1
+        );
         withdrawalQueueMetadata.queued = uint128(queued);
 
         emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
