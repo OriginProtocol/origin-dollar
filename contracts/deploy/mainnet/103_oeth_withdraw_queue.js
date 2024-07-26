@@ -1,4 +1,4 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseEther } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
@@ -117,6 +117,17 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVault,
           signature: "setAssetDefaultStrategy(address,address)",
           args: [addresses.mainnet.WETH, cNativeStakingStrategy2Proxy.address],
+        },
+        // 10. Allocate WETH to the second Native Staking Strategy
+        {
+          contract: cVault,
+          signature: "allocate()",
+        },
+        // 11. Set Vault buffer to 0.2%
+        {
+          contract: cVault,
+          signature: "setVaultBuffer(uint256)",
+          args: [parseEther("0.002")],
         },
       ],
     };
