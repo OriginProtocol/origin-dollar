@@ -1986,14 +1986,14 @@ describe("OETH Vault", function () {
 
         await oethVault.connect(josh).addWithdrawalQueueLiquidity();
       });
-      it("Should allow first user to claim the request of 10 WETH, no loss", async () => {
+      it("Should allow first user to claim the request of 10 WETH", async () => {
         const { oethVault, daniel } = fixture;
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
 
         const tx = await oethVault.connect(daniel).claimWithdrawal(0);
 
-        await expect(tx)
+        expect(tx)
           .to.emit(oethVault, "WithdrawalClaimed")
           .withArgs(daniel.address, 0, oethUnits("10"));
 
@@ -2021,27 +2021,88 @@ describe("OETH Vault", function () {
 
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
-      it("Should allow a user to create a new request, with the vault insolvent and solvency check off", async () => {
+      it("Should allow a user to create a new request with solvency check off", async () => {
         // maxSupplyDiff is set to 0 so no insolvency check
         const { oethVault, matt } = fixture;
+        const fixtureWithUser = { ...fixture, user: matt };
+        const dataBefore = await snapData(fixtureWithUser);
 
         const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
 
-        await expect(tx)
+        expect(tx)
           .to.emit(oethVault, "WithdrawalRequested")
           .withArgs(matt.address, 3, oethUnits("10"), oethUnits("50"));
+
+        await assertChangedData(
+          dataBefore,
+          {
+            oethTotalSupply: oethUnits("10").mul(-1),
+            oethTotalValue: oethUnits("10").mul(-1),
+            vaultCheckBalance: oethUnits("10").mul(-1),
+            userOeth: oethUnits("10").mul(-1),
+            userWeth: 0,
+            vaultWeth: 0,
+            queued: oethUnits("10").mul(1),
+            claimable: 0,
+            claimed: 0,
+            nextWithdrawalIndex: 1,
+          },
+          fixtureWithUser
+        );
       });
-      it("Fail to allow user to create a new request, with the vault insolvent and solvency check at 3%", async () => {
-        const { oethVault, matt } = fixture;
+      describe("with solvency check at 3%", () => {
+        beforeEach(async () => {
+          const { oethVault } = fixture;
+          // Turn on insolvency check with 3% buffer
+          await oethVault
+            .connect(await impersonateAndFund(await oethVault.governor()))
+            .setMaxSupplyDiff(oethUnits("0.03"));
+        });
+        it("Fail to allow user to create a new request due to insolvency check", async () => {
+          const { oethVault, matt } = fixture;
 
-        // Turn on insolvency check with 3% buffer
-        await oethVault
-          .connect(await impersonateAndFund(await oethVault.governor()))
-          .setMaxSupplyDiff(oethUnits("0.03"));
+          const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
 
-        const tx = oethVault.connect(matt).requestWithdrawal(oethUnits("1"));
+          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+        });
+        it("Fail to allow first user to claim a withdrawal due to insolvency check", async () => {
+          const { oethVault, daniel } = fixture;
 
-        await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+          await advanceTime(delayPeriod);
+
+          const tx = oethVault.connect(daniel).claimWithdrawal(0);
+
+          await expect(tx).to.be.revertedWith("Backing supply liquidity error");
+        });
+      });
+      describe("with solvency check at 10%", () => {
+        beforeEach(async () => {
+          const { oethVault } = fixture;
+          // Turn on insolvency check with 10% buffer
+          await oethVault
+            .connect(await impersonateAndFund(await oethVault.governor()))
+            .setMaxSupplyDiff(oethUnits("0.1"));
+        });
+        it("Should allow user to create a new request", async () => {
+          const { oethVault, matt } = fixture;
+
+          const tx = await oethVault
+            .connect(matt)
+            .requestWithdrawal(oethUnits("1"));
+
+          expect(tx)
+            .to.emit(oethVault, "WithdrawalRequested")
+            .withArgs(matt.address, 3, oethUnits("1"), oethUnits("41"));
+        });
+        it("Should allow first user to claim the request of 10 WETH", async () => {
+          const { oethVault, daniel } = fixture;
+
+          const tx = await oethVault.connect(daniel).claimWithdrawal(0);
+
+          expect(tx)
+            .to.emit(oethVault, "WithdrawalClaimed")
+            .withArgs(daniel.address, 0, oethUnits("10"));
+        });
       });
     });
   });
