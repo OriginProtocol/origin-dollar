@@ -118,16 +118,16 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setAssetDefaultStrategy(address,address)",
           args: [addresses.mainnet.WETH, cNativeStakingStrategy2Proxy.address],
         },
-        // 10. Allocate WETH to the second Native Staking Strategy
-        {
-          contract: cVault,
-          signature: "allocate()",
-        },
-        // 11. Set Vault buffer to 0.2%
+        // 10. Set Vault buffer to 0.2%
         {
           contract: cVault,
           signature: "setVaultBuffer(uint256)",
           args: [parseEther("0.002")],
+        },
+        // 11. Allocate WETH to the second Native Staking Strategy
+        {
+          contract: cVault,
+          signature: "allocate()",
         },
       ],
     };
