@@ -8,5 +8,25 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OETHBaseVaultAdmin is VaultAdmin {
+    function addStrategyToMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(!mintWhitelistedStrategy[strategyAddr], "Already whitelisted");
 
+        mintWhitelistedStrategy[strategyAddr] = true;
+
+        emit StrategyAddedToMintWhitelist(strategistAddr);
+    }
+
+    function removeStrategyFromMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(mintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+
+        mintWhitelistedStrategy[strategyAddr] = false;
+
+        emit StrategyRemovedFromMintWhitelist(strategistAddr);
+    }
 }

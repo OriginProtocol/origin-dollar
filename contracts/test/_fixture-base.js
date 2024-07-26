@@ -53,6 +53,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
 
+  const woethStrategyProxy = await ethers.getContract(
+    "BridgedWOETHStrategyProxy"
+  );
+  const woethStrategy = await ethers.getContractAt(
+    "BridgedWOETHStrategy",
+    woethStrategyProxy.address
+  );
+
   // WETH
   const weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
 
@@ -95,6 +103,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // Bridged WOETH
     woeth,
     woethProxy,
+    woethStrategy,
 
     // WETH
     weth,
