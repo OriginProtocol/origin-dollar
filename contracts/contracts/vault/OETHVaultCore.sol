@@ -440,10 +440,18 @@ contract OETHVaultCore is VaultCore {
         value = _totalValueInVault() + _totalValueInStrategies();
 
         // Need to remove WETH that is reserved for the withdrawal queue.
-        // reserved for the withdrawal queue = cumulative queued total - total claimed
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-        if (value + queue.claimed >= queue.queued) {
-            return value + queue.claimed - queue.queued;
+        // reserved for the withdrawal queue = cumulative queued total - total claimed
+        uint256 reservedForQueue = queue.queued - queue.claimed;
+
+        if (reservedForQueue > 0) {
+            if (value > reservedForQueue) {
+                return value - reservedForQueue;
+            }
+            // This can happen if the vault becomes insolvent enough that the
+            // total value in the vault and all strategies < outstanding withdrawals.
+            // For example, there was a mass slashing event and most users request to withdraw.
+            return 0;
         }
     }
 
