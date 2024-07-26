@@ -11,7 +11,7 @@ import { ICERC20 } from "./ICompound.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
-abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
+abstract contract AbstractCompoundStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     int256[50] private __reserved;

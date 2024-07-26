@@ -17,7 +17,7 @@ import { IBalancerVault } from "../interfaces/balancer/IBalancerVault.sol";
 import { ICurvePool } from "../strategies/ICurvePool.sol";
 import "../utils/Helpers.sol";
 
-abstract contract BaseHarvester is Governable {
+abstract contract AbstractHarvester is Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using StableMath for uint256;
@@ -455,7 +455,7 @@ abstract contract BaseHarvester is Governable {
      *      base token on the configured swap platform
      * @param _strategyAddr Address of the strategy to collect rewards from.
      */
-    function _harvest(address _strategyAddr) internal {
+    function _harvest(address _strategyAddr) internal virtual {
         if (!supportedStrategies[_strategyAddr]) {
             revert UnsupportedStrategy(_strategyAddr);
         }

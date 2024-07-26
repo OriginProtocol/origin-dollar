@@ -1,5 +1,5 @@
 const { isFork } = require("../../test/helpers");
-const { deployOnArb } = require("../../utils/delpoy-l2");
+const { deployOnArb } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
 

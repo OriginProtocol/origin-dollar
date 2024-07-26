@@ -36,7 +36,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     function symbol() public view override returns (string memory) {
-        return "WOETH";
+        return "wOETH";
     }
 
     /**

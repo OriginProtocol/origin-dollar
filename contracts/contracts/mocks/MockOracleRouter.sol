@@ -6,10 +6,10 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { OracleRouterBase } from "../oracle/OracleRouterBase.sol";
+import { AbstractOracleRouter } from "../oracle/AbstractOracleRouter.sol";
 
 // @notice Oracle Router required for testing environment
-contract MockOracleRouter is OracleRouterBase {
+contract MockOracleRouter is AbstractOracleRouter {
     struct FeedMetadata {
         address feedAddress;
         uint256 maxStaleness;

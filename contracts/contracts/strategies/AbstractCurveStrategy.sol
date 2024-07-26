@@ -13,7 +13,7 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
-abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
+abstract contract AbstractCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
