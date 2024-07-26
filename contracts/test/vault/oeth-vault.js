@@ -1501,6 +1501,9 @@ describe("OETH Vault", function () {
         it("the first withdrawal with wrong withdrawer", async () => {
           const { oethVault, matt } = fixture;
 
+          // Advance in time to ensure time delay between request and claim.
+          await advanceTime(delayPeriod);
+
           const tx = oethVault.connect(matt).claimWithdrawal(2);
 
           await expect(tx).to.be.revertedWith("Not requester");

@@ -198,9 +198,9 @@ contract OETHVaultCore is VaultCore {
     /**
      * @notice Claim a previously requested withdrawal once it is claimable.
      * This request can be claimed once the withdrawal queue's `claimable` amount
-     * is greater than or equal this request's `queued` amount and 30 minutes has passed.
+     * is greater than or equal this request's `queued` amount and 10 minutes has passed.
      * If the requests is not claimable, the transaction will revert with `Queue pending liquidity`.
-     * If the request is not older than 30 minutes, the transaction will revert with `Claim delay not met`.
+     * If the request is not older than 10 minutes, the transaction will revert with `Claim delay not met`.
      * OETH is converted to WETH at 1:1.
      * @param _requestId Unique ID for the withdrawal request
      * @return amount Amount of WETH transferred to the withdrawer
@@ -211,6 +211,18 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256 amount)
     {
+        // Try and get more liquidity if there is not enough available
+        if (
+            withdrawalRequests[_requestId].queued >
+            withdrawalQueueMetadata.claimable
+        ) {
+            // Stream any harvested rewards (WETH) that are available to the Vault
+            IDripper(dripper).collect();
+
+            // Add any WETH from the Dripper to the withdrawal queue
+            _addWithdrawalQueueLiquidity();
+        }
+
         amount = _claimWithdrawal(_requestId);
 
         // transfer WETH from the vault to the withdrawer
@@ -223,9 +235,9 @@ contract OETHVaultCore is VaultCore {
     /**
      * @notice Claim a previously requested withdrawals once they are claimable.
      * This requests can be claimed once the withdrawal queue's `claimable` amount
-     * is greater than or equal each request's `queued` amount and 30 minutes has passed.
+     * is greater than or equal each request's `queued` amount and 10 minutes has passed.
      * If one of the requests is not claimable, the whole transaction will revert with `Queue pending liquidity`.
-     * If one of the requests is not older than 30 minutes,
+     * If one of the requests is not older than 10 minutes,
      * the whole transaction will revert with `Claim delay not met`.
      * @param _requestIds Unique ID of each withdrawal request
      * @return amounts Amount of WETH received for each request
@@ -237,6 +249,15 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
+        // Just call the Dripper instead of looping through _requestIds to find the highest id
+        // and checking it's queued amount is > the queue's claimable amount.
+
+        // Stream any harvested rewards (WETH) that are available to the Vault
+        IDripper(dripper).collect();
+
+        // Add any WETH from the Dripper to the withdrawal queue
+        _addWithdrawalQueueLiquidity();
+
         amounts = new uint256[](_requestIds.length);
         for (uint256 i = 0; i < _requestIds.length; ++i) {
             amounts[i] = _claimWithdrawal(_requestIds[i]);
@@ -250,49 +271,32 @@ contract OETHVaultCore is VaultCore {
         _postRedeem(totalAmount);
     }
 
-    // slither-disable-start reentrancy-no-eth
-
     function _claimWithdrawal(uint256 requestId)
         internal
         returns (uint256 amount)
     {
-        // Check if there's enough liquidity to cover the withdrawal request
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+        // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        require(request.claimed == false, "Already claimed");
-        require(request.withdrawer == msg.sender, "Not requester");
         require(
             request.timestamp + CLAIM_DELAY <= block.timestamp,
             "Claim delay not met"
         );
+        // If there isn't enough reserved liquidity in the queue to claim
+        require(request.queued <= queue.claimable, "Queue pending liquidity");
+        require(request.withdrawer == msg.sender, "Not requester");
+        require(request.claimed == false, "Already claimed");
 
-        // Try and get more liquidity in the withdrawal queue if there is not enough
-        if (request.queued > queue.claimable) {
-            // Stream any harvested rewards (WETH) that are available to the Vault
-            IDripper(dripper).collect();
-
-            // Add any WETH from the Dripper to the withdrawal queue
-            uint256 addedClaimable = _addWithdrawalQueueLiquidity();
-
-            // If there still isn't enough liquidity in the queue to claim, revert
-            require(
-                request.queued <= queue.claimable + addedClaimable,
-                "Queue pending liquidity"
-            );
-        }
-
-        // Store the updated claimed amount
-        withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
         // Store the request as claimed
         withdrawalRequests[requestId].claimed = true;
+        // Store the updated claimed amount
+        withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
         return request.amount;
     }
-
-    // slither-disable-end reentrancy-no-eth
 
     /// @notice Collects harvested rewards from the Dripper as WETH then
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
