@@ -78,7 +78,7 @@ describe("OETH Vault", function () {
   };
 
   describe("Mint", () => {
-    it("should mint with WETH", async () => {
+    it("Should mint with WETH", async () => {
       const { oethVault, weth, josh } = fixture;
 
       const fixtureWithUser = { ...fixture, user: josh };
@@ -115,7 +115,7 @@ describe("OETH Vault", function () {
       );
     });
 
-    it("should not mint with any other asset", async () => {
+    it("Fail to mint with any other asset", async () => {
       const { oethVault, frxETH, stETH, reth, josh } = fixture;
 
       const amount = parseUnits("1", 18);
@@ -129,14 +129,14 @@ describe("OETH Vault", function () {
       }
     });
 
-    it("should revert if mint amount is zero", async () => {
+    it("Fail to mint if amount is zero", async () => {
       const { oethVault, weth, josh } = fixture;
 
       const tx = oethVault.connect(josh).mint(weth.address, "0", "0");
       await expect(tx).to.be.revertedWith("Amount must be greater than 0");
     });
 
-    it("should revert if capital is paused", async () => {
+    it("Fail to mint if capital is paused", async () => {
       const { oethVault, weth, governor } = fixture;
 
       await oethVault.connect(governor).pauseCapital();
@@ -190,7 +190,7 @@ describe("OETH Vault", function () {
   });
 
   describe("Redeem", () => {
-    it("should return only WETH in redeem calculations", async () => {
+    it("Should return only WETH in redeem calculations", async () => {
       const { oethVault, weth } = fixture;
 
       const outputs = await oethVault.calculateRedeemOutputs(
@@ -208,7 +208,7 @@ describe("OETH Vault", function () {
       }
     });
 
-    it("should revert if WETH index isn't cached", async () => {
+    it("Fail to calculateRedeemOutputs if WETH index isn't cached", async () => {
       const { frxETH, weth } = fixture;
 
       await deployWithConfirmation("MockOETHVault", [weth.address]);
@@ -220,7 +220,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.be.revertedWith("WETH Asset index not cached");
     });
 
-    it("should update total supply correctly without redeem fee", async () => {
+    it("Should update total supply correctly without redeem fee", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -240,7 +240,7 @@ describe("OETH Vault", function () {
       expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
     });
 
-    it("should update total supply correctly with redeem fee", async () => {
+    it("Should update total supply correctly with redeem fee", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -268,7 +268,7 @@ describe("OETH Vault", function () {
       expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
     });
 
-    it("Should withdraw from strategy if necessary", async () => {
+    it("Fail to redeem if not enough liquidity available in the vault", async () => {
       const { oethVault, weth, domen, governor } = fixture;
 
       const mockStrategy = await deployWithConfirmation("MockStrategy");
@@ -284,40 +284,26 @@ describe("OETH Vault", function () {
       // Mint a small amount that won't get allocated to the strategy
       await oethVault.connect(domen).mint(weth.address, oethUnits("1.23"), "0");
 
-      const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
-      const stratBalanceBefore = await weth.balanceOf(mockStrategy.address);
-      const userBalanceBefore = await weth.balanceOf(domen.address);
-
       // Withdraw something more than what the Vault holds
-      await oethVault.connect(domen).redeem(oethUnits("12.55"), "0");
+      const tx = oethVault.connect(domen).redeem(oethUnits("12.55"), "0");
 
-      const vaultBalanceAfter = await weth.balanceOf(oethVault.address);
-      const stratBalanceAfter = await weth.balanceOf(mockStrategy.address);
-      const userBalanceAfter = await weth.balanceOf(domen.address);
-
-      expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(oethUnits("12.55"));
-
-      expect(stratBalanceBefore.sub(stratBalanceAfter)).to.eq(
-        oethUnits("12.55")
-      );
-
-      expect(vaultBalanceBefore).to.eq(vaultBalanceAfter);
+      await expect(tx).to.revertedWith("Liquidity error");
     });
 
-    it("should redeem zero amount without revert", async () => {
+    it("Should redeem zero amount without revert", async () => {
       const { oethVault, daniel } = fixture;
 
       await oethVault.connect(daniel).redeem(0, 0);
     });
 
-    it("should revert on liquidity error", async () => {
+    it("Fail to redeem if not enough liquidity", async () => {
       const { oethVault, daniel } = fixture;
       const tx = oethVault
         .connect(daniel)
         .redeem(oethUnits("1023232323232"), "0");
       await expect(tx).to.be.revertedWith("Liquidity error");
     });
-    it("should allow every user to redeem", async () => {
+    it("Should allow every user to redeem", async () => {
       const { oethVault, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -328,7 +314,7 @@ describe("OETH Vault", function () {
   });
 
   describe("Config", () => {
-    it("should allow caching WETH index", async () => {
+    it("Should allow caching WETH index", async () => {
       const { oethVault, weth, governor } = fixture;
 
       await oethVault.connect(governor).cacheWETHAssetIndex();
@@ -340,14 +326,14 @@ describe("OETH Vault", function () {
       expect(assets[index]).to.equal(weth.address);
     });
 
-    it("should not allow anyone other than Governor to change cached index", async () => {
+    it("Fail to allow anyone other than Governor to change cached index", async () => {
       const { oethVault, strategist } = fixture;
 
       const tx = oethVault.connect(strategist).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("should revert if WETH is not an supported asset", async () => {
+    it("Fail to cacheWETHAssetIndex if WETH is not a supported asset", async () => {
       const { frxETH, weth } = fixture;
       const { deployerAddr } = await hre.getNamedAccounts();
       const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
@@ -361,7 +347,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
 
-    it("should return all strategies", async () => {
+    it("Should return all strategies", async () => {
       // Mostly to increase coverage
 
       const { oethVault, weth, governor } = fixture;
@@ -380,7 +366,7 @@ describe("OETH Vault", function () {
   });
 
   describe("Remove Asset", () => {
-    it("should allow removing a single asset", async () => {
+    it("Should allow removing a single asset", async () => {
       const { oethVault, frxETH, governor } = fixture;
 
       const vaultAdmin = await ethers.getContractAt(
@@ -413,7 +399,7 @@ describe("OETH Vault", function () {
       expect(config.isSupported).to.be.false;
     });
 
-    it("should only allow governance to remove assets", async () => {
+    it("Should only allow governance to remove assets", async () => {
       const { oethVault, weth, strategist, josh } = fixture;
 
       for (const signer of [strategist, josh]) {
@@ -425,14 +411,14 @@ describe("OETH Vault", function () {
       }
     });
 
-    it("should revert if asset is not supported", async () => {
+    it("Fail to remove asset if asset is not supported", async () => {
       const { oethVault, dai, governor } = fixture;
       const tx = oethVault.connect(governor).removeAsset(dai.address);
 
       await expect(tx).to.be.revertedWith("Asset not supported");
     });
 
-    it("should revert if vault still holds the asset", async () => {
+    it("Fail to remove asset if vault still holds the asset", async () => {
       const { oethVault, weth, governor, daniel } = fixture;
 
       await oethVault.connect(daniel).mint(weth.address, oethUnits("1"), "0");
@@ -442,7 +428,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.be.revertedWith("Vault still holds asset");
     });
 
-    it("should not revert for smaller dust", async () => {
+    it("Fail to revert for smaller dust", async () => {
       const { oethVault, weth, governor, daniel } = fixture;
 
       await oethVault.connect(daniel).mint(weth.address, "500000000000", "0");
@@ -452,7 +438,7 @@ describe("OETH Vault", function () {
       await expect(tx).to.not.be.revertedWith("Vault still holds asset");
     });
 
-    it("should allow strategy to burnForStrategy", async () => {
+    it("Should allow strategy to burnForStrategy", async () => {
       const { oethVault, oeth, weth, governor, daniel } = fixture;
 
       await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
@@ -708,7 +694,7 @@ describe("OETH Vault", function () {
       });
       const firstRequestAmount = oethUnits("5");
       const secondRequestAmount = oethUnits("18");
-      it("should request first withdrawal by Daniel", async () => {
+      it("Should request first withdrawal by Daniel", async () => {
         const { oethVault, daniel } = fixture;
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
@@ -738,7 +724,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("should request withdrawal of zero amount", async () => {
+      it("Should request withdrawal of zero amount", async () => {
         const { oethVault, josh } = fixture;
         const fixtureWithUser = { ...fixture, user: josh };
         await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
@@ -767,7 +753,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("should request first and second withdrawals with no WETH in the Vault", async () => {
+      it("Should request first and second withdrawals with no WETH in the Vault", async () => {
         const { oethVault, governor, josh, matt, weth } = fixture;
         const fixtureWithUser = { ...fixture, user: josh };
 
@@ -820,7 +806,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("should request second withdrawal by matt", async () => {
+      it("Should request second withdrawal by matt", async () => {
         const { oethVault, daniel, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
         await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
@@ -1098,7 +1084,7 @@ describe("OETH Vault", function () {
           await oethVault.connect(daniel).requestWithdrawal(firstRequestAmount);
           await oethVault.connect(josh).requestWithdrawal(secondRequestAmount);
         });
-        it("Should not deposit allocated WETH to a strategy", async () => {
+        it("Fail to deposit allocated WETH to a strategy", async () => {
           const { oethVault, weth, governor } = fixture;
 
           // WETH in the vault = 60 - 15 = 45 WETH
@@ -1114,7 +1100,7 @@ describe("OETH Vault", function () {
             );
           await expect(tx).to.be.revertedWith("Not enough WETH available");
         });
-        it("should not deposit allocated WETH during allocate", async () => {
+        it("Fail to deposit allocated WETH during allocate", async () => {
           const { oethVault, governor, weth } = fixture;
 
           // Set mock strategy as default strategy
@@ -1639,7 +1625,7 @@ describe("OETH Vault", function () {
 
           await expect(tx).to.be.revertedWith("Not enough WETH available");
         });
-        it("Should not allocate any WETH to the default strategy", async () => {
+        it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
 
           const tx = await oethVault.connect(domen).allocate();
@@ -1682,7 +1668,7 @@ describe("OETH Vault", function () {
 
           await expect(tx).to.be.revertedWith("Not enough WETH available");
         });
-        it("Should not allocate any WETH to the default strategy", async () => {
+        it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
 
           const tx = await oethVault.connect(domen).allocate();
@@ -1774,7 +1760,7 @@ describe("OETH Vault", function () {
         await oethVault.connect(daniel).claimWithdrawal(0);
         await oethVault.connect(josh).claimWithdrawal(1);
       });
-      it("should allow the last user to request the remaining 10 WETH", async () => {
+      it("Should allow the last user to request the remaining 10 WETH", async () => {
         const { oethVault, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
         const dataBefore = await snapData(fixtureWithUser);
@@ -1804,7 +1790,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("should allow the last user to claim the request of 10 WETH", async () => {
+      it("Should allow the last user to claim the request of 10 WETH", async () => {
         const { oethVault, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
         await oethVault.connect(matt).requestWithdrawal(oethUnits("10"));
@@ -1852,7 +1838,7 @@ describe("OETH Vault", function () {
         await oethVault.connect(matt).requestWithdrawal(oethUnits("40"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
       });
-      it("should allow user to claim the request of 40 WETH", async () => {
+      it("Should allow user to claim the request of 40 WETH", async () => {
         const { oethVault, matt } = fixture;
         const fixtureWithUser = { ...fixture, user: matt };
         const dataBefore = await snapData(fixtureWithUser);
@@ -1880,7 +1866,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("should allow user to perform a new request and claim a smaller than the WETH available", async () => {
+      it("Should allow user to perform a new request and claim a smaller than the WETH available", async () => {
         const { oethVault, josh } = fixture;
 
         await oethVault.connect(josh).requestWithdrawal(oethUnits("20"));
@@ -1890,7 +1876,7 @@ describe("OETH Vault", function () {
 
         await expect(tx).to.emit(oethVault, "WithdrawalClaimed");
       });
-      it("should allow user to perform a new request and claim exactly the WETH available", async () => {
+      it("Should allow user to perform a new request and claim exactly the WETH available", async () => {
         const { oethVault, oeth, josh, matt, daniel } = fixture;
         await oethVault.connect(matt).claimWithdrawal(0);
         // All user give OETH to another user
@@ -1928,7 +1914,7 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("shouldn't allow user to perform a new request and claim more than the WETH available", async () => {
+      it("Shouldn't allow user to perform a new request and claim more than the WETH available", async () => {
         const { oethVault, oeth, weth, josh, matt, daniel } = fixture;
         await oethVault.connect(matt).claimWithdrawal(0);
         // All user give OETH to another user

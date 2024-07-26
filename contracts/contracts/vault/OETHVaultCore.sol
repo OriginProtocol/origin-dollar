@@ -137,21 +137,11 @@ contract OETHVaultCore is VaultCore {
             "Redeem amount lower than minimum"
         );
 
-        // If there is any WETH in the Vault available after accounting for the withdrawal queue
-        if (_wethAvailable() >= amountMinusFee) {
-            // Use Vault funds first if sufficient
-            IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
-        } else {
-            address strategyAddr = assetDefaultStrategies[weth];
-            if (strategyAddr != address(0)) {
-                // Nothing in Vault, but something in Strategy, send from there
-                IStrategy strategy = IStrategy(strategyAddr);
-                strategy.withdraw(msg.sender, weth, amountMinusFee);
-            } else {
-                // Cant find funds anywhere
-                revert("Liquidity error");
-            }
-        }
+        // Is there enough WETH in the Vault available after accounting for the withdrawal queue
+        require(_wethAvailable() >= amountMinusFee, "Liquidity error");
+
+        // Transfer WETH minus the fee to the redeemer
+        IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
 
         // Burn OETH from user (including fees)
         oUSD.burn(msg.sender, _amount);
@@ -354,6 +344,8 @@ contract OETHVaultCore is VaultCore {
                 View Functions
     ****************************************/
 
+    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
+    // That is, it is available to be redeemed or deposited into a strategy.
     function _wethAvailable() internal view returns (uint256 wethAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
