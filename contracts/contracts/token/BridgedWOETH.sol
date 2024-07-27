@@ -15,7 +15,7 @@ contract BridgedWOETH is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    constructor() ERC20("Wrapped OETH", "WOETH") {
+    constructor() ERC20("Wrapped OETH", "wOETH") {
         // Nobody owns the implementation
         _setGovernor(address(0));
     }
@@ -74,7 +74,7 @@ contract BridgedWOETH is
      * name.
      */
     function symbol() public view virtual override returns (string memory) {
-        return "WOETH";
+        return "wOETH";
     }
 
     /**

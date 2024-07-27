@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OETH Base Balancer Abstract Strategy
+ * @title OETH Balancer Abstract Strategy
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -15,7 +15,7 @@ import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
-abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
+abstract contract AbstractBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 

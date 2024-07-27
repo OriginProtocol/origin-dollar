@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
-import { OracleRouterBase } from "./OracleRouterBase.sol";
+import { AbstractOracleRouter } from "./AbstractOracleRouter.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 // @notice Oracle Router that denominates all prices in ETH
-contract OETHOracleRouter is OracleRouterBase {
+contract OETHOracleRouter is AbstractOracleRouter {
     using StableMath for uint256;
 
     address public immutable auraPriceFeed;
