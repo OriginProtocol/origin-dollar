@@ -9,6 +9,12 @@ import { StableMath } from "../utils/StableMath.sol";
 contract OETHBaseOracleRouter is AbstractOracleRouter {
     using StableMath for uint256;
 
+    address constant WETH = 0x4200000000000000000000000000000000000006;
+    address constant WOETH = 0xD8724322f44E5c58D7A815F542036fb17DbbF839;
+    address constant AERO = 0x940181a94A35A4569E4529A3CDfB74e38FD98631;
+    address constant WOETH_CHAINLINK_FEED =
+        0xe96EB1EDa83d18cbac224233319FA5071464e1b9;
+
     address public immutable aeroPriceFeed;
 
     constructor(address _aeroPriceFeed) {
@@ -63,19 +69,18 @@ contract OETHBaseOracleRouter is AbstractOracleRouter {
         override
         returns (address feedAddress, uint256 maxStaleness)
     {
-        if (asset == 0x4200000000000000000000000000000000000006) {
+        if (asset == WETH) {
             // FIXED_PRICE: WETH/ETH
             feedAddress = FIXED_PRICE;
             maxStaleness = 0;
-        } else if (asset == 0xD8724322f44E5c58D7A815F542036fb17DbbF839) {
+        } else if (asset == WOETH) {
             // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
             // Bridged wOETH/OETH
-            feedAddress = 0xe96EB1EDa83d18cbac224233319FA5071464e1b9;
+            feedAddress = WOETH_CHAINLINK_FEED;
             maxStaleness = 1 days + STALENESS_BUFFER;
-        } else if (asset == 0x940181a94A35A4569E4529A3CDfB74e38FD98631) {
+        } else if (asset == AERO) {
             // AERO/ETH (PriceFeedPair instance)
             feedAddress = aeroPriceFeed;
-            maxStaleness = 1 days + STALENESS_BUFFER;
         } else {
             revert("Asset not available");
         }

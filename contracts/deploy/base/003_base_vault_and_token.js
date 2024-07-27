@@ -26,8 +26,8 @@ module.exports = deployOnBaseWithGuardian(
     const dOETHb = await deployWithConfirmation("OETH");
     const dwOETHb = await deployWithConfirmation("WOETH", [
       cOETHbProxy.address, // Base token
-      "Wrapped OETH",
-      "wOETH", // TODO: Confirm symbol and name
+      "Wrapped OETH Base",
+      "wOETHb",
     ]);
     const dOETHbVault = await deployWithConfirmation("OETHVault");
     const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
@@ -49,8 +49,8 @@ module.exports = deployOnBaseWithGuardian(
     const initDataOETHb = cOETHb.interface.encodeFunctionData(
       "initialize(string,string,address,uint256)",
       [
-        "Origin Ether", // TODO: Confirm token name
-        "OETH", // Token Symbol
+        "OETH Base",
+        "OETHb", // Token Symbol
         cOETHbVaultProxy.address, // OETHb Vault
         resolution, // HighRes
       ]
