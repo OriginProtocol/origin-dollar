@@ -53,6 +53,8 @@ contract VaultStorage is Initializable, Governable {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
+    event StrategyAddedToMintWhitelist(address indexed strategy);
+    event StrategyRemovedFromMintWhitelist(address indexed strategy);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -166,8 +168,12 @@ contract VaultStorage is Initializable, Governable {
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
+    // List of strategies that can mint oTokens directly
+    // Used in OETHBaseVaultCore
+    mapping(address => bool) public mintWhitelistedStrategy;
+
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

@@ -119,6 +119,7 @@ contract VaultCore is VaultInitializer {
      */
     function mintForStrategy(uint256 _amount)
         external
+        virtual
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {
@@ -245,6 +246,7 @@ contract VaultCore is VaultInitializer {
      */
     function burnForStrategy(uint256 _amount)
         external
+        virtual
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {

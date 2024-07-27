@@ -8,5 +8,30 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OETHBaseVaultAdmin is VaultAdmin {
+    function addStrategyToMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(strategies[strategyAddr].isSupported, "Strategy not approved");
 
+        require(!mintWhitelistedStrategy[strategyAddr], "Already whitelisted");
+
+        mintWhitelistedStrategy[strategyAddr] = true;
+
+        emit StrategyAddedToMintWhitelist(strategistAddr);
+    }
+
+    function removeStrategyFromMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        // Intentionally skipping `strategies.isSupported` check since
+        // we may wanna remove an address even after removing the strategy
+
+        require(mintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+
+        mintWhitelistedStrategy[strategyAddr] = false;
+
+        emit StrategyRemovedFromMintWhitelist(strategistAddr);
+    }
 }
