@@ -9,11 +9,11 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICERC20 } from "./ICompound.sol";
-import { BaseCompoundStrategy, InitializableAbstractStrategy } from "./BaseCompoundStrategy.sol";
+import { AbstractCompoundStrategy, InitializableAbstractStrategy } from "./AbstractCompoundStrategy.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
 import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 
-contract CompoundStrategy is BaseCompoundStrategy {
+contract CompoundStrategy is AbstractCompoundStrategy {
     using SafeERC20 for IERC20;
     event SkippedWithdrawal(address asset, uint256 amount);
 

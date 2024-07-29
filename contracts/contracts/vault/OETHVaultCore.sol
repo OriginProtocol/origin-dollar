@@ -22,6 +22,9 @@ contract OETHVaultCore is VaultCore {
     address public immutable weth;
     uint256 public wethAssetIndex;
 
+    // For future use (because OETHBaseVaultCore inherits from this)
+    uint256[50] private __gap;
+
     constructor(address _weth) {
         weth = _weth;
     }

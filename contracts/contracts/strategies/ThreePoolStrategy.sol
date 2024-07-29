@@ -11,18 +11,18 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
-import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20, AbstractCurveStrategy, InitializableAbstractStrategy } from "./AbstractCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
 /*
  * IMPORTANT(!) If ThreePoolStrategy needs to be re-deployed, it requires new
- * proxy contract with fresh storage slots. Changes in `BaseCurveStrategy`
+ * proxy contract with fresh storage slots. Changes in `AbstractCurveStrategy`
  * storage slots would break existing implementation.
  *
  * Remove this notice if ThreePoolStrategy is re-deployed
  */
-contract ThreePoolStrategy is BaseCurveStrategy {
+contract ThreePoolStrategy is AbstractCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 

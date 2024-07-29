@@ -7,13 +7,13 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, BaseCompoundStrategy, InitializableAbstractStrategy } from "./BaseCompoundStrategy.sol";
+import { IERC20, AbstractCompoundStrategy, InitializableAbstractStrategy } from "./AbstractCompoundStrategy.sol";
 import { IMorpho } from "../interfaces/morpho/IMorpho.sol";
 import { ILens } from "../interfaces/morpho/ILens.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
-contract MorphoCompoundStrategy is BaseCompoundStrategy {
+contract MorphoCompoundStrategy is AbstractCompoundStrategy {
     address public constant MORPHO = 0x8888882f8f843896699869179fB6E4f7e3B58888;
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
     using SafeERC20 for IERC20;
