@@ -99,6 +99,8 @@ describe("ForkTest: OETHb Vault", function () {
 
   describe("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
+    const BIGGER_THAN_MAX_INT =
+      "57896044618658097711785492504343953926634992332820282019729";
     beforeEach(async () => {
       const { oethbVault, governor } = fixture;
 
@@ -125,6 +127,118 @@ describe("ForkTest: OETHb Vault", function () {
 
       await oethbVault.connect(strategySigner).burnForStrategy(amount);
       expect(await oethb.balanceOf(mockStrategy.address)).to.eq(0);
+      expect(await oethb.totalSupply()).to.eq(supplyBefore);
+    });
+
+    it("Should not allow a non-supported strategy to mint", async () => {
+      const { oethbVault, governor } = fixture;
+
+      const amount = oethUnits("1");
+
+      const tx = oethbVault.connect(governor).mintForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Unsupported strategy");
+    });
+
+    it("Should not allow a non-supported strategy to burn", async () => {
+      const { oethbVault, governor } = fixture;
+
+      const amount = oethUnits("1");
+
+      const tx = oethbVault.connect(governor).burnForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Unsupported strategy");
+    });
+
+    it("Should not allow a non-white listed strategy to mint", async () => {
+      const { oethbVault, governor } = fixture;
+
+      // Pretend addresses.dead is a strategy
+      await oethbVault.connect(governor).approveStrategy(addresses.dead);
+
+      const amount = oethUnits("1");
+
+      const tx = oethbVault
+        .connect(await impersonateAndFund(addresses.dead))
+        .mintForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Not whitelisted strategy");
+    });
+
+    it("Should not allow a non-white listed strategy to burn", async () => {
+      const { oethbVault, governor } = fixture;
+
+      // Pretend addresses.dead is a strategy
+      await oethbVault.connect(governor).approveStrategy(addresses.dead);
+
+      const amount = oethUnits("1");
+
+      const tx = oethbVault
+        .connect(await impersonateAndFund(addresses.dead))
+        .burnForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Not whitelisted strategy");
+    });
+
+    it("Should not allow a strategy to mint if amount is too high", async () => {
+      const { oethbVault } = fixture;
+
+      const amount = oethUnits(BIGGER_THAN_MAX_INT);
+
+      const tx = oethbVault.connect(strategySigner).mintForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Amount too high");
+    });
+
+    it("Should not allow a strategy to burn if amount is too high", async () => {
+      const { oethbVault } = fixture;
+
+      const amount = oethUnits(BIGGER_THAN_MAX_INT);
+
+      const tx = oethbVault.connect(strategySigner).burnForStrategy(amount);
+      await expect(tx).to.be.revertedWith("Amount too high");
+    });
+  });
+
+  describe("Mint & Burn To/From For Strategy", function () {
+    let strategySigner, mockStrategy;
+    beforeEach(async () => {
+      const { oethbVault, governor } = fixture;
+
+      mockStrategy = await deployWithConfirmation("MockStrategy");
+
+      await oethbVault.connect(governor).approveStrategy(mockStrategy.address);
+      await oethbVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(mockStrategy.address);
+      strategySigner = await impersonateAndFund(mockStrategy.address);
+    });
+
+    it("Should allow a user to mint to for a strategy", async () => {
+      const { oethbVault, oethb } = fixture;
+
+      await oethbVault.rebase();
+
+      const amount = oethUnits("1");
+
+      const supplyBefore = await oethb.totalSupply();
+      await oethbVault
+        .connect(strategySigner)
+        .mintToForStrategy(addresses.dead, amount);
+      expect(await oethb.balanceOf(addresses.dead)).to.eq(amount);
+      expect(await oethb.totalSupply()).to.eq(supplyBefore.add(amount));
+    });
+
+    it("Should allow a user to burn from for a strategy", async () => {
+      const { oethbVault, oethb } = fixture;
+
+      await oethbVault.rebase();
+
+      const amount = oethUnits("1");
+
+      const supplyBefore = await oethb.totalSupply();
+      await oethbVault
+        .connect(strategySigner)
+        .mintToForStrategy(addresses.dead, amount);
+      await oethbVault
+        .connect(strategySigner)
+        .burnFromForStrategy(addresses.dead, amount);
+      expect(await oethb.balanceOf(addresses.dead)).to.eq(0);
       expect(await oethb.totalSupply()).to.eq(supplyBefore);
     });
   });
