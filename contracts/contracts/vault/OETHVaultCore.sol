@@ -171,21 +171,19 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
-        // Burn the user's OETH
-        // This also checks the requester has enough OETH to burn
-        oUSD.burn(msg.sender, _amount);
+        // The check that the requester has enough OETH is done in to later burn call
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
         queued = withdrawalQueueMetadata.queued + _amount;
 
-        // store the next withdrawal request
+        // Store the next withdrawal request
         withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
             requestId + 1
         );
+        // Store the updated queued amount which reserves WETH in the withdrawal queue
+        // and reduces the vault's total assets
         withdrawalQueueMetadata.queued = uint128(queued);
-
-        emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
-
+        // Store the user's withdrawal request
         withdrawalRequests[requestId] = WithdrawalRequest({
             withdrawer: msg.sender,
             claimed: false,
@@ -194,8 +192,13 @@ contract OETHVaultCore is VaultCore {
             queued: uint128(queued)
         });
 
-        // Prevent insolvency
+        // Burn the user's OETH
+        oUSD.burn(msg.sender, _amount);
+
+        // Prevent withdrawal if the vault is solvent by more than the the allowed percentage
         _postRedeem(_amount);
+
+        emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
     }
 
     // slither-disable-start reentrancy-no-eth
