@@ -195,7 +195,6 @@ contract OETHVaultCore is VaultCore {
         _postRedeem(_amount);
     }
 
-
     // slither-disable-start reentrancy-no-eth
     /**
      * @notice Claim a previously requested withdrawal once it is claimable.
@@ -448,15 +447,15 @@ contract OETHVaultCore is VaultCore {
         // reserved for the withdrawal queue = cumulative queued total - total claimed
         uint256 reservedForQueue = queue.queued - queue.claimed;
 
-        if (reservedForQueue > 0) {
-            if (value > reservedForQueue) {
-                return value - reservedForQueue;
-            }
+        if (value < reservedForQueue) {
             // This can happen if the vault becomes insolvent enough that the
-            // total value in the vault and all strategies < outstanding withdrawals.
-            // For example, there was a mass slashing event and most users request to withdraw.
+            // total value in the vault and all strategies is less than the outstanding withdrawals.
+            // For example, there was a mass slashing event and most users request a withdrawal.
             return 0;
         }
+
+        // Adjust the total value by the amount reserved for the withdrawal queue
+        return value - reservedForQueue;
     }
 
     /// @dev Only WETH is supported in the OETH Vault so return the WETH balance only
