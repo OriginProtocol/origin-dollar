@@ -33,6 +33,8 @@ async function snapVault({ block }, hre) {
 
   const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+  const oethProxy = await hre.ethers.getContract(`OETHProxy`);
+  const oeth = await hre.ethers.getContractAt("OETH", oethProxy.address);
 
   const { chainId } = await hre.ethers.provider.getNetwork();
   const wethAddress = addresses[networkMap[chainId]].WETH;
@@ -49,18 +51,53 @@ async function snapVault({ block }, hre) {
   const unclaimed = queue.queued.sub(queue.claimed);
   const available = wethBalance.sub(unclaimed).sub(shortfall);
 
-  console.log(`Vault WETH : ${formatUnits(wethBalance)}, ${wethBalance} wei`);
+  const totalSupply = await oeth.totalSupply({
+    blockTag,
+  });
 
-  console.log(`Queued     : ${formatUnits(queue.queued)}, ${queue.queued} wei`);
+  const totalAssets = await vault.totalValue({
+    blockTag,
+  });
+  const assetSupplyDiff = totalAssets.sub(totalSupply);
+  const vaultBufferPercentage = await vault.vaultBuffer({
+    blockTag,
+  });
+  const vaultBuffer = totalSupply
+    .mul(vaultBufferPercentage)
+    .div(parseUnits("1"));
+
   console.log(
-    `Claimable  : ${formatUnits(queue.claimable)}, ${queue.claimable} wei`
+    `Vault WETH    : ${formatUnits(wethBalance)}, ${wethBalance} wei`
+  );
+
+  console.log(
+    `Queued        : ${formatUnits(queue.queued)}, ${queue.queued} wei`
   );
   console.log(
-    `Claimed    : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+    `Claimable     : ${formatUnits(queue.claimable)}, ${queue.claimable} wei`
   );
-  console.log(`Shortfall  : ${formatUnits(shortfall)}, ${shortfall} wei`);
-  console.log(`Unclaimed  : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
-  console.log(`Available  : ${formatUnits(available)}, ${available} wei`);
+  console.log(
+    `Claimed       : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+  );
+  console.log(`Shortfall     : ${formatUnits(shortfall)}, ${shortfall} wei`);
+  console.log(`Unclaimed     : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
+  console.log(`Available     : ${formatUnits(available)}, ${available} wei`);
+  console.log(
+    `Target Buffer : ${formatUnits(vaultBuffer)} (${formatUnits(
+      vaultBufferPercentage,
+      16
+    )}%)`
+  );
+
+  console.log(
+    `Total Asset   : ${formatUnits(totalAssets)}, ${totalAssets} wei`
+  );
+  console.log(
+    `Total Supply  : ${formatUnits(totalSupply)}, ${totalSupply} wei`
+  );
+  console.log(
+    `Asset - Supply: ${formatUnits(assetSupplyDiff)}, ${assetSupplyDiff} wei`
+  );
 }
 
 async function addWithdrawalQueueLiquidity(_, hre) {
