@@ -8,6 +8,11 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OETHBaseVaultAdmin is VaultAdmin {
+    /**
+     * @notice Adds a strategy to the mint whitelist.
+     *          Reverts if strategy isn't approved on Vault.
+     * @param strategyAddr Strategy address
+     */
     function addStrategyToMintWhitelist(address strategyAddr)
         external
         onlyGovernor
@@ -21,6 +26,10 @@ contract OETHBaseVaultAdmin is VaultAdmin {
         emit StrategyAddedToMintWhitelist(strategistAddr);
     }
 
+    /**
+     * @notice Removes a strategy from the mint whitelist.
+     * @param strategyAddr Strategy address
+     */
     function removeStrategyFromMintWhitelist(address strategyAddr)
         external
         onlyGovernor
