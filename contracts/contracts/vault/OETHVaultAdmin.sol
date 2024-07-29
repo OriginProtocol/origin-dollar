@@ -5,21 +5,17 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IVault } from "../interfaces/IVault.sol";
 import { VaultAdmin } from "./VaultAdmin.sol";
+import { OETHVaultCommon } from "./OETHVaultCommon.sol";
 
 /**
  * @title OETH VaultAdmin Contract
  * @author Origin Protocol Inc
  */
-contract OETHVaultAdmin is VaultAdmin {
+contract OETHVaultAdmin is OETHVaultCommon, VaultAdmin {
     using SafeERC20 for IERC20;
 
-    address public immutable weth;
-
-    constructor(address _weth) {
-        weth = _weth;
-    }
+    constructor(address _weth) OETHVaultCommon(_weth) {}
 
     /// @dev Simplified version of the deposit function as WETH is the only supported asset.
     function _depositToStrategy(
@@ -59,35 +55,19 @@ contract OETHVaultAdmin is VaultAdmin {
             _amounts
         );
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 
     function _withdrawAllFromStrategy(address _strategyAddr) internal override {
         super._withdrawAllFromStrategy(_strategyAddr);
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 
     function _withdrawAllFromStrategies() internal override {
         super._withdrawAllFromStrategies();
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
-    }
-
-    /// @dev Calculates the amount of WETH in the Vault that is not reserved for the withdrawal queue.
-    function _wethAvailable() internal view returns (uint256 wethAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of WETH that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in WETH in the vault
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // If there is more WETH in the vault than the outstanding withdrawals
-        if (wethBalance > outstandingWithdrawals) {
-            wethAvailable = wethBalance - outstandingWithdrawals;
-        }
+        _addWithdrawalQueueLiquidity();
     }
 
     function _swapCollateral(
@@ -108,6 +88,6 @@ contract OETHVaultAdmin is VaultAdmin {
         );
 
         // Add any new WETH to the withdrawal queue first
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 }

@@ -7,6 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { VaultCore } from "./VaultCore.sol";
+import { OETHVaultCommon } from "./OETHVaultCommon.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IDripper } from "../interfaces/IDripper.sol";
 
@@ -14,20 +15,17 @@ import { IDripper } from "../interfaces/IDripper.sol";
  * @title OETH VaultCore Contract
  * @author Origin Protocol Inc
  */
-contract OETHVaultCore is VaultCore {
+contract OETHVaultCore is OETHVaultCommon, VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
     uint256 constant CLAIM_DELAY = 10 minutes;
-    address public immutable weth;
     uint256 public wethAssetIndex;
 
     // For future use (because OETHBaseVaultCore inherits from this)
     uint256[50] private __gap;
 
-    constructor(address _weth) {
-        weth = _weth;
-    }
+    constructor(address _weth) OETHVaultCommon(_weth) {}
 
     /**
      * @dev Caches WETH's index in `allAssets` variable.
@@ -311,75 +309,16 @@ contract OETHVaultCore is VaultCore {
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     /// It also called before any WETH is allocated to a strategy.
-    function addWithdrawalQueueLiquidity() external {
+    function addWithdrawalQueueLiquidity() external nonReentrant {
         // Stream any harvested rewards (WETH) that are available to the Vault
         IDripper(dripper).collect();
 
         _addWithdrawalQueueLiquidity();
     }
 
-    /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
-    /// This assumes 1 WETH equal 1 OETH.
-    function _addWithdrawalQueueLiquidity()
-        internal
-        returns (uint256 addedClaimable)
-    {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // Check if the claimable WETH is less than the queued amount
-        uint256 queueShortfall = queue.queued - queue.claimable;
-
-        // No need to do anything is the withdrawal queue is full funded
-        if (queueShortfall == 0) {
-            return 0;
-        }
-
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of WETH that is currently allocated for the withdrawal queue
-        uint256 allocatedWeth = queue.claimable - queue.claimed;
-
-        // If there is no unallocated WETH then there is nothing to add to the queue
-        if (wethBalance <= allocatedWeth) {
-            return 0;
-        }
-
-        uint256 unallocatedWeth = wethBalance - allocatedWeth;
-
-        // the new claimable amount is the smaller of the queue shortfall or unallocated weth
-        addedClaimable = queueShortfall < unallocatedWeth
-            ? queueShortfall
-            : unallocatedWeth;
-        uint256 newClaimable = queue.claimable + addedClaimable;
-
-        // Store the new claimable amount back to storage
-        withdrawalQueueMetadata.claimable = uint128(newClaimable);
-
-        // emit a WithdrawalClaimable event
-        emit WithdrawalClaimable(newClaimable, addedClaimable);
-    }
-
     /***************************************
                 View Functions
     ****************************************/
-
-    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
-    // That is, it is available to be redeemed or deposited into a strategy.
-    function _wethAvailable() internal view returns (uint256 wethAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of WETH that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in WETH in the vault
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // If there is more WETH in the vault than the outstanding withdrawals
-        if (wethBalance > outstandingWithdrawals) {
-            wethAvailable = wethBalance - outstandingWithdrawals;
-        }
-    }
 
     /// @dev Get the balance of an asset held in Vault and all strategies
     /// less any WETH that is reserved for the withdrawal queue.
