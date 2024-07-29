@@ -375,10 +375,12 @@ contract OETHVaultCore is VaultCore {
         // The amount of sitting in WETH in the vault
         uint256 wethBalance = IERC20(weth).balanceOf(address(this));
 
-        // If there is more WETH in the vault than the outstanding withdrawals
-        if (wethBalance > outstandingWithdrawals) {
-            wethAvailable = wethBalance - outstandingWithdrawals;
+        // If there is not enough WETH in the vault to cover the outstanding withdrawals
+        if (wethBalance <= outstandingWithdrawals) {
+            return 0;
         }
+
+        return wethBalance - outstandingWithdrawals;
     }
 
     /// @dev Get the balance of an asset held in Vault and all strategies
