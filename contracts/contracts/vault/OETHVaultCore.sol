@@ -311,7 +311,7 @@ contract OETHVaultCore is VaultCore {
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     /// It also called before any WETH is allocated to a strategy.
-    function addWithdrawalQueueLiquidity() external {
+    function addWithdrawalQueueLiquidity() external nonReentrant {
         // Stream any harvested rewards (WETH) that are available to the Vault
         IDripper(dripper).collect();
 
