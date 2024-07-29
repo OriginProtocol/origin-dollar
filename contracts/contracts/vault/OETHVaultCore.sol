@@ -311,7 +311,7 @@ contract OETHVaultCore is VaultCore {
     /// adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     /// It also called before any WETH is allocated to a strategy.
-    function addWithdrawalQueueLiquidity() external nonReentrant {
+    function addWithdrawalQueueLiquidity() external {
         // Stream any harvested rewards (WETH) that are available to the Vault
         IDripper(dripper).collect();
 
@@ -329,28 +329,35 @@ contract OETHVaultCore is VaultCore {
         // Check if the claimable WETH is less than the queued amount
         uint256 queueShortfall = queue.queued - queue.claimable;
 
-        // No need to get WETH balance if all the withdrawal requests are claimable
-        if (queueShortfall > 0) {
-            uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-            // Of the claimable withdrawal requests, how much is unclaimed?
-            uint256 unclaimed = queue.claimable - queue.claimed;
-            if (wethBalance > unclaimed) {
-                uint256 unallocatedWeth = wethBalance - unclaimed;
-
-                // the new claimable amount is the smaller of the queue shortfall or unallocated weth
-                addedClaimable = queueShortfall < unallocatedWeth
-                    ? queueShortfall
-                    : unallocatedWeth;
-                uint256 newClaimable = queue.claimable + addedClaimable;
-
-                // Store the new claimable amount back to storage
-                withdrawalQueueMetadata.claimable = uint128(newClaimable);
-
-                // emit a WithdrawalClaimable event
-                emit WithdrawalClaimable(newClaimable, addedClaimable);
-            }
+        // No need to do anything is the withdrawal queue is full funded
+        if (queueShortfall == 0) {
+            return 0;
         }
+
+        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
+
+        // Of the claimable withdrawal requests, how much is unclaimed?
+        // That is, the amount of WETH that is currently allocated for the withdrawal queue
+        uint256 allocatedWeth = queue.claimable - queue.claimed;
+
+        // If there is no unallocated WETH then there is nothing to add to the queue
+        if (wethBalance <= allocatedWeth) {
+            return 0;
+        }
+
+        uint256 unallocatedWeth = wethBalance - allocatedWeth;
+
+        // the new claimable amount is the smaller of the queue shortfall or unallocated weth
+        addedClaimable = queueShortfall < unallocatedWeth
+            ? queueShortfall
+            : unallocatedWeth;
+        uint256 newClaimable = queue.claimable + addedClaimable;
+
+        // Store the new claimable amount back to storage
+        withdrawalQueueMetadata.claimable = uint128(newClaimable);
+
+        // emit a WithdrawalClaimable event
+        emit WithdrawalClaimable(newClaimable, addedClaimable);
     }
 
     /***************************************
