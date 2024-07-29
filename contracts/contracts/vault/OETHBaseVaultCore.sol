@@ -23,6 +23,10 @@ contract OETHBaseVaultCore is OETHVaultCore {
         whenNotCapitalPaused
     {
         require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
             mintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
@@ -50,6 +54,10 @@ contract OETHBaseVaultCore is OETHVaultCore {
         internal
         whenNotCapitalPaused
     {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
         require(
             mintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"

@@ -2,8 +2,9 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
-const { impersonateAccount } = require("../../utils/signers");
+const { impersonateAndFund } = require("../../utils/signers");
 const { oethUnits } = require("../helpers");
+const { deployWithConfirmation } = require("../../utils/deploy");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -96,16 +97,18 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
-  describe.skip("Mint & Burn For Strategy", function () {
-    let strategySigner;
+  describe("Mint & Burn For Strategy", function () {
+    let strategySigner, mockStrategy;
     beforeEach(async () => {
       const { oethbVault, governor } = fixture;
 
-      await oethbVault.connect(governor).approveStrategy(addresses.dead);
+      mockStrategy = await deployWithConfirmation("MockStrategy");
+
+      await oethbVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethbVault
         .connect(governor)
-        .addStrategyToMintWhitelist(addresses.dead);
-      strategySigner = await impersonateAccount(addresses.dead);
+        .addStrategyToMintWhitelist(mockStrategy.address);
+      strategySigner = await impersonateAndFund(mockStrategy.address);
     });
 
     it("Should allow a whitelisted strategy to mint and burn", async () => {
@@ -117,11 +120,11 @@ describe("ForkTest: OETHb Vault", function () {
 
       const supplyBefore = await oethb.totalSupply();
       await oethbVault.connect(strategySigner).mintForStrategy(amount);
-      expect(oethb.balanceOf(strategySigner.addresses)).to.eq(amount);
+      expect(await oethb.balanceOf(mockStrategy.address)).to.eq(amount);
       expect(await oethb.totalSupply()).to.eq(supplyBefore.add(amount));
 
       await oethbVault.connect(strategySigner).burnForStrategy(amount);
-      expect(oethb.balanceOf(strategySigner.addresses)).to.eq(0);
+      expect(await oethb.balanceOf(mockStrategy.address)).to.eq(0);
       expect(await oethb.totalSupply()).to.eq(supplyBefore);
     });
   });
