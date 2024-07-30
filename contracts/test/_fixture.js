@@ -1492,9 +1492,9 @@ async function morphoCompoundFixture() {
 }
 
 /**
- * Configure a Vault with only the Morpho strategy.
+ * Configure a Vault with only the Aave strategy for USDT.
  */
-async function morphoAaveFixture() {
+async function aaveFixture() {
   const fixture = await defaultFixture();
 
   const { timelock } = fixture;
@@ -1504,20 +1504,38 @@ async function morphoAaveFixture() {
       .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdt.address,
-        fixture.morphoAaveStrategy.address
+        fixture.aaveStrategy.address
       );
+  } else {
+    throw new Error(
+      "Aave strategy supported for USDT in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the Morpho strategy.
+ */
+async function morphoAaveFixture() {
+  const fixture = await defaultFixture();
+
+  const { timelock } = fixture;
+
+  if (isFork) {
+    // The supply of DAI and USDT has been paused for Morpho Aave V2 so no default strategy
+    await fixture.vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(fixture.dai.address, addresses.zero);
+    await fixture.vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(fixture.usdt.address, addresses.zero);
 
     await fixture.vault
       .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdc.address,
-        fixture.morphoAaveStrategy.address
-      );
-
-    await fixture.vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.dai.address,
         fixture.morphoAaveStrategy.address
       );
   } else {
@@ -2473,6 +2491,7 @@ module.exports = {
   convexLUSDMetaVaultFixture,
   makerDsrFixture,
   morphoCompoundFixture,
+  aaveFixture,
   morphoAaveFixture,
   aaveVaultFixture,
   hackedVaultFixture,
