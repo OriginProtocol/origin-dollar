@@ -397,15 +397,12 @@ contract OETHVaultCore is VaultCore {
         override
         returns (uint256 balance)
     {
-        balance = super._checkBalance(_asset);
-
-        if (_asset == weth) {
-            WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-            // Need to remove WETH that is reserved for the withdrawal queue
-            if (balance + queue.claimed >= queue.queued) {
-                return balance + queue.claimed - queue.queued;
-            }
+        if (_asset != weth) {
+            return 0;
         }
+
+        // Get the WETH balance in the vault and all strategies less any WETH reserved for the withdrawal queue
+        return _totalValue();
     }
 
     /**
