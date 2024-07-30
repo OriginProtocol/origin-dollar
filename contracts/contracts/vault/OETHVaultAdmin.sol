@@ -91,12 +91,12 @@ contract OETHVaultAdmin is VaultAdmin {
     }
 
     function _swapCollateral(
-        address _fromAsset,
-        address _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _minToAssetAmount,
-        bytes calldata _data
-    ) internal override returns (uint256 toAssetAmount) {
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) internal pure override returns (uint256) {
         revert("Collateral swap not supported");
     }
 }
