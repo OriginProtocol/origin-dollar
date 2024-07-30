@@ -170,7 +170,7 @@ contract VaultStorage is Initializable, Governable {
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
-    mapping(address => bool) public mintWhitelistedStrategy;
+    mapping(address => bool) public isMintWhitelistedStrategy;
 
     // For future use
     uint256[49] private __gap;

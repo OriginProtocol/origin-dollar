@@ -19,9 +19,12 @@ contract OETHBaseVaultAdmin is VaultAdmin {
     {
         require(strategies[strategyAddr].isSupported, "Strategy not approved");
 
-        require(!mintWhitelistedStrategy[strategyAddr], "Already whitelisted");
+        require(
+            !isMintWhitelistedStrategy[strategyAddr],
+            "Already whitelisted"
+        );
 
-        mintWhitelistedStrategy[strategyAddr] = true;
+        isMintWhitelistedStrategy[strategyAddr] = true;
 
         emit StrategyAddedToMintWhitelist(strategistAddr);
     }
@@ -37,9 +40,9 @@ contract OETHBaseVaultAdmin is VaultAdmin {
         // Intentionally skipping `strategies.isSupported` check since
         // we may wanna remove an address even after removing the strategy
 
-        require(mintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+        require(isMintWhitelistedStrategy[strategyAddr], "Not whitelisted");
 
-        mintWhitelistedStrategy[strategyAddr] = false;
+        isMintWhitelistedStrategy[strategyAddr] = false;
 
         emit StrategyRemovedFromMintWhitelist(strategistAddr);
     }

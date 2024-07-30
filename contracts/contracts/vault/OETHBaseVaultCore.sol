@@ -33,7 +33,7 @@ contract OETHBaseVaultCore is OETHVaultCore {
             "Unsupported strategy"
         );
         require(
-            mintWhitelistedStrategy[msg.sender] == true,
+            isMintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
 
@@ -71,7 +71,7 @@ contract OETHBaseVaultCore is OETHVaultCore {
             "Unsupported strategy"
         );
         require(
-            mintWhitelistedStrategy[msg.sender] == true,
+            isMintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
 

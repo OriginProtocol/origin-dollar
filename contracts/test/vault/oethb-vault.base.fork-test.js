@@ -26,7 +26,7 @@ describe("ForkTest: OETHb Vault", function () {
         .addStrategyToMintWhitelist(addresses.dead);
 
       await expect(tx).to.emit(oethbVault, "StrategyAddedToMintWhitelist");
-      expect(await oethbVault.mintWhitelistedStrategy(addresses.dead)).to.be
+      expect(await oethbVault.isMintWhitelistedStrategy(addresses.dead)).to.be
         .true;
     });
 
@@ -45,7 +45,7 @@ describe("ForkTest: OETHb Vault", function () {
         .removeStrategyFromMintWhitelist(addresses.dead);
 
       await expect(tx).to.emit(oethbVault, "StrategyRemovedFromMintWhitelist");
-      expect(await oethbVault.mintWhitelistedStrategy(addresses.dead)).to.be
+      expect(await oethbVault.isMintWhitelistedStrategy(addresses.dead)).to.be
         .false;
     });
 

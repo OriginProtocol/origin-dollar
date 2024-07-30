@@ -221,7 +221,7 @@ interface IVault {
 
     function removeStrategyFromMintWhitelist(address strategyAddr) external;
 
-    function mintWhitelistedStrategy(address strategyAddr)
+    function isMintWhitelistedStrategy(address strategyAddr)
         external
         view
         returns (bool);
