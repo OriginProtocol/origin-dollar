@@ -576,3 +576,30 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+
+
+# --------------------------------
+# Jul 30, 2024 - Change the USDT default strategy from Morpho Aave V2 as Aave V2
+# 
+
+from world import *
+
+with TemporaryFork():
+    txs = []
+    # Before
+    txs.append(vault_core.rebase(std))
+    txs.append(vault_value_checker.takeSnapshot(std))
+    
+    txs.append(vault_admin.setAssetDefaultStrategy(USDT, AAVE_STRAT, {'from':STRATEGIST}))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OUSD supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
