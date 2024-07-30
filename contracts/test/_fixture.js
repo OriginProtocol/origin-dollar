@@ -1492,6 +1492,30 @@ async function morphoCompoundFixture() {
 }
 
 /**
+ * Configure a Vault with only the Aave strategy for USDT.
+ */
+async function aaveFixture() {
+  const fixture = await defaultFixture();
+
+  const { timelock } = fixture;
+
+  if (isFork) {
+    await fixture.vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(
+        fixture.usdt.address,
+        fixture.aaveStrategy.address
+      );
+  } else {
+    throw new Error(
+      "Aave strategy supported for USDT in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with only the Morpho strategy.
  */
 async function morphoAaveFixture() {
@@ -2467,6 +2491,7 @@ module.exports = {
   convexLUSDMetaVaultFixture,
   makerDsrFixture,
   morphoCompoundFixture,
+  aaveFixture,
   morphoAaveFixture,
   aaveVaultFixture,
   hackedVaultFixture,
