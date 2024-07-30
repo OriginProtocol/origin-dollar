@@ -34,6 +34,8 @@ interface IVault {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
+    event StrategyAddedToMintWhitelist(address indexed strategy);
+    event StrategyRemovedFromMintWhitelist(address indexed strategy);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -145,9 +147,13 @@ interface IVault {
 
     function mintForStrategy(uint256 _amount) external;
 
+    function mintToForStrategy(address receiver, uint256 _amount) external;
+
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
     function burnForStrategy(uint256 _amount) external;
+
+    function burnFromForStrategy(address user, uint256 _amount) external;
 
     function redeemAll(uint256 _minimumUnitAmount) external;
 
@@ -210,4 +216,13 @@ interface IVault {
     function setAdminImpl(address) external;
 
     function removeAsset(address _asset) external;
+
+    function addStrategyToMintWhitelist(address strategyAddr) external;
+
+    function removeStrategyFromMintWhitelist(address strategyAddr) external;
+
+    function isMintWhitelistedStrategy(address strategyAddr)
+        external
+        view
+        returns (bool);
 }
