@@ -34,9 +34,9 @@ interface IVault {
         uint256 _fromAssetAmount,
         uint256 _toAssetAmount
     );
-    event DripperChanged(address indexed _dripper);
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
+    event DripperChanged(address indexed _dripper);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
