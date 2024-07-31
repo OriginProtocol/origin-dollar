@@ -135,18 +135,20 @@ function deployOnBaseWithGuardian(opts, fn) {
     const guardianActions = [];
     for (const action of proposal.actions) {
       const { contract, signature, args } = action;
+
       if (isFork) {
         log(`Sending governance action ${signature} to ${contract.address}`);
-        const result = await withConfirmation(
+        await withConfirmation(
           contract.connect(sGuardian)[signature](...args, await getTxOpts())
         );
       }
+
       guardianActions.push({
         sig: signature,
         args: args,
         to: contract.address,
-        data: result.data,
-        value: result.value.toString(),
+        data: contract.interface.encodeFunctionData(signature, args),
+        value: "0",
       });
 
       console.log(`... ${signature} completed`);
