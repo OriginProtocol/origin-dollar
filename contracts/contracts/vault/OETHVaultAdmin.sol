@@ -74,7 +74,8 @@ contract OETHVaultAdmin is VaultAdmin {
         IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 
-    /// @dev Calculates the amount of WETH in the Vault that is not reserved for the withdrawal queue.
+    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
+    // That is, it is available to be redeemed or deposited into a strategy.
     function _wethAvailable() internal view returns (uint256 wethAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
@@ -84,10 +85,12 @@ contract OETHVaultAdmin is VaultAdmin {
         // The amount of sitting in WETH in the vault
         uint256 wethBalance = IERC20(weth).balanceOf(address(this));
 
-        // If there is more WETH in the vault than the outstanding withdrawals
-        if (wethBalance > outstandingWithdrawals) {
-            wethAvailable = wethBalance - outstandingWithdrawals;
+        // If there is not enough WETH in the vault to cover the outstanding withdrawals
+        if (wethBalance <= outstandingWithdrawals) {
+            return 0;
         }
+
+        return wethBalance - outstandingWithdrawals;
     }
 
     function _swapCollateral(
