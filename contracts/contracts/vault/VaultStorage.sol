@@ -54,6 +54,8 @@ contract VaultStorage is Initializable, Governable {
         uint256 _toAssetAmount
     );
     event DripperChanged(address indexed _dripper);
+    event StrategyAddedToMintWhitelist(address indexed strategy);
+    event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -178,6 +180,10 @@ contract VaultStorage is Initializable, Governable {
         uint16 allowedUndervalueBps;
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    // List of strategies that can mint oTokens directly
+    // Used in OETHBaseVaultCore
+    mapping(address => bool) public isMintWhitelistedStrategy;
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
