@@ -83,10 +83,9 @@ async function snapVault({ block }, hre) {
   console.log(`Shortfall       : ${formatUnits(shortfall)}, ${shortfall} wei`);
   console.log(`Unclaimed       : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
   console.log(
-    `Available       : ${formatUnits(available)}, ${available} wei (${formatUnits(
-      availablePercentage,
-      2
-    )}%)`
+    `Available       : ${formatUnits(
+      available
+    )}, ${available} wei (${formatUnits(availablePercentage, 2)}%)`
   );
   console.log(
     `Target Buffer   : ${formatUnits(vaultBuffer)} (${formatUnits(
