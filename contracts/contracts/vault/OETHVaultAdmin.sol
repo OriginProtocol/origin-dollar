@@ -5,7 +5,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import { OETHVaultLibrary } from "./OETHVaultLibrary.sol";
 import { VaultAdmin } from "./VaultAdmin.sol";
 
 /**
@@ -37,7 +37,11 @@ contract OETHVaultAdmin is VaultAdmin {
         );
 
         // Check the there is enough WETH to transfer once the WETH reserved for the withdrawal queue is accounted for
-        require(_amounts[0] <= _wethAvailable(), "Not enough WETH available");
+        require(
+            _amounts[0] <=
+                OETHVaultLibrary._wethAvailable(withdrawalQueueMetadata, weth),
+            "Not enough WETH available"
+        );
 
         // Send required amount of funds to the strategy
         IERC20(weth).safeTransfer(_strategyToAddress, _amounts[0]);
@@ -59,38 +63,28 @@ contract OETHVaultAdmin is VaultAdmin {
             _amounts
         );
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
     }
 
     function _withdrawAllFromStrategy(address _strategyAddr) internal override {
         super._withdrawAllFromStrategy(_strategyAddr);
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
     }
 
     function _withdrawAllFromStrategies() internal override {
         super._withdrawAllFromStrategies();
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
-    }
-
-    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
-    // That is, it is available to be redeemed or deposited into a strategy.
-    function _wethAvailable() internal view returns (uint256 wethAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of WETH that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in WETH in the vault
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // If there is not enough WETH in the vault to cover the outstanding withdrawals
-        if (wethBalance <= outstandingWithdrawals) {
-            return 0;
-        }
-
-        return wethBalance - outstandingWithdrawals;
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
     }
 
     function _swapCollateral(

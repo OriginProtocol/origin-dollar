@@ -7,6 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { VaultCore } from "./VaultCore.sol";
+import { OETHVaultLibrary } from "./OETHVaultLibrary.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IDripper } from "../interfaces/IDripper.sol";
 
@@ -76,7 +77,10 @@ contract OETHVaultCore is VaultCore {
         IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
 
         // Give priority to the withdrawal queue for the new WETH liquidity
-        _addWithdrawalQueueLiquidity();
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
 
         // Auto-allocate if necessary
         if (_amount >= autoAllocateThreshold) {
@@ -141,7 +145,11 @@ contract OETHVaultCore is VaultCore {
         );
 
         // Is there enough WETH in the Vault available after accounting for the withdrawal queue
-        require(_wethAvailable() >= amountMinusFee, "Liquidity error");
+        require(
+            OETHVaultLibrary._wethAvailable(withdrawalQueueMetadata, weth) >=
+                amountMinusFee,
+            "Liquidity error"
+        );
 
         // Transfer WETH minus the fee to the redeemer
         IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
@@ -227,7 +235,10 @@ contract OETHVaultCore is VaultCore {
             IDripper(dripper).collect();
 
             // Add any WETH from the Dripper to the withdrawal queue
-            _addWithdrawalQueueLiquidity();
+            OETHVaultLibrary._addWithdrawalQueueLiquidity(
+                withdrawalQueueMetadata,
+                weth
+            );
         }
 
         amount = _claimWithdrawal(_requestId);
@@ -265,7 +276,10 @@ contract OETHVaultCore is VaultCore {
         IDripper(dripper).collect();
 
         // Add any WETH from the Dripper to the withdrawal queue
-        _addWithdrawalQueueLiquidity();
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
 
         amounts = new uint256[](_requestIds.length);
         for (uint256 i = 0; i < _requestIds.length; ++i) {
@@ -315,73 +329,15 @@ contract OETHVaultCore is VaultCore {
         // Stream any harvested rewards (WETH) that are available to the Vault
         IDripper(dripper).collect();
 
-        _addWithdrawalQueueLiquidity();
-    }
-
-    /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
-    /// This assumes 1 WETH equal 1 OETH.
-    function _addWithdrawalQueueLiquidity()
-        internal
-        returns (uint256 addedClaimable)
-    {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // Check if the claimable WETH is less than the queued amount
-        uint256 queueShortfall = queue.queued - queue.claimable;
-
-        // No need to do anything is the withdrawal queue is full funded
-        if (queueShortfall == 0) {
-            return 0;
-        }
-
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of WETH that is currently allocated for the withdrawal queue
-        uint256 allocatedWeth = queue.claimable - queue.claimed;
-
-        // If there is no unallocated WETH then there is nothing to add to the queue
-        if (wethBalance <= allocatedWeth) {
-            return 0;
-        }
-
-        uint256 unallocatedWeth = wethBalance - allocatedWeth;
-
-        // the new claimable amount is the smaller of the queue shortfall or unallocated weth
-        addedClaimable = queueShortfall < unallocatedWeth
-            ? queueShortfall
-            : unallocatedWeth;
-        uint256 newClaimable = queue.claimable + addedClaimable;
-
-        // Store the new claimable amount back to storage
-        withdrawalQueueMetadata.claimable = SafeCast.toUint128(newClaimable);
-
-        // emit a WithdrawalClaimable event
-        emit WithdrawalClaimable(newClaimable, addedClaimable);
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
     }
 
     /***************************************
                 View Functions
     ****************************************/
-
-    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
-    // That is, it is available to be redeemed or deposited into a strategy.
-    function _wethAvailable() internal view returns (uint256 wethAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of WETH that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in WETH in the vault
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // If there is not enough WETH in the vault to cover the outstanding withdrawals
-        if (wethBalance <= outstandingWithdrawals) {
-            return 0;
-        }
-
-        return wethBalance - outstandingWithdrawals;
-    }
 
     /// @dev Get the balance of an asset held in Vault and all strategies
     /// less any WETH that is reserved for the withdrawal queue.
@@ -413,7 +369,10 @@ contract OETHVaultCore is VaultCore {
      **/
     function allocate() external override whenNotCapitalPaused nonReentrant {
         // Add any unallocated WETH to the withdrawal queue first
-        _addWithdrawalQueueLiquidity();
+        OETHVaultLibrary._addWithdrawalQueueLiquidity(
+            withdrawalQueueMetadata,
+            weth
+        );
 
         _allocate();
     }
@@ -426,7 +385,10 @@ contract OETHVaultCore is VaultCore {
         address depositStrategyAddr = assetDefaultStrategies[weth];
         if (depositStrategyAddr == address(0)) return;
 
-        uint256 wethAvailableInVault = _wethAvailable();
+        uint256 wethAvailableInVault = OETHVaultLibrary._wethAvailable(
+            withdrawalQueueMetadata,
+            weth
+        );
         // No need to do anything if there isn't any WETH in the vault to allocate
         if (wethAvailableInVault == 0) return;
 
