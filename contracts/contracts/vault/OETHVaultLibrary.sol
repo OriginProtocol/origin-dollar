@@ -15,7 +15,8 @@ library OETHVaultLibrary {
 
     /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
     /// That is, it is available to be redeemed or deposited into a strategy.
-    /// @param withdrawalQueueMetadata The withdrawal queue metadata that is stored in the vault's proxy contract's storage.
+    /// @param withdrawalQueueMetadata The withdrawal queue metadata that is stored
+    /// in the vault's proxy contract's storage.
     /// @param weth The address of the WETH token.
     function _wethAvailable(
         VaultStorage.WithdrawalQueueMetadata storage withdrawalQueueMetadata,
@@ -41,7 +42,8 @@ library OETHVaultLibrary {
 
     /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
     /// This assumes 1 WETH equal 1 OETH.
-    /// @param withdrawalQueueMetadata The withdrawal queue metadata that is stored in the vault's proxy contract's storage.
+    /// @param withdrawalQueueMetadata The withdrawal queue metadata that is stored
+    /// in the vault's proxy contract's storage.
     /// @param weth The address of the WETH token.
     function _addWithdrawalQueueLiquidity(
         VaultStorage.WithdrawalQueueMetadata storage withdrawalQueueMetadata,
