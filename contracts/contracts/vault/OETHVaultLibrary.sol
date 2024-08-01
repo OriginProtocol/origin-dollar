@@ -5,7 +5,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { VaultStorage } from "../vault/VaultStorage.sol";
-import { IVault } from "../interfaces/IVault.sol";
 
 /**
  * @title OETH Vault Library
