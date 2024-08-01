@@ -36,6 +36,19 @@ interface IVault {
     );
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
+    event DripperChanged(address indexed _dripper);
+    event WithdrawalRequested(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount,
+        uint256 _queued
+    );
+    event WithdrawalClaimed(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount
+    );
+    event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -205,6 +218,8 @@ interface IVault {
 
     function netOusdMintedForStrategy() external view returns (int256);
 
+    function setDripper(address _dripper) external;
+
     function weth() external view returns (address);
 
     function cacheWETHAssetIndex() external;
@@ -225,4 +240,29 @@ interface IVault {
         external
         view
         returns (bool);
+
+    // These are OETH specific functions
+    function addWithdrawalQueueLiquidity() external;
+
+    function requestWithdrawal(uint256 _amount)
+        external
+        returns (uint256 requestId, uint256 queued);
+
+    function claimWithdrawal(uint256 requestId)
+        external
+        returns (uint256 amount);
+
+    function claimWithdrawals(uint256[] memory requestIds)
+        external
+        returns (uint256[] memory amounts, uint256 totalAmount);
+
+    function withdrawalQueueMetadata()
+        external
+        view
+        returns (VaultStorage.WithdrawalQueueMetadata memory);
+
+    function withdrawalRequests(uint256 requestId)
+        external
+        view
+        returns (VaultStorage.WithdrawalRequest memory);
 }
