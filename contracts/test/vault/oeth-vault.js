@@ -2149,6 +2149,11 @@ describe("OETH Vault", function () {
           // 100 from mints - 99 outstanding withdrawals - 2 from slashing = -1 value which is rounder up to zero
           expect(await fixture.oethVault.totalValue()).to.equal(0);
         });
+        it("Should have check balance of zero", async () => {
+          const { oethVault, weth } = fixture;
+          // 100 from mints - 99 outstanding withdrawals - 2 from slashing = -1 value which is rounder up to zero
+          expect(await oethVault.checkBalance(weth.address)).to.equal(0);
+        });
         it("Fail to allow user to create a new request due to too many outstanding requests", async () => {
           const { oethVault, matt } = fixture;
 
