@@ -399,13 +399,19 @@ contract OETHVaultCore is VaultCore {
     {
         balance = super._checkBalance(_asset);
 
-        if (_asset == weth) {
-            WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-            // Need to remove WETH that is reserved for the withdrawal queue
-            if (balance + queue.claimed >= queue.queued) {
-                return balance + queue.claimed - queue.queued;
-            }
+        if (_asset != weth) {
+            return 0;
         }
+
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+        // If there is not enough WETH in the vault and strategies to cover the outstanding withdrawals.
+        // It can happen if more than half of the users have requested a withdrawal but have not claimed.
+        if (balance + queue.claimed < queue.queued) {
+            return 0;
+        }
+
+        // Need to remove WETH that is reserved for the withdrawal queue
+        return balance + queue.claimed - queue.queued;
     }
 
     /**
