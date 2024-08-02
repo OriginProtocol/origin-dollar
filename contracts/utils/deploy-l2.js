@@ -116,32 +116,39 @@ function deployOnBaseWithGuardian(opts, fn) {
       withConfirmation,
     };
 
+    const guardianAddr = addresses.base.governor;
+
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
       await impersonateAndFund(deployerAddr);
+
+      await impersonateGuardian(guardianAddr);
     }
 
     const proposal = await fn(tools);
 
-    const guardianAddr = addresses.base.governor;
-    await impersonateGuardian(guardianAddr);
-
-    const sGuardian = await ethers.provider.getSigner(guardianAddr);
+    const sGuardian = !isFork
+      ? undefined
+      : await ethers.provider.getSigner(guardianAddr);
     console.log("guardianAddr", guardianAddr);
 
     const guardianActions = [];
     for (const action of proposal.actions) {
       const { contract, signature, args } = action;
-      log(`Sending governance action ${signature} to ${contract.address}`);
-      const result = await withConfirmation(
-        contract.connect(sGuardian)[signature](...args, await getTxOpts())
-      );
+
+      if (isFork) {
+        log(`Sending governance action ${signature} to ${contract.address}`);
+        await withConfirmation(
+          contract.connect(sGuardian)[signature](...args, await getTxOpts())
+        );
+      }
+
       guardianActions.push({
         sig: signature,
         args: args,
         to: contract.address,
-        data: result.data,
-        value: result.value.toString(),
+        data: contract.interface.encodeFunctionData(signature, args),
+        value: "0",
       });
 
       console.log(`... ${signature} completed`);
@@ -169,6 +176,7 @@ function deployOnBaseWithGuardian(opts, fn) {
   main.tags = ["base"];
 
   main.skip = () =>
+    forceSkip ||
     !(
       isBaseFork ||
       hre.network.name == "base" ||
