@@ -401,11 +401,14 @@ contract OETHVaultCore is VaultCore {
             return 0;
         }
 
+        // Get the WETH in the vault and the strategies
         balance = super._checkBalance(_asset);
 
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-        // If there is not enough WETH in the vault and strategies to cover the outstanding withdrawals.
-        // It can happen if more than half of the users have requested a withdrawal but have not claimed.
+
+        // If the vault becomes insolvent enough that the total value in the vault and all strategies
+        // is less than the outstanding withdrawals.
+        // For example, there was a mass slashing event and most users request a withdrawal.
         if (balance + queue.claimed < queue.queued) {
             return 0;
         }
@@ -454,29 +457,14 @@ contract OETHVaultCore is VaultCore {
         emit AssetAllocated(weth, depositStrategyAddr, allocateAmount);
     }
 
-    /// @dev The total value of all assets held by the vault and all its strategies
+    /// @dev The total value of all WETH held by the vault and all its strategies
     /// less any WETH that is reserved for the withdrawal queue.
-    /// For OETH, this is just WETH in the vault and strategies.
     ///
     // If there is not enough WETH in the vault and all strategies to cover all outstanding
     // withdrawal requests then return a total value of 0.
     function _totalValue() internal view override returns (uint256 value) {
-        value = _totalValueInVault() + _totalValueInStrategies();
-
-        // Need to remove WETH that is reserved for the withdrawal queue.
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-        // reserved for the withdrawal queue = cumulative queued total - total claimed
-        uint256 reservedForQueue = queue.queued - queue.claimed;
-
-        if (value < reservedForQueue) {
-            // This can happen if the vault becomes insolvent enough that the
-            // total value in the vault and all strategies is less than the outstanding withdrawals.
-            // For example, there was a mass slashing event and most users request a withdrawal.
-            return 0;
-        }
-
-        // Adjust the total value by the amount reserved for the withdrawal queue
-        return value - reservedForQueue;
+        // As WETH is the only asset, just return the WETH balance
+        return _checkBalance(weth);
     }
 
     /// @dev Only WETH is supported in the OETH Vault so return the WETH balance only
