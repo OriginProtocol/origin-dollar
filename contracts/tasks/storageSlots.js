@@ -9,6 +9,9 @@ const {
   isCurrentValidationData,
   assertStorageUpgradeSafe,
 } = require("@openzeppelin/upgrades-core");
+
+const log = require("../utils/logger")("task:storage");
+
 const isFork = process.env.FORK === "true";
 
 const getStorageFileLocation = (hre, contractName) => {
@@ -124,7 +127,7 @@ const showStorageLayout = async (taskArguments, hre) => {
 
 const assertUpgradeIsSafe = async (hre, contractName) => {
   if (!isContractEligible(contractName)) {
-    console.debug(`Skipping storage slot validation of ${contractName}.`);
+    log(`Skipping storage slot validation of ${contractName}.`);
     return true;
   }
 
@@ -135,7 +138,7 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
     contractName
   );
   if (!oldLayout) {
-    console.debug(
+    log(
       `Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract.`
     );
   } else {

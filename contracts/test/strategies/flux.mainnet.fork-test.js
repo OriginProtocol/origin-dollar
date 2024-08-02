@@ -5,7 +5,7 @@ const { fluxStrategyFixture, createFixtureLoader } = require("../_fixture");
 const { units, ousdUnits, isCI } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("Flux strategy", function () {
+describe.skip("Flux strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

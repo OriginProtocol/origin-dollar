@@ -1,10 +1,12 @@
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
+const { getBlock } = require("./block");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
+const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:vault");
 
@@ -24,6 +26,97 @@ async function getContract(hre, symbol) {
     vault,
     oToken,
   };
+}
+
+async function snapVault({ block }, hre) {
+  const blockTag = getBlock(block);
+
+  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+  const oethProxy = await hre.ethers.getContract(`OETHProxy`);
+  const oeth = await hre.ethers.getContractAt("OETH", oethProxy.address);
+
+  const { chainId } = await hre.ethers.provider.getNetwork();
+  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+
+  const wethBalance = await weth.balanceOf(vault.address, {
+    blockTag,
+  });
+
+  const totalSupply = await oeth.totalSupply({
+    blockTag,
+  });
+
+  const queue = await vault.withdrawalQueueMetadata({
+    blockTag,
+  });
+  const shortfall = queue.queued.sub(queue.claimable);
+  const unclaimed = queue.queued.sub(queue.claimed);
+  const available = wethBalance.add(queue.claimed).sub(queue.queued);
+  const availablePercentage = available.mul(10000).div(totalSupply);
+
+  const totalAssets = await vault.totalValue({
+    blockTag,
+  });
+  const assetSupplyDiff = totalAssets.sub(totalSupply);
+  const vaultBufferPercentage = await vault.vaultBuffer({
+    blockTag,
+  });
+  const vaultBuffer = totalSupply
+    .mul(vaultBufferPercentage)
+    .div(parseUnits("1"));
+
+  console.log(
+    `Vault WETH      : ${formatUnits(wethBalance)}, ${wethBalance} wei`
+  );
+
+  console.log(
+    `Queued          : ${formatUnits(queue.queued)}, ${queue.queued} wei`
+  );
+  console.log(
+    `Claimable       : ${formatUnits(queue.claimable)}, ${queue.claimable} wei`
+  );
+  console.log(
+    `Claimed         : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+  );
+  console.log(`Shortfall       : ${formatUnits(shortfall)}, ${shortfall} wei`);
+  console.log(`Unclaimed       : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
+  console.log(
+    `Available       : ${formatUnits(
+      available
+    )}, ${available} wei (${formatUnits(availablePercentage, 2)}%)`
+  );
+  console.log(
+    `Target Buffer   : ${formatUnits(vaultBuffer)} (${formatUnits(
+      vaultBufferPercentage,
+      16
+    )}%)`
+  );
+
+  console.log(
+    `Total Asset     : ${formatUnits(totalAssets)}, ${totalAssets} wei`
+  );
+  console.log(
+    `Total Supply    : ${formatUnits(totalSupply)}, ${totalSupply} wei`
+  );
+  console.log(
+    `Asset - Supply  : ${formatUnits(assetSupplyDiff)}, ${assetSupplyDiff} wei`
+  );
+  console.log(`last request id : ${queue.nextWithdrawalIndex - 1}`);
+}
+
+async function addWithdrawalQueueLiquidity(_, hre) {
+  const signer = await getSigner();
+
+  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  log(
+    `About to call addWithdrawalQueueLiquidity() on the vault with address ${vault.address}`
+  );
+  const tx = await vault.connect(signer).addWithdrawalQueueLiquidity();
+  await logTxDetails(tx, "addWithdrawalQueueLiquidity");
 }
 
 async function allocate({ symbol }, hre) {
@@ -294,7 +387,39 @@ async function withdrawAllFromStrategies({ symbol }, hre) {
   await logTxDetails(tx, "withdrawAllFromStrategies");
 }
 
+async function requestWithdrawal({ amount, symbol }, hre) {
+  const signer = await getSigner();
+
+  const oTokenUnits = parseUnits(amount.toString());
+
+  const { vault } = await getContract(hre, symbol);
+
+  // Get the withdrawal request ID by statically calling requestWithdrawal
+  const { requestId } = await vault
+    .connect(signer)
+    .callStatic.requestWithdrawal(oTokenUnits);
+
+  log(`About to request withdrawal from the ${symbol} vault`);
+  const tx = await vault.connect(signer).requestWithdrawal(oTokenUnits);
+  await logTxDetails(tx, "requestWithdrawal");
+
+  console.log(`Withdrawal request id: ${requestId}`);
+}
+
+async function claimWithdrawal({ requestId, symbol }, hre) {
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  log(
+    `About to claim withdrawal from the ${symbol} vault for request ${requestId}`
+  );
+  const tx = await vault.connect(signer).claimWithdrawal(requestId);
+  await logTxDetails(tx, "claimWithdrawal");
+}
+
 module.exports = {
+  addWithdrawalQueueLiquidity,
   allocate,
   capital,
   depositToStrategy,
@@ -302,6 +427,9 @@ module.exports = {
   rebase,
   redeem,
   redeemAll,
+  requestWithdrawal,
+  claimWithdrawal,
+  snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,

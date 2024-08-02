@@ -19,6 +19,14 @@ object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
 
+' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
+' }
+
+object "OETH ARM" as arm <<Origin>><<Proxy>> #$newColor {
+    assets: WETH, OETH
+}
+
+
 object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
@@ -99,9 +107,14 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
 ' }
 ' object "BaseRewardPool" as cvxPool <<Convex>> {
 ' }
-' object "DepositToken" as cvxPoolLp <<Convex>> {
-'     symbol: cvxOUSD3CRV-f
-'     name: Origin Dollar Convex Deposit
+' ' object "DepositToken" as cvxPoolLp <<Convex>> {
+' '     symbol: cvxOUSD3CRV-f
+' '     name: Origin Dollar Convex Deposit
+' ' }
+
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
 ' }
 
 ' ' SSV
@@ -135,11 +148,14 @@ zap ..> oeth
 zap ..> oethv
 ' zap .....> weth
 
-' drip .....> weth
-oethv <. drip
+' router ..> arm
+arm ..> oethv
 
-checker ..> oeth
-checker ..> oethv
+' drip .....> weth
+oethv <.> drip
+
+' checker ..> oeth
+' checker ..> oethv
 
 oethv <.. harv 
 drip <.. harv 
