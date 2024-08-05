@@ -23,13 +23,19 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHVaultCore",
       [addresses.mainnet.WETH],
       null,
-      true
+      true,
+      {}, // libraries
+      3800000, // gasLimit
+      false // useFeeData
     );
     const dVaultAdmin = await deployWithConfirmation(
       "OETHVaultAdmin",
       [addresses.mainnet.WETH],
       null,
-      true
+      true,
+      {}, // libraries
+      3200000, // gasLimit
+      false // useFeeData
     );
 
     // 2. Connect to the OETH Vault as its governor via the proxy
