@@ -122,6 +122,12 @@ const withConfirmation = async (
   logContractAbi = false
 ) => {
   const result = await deployOrTransactionPromise;
+
+  if (process.env.PROVIDER_URL?.includes("rpc.tenderly.co")) {
+    // Skip on Tenderly
+    return result;
+  }
+
   const receipt = await hre.ethers.provider.waitForTransaction(
     result.receipt ? result.receipt.transactionHash : result.hash,
     NUM_CONFIRMATIONS

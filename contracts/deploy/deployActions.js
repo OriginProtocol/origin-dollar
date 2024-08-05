@@ -710,6 +710,7 @@ const deployOUSDDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("Dripper", [
@@ -726,8 +727,21 @@ const deployOUSDDripper = async () => {
       []
     )
   );
+  const cDripper = await ethers.getContractAt(
+    "OETHDripper",
+    cDripperProxy.address
+  );
 
-  return cDripperProxy;
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // duration of 14 days
+  await withConfirmation(
+    cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
+  );
+  await withConfirmation(
+    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
+  );
+
+  return cDripper;
 };
 
 const deployOETHDripper = async () => {
@@ -735,6 +749,7 @@ const deployOETHDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("OETHDripper", [
@@ -752,8 +767,23 @@ const deployOETHDripper = async () => {
       []
     )
   );
+  const cDripper = await ethers.getContractAt(
+    "OETHDripper",
+    cDripperProxy.address
+  );
 
-  return cDripperProxy;
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // duration of 14 days
+  await withConfirmation(
+    cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
+  );
+
+  await withConfirmation(
+    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
+  );
+
+  return cDripper;
 };
 
 const deployDrippers = async () => {
@@ -1066,7 +1096,9 @@ const deployOETHCore = async () => {
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
     assetAddresses.WETH,
   ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+    assetAddresses.WETH,
+  ]);
 
   // Get contract instances
   const cOETHProxy = await ethers.getContract("OETHProxy");

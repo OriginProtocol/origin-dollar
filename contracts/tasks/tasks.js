@@ -16,6 +16,7 @@ const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
+const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
 
 const {
@@ -41,6 +42,7 @@ const {
 } = require("./tokens");
 const { depositWETH, withdrawWETH } = require("./weth");
 const {
+  addWithdrawalQueueLiquidity,
   allocate,
   capital,
   depositToStrategy,
@@ -48,6 +50,9 @@ const {
   rebase,
   redeem,
   redeemAll,
+  requestWithdrawal,
+  claimWithdrawal,
+  snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
@@ -269,6 +274,15 @@ task("withdrawWETH").setAction(async (_, __, runSuper) => {
 });
 
 // Vault tasks.
+
+task(
+  "queueLiquidity",
+  "Call addWithdrawalQueueLiquidity() on the Vault to add WETH to the withdrawal queue"
+).setAction(addWithdrawalQueueLiquidity);
+task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
     "symbol",
@@ -474,6 +488,77 @@ subtask(
   )
   .setAction(withdrawAllFromStrategies);
 task("withdrawAllFromStrategies").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("requestWithdrawal", "Request a withdrawal from a vault")
+  .addParam(
+    "amount",
+    "The amount of oTokens to withdraw",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(requestWithdrawal);
+task("requestWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "claimWithdrawal",
+  "Claim a previously requested withdrawal from a vault"
+)
+  .addParam(
+    "requestId",
+    "The id from the previous withdrawal request",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(claimWithdrawal);
+task("claimWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Dripper
+
+subtask("collect", "Collect harvested rewards from the Dripper to the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(collect);
+task("collect").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setDripDuration", "Set the Dripper duration")
+  .addParam(
+    "duration",
+    "The number of seconds to drip harvested rewards",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(setDripDuration);
+task("setDripDuration").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -940,7 +1025,7 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
   )
   .addParam(
     "owner",
-    "Address of the cluster owner. Default to NodeDelegator",
+    "Address of the cluster owner which is the native staking strategy",
     undefined,
     types.string
   )
@@ -1335,6 +1420,18 @@ subtask(
     await snapStaking({ ...taskArgs, signer });
   });
 task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapVault", "Takes a snapshot of a OETH Vault")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapVault);
+task("snapVault").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

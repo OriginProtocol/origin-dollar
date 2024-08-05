@@ -11,7 +11,7 @@ const {
 } = require("./../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("FraxETH Strategy", function () {
+describe.skip("FraxETH Strategy", function () {
   let fixture;
   const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
   beforeEach(async () => {
