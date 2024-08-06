@@ -23,9 +23,9 @@ import "./VaultInitializer.sol";
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    // max signed int
+    /// @dev max signed int
     uint256 internal constant MAX_INT = 2**255 - 1;
-    // max un-signed int
+    /// @dev max un-signed int
     uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -45,6 +45,9 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
+    /**
+     * @dev Verifies that the caller is the AMO strategy.
+     */
     modifier onlyOusdMetaStrategy() {
         require(
             msg.sender == ousdMetaStrategy,
@@ -67,6 +70,12 @@ contract VaultCore is VaultInitializer {
         _mint(_asset, _amount, _minimumOusdAmount);
     }
 
+    /**
+     * @dev Deposit a supported asset and mint OTokens.
+     * @param _asset Address of the asset being deposited
+     * @param _amount Amount of the asset being deposited
+     * @param _minimumOusdAmount Minimum OTokens to mint
+     */
     function _mint(
         address _asset,
         uint256 _amount,
@@ -731,6 +740,11 @@ contract VaultCore is VaultInitializer {
         }
     }
 
+    /**
+     * @dev Get the number of decimals of a token asset
+     * @param _asset Address of the asset
+     * @return decimals number of decimals
+     */
     function _getDecimals(address _asset)
         internal
         view
@@ -749,6 +763,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Gets the vault configuration of a supported asset.
+     * @param _asset Address of the token asset
      */
     function getAssetConfig(address _asset)
         public
