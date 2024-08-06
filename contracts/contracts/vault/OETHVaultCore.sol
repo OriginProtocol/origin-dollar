@@ -18,7 +18,7 @@ contract OETHVaultCore is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    uint256 constant CLAIM_DELAY = 10 minutes;
+    uint256 public constant CLAIM_DELAY = 10 minutes;
     address public immutable weth;
     uint256 public wethAssetIndex;
 
