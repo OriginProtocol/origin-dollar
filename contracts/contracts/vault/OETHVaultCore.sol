@@ -35,7 +35,7 @@ contract OETHVaultCore is VaultCore {
      */
     function cacheWETHAssetIndex() external onlyGovernor {
         uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i; i < assetCount; ++i) {
             if (allAssets[i] == weth) {
                 wethAssetIndex = i;
                 break;
@@ -268,7 +268,7 @@ contract OETHVaultCore is VaultCore {
         _addWithdrawalQueueLiquidity();
 
         amounts = new uint256[](_requestIds.length);
-        for (uint256 i = 0; i < _requestIds.length; ++i) {
+        for (uint256 i; i < _requestIds.length; ++i) {
             amounts[i] = _claimWithdrawal(_requestIds[i]);
             totalAmount += amounts[i];
         }

@@ -437,7 +437,7 @@ contract VaultCore is VaultInitializer {
         returns (uint256 value)
     {
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             uint256 balance = IERC20(assetAddr).balanceOf(address(this));
             if (balance > 0) {
@@ -469,7 +469,7 @@ contract VaultCore is VaultInitializer {
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             if (strategy.supportsAsset(assetAddr)) {
                 uint256 balance = strategy.checkBalance(assetAddr);
