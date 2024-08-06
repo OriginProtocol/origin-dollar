@@ -122,14 +122,15 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     OUSD internal oUSD;
 
-    //keccak256("OUSD.vault.governor.admin.impl");
+    /// @dev Storage slot for the address of the VaultAdmin contract that is delegated to
+    // keccak256("OUSD.vault.governor.admin.impl");
     bytes32 constant adminImplPosition =
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
-    // Address of the contract responsible for post rebase syncs with AMMs
+    /// @dev Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
 
-    // Deprecated: Address of Uniswap
+    /// @dev Deprecated: Address of Uniswap
     // slither-disable-next-line constable-states
     address private _deprecated_uniswapAddr = address(0);
 
@@ -221,8 +222,8 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
-    // For future use
-    uint256[46] private __gap;
+    /// @dev For future use
+    uint256[45] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
