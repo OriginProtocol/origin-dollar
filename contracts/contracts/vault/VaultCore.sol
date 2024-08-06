@@ -25,9 +25,6 @@ contract VaultCore is VaultInitializer {
     using StableMath for uint256;
     /// @dev max signed int
     uint256 internal constant MAX_INT = 2**255 - 1;
-    /// @dev max un-signed int
-    uint256 internal constant MAX_UINT =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
      * @dev Verifies that the rebasing is not paused.
