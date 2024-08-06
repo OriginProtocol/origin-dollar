@@ -158,7 +158,7 @@ contract OETHVaultCore is VaultCore {
      * The OETH is burned on request and the WETH is transferred to the withdrawer on claim.
      * This request can be claimed once the withdrawal queue's `claimable` amount
      * is greater than or equal this request's `queued` amount.
-     * There is no minimum time or block number before a request can be claimed. It just needs
+     * There is a minimum of 10 minutes before a request can be claimed. After that, the request just needs
      * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
      * OETH is converted to WETH at 1:1.
      * @param _amount Amount of OETH to burn.
@@ -383,7 +383,7 @@ contract OETHVaultCore is VaultCore {
 
     /// @dev Get the balance of an asset held in Vault and all strategies
     /// less any WETH that is reserved for the withdrawal queue.
-    /// This will only return a non-zero balance for WETH.
+    /// WETH is the only asset that can return a non-zero balance.
     /// All other assets will return 0 even if there is some dust amounts left in the Vault.
     /// For example, there is 1 wei left of stETH in the OETH Vault but will return 0 in this function.
     ///
