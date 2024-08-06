@@ -39,10 +39,8 @@ async function removeValidator({ index, pubkey, operatorids }) {
 
 const printClusterInfo = async (options) => {
   const cluster = await getClusterInfo(options);
-  // const nextNonce = await getClusterNonce(options);
   console.log(`block ${cluster.block}`);
-  console.log(`Cluster: ${JSON.stringify(cluster.snapshot, null, "  ")}`);
-  // console.log("Next Nonce:", nextNonce);
+  console.log(`Cluster: ${JSON.stringify(cluster.cluster, null, "  ")}`);
 };
 
 const depositSSV = async ({ amount, index, operatorids }) => {

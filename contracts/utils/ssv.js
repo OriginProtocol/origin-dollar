@@ -122,7 +122,6 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
       );
       return {
         block: 0,
-        snapshot: emptyCluster,
         cluster: emptyCluster,
       };
     }
@@ -132,7 +131,6 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
     return {
       block: response.data.cluster.blockNumber,
       cluster: response.data.cluster,
-      snapshot: response.data.cluster,
     };
   } catch (err) {
     if (err.response) {
@@ -171,10 +169,10 @@ const getClusterNonce = async ({
 };
 
 const printClusterInfo = async (options) => {
-  const cluster = await getClusterInfo(options);
+  const info = await getClusterInfo(options);
   const nextNonce = await getClusterNonce(options);
-  console.log(`block ${cluster.block}`);
-  console.log(`Cluster: ${JSON.stringify(cluster.snapshot, null, "  ")}`);
+  console.log(`block ${info.block}`);
+  console.log(`Cluster: ${JSON.stringify(info.cluster, null, "  ")}`);
   console.log("Next Nonce:", nextNonce);
 };
 
