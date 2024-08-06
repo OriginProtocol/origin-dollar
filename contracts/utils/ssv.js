@@ -116,23 +116,29 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
       throw Error("response is missing data");
     }
 
-    if (response.data.cluster === null) {
+    if (response.data.data === null) {
       log(
         `Cluster not found for network ${network}, owner ${ownerAddress} and operators ${operatorids}`
       );
       return {
         block: 0,
-        snapshot: emptyCluster,
         cluster: emptyCluster,
       };
     }
 
-    log("Cluster data from SSV API: ", JSON.stringify(response.data.cluster));
+    const cluster = {
+      validatorCount: response.data.data.validatorCount,
+      networkFeeIndex: response.data.data.networkFeeIndex,
+      index: response.data.data.index,
+      active: response.data.data.active,
+      balance: response.data.data.balance,
+    };
+
+    log("Cluster data from SSV API: ", cluster);
 
     return {
-      block: response.data.cluster.blockNumber,
-      cluster: response.data.cluster,
-      snapshot: response.data.cluster,
+      block: response.data.data.blockNumber,
+      cluster,
     };
   } catch (err) {
     if (err.response) {
@@ -171,10 +177,10 @@ const getClusterNonce = async ({
 };
 
 const printClusterInfo = async (options) => {
-  const cluster = await getClusterInfo(options);
+  const info = await getClusterInfo(options);
   const nextNonce = await getClusterNonce(options);
-  console.log(`block ${cluster.block}`);
-  console.log(`Cluster: ${JSON.stringify(cluster.snapshot, null, "  ")}`);
+  console.log(`block ${info.block}`);
+  console.log(`Cluster: ${JSON.stringify(info.cluster, null, "  ")}`);
   console.log("Next Nonce:", nextNonce);
 };
 

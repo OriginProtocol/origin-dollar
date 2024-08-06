@@ -74,7 +74,8 @@ contract OETHVaultAdmin is VaultAdmin {
         IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 
-    /// @dev Calculates the amount of WETH in the Vault that is not reserved for the withdrawal queue.
+    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
+    // That is, it is available to be redeemed or deposited into a strategy.
     function _wethAvailable() internal view returns (uint256 wethAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
@@ -84,30 +85,21 @@ contract OETHVaultAdmin is VaultAdmin {
         // The amount of sitting in WETH in the vault
         uint256 wethBalance = IERC20(weth).balanceOf(address(this));
 
-        // If there is more WETH in the vault than the outstanding withdrawals
-        if (wethBalance > outstandingWithdrawals) {
-            wethAvailable = wethBalance - outstandingWithdrawals;
+        // If there is not enough WETH in the vault to cover the outstanding withdrawals
+        if (wethBalance <= outstandingWithdrawals) {
+            return 0;
         }
+
+        return wethBalance - outstandingWithdrawals;
     }
 
     function _swapCollateral(
-        address _fromAsset,
-        address _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _minToAssetAmount,
-        bytes calldata _data
-    ) internal override returns (uint256 toAssetAmount) {
-        require(_fromAsset != weth, "Swap from WETH not supported");
-        require(_toAsset == weth, "Only swap to WETH");
-        toAssetAmount = super._swapCollateral(
-            _fromAsset,
-            _toAsset,
-            _fromAssetAmount,
-            _minToAssetAmount,
-            _data
-        );
-
-        // Add any new WETH to the withdrawal queue first
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) internal pure override returns (uint256) {
+        revert("Collateral swap not supported");
     }
 }

@@ -54,6 +54,8 @@ contract VaultStorage is Initializable, Governable {
         uint256 _toAssetAmount
     );
     event DripperChanged(address indexed _dripper);
+    event StrategyAddedToMintWhitelist(address indexed strategy);
+    event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -97,6 +99,7 @@ contract VaultStorage is Initializable, Governable {
         uint256 _deprecated; // Deprecated storage slot
     }
     /// @dev mapping of strategy contracts to their configuration
+    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -158,13 +161,20 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
-    address public ousdMetaStrategy = address(0);
+
+    // slither-disable-start constable-states
+    // slither-disable-next-line uninitialized-state
+    address public ousdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    // slither-disable-next-line uninitialized-state
+    int256 public netOusdMintedForStrategy;
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold = 0;
+    // slither-disable-next-line uninitialized-state
+    uint256 public netOusdMintForStrategyThreshold;
+
+    // slither-disable-end constable-states
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -179,6 +189,11 @@ contract VaultStorage is Initializable, Governable {
         uint16 allowedUndervalueBps;
     }
     SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    // List of strategies that can mint oTokens directly
+    // Used in OETHBaseVaultCore
+    // slither-disable-next-line uninitialized-state
+    mapping(address => bool) public isMintWhitelistedStrategy;
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
@@ -222,7 +237,7 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
-    /// @dev For future use
+    // For future use
     uint256[45] private __gap;
 
     /**

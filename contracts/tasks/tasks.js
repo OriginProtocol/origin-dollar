@@ -1025,7 +1025,7 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
   )
   .addParam(
     "owner",
-    "Address of the cluster owner. Default to NodeDelegator",
+    "Address of the cluster owner which is the native staking strategy",
     undefined,
     types.string
   )
