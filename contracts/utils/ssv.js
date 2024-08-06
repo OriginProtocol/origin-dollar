@@ -116,7 +116,7 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
       throw Error("response is missing data");
     }
 
-    if (response.data.data === null) {
+    if (response.data.cluster === null) {
       log(
         `Cluster not found for network ${network}, owner ${ownerAddress} and operators ${operatorids}`
       );
@@ -126,19 +126,11 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
       };
     }
 
-    const cluster = {
-      validatorCount: response.data.data.validatorCount,
-      networkFeeIndex: response.data.data.networkFeeIndex,
-      index: response.data.data.index,
-      active: response.data.data.active,
-      balance: response.data.data.balance,
-    };
-
-    log("Cluster data from SSV API: ", cluster);
+    log("Cluster data from SSV API: ", JSON.stringify(response.data.cluster));
 
     return {
-      block: response.data.data.blockNumber,
-      cluster,
+      block: response.data.cluster.blockNumber,
+      cluster: response.data.cluster,
     };
   } catch (err) {
     if (err.response) {
