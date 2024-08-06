@@ -252,7 +252,7 @@ contract OETHVaultCore is VaultCore {
      * @return amounts Amount of WETH received for each request
      * @return totalAmount Total amount of WETH transferred to the withdrawer
      */
-    function claimWithdrawals(uint256[] memory _requestIds)
+    function claimWithdrawals(uint256[] calldata _requestIds)
         external
         whenNotCapitalPaused
         nonReentrant
