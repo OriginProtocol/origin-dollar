@@ -55,6 +55,21 @@ contract VaultStorage is Initializable, Governable {
     );
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
+    event DripperChanged(address indexed _dripper);
+    event StrategyAddedToMintWhitelist(address indexed strategy);
+    event StrategyRemovedFromMintWhitelist(address indexed strategy);
+    event WithdrawalRequested(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount,
+        uint256 _queued
+    );
+    event WithdrawalClaimed(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount
+    );
+    event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -85,7 +100,8 @@ contract VaultStorage is Initializable, Governable {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
     }
-    /// @dev mapping of strategy contracts to their configiration
+    /// @dev mapping of strategy contracts to their configuration
+    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -146,13 +162,20 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
-    address public ousdMetaStrategy = address(0);
+
+    // slither-disable-start constable-states
+    // slither-disable-next-line uninitialized-state
+    address public ousdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    // slither-disable-next-line uninitialized-state
+    int256 public netOusdMintedForStrategy;
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold = 0;
+    // slither-disable-next-line uninitialized-state
+    uint256 public netOusdMintForStrategyThreshold;
+
+    // slither-disable-end constable-states
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -170,10 +193,53 @@ contract VaultStorage is Initializable, Governable {
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
-    mapping(address => bool) public mintWhitelistedStrategy;
+    // slither-disable-next-line uninitialized-state
+    mapping(address => bool) public isMintWhitelistedStrategy;
+
+    /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
+    /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
+    // slither-disable-start constable-states
+    // slither-disable-next-line uninitialized-state
+    address public dripper;
+    // slither-disable-end constable-states
+
+    /// Withdrawal Queue Storage /////
+
+    struct WithdrawalQueueMetadata {
+        // cumulative total of all withdrawal requests included the ones that have already been claimed
+        uint128 queued;
+        // cumulative total of all the requests that can be claimed including the ones that have already been claimed
+        uint128 claimable;
+        // total of all the requests that have been claimed
+        uint128 claimed;
+        // index of the next withdrawal request starting at 0
+        uint128 nextWithdrawalIndex;
+    }
+
+    /// @notice Global metadata for the withdrawal queue including:
+    /// queued - cumulative total of all withdrawal requests included the ones that have already been claimed
+    /// claimable - cumulative total of all the requests that can be claimed including the ones already claimed
+    /// claimed - total of all the requests that have been claimed
+    /// nextWithdrawalIndex - index of the next withdrawal request starting at 0
+    // slither-disable-next-line uninitialized-state
+    WithdrawalQueueMetadata public withdrawalQueueMetadata;
+
+    struct WithdrawalRequest {
+        address withdrawer;
+        bool claimed;
+        uint40 timestamp; // timestamp of the withdrawal request
+        // Amount of oTokens to redeem. eg OETH
+        uint128 amount;
+        // cumulative total of all withdrawal requests including this one.
+        // this request can be claimed when this queued amount is less than or equal to the queue's claimable amount.
+        uint128 queued;
+    }
+
+    /// @notice Mapping of withdrawal request indices to the user withdrawal request data
+    mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
     // For future use
-    uint256[49] private __gap;
+    uint256[45] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

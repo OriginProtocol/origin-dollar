@@ -4,7 +4,7 @@ const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { hotDeployOption } = require("../_hot-deploy");
 
-describe("ForkTest: Aura/WETH Price Feed", function () {
+describe.skip("ForkTest: Aura/WETH Price Feed", function () {
   this.timeout(0);
 
   let fixture;

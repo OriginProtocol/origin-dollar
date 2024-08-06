@@ -18,57 +18,48 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
     constructor(address _weth) OETHVaultCore(_weth) {}
 
-    function _mintToForStrategy(address receiver, uint256 amount)
-        internal
+    // @inheritdoc VaultCore
+    function mintForStrategy(uint256 amount)
+        external
+        override
         whenNotCapitalPaused
     {
         require(
-            mintWhitelistedStrategy[msg.sender] == true,
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
 
         require(amount < MAX_INT, "Amount too high");
 
-        emit Mint(receiver, amount);
+        emit Mint(msg.sender, amount);
 
         // Mint matching amount of OTokens
-        oUSD.mint(receiver, amount);
+        oUSD.mint(msg.sender, amount);
     }
 
-    // @inheritdoc VaultCore
-    function mintForStrategy(uint256 amount) external override {
-        _mintToForStrategy(msg.sender, amount);
-    }
-
-    // Same as mintForStrategy(uint256) but transfers
-    // minted tokens to a different address
-    function mintToForStrategy(address receiver, uint256 amount) external {
-        _mintToForStrategy(receiver, amount);
-    }
-
-    function _burnFromForStrategy(address receiver, uint256 amount)
-        internal
+    function burnForStrategy(uint256 amount)
+        external
+        override
         whenNotCapitalPaused
     {
         require(
-            mintWhitelistedStrategy[msg.sender] == true,
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
 
         require(amount < MAX_INT, "Amount too high");
 
-        emit Redeem(receiver, amount);
+        emit Redeem(msg.sender, amount);
 
         // Burn OTokens
-        oUSD.burn(receiver, amount);
-    }
-
-    function burnFromForStrategy(address user, uint256 amount) external {
-        _burnFromForStrategy(user, amount);
-    }
-
-    // @inheritdoc VaultCore
-    function burnForStrategy(uint256 amount) external override {
-        _burnFromForStrategy(msg.sender, amount);
+        oUSD.burn(msg.sender, amount);
     }
 }

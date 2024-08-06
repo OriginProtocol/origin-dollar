@@ -68,7 +68,8 @@ abstract contract AbstractCurveStrategy is InitializableAbstractStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 curveVirtualPrice = curvePool.get_virtual_price();
 
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
+        uint256 assetCount = assetsMapped.length;
+        for (uint256 i = 0; i < assetCount; i++) {
             address assetAddress = assetsMapped[i];
             uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
