@@ -162,8 +162,8 @@ contract OETHVaultCore is VaultCore {
      * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
      * OETH is converted to WETH at 1:1.
      * @param _amount Amount of OETH to burn.
-     * @param requestId Unique ID for the withdrawal request
-     * @param queued Cumulative total of all WETH queued including already claimed requests.
+     * @return requestId Unique ID for the withdrawal request
+     * @return queued Cumulative total of all WETH queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
         external
