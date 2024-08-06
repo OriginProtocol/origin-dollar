@@ -24,7 +24,7 @@ module.exports = deployOnBaseWithGuardian(
 
     // Core contracts
     const dOETHb = await deployWithConfirmation("OETH");
-    const dwOETHb = await deployWithConfirmation("WOETH", [
+    const dwOETHb = await deployWithConfirmation("WOETHBase", [
       cOETHbProxy.address, // Base token
       "Wrapped OETH Base",
       "wOETHb",
@@ -37,7 +37,10 @@ module.exports = deployOnBaseWithGuardian(
 
     // Get contract instances
     const cOETHb = await ethers.getContractAt("OETH", cOETHbProxy.address);
-    const cwOETHb = await ethers.getContractAt("WOETH", cwOETHbProxy.address);
+    const cwOETHb = await ethers.getContractAt(
+      "WOETHBase",
+      cwOETHbProxy.address
+    );
     const cOETHbVault = await ethers.getContractAt(
       "IVault",
       cOETHbVaultProxy.address
@@ -95,9 +98,9 @@ module.exports = deployOnBaseWithGuardian(
       cwOETHbProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dwOETHb.address,
-          // No need for additional governance transfer, 
+          // No need for additional governance transfer,
           // since deployer doesn't have to configure anything
-          governorAddr, 
+          governorAddr,
           initDatawOETHb
         )
     );
@@ -153,7 +156,12 @@ module.exports = deployOnBaseWithGuardian(
           signature: "unpauseCapital()",
           args: [],
         },
-        // TODO: set auto allocate and rebase thresholds
+        {
+          // 5. Upgrade wOETHb
+          contract: cwOETHbProxy,
+          signature: "upgradeTo(address)",
+          args: [dwOETHb.address],
+        },
       ],
     };
   }

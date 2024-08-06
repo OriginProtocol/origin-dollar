@@ -31,6 +31,14 @@ contract WOETH is ERC4626, Governable, Initializable {
         OETH(address(asset())).rebaseOptIn();
     }
 
+    function name() public view virtual override returns (string memory) {
+        return "Wrapped OETH";
+    }
+
+    function symbol() public view virtual override returns (string memory) {
+        return "wOETH";
+    }
+
     /**
      * @notice Transfer token to governor. Intended for recovering tokens stuck in
      *      contract, i.e. mistaken sends. Cannot transfer OETH

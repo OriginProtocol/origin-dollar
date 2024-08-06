@@ -40,7 +40,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   // wOETHb (4626)
   const wOETHbProxy = await ethers.getContract("WOETHBaseProxy");
-  const wOETHb = await ethers.getContractAt("WOETH", wOETHbProxy.address);
+  const wOETHb = await ethers.getContractAt("WOETHBase", wOETHbProxy.address);
 
   // OETHb Vault
   const oethbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
