@@ -222,7 +222,7 @@ contract VaultStorage is Initializable, Governable {
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
     // For future use
-    uint256[46] private __gap;
+    uint256[45] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
