@@ -14,6 +14,7 @@ module.exports = deployOnBaseWithGuardian(
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+    const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
     const cOETHbVault = await ethers.getContractAt(
       "IVault",
       cOETHbVaultProxy.address
@@ -30,7 +31,7 @@ module.exports = deployOnBaseWithGuardian(
       [addresses.zero, cOETHbVaultProxy.address],
       addresses.base.WETH,
       addresses.base.BridgedWOETH,
-      addresses.base.BridgedWOETHOracleFeed,
+      cOETHbProxy.address,
     ]);
     const cStrategy = await ethers.getContractAt(
       "BridgedWOETHStrategy",
@@ -38,7 +39,12 @@ module.exports = deployOnBaseWithGuardian(
     );
 
     // Init OETHb Harvester
-    const initData = cStrategy.interface.encodeFunctionData("initialize()", []);
+    const initData = cStrategy.interface.encodeFunctionData(
+      "initialize(uint128)",
+      [
+        100, // 1% maxPriceDiffBps
+      ]
+    );
     // prettier-ignore
     await withConfirmation(
       cStrategyProxy
@@ -63,6 +69,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbVault,
           signature: "addStrategyToMintWhitelist(address)",
           args: [cStrategyProxy.address],
+        },
+        {
+          // 3. Update oracle price
+          contract: cStrategy,
+          signature: "updateWOETHOraclePrice()",
+          args: [],
         },
       ],
     };

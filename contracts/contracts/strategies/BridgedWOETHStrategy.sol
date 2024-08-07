@@ -6,18 +6,24 @@ import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 
 contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
+    using StableMath for uint128;
+    using SafeCast for uint256;
+
+    event MaxPriceDiffBpsUpdated(uint128 oldValue, uint128 newValue);
 
     IWETH9 public immutable weth;
     IERC20 public immutable bridgedWOETH;
-
-    // TODO: Should this strategy also use Oracle Router?
-    AggregatorV3Interface public immutable oracleFeed;
-    uint8 public immutable oracleFeedDecimals;
+    IERC20 public immutable oethb;
 
     uint256 public constant MAX_PRICE_STALENESS = 2 days;
+
+    uint128 public lastOraclePrice;
+    uint128 public maxPriceDiffBps;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -34,77 +40,175 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         BaseStrategyConfig memory _stratConfig,
         address _weth,
         address _bridgedWOETH,
-        address _oracleFeed
+        address _oethb
     ) InitializableAbstractStrategy(_stratConfig) {
         weth = IWETH9(_weth);
         bridgedWOETH = IERC20(_bridgedWOETH);
-
-        oracleFeed = AggregatorV3Interface(_oracleFeed);
-        oracleFeedDecimals = AggregatorV3Interface(_oracleFeed).decimals();
+        oethb = IERC20(_oethb);
     }
 
-    function initialize() external onlyGovernor initializer {
+    function initialize(uint128 _maxPriceDiffBps)
+        external
+        onlyGovernor
+        initializer
+    {
         InitializableAbstractStrategy._initialize(
             new address[](0), // No reward tokens
             new address[](0), // No assets
             new address[](0) // No pTokens
         );
+
+        _setMaxPriceDiffBps(_maxPriceDiffBps);
     }
 
-    function getBridgedWOETHValue(uint256 amount)
+    /**
+     * @dev Sets the max price diff bps for the wOETH value appreciation
+     * @param _maxPriceDiffBps Bps value, 10k == 100%
+     */
+    function _setMaxPriceDiffBps(uint128 _maxPriceDiffBps) internal {
+        require(_maxPriceDiffBps <= 10000, "Invalid bps value");
+
+        emit MaxPriceDiffBpsUpdated(maxPriceDiffBps, _maxPriceDiffBps);
+
+        maxPriceDiffBps = _maxPriceDiffBps;
+    }
+
+    /**
+     * @dev Sets the max price diff bps for the wOETH value appreciation
+     * @param _maxPriceDiffBps Bps value, 10k == 100%
+     */
+    function setMaxPriceDiffBps(uint128 _maxPriceDiffBps)
+        external
+        onlyGovernor
+    {
+        _setMaxPriceDiffBps(_maxPriceDiffBps);
+    }
+
+    /**
+     * @dev Finds the value of bridged wOETH from the Oracle.
+     *      Ensures that it's within the bounds and reasonable.
+     *      And stores it.
+     *
+     *      NOTE: Intentionally not caching `Vault.priceProvider` here,
+     *      since doing so would mean that we also have to update this
+     *      strategy every time there's a change in oracle router.
+     *      Besides on L2, the gas is considerably cheaper than mainnet.
+     *
+     * @return Latest price from oracle
+     */
+    function _updateWOETHOraclePrice() internal returns (uint256) {
+        // WETH price per unit of bridged wOETH
+        uint256 oraclePrice = IOracle(IVault(vaultAddress).priceProvider())
+            .price(address(bridgedWOETH));
+
+        // 1 wOETH > 1 WETH, always
+        require(oraclePrice > 1 ether, "Invalid wOETH value");
+
+        uint128 oraclePrice128 = oraclePrice.toUint128();
+
+        // Do some checks
+        if (lastOraclePrice > 0) {
+            // Make sure the value only goes up
+            require(lastOraclePrice <= oraclePrice128, "Negative wOETH yield");
+
+            // And that it's within the bounds.
+            require(
+                // maxPriceDiffBps is denominated in 1e4. Oracle prices are denominated in 1e18.
+                // It basically does the following after scaling:
+                //    `(1 - (currentPrice / lastPrice)) <= maxPriceDiffBps`
+                1e4 -
+                    ((oraclePrice128 * 1 ether) / lastOraclePrice).scaleBy(
+                        4,
+                        18
+                    ) <=
+                    uint128(maxPriceDiffBps),
+                "Price diff beyond threshold"
+            );
+        }
+
+        // Store the price
+        lastOraclePrice = oraclePrice128;
+
+        return oraclePrice;
+    }
+
+    /**
+     * @dev Wrapper for _updateWOETHOraclePrice with nonReentrant flag
+     * @return The latest price of wOETH from Oracle
+     */
+    function updateWOETHOraclePrice() external nonReentrant returns (uint256) {
+        return _updateWOETHOraclePrice();
+    }
+
+    /**
+     * @dev Computes & returns the value of given wOETH in WETH
+     * @param woethAmount Amount of wOETH
+     * @return Value of wOETH in WETH (using the last stored oracle price)
+     */
+    function getBridgedWOETHValue(uint256 woethAmount)
         public
         view
-        returns (uint256 oethValue)
+        returns (uint256)
     {
-        // slither-disable-next-line unused-return
-        (, int256 oraclePrice, , uint256 updatedAt, ) = AggregatorV3Interface(
-            oracleFeed
-        ).latestRoundData();
-
-        require(
-            updatedAt + MAX_PRICE_STALENESS >= block.timestamp,
-            "Oracle price too old"
-        );
-
-        // Price per unit bridged wOETH
-        oethValue = uint256(oraclePrice).scaleBy(18, oracleFeedDecimals);
-
-        // Price for `amount`
-        oethValue = (amount * oethValue) / 1 ether;
+        return (woethAmount * lastOraclePrice) / 1 ether;
     }
 
-    // TODO: Add minAmount
+    /**
+     * @dev Takes in bridged wOETH and mints & returns
+     *      equivalent amount of OETHb.
+     * @param woethAmount Amount of bridged wOETH to transfer in
+     */
     function depositBridgedWOETH(uint256 woethAmount)
         external
         onlyGovernorOrStrategist
+        nonReentrant
     {
-        // Transfer in all bridged wOETH tokens
-        bridgedWOETH.transferFrom(msg.sender, address(this), woethAmount);
+        // Update wOETH price
+        uint256 oraclePrice = _updateWOETHOraclePrice();
 
         // Figure out how much they are worth
-        uint256 oethToMint = getBridgedWOETHValue(woethAmount);
+        uint256 oethToMint = (woethAmount * oraclePrice) / 1 ether;
 
         // There's no pToken, however, it just uses WOETH address in the event
         emit Deposit(address(weth), address(bridgedWOETH), oethToMint);
 
         // Mint OETHb tokens and transfer it to the caller
-        IVault(vaultAddress).mintToForStrategy(msg.sender, oethToMint);
+        IVault(vaultAddress).mintForStrategy(oethToMint);
+
+        // Transfer out minted OETHb
+        oethb.transfer(msg.sender, oethToMint);
+
+        // Transfer in all bridged wOETH tokens
+        bridgedWOETH.transferFrom(msg.sender, address(this), woethAmount);
     }
 
-    function withdrawBridgedWOETH(uint256 woethAmount, address receiver)
+    /**
+     * @dev Takes in OETHb and burns it and returns
+     *      equivalent amount of bridged wOETH.
+     * @param woethAmount Amount of bridged wOETH to get back
+     */
+    function withdrawBridgedWOETH(uint256 woethAmount)
         external
         onlyGovernorOrStrategist
+        nonReentrant
     {
-        uint256 oethToBurn = getBridgedWOETHValue(woethAmount);
+        // Update wOETH price
+        uint256 oraclePrice = _updateWOETHOraclePrice();
+
+        // Figure out how much they are worth
+        uint256 oethToBurn = (woethAmount * oraclePrice) / 1 ether;
 
         // There's no pToken, however, it just uses WOETH address in the event
         emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);
 
-        // Burn OETHb
-        IVault(vaultAddress).burnFromForStrategy(msg.sender, oethToBurn);
-
         // Transfer WOETH back
-        bridgedWOETH.transfer(receiver, woethAmount);
+        bridgedWOETH.transfer(msg.sender, woethAmount);
+
+        // Transfer in OETHb
+        oethb.transferFrom(msg.sender, address(this), oethToBurn);
+
+        // Burn OETHb
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
     }
 
     /**
@@ -120,8 +224,12 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     {
         require(_asset == address(weth), "Unsupported asset");
 
-        // Figure out how much wOETH is worth at the time
-        balance = getBridgedWOETHValue(bridgedWOETH.balanceOf(address(this)));
+        // Figure out how much wOETH is worth at the time.
+        // Always uses the last stored oracle price.
+        // Call updateWOETHOraclePrice manually to pull in latest yields.
+        balance =
+            (bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) /
+            1 ether;
     }
 
     /**

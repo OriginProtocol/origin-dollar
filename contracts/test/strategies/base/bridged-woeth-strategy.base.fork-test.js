@@ -102,10 +102,13 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       woethStrategy.address
     );
 
-    // Governor tries to withdraw
-    await woethStrategy
+    // Approve strategy to move OETHb
+    await oethb
       .connect(governor)
-      .withdrawBridgedWOETH(depositAmount, governor.address);
+      .approve(woethStrategy.address, oethUnits("1000000"));
+
+    // Governor tries to withdraw
+    await woethStrategy.connect(governor).withdrawBridgedWOETH(depositAmount);
 
     const supplyDiff = supplyBefore.sub(await oethb.totalSupply());
     expect(supplyDiff).to.approxEqualTolerance(
@@ -197,17 +200,20 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
     await cMockOracleFeed.connect(governor).setPrice(roundData.answer);
     await cMockOracleFeed.connect(governor).setDecimals(18);
 
+    // Update price on strategy
+    await woethStrategy.updateWOETHOraclePrice();
+
     expect(await woethStrategy.checkBalance(weth.address)).to.equal(
       stratBalanceBefore
     );
 
-    // Increase the price by 10%
-    await cMockOracleFeed.setPrice(roundData.answer.mul(110).div(100));
+    // Increase the price by 0.5%
+    await cMockOracleFeed.setPrice(roundData.answer.mul(1005).div(1000));
 
-    // Strategy balance should've increased by 10%
+    // Strategy balance should've increased by 0.5%
     expect(
       await woethStrategy.checkBalance(weth.address)
-    ).to.approxEqualTolerance(stratBalanceBefore.mul(110).div(100), 1);
+    ).to.approxEqualTolerance(stratBalanceBefore.mul(1005).div(1000), 1);
     expect(await woeth.balanceOf(woethStrategy.address)).to.equal(
       stratWOETHBalanceBefore
     );
@@ -217,7 +223,7 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
 
     // Should've increased supply
     expect(await oethb.totalSupply()).to.be.approxEqualTolerance(
-      supplyBefore.add(stratBalanceBefore.mul(10).div(100)),
+      supplyBefore.add(stratBalanceBefore.mul(5).div(1000)),
       1
     );
   });
