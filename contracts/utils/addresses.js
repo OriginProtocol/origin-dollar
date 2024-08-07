@@ -301,6 +301,9 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 addresses.base.BridgedWOETHOracleFeed =
   "0xe96EB1EDa83d18cbac224233319FA5071464e1b9";
 
+// 2/8 Multisig
+addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 
