@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IDepositContract } from "./../interfaces/IDepositContract.sol";
 
 contract MockDepositContract is IDepositContract {
-    uint256 deposit_count;
+    uint256 public deposit_count;
 
     function deposit(
         bytes calldata pubkey,
@@ -47,6 +47,8 @@ contract MockDepositContract is IDepositContract {
             deposit_data_root != 0,
             "DepositContract: invalid deposit_data_root"
         );
+
+        deposit_count += 1;
     }
 
     function get_deposit_root() external view override returns (bytes32) {

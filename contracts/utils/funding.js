@@ -42,7 +42,7 @@ const fundAccountsForOETHUnitTests = async () => {
 
   for (const address of signerAddresses) {
     const signer = await ethers.provider.getSigner(address);
-    await weth.connect(signer).mint(oethUnits("1000"));
+    await weth.connect(signer).mint(oethUnits("100000"));
     await rETH.connect(signer).mint(oethUnits("1000"));
     await stETH.connect(signer).mint(oethUnits("1000"));
     await frxETH.connect(signer).mint(oethUnits("1000"));
