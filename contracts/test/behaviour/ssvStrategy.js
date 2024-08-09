@@ -92,7 +92,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
       expect(await nativeStakingSSVStrategy.MAX_VALIDATORS()).to.equal(500);
     });
-    it("Anyone should be able to set the MEV fee recipent", async () => {
+    it("Anyone should be able to set the MEV fee recipient", async () => {
       const { nativeStakingSSVStrategy, nativeStakingFeeAccumulator, matt } =
         await context();
 
