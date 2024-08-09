@@ -5,6 +5,7 @@ const {
   isArbFork,
   isHoleskyFork,
   isBaseFork,
+  isBaseUnitTest,
 } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
@@ -44,7 +45,8 @@ mocha.before(function () {
     const isHoleskyTestFile = s.file.endsWith(".holesky.fork-test.js");
     const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
     const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
-    const unitTest = !s.file.endsWith(".fork-test.js");
+    const isBaseUnitTestFile = s.file.endsWith(".base.js");
+    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile;
 
     if (isArbFork) {
       return isArbTestFile;
@@ -54,6 +56,8 @@ mocha.before(function () {
       return isBaseTestFile;
     } else if (isHoleskyFork) {
       return isHoleskyTestFile;
+    } else if (isBaseUnitTest) {
+      return isBaseUnitTestFile;
     } else {
       // else is unit test
       return unitTest;

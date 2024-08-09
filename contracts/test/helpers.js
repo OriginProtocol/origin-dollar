@@ -273,6 +273,7 @@ const isCI = process.env.GITHUB_ACTIONS;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isBaseOrFork = isBase || isBaseFork;
+const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -805,6 +806,7 @@ module.exports = {
   isBase,
   isBaseFork,
   isBaseOrFork,
+  isBaseUnitTest,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

@@ -12,6 +12,8 @@ const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
 const isHoleskyForkTest = isForkTest && isHoleskyFork;
 const isBaseForkTest = isForkTest && isBaseFork;
+const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
+
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
 }`;
@@ -137,6 +139,7 @@ module.exports = {
   isBase,
   isBaseFork,
   isBaseForkTest,
+  isBaseUnitTest,
   isHoleskyFork,
   isHolesky,
   isForkTest,
