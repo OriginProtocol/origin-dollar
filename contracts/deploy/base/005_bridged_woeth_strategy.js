@@ -38,7 +38,7 @@ module.exports = deployOnBaseWithGuardian(
       cStrategyProxy.address
     );
 
-    // Init OETHb Harvester
+    // Init Strategy
     const initData = cStrategy.interface.encodeFunctionData(
       "initialize(uint128)",
       [

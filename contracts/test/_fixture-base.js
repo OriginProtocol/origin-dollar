@@ -61,8 +61,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     woethStrategyProxy.address
   );
 
+  const oracleRouter = await ethers.getContract(
+    isFork ? "OETHBaseOracleRouter" : "MockOracleRouter"
+  );
+
   // WETH
-  const weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
+  const weth = isFork
+    ? await ethers.getContractAt("IWETH9", addresses.base.WETH)
+    : await ethers.getContract("MockWETH");
 
   const signers = await hre.ethers.getSigners();
 
@@ -91,8 +97,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   await woeth.connect(minter).mint(nick.address, oethUnits("1"));
   await woeth.connect(minter).mint(woethGovernor.address, oethUnits("1"));
 
-  // Governor opts in for rebasing
-  await oethb.connect(governor).rebaseOptIn();
+  if (isFork) {
+    // Governor opts in for rebasing
+    await oethb.connect(governor).rebaseOptIn();
+  }
 
   return {
     // OETHb
@@ -104,6 +112,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     woeth,
     woethProxy,
     woethStrategy,
+    oracleRouter,
 
     // WETH
     weth,

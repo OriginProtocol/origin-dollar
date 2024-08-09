@@ -9,6 +9,7 @@ const {
   isBase,
   isBaseFork,
   isBaseForkTest,
+  isBaseUnitTest,
   baseProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
@@ -31,7 +32,6 @@ require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
 
 const addresses = require("./utils/addresses.js");
-
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
   "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
@@ -71,7 +71,7 @@ const paths = {};
 if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   // holesky deployment files are in contracts/deploy/holesky
   paths.deploy = "deploy/holesky";
-} else if (isBase || isBaseFork || isBaseForkTest) {
+} else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet

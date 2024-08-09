@@ -8,6 +8,7 @@ import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Inter
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import "hardhat/console.sol";
 
 contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -66,7 +67,10 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @param _maxPriceDiffBps Bps value, 10k == 100%
      */
     function _setMaxPriceDiffBps(uint128 _maxPriceDiffBps) internal {
-        require(_maxPriceDiffBps <= 10000, "Invalid bps value");
+        require(
+            _maxPriceDiffBps > 0 && _maxPriceDiffBps <= 10000,
+            "Invalid bps value"
+        );
 
         emit MaxPriceDiffBpsUpdated(maxPriceDiffBps, _maxPriceDiffBps);
 
@@ -113,15 +117,10 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
 
             // And that it's within the bounds.
             require(
-                // maxPriceDiffBps is denominated in 1e4. Oracle prices are denominated in 1e18.
-                // It basically does the following after scaling:
-                //    `(1 - (currentPrice / lastPrice)) <= maxPriceDiffBps`
-                1e4 -
-                    ((oraclePrice128 * 1 ether) / lastOraclePrice).scaleBy(
-                        4,
-                        18
-                    ) <=
-                    uint128(maxPriceDiffBps),
+                // oraclePrice <= (lastOraclePrice * (1 + maxPriceDiffBps))
+                oraclePrice128 <=
+                    ((lastOraclePrice * (1e4 + uint128(maxPriceDiffBps))) /
+                        1e4),
                 "Price diff beyond threshold"
             );
         }
@@ -227,6 +226,15 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // Figure out how much wOETH is worth at the time.
         // Always uses the last stored oracle price.
         // Call updateWOETHOraclePrice manually to pull in latest yields.
+
+        // NOTE: If the contract has been deployed but the call to
+        // `updateWOETHOraclePrice()` has never been made, then this
+        // will return zero. It should be fine because the strategy
+        // should update the price whenever a deposit/withdraw happens.
+
+        // If `updateWOETHOraclePrice()` hasn't been called in a while,
+        // the strategy will underreport its holdings but never overreport it.
+
         balance =
             (bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) /
             1 ether;
