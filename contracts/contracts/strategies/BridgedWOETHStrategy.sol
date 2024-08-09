@@ -16,6 +16,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using SafeCast for uint256;
 
     event MaxPriceDiffBpsUpdated(uint128 oldValue, uint128 newValue);
+    event WOETHPriceUpdated(uint128 oldValue, uint128 newValue);
 
     IWETH9 public immutable weth;
     IERC20 public immutable bridgedWOETH;
@@ -124,6 +125,8 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
                 "Price diff beyond threshold"
             );
         }
+
+        emit WOETHPriceUpdated(lastOraclePrice, oraclePrice128);
 
         // Store the price
         lastOraclePrice = oraclePrice128;
