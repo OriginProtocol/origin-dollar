@@ -65,30 +65,6 @@ jobs:
         run: yarn run test
         working-directory: ./contracts
 
-  contracts-base-test:
-    name: "Contracts Unit Tests (Base)"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./contracts
-
-      # this will run the unit tests and report the gas usage
-      - name: Run Unit Tests
-        env:
-          REPORT_GAS: true
-          UNIT_TESTS_NETWORK: base
-        run: yarn run test:base
-        working-directory: ./contracts
-
   contracts-unit-coverage:
     name: "Contracts Unit Coverage"
     runs-on: ubuntu-latest
@@ -112,6 +88,38 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
+  contracts-base-test:
+    name: "Contracts Unit Tests (Base)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      # this will run the unit tests and report the gas usage
+      - name: Run Unit Tests
+        env:
+          REPORT_GAS: true
+          UNIT_TESTS_NETWORK: base
+        run: yarn run test:coverage:base
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-unit-test-coverage-${{ github.sha }}
           path: | 
             ./contracts/coverage.json
             ./contracts/coverage/**/*
@@ -290,6 +298,7 @@ jobs:
       - contracts-forktest
       - contracts-arb-forktest
       - contracts-hol-forktest
+      - contracts-base-test
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:

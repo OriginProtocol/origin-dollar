@@ -46,7 +46,7 @@ mocha.before(function () {
     const isArbTestFile = s.file.endsWith(".arb.fork-test.js");
     const isBaseTestFile = s.file.endsWith(".base.fork-test.js");
     const isBaseUnitTestFile = s.file.endsWith(".base.js");
-    const unitTest = !s.file.endsWith(".fork-test.js");
+    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile;
 
     if (isArbFork) {
       return isArbTestFile;
