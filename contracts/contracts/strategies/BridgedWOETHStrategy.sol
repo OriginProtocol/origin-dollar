@@ -8,7 +8,6 @@ import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Inter
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import "hardhat/console.sol";
 
 contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
