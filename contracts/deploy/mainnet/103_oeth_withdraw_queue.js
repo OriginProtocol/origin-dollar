@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId:
+    proposalId:
+      "4952583864870422832882752992396486341874887833414208719999363086677469346971",
   },
   async ({ deployWithConfirmation }) => {
     // Deployer Actions
@@ -23,13 +24,19 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHVaultCore",
       [addresses.mainnet.WETH],
       null,
-      true
+      true,
+      {}, // libraries
+      3800000, // gasLimit
+      false // useFeeData
     );
     const dVaultAdmin = await deployWithConfirmation(
       "OETHVaultAdmin",
       [addresses.mainnet.WETH],
       null,
-      true
+      true,
+      {}, // libraries
+      3200000, // gasLimit
+      false // useFeeData
     );
 
     // 2. Connect to the OETH Vault as its governor via the proxy
