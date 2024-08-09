@@ -6,6 +6,7 @@ hide footbox
 title "Origin ETH processes"
 
 actor "Anyone" as sender
+actor "Block\nBuilder\n(MEV)" as mev
 actor "Registrator\n(Relayer)" as reg <<Origin>>
 actor "Admin\n(5/8 Safe)" as admin <<Origin>>
 actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
@@ -36,10 +37,10 @@ nativeStrat -> ssv : approve(\nSSV Network,\namount)
 activate ssv
 note right : Native Staking Strategy approves\nSSV Network to spend\nSSV tokens
 return
-' nativeStrat -> ssvNet : setFeeRecipientAddress(\nrecipient)
-' activate ssvNet
-' note right : NodeDelegator set as the fee recipient
-' return
+nativeStrat -> ssvNet : setFeeRecipientAddress(\nFeeAccumulator)
+activate ssvNet
+note right : set FeeAccumulator\nto receive MEV rewards
+return
 return
 
 gov -> ssv : transfer(\nfrom\nto\namount)
@@ -49,11 +50,26 @@ return
 
 end group
 
-group Governor sets staked ETH threshold
+group Governor setup of the Native Staking Strategy
 
-gov -> nativeStrat : setStakeETHThreshold()
+gov -> nativeStrat : setHarvesterAddress(\nharvester)
 activate nativeStrat
-note right: set ETH that can be staked\nbefore the staking monitor has to reset
+return
+
+gov -> nativeStrat : setFuseInterval(\nstart, end)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setRegistrator(\nregistrator)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setStakingMonitor(\ngovernor)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setStakeETHThreshold(\nmax)
+activate nativeStrat
 return
 
 end group
@@ -200,7 +216,6 @@ group Consensus Rewards
 
 note over val
 attesting to blocks
-proposing blocks
 participating in sync committees
 end note
 val -> val : ETH
@@ -279,10 +294,13 @@ end group
 
 group Execution Rewards
 
-sender -> feeAccum : ETH
-note right : tx fees and MEV rewards
+mev -> feeAccum : ETH
+note right : MEV rewards
 
-note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+sender -> nativeStrat : ETH
+note right : tx priority fees
+
+note over nativeStrat : Native Staking Strategy's WETH balance\ndoes not change from either
 
 end group
 
@@ -317,7 +335,6 @@ return
 return
 
 end group
-
 
 group Strategist pauses Native Staking Strategy
 

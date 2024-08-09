@@ -37,4 +37,6 @@ contract MockSSVNetwork {
         uint256 amount,
         Cluster memory cluster
     ) external {}
+
+    function setFeeRecipientAddress(address recipient) external {}
 }
