@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "004_mutlisig_harvester",
+    deployName: "005_mutlisig_harvester",
   },
   async ({ ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -62,10 +62,8 @@ module.exports = deployOnBaseWithGuardian(
           // 1. Configure Dripper to 7 days
           contract: cDripper,
           signature: "setDripDuration(uint256)",
-          args: [7 * 24 * 60 * 60],
+          args: [3 * 24 * 60 * 60],
         },
-        // TODO: Set IStrategy.setHarvesterAddress for both strategies
-        // in both strategies
       ],
     };
   }
