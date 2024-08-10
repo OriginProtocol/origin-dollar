@@ -7,15 +7,23 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { ISugarHelper } from "../interfaces/aerodrome/ISugarHelper.sol";
-import { INonfungiblePositionManager } from "../interfaces/aerodrome/INonfungiblePositionManager.sol";
-import { ISwapRouter } from "../interfaces/aerodrome/ISwapRouter.sol";
-import { ICLFactory } from "../interfaces/aerodrome/ICLFactory.sol";
-import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
+import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
+import { ISugarHelper } from "../../interfaces/aerodrome/ISugarHelper.sol";
+import { INonfungiblePositionManager } from "../../interfaces/aerodrome/INonfungiblePositionManager.sol";
+import { IQuoterV2 } from "../../interfaces/aerodrome/IQuoterV2.sol";
+import { ISwapRouter } from "../../interfaces/aerodrome/ISwapRouter.sol";
+import { ICLPool } from "../../interfaces/aerodrome/ICLPool.sol";
+import { ICLGauge } from "../../interfaces/aerodrome/ICLGauge.sol";
+import { IVault } from "../../interfaces/IVault.sol";
+import { IAMOCallback } from "../../interfaces/aerodrome/IAMOCallback.sol";
+import { IAMOQuoteLoop } from "../../interfaces/aerodrome/IAMOQuoteLoop.sol";
 
-contract AerodromeAMOStrategy is InitializableAbstractStrategy {
+import "hardhat/console.sol";
+
+contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
+    using StableMath for uint256;
     using SafeERC20 for IERC20;
 
     /***************************************
@@ -24,24 +32,39 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /// @notice tokenId of the liquidity position
     uint256 public tokenId;
-    /// @notice amount of liquidity deployed
-    uint128 public liquidity;
-    /// @notice TODO is this redundant to liquidity???
+    /// @dev Cumulative amount of WETH + OETHb tokens present in Aerodrome Slipstream pool
+    ///      increase liquidity increases this number by the amount of tokens added
+    ///      decrease liquidity decreases this number by the amount of tokens removed
     uint256 public netValue;
     /// @notice the swapRouter for performing swaps
     ISwapRouter public swapRouter;
-    /// @notice factory for pool creation
-    ICLFactory public clFactory;
     /// @notice the pool used
     ICLPool public clPool;
+    /// @notice the pool used
+    ICLGauge public clGauge;
     /// @notice the liquidity position
     INonfungiblePositionManager public positionManager;
     /// @notice helper contract for liquidity and ticker math
     ISugarHelper public helper;
+    /// @notice helper contract for liquidity and ticker math
+    IQuoterV2 public quoter;
+    /// @notice quote looper needed to utilize quotes
+    IAMOQuoteLoop public quoteLooper;
     /// @notice sqrtRatioX96Tick0
     uint160 public sqrtRatioX96Tick0;
     /// @notice sqrtRatioX96Tick1
     uint160 public sqrtRatioX96Tick1;
+    /**
+     * Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
+     * in basis point format.
+     * 
+     * e.g. 2000 means 20% WETH 80% OETHb
+     */
+    uint256 public poolWethShare;
+    /**
+     * Share of liquidity to remove on rebalance
+     */
+    uint128 public withdrawLiquidityShare;
     /// @dev reserved for inheritance
     int256[50] private __reserved;
 
@@ -60,32 +83,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
 
-    // Represents a position minted by UniswapV3Strategy contract
-    struct Position {
-        // The following two fields are redundant but since we use these
-        // two quite a lot, think it might be cheaper to store it than
-        // compute it every time?
-        uint160 sqrtRatioAX96;
-        uint160 sqrtRatioBX96;
-        uint256 netValue; // Last recorded net value of the position
-    }
+    event PoolWethShareUpdated(
+        uint256 newWethShare
+    );
 
-    event UniswapV3LiquidityAdded(
-        uint256 indexed tokenId,
-        uint256 amount0Sent,
-        uint256 amount1Sent,
-        uint128 liquidityMinted
-    );
-    event UniswapV3LiquidityRemoved(
-        uint256 indexed tokenId,
-        uint256 amount0Received,
-        uint256 amount1Received,
-        uint128 liquidityBurned
-    );
-    event UniswapV3PositionMinted(
-        uint256 indexed tokenId,
-        int24 lowerTick,
-        int24 upperTick
+    event WithdrawLiqiudityShareUpdated(
+        uint128 newWithdrawLiquidityShare
     );
 
     /// @param _stratConfig st
@@ -113,7 +116,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _swapRouter Address of the Aerodrome Universal Swap Router
      * @param _nonfungiblePositionManager Address of position manager to add/remove
      *        the liquidity
-     * @param _clFactory Address of the concentrated liquidity factory
      */
     function initialize(
         address[] memory _rewardTokenAddresses,
@@ -121,8 +123,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address[] memory _pTokens,
         address _swapRouter,
         address _nonfungiblePositionManager,
-        address _clFactory,
-        address _sugarHelper
+        address _clPool,
+        address _clGauge,
+        address _quoter,
+        address _sugarHelper,
+        address _quoteLooper
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -134,11 +139,55 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         positionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
-        clFactory = ICLFactory(_clFactory);
+        clPool = ICLPool(_clPool);
+        clGauge = ICLGauge(_clGauge);
         helper = ISugarHelper(_sugarHelper);
+        quoter = IQuoterV2(_quoter);
+        quoteLooper = IAMOQuoteLoop(_quoteLooper);
         sqrtRatioX96Tick0 = helper.getSqrtRatioAtTick(0);
         sqrtRatioX96Tick1 = helper.getSqrtRatioAtTick(1);
     }
+
+    /***************************************
+                  Configuration 
+    ****************************************/
+
+    /**
+     * @notice Set the new desired WETH share
+     * @param _amount               The new amount specified in basis points
+     */
+    function setPoolWethShare(uint256 _amount) external onlyGovernor {
+        // TODO tests:
+        // - governor can update
+        // - non governor can not update
+        // - must be within allowed values (event emitted)
+
+        require(_amount < 10000, "Invalid poolWethShare amount");
+
+        poolWethShare = _amount;
+        emit PoolWethShareUpdated(_amount);
+    }
+
+    /**
+     * @notice Specifies the amount of liquidity that is to be removed when 
+     *         a rebalancing happens.
+     * @param _amount               The new amount specified in basis points
+     */
+    function setWithdrawLiquidityShare(uint128 _amount) external onlyGovernor {
+        // TODO tests:
+        // - governor can update
+        // - non governor can not update
+        // - must be within allowed values (event emitted)
+
+        require(_amount < 10000, "Invalid withdrawLiquidityShare amount");
+
+        withdrawLiquidityShare = _amount;
+        emit WithdrawLiqiudityShareUpdated(_amount);
+    }
+
+    /***************************************
+               Strategy overrides 
+    ****************************************/
 
     /**
      * @notice Deposit an amount of assets into the platform
@@ -146,14 +195,247 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amount              Units of asset to deposit
      */
     function deposit(address _asset, uint256 _amount) external virtual override {
+        _deposit(_asset, _amount);
+    }
 
+    /**
+     * @dev Deposit an asset into the underlying platform
+     * @param _asset Address of the asset to deposit
+     * @param _amount Amount of assets to deposit
+     */
+    function _deposit(address _asset, uint256 _amount) internal {
+        require(_asset == WETH, "Unsupported asset");
+        require(_amount > 0, "Must deposit something");
+        emit Deposit(_asset, address(0), _amount);
+
+        // TODO delete this. Just testing you knows?!
+        _addLiquidity();
+    }
+
+    /** 
+     * @notice quote the target pool price after the tokens are swapped
+     * @dev execute this function optimistically. All state changes are reverted
+     * @param _amount Amount of asset to swap
+     * @param _swapWETH when true WETH is being swapped for OETHb
+     */
+    function quotePriceAfterTokenSwap(uint256 _amount, bool _swapWETH) external 
+        returns (uint160, uint160, uint256)
+    {
+        try quoteLooper.quoteLoop(
+            _amount,
+            _swapWETH
+        ) {} catch (bytes memory reason) {
+
+            console.log("The reason received");
+            return handleRevert(reason);
+        }
+    }
+
+    function handleRevert(bytes memory reason)
+        private
+        view
+        returns (uint160 sqrtRatioX96Before, uint160 sqrtPriceX96After, uint256 amountReceived)
+    {
+        (uint160 sqrtRatioX96Before,,,,,) = clPool.slot0();
+        (amountReceived, sqrtPriceX96After) = parseRevertReason(reason);
+
+        console.log("DECODED DATA");
+        console.log(amountReceived);
+        console.log(sqrtPriceX96After);
+
+        return (sqrtRatioX96Before, sqrtPriceX96After, amountReceived);
+    }
+
+    /// @dev Parses a revert reason that should contain the numeric quote
+    function parseRevertReason(bytes memory reason)
+        private
+        pure
+        returns (uint256 amount, uint160 sqrtPriceX96After)
+    {
+        if (reason.length != 64) {
+            revert(abi.decode(reason, (string)));
+        }
+        return abi.decode(reason, (uint256, uint160));
+    }
+
+
+    /**
+     * @dev try/catch can only be used by calling another contract. For that reason this loop
+     * around is required. Also this function will always revert
+     */
+    function quoteCallback(uint256 _amount, bool _swapWETH) external override {
+        _removeLiquidity();
+        (uint256 amountOut, uint160 sqrtPriceX96After,,) = quoter.quoteExactInputSingle(
+            IQuoterV2.QuoteExactInputSingleParams({
+                tokenIn: _swapWETH ? WETH : OETHb,
+                tokenOut: _swapWETH ? OETHb : WETH,
+                amountIn: _amount,
+                tickSpacing: 1,
+                // TODO change the thing below
+                sqrtPriceLimitX96: helper.getSqrtRatioAtTick(1)
+            })
+        );
+
+        assembly {
+            let ptr := mload(64)
+            // encode amountOut in the first 32 bytes of the error message data
+            mstore(ptr, amountOut)
+            // encode sqrtPriceX96After in the range of 32 -> 64 bytes of the error message data
+            mstore(add(ptr, 32), sqrtPriceX96After)
+            revert(ptr, 64)
+        }
+    }
+
+    /**
+     * @notice Rebalance the pool to the desired token split
+     */
+    function rebalace() external nonReentrant onlyVaultOrGovernorOrStrategist {
+        _rebalace();
+    }
+
+    /**
+     * @dev Rebalance the pool to the desired token split
+     */
+    function _rebalace() internal {
+        // TODO remove
+        _checkLiquidityWithinExpectedShare();
+
+        _removeLiquidity();
+        _swapToDesiredPosition();
+        _addLiquidity();
+    }
+
+    /**
+     * @dev Decrease 100% of thex liquidity if strategy holds any. In practice the removal of liquidity
+     * will be skipped only on the first time called.
+     */
+    function _removeLiquidity() internal {
+        if (tokenId == 0) {
+            return;
+        }
+        // TODO remove from gauge once we have it
+        // clGauge.withdraw(tokenId)
+
+        (uint128 liquidity,,) = _getPositionInfo();
+        uint128 liqudityToRemove = liquidity * withdrawLiquidityShare / 1e4;
+
+        (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: tokenId,
+                liquidity: liqudityToRemove,
+                /**
+                 * Both expected amounts can be 0 since we don't really care if any swaps
+                 * happen just before the liquidity removal.
+                 */
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
+        positionManager.positions(tokenId);
+
+        positionManager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: tokenId,
+                recipient: address(this),
+                amount0Max: type(uint128).max, // defaults to all tokens owed
+                amount1Max: type(uint128).max  // defaults to all tokens owed
+            })
+        );
+
+        // TODO can this go negative?
+        netValue -= amountWETH + amountOETHb;
+    }
+
+    /**
+     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
+     */
+    function _checkLiquidityWithinExpectedShare() internal {
+        if (tokenId == 0) {
+            return;
+        }
+        console.log("checking shares");
+
+        (uint256 amount0, uint256 amount1) = _getPositionPrincipal();
+        console.log(amount0);
+        console.log(amount1);
+    }
+
+    /**
+     * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
+     */
+    function _swapToDesiredPosition() internal {
+        if (tokenId == 0) {
+            return;
+        }
+        
+        console.log("Swap to desired position?");
+
+        (uint256 amount0, uint256 amount1) = _getPositionPrincipal();
+        console.log(amount0);
+        console.log(amount1);
+    }
+
+    /**
+     * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
+     */
+    function _addLiquidity() internal {
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
+        require(wethBalance > 0, "Must add some WETH");
+
+        // TODO mint corresponding 
+        //IVault(vaultAddress).mintForStrategy(oethBRequired);
+
+        if (tokenId == 0) {
+            (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
+            console.log("WHAT IS Up?!?!");
+            console.log(sqrtRatioX96);
+
+            // TODO add new token id position minted event
+            (uint256 mintedTokenId,,uint256 amountWETH, uint256 amountOETHb) = positionManager.mint(
+                INonfungiblePositionManager.MintParams({
+                    token0: WETH,
+                    token1: OETHb,
+                    tickSpacing: 1,
+                    tickLower: 0,
+                    tickUpper: 1,
+                    amount0Desired: wethBalance,
+                    amount1Desired: 0,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    // needs to be 0 because the pool is already created
+                    // non zero amount attempts to create a new instance of the pool
+                    sqrtPriceX96: 0 
+                })
+            );
+            tokenId = mintedTokenId;
+            // TODO add incerase liquidity event
+            netValue += amountWETH + amountOETHb;
+        } else {
+
+            (,uint256 amountWETH, uint256 amountOETHb) = positionManager.increaseLiquidity(
+                INonfungiblePositionManager.IncreaseLiquidityParams({
+                    tokenId: tokenId,
+                    amount0Desired: wethBalance,
+                    amount1Desired: 0,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
+            // TODO add incerase liquidity event
+            netValue += amountWETH + amountOETHb;
+        }
     }
 
     /**
      * @notice Deposit all supported assets in this strategy contract to the platform
      */
     function depositAll() external virtual override {
-
+        _deposit(WETH, IERC20(WETH).balanceOf(address(this)));
     }
 
     /**
@@ -176,7 +458,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * sends to the OToken's Vault.
      */
     function withdrawAll() external virtual override {
-
     }
 
 
@@ -243,7 +524,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         override
         returns (uint256)
     {
-        // TODO verify
         return netValue;
     }
 
@@ -269,7 +549,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @return amount0 Amount of token0 in position
      * @return amount1 Amount of token1 in position
      */
-    function getPositionPrincipal()
+    function _getPositionPrincipal()
         internal
         view
         returns (uint256 amount0, uint256 amount1)
@@ -280,6 +560,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             tokenId,
             sqrtRatioX96
         );
+    }
+
+    function _getPositionInfo() 
+        internal 
+        returns (
+            uint128 liquidity,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) {
+
+        if (tokenId > 0) {
+            (,,,,,,,liquidity,,,tokensOwed0,tokensOwed1) = positionManager.positions(tokenId);
+        }
     }
 
     /**
@@ -315,56 +608,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         revert("Unsupported method");
     }
 
-    /**
-     * @notice Mints a new position on the pool and provides liquidity to it
-     *
-     * @param _desiredAmount0 Desired amount of token0 to provide liquidity
-     * @param _desiredAmount1 Desired amount of token1 to provide liquidity
-     * @param _minAmount0 Min amount of token0 to deposit
-     * @param _minAmount1 Min amount of token1 to deposit
-     */
-    function _mintPosition(
-        uint256 _desiredAmount0,
-        uint256 _desiredAmount1,
-        uint256 _minAmount0,
-        uint256 _minAmount1,
-        int24 _lowerTick,
-        int24 _upperTick
-    )
-        internal
-    {
-        INonfungiblePositionManager.MintParams
-            memory params = INonfungiblePositionManager.MintParams({
-                // TODO: we need to figure which token is smaller when it comes to addresses: 
-                // https://github.com/velodrome-finance/slipstream/blob/87e4aae8143a2f3a800b8e1ef8c58d9b807caf4e/contracts/core/CLFactory.sol#L73
 
-                token0: WETH,
-                token1: OETHb,
-                tickSpacing: tickSpacing,
-                tickLower: _lowerTick,
-                tickUpper: _upperTick,
-                amount0Desired: _desiredAmount0,
-                amount1Desired: _desiredAmount1,
-                amount0Min: _minAmount0,
-                amount1Min: _minAmount1,
-                recipient: address(this),
-                deadline: block.timestamp,
-                /* Sets the initial price to 1 meaning we deposit only OETHb into the pool
-                 * after that we swap 20% of it to WETH and burn the resulting OETHb
-                 */ 
-                sqrtPriceX96: sqrtRatioX96Tick0
-            });
-
-        (uint256 mintedTokenId, uint128 mintedLiquidity, uint256 amount0, uint256 amount1) = positionManager.mint(params);
-
-        tokenId = mintedTokenId;
-        liquidity = mintedLiquidity;
-        netValue = amount0 + amount1;
-        // TODO fetch the pool address
-
-        //emit UniswapV3PositionMinted(mintedTokenId, lowerTick, upperTick);
-        //emit UniswapV3LiquidityAdded(mintedTokenId, amount0, amount1, liquidity);
-    }
 
     /**
      * @dev Swaps one token for other and then provides liquidity to pools.

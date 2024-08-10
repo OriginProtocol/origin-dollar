@@ -14,8 +14,13 @@ module.exports = deployOnBaseWithGuardian(
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+    const cOETHbVault = await ethers.getContractAt(
+      "IVault",
+      cOETHbVaultProxy.address
+    );
 
     await deployWithConfirmation("AerodromeAMOStrategyProxy");
+    await deployWithConfirmation("AerodromeQuoteLoop");
     await deployWithConfirmation("AerodromeAMOStrategy", [
       /* The pool address is not yet known. Might be created before we deploy the
        * strategy or after.
@@ -26,33 +31,58 @@ module.exports = deployOnBaseWithGuardian(
     ]);
 
     const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
-    const cAMOStrategy = await ethers.getContract("AerodromeAMOStrategy");
+    const cAMOStrategyImpl = await ethers.getContract("AerodromeAMOStrategy");
+    const cAMOStrategy = await ethers.getContractAt("AerodromeAMOStrategy", cAMOStrategyProxy.address);
+    const cAMOQuoteLooper = await ethers.getContract("AerodromeQuoteLoop");
 
     console.log("Deployed AMO strategy and proxy contracts");
 
     // Init the AMO strategy
-    const initData = cAMOStrategy.interface.encodeFunctionData(
-      "initialize(address[],address[],address[],address,address,address,address)",
+    const initData = cAMOStrategyImpl.interface.encodeFunctionData(
+      "initialize(address[],address[],address[],address,address,address,address,address,address,address)",
       [
         [addresses.base.AERO], // rewardTokenAddresses
         [], // assets
         [], // pTokens
         addresses.base.universalSwapRouter, // swapRouter
         addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
-        addresses.base.poolFactory, // clFactory
-        addresses.base.sugarHelper  // sugarHelper
+        addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
+        addresses.zero, // clOETHbWethGauge
+        addresses.base.quoterV2,
+        addresses.base.sugarHelper,  // sugarHelper
+        cAMOQuoteLooper.address // quote looper
       ]
     );
     // prettier-ignore
     await withConfirmation(
       cAMOStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
-          cAMOStrategy.address,
+          cAMOStrategyImpl.address,
           deployerAddr,
           initData
         )
     );
     console.log("Initialized cAMOStrategyProxy and implementation");
+
+    await withConfirmation(
+      cAMOStrategy
+        .connect(sDeployer)
+        .setPoolWethShare(2000) // 20%
+    );
+
+    await withConfirmation(
+      cAMOStrategy
+        .connect(sDeployer)
+        .setWithdrawLiquidityShare(9900) // 99%
+    );
+
+    await withConfirmation(
+      cAMOStrategy
+        .connect(sDeployer)
+        .safeApproveAllTokens()
+    );
+
+    console.log("AMOStrategy configured");
 
     // Transfer ownership
     await withConfirmation(
@@ -67,6 +97,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cAMOStrategyProxy,
           signature: "claimGovernance()",
           args: [],
+        },
+        {
+          // 2. Approve the AMO strategy on the Vault
+          contract: cOETHbVault,
+          signature: "approveStrategy(address)",
+          args: [cAMOStrategyProxy.address],
         }
       ],
     };

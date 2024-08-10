@@ -172,7 +172,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         );
         _;
     }
-
+    
     /**
      * @notice Set the reward token addresses. Any old addresses will be overwritten.
      * @param _rewardTokenAddresses Array of reward token addresses

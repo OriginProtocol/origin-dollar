@@ -49,6 +49,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oethbVaultProxy.address
   );
 
+  // Aerodrome AMO Strategy
+  const aerodromeAmoStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
+  const aerodromeAmoStrategy = await ethers.getContractAt("AerodromeAMOStrategy", aerodromeAmoStrategyProxy.address);
+
   // Bridged wOETH
   const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
@@ -62,6 +66,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const { governorAddr } = await getNamedAccounts();
   const governor = await ethers.getSigner(governorAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
+
 
   // Make sure we can print bridged WOETH for tests
   if (isBaseFork) {
@@ -78,9 +83,15 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   await woeth.connect(woethGovernor).grantRole(MINTER_ROLE, minter.address);
   await woeth.connect(woethGovernor).grantRole(BURNER_ROLE, burner.address);
 
-  // Mint some bridged WOETH
-  await woeth.connect(minter).mint(rafael.address, oethUnits("1"));
-  await woeth.connect(minter).mint(nick.address, oethUnits("1"));
+  for (const user of [rafael, nick]) {
+    // Mint some bridged WOETH
+    await woeth.connect(minter).mint(user.address, oethUnits("1"));
+    await weth.connect(user).deposit({ value: oethUnits("10") });
+
+    // Set allowance on the vault
+    await weth.connect(user).approve(oethbVault.address, oethUnits("10"));
+  }
+
   await woeth.connect(minter).mint(woethGovernor.address, oethUnits("1"));
 
   // Governor opts in for rebasing
@@ -95,6 +106,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // Bridged WOETH
     woeth,
     woethProxy,
+
+    // Strategies
+    aerodromeAmoStrategy,
 
     // WETH
     weth,
@@ -118,7 +132,6 @@ mocha.after(async () => {
 
 module.exports = {
   defaultBaseFixture,
-
   MINTER_ROLE,
   BURNER_ROLE,
 };
