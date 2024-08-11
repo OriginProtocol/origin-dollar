@@ -17,12 +17,10 @@ import { ISwapRouter } from "../../interfaces/aerodrome/ISwapRouter.sol";
 import { ICLPool } from "../../interfaces/aerodrome/ICLPool.sol";
 import { ICLGauge } from "../../interfaces/aerodrome/ICLGauge.sol";
 import { IVault } from "../../interfaces/IVault.sol";
-import { IAMOCallback } from "../../interfaces/aerodrome/IAMOCallback.sol";
-import { IAMOQuoteLoop } from "../../interfaces/aerodrome/IAMOQuoteLoop.sol";
 
 import "hardhat/console.sol";
 
-contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
+contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -48,8 +46,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
     ISugarHelper public helper;
     /// @notice helper contract for liquidity and ticker math
     IQuoterV2 public quoter;
-    /// @notice quote looper needed to utilize quotes
-    IAMOQuoteLoop public quoteLooper;
     /// @notice sqrtRatioX96Tick0
     uint160 public sqrtRatioX96Tick0;
     /// @notice sqrtRatioX96Tick1
@@ -126,8 +122,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
         address _clPool,
         address _clGauge,
         address _quoter,
-        address _sugarHelper,
-        address _quoteLooper
+        address _sugarHelper
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -143,7 +138,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
         clGauge = ICLGauge(_clGauge);
         helper = ISugarHelper(_sugarHelper);
         quoter = IQuoterV2(_quoter);
-        quoteLooper = IAMOQuoteLoop(_quoteLooper);
         sqrtRatioX96Tick0 = helper.getSqrtRatioAtTick(0);
         sqrtRatioX96Tick1 = helper.getSqrtRatioAtTick(1);
     }
@@ -210,80 +204,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
 
         // TODO delete this. Just testing you knows?!
         _addLiquidity();
-    }
-
-    /** 
-     * @notice quote the target pool price after the tokens are swapped
-     * @dev execute this function optimistically. All state changes are reverted
-     * @param _amount Amount of asset to swap
-     * @param _swapWETH when true WETH is being swapped for OETHb
-     */
-    function quotePriceAfterTokenSwap(uint256 _amount, bool _swapWETH) external 
-        returns (uint160, uint160, uint256)
-    {
-        try quoteLooper.quoteLoop(
-            _amount,
-            _swapWETH
-        ) {} catch (bytes memory reason) {
-
-            console.log("The reason received");
-            return handleRevert(reason);
-        }
-    }
-
-    function handleRevert(bytes memory reason)
-        private
-        view
-        returns (uint160 sqrtRatioX96Before, uint160 sqrtPriceX96After, uint256 amountReceived)
-    {
-        (uint160 sqrtRatioX96Before,,,,,) = clPool.slot0();
-        (amountReceived, sqrtPriceX96After) = parseRevertReason(reason);
-
-        console.log("DECODED DATA");
-        console.log(amountReceived);
-        console.log(sqrtPriceX96After);
-
-        return (sqrtRatioX96Before, sqrtPriceX96After, amountReceived);
-    }
-
-    /// @dev Parses a revert reason that should contain the numeric quote
-    function parseRevertReason(bytes memory reason)
-        private
-        pure
-        returns (uint256 amount, uint160 sqrtPriceX96After)
-    {
-        if (reason.length != 64) {
-            revert(abi.decode(reason, (string)));
-        }
-        return abi.decode(reason, (uint256, uint160));
-    }
-
-
-    /**
-     * @dev try/catch can only be used by calling another contract. For that reason this loop
-     * around is required. Also this function will always revert
-     */
-    function quoteCallback(uint256 _amount, bool _swapWETH) external override {
-        _removeLiquidity();
-        (uint256 amountOut, uint160 sqrtPriceX96After,,) = quoter.quoteExactInputSingle(
-            IQuoterV2.QuoteExactInputSingleParams({
-                tokenIn: _swapWETH ? WETH : OETHb,
-                tokenOut: _swapWETH ? OETHb : WETH,
-                amountIn: _amount,
-                tickSpacing: 1,
-                // TODO change the thing below
-                sqrtPriceLimitX96: helper.getSqrtRatioAtTick(1)
-            })
-        );
-
-        assembly {
-            let ptr := mload(64)
-            // encode amountOut in the first 32 bytes of the error message data
-            mstore(ptr, amountOut)
-            // encode sqrtPriceX96After in the range of 32 -> 64 bytes of the error message data
-            mstore(add(ptr, 32), sqrtPriceX96After)
-            revert(ptr, 64)
-        }
     }
 
     /**
@@ -429,6 +349,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy, IAMOCallback {
             // TODO add incerase liquidity event
             netValue += amountWETH + amountOETHb;
         }
+
+        // TODO remove from gauge once we have it
+        // clGauge.deposit(tokenId)
     }
 
     /**

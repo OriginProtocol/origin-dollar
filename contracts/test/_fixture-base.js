@@ -63,8 +63,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr } = await getNamedAccounts();
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
   const governor = await ethers.getSigner(governorAddr);
+  const strategist = await ethers.getSigner(strategistAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
 
 
@@ -115,6 +116,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     // Signers
     governor,
+    strategist,
     woethGovernor,
     minter,
     burner,

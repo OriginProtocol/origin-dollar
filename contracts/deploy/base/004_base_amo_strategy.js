@@ -20,7 +20,6 @@ module.exports = deployOnBaseWithGuardian(
     );
 
     await deployWithConfirmation("AerodromeAMOStrategyProxy");
-    await deployWithConfirmation("AerodromeQuoteLoop");
     await deployWithConfirmation("AerodromeAMOStrategy", [
       /* The pool address is not yet known. Might be created before we deploy the
        * strategy or after.
@@ -33,13 +32,12 @@ module.exports = deployOnBaseWithGuardian(
     const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
     const cAMOStrategyImpl = await ethers.getContract("AerodromeAMOStrategy");
     const cAMOStrategy = await ethers.getContractAt("AerodromeAMOStrategy", cAMOStrategyProxy.address);
-    const cAMOQuoteLooper = await ethers.getContract("AerodromeQuoteLoop");
 
     console.log("Deployed AMO strategy and proxy contracts");
 
     // Init the AMO strategy
     const initData = cAMOStrategyImpl.interface.encodeFunctionData(
-      "initialize(address[],address[],address[],address,address,address,address,address,address,address)",
+      "initialize(address[],address[],address[],address,address,address,address,address,address)",
       [
         [addresses.base.AERO], // rewardTokenAddresses
         [], // assets
@@ -49,8 +47,7 @@ module.exports = deployOnBaseWithGuardian(
         addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
         addresses.zero, // clOETHbWethGauge
         addresses.base.quoterV2,
-        addresses.base.sugarHelper,  // sugarHelper
-        cAMOQuoteLooper.address // quote looper
+        addresses.base.sugarHelper  // sugarHelper
       ]
     );
     // prettier-ignore
@@ -103,7 +100,13 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbVault,
           signature: "approveStrategy(address)",
           args: [cAMOStrategyProxy.address],
-        }
+        },
+        {
+          // 3. Set strategist address
+          contract: cOETHbVault,
+          signature: "setStrategistAddr(address)",
+          args: [addresses.base.strategist],
+        },
       ],
     };
   }

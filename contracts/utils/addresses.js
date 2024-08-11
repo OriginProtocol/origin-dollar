@@ -297,6 +297,7 @@ addresses.base.AERO = "0x940181a94a35a4569e4529a3cdfb74e38fd98631";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
 addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =

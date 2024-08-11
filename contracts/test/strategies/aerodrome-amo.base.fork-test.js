@@ -7,8 +7,8 @@ const { oethUnits } = require("../helpers");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
-describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
-  let fixture, oethbVault, weth, aerodromeAmoStrategy, governor;
+describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
+  let fixture, oethbVault, weth, aerodromeAmoStrategy, governor, strategist, rafael;
 
   beforeEach(async () => {
     fixture = await baseFixture();
@@ -21,25 +21,24 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   it("Should be able to deposit to the pool", async () => {
     const { rafael } = fixture;
     await mintAndDeposit(rafael);
-    await mintAndDeposit(rafael);
   });
 
-  it.only("Should be able to quote the amount required", async () => {
-    const { aerodromeAmoStrategy, rafael } = fixture;
-
+  it("Should be able to deposit to the pool & rebalance", async () => {
+    const { rafael } = fixture;
     await mintAndDeposit(rafael);
-
-    const result = await aerodromeAmoStrategy
-      .connect(rafael)
-      .quotePriceAfterTokenSwap(oethUnits("0.00003"), false);
-
-    console.log("result");
-    // In the trace result we get the corre
-    console.log(result);
 
   });
 
-  const mintAndDeposit = async (user) => {
+  const rebalance = async (user) => {
+    await oethbVault
+      .connect(strategist)
+      .rebalace(
+      );
+  }
+
+  const mintAndDeposit = async (userOverride) => {
+    const user = userOverride || rafael;
+
     await oethbVault
       .connect(user)
       .mint(
