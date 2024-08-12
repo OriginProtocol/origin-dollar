@@ -60,10 +60,13 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   });
 
-  const rebalance = async (user) => {
+  const rebalance = async () => {
     await oethbVault
       .connect(strategist)
-      .rebalace(
+      .rebalance(
+        oethUnits("0.1"),
+        oethUnits("0.1"),
+        true
       );
   }
 

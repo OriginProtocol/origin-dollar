@@ -264,16 +264,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _minTokenReceived Slippage check -> minimum amount of token expected in return
      * @param _swapWETH Swap using WETH when true, use OETHb when false
      */
-    function rebalace(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) external nonReentrant onlyGovernorOrStrategist {
-        _rebalace(_amountToSwap, _minTokenReceived, _swapWETH);
+    function rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) external nonReentrant onlyGovernorOrStrategist {
+        _rebalance(_amountToSwap, _minTokenReceived, _swapWETH);
     }
 
     /**
      * @dev Rebalance the pool to the desired token split
      */
-    function _rebalace(uint256 _amount, uint256 _minTokenReceived, bool _swapWETH) internal {
+    function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
         _removeLiquidity();
-        _swapToDesiredPosition(_amount, _minTokenReceived, _swapWETH);
+        _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWETH);
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
@@ -355,18 +355,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
      */
-    function _swapToDesiredPosition(uint256 _amount, uint256 _minTokenReceived, bool _swapWETH) internal {
+    function _swapToDesiredPosition(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
         IERC20 tokenToSwap = IERC20(_swapWETH ? WETH : OETHb);
         uint256 balance = tokenToSwap.balanceOf(address(this));
 
         // TODO not tested
-        if(balance < _amount) {
+        if(balance < _amountToSwap) {
             // if swapping OETHb
             if (!_swapWETH) {
-               uint256 mintForSwap = _amount - balance;
+               uint256 mintForSwap = _amountToSwap - balance;
                IVault(vaultAddress).mintForStrategy(mintForSwap);
             } else {
-                revert NotEnoughWethForSwap(balance, _amount);
+                revert NotEnoughWethForSwap(balance, _amountToSwap);
             }
         }
 
@@ -378,7 +378,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 tickSpacing: tickSpacing, // set to 1
                 recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: _amount,
+                amountIn: _amountToSwap,
                 amountOutMinimum: _minTokenReceived, // slippage check
                 // just a rough sanity check that we are within 0 -> 1 tick
                 // a more fine check is performed in _checkLiquidityWithinExpectedShare
