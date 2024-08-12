@@ -27,7 +27,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   if (isFork) {
     // Fund deployer account
     const { deployerAddr } = await getNamedAccounts();
-    await impersonateAndFund(deployerAddr)
+    await impersonateAndFund(deployerAddr);
   }
 
   log(
