@@ -26,7 +26,12 @@ module.exports = deployOnBaseWithGuardian(
        */
       [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
       addresses.base.WETH, // weth address
-      cOETHbProxy.address  // OETHb address
+      cOETHbProxy.address,  // OETHb address
+      addresses.base.universalSwapRouter, // swapRouter
+      addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
+      addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
+      addresses.base.quoterV2,
+      addresses.base.sugarHelper  // sugarHelper
     ]);
 
     const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
@@ -37,17 +42,12 @@ module.exports = deployOnBaseWithGuardian(
 
     // Init the AMO strategy
     const initData = cAMOStrategyImpl.interface.encodeFunctionData(
-      "initialize(address[],address[],address[],address,address,address,address,address,address)",
+      "initialize(address[],address[],address[],address)",
       [
         [addresses.base.AERO], // rewardTokenAddresses
         [], // assets
         [], // pTokens
-        addresses.base.universalSwapRouter, // swapRouter
-        addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
-        addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
         addresses.zero, // clOETHbWethGauge
-        addresses.base.quoterV2,
-        addresses.base.sugarHelper  // sugarHelper
       ]
     );
     // prettier-ignore

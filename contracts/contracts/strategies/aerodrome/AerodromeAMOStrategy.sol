@@ -34,22 +34,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///      increase liquidity increases this number by the amount of tokens added
     ///      decrease liquidity decreases this number by the amount of tokens removed
     uint256 public netValue;
-    /// @notice the swapRouter for performing swaps
-    ISwapRouter public swapRouter;
-    /// @notice the pool used
-    ICLPool public clPool;
-    /// @notice the pool used
+    /// @notice the gauge for the corresponding Slipstream pool (clPool)
+    /// @dev can become an immutable once the gauge is created on the base mainnet
     ICLGauge public clGauge;
-    /// @notice the liquidity position
-    INonfungiblePositionManager public positionManager;
-    /// @notice helper contract for liquidity and ticker math
-    ISugarHelper public helper;
-    /// @notice helper contract for liquidity and ticker math
-    IQuoterV2 public quoter;
-    /// @notice sqrtRatioX96Tick0
-    uint160 public sqrtRatioX96Tick0;
-    /// @notice sqrtRatioX96Tick1
-    uint160 public sqrtRatioX96Tick1;
     /**
      * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
      * in basis point format.
@@ -83,6 +70,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     int24 public immutable upperTick;
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
+    /// @notice the swapRouter for performing swaps
+    ISwapRouter public immutable swapRouter;
+    /// @notice the pool used
+    ICLPool public immutable clPool;
+    /// @notice the liquidity position
+    INonfungiblePositionManager public immutable positionManager;
+    /// @notice helper contract for liquidity and ticker math
+    ISugarHelper public immutable helper;
+    /// @notice helper contract for liquidity and ticker math
+    IQuoterV2 public immutable quoter;
+    /// @notice sqrtRatioX96Tick0
+    uint160 public immutable sqrtRatioX96Tick0;
+    /// @notice sqrtRatioX96Tick1
+    uint160 public immutable sqrtRatioX96Tick1;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
 
@@ -113,14 +114,34 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @param _stratConfig st
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _OETHbAddress Address of the Erc20 OETHb Token contract
+    /// @param _swapRouter Address of the Aerodrome Universal Swap Router
+    /// @param _nonfungiblePositionManager Address of position manager to add/remove
+    ///         the liquidity
+    /// @param _clPool Address of the Aerodrome concentrated liquidity pool
+    /// @param _quoter Address of the Aerodrome pool swap quoter
+    /// @param _sugarHelper Address of the Aerodrome Sugar helper contract
     constructor(
         BaseStrategyConfig memory _stratConfig,
         address _wethAddress,
-        address _OETHbAddress
+        address _OETHbAddress,
+        address _swapRouter,
+        address _nonfungiblePositionManager,
+        address _clPool,
+        address _quoter,
+        address _sugarHelper
     ) InitializableAbstractStrategy(_stratConfig)
     {
         WETH = _wethAddress;
         OETHb = _OETHbAddress;
+        swapRouter = ISwapRouter(_swapRouter);
+        positionManager = INonfungiblePositionManager(
+            _nonfungiblePositionManager
+        );
+        clPool = ICLPool(_clPool);
+        helper = ISugarHelper(_sugarHelper);
+        quoter = IQuoterV2(_quoter);
+        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(0);
+        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(1);
 
         lowerTick = 0;
         upperTick = 1;
@@ -132,37 +153,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
-     * @param _swapRouter Address of the Aerodrome Universal Swap Router
-     * @param _nonfungiblePositionManager Address of position manager to add/remove
-     *        the liquidity
+     * @param _clGauge Address of the Aerodrome slipstream pool gauge
      */
     function initialize(
         address[] memory _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens,
-        address _swapRouter,
-        address _nonfungiblePositionManager,
-        address _clPool,
-        address _clGauge,
-        address _quoter,
-        address _sugarHelper
+        address _clGauge
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
             _assets,
             _pTokens
         );
-
-        swapRouter = ISwapRouter(_swapRouter);
-        positionManager = INonfungiblePositionManager(
-            _nonfungiblePositionManager
-        );
-        clPool = ICLPool(_clPool);
         clGauge = ICLGauge(_clGauge);
-        helper = ISugarHelper(_sugarHelper);
-        quoter = IQuoterV2(_quoter);
-        sqrtRatioX96Tick0 = helper.getSqrtRatioAtTick(0);
-        sqrtRatioX96Tick1 = helper.getSqrtRatioAtTick(1);
     }
 
     /***************************************
