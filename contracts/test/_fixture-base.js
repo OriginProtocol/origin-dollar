@@ -20,8 +20,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   }
 
   if (!isBaseFork && isFork) {
-    // Only works for Arbitrum One fork
+    // Only works for Base fork
     return;
+  }
+
+  if (isFork) {
+    // Fund deployer account
+    const { deployerAddr } = await getNamedAccounts();
+    await impersonateAndFund(deployerAddr)
   }
 
   log(
