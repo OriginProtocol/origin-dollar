@@ -58,6 +58,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     uint256 public poolWethShare;
     /**
+     * TODO: implement setters and tests
+     * how much variance is allowed (~slippage) when rebalancing the pool
+     */
+    uint256 public poolWethShareVarianceAllowed;
+    /**
      * Share of liquidity to remove on rebalance
      */
     uint128 public withdrawLiquidityShare;
@@ -79,6 +84,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
 
+    error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
+
     event PoolWethShareUpdated(
         uint256 newWethShare
     );
@@ -86,6 +93,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     event WithdrawLiqiudityShareUpdated(
         uint128 newWithdrawLiquidityShare
     );
+
+    /**
+     * @dev Verifies that the caller is the Governor, or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == governor() ||
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Not the Governor or Strategist"
+        );
+        _;
+    }
 
     /// @param _stratConfig st
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -147,7 +166,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * TODO: delete once we get the gauge
+     * TODO: delete once we get the gauge.
      */
     function setGauge(address _clGauge) external onlyGovernor {
         clGauge = ICLGauge(_clGauge);
@@ -200,7 +219,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Deposit an asset into the underlying platform
+     * @dev Deposit WETH to the contract. This function doesn't deposit the liquidity to the
+     *      pool, that is done via the rebalance call.
      * @param _asset Address of the asset to deposit
      * @param _amount Amount of assets to deposit
      */
@@ -208,44 +228,49 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_asset == WETH, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(0), _amount);
-
-        // TODO delete this. Just testing you knows?!
-        _addLiquidity();
     }
 
     /**
-     * @notice Rebalance the pool to the desired token split
+     * @notice Rebalance the pool to the desired token split and Deposit any WETH on the contract to the
+     * underlying aerodrome pool. Print the required amount of corresponding OETHb.
+     * 
+     * Exact _amountToSwap, _minTokenReceived & _swapWETH parameters shall be determined by simulating the 
+     * transaction off-chain. The strategy checks that after the swap the share of the tokens is in the 
+     * expected ranges.
+     * 
+     * @param _amountToSwap The amount of the token to swap
+     * @param _minTokenReceived Slippage check -> minimum amount of token expected in return
+     * @param _swapWETH Swap using WETH when true, use OETHb when false
      */
-    function rebalace() external nonReentrant onlyVaultOrGovernorOrStrategist {
-        _rebalace();
+    function rebalace(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) external nonReentrant onlyGovernorOrStrategist {
+        _rebalace(_amountToSwap, _minTokenReceived, _swapWETH);
     }
 
     /**
      * @dev Rebalance the pool to the desired token split
      */
-    function _rebalace() internal {
-        // TODO remove
-        _checkLiquidityWithinExpectedShare();
-
+    function _rebalace(uint256 _amount, uint256 _minTokenReceived, bool _swapWETH) internal {
         _removeLiquidity();
-        _swapToDesiredPosition();
+        _swapToDesiredPosition(_amount, _minTokenReceived, _swapWETH);
         _addLiquidity();
+        _checkLiquidityWithinExpectedShare();
     }
 
     /**
-     * @dev Decrease 100% of thex liquidity if strategy holds any. In practice the removal of liquidity
+     * @dev Decrease withdrawLiquidityShare (currently set to 99%) of the liquidity if strategy holds any. In practice the removal of liquidity
      * will be skipped only on the first time called.
      */
     function _removeLiquidity() internal {
         if (tokenId == 0) {
             return;
         }
-        // TODO remove from gauge once we have it
-        // clGauge.withdraw(tokenId)
+
+        clGauge.withdraw(tokenId);
 
         (uint128 liquidity,,) = _getPositionInfo();
         uint128 liqudityToRemove = liquidity * withdrawLiquidityShare / 1e4;
 
+        // TODO add events
         (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: tokenId,
@@ -282,26 +307,64 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (tokenId == 0) {
             return;
         }
+        // TODO: calculate that the liquidiy shares are within the expected position
         console.log("checking shares");
 
         (uint256 amount0, uint256 amount1) = _getPositionPrincipal();
         console.log(amount0);
         console.log(amount1);
+
+        // calculate in 1 of 2 ways
+        // 1st way
+        // uint256 currentWethShare = amount0 * 1e4 / (amount0 + amount1)
+        // check that currentWethShare is within the poolWethShareVarianceAllowed of the
+        // configurable poolWethShare
+
+        // 2nd way
+        // math should roughly be:
+        // (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
+        // uint160 tickPriceInterval = (sqrtRatioX96Tick1 - sqrtRatioX96Tick0);
+        // uint160 targetPriceX96 = sqrtRatioX96Tick0 + 
+        //    tickPriceInterval.mulTruncateScale(poolWethShare, 1e4)
+        // - check that the targetPricex96 is within sqrtRatioX96 (with poolWethShareVarianceAllowed)
+
     }
 
     /**
      * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
      */
-    function _swapToDesiredPosition() internal {
-        if (tokenId == 0) {
-            return;
-        }
-        
-        console.log("Swap to desired position?");
+    function _swapToDesiredPosition(uint256 _amount, uint256 _minTokenReceived, bool _swapWETH) internal {
+        IERC20 tokenToSwap = IERC20(_swapWETH ? WETH : OETHb);
+        uint256 balance = tokenToSwap.balanceOf(address(this));
 
-        (uint256 amount0, uint256 amount1) = _getPositionPrincipal();
-        console.log(amount0);
-        console.log(amount1);
+        // TODO not tested
+        if(balance < _amount) {
+            // if swapping OETHb
+            if (!_swapWETH) {
+               uint256 mintForSwap = _amount - balance;
+               IVault(vaultAddress).mintForStrategy(mintForSwap);
+            } else {
+                revert NotEnoughWethForSwap(balance, _amount);
+            }
+        }
+
+        // Swap it
+        uint256 amountReceived = swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: _swapWETH ? WETH : OETHb,
+                tokenOut: _swapWETH ? OETHb : WETH,
+                tickSpacing: tickSpacing, // set to 1
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: _amount,
+                amountOutMinimum: _minTokenReceived, // slippage check
+                // just a rough sanity check that we are within 0 -> 1 tick
+                // a more fine check is performed in _checkLiquidityWithinExpectedShare
+                sqrtPriceLimitX96: _swapWETH ? sqrtRatioX96Tick0 : sqrtRatioX96Tick1
+            })
+        );
+
+        _checkLiquidityWithinExpectedShare();
     }
 
     /**
@@ -316,7 +379,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         if (tokenId == 0) {
             (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
-            console.log("WHAT IS Up?!?!");
+            console.log("The current square root balance of the pool");
             console.log(sqrtRatioX96);
 
             // TODO add new token id position minted event
@@ -357,8 +420,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             netValue += amountWETH + amountOETHb;
         }
 
-        // TODO remove from gauge once we have it
-        // clGauge.deposit(tokenId)
+        clGauge.deposit(tokenId);
     }
 
     /**
@@ -537,107 +599,4 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
-
-
-
-    /**
-     * @dev Swaps one token for other and then provides liquidity to pools.
-     *
-     * @param _desiredAmount0 Minimum amount of token0 needed
-     * @param _desiredAmount1 Minimum amount of token1 needed
-     * @param _swapAmountIn Amount of tokens to swap
-     * @param _swapMinAmountOut Minimum amount of other tokens expected
-     * @param _sqrtPriceLimitX96 Max price limit for swap
-     * @param _swapZeroForOne True if swapping from token0 to token1
-     */
-    // function _ensureAssetsBySwapping(
-    //     uint256 _desiredAmount0,
-    //     uint256 _desiredAmount1,
-    //     uint256 _swapAmountIn,
-    //     uint256 _swapMinAmountOut,
-    //     uint160 _sqrtPriceLimitX96,
-    //     bool _swapZeroForOne
-    // ) internal {
-    //     require(!swapsPaused, "Swaps are paused");
-
-    //     uint256 token0Balance = IERC20(token0).balanceOf(address(this));
-    //     uint256 token1Balance = IERC20(token1).balanceOf(address(this));
-
-    //     uint256 token0Needed = _desiredAmount0 > token0Balance
-    //         ? _desiredAmount0 - token0Balance
-    //         : 0;
-    //     uint256 token1Needed = _desiredAmount1 > token1Balance
-    //         ? _desiredAmount1 - token1Balance
-    //         : 0;
-
-    //     if (_swapZeroForOne) {
-    //         // Amount available in reserve strategies
-    //         uint256 t1ReserveBal = reserveStrategy1.checkBalance(token1);
-
-    //         // Only swap when asset isn't available in reserve as well
-    //         require(token1Needed > 0, "No need for swap");
-    //         require(
-    //             token1Needed > t1ReserveBal,
-    //             "Cannot swap when the asset is available in reserve"
-    //         );
-    //         // Additional amount of token0 required for swapping
-    //         token0Needed += _swapAmountIn;
-    //         // Subtract token1 that we will get from swapping
-    //         token1Needed = (_swapMinAmountOut >= token1Needed)
-    //             ? 0
-    //             : (token1Needed - _swapMinAmountOut);
-    //     } else {
-    //         // Amount available in reserve strategies
-    //         uint256 t0ReserveBal = reserveStrategy0.checkBalance(token0);
-
-    //         // Only swap when asset isn't available in reserve as well
-    //         require(token0Needed > 0, "No need for swap");
-    //         require(
-    //             token0Needed > t0ReserveBal,
-    //             "Cannot swap when the asset is available in reserve"
-    //         );
-    //         // Additional amount of token1 required for swapping
-    //         token1Needed += _swapAmountIn;
-    //         // Subtract token0 that we will get from swapping
-    //         token0Needed = (_swapMinAmountOut >= token0Needed)
-    //             ? 0
-    //             : (token0Needed - _swapMinAmountOut);
-    //     }
-
-    //     // Fund strategy from reserve strategies
-    //     if (token0Needed > 0) {
-    //         IVault(vaultAddress).withdrawFromUniswapV3Reserve(
-    //             token0,
-    //             token0Needed
-    //         );
-    //     }
-
-    //     if (token1Needed > 0) {
-    //         IVault(vaultAddress).withdrawFromUniswapV3Reserve(
-    //             token1,
-    //             token1Needed
-    //         );
-    //     }
-
-    //     // Swap it
-    //     uint256 amountReceived = swapRouter.exactInputSingle(
-    //         ISwapRouter.ExactInputSingleParams({
-    //             tokenIn: _swapZeroForOne ? token0 : token1,
-    //             tokenOut: _swapZeroForOne ? token1 : token0,
-    //             fee: poolFee,
-    //             recipient: address(this),
-    //             deadline: block.timestamp,
-    //             amountIn: _swapAmountIn,
-    //             amountOutMinimum: _swapMinAmountOut,
-    //             sqrtPriceLimitX96: _sqrtPriceLimitX96
-    //         })
-    //     );
-
-    //     emit AssetSwappedForRebalancing(
-    //         _swapZeroForOne ? token0 : token1,
-    //         _swapZeroForOne ? token1 : token0,
-    //         _swapAmountIn,
-    //         amountReceived
-    //     );
-    // }
 }

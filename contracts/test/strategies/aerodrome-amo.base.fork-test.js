@@ -29,6 +29,18 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   });
 
+  // create initial position, swap out all the OETHb from the pool
+  it("Should be able to mint OETHb to facilitate swap transaction", async () => {
+    
+
+  });
+
+
+  it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
+    
+
+  });
+
   const rebalance = async (user) => {
     await oethbVault
       .connect(strategist)

@@ -148,7 +148,7 @@ const setupAerodromeOEthbWETHGauge = async (oethbAddress, aerodromeAmoStrategy, 
       oethbAddress,
       true
     );
-
+    
   // create a gauge
   await voter
     .connect(aeroGaugeSigner)
