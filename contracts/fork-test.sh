@@ -42,6 +42,9 @@ main()
     elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
       PROVIDER_URL=$HOLESKY_PROVIDER_URL;
       BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+      PROVIDER_URL=$BASE_PROVIDER_URL;
+      BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
     fi
 
     if $is_local; then
@@ -70,15 +73,9 @@ main()
     fi
 
     if [ -z "$1" ]; then
-        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
-            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.holesky.fork-test.js"
-        else
-            # Run all files with `.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.fork-test.js"
-        fi
+        # Run all files with `.fork-test.js` suffix when no file name param is given
+        # pass all other params along. Network level filtering happens in global hooks
+        params+="test/**/*.fork-test.js"
     else
         # Run specifc files when a param is given
         params+="$@"
