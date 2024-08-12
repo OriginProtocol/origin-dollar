@@ -69,7 +69,7 @@ const {
   calcDepositRoot,
   depositSSV,
   printClusterInfo,
-  removeValidator,
+  removeValidators,
 } = require("./ssv");
 const {
   amoStrategyTask,
@@ -90,7 +90,7 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  exitValidator,
+  exitValidators,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
@@ -1218,10 +1218,10 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("exitValidator", "Starts the exit process from a validator")
+subtask("exitValidators", "Starts the exit process from validators")
   .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
+    "pubkeys",
+    "Comma separated validator public keys",
     undefined,
     types.string
   )
@@ -1239,15 +1239,15 @@ subtask("exitValidator", "Starts the exit process from a validator")
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await exitValidator({ ...taskArgs, signer });
+    await exitValidators({ ...taskArgs, signer });
   });
-task("exitValidator").setAction(async (_, __, runSuper) => {
+task("exitValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
 subtask(
-  "removeValidator",
-  "Removes a validator from the SSV cluster after it has exited the beacon chain"
+  "removeValidators",
+  "Removes validators from the SSV cluster after they have exited the beacon chain"
 )
   .addOptionalParam(
     "index",
@@ -1256,8 +1256,8 @@ subtask(
     types.int
   )
   .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
+    "pubkeys",
+    "Comma separated validator public keys",
     undefined,
     types.string
   )
@@ -1269,9 +1269,9 @@ subtask(
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await removeValidator({ ...taskArgs, signer });
+    await removeValidators({ ...taskArgs, signer });
   });
-task("removeValidator").setAction(async (_, __, runSuper) => {
+task("removeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

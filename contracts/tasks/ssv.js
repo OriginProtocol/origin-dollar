@@ -1,4 +1,9 @@
-const { parseUnits, formatUnits, solidityPack } = require("ethers/lib/utils");
+const {
+  parseUnits,
+  formatUnits,
+  solidityPack,
+  hexlify,
+} = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -7,11 +12,10 @@ const { getClusterInfo } = require("../utils/ssv");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
-const { checkPubkeyFormat } = require("./taskUtils");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ index, pubkey, operatorids }) {
+async function removeValidators({ index, pubkeys, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
@@ -29,12 +33,14 @@ async function removeValidator({ index, pubkey, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`About to remove validator`);
-  pubkey = checkPubkeyFormat(pubkey);
+  log(`Splitting public keys ${pubkeys}`);
+  const pubKeys = pubkeys.split(",").map((pubkey) => hexlify(pubkey));
+
+  log(`About to remove validators: ${pubKeys}`);
   const tx = await strategy
     .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
+    .removeSsvValidators(pubKeys, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidators");
 }
 
 const printClusterInfo = async (options) => {
@@ -121,5 +127,5 @@ module.exports = {
   printClusterInfo,
   depositSSV,
   calcDepositRoot,
-  removeValidator,
+  removeValidators,
 };
