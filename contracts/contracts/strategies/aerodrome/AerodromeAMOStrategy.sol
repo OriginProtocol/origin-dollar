@@ -147,6 +147,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
+     * TODO: delete once we get the gauge
+     */
+    function setGauge(address _clGauge) external onlyGovernor {
+        clGauge = ICLGauge(_clGauge);
+    }
+
+    /**
      * @notice Set the new desired WETH share
      * @param _amount               The new amount specified in basis points
      */
