@@ -76,6 +76,12 @@ module.exports = deployOnBaseWithGuardian(
     await withConfirmation(
       cAMOStrategy
         .connect(sDeployer)
+        .setPoolWethShareVarianceAllowed(200) // 2%
+    );
+
+    await withConfirmation(
+      cAMOStrategy
+        .connect(sDeployer)
         .safeApproveAllTokens()
     );
 

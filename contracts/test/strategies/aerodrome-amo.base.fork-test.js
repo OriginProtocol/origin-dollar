@@ -2,7 +2,7 @@ const { createFixtureLoader } = require("../_fixture");
 const {
   defaultBaseFixture,
 } = require("../_fixture-base");
-//const { expect } = require("chai");
+const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
@@ -16,6 +16,25 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     oethbVault = fixture.oethbVault;
     aerodromeAmoStrategy = fixture.aerodromeAmoStrategy;
     governor = fixture.governor;
+  });
+
+  describe("ForkTest: Initial state (Base)", function () {
+    it("Should have the correct initial state", async function () {
+      // correct pool weth share variance
+      expect(await aerodromeAmoStrategy.poolWethShareVarianceAllowed()).to.equal(
+        200
+      );
+
+      // correct withdrawal liquity share
+      expect(await aerodromeAmoStrategy.withdrawLiquidityShare()).to.equal(
+        9900
+      );
+
+      // correct pool weth share
+      expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
+        2000
+      );
+    }); 
   });
 
   it("Should be able to deposit to the pool", async () => {

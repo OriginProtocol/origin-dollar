@@ -51,15 +51,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice sqrtRatioX96Tick1
     uint160 public sqrtRatioX96Tick1;
     /**
-     * Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
+     * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
      * in basis point format.
      * 
      * e.g. 2000 means 20% WETH 80% OETHb
      */
     uint256 public poolWethShare;
     /**
-     * TODO: implement setters and tests
-     * how much variance is allowed (~slippage) when rebalancing the pool
+     * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
+     * vary from the configured value after rebalancing. Expressed in basis points.
      */
     uint256 public poolWethShareVarianceAllowed;
     /**
@@ -92,6 +92,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     event WithdrawLiqiudityShareUpdated(
         uint128 newWithdrawLiquidityShare
+    );
+
+    event PoolWethShareVarianceAllowedUpdated(
+        uint256 poolWethShareVarianceAllowed
     );
 
     /**
@@ -205,6 +209,24 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         emit WithdrawLiqiudityShareUpdated(_amount);
     }
 
+    /**
+     * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
+     *         vary from the configured value after rebalancing.
+     * @param _amount               The new amount specified in basis points
+     */
+    function setPoolWethShareVarianceAllowed(uint256 _amount) external onlyGovernor {
+        // TODO tests:
+        // - governor can update
+        // - non governor can not update
+        // - must be within allowed values (event emitted)
+
+        // no sensible reason to ever allow this over 20%
+        require(_amount < 2000, "PoolWethShareVariance");
+
+        poolWethShareVarianceAllowed = _amount;
+        emit PoolWethShareVarianceAllowedUpdated(_amount);
+    }
+    
     /***************************************
                Strategy overrides 
     ****************************************/
