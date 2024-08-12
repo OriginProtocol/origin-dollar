@@ -8,13 +8,14 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
-describe("ForkTest: OETHb Vault", function () {
+describe("OETHb Vault", function () {
   let fixture;
-  beforeEach(async () => {
-    fixture = await baseFixture();
-  });
 
   describe("Mint Whitelist", function () {
+    beforeEach(async () => {
+      fixture = await baseFixture();
+    });
+
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethbVault, governor } = fixture;
 
@@ -101,6 +102,7 @@ describe("ForkTest: OETHb Vault", function () {
     let strategySigner, mockStrategy;
 
     beforeEach(async () => {
+      fixture = await baseFixture();
       const { oethbVault, governor } = fixture;
 
       mockStrategy = await deployWithConfirmation("MockStrategy");
