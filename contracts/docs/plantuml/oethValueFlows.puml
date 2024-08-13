@@ -4,6 +4,7 @@ title "OETH Flow of Value"
 
 actor "User" as user
 actor "Anyone" as anyone
+actor "Block\nBuilder" as mev
 actor "Trustee" as trust <<Origin>> #DeepSkyBlue
 participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
@@ -134,8 +135,11 @@ note right : Beacon chain\nconsensus rewards
 
 ... when a validator produces a block (~4 times a year) ...
 
-val -> feeAcc : ETH
-note right : execution rewards\nincluding MEV
+mev -> feeAcc : ETH
+note right : MEV rewards from block production
+
+anyone -> nativeStrat : ETH
+note right : tx priority fees from block production
 
 end
 

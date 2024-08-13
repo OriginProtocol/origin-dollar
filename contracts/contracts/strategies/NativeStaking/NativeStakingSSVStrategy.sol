@@ -9,6 +9,7 @@ import { InitializableAbstractStrategy } from "../../utils/InitializableAbstract
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
+import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -48,10 +49,8 @@ contract NativeStakingSSVStrategy is
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN;
     /// @notice Fee collector address
-    /// @dev this address will receive Execution layer rewards - These are rewards earned for
-    /// executing transactions on the Ethereum network as part of block proposals. They include
-    /// priority fees (fees paid by users for their transactions to be included) and MEV rewards
-    /// (rewards for arranging transactions in a way that benefits the validator).
+    /// @dev this address will receive maximal extractable value (MEV) rewards. These are
+    /// rewards for arranging transactions in a way that benefits the validator.
     address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
@@ -99,7 +98,9 @@ contract NativeStakingSSVStrategy is
         FEE_ACCUMULATOR_ADDRESS = payable(_feeAccumulator);
     }
 
-    /// @notice initialize function, to set up initial internal state
+    /// @notice Set up initial internal state including
+    /// 1. approving the SSVNetwork to transfer SSV tokens from this strategy contract
+    /// 2. setting the recipient of SSV validator MEV rewards to the FeeAccumulator contract.
     /// @param _rewardTokenAddresses Address of reward token for platform
     /// @param _assets Addresses of initial supported assets
     /// @param _pTokens Platform Token corresponding addresses
@@ -112,6 +113,14 @@ contract NativeStakingSSVStrategy is
             _rewardTokenAddresses,
             _assets,
             _pTokens
+        );
+
+        // Approves the SSV Network contract to transfer SSV tokens for deposits
+        IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
+
+        // Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
+        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
+            FEE_ACCUMULATOR_ADDRESS
         );
     }
 
@@ -247,15 +256,29 @@ contract NativeStakingSSVStrategy is
 
     /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
     function safeApproveAllTokens() external override {
-        /// @dev Approves the SSV Network contract to transfer SSV tokens for deposits
+        // Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
+    }
+
+    /// @notice Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
+    function setFeeRecipient() external {
+        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
+            FEE_ACCUMULATOR_ADDRESS
+        );
     }
 
     /**
      * @notice Only accept ETH from the FeeAccumulator and the WETH contract - required when
-     * unwrapping WETH just before staking it to the validator
-     * @dev don't want to receive donations from anyone else as this will
-     * mess with the accounting of the consensus rewards and validator full withdrawals
+     * unwrapping WETH just before staking it to the validator.
+     * The strategy will also receive ETH from the priority fees of transactions when producing blocks
+     * as defined in EIP-1559.
+     * The tx fees come from the Beacon chain so do not need any EVM level permissions to receive ETH.
+     * The tx fees are paid with each block produced. They are not included in the consensus rewards
+     * which are periodically swept from the validators to this strategy.
+     * For accounting purposes, the priority fees of transactions will be considered consensus rewards
+     * and will be included in the AccountingConsensusRewards event.
+     * @dev don't want to receive donations from anyone else as donations over the fuse limits will
+     * mess with the accounting of the consensus rewards and validator full withdrawals.
      */
     receive() external payable {
         require(
