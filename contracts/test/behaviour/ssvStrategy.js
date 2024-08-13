@@ -92,6 +92,25 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
       expect(await nativeStakingSSVStrategy.MAX_VALIDATORS()).to.equal(500);
     });
+    it("Anyone should be able to set the MEV fee recipient", async () => {
+      const { nativeStakingSSVStrategy, nativeStakingFeeAccumulator, matt } =
+        await context();
+
+      const tx = await nativeStakingSSVStrategy.connect(matt).setFeeRecipient();
+
+      const ssvNetworkAddress = await nativeStakingSSVStrategy.SSV_NETWORK();
+      const ssvNetwork = await ethers.getContractAt(
+        "ISSVNetwork",
+        ssvNetworkAddress
+      );
+
+      await expect(tx)
+        .to.emit(ssvNetwork, "FeeRecipientAddressUpdated")
+        .withArgs(
+          nativeStakingSSVStrategy.address,
+          nativeStakingFeeAccumulator.address
+        );
+    });
   });
 
   describe("Deposit/Allocation", function () {

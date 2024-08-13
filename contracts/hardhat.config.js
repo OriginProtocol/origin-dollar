@@ -14,6 +14,7 @@ const {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
+  isBaseUnitTest,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
@@ -71,7 +72,7 @@ const paths = {};
 if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   // holesky deployment files are in contracts/deploy/holesky
   paths.deploy = "deploy/holesky";
-} else if (isBase || isBaseFork || isBaseForkTest) {
+} else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet

@@ -24,6 +24,7 @@ const {
   isBase,
   isBaseFork,
   isCI,
+  isTest,
 } = require("../test/helpers.js");
 
 const {
@@ -80,7 +81,7 @@ const deployWithConfirmation = async (
   useFeeData
 ) => {
   // check that upgrade doesn't corrupt the storage slots
-  if (!skipUpgradeSafety) {
+  if (!isTest && !skipUpgradeSafety) {
     await assertUpgradeIsSafe(
       hre,
       typeof contract == "string" ? contract : contractName
@@ -123,8 +124,11 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (process.env.PROVIDER_URL?.includes("rpc.tenderly.co")) {
-    // Skip on Tenderly
+  if (
+    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
+    (isTest && !isForkTest)
+  ) {
+    // Skip on Tenderly and for unit tests
     return result;
   }
 
