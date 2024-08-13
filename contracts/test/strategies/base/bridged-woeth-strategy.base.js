@@ -174,14 +174,14 @@ describe("Bridged WOETH Strategy", function () {
         .approve(woethStrategy.address, depositAmount);
       await woethStrategy.connect(governor).depositBridgedWOETH(depositAmount);
 
-      const expectedWoeth = oethUnits("1");
+      const mintedOETHbAmount = oethUnits("1.01");
 
       await oethb
         .connect(governor)
-        .approve(woethStrategy.address, oethUnits("1.01"));
+        .approve(woethStrategy.address, mintedOETHbAmount);
       const tx = await woethStrategy
         .connect(governor)
-        .withdrawBridgedWOETH(expectedWoeth);
+        .withdrawBridgedWOETH(mintedOETHbAmount);
       await expect(tx).to.emit(woethStrategy, "Withdrawal");
 
       // Check state

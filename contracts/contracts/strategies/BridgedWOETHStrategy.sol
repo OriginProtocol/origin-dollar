@@ -184,9 +184,9 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     /**
      * @dev Takes in OETHb and burns it and returns
      *      equivalent amount of bridged wOETH.
-     * @param woethAmount Amount of bridged wOETH to get back
+     * @param oethToBurn Amount of OETHb to burn
      */
-    function withdrawBridgedWOETH(uint256 woethAmount)
+    function withdrawBridgedWOETH(uint256 oethToBurn)
         external
         onlyGovernorOrStrategist
         nonReentrant
@@ -195,7 +195,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         uint256 oraclePrice = _updateWOETHOraclePrice();
 
         // Figure out how much they are worth
-        uint256 oethToBurn = (woethAmount * oraclePrice) / 1 ether;
+        uint256 woethAmount = (oethToBurn * 1 ether) / oraclePrice;
 
         // There's no pToken, however, it just uses WOETH address in the event
         emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);

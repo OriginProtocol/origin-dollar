@@ -85,14 +85,18 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
 
     await oethbVault.rebase();
 
-    const depositAmount = oethUnits("1");
-    const expectedAmount = await woethStrategy.getBridgedWOETHValue(
-      depositAmount
+    const depositWOETHAmount = oethUnits("1");
+    const expectedOETHbAmount = await woethStrategy.getBridgedWOETHValue(
+      depositWOETHAmount
     );
 
     // Governor mints OETHb with wOETH
-    await woeth.connect(governor).approve(woethStrategy.address, depositAmount);
-    await woethStrategy.connect(governor).depositBridgedWOETH(depositAmount);
+    await woeth
+      .connect(governor)
+      .approve(woethStrategy.address, depositWOETHAmount);
+    await woethStrategy
+      .connect(governor)
+      .depositBridgedWOETH(depositWOETHAmount);
 
     const supplyBefore = await oethb.totalSupply();
     const userOETHbBalanceBefore = await oethb.balanceOf(governor.address);
@@ -108,11 +112,13 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       .approve(woethStrategy.address, oethUnits("1000000"));
 
     // Governor tries to withdraw
-    await woethStrategy.connect(governor).withdrawBridgedWOETH(depositAmount);
+    await woethStrategy
+      .connect(governor)
+      .withdrawBridgedWOETH(expectedOETHbAmount);
 
     const supplyDiff = supplyBefore.sub(await oethb.totalSupply());
     expect(supplyDiff).to.approxEqualTolerance(
-      expectedAmount,
+      expectedOETHbAmount,
       1,
       "Incorrect supply change"
     );
@@ -121,7 +127,7 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       await oethb.balanceOf(governor.address)
     );
     expect(userOETHbBalanceDiff).to.approxEqualTolerance(
-      expectedAmount,
+      expectedOETHbAmount,
       1,
       "OETHb balance didn't go down"
     );
@@ -130,7 +136,7 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       userWOETHBalanceBefore
     );
     expect(userWOETHBalanceDiff).to.approxEqualTolerance(
-      depositAmount,
+      depositWOETHAmount,
       1,
       "User has less WOETH"
     );
@@ -139,7 +145,7 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       await woethStrategy.checkBalance(weth.address)
     );
     expect(stratBalanceDiff).to.approxEqualTolerance(
-      expectedAmount,
+      expectedOETHbAmount,
       1,
       "Strategy reports incorrect balance"
     );
@@ -148,7 +154,7 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
       await woeth.balanceOf(woethStrategy.address)
     );
     expect(stratWOETHBalanceDiff).to.approxEqualTolerance(
-      depositAmount,
+      depositWOETHAmount,
       1,
       "Strategy has more WOETH"
     );
