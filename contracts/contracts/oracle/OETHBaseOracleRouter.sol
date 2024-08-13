@@ -8,6 +8,7 @@ import { StableMath } from "../utils/StableMath.sol";
 // @notice Oracle Router (for OETH on Base) that denominates all prices in ETH
 contract OETHBaseOracleRouter is AbstractOracleRouter {
     using StableMath for uint256;
+    using SafeCast for int256;
 
     address constant WETH = 0x4200000000000000000000000000000000000006;
     address constant WOETH = 0xD8724322f44E5c58D7A815F542036fb17DbbF839;
@@ -46,7 +47,7 @@ contract OETHBaseOracleRouter is AbstractOracleRouter {
         );
 
         uint8 decimals = getDecimals(_feed);
-        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        uint256 _price = _iprice.toUint256().scaleBy(18, decimals);
         return _price;
     }
 

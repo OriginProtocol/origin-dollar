@@ -20,6 +20,15 @@ module.exports = deployOnBaseWithGuardian(
       cOETHbVaultProxy.address
     );
 
+    // Deploy oracle router
+    await deployWithConfirmation("OETHBaseOracleRouter");
+    const cOracleRouter = await ethers.getContract("OETHBaseOracleRouter");
+
+    // Cache decimals
+    await withConfirmation(
+      cOracleRouter.cacheDecimals(addresses.base.BridgedWOETH)
+    );
+
     // Deploy proxy
     await deployWithConfirmation("BridgedWOETHStrategyProxy");
     const cStrategyProxy = await ethers.getContract(
@@ -75,6 +84,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cStrategy,
           signature: "updateWOETHOraclePrice()",
           args: [],
+        },
+        {
+          // 4. Update oracle router
+          contract: cOETHbVault,
+          signature: "setPriceProvider(address)",
+          args: [cOracleRouter.address],
         },
       ],
     };
