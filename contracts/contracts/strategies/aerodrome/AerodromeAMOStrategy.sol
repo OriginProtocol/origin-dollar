@@ -643,23 +643,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Returns the accumulated fees from the active position
-     * @return amount0 Amount of token0 ready to be collected as fee
-     * @return amount1 Amount of token1 ready to be collected as fee
-     */
-    function getPendingFees()
-        external
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-
-        (amount0, amount1) = helper.fees(
-            positionManager,
-            tokenId
-        );
-    }
-
-    /**
      * @dev Returns the balance of both tokens in a given position (excluding fees)
      * @return amount0 Amount of token0 in position
      * @return amount1 Amount of token1 in position
