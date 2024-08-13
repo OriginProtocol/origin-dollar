@@ -90,9 +90,9 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Upgrade both OETH Native Staking Strategy.
+      name: `Upgrade both OETH Native Staking Strategies.
 
-Set the FeeAccumulator's to receive MEV rewards`,
+Set the FeeAccumulator contracts to receive MEV rewards from the SSV validators`,
       actions: [
         // 1. Upgrade the first Native Staking Strategy
         {
