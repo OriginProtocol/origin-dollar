@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/chainlink/AggregatorV3Interface.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { AbstractOracleRouter } from "./AbstractOracleRouter.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import "../interfaces/chainlink/AggregatorV3Interface.sol";
 
 // @notice Oracle Router (for OETH on Base) that denominates all prices in ETH
 contract OETHBaseOracleRouter is AbstractOracleRouter {
