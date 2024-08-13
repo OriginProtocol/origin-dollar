@@ -80,7 +80,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   const governor = await ethers.getSigner(governorAddr);
-  const strategist = await ethers.getSigner(strategistAddr);
+  const strategist = await impersonateAndFund(strategistAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
 
 
@@ -151,9 +151,11 @@ const defaultBaseFixture = deployments.createFixture(async () => {
  * This is needed only as long as the gauge isn't created on the base mainnet
  */
 const setupAerodromeOEthbWETHGauge = async (oethbAddress, aerodromeAmoStrategy, governor) => {
+  //0x16613524e02ad97eDfeF371bC883F2F5d6C480A5
   const voter = await ethers.getContractAt(aeroVoterAbi, addresses.base.aeroVoterAddress);
   const amoPool = await ethers.getContractAt(slipstreamPoolAbi, addresses.base.aerodromeOETHbWETHClPool);
 
+  // 0xE6A41fE61E7a1996B59d508661e3f524d6A32075
   const aeroGaugeSigner = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress);
 
   // whitelist OETHb
@@ -168,9 +170,12 @@ const setupAerodromeOEthbWETHGauge = async (oethbAddress, aerodromeAmoStrategy, 
   await voter
     .connect(aeroGaugeSigner)
     .createGauge(
+      // 0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A
       addresses.base.slipstreamPoolFactory,
+      // 0x6446021F4E396dA3df4235C62537431372195D38
       addresses.base.aerodromeOETHbWETHClPool
     );
+
 
   await aerodromeAmoStrategy
     .connect(governor)

@@ -16,6 +16,8 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     oethbVault = fixture.oethbVault;
     aerodromeAmoStrategy = fixture.aerodromeAmoStrategy;
     governor = fixture.governor;
+    strategist = fixture.strategist;
+    rafael = fixture.rafael;
   });
 
   describe("ForkTest: Initial state (Base)", function () {
@@ -42,9 +44,23 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     await mintAndDeposit(rafael);
   });
 
-  it("Should be able to deposit to the pool & rebalance", async () => {
+  it.only("Should be able to deposit to the pool & rebalance", async () => {
     const { rafael } = fixture;
     await mintAndDeposit(rafael);
+
+    await rebalance(
+      oethUnits("0.0073"),
+      oethUnits("0.0072"),
+      false // swap OETHb for WETH
+    );
+
+    await mintAndDeposit(rafael);
+
+    await rebalance(
+      oethUnits("0.0000001"),
+      oethUnits("0.00000009"),
+      false // swap OETHb for WETH
+    );
 
   });
 
@@ -60,13 +76,13 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   });
 
-  const rebalance = async () => {
-    await oethbVault
+  const rebalance = async (amountToSwap, minTokenReceived, swapWETH) => {
+    await aerodromeAmoStrategy
       .connect(strategist)
       .rebalance(
-        oethUnits("0.1"),
-        oethUnits("0.1"),
-        true
+        amountToSwap,
+        minTokenReceived,
+        swapWETH
       );
   }
 

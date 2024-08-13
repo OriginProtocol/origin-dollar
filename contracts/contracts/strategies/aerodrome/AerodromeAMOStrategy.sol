@@ -86,7 +86,21 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     uint160 public immutable sqrtRatioX96Tick1;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
-    error PoolRebalanceOutOfBounds(uint256 currentPoolWethShare, uint256 requiredPoolWethShare); // 0x79b8cc8e
+    error PoolRebalanceOutOfBounds(
+        uint256 currentPoolWethShare,
+        uint256 requiredPoolWethShare,
+        uint256 WETHPositionBalance,
+        uint256 OETHbPositionBalance
+    ); // 0x6c6108fb
+
+
+
+    event PoolRebalanced(
+        uint256 currentPoolWethShare,
+        uint256 targetPoolWethShare,
+        uint256 WETHPositionBalance,
+        uint256 OETHbPositionBalance
+    );
     
     event PoolWethShareUpdated(
         uint256 newWethShare
@@ -158,6 +172,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
         clPool = ICLPool(_clPool);
         helper = ISugarHelper(_sugarHelper);
+        // TODO: delete quoter
         quoter = IQuoterV2(_quoter);
         sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(0);
         sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(1);
@@ -365,19 +380,28 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (tokenId == 0) {
             return;
         }
-        console.log("checking shares");
 
-        (uint256 amountWETH, uint256 amountOETHb) = _getPositionPrincipal();
+        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = _getPositionPrincipal();
         // TODO check we are withing the expected tick range
-        require(amountWETH + amountOETHb > 0, "Can not withhdraw full position");
-        console.log(amountWETH);
-        console.log(amountOETHb);
+        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withhdraw full position");
 
-        uint256 currentWethShareBp = amountWETH * 1e4 / (amountWETH + amountOETHb);
+        uint256 currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
 
         if (poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
             poolWethShare > currentWethShareBp + poolWethShareVarianceAllowed) {
-            revert PoolRebalanceOutOfBounds(currentWethShareBp, poolWethShare);
+            revert PoolRebalanceOutOfBounds(
+                currentWethShareBp,
+                poolWethShare,
+                WETHPositionBalance,
+                OETHbPositionBalance
+            );
+        } else {
+            emit PoolRebalanced(
+                currentWethShareBp,
+                poolWethShare,
+                WETHPositionBalance,
+                OETHbPositionBalance
+            );
         }
     }
 
@@ -414,6 +438,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 sqrtPriceLimitX96: _swapWETH ? sqrtRatioX96Tick0 : sqrtRatioX96Tick1
             })
         );
+
+        _checkLiquidityWithinExpectedShare();
     }
 
     /**
@@ -422,11 +448,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _addLiquidity() internal {
         uint256 WETHBalance = IERC20(WETH).balanceOf(address(this));
         uint256 OETHbBalance = IERC20(OETHb).balanceOf(address(this));
-
         require(WETHBalance > 0, "Must add some WETH");
+        uint256 OETHbRequired;
 
-        uint256 OETHbRequired = (WETHBalance / poolWethShare)
-            .mulTruncateScale((1e4 - poolWethShare), 1e4);
+        if (tokenId == 0) {
+            // supply token amounts according to target poolWethShare amount
+            OETHbRequired = (WETHBalance * 1e4 / poolWethShare)
+                .mulTruncateScale((1e4 - poolWethShare), 1e4);
+
+        } else {
+            // supply the tokens to the pool according to the current position in the pool
+            (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = _getPositionPrincipal();
+
+            OETHbRequired = OETHbPositionBalance * 1e4 / WETHPositionBalance * WETHBalance / 1e4;
+        }
 
         if (OETHbRequired > OETHbBalance) {
             IVault(vaultAddress).mintForStrategy(OETHbRequired - OETHbBalance);
@@ -434,10 +469,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         if (tokenId == 0) {
             (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
-            console.log("The current square root balance of the pool");
-            console.log(sqrtRatioX96);
 
-            // TODO add new token id position minted event
             (uint256 mintedTokenId,,uint256 WETHAmountSupplied, uint256 OETHbAmountSupplied) = positionManager.mint(
                 INonfungiblePositionManager.MintParams({
                     token0: WETH,
@@ -469,7 +501,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 mintedTokenId, // tokenId
                 netValue
             );
-
         } else {
 
             (,uint256 WETHAmountSupplied, uint256 OETHbAmountSupplied) = positionManager.increaseLiquidity(
@@ -486,7 +517,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
 
             netValue += WETHAmountSupplied + OETHbAmountSupplied;
-            
+
             emit LiquidityAdded(
                 WETHBalance, // WETHAmountDesired
                 OETHbRequired, // OETHbAmountDesired
@@ -497,6 +528,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
+        positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
     }
 
@@ -546,7 +578,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
 
     /**
-     * @dev Default TODO
+     * @dev Collect the AERO token from the gauge 
      */
     function _collectRewardTokens() internal override {
         // TODO do other stuff
@@ -578,8 +610,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding aToken,
-     *      if for some reason is it necessary.
+     * @dev Approve the spending of all assets 
      */
     function safeApproveAllTokens()
         external
@@ -659,24 +690,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /**
-     * @dev Returns the fees in a given position
-     * TODO: test this, should return 0 since we don't earn fees
-     * @return amount0 Amount of token0 in position
-     * @return amount1 Amount of token1 in position
-     */
-    function getPositionFees()
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
-        (amount0, amount1) = helper.fees(
-            positionManager,
-            tokenId
-        );
-    }
-
     /***************************************
             Hidden functions
     ****************************************/
@@ -690,5 +703,21 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function removePToken(uint256) external override {
         // The pool tokens can never change.
         revert("Unsupported method");
+    }
+
+    /***************************************
+            ERC721 management
+    ****************************************/
+
+    /// @notice Callback function for whenever a NFT is transferred to this contract
+    // solhint-disable-next-line max-line-length
+    /// Ref: https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721Receiver-onERC721Received-address-address-uint256-bytes-
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 }

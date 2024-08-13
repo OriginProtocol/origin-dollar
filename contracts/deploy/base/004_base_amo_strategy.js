@@ -27,7 +27,7 @@ module.exports = deployOnBaseWithGuardian(
       [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
       addresses.base.WETH, // weth address
       cOETHbProxy.address,  // OETHb address
-      addresses.base.universalSwapRouter, // swapRouter
+      addresses.base.swapRouter, // swapRouter
       addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
       addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
       addresses.base.quoterV2,
@@ -113,6 +113,12 @@ module.exports = deployOnBaseWithGuardian(
           signature: "setStrategistAddr(address)",
           args: [addresses.base.strategist],
         },
+        {
+          // 4. Set strategy as whitelisted one to mint OETHb tokens
+          contract: cOETHbVault,
+          signature: "addStrategyToMintWhitelist(address)",
+          args: [cAMOStrategyProxy.address],
+        }
       ],
     };
   }

@@ -7,6 +7,11 @@ pragma abicoder v2;
 /// and authorized.
 interface INonfungiblePositionManager
 {
+    /**
+     * @dev See {IERC721-approve}.
+     */
+     function approve(address to, uint256 tokenId) external;
+
     /// @notice Returns the position information associated with a given token ID.
     /// @dev Throws if the token ID is not valid.
     /// @param tokenId The ID of the token that represents the position
