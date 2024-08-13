@@ -124,8 +124,8 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
             require(oraclePrice128 >= lastOraclePrice, "Negative wOETH yield");
 
             // (lastOraclePrice * (1 + maxPriceDiffBps))
-            uint256 maxPrice = ((lastOraclePrice *
-                (1e4 + uint128(maxPriceDiffBps))) / 1e4);
+            uint256 maxPrice = ((lastOraclePrice * (1e4 + maxPriceDiffBps)) /
+                1e4);
 
             // And that it's within the bounds.
             require(oraclePrice128 <= maxPrice, "Price diff beyond threshold");
