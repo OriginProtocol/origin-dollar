@@ -66,6 +66,17 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @dev Sets the max price diff bps for the wOETH value appreciation
      * @param _maxPriceDiffBps Bps value, 10k == 100%
      */
+    function setMaxPriceDiffBps(uint128 _maxPriceDiffBps)
+        external
+        onlyGovernor
+    {
+        _setMaxPriceDiffBps(_maxPriceDiffBps);
+    }
+
+    /**
+     * @dev Sets the max price diff bps for the wOETH value appreciation
+     * @param _maxPriceDiffBps Bps value, 10k == 100%
+     */
     function _setMaxPriceDiffBps(uint128 _maxPriceDiffBps) internal {
         require(
             _maxPriceDiffBps > 0 && _maxPriceDiffBps <= 10000,
@@ -78,14 +89,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Sets the max price diff bps for the wOETH value appreciation
-     * @param _maxPriceDiffBps Bps value, 10k == 100%
+     * @dev Wrapper for _updateWOETHOraclePrice with nonReentrant flag
+     * @return The latest price of wOETH from Oracle
      */
-    function setMaxPriceDiffBps(uint128 _maxPriceDiffBps)
-        external
-        onlyGovernor
-    {
-        _setMaxPriceDiffBps(_maxPriceDiffBps);
+    function updateWOETHOraclePrice() external nonReentrant returns (uint256) {
+        return _updateWOETHOraclePrice();
     }
 
     /**
@@ -113,16 +121,14 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // Do some checks
         if (lastOraclePrice > 0) {
             // Make sure the value only goes up
-            require(lastOraclePrice <= oraclePrice128, "Negative wOETH yield");
+            require(oraclePrice128 >= lastOraclePrice, "Negative wOETH yield");
+
+            // (lastOraclePrice * (1 + maxPriceDiffBps))
+            uint256 maxPrice = ((lastOraclePrice *
+                (1e4 + uint128(maxPriceDiffBps))) / 1e4);
 
             // And that it's within the bounds.
-            require(
-                // oraclePrice <= (lastOraclePrice * (1 + maxPriceDiffBps))
-                oraclePrice128 <=
-                    ((lastOraclePrice * (1e4 + uint128(maxPriceDiffBps))) /
-                        1e4),
-                "Price diff beyond threshold"
-            );
+            require(oraclePrice128 <= maxPrice, "Price diff beyond threshold");
         }
 
         emit WOETHPriceUpdated(lastOraclePrice, oraclePrice128);
@@ -131,14 +137,6 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         lastOraclePrice = oraclePrice128;
 
         return oraclePrice;
-    }
-
-    /**
-     * @dev Wrapper for _updateWOETHOraclePrice with nonReentrant flag
-     * @return The latest price of wOETH from Oracle
-     */
-    function updateWOETHOraclePrice() external nonReentrant returns (uint256) {
-        return _updateWOETHOraclePrice();
     }
 
     /**
