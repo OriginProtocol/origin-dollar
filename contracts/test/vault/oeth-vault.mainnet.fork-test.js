@@ -190,14 +190,12 @@ describe("ForkTest: OETH Vault", function () {
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
 
-    // Skipping this test since right now we have too much of
-    // WETH sitting in the Vault waiting to be deposited
-    it.skip("should not do full redeem by OETH whale", async () => {
+    it("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
-        parseUnits("100", 18)
+        parseUnits("1000", 18)
       );
 
       const tx = oethVault.connect(oethWhaleSigner).redeem(oethWhaleBalance, 0);
@@ -210,6 +208,8 @@ describe("ForkTest: OETH Vault", function () {
       expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
         parseUnits("100", 18)
       );
+      const { nextWithdrawalIndex: requestId } =
+        await oethVault.withdrawalQueueMetadata();
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
@@ -220,6 +220,7 @@ describe("ForkTest: OETH Vault", function () {
         .withNamedArgs({
           _withdrawer: await oethWhaleSigner.getAddress(),
           _amount: oethWhaleBalance,
+          _requestId: requestId,
         });
     });
     it("should claim withdraw by a OETH whale", async () => {
@@ -232,6 +233,8 @@ describe("ForkTest: OETH Vault", function () {
       );
 
       oethWhaleBalance = oethUnits("50");
+      const { nextWithdrawalIndex: requestId } =
+        await oethVault.withdrawalQueueMetadata();
 
       // First Request withdrawal
       await oethVault
@@ -241,11 +244,13 @@ describe("ForkTest: OETH Vault", function () {
       await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
       // Then Claim withdrawal
-      const tx = await oethVault.connect(oethWhaleSigner).claimWithdrawal(0);
+      const tx = await oethVault
+        .connect(oethWhaleSigner)
+        .claimWithdrawal(requestId);
 
       await expect(tx)
         .to.emit(oethVault, "WithdrawalClaimed")
-        .withArgs(oethWhaleAddress, 0, oethWhaleBalance);
+        .withArgs(oethWhaleAddress, requestId, oethWhaleBalance);
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock } = fixture;
