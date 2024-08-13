@@ -412,7 +412,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         IERC20 tokenToSwap = IERC20(_swapWETH ? WETH : OETHb);
         uint256 balance = tokenToSwap.balanceOf(address(this));
 
-        // TODO not tested
         if(balance < _amountToSwap) {
             // if swapping OETHb
             if (!_swapWETH) {
