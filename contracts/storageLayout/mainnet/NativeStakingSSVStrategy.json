@@ -53,7 +53,7 @@
       "label": "validatorsStates",
       "offset": 0,
       "slot": "53",
-      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36016)",
+      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36384)",
       "contract": "ValidatorRegistrator",
       "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:45"
     },
@@ -207,7 +207,7 @@
       "slot": "263",
       "type": "t_uint256",
       "contract": "NativeStakingSSVStrategy",
-      "src": "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:67"
+      "src": "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:66"
     },
     {
       "label": "__gap",
@@ -215,7 +215,7 @@
       "slot": "264",
       "type": "t_array(t_uint256)49_storage",
       "contract": "NativeStakingSSVStrategy",
-      "src": "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:70"
+      "src": "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:69"
     }
   ],
   "types": {
@@ -251,7 +251,7 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(VALIDATOR_STATE)36016": {
+    "t_enum(VALIDATOR_STATE)36384": {
       "label": "enum ValidatorRegistrator.VALIDATOR_STATE",
       "members": [
         "NON_REGISTERED",
@@ -270,7 +270,7 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36016)": {
+    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36384)": {
       "label": "mapping(bytes32 => enum ValidatorRegistrator.VALIDATOR_STATE)",
       "numberOfBytes": "32"
     },
