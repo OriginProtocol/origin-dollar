@@ -5,12 +5,13 @@ const {
 const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
 const ethers = require("ethers");
+const { impersonateAndFund } = require("../../utils/signers");
 const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
-describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
+describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
 
   beforeEach(async () => {
@@ -51,6 +52,190 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
     }); 
   });
+
+  describe("Withdraw", function () {
+    it("Should allow withdraw when the pool is 80:20 balanced", async () => {
+      const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      const balanceBefore = await weth.balanceOf(rafael.address)
+
+      const poolPrice = await aerodromeAmoStrategy.getPoolX96Price()
+
+      // setup() moves the pool closer to 80:20
+      const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdraw(
+          rafael.address,
+          weth.address,
+          oethUnits("1")
+        );
+      
+      // Make sure that 1 WETH and 4 OETHb were burned
+      const [amountWETHAfter, amountOETHbAfter] = await aerodromeAmoStrategy.getPositionPrincipal();
+      expect(amountWETHAfter).to.approxEqualTolerance(amountWETH.sub(oethUnits("1")))
+      expect(amountOETHbAfter).to.approxEqualTolerance(amountOETHb.sub(oethUnits("4")))
+
+      // Make sure there's no price movement
+      expect(await aerodromeAmoStrategy.getPoolX96Price()).to.eq(poolPrice)
+
+      // And recipient has got it
+      expect(await weth.balanceOf(rafael.address)).to.eq(balanceBefore.add(oethUnits("1")))
+    })
+
+    it("Should allow withdrawAll when the pool is 80:20 balanced", async () => {
+      const { oethbVault, aerodromeAmoStrategy, weth, oethb } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
+      const supplyBefore = await oethb.totalSupply();
+      
+      // setup() moves the pool closer to 80:20
+      const [amountWETHBefore, amountOETHbBefore] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdrawAll();
+
+      // // Make sure pool is empty
+      // // TODO: This method reverts when there's nothing in the pool
+      // const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+      // expect(amountOETHb).to.eq(0)
+      // expect(amountWETH).to.eq(0)
+
+      // And recipient has got it
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETHBefore))
+
+      // And supply has gone down
+      expect(await oethb.totalSupply()).to.eq(supplyBefore.sub(amountOETHbBefore))
+    })
+
+    it("Should withdraw when there's little WETH in the pool", async () => {
+      const { oethbVault, aerodromeAmoStrategy, rafael, weth, oethb } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of WETH
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("3.5"),
+        swapWeth: false
+      })
+
+      const balanceBefore = await weth.balanceOf(rafael.address)
+
+      const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdraw(
+          rafael.address,
+          weth.address,
+          oethUnits("1")
+        );
+      
+      // Make sure that 1 WETH was burned and pool composition remains the same
+      const [amountWETHAfter, amountOETHbAfter] = await aerodromeAmoStrategy.getPositionPrincipal();
+      expect(amountWETHAfter).to.approxEqualTolerance(amountWETH.sub(oethUnits("1")))
+      expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(amountOETHb.div(amountWETH))
+      
+      // And recipient has got it
+      expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+    })
+
+    it("Should withdrawAll when there's little WETH in the pool", async () => {
+      const { oethbVault, aerodromeAmoStrategy, weth } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of WETH
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("3.5"),
+        swapWeth: false
+      })
+
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
+
+      const [amountWETH,] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdrawAll();
+
+      // And recipient has got it
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETH))
+    })
+
+    it("Should withdraw when there's little OETHb in the pool", async () => {
+      const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of OETHb
+      await swap({
+        // Pool has 5 OETHb
+        amount: oethUnits("3.5"),
+        swapWeth: true
+      })
+
+      const balanceBefore = await weth.balanceOf(rafael.address)
+
+      const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdraw(
+          rafael.address,
+          weth.address,
+          oethUnits("1")
+        );
+      
+      // Make sure that 1 WETH was burned and pool composition remains the same
+      const [amountWETHAfter, amountOETHbAfter] = await aerodromeAmoStrategy.getPositionPrincipal();
+      expect(amountWETHAfter).to.approxEqualTolerance(amountWETH.sub(oethUnits("1")))
+      expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(amountOETHb.div(amountWETH))
+
+      // And recipient has got it
+      expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+    })
+
+    it("Should withdrawAll when there's little OETHb in the pool", async () => {
+      const { oethbVault, aerodromeAmoStrategy, weth } = fixture
+      
+      const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of WETH
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("3.5"),
+        swapWeth: false
+      })
+
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
+
+      const [amountWETH,] = await aerodromeAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
+        .withdrawAll();
+
+      // And recipient has got it
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETH))
+    })
+  })
 
   it("Should be able to deposit to the strategy", async () => {
     const { rafael } = fixture;
