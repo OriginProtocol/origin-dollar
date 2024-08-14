@@ -30,7 +30,6 @@ module.exports = deployOnBaseWithGuardian(
       addresses.base.swapRouter, // swapRouter
       addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
       addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
-      addresses.base.quoterV2,
       addresses.base.sugarHelper  // sugarHelper
     ]);
 

@@ -9,6 +9,7 @@ const addresses = require("../utils/addresses");
 const log = require("../utils/logger")("test:fixtures-arb");
 
 const aeroVoterAbi = require("./abi/aerodromeVoter.json");
+const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const slipstreamPoolAbi = require("./abi/aerodromeSlipstreamPool.json")
 
 const MINTER_ROLE =
@@ -102,10 +103,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   for (const user of [rafael, nick]) {
     // Mint some bridged WOETH
     await woeth.connect(minter).mint(user.address, oethUnits("1"));
-    await weth.connect(user).deposit({ value: oethUnits("10") });
+    await weth.connect(user).deposit({ value: oethUnits("100") });
 
     // Set allowance on the vault
-    await weth.connect(user).approve(oethbVault.address, oethUnits("10"));
+    await weth.connect(user).approve(oethbVault.address, oethUnits("50"));
   }
 
   await woeth.connect(minter).mint(woethGovernor.address, oethUnits("1"));
@@ -115,10 +116,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     await oethb.connect(governor).rebaseOptIn();
   }
 
+  const aeroSwapRouter = await ethers.getContractAt(aeroSwapRouterAbi, addresses.base.swapRouter);
+
   // TODO delete once we have gauge on the mainnet
   await setupAerodromeOEthbWETHGauge(oethb.address, aerodromeAmoStrategy, governor);
 
   return {
+    // Aerodrome
+    aeroSwapRouter,
     // OETHb
     oethb,
     oethbVault,
@@ -151,11 +156,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
  * This is needed only as long as the gauge isn't created on the base mainnet
  */
 const setupAerodromeOEthbWETHGauge = async (oethbAddress, aerodromeAmoStrategy, governor) => {
-  //0x16613524e02ad97eDfeF371bC883F2F5d6C480A5
   const voter = await ethers.getContractAt(aeroVoterAbi, addresses.base.aeroVoterAddress);
   const amoPool = await ethers.getContractAt(slipstreamPoolAbi, addresses.base.aerodromeOETHbWETHClPool);
 
-  // 0xE6A41fE61E7a1996B59d508661e3f524d6A32075
   const aeroGaugeSigner = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress);
 
   // whitelist OETHb

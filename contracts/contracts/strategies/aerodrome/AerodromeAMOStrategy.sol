@@ -12,7 +12,6 @@ import { StableMath } from "../../utils/StableMath.sol";
 
 import { ISugarHelper } from "../../interfaces/aerodrome/ISugarHelper.sol";
 import { INonfungiblePositionManager } from "../../interfaces/aerodrome/INonfungiblePositionManager.sol";
-import { IQuoterV2 } from "../../interfaces/aerodrome/IQuoterV2.sol";
 import { ISwapRouter } from "../../interfaces/aerodrome/ISwapRouter.sol";
 import { ICLPool } from "../../interfaces/aerodrome/ICLPool.sol";
 import { ICLGauge } from "../../interfaces/aerodrome/ICLGauge.sol";
@@ -30,9 +29,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /// @notice tokenId of the liquidity position
     uint256 public tokenId;
-    /// @dev Cumulative amount of WETH + OETHb tokens present in Aerodrome Slipstream pool
-    ///      increase liquidity increases this number by the amount of tokens added
-    ///      decrease liquidity decreases this number by the amount of tokens removed
+    /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
+    ///      minimum amount of tokens are withdrawn at a 1:1 price
     uint256 public netValue;
     /// @notice the gauge for the corresponding Slipstream pool (clPool)
     /// @dev can become an immutable once the gauge is created on the base mainnet
@@ -78,11 +76,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     INonfungiblePositionManager public immutable positionManager;
     /// @notice helper contract for liquidity and ticker math
     ISugarHelper public immutable helper;
-    /// @notice helper contract for liquidity and ticker math
-    IQuoterV2 public immutable quoter;
     /// @notice sqrtRatioX96Tick0
+    /// @dev tick 0 has value -1 and represents the lowest price of WETH priced in OETHb. Meaning the pool
+    /// offers less than 1 OETHb for 1 WETH. In other terms to get 1 OETHB the swap needs to offer 1.0001 WETH
     uint160 public immutable sqrtRatioX96Tick0;
     /// @notice sqrtRatioX96Tick1
+    /// @dev tick 1 has value 0 and represents 1:1 price parity of WETH to OETHb 
     uint160 public immutable sqrtRatioX96Tick1;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
@@ -93,8 +92,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 OETHbPositionBalance
     ); // 0x6c6108fb
 
-
-
     event PoolRebalanced(
         uint256 currentPoolWethShare,
         uint256 targetPoolWethShare,
@@ -104,6 +101,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     
     event PoolWethShareUpdated(
         uint256 newWethShare
+    );
+
+    event PrincipalPositionBeforeSwap(
+        uint256 WETHPositionBalance,
+        uint256 OETHbPositionBalance
+    );
+
+    event PrincipalPositionAfterSwap(
+        uint256 WETHPositionBalance,
+        uint256 OETHbPositionBalance
     );
 
     event WithdrawLiqiudityShareUpdated(
@@ -151,7 +158,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @param _nonfungiblePositionManager Address of position manager to add/remove
     ///         the liquidity
     /// @param _clPool Address of the Aerodrome concentrated liquidity pool
-    /// @param _quoter Address of the Aerodrome pool swap quoter
     /// @param _sugarHelper Address of the Aerodrome Sugar helper contract
     constructor(
         BaseStrategyConfig memory _stratConfig,
@@ -160,7 +166,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address _swapRouter,
         address _nonfungiblePositionManager,
         address _clPool,
-        address _quoter,
         address _sugarHelper
     ) InitializableAbstractStrategy(_stratConfig)
     {
@@ -172,13 +177,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
         clPool = ICLPool(_clPool);
         helper = ISugarHelper(_sugarHelper);
-        // TODO: delete quoter
-        quoter = IQuoterV2(_quoter);
-        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(0);
-        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(1);
+        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(-1);
+        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(0);
 
-        lowerTick = 0;
-        upperTick = 1;
+        lowerTick = -1;
+        upperTick = 0;
         tickSpacing = 1;
     }
 
@@ -311,6 +314,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _rebalance(_amountToSwap, _minTokenReceived, _swapWETH);
     }
 
+    /// @notice Only used for the initial deposit (or after calling withdrawAll) when there is no liquidity
+    ///         in the [-1, 0] tick. We can not swap to the desired within the pool if there might be no
+    ///         liquidity in that ticker
+    function depositLiquidity() external nonReentrant onlyGovernorOrStrategist {
+        require(tokenId == 0, "Liquidity already deposited");
+        _addLiquidity();
+    }
+
     /**
      * @dev Rebalance the pool to the desired token split
      */
@@ -349,8 +360,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             })
         );
 
-        positionManager.positions(tokenId);
-
         (uint256 amountWETHCollected, uint256 amountOETHbCollected) = positionManager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: tokenId,
@@ -360,8 +369,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             })
         );
 
-        // TODO can this go negative?
-        netValue -= amountWETH + amountOETHb;
+        updateNetValue();
 
         emit LiquidityRemoved(
             withdrawLiquidityShare,
@@ -377,18 +385,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
      */
     function _checkLiquidityWithinExpectedShare() internal {
-        if (tokenId == 0) {
-            return;
+        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
+        // TODO check we are withing the expected tick range
+        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
+
+        uint256 currentWethShareBp = 0;
+        if (WETHPositionBalance != 0) {
+            currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
         }
 
-        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = _getPositionPrincipal();
-        // TODO check we are withing the expected tick range
-        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withhdraw full position");
-
-        uint256 currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
-
-        if (poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
+        if (currentWethShareBp < poolWethShareVarianceAllowed || // uint256 musn't go below 0  
+            poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
             poolWethShare > currentWethShareBp + poolWethShareVarianceAllowed) {
+
             revert PoolRebalanceOutOfBounds(
                 currentWethShareBp,
                 poolWethShare,
@@ -422,6 +431,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             }
         }
 
+        // emit an event so it is easier to find correct values off-chain
+        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
+        emit PrincipalPositionBeforeSwap(WETHPositionBalance, OETHbPositionBalance);
+
         // Swap it
         uint256 amountReceived = swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -437,6 +450,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 sqrtPriceLimitX96: _swapWETH ? sqrtRatioX96Tick0 : sqrtRatioX96Tick1
             })
         );
+
+        // emit an event so it is easier to find correct values off-chain
+        (WETHPositionBalance, OETHbPositionBalance) = getPositionPrincipal();
+        emit PrincipalPositionAfterSwap(WETHPositionBalance, OETHbPositionBalance);
 
         _checkLiquidityWithinExpectedShare();
     }
@@ -457,8 +474,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         } else {
             // supply the tokens to the pool according to the current position in the pool
-            (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = _getPositionPrincipal();
+            (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
 
+            require(OETHbPositionBalance > 0, "Can not calculate OETHb required");
             OETHbRequired = OETHbPositionBalance * 1e4 / WETHPositionBalance * WETHBalance / 1e4;
         }
 
@@ -467,15 +485,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         if (tokenId == 0) {
-            (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
+            uint160 sqrtRatioX96 = getPoolX96Price();
 
-            (uint256 mintedTokenId,,uint256 WETHAmountSupplied, uint256 OETHbAmountSupplied) = positionManager.mint(
+            (uint256 mintedTokenId, uint128 liquidity, uint256 WETHAmountSupplied, uint256 OETHbAmountSupplied) = positionManager.mint(
                 INonfungiblePositionManager.MintParams({
                     token0: WETH,
                     token1: OETHb,
                     tickSpacing: 1,
-                    tickLower: 0,
-                    tickUpper: 1,
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
                     amount0Desired: WETHBalance,
                     amount1Desired: OETHbRequired,
                     // we don't need slippage protection checking for that in _checkLiquidityWithinExpectedShare
@@ -489,9 +507,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                     sqrtPriceX96: 0
                 })
             );
-            tokenId = mintedTokenId;
-            netValue += WETHAmountSupplied + OETHbAmountSupplied;
 
+            tokenId = mintedTokenId;
+
+            updateNetValue();
             emit LiquidityAdded(
                 WETHBalance, // WETHAmountDesired
                 OETHbRequired, // OETHbAmountDesired
@@ -515,8 +534,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 })
             );
 
-            netValue += WETHAmountSupplied + OETHbAmountSupplied;
-
+            updateNetValue();
             emit LiquidityAdded(
                 WETHBalance, // WETHAmountDesired
                 OETHbRequired, // OETHbAmountDesired
@@ -529,6 +547,36 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
+    }
+
+    function updateNetValue() internal {
+        if (tokenId == 0) {
+            netValue = 0;
+        } else {
+            (uint128 liquidity,,) = _getPositionInfo();
+
+            /**
+             * Our net value represent the smallest amount of tokens we are able to extract from the position
+             * given our liquidity.
+             *
+             * The least amount of tokens extraditable from the position is where the active trading price is
+             * at the ticker 0 meaning the pool is offering 1:1 trades between WETH & OETHb. At that moment the pool 
+             * consists completely of OETHb and no WETH.
+             * 
+             * The more swaps from WETH -> OETHb happen on the pool the more the price starts to move towards the -1
+             * ticker making OETHb (priced in WETH) more expensive.
+             */
+            (uint256 wethAmount, uint256 OETHbAmount) = helper.getAmountsForLiquidity(
+                sqrtRatioX96Tick1,
+                sqrtRatioX96Tick0,
+                sqrtRatioX96Tick1,
+                liquidity
+            );
+
+            require(wethAmount == 0, "Non zero wethAmount");
+            netValue = OETHbAmount;
+        }
+
     }
 
     /**
@@ -560,7 +608,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
-
+        require(_asset == WETH, "Unsupported asset");
+        //TODO withdraw required amount of WETH
+        _withdraw(vaultAddress, _amount);
     }
 
     /**
@@ -573,6 +623,22 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
+        //TODO withdraw all WETH
+        uint256 balance = IERC20(WETH).balanceOf(address(this));
+        if (balance > 0) {
+            _withdraw(vaultAddress, balance);
+        }
+    }
+
+    function _withdraw(
+        address _recipient,
+        uint256 _amount
+    ) internal {
+        require(_amount > 0, "Must withdraw something");
+        require(_recipient != address(0), "Must specify recipient");
+
+        IERC20(WETH).safeTransfer(_recipient, _amount);
+        emit Withdrawal(WETH, address(0), _amount);
     }
 
 
@@ -643,21 +709,28 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Returns the balance of both tokens in a given position (excluding fees)
-     * @return amount0 Amount of token0 in position
-     * @return amount1 Amount of token1 in position
+     * @return amountWETH Amount of WETH in position
+     * @return amountOETHb Amount of OETHb in position
      */
-    function _getPositionPrincipal()
-        internal
+    function getPositionPrincipal()
+        public
         view
-        returns (uint256 amount0, uint256 amount1)
+        returns (uint256 amountWETH, uint256 amountOETHb)
     {
-        (uint160 sqrtRatioX96, , , , ,) = clPool.slot0();
-        (amount0, amount1) = helper.principal(
+        uint160 sqrtRatioX96 = getPoolX96Price();
+        (amountWETH, amountOETHb) = helper.principal(
             positionManager,
             tokenId,
             sqrtRatioX96
         );
     }
+
+    function getPoolX96Price()
+        public
+        view
+        returns (uint160 sqrtRatioX96) {
+            (sqrtRatioX96, , , , ,) = clPool.slot0();
+        }
 
     function _getPositionInfo() 
         internal 
