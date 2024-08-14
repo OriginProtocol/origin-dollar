@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -22,6 +23,7 @@ import "hardhat/console.sol";
 contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
+    using SafeCast for uint256;
 
     /***************************************
             Storage slot members
@@ -339,7 +341,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Decrease partial liquidity from the pool.
-     * @param _withdrawLiquidityShare The amount of liquidity to remove expressed in basis points
+     * @param _partialLiquidityToDecrease The amount of liquidity to remove expressed in basis points
      */
     function _removePartialLiquidity(uint256 _partialLiquidityToDecrease) internal {
         require(_partialLiquidityToDecrease > 0, "Must remove some liquidity");
@@ -375,7 +377,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         clGauge.withdraw(tokenId);
 
         (uint128 liquidity,,) = _getPositionInfo();
-        uint128 liqudityToRemove = liquidity * _liquidityToDecrease / 1e4;
+        uint128 liqudityToRemove = liquidity * _liquidityToDecrease.toUint128() / 1e4;
 
         (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({

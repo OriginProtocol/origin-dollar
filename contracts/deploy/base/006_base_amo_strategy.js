@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "004_base_amo_strategy",
+    deployName: "006_base_amo_strategy",
   },
   async ({ ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
