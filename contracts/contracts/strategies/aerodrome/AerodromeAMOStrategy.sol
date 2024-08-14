@@ -349,6 +349,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * Burns any lingering OETHb tokens still remaining on the contract
+     */
+    function _burnOETHbOnTheContract() internal {
+        uint256 OETHbBalance = IERC20(OETHb).balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(OETHbBalance);
+    }
+
+    /**
      * @dev Decrease all liquidity from the pool.
      */
     function _removeAllLiquidity() internal {
@@ -568,6 +576,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
+        // burn remaining OETHb
+        _burnOETHbOnTheContract();
         positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
     }
@@ -645,6 +655,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _removePartialLiquidity(shareOfWethToRemoveBp);
         }
 
+        // burn remaining OETHb
+        _burnOETHbOnTheContract();
         _withdraw(vaultAddress, _amount);
     }
 
@@ -659,11 +671,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         _removeAllLiquidity();
-        
+
         uint256 balance = IERC20(WETH).balanceOf(address(this));
         if (balance > 0) {
             _withdraw(vaultAddress, balance);
         }
+        // burn remaining OETHb
+        _burnOETHbOnTheContract();
     }
 
     function _withdraw(
