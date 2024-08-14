@@ -86,6 +86,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice sqrtRatioX96Tick1
     /// @dev tick 1 has value 0 and represents 1:1 price parity of WETH to OETHb 
     uint160 public immutable sqrtRatioX96Tick1;
+    /// @dev tick closest to 1:1 price parity
+    ///      Correctly assesing which tick is closer to 1:1 price parity is important since it affects
+    ///      the way we calculate the underlying assets in check Balance
+    uint160 public immutable sqrtRatioX96TickClosestToParity;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth);
@@ -168,6 +172,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///         the liquidity
     /// @param _clPool Address of the Aerodrome concentrated liquidity pool
     /// @param _sugarHelper Address of the Aerodrome Sugar helper contract
+    /// @param _lowerBoundingTick Smaller bounding tick of our liquidity position
+    /// @param _upperBoundingTick Larger bounding tick of our liquidity position
+    /// @param _tickClosestToParity Tick that is closer to 1:1 price parity
     constructor(
         BaseStrategyConfig memory _stratConfig,
         address _wethAddress,
@@ -175,7 +182,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address _swapRouter,
         address _nonfungiblePositionManager,
         address _clPool,
-        address _sugarHelper
+        address _sugarHelper,
+        int24 _lowerBoundingTick,
+        int24 _upperBoundingTick,
+        int24 _tickClosestToParity
     ) InitializableAbstractStrategy(_stratConfig)
     {
         WETH = _wethAddress;
@@ -186,11 +196,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
         clPool = ICLPool(_clPool);
         helper = ISugarHelper(_sugarHelper);
-        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(-1);
-        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(0);
+        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_lowerBoundingTick);
+        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_upperBoundingTick);
+        sqrtRatioX96TickClosestToParity = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_upperBoundingTick);
 
-        lowerTick = -1;
-        upperTick = 0;
+        lowerTick = _lowerBoundingTick;
+        upperTick = _upperBoundingTick;
         tickSpacing = 1;
     }
 
@@ -598,7 +609,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             underlyingAssets = 0;
         } else {
             (uint128 liquidity,,) = _getPositionInfo();
-            
+
             /**
              * Our net value represent the smallest amount of tokens we are able to extract from the position
              * given our liquidity.
@@ -611,9 +622,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
              * ticker making OETHb (priced in WETH) more expensive.
              */
             (uint256 wethAmount, uint256 OETHbAmount) = helper.getAmountsForLiquidity(
-                sqrtRatioX96Tick1,
-                sqrtRatioX96Tick0,
-                sqrtRatioX96Tick1,
+                sqrtRatioX96TickClosestToParity, // sqrtRatioX96
+                sqrtRatioX96Tick0,               // sqrtRatioAX96
+                sqrtRatioX96Tick1,               // sqrtRatioBX96
                 liquidity
             );
 

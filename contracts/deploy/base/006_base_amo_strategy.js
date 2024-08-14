@@ -31,7 +31,10 @@ module.exports = deployOnBaseWithGuardian(
       addresses.base.swapRouter, // swapRouter
       addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
       addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
-      addresses.base.sugarHelper  // sugarHelper
+      addresses.base.sugarHelper,  // sugarHelper
+      -1, // lowerBoundingTick
+      0, // upperBoundingTick
+      0 // tickClosestToParity
     ]);
 
     const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");

@@ -55,7 +55,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   describe("Withdraw", function () {
     it("Should allow withdraw when the pool is 80:20 balanced", async () => {
-      const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
+      const { oethbVault, aerodromeAmoStrategy, weth } = fixture
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
@@ -115,7 +115,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     })
 
     it("Should withdraw when there's little WETH in the pool", async () => {
-      const { oethbVault, aerodromeAmoStrategy, rafael, weth, oethb } = fixture
+      const { oethbVault, aerodromeAmoStrategy, weth } = fixture
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
@@ -176,7 +176,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     })
 
     it("Should withdraw when there's little OETHb in the pool", async () => {
-      const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
+      const { oethbVault, aerodromeAmoStrategy, weth } = fixture
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
@@ -238,7 +238,6 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   })
 
   it("Should be able to deposit to the strategy", async () => {
-    const { rafael } = fixture;
     await mintAndDepositToStrategy();
   });
 
