@@ -53,7 +53,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     }); 
   });
 
-  describe.only("Withdraw", function () {
+  describe("Withdraw", function () {
     it("Should allow withdraw when the pool is 80:20 balanced", async () => {
       const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
       
