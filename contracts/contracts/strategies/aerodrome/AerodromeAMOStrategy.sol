@@ -792,7 +792,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         returns (uint256 amountWETH, uint256 amountOETHb)
     {
         if (tokenId == 0) {
-            revert("No LP position");
+            return;
         }
 
         uint160 sqrtRatioX96 = getPoolX96Price();
