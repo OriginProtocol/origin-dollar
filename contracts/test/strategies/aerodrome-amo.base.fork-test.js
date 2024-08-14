@@ -146,7 +146,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(amountOETHb.div(amountWETH))
       
       // And recipient has got it
-      console.log(balanceBefore.add(oethUnits("1")).toString(), (await weth.balanceOf(rafael.address)).toString())
       expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
     })
 
