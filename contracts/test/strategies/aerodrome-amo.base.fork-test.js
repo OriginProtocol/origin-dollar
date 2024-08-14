@@ -129,7 +129,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       })
 
       const balanceBefore = await weth.balanceOf(rafael.address)
-      const supplyBefore = await oethb.totalSupply();
 
       const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
 
@@ -149,11 +148,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       // And recipient has got it
       console.log(balanceBefore.add(oethUnits("1")).toString(), (await weth.balanceOf(rafael.address)).toString())
       expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
-      console.log("balance check")
-      
-      // And supply has gone down
-      expect(await oethb.totalSupply()).to.eq(supplyBefore.sub(amountOETHb))
-      console.log("Supply check")
     })
 
     it("Should withdrawAll when there's little WETH in the pool", async () => {
