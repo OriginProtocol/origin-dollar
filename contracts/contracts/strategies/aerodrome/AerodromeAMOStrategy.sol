@@ -567,9 +567,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _checkLiquidityWithinExpectedShare() internal {
         (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
-
-        // TODO check we are withing the expected tick range
         require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
+
+        uint160 currentPrice = getPoolX96Price();
+        // check we are in inspected tick range
+        require(currentPrice >= sqrtRatioX96Tick0 && currentPrice <= sqrtRatioX96Tick1, "Not in expected tick range");
 
         uint256 currentWethShare = 0;
         if (WETHPositionBalance != 0) {
@@ -792,7 +794,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         returns (uint256 amountWETH, uint256 amountOETHb)
     {
         if (tokenId == 0) {
-            return;
+            return (0,0);
         }
 
         uint160 sqrtRatioX96 = getPoolX96Price();
