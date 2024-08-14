@@ -488,7 +488,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
 
             require(OETHbPositionBalance > 0, "Can not calculate OETHb required");
-            OETHbRequired = OETHbPositionBalance * 1e4 / WETHPositionBalance * WETHBalance / 1e4;
+            OETHbRequired = OETHbPositionBalance.divPrecisely(WETHPositionBalance).mulTruncate(WETHBalance);
         }
 
         if (OETHbRequired > OETHbBalance) {
