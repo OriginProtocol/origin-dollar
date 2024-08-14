@@ -85,6 +85,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     uint160 public immutable sqrtRatioX96Tick1;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
+    error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth);
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
         uint256 requiredPoolWethShare,
@@ -128,6 +129,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 WETHAmountCollected,
         uint256 OETHbAmountCollected,
         uint256 netValue
+    );
+
+    event LiquidityTokenBurned(
+        uint256 tokenId
     );
 
     event LiquidityAdded(
@@ -326,25 +331,43 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Rebalance the pool to the desired token split
      */
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
-        _removeLiquidity();
+        _removePartialLiquidity(withdrawLiquidityShare);
         _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWETH);
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
 
     /**
-     * @dev Decrease withdrawLiquidityShare (currently set to 99%) of the liquidity if strategy holds any. In practice the removal of liquidity
-     * will be skipped only on the first time called.
+     * @dev Decrease partial liquidity from the pool.
+     * @param _withdrawLiquidityShare The amount of liquidity to remove expressed in basis points
      */
-    function _removeLiquidity() internal {
-        if (tokenId == 0) {
-            return;
-        }
+    function _removePartialLiquidity(uint256 _partialLiquidityToDecrease) internal {
+        require(_partialLiquidityToDecrease > 0, "Must remove some liquidity");
+        require(_partialLiquidityToDecrease < 10000, "Mustn't remove all liquidity");
 
+        _removeLiquidity(_partialLiquidityToDecrease);
+    }
+
+    /**
+     * @dev Decrease all liquidity from the pool.
+     */
+    function _removeAllLiquidity() internal {
+        _removeLiquidity(1e4);
+
+        positionManager.burn(tokenId);
+        emit LiquidityTokenBurned(tokenId);
+        tokenId = 0;
+    }
+
+    /**
+     * @dev Decrease partial or all liquidity from the pool.
+     * @param _liquidityToDecrease The amount of liquidity to remove expressed in basis points
+     */
+    function _removeLiquidity(uint256 _liquidityToDecrease) internal {
         clGauge.withdraw(tokenId);
 
         (uint128 liquidity,,) = _getPositionInfo();
-        uint128 liqudityToRemove = liquidity * withdrawLiquidityShare / 1e4;
+        uint128 liqudityToRemove = liquidity * _liquidityToDecrease / 1e4;
 
         (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -609,7 +632,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         require(_asset == WETH, "Unsupported asset");
-        //TODO withdraw required amount of WETH
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
+        if (wethBalance < _amount) {
+            uint256 additionalWETHRequired = _amount - wethBalance;
+            (uint256 WETHInThePool,) = getPositionPrincipal();
+            
+            if(WETHInThePool < additionalWETHRequired) {
+                revert NotEnoughWethLiquidity(WETHInThePool, additionalWETHRequired);
+            }
+
+            uint256 shareOfWethToRemoveBp = (additionalWETHRequired * 1e4 / WETHInThePool) + 1;
+            _removePartialLiquidity(shareOfWethToRemoveBp);
+        }
+
         _withdraw(vaultAddress, _amount);
     }
 
@@ -623,7 +658,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
-        //TODO withdraw all WETH
+        _removeAllLiquidity();
+        
         uint256 balance = IERC20(WETH).balanceOf(address(this));
         if (balance > 0) {
             _withdraw(vaultAddress, balance);
