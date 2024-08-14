@@ -39,18 +39,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ICLGauge public clGauge;
     /**
      * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
-     * in basis point format.
+     * as 18 decimal point
      * 
-     * e.g. 2000 means 20% WETH 80% OETHb
+     * e.g. 0.2e18 means 20% WETH 80% OETHb
      */
     uint256 public poolWethShare;
     /**
      * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
-     * vary from the configured value after rebalancing. Expressed in basis points.
+     * vary from the configured value after rebalancing. Expressed as 18 decimal point
      */
     uint256 public poolWethShareVarianceAllowed;
     /**
-     * Share of liquidity to remove on rebalance
+     * Share of liquidity to remove on rebalance expressed in 18 decimal points
      */
     uint128 public withdrawLiquidityShare;
     /// @dev reserved for inheritance
@@ -237,7 +237,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // - non governor can not update
         // - must be within allowed values (event emitted)
 
-        require(_amount < 10000, "Invalid poolWethShare amount");
+        require(_amount < 1e18, "Invalid poolWethShare amount");
 
         poolWethShare = _amount;
         emit PoolWethShareUpdated(_amount);
@@ -254,7 +254,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // - non governor can not update
         // - must be within allowed values (event emitted)
 
-        require(_amount < 10000, "Invalid withdrawLiquidityShare amount");
+        require(_amount < 1e18, "Invalid withdrawLiquidityShare amount");
 
         withdrawLiquidityShare = _amount;
         emit WithdrawLiqiudityShareUpdated(_amount);
@@ -271,8 +271,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // - non governor can not update
         // - must be within allowed values (event emitted)
 
-        // no sensible reason to ever allow this over 20%
-        require(_amount < 4000, "Invalid poolWethShareVariance");
+        // no sensible reason to ever allow this over 40%
+        require(_amount < 4e17, "Invalid poolWethShareVariance");
 
         poolWethShareVarianceAllowed = _amount;
         emit PoolWethShareVarianceAllowedUpdated(_amount);
@@ -349,11 +349,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Decrease partial liquidity from the pool.
-     * @param _partialLiquidityToDecrease The amount of liquidity to remove expressed in basis points
+     * @param _partialLiquidityToDecrease The amount of liquidity to remove expressed in 18 decimals
      */
     function _removePartialLiquidity(uint256 _partialLiquidityToDecrease) internal {
         require(_partialLiquidityToDecrease > 0, "Must remove some liquidity");
-        require(_partialLiquidityToDecrease < 10000, "Mustn't remove all liquidity");
+        require(_partialLiquidityToDecrease < 1e18, "Mustn't remove all liquidity");
 
         _removeLiquidity(_partialLiquidityToDecrease);
     }
@@ -362,7 +362,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Remove all liquidity from the pool.
      */
     function _removeAllLiquidity() internal {
-        _removeLiquidity(1e4);
+        _removeLiquidity(1e18);
 
         positionManager.burn(tokenId);
         tokenId = 0;
@@ -371,14 +371,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Decrease partial or all liquidity from the pool.
-     * @param _liquidityToDecrease The amount of liquidity to remove expressed in basis points
+     * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
      */
     function _removeLiquidity(uint256 _liquidityToDecrease) internal {
         // unstake the position from the gauge
         clGauge.withdraw(tokenId);
 
         (uint128 liquidity,,) = _getPositionInfo();
-        uint128 liqudityToRemove = liquidity * _liquidityToDecrease.toUint128() / 1e4;
+        // need to convert to uint256 since intermittent result is to big for uint128 to handle
+        uint128 liqudityToRemove = uint128(uint256(liquidity).mulTruncate(_liquidityToDecrease));
 
         (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -468,8 +469,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         if (tokenId == 0) {
             // supply token amounts according to target poolWethShare amount
-            OETHbRequired = (WETHBalance * 1e4 / poolWethShare)
-                .mulTruncateScale((1e4 - poolWethShare), 1e4);
+            OETHbRequired = WETHBalance.divPrecisely(poolWethShare)
+                .mulTruncate(1e18 - poolWethShare);
 
         } else {
             // supply the tokens to the pool according to the current position in the pool
@@ -555,27 +556,28 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _checkLiquidityWithinExpectedShare() internal {
         (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
+
         // TODO check we are withing the expected tick range
         require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
 
-        uint256 currentWethShareBp = 0;
+        uint256 currentWethShare = 0;
         if (WETHPositionBalance != 0) {
-            currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
+            currentWethShare = WETHPositionBalance.divPrecisely(WETHPositionBalance + OETHbPositionBalance);
         }
 
-        if (currentWethShareBp < poolWethShareVarianceAllowed || // uint256 musn't go below 0  
-            poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
-            poolWethShare > currentWethShareBp + poolWethShareVarianceAllowed) {
+        if (currentWethShare < poolWethShareVarianceAllowed || // uint256 mustn't go below 0  
+            poolWethShare < currentWethShare - poolWethShareVarianceAllowed ||
+            poolWethShare > currentWethShare + poolWethShareVarianceAllowed) {
 
             revert PoolRebalanceOutOfBounds(
-                currentWethShareBp,
+                currentWethShare,
                 poolWethShare,
                 WETHPositionBalance,
                 OETHbPositionBalance
             );
         } else {
             emit PoolRebalanced(
-                currentWethShareBp,
+                currentWethShare,
                 poolWethShare,
                 WETHPositionBalance,
                 OETHbPositionBalance
@@ -596,7 +598,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             underlyingAssets = 0;
         } else {
             (uint128 liquidity,,) = _getPositionInfo();
-
+            
             /**
              * Our net value represent the smallest amount of tokens we are able to extract from the position
              * given our liquidity.
@@ -651,6 +653,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         require(_asset == WETH, "Unsupported asset");
+        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
+
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         if (wethBalance < _amount) {
             uint256 additionalWETHRequired = _amount - wethBalance;
@@ -660,8 +664,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 revert NotEnoughWethLiquidity(WETHInThePool, additionalWETHRequired);
             }
 
-            uint256 shareOfWethToRemoveBp = (additionalWETHRequired * 1e4 / WETHInThePool) + 1;
-            _removePartialLiquidity(shareOfWethToRemoveBp);
+            uint256 shareOfWethToRemove = additionalWETHRequired.divPrecisely(WETHInThePool) + 1;
+            _removePartialLiquidity(shareOfWethToRemove);
         }
 
         // burn remaining OETHb

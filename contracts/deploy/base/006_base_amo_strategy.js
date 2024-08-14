@@ -4,6 +4,7 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnBaseWithGuardian(
   {
@@ -63,19 +64,19 @@ module.exports = deployOnBaseWithGuardian(
     await withConfirmation(
       cAMOStrategy
         .connect(sDeployer)
-        .setPoolWethShare(2000) // 20%
+        .setPoolWethShare(oethUnits("0.20")) // 20%
     );
 
     await withConfirmation(
       cAMOStrategy
         .connect(sDeployer)
-        .setWithdrawLiquidityShare(9900) // 99%
+        .setWithdrawLiquidityShare(oethUnits("0.99")) // 99%
     );
 
     await withConfirmation(
       cAMOStrategy
         .connect(sDeployer)
-        .setPoolWethShareVarianceAllowed(200) // 2%
+        .setPoolWethShareVarianceAllowed(oethUnits("0.02")) // 2%
     );
 
     await withConfirmation(

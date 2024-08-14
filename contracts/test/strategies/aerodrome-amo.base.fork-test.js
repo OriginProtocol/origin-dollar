@@ -11,7 +11,7 @@ const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
-describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
+describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
 
   beforeEach(async () => {
@@ -38,17 +38,17 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should have the correct initial state", async function () {
       // correct pool weth share variance
       expect(await aerodromeAmoStrategy.poolWethShareVarianceAllowed()).to.equal(
-        200
+        oethUnits("0.02")
       );
 
       // correct withdrawal liquity share
       expect(await aerodromeAmoStrategy.withdrawLiquidityShare()).to.equal(
-        9900
+        oethUnits("0.99")
       );
 
       // correct pool weth share
       expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
-        2000
+        oethUnits("0.20")
       );
     }); 
   });
@@ -59,7 +59,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
-      const balanceBefore = await weth.balanceOf(rafael.address)
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
 
       const poolPrice = await aerodromeAmoStrategy.getPoolX96Price()
 
@@ -69,7 +69,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       // Try withdrawing an amount
       await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
         .withdraw(
-          rafael.address,
+          oethbVault.address,
           weth.address,
           oethUnits("1")
         );
@@ -83,7 +83,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(await aerodromeAmoStrategy.getPoolX96Price()).to.eq(poolPrice)
 
       // And recipient has got it
-      expect(await weth.balanceOf(rafael.address)).to.eq(balanceBefore.add(oethUnits("1")))
+      expect(await weth.balanceOf(oethbVault.address)).to.eq(balanceBefore.add(oethUnits("1")))
     })
 
     it("Should allow withdrawAll when the pool is 80:20 balanced", async () => {
@@ -128,14 +128,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         swapWeth: false
       })
 
-      const balanceBefore = await weth.balanceOf(rafael.address)
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
 
       const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
 
       // Try withdrawing an amount
       await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
         .withdraw(
-          rafael.address,
+          oethbVault.address,
           weth.address,
           oethUnits("1")
         );
@@ -146,7 +146,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(amountOETHb.div(amountWETH))
       
       // And recipient has got it
-      expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
     })
 
     it("Should withdrawAll when there's little WETH in the pool", async () => {
@@ -189,14 +189,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         swapWeth: true
       })
 
-      const balanceBefore = await weth.balanceOf(rafael.address)
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
 
       const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
 
       // Try withdrawing an amount
       await aerodromeAmoStrategy.connect(impersonatedVaultSigner)
         .withdraw(
-          rafael.address,
+          oethbVault.address,
           weth.address,
           oethUnits("1")
         );
@@ -207,7 +207,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(amountOETHb.div(amountWETH))
 
       // And recipient has got it
-      expect(await weth.balanceOf(rafael.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
     })
 
     it("Should withdrawAll when there's little OETHb in the pool", async () => {
