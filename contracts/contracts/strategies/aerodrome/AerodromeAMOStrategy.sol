@@ -35,7 +35,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///      minimum amount of tokens are withdrawn at a 1:1 price
     uint256 public netValue;
     /// @notice the gauge for the corresponding Slipstream pool (clPool)
-    /// @dev can become an immutable once the gauge is created on the base mainnet
+    /// @dev can become an immutable once the gauge is created on the base main-net
     ICLGauge public clGauge;
     /**
      * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
@@ -64,23 +64,24 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     address public immutable WETH;
     /// @notice The address of the OETHb token contract
     address public immutable OETHb;
-    /// @notice lower tick set to 0 representing the price of 1. Equation 1.0001^0 = 1
+    /// @notice lower tick set to -1 representing the price of 1.0001 of WETH for 1 OETHb.
     int24 public immutable lowerTick;
-    /// @notice lower tick set to 1 representing the price of 1.0001. Equation 1.0001^1 = 1.0001
+    /// @notice lower tick set to 0 representing the price of 1.0000 of WETH for 1 OETHb.
     int24 public immutable upperTick;
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
     /// @notice the swapRouter for performing swaps
     ISwapRouter public immutable swapRouter;
-    /// @notice the pool used
+    /// @notice the underlying AMO Slipstream pool
     ICLPool public immutable clPool;
-    /// @notice the liquidity position
+    /// @notice the Position manager contract that is used to manage the pool's position
     INonfungiblePositionManager public immutable positionManager;
     /// @notice helper contract for liquidity and ticker math
     ISugarHelper public immutable helper;
     /// @notice sqrtRatioX96Tick0
     /// @dev tick 0 has value -1 and represents the lowest price of WETH priced in OETHb. Meaning the pool
     /// offers less than 1 OETHb for 1 WETH. In other terms to get 1 OETHB the swap needs to offer 1.0001 WETH
+    /// this is where purchasing OETHb with WETH within the liquidity position is most expensive
     uint160 public immutable sqrtRatioX96Tick0;
     /// @notice sqrtRatioX96Tick1
     /// @dev tick 1 has value 0 and represents 1:1 price parity of WETH to OETHb 
@@ -158,7 +159,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _;
     }
 
-    /// @param _stratConfig st
+    /// @notice the constructor
+    /// @param _stratConfig the basic strategy configuration
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _OETHbAddress Address of the Erc20 OETHb Token contract
     /// @param _swapRouter Address of the Aerodrome Universal Swap Router
@@ -210,6 +212,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _assets,
             _pTokens
         );
+        // TODO: move to constructor once this is known on the mainnet
         clGauge = ICLGauge(_clGauge);
     }
 
@@ -226,7 +229,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Set the new desired WETH share
-     * @param _amount               The new amount specified in basis points
+     * @param _amount The new amount specified in basis points
      */
     function setPoolWethShare(uint256 _amount) external onlyGovernor {
         // TODO tests:
@@ -243,7 +246,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Specifies the amount of liquidity that is to be removed when 
      *         a rebalancing happens.
-     * @param _amount               The new amount specified in basis points
+     * @param _amount The new amount specified in basis points
      */
     function setWithdrawLiquidityShare(uint128 _amount) external onlyGovernor {
         // TODO tests:
@@ -260,7 +263,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
      *         vary from the configured value after rebalancing.
-     * @param _amount               The new amount specified in basis points
+     * @param _amount The new amount specified in basis points
      */
     function setPoolWethShareVarianceAllowed(uint256 _amount) external onlyGovernor {
         // TODO tests:
@@ -269,7 +272,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // - must be within allowed values (event emitted)
 
         // no sensible reason to ever allow this over 20%
-        require(_amount < 2000, "PoolWethShareVariance");
+        require(_amount < 4000, "Invalid poolWethShareVariance");
 
         poolWethShareVarianceAllowed = _amount;
         emit PoolWethShareVarianceAllowedUpdated(_amount);
@@ -280,9 +283,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Deposit an amount of assets into the platform
-     * @param _asset               Address for the asset
-     * @param _amount              Units of asset to deposit
+     * @notice Deposit an amount of assets into the strategy contract. Calling deposit doesn't
+     *         automatically deposit funds into the underlying Aerodrome pool
+     * @param _asset   Address for the asset
+     * @param _amount  Units of asset to deposit
      */
     function deposit(address _asset, uint256 _amount) 
         external
@@ -307,7 +311,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Rebalance the pool to the desired token split and Deposit any WETH on the contract to the
-     * underlying aerodrome pool. Print the required amount of corresponding OETHb.
+     * underlying aerodrome pool. Print the required amount of corresponding OETHb. After the rebalancing is 
+     * done burn any potentially remaining OETHb tokens still on the strategy contract.
      * 
      * Exact _amountToSwap, _minTokenReceived & _swapWETH parameters shall be determined by simulating the 
      * transaction off-chain. The strategy checks that after the swap the share of the tokens is in the 
@@ -322,8 +327,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /// @notice Only used for the initial deposit (or after calling withdrawAll) when there is no liquidity
-    ///         in the [-1, 0] tick. We can not swap to the desired within the pool if there might be no
-    ///         liquidity in that ticker
+    ///         in the [-1, 0] tick. This function is needed since we can not swap to the desired position within
+    ///         the pool if there is no liquidity in the [-1, 0] ticker
     function depositLiquidity() external nonReentrant onlyGovernorOrStrategist {
         require(tokenId == 0, "Liquidity already deposited");
         _addLiquidity();
@@ -335,6 +340,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
         _removePartialLiquidity(withdrawLiquidityShare);
         _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWETH);
+        // calling check liquidity early so we don't get unexpected errors when adding liquidity
+        // in the later stages of this function
+        _checkLiquidityWithinExpectedShare();
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
@@ -351,22 +359,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Burns any lingering OETHb tokens still remaining on the contract
-     */
-    function _burnOETHbOnTheContract() internal {
-        uint256 OETHbBalance = IERC20(OETHb).balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(OETHbBalance);
-    }
-
-    /**
-     * @dev Decrease all liquidity from the pool.
+     * @dev Remove all liquidity from the pool.
      */
     function _removeAllLiquidity() internal {
         _removeLiquidity(1e4);
 
         positionManager.burn(tokenId);
-        emit LiquidityTokenBurned(tokenId);
         tokenId = 0;
+        emit LiquidityTokenBurned(tokenId);
     }
 
     /**
@@ -415,39 +415,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
-     */
-    function _checkLiquidityWithinExpectedShare() internal {
-        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
-        // TODO check we are withing the expected tick range
-        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
-
-        uint256 currentWethShareBp = 0;
-        if (WETHPositionBalance != 0) {
-            currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
-        }
-
-        if (currentWethShareBp < poolWethShareVarianceAllowed || // uint256 musn't go below 0  
-            poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
-            poolWethShare > currentWethShareBp + poolWethShareVarianceAllowed) {
-
-            revert PoolRebalanceOutOfBounds(
-                currentWethShareBp,
-                poolWethShare,
-                WETHPositionBalance,
-                OETHbPositionBalance
-            );
-        } else {
-            emit PoolRebalanced(
-                currentWethShareBp,
-                poolWethShare,
-                WETHPositionBalance,
-                OETHbPositionBalance
-            );
-        }
-    }
-
-    /**
      * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
      */
     function _swapToDesiredPosition(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
@@ -487,8 +454,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // emit an event so it is easier to find correct values off-chain
         (WETHPositionBalance, OETHbPositionBalance) = getPositionPrincipal();
         emit PrincipalPositionAfterSwap(WETHPositionBalance, OETHbPositionBalance);
-
-        _checkLiquidityWithinExpectedShare();
     }
 
     /**
@@ -582,6 +547,47 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _burnOETHbOnTheContract();
         positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
+    }
+
+    /**
+     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
+     */
+    function _checkLiquidityWithinExpectedShare() internal {
+        (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
+        // TODO check we are withing the expected tick range
+        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
+
+        uint256 currentWethShareBp = 0;
+        if (WETHPositionBalance != 0) {
+            currentWethShareBp = WETHPositionBalance * 1e4 / (WETHPositionBalance + OETHbPositionBalance);
+        }
+
+        if (currentWethShareBp < poolWethShareVarianceAllowed || // uint256 musn't go below 0  
+            poolWethShare < currentWethShareBp - poolWethShareVarianceAllowed ||
+            poolWethShare > currentWethShareBp + poolWethShareVarianceAllowed) {
+
+            revert PoolRebalanceOutOfBounds(
+                currentWethShareBp,
+                poolWethShare,
+                WETHPositionBalance,
+                OETHbPositionBalance
+            );
+        } else {
+            emit PoolRebalanced(
+                currentWethShareBp,
+                poolWethShare,
+                WETHPositionBalance,
+                OETHbPositionBalance
+            );
+        }
+    }
+
+    /**
+     * Burns any lingering OETHb tokens still remaining on the contract
+     */
+    function _burnOETHbOnTheContract() internal {
+        uint256 OETHbBalance = IERC20(OETHb).balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(OETHbBalance);
     }
 
     function updateNetValue() internal {

@@ -98,12 +98,11 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   });
 
   it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
-    await printPoolInfo();
     await swap({
       amount: oethUnits("20.44"),
       swapWeth: true
     })
-    await printPoolInfo();
+    //await printPoolInfo();
 
     await rebalance(
       oethUnits("0.2"),
@@ -111,7 +110,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       false // _swapWETH
     );
 
-    await printPoolInfo();
+    //await printPoolInfo();
   });
 
   it("Should have the correct net liquidity within some tolerance", async () => {
