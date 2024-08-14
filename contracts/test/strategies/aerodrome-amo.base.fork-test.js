@@ -114,13 +114,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(await oethb.totalSupply()).to.eq(supplyBefore.sub(amountOETHbBefore))
     })
 
-    it.only("Should withdraw when there's little WETH in the pool", async () => {
+    it("Should withdraw when there's little WETH in the pool", async () => {
       const { oethbVault, aerodromeAmoStrategy, rafael, weth, oethb } = fixture
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
-
-      const balanceBefore = await weth.balanceOf(rafael.address)
-      const supplyBefore = await oethb.totalSupply();
 
       // setup() moves the pool closer to 80:20
 
@@ -130,6 +127,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         amount: oethUnits("3.5"),
         swapWeth: false
       })
+
+      const balanceBefore = await weth.balanceOf(rafael.address)
+      const supplyBefore = await oethb.totalSupply();
 
       const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
 
@@ -161,8 +161,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
-      const balanceBefore = await weth.balanceOf(oethbVault.address)
-
       // setup() moves the pool closer to 80:20
 
       // Drain out most of WETH
@@ -171,6 +169,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         amount: oethUnits("3.5"),
         swapWeth: false
       })
+
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
 
       const [amountWETH,] = await aerodromeAmoStrategy.getPositionPrincipal();
 
@@ -182,12 +182,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETH))
     })
 
-    it.only("Should withdraw when there's little OETHb in the pool", async () => {
+    it("Should withdraw when there's little OETHb in the pool", async () => {
       const { oethbVault, aerodromeAmoStrategy, rafael, weth } = fixture
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
-
-      const balanceBefore = await weth.balanceOf(rafael.address)
 
       // setup() moves the pool closer to 80:20
 
@@ -197,6 +195,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         amount: oethUnits("3.5"),
         swapWeth: true
       })
+
+      const balanceBefore = await weth.balanceOf(rafael.address)
 
       const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
 
@@ -222,8 +222,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       
       const impersonatedVaultSigner = await impersonateAndFund(oethbVault.address)
 
-      const balanceBefore = await weth.balanceOf(oethbVault.address)
-
       // setup() moves the pool closer to 80:20
 
       // Drain out most of WETH
@@ -232,6 +230,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         amount: oethUnits("3.5"),
         swapWeth: false
       })
+
+      const balanceBefore = await weth.balanceOf(oethbVault.address)
 
       const [amountWETH,] = await aerodromeAmoStrategy.getPositionPrincipal();
 
