@@ -374,6 +374,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _liquidityToDecrease The amount of liquidity to remove expressed in basis points
      */
     function _removeLiquidity(uint256 _liquidityToDecrease) internal {
+        // unstake the position from the gauge
         clGauge.withdraw(tokenId);
 
         (uint128 liquidity,,) = _getPositionInfo();
@@ -775,6 +776,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 amountWETH, uint256 amountOETHb)
     {
+        if (tokenId == 0) {
+            revert("No LP position");
+        }
+
         uint160 sqrtRatioX96 = getPoolX96Price();
         (amountWETH, amountOETHb) = helper.principal(
             positionManager,
@@ -798,9 +803,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             uint128 tokensOwed1
         ) {
 
-        if (tokenId > 0) {
-            (,,,,,,,liquidity,,,tokensOwed0,tokensOwed1) = positionManager.positions(tokenId);
+        if (tokenId == 0) {
+            revert("No LP position");
         }
+
+        (,,,,,,,liquidity,,,tokensOwed0,tokensOwed1) = positionManager.positions(tokenId);
     }
 
     /***************************************
