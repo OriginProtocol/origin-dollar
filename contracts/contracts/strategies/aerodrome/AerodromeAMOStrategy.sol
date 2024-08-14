@@ -659,7 +659,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // burn remaining OETHb
         _burnOETHbOnTheContract();
-        _withdraw(vaultAddress, _amount);
+        _withdraw(_recipient, _amount);
     }
 
     /**
