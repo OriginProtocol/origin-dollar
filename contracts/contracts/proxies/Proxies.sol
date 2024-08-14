@@ -282,8 +282,15 @@ contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice OETHBaseDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice AerodromeAMOStrategyProxy delegates calls to AerodromeAMOStrategy implementation
  */
 contract AerodromeAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
+    
 }
