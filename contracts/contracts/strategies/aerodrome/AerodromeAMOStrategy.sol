@@ -33,7 +33,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     uint256 public tokenId;
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
-    uint256 public netValue;
+    uint256 public underlyingAssets;
     /// @notice the gauge for the corresponding Slipstream pool (clPool)
     /// @dev can become an immutable once the gauge is created on the base main-net
     ICLGauge public clGauge;
@@ -131,7 +131,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 removedOETHbAmount,
         uint256 WETHAmountCollected,
         uint256 OETHbAmountCollected,
-        uint256 netValue
+        uint256 underlyingAssets
     );
 
     event LiquidityTokenBurned(
@@ -144,7 +144,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 WETHAmountSupplied,
         uint256 OETHbAmountSupplied,
         uint256 tokenId,
-        uint256 netValue
+        uint256 underlyingAssets
     );
 
     /**
@@ -403,7 +403,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             })
         );
 
-        updateNetValue();
+        updateUnderlyingAssets();
 
         emit LiquidityRemoved(
             withdrawLiquidityShare,
@@ -411,7 +411,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             amountOETHb, //removedOETHbAmount
             amountWETHCollected,
             amountOETHbCollected,
-            netValue
+            underlyingAssets
         );
     }
 
@@ -509,14 +509,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
             tokenId = mintedTokenId;
 
-            updateNetValue();
+            updateUnderlyingAssets();
             emit LiquidityAdded(
                 WETHBalance, // WETHAmountDesired
                 OETHbRequired, // OETHbAmountDesired
                 WETHAmountSupplied, // WETHAmountSupplied
                 OETHbAmountSupplied, // OETHbAmountSupplied
                 mintedTokenId, // tokenId
-                netValue
+                underlyingAssets
             );
         } else {
 
@@ -533,14 +533,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 })
             );
 
-            updateNetValue();
+            updateUnderlyingAssets();
             emit LiquidityAdded(
                 WETHBalance, // WETHAmountDesired
                 OETHbRequired, // OETHbAmountDesired
                 WETHAmountSupplied, // WETHAmountSupplied
                 OETHbAmountSupplied, // OETHbAmountSupplied
                 tokenId, // tokenId
-                netValue
+                underlyingAssets
             );
         }
 
@@ -591,9 +591,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(OETHbBalance);
     }
 
-    function updateNetValue() internal {
+    function updateUnderlyingAssets() internal {
         if (tokenId == 0) {
-            netValue = 0;
+            underlyingAssets = 0;
         } else {
             (uint128 liquidity,,) = _getPositionInfo();
 
@@ -616,7 +616,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
 
             require(wethAmount == 0, "Non zero wethAmount");
-            netValue = OETHbAmount;
+            underlyingAssets = OETHbAmount;
         }
 
     }
@@ -763,7 +763,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         override
         returns (uint256)
     {
-        return netValue;
+        return underlyingAssets;
     }
 
     /**
