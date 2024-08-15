@@ -369,8 +369,6 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       oethUnits("0.054"),
       true // _swapWETH
     );
-
-    //await printPoolInfo();
   });
 
   it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
@@ -378,30 +376,42 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       amount: oethUnits("20.44"),
       swapWeth: true
     })
-    //await printPoolInfo();
 
     await rebalance(
       oethUnits("0.2"),
       oethUnits("0.19"),
       false // _swapWETH
     );
-
-    //await printPoolInfo();
   });
 
-  it("Should have the correct net liquidity within some tolerance", async () => {
-    
-
+  it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
+    await expect(aerodromeAmoStrategy
+      .connect(strategist)
+      .depositLiquidity()
+    ).to.be.revertedWith("Liquidity already deposited")
   });
 
-  it("Even if WETH is running low should still leave some OETHb in the pool", async () => {
-    
+  it("Should have the correct balance within some tolerance", async () => {
+    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("25.444"));
+    await mintAndDepositToStrategy({ amount: oethUnits("6") });
+    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("31.444"));
+    // just add liquidity don't move the active trading position
+    await rebalance(BigNumber.from("0"), BigNumber.from("0"), true);
 
+    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("55.98"));
   });
 
   it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
-    
+    // swap out most of the weth
+    await swap({
+      // Pool has 5 WETH
+      amount: oethUnits("4.99"),
+      swapWeth: false
+    });
 
+    await expect(
+      rebalance(oethUnits("4.99"), oethUnits("4"), true)
+    ).to.be.revertedWith("NotEnoughWethForSwap");
   });
 
   const setup = async () => {
@@ -467,8 +477,6 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       .connect(strategist)
       .depositLiquidity();
   }
-
-  // TODO test we can not deposit liquidity that has already been deposited
 
   const rebalance = async (amountToSwap, minTokenReceived, swapWETH) => {
     await aerodromeAmoStrategy

@@ -335,7 +335,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWETH) internal {
         _removePartialLiquidity(withdrawLiquidityShare);
-        _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWETH);
+        // in some cases we will just want to add liquidity and not issue a swap to move the 
+        // active trading position within the pool
+        if (_amountToSwap > 0) {
+            _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWETH);
+        }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
         _checkLiquidityWithinExpectedShare();
@@ -765,8 +769,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         view
         override
         returns (uint256)
-    {
-        return underlyingAssets;
+    {   
+        // we could in theory deposit to the strategy and forget to call rebalance in the same
+        // governance transaction batch. In that case the WETH that is on the strategy contract
+        // also needs to be accounted for. 
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
+        // just paranoia check, in case there is OETHb in the strategy that for some reason hasn't
+        // gotten burned yet.
+        uint256 oethbBalance = IERC20(OETHb).balanceOf(address(this));
+        return underlyingAssets + wethBalance + oethbBalance;
     }
 
     /**
