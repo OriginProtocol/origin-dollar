@@ -53,6 +53,98 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     }); 
   });
 
+  describe("Configuration", function () {
+    it("Governor can set the pool weth share", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await aerodromeAmoStrategy
+        .connect(governor)
+        .setPoolWethShare(oethUnits("0.5"));
+
+      expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
+        oethUnits("0.5")
+      );
+    });
+
+    it("Only the governor can set the pool weth share", async () => {
+      const { rafael, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(rafael)
+        .setPoolWethShare(oethUnits("0.5"))
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Can not set too large pool weth share", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .setPoolWethShare(oethUnits("1"))
+      ).to.be.revertedWith("Invalid poolWethShare amount");
+    });
+
+    it("Governor can set the withdraw liquidity share", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await aerodromeAmoStrategy
+        .connect(governor)
+        .setWithdrawLiquidityShare(oethUnits("0.98"));
+
+      expect(await aerodromeAmoStrategy.withdrawLiquidityShare()).to.equal(
+        oethUnits("0.98")
+      );
+    });
+
+    it("Only the governor can set the withdraw liquidity share", async () => {
+      const { rafael, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(rafael)
+        .setWithdrawLiquidityShare(oethUnits("0.98"))
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Can not set too large withdraw liquidity share", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .setWithdrawLiquidityShare(oethUnits("1"))
+      ).to.be.revertedWith("Invalid withdrawLiquidityShare amount");
+    });
+
+    it("Governor can set the pool weth share allowance allowed", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await aerodromeAmoStrategy
+        .connect(governor)
+        .setPoolWethShareVarianceAllowed(oethUnits("0.39"));
+
+      expect(await aerodromeAmoStrategy.poolWethShareVarianceAllowed()).to.equal(
+        oethUnits("0.39")
+      );
+    });
+
+    it("Only the governor can set the pool weth share allowance allowed", async () => {
+      const { rafael, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(rafael)
+        .setPoolWethShareVarianceAllowed(oethUnits("0.98"))
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Can not set too large pool weth share allowance allowed", async () => {
+      const { governor, aerodromeAmoStrategy} = fixture;
+
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .setPoolWethShareVarianceAllowed(oethUnits("0.40"))
+      ).to.be.revertedWith("Invalid poolWethShareVariance");
+    });
+  });
+
   describe("Withdraw", function () {
     it("Should allow withdraw when the pool is 80:20 balanced", async () => {
       const { oethbVault, aerodromeAmoStrategy, weth } = fixture

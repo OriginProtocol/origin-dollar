@@ -243,11 +243,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amount The new amount specified in basis points
      */
     function setPoolWethShare(uint256 _amount) external onlyGovernor {
-        // TODO tests:
-        // - governor can update
-        // - non governor can not update
-        // - must be within allowed values (event emitted)
-
         require(_amount < 1e18, "Invalid poolWethShare amount");
 
         poolWethShare = _amount;
@@ -260,11 +255,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amount The new amount specified in basis points
      */
     function setWithdrawLiquidityShare(uint128 _amount) external onlyGovernor {
-        // TODO tests:
-        // - governor can update
-        // - non governor can not update
-        // - must be within allowed values (event emitted)
-
         require(_amount < 1e18, "Invalid withdrawLiquidityShare amount");
 
         withdrawLiquidityShare = _amount;
@@ -277,11 +267,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amount The new amount specified in basis points
      */
     function setPoolWethShareVarianceAllowed(uint256 _amount) external onlyGovernor {
-        // TODO tests:
-        // - governor can update
-        // - non governor can not update
-        // - must be within allowed values (event emitted)
-
         // no sensible reason to ever allow this over 40%
         require(_amount < 4e17, "Invalid poolWethShareVariance");
 
@@ -460,6 +445,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 amountOutMinimum: _minTokenReceived, // slippage check
                 // just a rough sanity check that we are within 0 -> 1 tick
                 // a more fine check is performed in _checkLiquidityWithinExpectedShare
+                // TBD(!): this needs further work if we want to generalize this approach
                 sqrtPriceLimitX96: _swapWETH ? sqrtRatioX96Tick0 : sqrtRatioX96Tick1
             })
         );
@@ -847,7 +833,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /// @notice Callback function for whenever a NFT is transferred to this contract
-    // solhint-disable-next-line max-line-length
+    //  solhint-disable-next-line max-line-length
     /// Ref: https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721Receiver-onERC721Received-address-address-uint256-bytes-
     function onERC721Received(
         address,
