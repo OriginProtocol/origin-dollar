@@ -203,6 +203,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         lowerTick = _lowerBoundingTick;
         upperTick = _upperBoundingTick;
         tickSpacing = 1;
+
+        require(ICLPool(_clPool).token0() == _wethAddress, "Only WETH supported as token0");
+        require(ICLPool(_clPool).token1() == _OETHbAddress, "Only OETHb supported as token1");
     }
 
     /**
