@@ -32,9 +32,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
     uint256 public underlyingAssets;
-    /// @notice the gauge for the corresponding Slipstream pool (clPool)
-    /// @dev can become an immutable once the gauge is created on the base main-net
-    ICLGauge public clGauge;
     /**
      * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing 
      * as 18 decimal point
@@ -72,6 +69,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ISwapRouter public immutable swapRouter;
     /// @notice the underlying AMO Slipstream pool
     ICLPool public immutable clPool;
+    /// @notice the gauge for the corresponding Slipstream pool (clPool)
+    /// @dev can become an immutable once the gauge is created on the base main-net
+    ICLGauge public immutable clGauge;
     /// @notice the Position manager contract that is used to manage the pool's position
     INonfungiblePositionManager public immutable positionManager;
     /// @notice helper contract for liquidity and ticker math
@@ -169,6 +169,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @param _nonfungiblePositionManager Address of position manager to add/remove
     ///         the liquidity
     /// @param _clPool Address of the Aerodrome concentrated liquidity pool
+    /// @param _clGauge Address of the Aerodrome slipstream pool gauge
     /// @param _sugarHelper Address of the Aerodrome Sugar helper contract
     /// @param _lowerBoundingTick Smaller bounding tick of our liquidity position
     /// @param _upperBoundingTick Larger bounding tick of our liquidity position
@@ -180,6 +181,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address _swapRouter,
         address _nonfungiblePositionManager,
         address _clPool,
+        address _clGauge,
         address _sugarHelper,
         int24 _lowerBoundingTick,
         int24 _upperBoundingTick,
@@ -193,6 +195,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _nonfungiblePositionManager
         );
         clPool = ICLPool(_clPool);
+        clGauge = ICLGauge(_clGauge);
         helper = ISugarHelper(_sugarHelper);
         sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_lowerBoundingTick);
         sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_upperBoundingTick);
@@ -211,33 +214,22 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
-     * @param _clGauge Address of the Aerodrome slipstream pool gauge
      */
     function initialize(
         address[] memory _rewardTokenAddresses,
         address[] memory _assets,
-        address[] memory _pTokens,
-        address _clGauge
+        address[] memory _pTokens
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
             _assets,
             _pTokens
         );
-        // TODO: move to constructor once this is known on the mainnet
-        clGauge = ICLGauge(_clGauge);
     }
 
     /***************************************
                   Configuration 
     ****************************************/
-
-    /**
-     * TODO: delete once we get the gauge.
-     */
-    function setGauge(address _clGauge) external onlyGovernor {
-        clGauge = ICLGauge(_clGauge);
-    }
 
     /**
      * @notice Set the new desired WETH share
@@ -713,7 +705,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Collect the AERO token from the gauge 
      */
     function _collectRewardTokens() internal override {
-        // TODO do other stuff
+        clGauge.getReward(tokenId);
         super._collectRewardTokens();
     }
 

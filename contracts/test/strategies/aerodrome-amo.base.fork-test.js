@@ -146,6 +146,12 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   });
 
   describe("Withdraw", function () {
+    it("Should be able to collect reward tokens", async () => {
+      expect.fail("need to implement test");
+    });
+  });
+
+  describe("Withdraw", function () {
     it("Should allow withdraw when the pool is 80:20 balanced", async () => {
       const { oethbVault, aerodromeAmoStrategy, weth } = fixture
       

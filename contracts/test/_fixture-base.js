@@ -8,9 +8,7 @@ const addresses = require("../utils/addresses");
 
 const log = require("../utils/logger")("test:fixtures-arb");
 
-const aeroVoterAbi = require("./abi/aerodromeVoter.json");
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
-const slipstreamPoolAbi = require("./abi/aerodromeSlipstreamPool.json")
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -118,9 +116,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   const aeroSwapRouter = await ethers.getContractAt(aeroSwapRouterAbi, addresses.base.swapRouter);
 
-  // TODO delete once we have gauge on the mainnet
-  await setupAerodromeOEthbWETHGauge(oethb.address, aerodromeAmoStrategy, governor);
-
   return {
     // Aerodrome
     aeroSwapRouter,
@@ -151,39 +146,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     nick,
   };
 });
-
-/**
- * This is needed only as long as the gauge isn't created on the base mainnet
- */
-const setupAerodromeOEthbWETHGauge = async (oethbAddress, aerodromeAmoStrategy, governor) => {
-  const voter = await ethers.getContractAt(aeroVoterAbi, addresses.base.aeroVoterAddress);
-  const amoPool = await ethers.getContractAt(slipstreamPoolAbi, addresses.base.aerodromeOETHbWETHClPool);
-
-  const aeroGaugeSigner = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress);
-
-  // whitelist OETHb
-  await voter
-    .connect(aeroGaugeSigner)
-    .whitelistToken(
-      oethbAddress,
-      true
-    );
-    
-  // create a gauge
-  await voter
-    .connect(aeroGaugeSigner)
-    .createGauge(
-      // 0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A
-      addresses.base.slipstreamPoolFactory,
-      // 0x6446021F4E396dA3df4235C62537431372195D38
-      addresses.base.aerodromeOETHbWETHClPool
-    );
-
-
-  await aerodromeAmoStrategy
-    .connect(governor)
-    .setGauge(await amoPool.gauge());
-};
 
 mocha.after(async () => {
   if (snapshotId) {
