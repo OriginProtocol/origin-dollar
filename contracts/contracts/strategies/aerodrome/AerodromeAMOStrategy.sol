@@ -18,8 +18,6 @@ import { ICLPool } from "../../interfaces/aerodrome/ICLPool.sol";
 import { ICLGauge } from "../../interfaces/aerodrome/ICLGauge.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 
-import "hardhat/console.sol";
-
 contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
