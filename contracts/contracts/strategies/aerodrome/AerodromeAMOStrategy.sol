@@ -200,7 +200,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         helper = ISugarHelper(_sugarHelper);
         sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_lowerBoundingTick);
         sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_upperBoundingTick);
-        sqrtRatioX96TickClosestToParity = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_upperBoundingTick);
+        sqrtRatioX96TickClosestToParity = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(_tickClosestToParity);
 
         lowerTick = _lowerBoundingTick;
         upperTick = _upperBoundingTick;
