@@ -765,6 +765,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         override
         returns (uint256)
     {   
+        require(_asset == WETH, "Only WETH supported");
+        
         // we could in theory deposit to the strategy and forget to call rebalance in the same
         // governance transaction batch. In that case the WETH that is on the strategy contract
         // also needs to be accounted for. 
