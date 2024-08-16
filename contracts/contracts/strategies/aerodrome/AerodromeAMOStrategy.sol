@@ -438,7 +438,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // Swap it
         uint256 amountReceived = swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
-                tokenIn: _swapWETH ? WETH : OETHb,
+                tokenIn: address(tokenToSwap),
                 tokenOut: _swapWETH ? OETHb : WETH,
                 tickSpacing: tickSpacing, // set to 1
                 recipient: address(this),
