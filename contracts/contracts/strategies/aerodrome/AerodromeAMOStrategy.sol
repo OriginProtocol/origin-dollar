@@ -402,7 +402,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             })
         );
 
-        updateUnderlyingAssets();
+        _updateUnderlyingAssets();
 
         emit LiquidityRemoved(
             withdrawLiquidityShare,
@@ -507,7 +507,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
             tokenId = mintedTokenId;
 
-            updateUnderlyingAssets();
+            _updateUnderlyingAssets();
             emit LiquidityAdded(
                 wethBalance, // wethAmountDesired
                 oethbRequired, // oethbAmountDesired
@@ -531,7 +531,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 })
             );
 
-            updateUnderlyingAssets();
+            _updateUnderlyingAssets();
             emit LiquidityAdded(
                 wethBalance, // wethAmountDesired
                 oethbRequired, // oethbAmountDesired
@@ -591,7 +591,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(oethbBalance);
     }
 
-    function updateUnderlyingAssets() internal {
+    function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
         } else {
