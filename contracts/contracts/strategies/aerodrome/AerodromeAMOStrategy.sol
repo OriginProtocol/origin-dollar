@@ -488,7 +488,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 INonfungiblePositionManager.MintParams({
                     token0: WETH,
                     token1: OETHb,
-                    tickSpacing: 1,
+                    tickSpacing: tickSpacing,
                     tickLower: lowerTick,
                     tickUpper: upperTick,
                     amount0Desired: WETHBalance,
