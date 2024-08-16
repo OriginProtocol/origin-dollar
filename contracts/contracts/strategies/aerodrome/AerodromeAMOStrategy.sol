@@ -370,6 +370,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
      */
     function _removeLiquidity(uint256 _liquidityToDecrease) internal {
+        require(_liquidityToDecrease > 0, "Must remove some liquidity");
+        require(_liquidityToDecrease < 1e18, "Mustn't remove all liquidity");
+        
         // unstake the position from the gauge
         clGauge.withdraw(tokenId);
 
