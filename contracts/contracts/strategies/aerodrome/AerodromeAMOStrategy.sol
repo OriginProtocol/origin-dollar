@@ -377,7 +377,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint128 liquidity = _getLiquidity();
         // need to convert to uint256 since intermittent result is to big for uint128 to handle
-        uint128 liqudityToRemove = uint128(uint256(liquidity).mulTruncate(_liquidityToDecrease));
+        uint128 liqudityToRemove = uint256(liquidity).mulTruncate(_liquidityToDecrease).toUint128();
 
         (uint256 amountWETH, uint256 amountOETHb) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
