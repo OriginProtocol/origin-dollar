@@ -163,7 +163,6 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         .connect(strategist)
         .collectRewardTokens();
 
-      console.log("await aero.balanceOf(strategistAddr)", await aero.balanceOf(strategistAddr));
       const aeroBalancediff = (await aero.balanceOf(strategistAddr)).sub(aeroBalanceBefore);
 
       expect(aeroBalancediff).to.equal(oethUnits("1337"));
@@ -220,10 +219,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         .withdrawAll();
 
       // // Make sure pool is empty
-      // // TODO: This method reverts when there's nothing in the pool
-      // const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
-      // expect(amountOETHb).to.eq(0)
-      // expect(amountWETH).to.eq(0)
+      const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+      expect(amountOETHb).to.eq(0)
+      expect(amountWETH).to.eq(0)
 
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETHBefore))
@@ -355,89 +353,104 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     })
   })
 
-  it("Should be able to deposit to the strategy", async () => {
-    await mintAndDepositToStrategy();
-  });
-
-  it("Should be able to deposit to the pool & rebalance", async () => {
-    await mintAndDepositToStrategy({ amount: oethUnits("5") });
-    await rebalance(
-      oethUnits("0.00001"),
-      oethUnits("0.000009"),
-      true // _swapWETHs
-    );
-  });
-
-  it("Should revert when there is not enough WETH to perform a swap", async () => {
-    await swap({
-      amount: oethUnits("5"),
-      swapWeth: false
-    })
-
-    await expect(rebalance(
-      oethUnits("0.02"),
-      oethUnits("0.018"),
-      true // _swapWETH
-    )).to.be.reverted;
-  });
-
-  it("Should be able to rebalance the pool when price pushed to 1:1", async () => {
-    await swap({
-      amount: oethUnits("5"),
-      swapWeth: false
-    })
-
-    // supply some WETH for the rebalance
-    await mintAndDepositToStrategy({ amount: oethUnits("1") });
-
-    await rebalance(
-      oethUnits("0.055"),
-      oethUnits("0.054"),
-      true // _swapWETH
-    );
-  });
-
-  it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
-    await swap({
-      amount: oethUnits("20.44"),
-      swapWeth: true
-    })
-
-    await rebalance(
-      oethUnits("0.2"),
-      oethUnits("0.19"),
-      false // _swapWETH
-    );
-  });
-
-  it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
-    await expect(aerodromeAmoStrategy
-      .connect(strategist)
-      .depositLiquidity()
-    ).to.be.revertedWith("Liquidity already deposited")
-  });
-
-  it("Should have the correct balance within some tolerance", async () => {
-    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("25.444"));
-    await mintAndDepositToStrategy({ amount: oethUnits("6") });
-    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("31.444"));
-    // just add liquidity don't move the active trading position
-    await rebalance(BigNumber.from("0"), BigNumber.from("0"), true);
-
-    await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("55.98"));
-  });
-
-  it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
-    // swap out most of the weth
-    await swap({
-      // Pool has 5 WETH
-      amount: oethUnits("4.99"),
-      swapWeth: false
+  describe("Deposit and rebalance", function () {
+    it("Should be able to deposit to the strategy", async () => {
+      await mintAndDepositToStrategy();
     });
 
-    await expect(
-      rebalance(oethUnits("4.99"), oethUnits("4"), true)
-    ).to.be.revertedWith("NotEnoughWethForSwap");
+    it("Should be able to deposit to the pool & rebalance", async () => {
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+
+      // prettier-ignore
+      const tx = await rebalance(
+        oethUnits("0.00001"),
+        oethUnits("0.000009"),
+        true // _swapWETHs
+      );
+
+      await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+
+    });
+
+    it("Should revert when there is not enough WETH to perform a swap", async () => {
+      await swap({
+        amount: oethUnits("5"),
+        swapWeth: false
+      })
+
+      await expect(rebalance(
+        oethUnits("0.02"),
+        oethUnits("0.018"),
+        true // _swapWETH
+      )).to.be.revertedWith("NotEnoughWethForSwap");
+    });
+
+    it("Should revert when pool rebalance is off target", async () => {
+      await expect(rebalance(
+        oethUnits("0.04"),
+        oethUnits("0.035"),
+        true // _swapWETH
+      )).to.be.revertedWith("PoolRebalanceOutOfBounds");
+    });
+
+    it("Should be able to rebalance the pool when price pushed to 1:1", async () => {
+      await swap({
+        amount: oethUnits("5"),
+        swapWeth: false
+      })
+
+      // supply some WETH for the rebalance
+      await mintAndDepositToStrategy({ amount: oethUnits("1") });
+
+      await rebalance(
+        oethUnits("0.055"),
+        oethUnits("0.054"),
+        true // _swapWETH
+      );
+    });
+
+    it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
+      await swap({
+        amount: oethUnits("20.44"),
+        swapWeth: true
+      })
+
+      await rebalance(
+        oethUnits("0.2"),
+        oethUnits("0.19"),
+        false // _swapWETH
+      );
+    });
+
+    it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
+      await expect(aerodromeAmoStrategy
+        .connect(strategist)
+        .depositLiquidity()
+      ).to.be.revertedWith("Liquidity already deposited")
+    });
+
+    it("Should have the correct balance within some tolerance", async () => {
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("25.444"));
+      await mintAndDepositToStrategy({ amount: oethUnits("6") });
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("31.444"));
+      // just add liquidity don't move the active trading position
+      await rebalance(BigNumber.from("0"), BigNumber.from("0"), true);
+
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("55.98"));
+    });
+
+    it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
+      // swap out most of the weth
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("4.99"),
+        swapWeth: false
+      });
+
+      await expect(
+        rebalance(oethUnits("4.99"), oethUnits("4"), true)
+      ).to.be.revertedWith("NotEnoughWethForSwap");
+    });
   });
 
   const setup = async () => {
@@ -505,7 +518,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   }
 
   const rebalance = async (amountToSwap, minTokenReceived, swapWETH) => {
-    await aerodromeAmoStrategy
+    return await aerodromeAmoStrategy
       .connect(strategist)
       .rebalance(
         amountToSwap,

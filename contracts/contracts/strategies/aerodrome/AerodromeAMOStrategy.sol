@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
  * @title Aerodrome AMO strategy
  * @author Origin Protocol Inc
  */
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -561,18 +562,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             currentWethShare = WETHPositionBalance.divPrecisely(WETHPositionBalance + OETHbPositionBalance);
         }
 
-        if (currentWethShare < poolWethShareVarianceAllowed || // uint256 mustn't go below 0  
-            poolWethShare < currentWethShare - poolWethShareVarianceAllowed ||
-            poolWethShare > currentWethShare + poolWethShareVarianceAllowed) {
+        uint256 wethDiff = Math.max(poolWethShare, currentWethShare) - Math.min(poolWethShare, currentWethShare);
 
-            revert PoolRebalanceOutOfBounds(
+        if (wethDiff < poolWethShareVarianceAllowed) {
+            emit PoolRebalanced(
                 currentWethShare,
                 poolWethShare,
                 WETHPositionBalance,
                 OETHbPositionBalance
             );
         } else {
-            emit PoolRebalanced(
+            revert PoolRebalanceOutOfBounds(
                 currentWethShare,
                 poolWethShare,
                 WETHPositionBalance,
