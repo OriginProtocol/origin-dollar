@@ -222,9 +222,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address[] memory _pTokens
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
+            // these should all be empty
+            new address[](0),
+            new address[](0),
+            new address[](0)
         );
     }
 
@@ -806,7 +807,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         internal 
         view
         returns (
-            uint128 liquidity,
+            uint128 liquidity
         ) {
 
         if (tokenId == 0) {
