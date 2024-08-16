@@ -83,7 +83,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it.only("Can not set too large or too small pool weth share", async () => {
+    it("Can not set too large or too small pool weth share", async () => {
       const { governor, aerodromeAmoStrategy} = fixture;
 
       await expect(aerodromeAmoStrategy
