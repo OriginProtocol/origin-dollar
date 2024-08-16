@@ -436,7 +436,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         emit PrincipalPositionBeforeSwap(WETHPositionBalance, OETHbPositionBalance);
 
         // Swap it
-        uint256 amountReceived = swapRouter.exactInputSingle(
+        swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(tokenToSwap),
                 tokenOut: _swapWETH ? OETHb : WETH,
