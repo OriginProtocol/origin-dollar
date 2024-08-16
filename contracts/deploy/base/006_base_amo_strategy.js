@@ -166,6 +166,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbVault,
           signature: "addStrategyToMintWhitelist(address)",
           args: [cAMOStrategyProxy.address],
+        },
+        {
+          // 5. Set harvester address
+          contract: cAMOStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.base.strategist],
         }
       ],
     };

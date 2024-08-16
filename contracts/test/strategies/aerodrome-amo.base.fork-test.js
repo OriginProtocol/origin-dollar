@@ -1,3 +1,4 @@
+const hre = require("hardhat");
 const { createFixtureLoader } = require("../_fixture");
 const {
   defaultBaseFixture,
@@ -10,6 +11,7 @@ const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
+const { setERC20TokenBalance } = require("../_fund");
 
 describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
@@ -17,6 +19,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   beforeEach(async () => {
     fixture = await baseFixture();
     weth = fixture.weth;
+    aero = fixture.aero;
     oethb = fixture.oethb;
     oethbVault = fixture.oethbVault;
     aerodromeAmoStrategy = fixture.aerodromeAmoStrategy;
@@ -49,6 +52,11 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       // correct pool weth share
       expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
         oethUnits("0.20")
+      );
+
+      // correct harvester set
+      expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
+        await strategist.getAddress()
       );
     }); 
   });
@@ -145,9 +153,21 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
   });
 
-  describe("Withdraw", function () {
+  describe("Harvest rewards", function () {
     it("Should be able to collect reward tokens", async () => {
-      expect.fail("need to implement test");
+      const strategistAddr = await strategist.getAddress();
+
+      await setERC20TokenBalance(aerodromeAmoStrategy.address, aero, "1337", hre);
+      const aeroBalanceBefore = await aero.balanceOf(strategistAddr);
+      await aerodromeAmoStrategy
+        .connect(strategist)
+        .collectRewardTokens();
+
+      console.log("await aero.balanceOf(strategistAddr)", await aero.balanceOf(strategistAddr));
+      const aeroBalancediff = (await aero.balanceOf(strategistAddr)).sub(aeroBalanceBefore);
+
+      expect(aeroBalancediff).to.equal(oethUnits("1337"));
+
     });
   });
 

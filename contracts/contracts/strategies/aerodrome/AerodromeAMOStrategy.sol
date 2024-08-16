@@ -49,7 +49,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     uint128 public withdrawLiquidityShare;
     /// @dev reserved for inheritance
-    int256[50] private __reserved;
+    int256[45] private __reserved;
 
     /***************************************
           Constants, structs and events
@@ -550,7 +550,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _checkLiquidityWithinExpectedShare() internal {
         (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
-        require(WETHPositionBalance + OETHbPositionBalance > 0, "Can not withdraw full position");
+        require(WETHPositionBalance + OETHbPositionBalance > 0, "No liquidity in position");
 
         uint160 currentPrice = getPoolX96Price();
         // check we are in inspected tick range

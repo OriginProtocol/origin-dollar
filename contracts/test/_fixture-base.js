@@ -5,6 +5,7 @@ const { isFork, isBaseFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
+const erc20Abi = require("./abi/erc20.json");
 
 const log = require("../utils/logger")("test:fixtures-arb");
 
@@ -70,9 +71,15 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   );
 
   // WETH
-  const weth = isFork
-    ? await ethers.getContractAt("IWETH9", addresses.base.WETH)
-    : await ethers.getContract("MockWETH");
+  let weth, aero
+
+  if (isFork) {
+    weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
+    aero = await ethers.getContractAt(erc20Abi, addresses.base.AERO);
+  } else {
+    weth = await ethers.getContract("MockWETH");
+    aero = await ethers.getContract("MockAero");
+  }
 
   const signers = await hre.ethers.getSigners();
 
@@ -119,6 +126,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   return {
     // Aerodrome
     aeroSwapRouter,
+    aero,
     // OETHb
     oethb,
     oethbVault,
