@@ -50,7 +50,7 @@ describe.skip("ForkTest: Lido Withdrawal Strategy", function () {
         9
       );
     });
-    it("Should redeem in in 5 requests", async function () {
+    it("Should redeem in 5 requests", async function () {
       await _testWithdrawalCycle([ousdUnits("4999")], 5, 2);
     });
     it("Should redeem stETH for WETH (1 small request)", async function () {
