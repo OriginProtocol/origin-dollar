@@ -371,7 +371,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // unstake the position from the gauge
         clGauge.withdraw(tokenId);
 
-        (uint128 liquidity,,) = _getPositionInfo();
+        uint128 liquidity = _getLiquidity();
         // need to convert to uint256 since intermittent result is to big for uint128 to handle
         uint128 liqudityToRemove = uint128(uint256(liquidity).mulTruncate(_liquidityToDecrease));
 
@@ -593,7 +593,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (tokenId == 0) {
             underlyingAssets = 0;
         } else {
-            (uint128 liquidity,,) = _getPositionInfo();
+            uint128 liquidity = _getLiquidity();
 
             /**
              * Our net value represent the smallest amount of tokens we are able to extract from the position
@@ -802,19 +802,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             (sqrtRatioX96, , , , ,) = clPool.slot0();
         }
 
-    function _getPositionInfo() 
+    function _getLiquidity() 
         internal 
+        view
         returns (
             uint128 liquidity,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
         ) {
 
         if (tokenId == 0) {
             revert("No LP position");
         }
 
-        (,,,,,,,liquidity,,,tokensOwed0,tokensOwed1) = positionManager.positions(tokenId);
+        (,,,,,,,liquidity,,,,) = positionManager.positions(tokenId);
     }
 
     /***************************************

@@ -372,6 +372,10 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     });
 
+    it("Should work correctly with pool having starting liquidity or not", async () => {
+      throw new Error("Implement this");
+    });
+
     it("Should revert when there is not enough WETH to perform a swap", async () => {
       await swap({
         amount: oethUnits("5"),
