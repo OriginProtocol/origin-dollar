@@ -484,8 +484,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         if (tokenId == 0) {
-            uint160 sqrtRatioX96 = getPoolX96Price();
-
             (uint256 mintedTokenId, uint128 liquidity, uint256 WETHAmountSupplied, uint256 OETHbAmountSupplied) = positionManager.mint(
                 INonfungiblePositionManager.MintParams({
                     token0: WETH,
