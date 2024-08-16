@@ -222,8 +222,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address[] memory _pTokens
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
             // these should all be empty
-            new address[](0),
             new address[](0),
             new address[](0)
         );
@@ -239,6 +239,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function setPoolWethShare(uint256 _amount) external onlyGovernor {
         require(_amount < 1e18, "Invalid poolWethShare amount");
+        require(_amount > 0, "Invalid poolWethShare amount");
 
         poolWethShare = _amount;
         emit PoolWethShareUpdated(_amount);

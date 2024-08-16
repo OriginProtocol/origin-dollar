@@ -83,13 +83,19 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Can not set too large pool weth share", async () => {
+    it.only("Can not set too large or too small pool weth share", async () => {
       const { governor, aerodromeAmoStrategy} = fixture;
 
       await expect(aerodromeAmoStrategy
         .connect(governor)
         .setPoolWethShare(oethUnits("1"))
       ).to.be.revertedWith("Invalid poolWethShare amount");
+
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .setPoolWethShare(oethUnits("0"))
+      ).to.be.revertedWith("Invalid poolWethShare amount");
+
     });
 
     it("Governor can set the withdraw liquidity share", async () => {
