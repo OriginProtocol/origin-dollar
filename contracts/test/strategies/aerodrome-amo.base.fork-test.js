@@ -378,7 +378,20 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     });
 
+    it("Revert when there is no token id yet and no liquidity to perform the swap.", async () => {
+      // this will need a separate top level describe with no setup
+      throw new Error("Implement this");
+    });
+
     it("Should work correctly with pool having starting liquidity or not", async () => {
+      throw new Error("Implement this");
+    });
+
+    it("Should check that add liquidity in difference cases leaves no to little weth on the contract", async () => {
+      throw new Error("Implement this");
+    });
+
+    it("Should check that withdraw liquidity in all tests leaves no to little weth on the contract", async () => {
       throw new Error("Implement this");
     });
 
@@ -426,27 +439,20 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       })
 
       await rebalance(
-        oethUnits("0.2"),
-        oethUnits("0.19"),
+        oethUnits("0.205"),
+        oethUnits("0.20"),
         false // _swapWETH
       );
     });
 
-    it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
-      await expect(aerodromeAmoStrategy
-        .connect(strategist)
-        .depositLiquidity()
-      ).to.be.revertedWith("Liquidity already deposited")
-    });
-
     it("Should have the correct balance within some tolerance", async () => {
-      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("25.444"));
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("24.98"));
       await mintAndDepositToStrategy({ amount: oethUnits("6") });
-      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("31.444"));
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("30.98"));
       // just add liquidity don't move the active trading position
       await rebalance(BigNumber.from("0"), BigNumber.from("0"), true);
 
-      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("55.98"));
+      await expect(await aerodromeAmoStrategy.checkBalance(weth.address)).to.approxEqualTolerance(oethUnits("54.9"));
     });
 
     it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
@@ -465,14 +471,11 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   const setup = async () => {
     await mintAndDepositToStrategy({ amount: oethUnits("5") });
-    // deploy some liquidity into the [-1, 0] ticker without swapping
-    // only called when the strategy has no liquidity position yet
-    await depositLiquidityToPool();
 
     // move the price to pre-configured 20% value
     await rebalance(
-      oethUnits("0.04"),
-      oethUnits("0.03"),
+      oethUnits("0.0027"),
+      oethUnits("0.0026"),
       true // _swapWETH
     );
   }
@@ -520,12 +523,6 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         sqrtPriceLimitX96: swapWeth ? sqrtRatioX96TickM1000 : sqrtRatioX96Tick1000
     })
   };
-
-  const depositLiquidityToPool = async () => {
-    await aerodromeAmoStrategy
-      .connect(strategist)
-      .depositLiquidity();
-  }
 
   const rebalance = async (amountToSwap, minTokenReceived, swapWETH) => {
     return await aerodromeAmoStrategy
