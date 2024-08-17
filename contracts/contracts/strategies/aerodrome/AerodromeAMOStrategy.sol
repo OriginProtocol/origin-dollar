@@ -306,6 +306,29 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * underlying aerodrome pool. Print the required amount of corresponding OETHb. After the rebalancing is 
      * done burn any potentially remaining OETHb tokens still on the strategy contract.
      * 
+     * This function has a slightly different behaviours depending on the status of the underlying Aerodrome
+     * slipstream pool. The function achieves its behaviour using the following 3 steps: 
+     * 1. withdrawPartialLiqidity -> so that moving the activeTrading price via  a swap is cheaper
+     * 2. swapToDesiredPosition   -> move active trading price in the pool to be able to deposit WETH & OETHb
+     *                               tokens with the desired pre-configured shares
+     * 3. addLiquidity            -> add liquidity into the pool respecting share split configuration
+     * 
+     * Scenario 1: When there is yet no liquidity yet in the pool (from the strategy or others) that means that 
+     *             someone has minted the pool, added the initial liquidity and removed the liquidity from the 
+     *             pool. (See `aerodrome_amo_liquidity.py` brownie script on block 18558804 to test the situation).
+     *             Then the Aerodrome pool is in this particular state where active trading price of the pool is
+     *             still at the value when last liquidity was in the pool and that trading price can not be moved
+     *             since there is no liquidity to perform the swap. In such a case the rebalancing transaction 
+     *             shall be reverted. 
+     *             It becomes the responsibility of the strategist or deployer to add some liquidity in the configured
+     *             tick ranges to the pool to facilitate the swap. Effectively turning Scenario 1 into a Scenario 2
+     * Scenario 2: When there is no liquidity in the pool from the strategy but there is from other LPs then
+     *             only step 1 is skipped. (It is important to note that liquidity needs to exist in the configured
+     *             strategy tick ranges in order for the swap to be possible) Step 3 mints new liquidity position 
+     *             instead of adding to an existing one.
+     * Scenario 3: When there is strategy's liquidity in the pool all 3 steps are taken 
+     * 
+     * 
      * Exact _amountToSwap, _minTokenReceived & _swapWeth parameters shall be determined by simulating the 
      * transaction off-chain. The strategy checks that after the swap the share of the tokens is in the 
      * expected ranges.
@@ -318,19 +341,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _rebalance(_amountToSwap, _minTokenReceived, _swapWeth);
     }
 
-    /// @notice Only used for the initial deposit (or after calling withdrawAll) when there is no liquidity
-    ///         in the [-1, 0] tick. This function is needed since we can not swap to the desired position within
-    ///         the pool if there is no liquidity in the [-1, 0] ticker
-    function depositLiquidity() external nonReentrant onlyGovernorOrStrategist {
-        require(tokenId == 0, "Liquidity already deposited");
-        _addLiquidity();
-    }
-
     /**
      * @dev Rebalance the pool to the desired token split
      */
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) internal {
-        _removePartialLiquidity(withdrawLiquidityShare);
+        /**
+         * When rebalance is called for the first time or after a withdrawAll there is no strategy's
+         * liquidity in the pool yet. The partial removal is thus skipped.
+         */
+        if (tokenId != 0) {
+            _removePartialLiquidity(withdrawLiquidityShare);
+        }
         // in some cases we will just want to add liquidity and not issue a swap to move the 
         // active trading position within the pool
         if (_amountToSwap > 0) {
@@ -338,7 +359,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
-        _checkLiquidityWithinExpectedShare();
+        if (tokenId != 0) {
+            _checkLiquidityWithinExpectedShare();
+        }
+
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
@@ -458,26 +482,23 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Perform a swap so that after the swap the ticker has the desired WETH to OETHb token share.
+     * @dev Add liquidity into the pool in the pre-configured WETH to OETHb share ratios 
+     * configured by the `poolWethShare` property. This function will respect liquidity 
+     * ratios when there no liquidity yet in the pool. If liquidity is already present 
+     * then it relies on the `_swapToDesiredPosition` function in a step before to already
+     * move the trading price to desired position (with some tolerance).
      */
     function _addLiquidity() internal {
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 oethbBalance = IERC20(OETHb).balanceOf(address(this));
         require(wethBalance > 0, "Must add some WETH");
-        uint256 oethbRequired;
 
-        if (tokenId == 0) {
-            // supply token amounts according to target poolWethShare amount
-            oethbRequired = wethBalance.divPrecisely(poolWethShare)
-                .mulTruncate(1e18 - poolWethShare);
+        uint160 currentPrice = getPoolX96Price();
+        // sanity check active trading price is positioned within our desired tick
+        require(currentPrice > sqrtRatioX96Tick0 && currentPrice < sqrtRatioX96Tick1, "Active trading price not in configured tick");
 
-        } else {
-            // supply the tokens to the pool according to the current position in the pool
-            (uint256 WETHPositionBalance, uint256 OETHbPositionBalance) = getPositionPrincipal();
-
-            require(OETHbPositionBalance > 0, "Can not calculate OETHb required");
-            oethbRequired = OETHbPositionBalance.divPrecisely(WETHPositionBalance).mulTruncate(wethBalance);
-        }
+        // in case oethb would be the 1st token we'd need to call estimateAmount0 here
+        uint256 oethbRequired = helper.estimateAmount1(wethBalance, address(clPool), currentPrice, lowerTick, upperTick);
 
         if (oethbRequired > oethbBalance) {
             IVault(vaultAddress).mintForStrategy(oethbRequired - oethbBalance);
@@ -766,7 +787,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         returns (uint256)
     {   
         require(_asset == WETH, "Only WETH supported");
-        
+
         // we could in theory deposit to the strategy and forget to call rebalance in the same
         // governance transaction batch. In that case the WETH that is on the strategy contract
         // also needs to be accounted for. 
