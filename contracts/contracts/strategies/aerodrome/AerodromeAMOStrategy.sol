@@ -355,6 +355,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Rebalance the pool to the desired token split
      */
+    // rebalance already has reentrancy check
+    // slither-disable-start reentrancy-no-eth
     function _rebalance(
         uint256 _amountToSwap,
         uint256 _minTokenReceived,
@@ -389,6 +391,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @dev Decrease partial liquidity from the pool.
@@ -409,6 +412,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all liquidity from the pool.
      */
+    // already check for reentrancy in withdrawAll
+    // slither-disable-start reentrancy-no-eth
     function _removeAllLiquidity() internal {
         _removeLiquidity(1e18);
 
@@ -416,6 +421,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         tokenId = 0;
         emit LiquidityTokenBurned(tokenId);
     }
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @dev Decrease partial or all liquidity from the pool.
@@ -535,6 +541,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * then it relies on the `_swapToDesiredPosition` function in a step before to already
      * move the trading price to desired position (with some tolerance).
      */
+    // rebalance already has re-entrency checks
+    // slither-disable-start reentrancy-no-eth
     function _addLiquidity() internal {
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 oethbBalance = IERC20(OETHb).balanceOf(address(this));
@@ -637,6 +645,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
     }
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
