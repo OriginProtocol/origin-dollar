@@ -78,11 +78,9 @@ const deployCore = async () => {
   const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
 
   // Core contracts
-  const dOETHb = await deployWithConfirmation("OETH");
+  const dOETHb = await deployWithConfirmation("OETHBase");
   const dwOETHb = await deployWithConfirmation("WOETHBase", [
     cOETHbProxy.address, // Base token
-    "Wrapped OETH Base",
-    "wOETHb",
   ]);
   const dOETHbVault = await deployWithConfirmation("OETHVault");
   const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
@@ -91,7 +89,7 @@ const deployCore = async () => {
   const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVaultAdmin");
 
   // Get contract instances
-  const cOETHb = await ethers.getContractAt("OETH", cOETHbProxy.address);
+  const cOETHb = await ethers.getContractAt("OETHBase", cOETHbProxy.address);
   const cwOETHb = await ethers.getContractAt("WOETHBase", cwOETHbProxy.address);
   const cOETHbVault = await ethers.getContractAt(
     "IVault",
@@ -104,8 +102,8 @@ const deployCore = async () => {
   const initDataOETHb = cOETHb.interface.encodeFunctionData(
     "initialize(string,string,address,uint256)",
     [
-      "OETH Base",
-      "OETHb", // Token Symbol
+      "Super OETH",
+      "superOETHb", // Token Symbol
       cOETHbVaultProxy.address, // OETHb Vault
       resolution, // HighRes
     ]
