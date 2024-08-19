@@ -6,40 +6,39 @@ const {
 const addresses = require("../../utils/addresses");
 const { oethUnits } = require("../../test/helpers");
 
-const aeroVoterAbi = require("../../test/abi/aerodromeVoter.json");
-const slipstreamPoolAbi = require("../../test/abi/aerodromeSlipstreamPool.json")
-const { isFork } = require("../../test/helpers.js");
-const { impersonateAndFund } = require("../../utils/signers.js");
+//const aeroVoterAbi = require("../../test/abi/aerodromeVoter.json");
+//const slipstreamPoolAbi = require("../../test/abi/aerodromeSlipstreamPool.json")
+//const { impersonateAndFund } = require("../../utils/signers.js");
 
 /**
  * This is needed only as long as the gauge isn't created on the base mainnet
  */
-const setupAerodromeOEthbWETHGauge = async (oethbAddress) => {
-  const voter = await ethers.getContractAt(aeroVoterAbi, addresses.base.aeroVoterAddress);
-  const amoPool = await ethers.getContractAt(slipstreamPoolAbi, addresses.base.aerodromeOETHbWETHClPool);
+// const setupAerodromeOEthbWETHGauge = async (oethbAddress) => {
+//   const voter = await ethers.getContractAt(aeroVoterAbi, addresses.base.aeroVoterAddress);
+//   const amoPool = await ethers.getContractAt(slipstreamPoolAbi, addresses.base.aerodromeOETHbWETHClPool);
 
-  const aeroGaugeSigner = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress);
+//   const aeroGaugeSigner = await impersonateAndFund(addresses.base.aeroGaugeGovernorAddress);
 
-  // whitelist OETHb
-  await voter
-    .connect(aeroGaugeSigner)
-    .whitelistToken(
-      oethbAddress,
-      true
-    );
+//   // whitelist OETHb
+//   await voter
+//     .connect(aeroGaugeSigner)
+//     .whitelistToken(
+//       oethbAddress,
+//       true
+//     );
     
-  // create a gauge
-  await voter
-    .connect(aeroGaugeSigner)
-    .createGauge(
-      // 0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A
-      addresses.base.slipstreamPoolFactory,
-      // 0x6446021F4E396dA3df4235C62537431372195D38
-      addresses.base.aerodromeOETHbWETHClPool
-    );
+//   // create a gauge
+//   await voter
+//     .connect(aeroGaugeSigner)
+//     .createGauge(
+//       // 0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A
+//       addresses.base.slipstreamPoolFactory,
+//       // 0x6446021F4E396dA3df4235C62537431372195D38
+//       addresses.base.aerodromeOETHbWETHClPool
+//     );
 
-  return await amoPool.gauge();
-};
+//   return await amoPool.gauge();
+// };
 
 
 module.exports = deployOnBaseWithGuardian(

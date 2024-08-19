@@ -8,7 +8,7 @@ const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
 const ethers = require("ethers");
 const { impersonateAndFund } = require("../../utils/signers");
-const { formatUnits } = ethers.utils;
+//const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
@@ -16,12 +16,11 @@ const { setERC20TokenBalance } = require("../_fund");
 const futureEpoch = 1924064072;
 
 describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function () {
-  let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
+  let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter, aeroNftManager;
 
   beforeEach(async () => {
     fixture = await baseFixture();
     weth = fixture.weth;
-    aero = fixture.aero;
     oethb = fixture.oethb;
     oethbVault = fixture.oethbVault;
     aerodromeAmoStrategy = fixture.aerodromeAmoStrategy;
@@ -93,7 +92,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
 });
 
 describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
-  let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
+  let fixture, oethbVault, oethb, aero, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
 
   beforeEach(async () => {
     fixture = await baseFixture();
@@ -593,32 +592,32 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     );
   }
 
-  const printPoolInfo = async () => {
-    const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
-    const poolPrice = Number((await aerodromeAmoStrategy.getPoolX96Price()).toString());
-    const priceTick0 = Number((await aerodromeAmoStrategy.sqrtRatioX96Tick0()).toString());
-    const priceTick1 = Number((await aerodromeAmoStrategy.sqrtRatioX96Tick1()).toString());
+  // const printPoolInfo = async () => {
+  //   const [amountWETH, amountOETHb] = await aerodromeAmoStrategy.getPositionPrincipal();
+  //   const poolPrice = Number((await aerodromeAmoStrategy.getPoolX96Price()).toString());
+  //   const priceTick0 = Number((await aerodromeAmoStrategy.sqrtRatioX96Tick0()).toString());
+  //   const priceTick1 = Number((await aerodromeAmoStrategy.sqrtRatioX96Tick1()).toString());
 
-    let displayedPoolPrice = '';
-    if (poolPrice > priceTick1) {
-      displayedPoolPrice = 'smaller than 1.0000';
-    } else if (poolPrice > priceTick0) {
-      const tickPriceWidth = priceTick1 - priceTick0;
-      const tickPosition = poolPrice - priceTick0;
-      console.log("POSITION WITHIN TICK");
-      console.log("tickPriceWidth", tickPriceWidth);
-      console.log("tickPosition", tickPosition);
-      const relativePosition = tickPosition / tickPriceWidth;
-      const displayedPoolPrice = `${1 + 0.0001 * relativePosition}`;
-    } else {
-      displayedPoolPrice = 'greater than 1.0001';
-    }
+  //   let displayedPoolPrice = '';
+  //   if (poolPrice > priceTick1) {
+  //     displayedPoolPrice = 'smaller than 1.0000';
+  //   } else if (poolPrice > priceTick0) {
+  //     const tickPriceWidth = priceTick1 - priceTick0;
+  //     const tickPosition = poolPrice - priceTick0;
+  //     console.log("POSITION WITHIN TICK");
+  //     console.log("tickPriceWidth", tickPriceWidth);
+  //     console.log("tickPosition", tickPosition);
+  //     const relativePosition = tickPosition / tickPriceWidth;
+  //     const displayedPoolPrice = `${1 + 0.0001 * relativePosition}`;
+  //   } else {
+  //     displayedPoolPrice = 'greater than 1.0001';
+  //   }
 
-    console.log("--------- AERODROME POOL LP POSITION ---------");
-    console.log("WETH amount      : ", formatUnits(amountWETH));
-    console.log("OETHb amount     : ", formatUnits(amountOETHb));
-    console.log("price of OETHb   : ", displayedPoolPrice);
-  };
+  //   console.log("--------- AERODROME POOL LP POSITION ---------");
+  //   console.log("WETH amount      : ", formatUnits(amountWETH));
+  //   console.log("OETHb amount     : ", formatUnits(amountOETHb));
+  //   console.log("price of OETHb   : ", displayedPoolPrice);
+  // };
 
   const swap = async ({ amount, swapWeth }) => {
     const sqrtRatioX96Tick1000 = BigNumber.from("83290069058676223003182343270");
