@@ -8,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "",
+    proposalId:
+      "71647907232135467087600722567288045171884251235529308950820063762029046155177",
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
@@ -90,9 +91,9 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Upgrade both OETH Native Staking Strategy.
+      name: `Upgrade both OETH Native Staking Strategies.
 
-Set the FeeAccumulator's to receive MEV rewards`,
+Set the FeeAccumulator contracts to receive MEV rewards from the SSV validators`,
       actions: [
         // 1. Upgrade the first Native Staking Strategy
         {

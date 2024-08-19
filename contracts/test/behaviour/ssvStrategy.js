@@ -651,17 +651,20 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         validatorRegistrator,
       } = await context();
       const dripperWethBefore = await weth.balanceOf(oethDripper.address);
-
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
+      const feeAccumulatorBefore =
+        await nativeStakingFeeAccumulator.provider.getBalance(
+          nativeStakingFeeAccumulator.address
+        );
 
       // add some ETH to the FeeAccumulator to simulate execution rewards
       const executionRewards = parseEther("7");
       //await setBalance(nativeStakingFeeAccumulator.address, executionRewards);
       await josh.sendTransaction({
         to: nativeStakingFeeAccumulator.address,
-        value: executionRewards,
+        value: executionRewards.sub(feeAccumulatorBefore),
       });
 
       // simulate consensus rewards

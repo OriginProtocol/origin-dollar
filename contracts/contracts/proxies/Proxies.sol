@@ -280,3 +280,10 @@ contract OETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHBaseDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

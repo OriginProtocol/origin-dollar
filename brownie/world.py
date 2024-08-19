@@ -606,7 +606,7 @@ def show_governor_five_proposal_actions(proposal_id):
 def sim_execute_governor_five(proposal_id):
     """
     Bypasses the actual timelock/voting and just calls each governance action
-    as if the timelock sent the transaction individualy.
+    as if the timelock sent the transaction individually.
 
     This skips the governance process time and block delays.
     """

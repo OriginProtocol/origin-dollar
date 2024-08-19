@@ -1110,7 +1110,7 @@ task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
  */
 subtask(
   "transferGovernanceNativeStakingProxy",
-  "Transfer governance of the proxy from the the Defender Relayer"
+  "Transfer governance of the proxy from the Defender Relayer"
 )
   .addParam(
     "deployer",

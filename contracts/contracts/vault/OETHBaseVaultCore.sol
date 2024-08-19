@@ -39,6 +39,7 @@ contract OETHBaseVaultCore is OETHVaultCore {
         oUSD.mint(msg.sender, amount);
     }
 
+    // @inheritdoc VaultCore
     function burnForStrategy(uint256 amount)
         external
         override
