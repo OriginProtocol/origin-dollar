@@ -123,9 +123,9 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
             // Make sure the value only goes up
             require(oraclePrice128 >= lastOraclePrice, "Negative wOETH yield");
 
-            // (lastOraclePrice * (1 + maxPriceDiffBps))
-            uint256 maxPrice = ((lastOraclePrice * (1e4 + maxPriceDiffBps)) /
-                1e4);
+            // lastOraclePrice * (1 + maxPriceDiffBps)
+            uint256 maxPrice = (lastOraclePrice * (1e4 + maxPriceDiffBps)) /
+                1e4;
 
             // And that it's within the bounds.
             require(oraclePrice128 <= maxPrice, "Price diff beyond threshold");
@@ -290,7 +290,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @notice withdrawAll() function not used for this strategy
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        require(false, "Withdrawal disabled");
+        // Withdrawal disabled
     }
 
     function _abstractSetPToken(address, address) internal override {
