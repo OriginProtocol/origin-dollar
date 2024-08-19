@@ -292,5 +292,5 @@ contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice AerodromeAMOStrategyProxy delegates calls to AerodromeAMOStrategy implementation
  */
 contract AerodromeAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-    
+
 }

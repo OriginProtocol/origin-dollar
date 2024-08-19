@@ -5,12 +5,11 @@ pragma abicoder v2;
 /// @title Non-fungible token for positions
 /// @notice Wraps CL positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager
-{
+interface INonfungiblePositionManager {
     /**
      * @dev See {IERC721-approve}.
      */
-     function approve(address to, uint256 tokenId) external;
+    function approve(address to, uint256 tokenId) external;
 
     /// @notice Returns the position information associated with a given token ID.
     /// @dev Throws if the token ID is not valid.
@@ -71,7 +70,12 @@ interface INonfungiblePositionManager
     function mint(MintParams calldata params)
         external
         payable
-        returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+        returns (
+            uint256 tokenId,
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     struct IncreaseLiquidityParams {
         uint256 tokenId;
@@ -95,7 +99,11 @@ interface INonfungiblePositionManager
     function increaseLiquidity(IncreaseLiquidityParams calldata params)
         external
         payable
-        returns (uint128 liquidity, uint256 amount0, uint256 amount1);
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     struct DecreaseLiquidityParams {
         uint256 tokenId;
@@ -137,7 +145,10 @@ interface INonfungiblePositionManager
     /// amount1Max The maximum amount of token1 to collect
     /// @return amount0 The amount of fees collected in token0
     /// @return amount1 The amount of fees collected in token1
-    function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1);
+    function collect(CollectParams calldata params)
+        external
+        payable
+        returns (uint256 amount0, uint256 amount1);
 
     /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
     /// must be collected first.

@@ -60,8 +60,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   );
 
   // Aerodrome AMO Strategy
-  const aerodromeAmoStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
-  const aerodromeAmoStrategy = await ethers.getContractAt("AerodromeAMOStrategy", aerodromeAmoStrategyProxy.address);
+  const aerodromeAmoStrategyProxy = await ethers.getContract(
+    "AerodromeAMOStrategyProxy"
+  );
+  const aerodromeAmoStrategy = await ethers.getContractAt(
+    "AerodromeAMOStrategy",
+    aerodromeAmoStrategyProxy.address
+  );
 
   // Bridged wOETH
   const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
@@ -72,7 +77,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   );
 
   // WETH
-  let weth, aero
+  let weth, aero;
 
   if (isFork) {
     weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
@@ -89,7 +94,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const governor = await ethers.getSigner(governorAddr);
   const strategist = await impersonateAndFund(strategistAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
-
 
   // Make sure we can print bridged WOETH for tests
   if (isBaseFork) {
@@ -122,8 +126,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     await oethb.connect(governor).rebaseOptIn();
   }
 
-  const aeroSwapRouter = await ethers.getContractAt(aeroSwapRouterAbi, addresses.base.swapRouter);
-  const aeroNftManager = await ethers.getContractAt(aeroNonfungiblePositionManagerAbi, addresses.base.nonFungiblePositionManager);
+  const aeroSwapRouter = await ethers.getContractAt(
+    aeroSwapRouterAbi,
+    addresses.base.swapRouter
+  );
+  const aeroNftManager = await ethers.getContractAt(
+    aeroNonfungiblePositionManagerAbi,
+    addresses.base.nonFungiblePositionManager
+  );
 
   return {
     // Aerodrome

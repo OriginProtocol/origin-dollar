@@ -26,7 +26,7 @@ const { oethUnits } = require("../../test/helpers");
 //       oethbAddress,
 //       true
 //     );
-    
+
 //   // create a gauge
 //   await voter
 //     .connect(aeroGaugeSigner)
@@ -39,7 +39,6 @@ const { oethUnits } = require("../../test/helpers");
 
 //   return await amoPool.gauge();
 // };
-
 
 module.exports = deployOnBaseWithGuardian(
   {
@@ -62,20 +61,25 @@ module.exports = deployOnBaseWithGuardian(
        */
       [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
       addresses.base.WETH, // weth address
-      cOETHbProxy.address,  // OETHb address
+      cOETHbProxy.address, // OETHb address
       addresses.base.swapRouter, // swapRouter
       addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
       addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
       addresses.base.aerodromeOETHbWETHClGauge, // gauge address
-      addresses.base.sugarHelper,  // sugarHelper
+      addresses.base.sugarHelper, // sugarHelper
       -1, // lowerBoundingTick
       0, // upperBoundingTick
-      0 // tickClosestToParity
+      0, // tickClosestToParity
     ]);
 
-    const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
+    const cAMOStrategyProxy = await ethers.getContract(
+      "AerodromeAMOStrategyProxy"
+    );
     const cAMOStrategyImpl = await ethers.getContract("AerodromeAMOStrategy");
-    const cAMOStrategy = await ethers.getContractAt("AerodromeAMOStrategy", cAMOStrategyProxy.address);
+    const cAMOStrategy = await ethers.getContractAt(
+      "AerodromeAMOStrategy",
+      cAMOStrategyProxy.address
+    );
 
     console.log("Deployed AMO strategy and proxy contracts");
 
@@ -100,9 +104,7 @@ module.exports = deployOnBaseWithGuardian(
     console.log("Initialized cAMOStrategyProxy and implementation");
 
     await withConfirmation(
-      cAMOStrategy
-        .connect(sDeployer)
-        .setPoolWethShare(oethUnits("0.20")) // 20%
+      cAMOStrategy.connect(sDeployer).setPoolWethShare(oethUnits("0.20")) // 20%
     );
 
     await withConfirmation(
@@ -118,9 +120,7 @@ module.exports = deployOnBaseWithGuardian(
     );
 
     await withConfirmation(
-      cAMOStrategy
-        .connect(sDeployer)
-        .safeApproveAllTokens()
+      cAMOStrategy.connect(sDeployer).safeApproveAllTokens()
     );
 
     console.log("AMOStrategy configured");
@@ -162,7 +162,7 @@ module.exports = deployOnBaseWithGuardian(
           contract: cAMOStrategy,
           signature: "setHarvesterAddress(address)",
           args: [addresses.base.strategist],
-        }
+        },
       ],
     };
   }

@@ -45,7 +45,12 @@ interface IQuoterV2 {
     /// @return gasEstimate The estimate of the gas that the swap consumes
     function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
         external
-        returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
+        returns (
+            uint256 amountOut,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
+        );
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool tick spacing. Path must be provided in reverse order
@@ -84,5 +89,10 @@ interface IQuoterV2 {
     /// @return gasEstimate The estimate of the gas that the swap consumes
     function quoteExactOutputSingle(QuoteExactOutputSingleParams memory params)
         external
-        returns (uint256 amountIn, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
+        returns (
+            uint256 amountIn,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
+        );
 }

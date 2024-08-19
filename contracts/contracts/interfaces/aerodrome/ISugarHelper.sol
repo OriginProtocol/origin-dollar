@@ -2,7 +2,7 @@
 pragma solidity >=0.5.0;
 pragma abicoder v2;
 
-import {INonfungiblePositionManager} from "./INonfungiblePositionManager.sol";
+import { INonfungiblePositionManager } from "./INonfungiblePositionManager.sol";
 
 interface ISugarHelper {
     struct PopulatedTick {
@@ -23,7 +23,6 @@ interface ISugarHelper {
         uint128 liquidity
     ) external pure returns (uint256 amount0, uint256 amount1);
 
-
     function getLiquidityForAmounts(
         uint256 amount0,
         uint256 amount1,
@@ -40,10 +39,13 @@ interface ISugarHelper {
     /// @param tickLow Upper tick boundary
     /// @dev   If the given pool address is not the zero address, will fetch `sqrtRatioX96` from pool
     /// @return amount0 Estimated amount of token0
-    function estimateAmount0(uint256 amount1, address pool, uint160 sqrtRatioX96, int24 tickLow, int24 tickHigh)
-        external
-        view
-        returns (uint256 amount0);
+    function estimateAmount0(
+        uint256 amount1,
+        address pool,
+        uint160 sqrtRatioX96,
+        int24 tickLow,
+        int24 tickHigh
+    ) external view returns (uint256 amount0);
 
     /// @notice Computes the amount of token1 for a given amount of token0 and price range
     /// @param amount0 Amount of token0 to estimate liquidity
@@ -53,19 +55,23 @@ interface ISugarHelper {
     /// @param tickLow Upper tick boundary
     /// @dev   If the given pool address is not the zero address, will fetch `sqrtRatioX96` from pool
     /// @return amount1 Estimated amount of token1
-    function estimateAmount1(uint256 amount0, address pool, uint160 sqrtRatioX96, int24 tickLow, int24 tickHigh)
-        external
-        view
-        returns (uint256 amount1);
+    function estimateAmount1(
+        uint256 amount0,
+        address pool,
+        uint160 sqrtRatioX96,
+        int24 tickLow,
+        int24 tickHigh
+    ) external view returns (uint256 amount1);
 
     ///
     /// Wrappers for PositionValue
     ///
 
-    function principal(INonfungiblePositionManager positionManager, uint256 tokenId, uint160 sqrtRatioX96)
-        external
-        view
-        returns (uint256 amount0, uint256 amount1);
+    function principal(
+        INonfungiblePositionManager positionManager,
+        uint256 tokenId,
+        uint160 sqrtRatioX96
+    ) external view returns (uint256 amount0, uint256 amount1);
 
     function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
         external
@@ -76,9 +82,15 @@ interface ISugarHelper {
     /// Wrappers for TickMath
     ///
 
-    function getSqrtRatioAtTick(int24 tick) external pure returns (uint160 sqrtRatioX96);
+    function getSqrtRatioAtTick(int24 tick)
+        external
+        pure
+        returns (uint160 sqrtRatioX96);
 
-    function getTickAtSqrtRatio(uint160 sqrtRatioX96) external pure returns (int24 tick);
+    function getTickAtSqrtRatio(uint160 sqrtRatioX96)
+        external
+        pure
+        returns (int24 tick);
 
     /// @notice Fetches Tick Data for all populated Ticks in given bitmaps
     /// @param pool Address of the pool from which to fetch data
