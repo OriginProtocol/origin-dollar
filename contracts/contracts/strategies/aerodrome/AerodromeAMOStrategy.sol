@@ -345,7 +345,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Rebalance the pool to the desired token split
      */
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) internal {
-        require(clPool.liquidity() > 0, "Can not rebalance empty pool");
+        /**
+         * Would be nice to check if there is any total liquidity in the pool before performing this swap 
+         * but there is no easy way to do that in UniswapV3:
+         * - clPool.liquidity() -> only liquidity in the active tick
+         * - asset1&2.balanceOf(address(clPool)) -> will include uncollected tokens of LP providers
+         *   after the liquidity has been decreased
+         */
+
         /**
          * When rebalance is called for the first time or after a withdrawAll there is no strategy's
          * liquidity in the pool yet. The partial removal is thus skipped.
@@ -827,6 +834,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         returns (uint160 sqrtRatioX96) {
             (sqrtRatioX96, , , , ,) = clPool.slot0();
         }
+
+    /**
+     * @dev get total amount of underlying pool tokens
+     */
+    function _getTotalPoolTokens() 
+        internal 
+        view
+        returns (
+            uint256 totalTokens
+        ) {
+
+        totalTokens = IERC20(WETH).balanceOf(address(clPool)) + 
+            IERC20(OETHb).balanceOf(address(clPool));
+    }
 
     function _getLiquidity() 
         internal 
