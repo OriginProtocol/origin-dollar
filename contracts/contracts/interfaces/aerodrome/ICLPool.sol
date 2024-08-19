@@ -28,4 +28,9 @@ interface ICLPool {
     /// @notice The gauge corresponding to this pool
     /// @return The gauge contract address
     function gauge() external view returns (address);
+
+    /// @notice The currently in range liquidity available to the pool
+    /// @dev This value has no relationship to the total liquidity across all ticks
+    /// @dev This value includes staked liquidity
+    function liquidity() external view returns (uint128);
 }

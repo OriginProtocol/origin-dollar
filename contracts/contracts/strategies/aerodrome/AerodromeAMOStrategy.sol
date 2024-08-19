@@ -345,6 +345,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Rebalance the pool to the desired token split
      */
     function _rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) internal {
+        require(clPool.liquidity() > 0, "Can not rebalance empty pool");
         /**
          * When rebalance is called for the first time or after a withdrawAll there is no strategy's
          * liquidity in the pool yet. The partial removal is thus skipped.
@@ -495,7 +496,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint160 currentPrice = getPoolX96Price();
         // sanity check active trading price is positioned within our desired tick
-        require(currentPrice > sqrtRatioX96Tick0 && currentPrice < sqrtRatioX96Tick1, "Active trading price not in configured tick");
+        require(currentPrice > sqrtRatioX96Tick0 && currentPrice < sqrtRatioX96Tick1, "Not in expected tick range");
 
         // in case oethb would be the 1st token we'd need to call estimateAmount0 here
         uint256 oethbRequired = helper.estimateAmount1(wethBalance, address(clPool), currentPrice, lowerTick, upperTick);

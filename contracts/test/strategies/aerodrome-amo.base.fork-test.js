@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const { createFixtureLoader } = require("../_fixture");
+
 const {
   defaultBaseFixture,
 } = require("../_fixture-base");
@@ -12,6 +13,83 @@ const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 const { setERC20TokenBalance } = require("../_fund");
+const futureEpoch = 1924064072;
+
+describe.only("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function () {
+  let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
+
+  beforeEach(async () => {
+    fixture = await baseFixture();
+    weth = fixture.weth;
+    aero = fixture.aero;
+    oethb = fixture.oethb;
+    oethbVault = fixture.oethbVault;
+    aerodromeAmoStrategy = fixture.aerodromeAmoStrategy;
+    governor = fixture.governor;
+    strategist = fixture.strategist;
+    rafael = fixture.rafael;
+    aeroSwapRouter = fixture.aeroSwapRouter;
+    aeroNftManager = fixture.aeroNftManager;
+
+    await setupEmpty();
+
+    await weth
+      .connect(rafael)
+      .approve(aeroSwapRouter.address, oethUnits("1000"));
+    await oethb
+      .connect(rafael)
+      .approve(aeroSwapRouter.address, oethUnits("1000"));
+  });
+
+  it("Revert when there is no token id yet and no liquidity to perform the swap.", async () => {
+    const amount = oethUnits("5");
+    await oethbVault
+      .connect(rafael)
+      .mint(
+        weth.address,
+        amount,
+        amount
+      );
+
+    await oethbVault
+      .connect(governor)
+      .depositToStrategy(
+        aerodromeAmoStrategy.address,
+        [weth.address],
+        [amount],
+      );
+
+    await expect(aerodromeAmoStrategy
+      .connect(strategist)
+      .rebalance(
+        oethUnits("0.001"),
+        oethUnits("0.0008"),
+        false
+      )).to.be.revertedWith("Can not rebalance empty pool");
+
+  });
+
+  const setupEmpty = async () => {
+    const poolDeployer = await impersonateAndFund("0xFD9E6005187F448957a0972a7d0C0A6dA2911236");
+
+    // remove all existing liquidity from the pool
+    for (const tokenId of [342186, 413296]) {
+      const { liquidity } = await aeroNftManager
+        .connect(poolDeployer)
+        .positions(tokenId);
+
+      await aeroNftManager
+        .connect(poolDeployer)
+        .decreaseLiquidity({
+          "tokenId": tokenId,
+          "liquidity": liquidity,
+          "amount0Min": 0,
+          "amount1Min": 0,
+          "deadline": futureEpoch
+        });
+    }
+  }
+});
 
 describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, governor, strategist, rafael, aeroSwapRouter;
@@ -207,6 +285,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.eq(balanceBefore.add(oethUnits("1")))
+
+      // Little to no weth should be left on the strategy contract - 10 wei is really small
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(BigNumber.from("10"));
     })
 
     it("Should allow withdrawAll when the pool is 80:20 balanced", async () => {
@@ -234,6 +315,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       // And supply has gone down
       expect(await oethb.totalSupply()).to.eq(supplyBefore.sub(amountOETHbBefore))
+
+      // There should be no WETH on the strategy contract
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.eq(oethUnits("0"));
     })
 
     it("Should withdraw when there's little WETH in the pool", async () => {
@@ -269,6 +353,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+
+      // Little to no weth should be left on the strategy contract - 10 wei is really small
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(BigNumber.from("10"));
     })
 
     it("Should withdrawAll when there's little WETH in the pool", async () => {
@@ -295,6 +382,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETH))
+
+      // There should be no WETH on the strategy contract
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.eq(oethUnits("0"));
     })
 
     it("Should withdraw when there's little OETHb in the pool", async () => {
@@ -330,6 +420,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(oethUnits("1")))
+
+      // Little to no weth should be left on the strategy contract - 10 wei is really small
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(BigNumber.from("10"));
     })
 
     it("Should withdrawAll when there's little OETHb in the pool", async () => {
@@ -356,6 +449,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       // And recipient has got it
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(balanceBefore.add(amountWETH))
+
+      // There should be no WETH on the strategy contract
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.eq(oethUnits("0"));
     })
   })
 
@@ -378,21 +474,37 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     });
 
-    it("Revert when there is no token id yet and no liquidity to perform the swap.", async () => {
-      // this will need a separate top level describe with no setup
-      throw new Error("Implement this");
-    });
-
-    it("Should work correctly with pool having starting liquidity or not", async () => {
-      throw new Error("Implement this");
-    });
-
     it("Should check that add liquidity in difference cases leaves no to little weth on the contract", async () => {
-      throw new Error("Implement this");
-    });
+      const amount = oethUnits("5");
 
-    it("Should check that withdraw liquidity in all tests leaves no to little weth on the contract", async () => {
-      throw new Error("Implement this");
+      await oethbVault
+        .connect(rafael)
+        .mint(
+          weth.address,
+          amount,
+          amount
+        );
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(oethUnits("0"));
+
+      await oethbVault
+      .connect(governor)
+      .depositToStrategy(
+        aerodromeAmoStrategy.address,
+        [weth.address],
+        [amount],
+      );
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(amount);
+
+      await expect(aerodromeAmoStrategy
+        .connect(strategist)
+        .rebalance(
+          oethUnits("0"),
+          oethUnits("0"),
+          false
+        )
+      );
+
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(oethUnits("0"));
     });
 
     it("Should revert when there is not enough WETH to perform a swap", async () => {
@@ -432,7 +544,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
     });
 
-    it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
+    it.only("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
       await swap({
         amount: oethUnits("20.44"),
         swapWeth: true

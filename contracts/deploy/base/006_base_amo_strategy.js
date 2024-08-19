@@ -56,15 +56,6 @@ module.exports = deployOnBaseWithGuardian(
       cOETHbVaultProxy.address
     );
 
-    let gaugeAddress;
-    if (isFork) {
-      gaugeAddress = await setupAerodromeOEthbWETHGauge(cOETHbProxy.address);
-    } else {
-      throw Error("Gauge not yet set on the mainnet!");
-    }
-
-    console.log("gaugeAddress", gaugeAddress);
-
     await deployWithConfirmation("AerodromeAMOStrategyProxy");
     await deployWithConfirmation("AerodromeAMOStrategy", [
       /* The pool address is not yet known. Might be created before we deploy the
@@ -76,7 +67,7 @@ module.exports = deployOnBaseWithGuardian(
       addresses.base.swapRouter, // swapRouter
       addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
       addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
-      gaugeAddress, // gauge address
+      addresses.base.aerodromeOETHbWETHClGauge, // gauge address
       addresses.base.sugarHelper,  // sugarHelper
       -1, // lowerBoundingTick
       0, // upperBoundingTick

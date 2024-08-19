@@ -10,6 +10,7 @@ const erc20Abi = require("./abi/erc20.json");
 const log = require("../utils/logger")("test:fixtures-arb");
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
+const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -122,10 +123,12 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   }
 
   const aeroSwapRouter = await ethers.getContractAt(aeroSwapRouterAbi, addresses.base.swapRouter);
+  const aeroNftManager = await ethers.getContractAt(aeroNonfungiblePositionManagerAbi, addresses.base.nonFungiblePositionManager);
 
   return {
     // Aerodrome
     aeroSwapRouter,
+    aeroNftManager,
     aero,
     // OETHb
     oethb,
