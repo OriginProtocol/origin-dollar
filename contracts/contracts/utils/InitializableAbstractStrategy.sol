@@ -271,6 +271,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function transferToken(address _asset, uint256 _amount)
         public
+        virtual
         onlyGovernor
     {
         require(!supportsAsset(_asset), "Cannot transfer supported asset");

@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "005_bridged_woeth_strategy",
+    deployName: "007_bridged_woeth_strategy",
   },
   async ({ ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -90,6 +90,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbVault,
           signature: "setPriceProvider(address)",
           args: [cOracleRouter.address],
+        },
+        {
+          // 5. Set strategist as Harvester
+          contract: cStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.base.strategist],
         },
       ],
     };

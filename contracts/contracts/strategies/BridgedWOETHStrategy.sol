@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
@@ -13,6 +13,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using StableMath for uint128;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
 
     event MaxPriceDiffBpsUpdated(uint128 oldValue, uint128 newValue);
     event WOETHPriceUpdated(uint128 oldValue, uint128 newValue);
@@ -168,6 +169,8 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // Figure out how much they are worth
         uint256 oethToMint = (woethAmount * oraclePrice) / 1 ether;
 
+        require(oethToMint > 0, "Invalid deposit amount");
+
         // There's no pToken, however, it just uses WOETH address in the event
         emit Deposit(address(weth), address(bridgedWOETH), oethToMint);
 
@@ -196,6 +199,8 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
 
         // Figure out how much they are worth
         uint256 woethAmount = (oethToBurn * 1 ether) / oraclePrice;
+
+        require(woethAmount > 0, "Invalid withdraw amount");
 
         // There's no pToken, however, it just uses WOETH address in the event
         emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);
@@ -255,11 +260,30 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     /***************************************
                Overridden methods
     ****************************************/
+    /**
+     * @inheritdoc InitializableAbstractStrategy
+     */
+    function transferToken(address _asset, uint256 _amount)
+        public
+        override
+        onlyGovernor
+    {
+        require(
+            _asset != address(bridgedWOETH) && _asset != address(weth),
+            "Cannot transfer supported asset"
+        );
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
 
     /**
      * @notice deposit() function not used for this strategy
      */
-    function deposit(address, uint256) public override onlyVault nonReentrant {
+    function deposit(address, uint256)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         // Use depositBridgedWOETH() instead
         require(false, "Deposit disabled");
     }
@@ -298,4 +322,16 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     }
 
     function safeApproveAllTokens() external override {}
+
+    /**
+     * @inheritdoc InitializableAbstractStrategy
+     */
+    function removePToken(uint256) external override {
+        revert("No pTokens are used");
+    }
+
+    /**
+     * @inheritdoc InitializableAbstractStrategy
+     */
+    function collectRewardTokens() external override {}
 }
