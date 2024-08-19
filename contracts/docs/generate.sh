@@ -128,6 +128,14 @@ sol2uml .. -v -hv -hf -he -hs -hl -b WOETH -o WOETHHierarchy.svg
 sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -b OETHBase -o OETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
+sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand _____gap,______gap
+
+sol2uml .. -v -hv -hf -he -hs -hl -b WOETHBase -o WOETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
+sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand _____gap,______gap
+
 # contracts/vault
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
 sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg

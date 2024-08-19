@@ -33,14 +33,13 @@ contract OETHBaseVaultCore is OETHVaultCore {
             "Not whitelisted strategy"
         );
 
-        require(amount < MAX_INT, "Amount too high");
-
         emit Mint(msg.sender, amount);
 
         // Mint matching amount of OTokens
         oUSD.mint(msg.sender, amount);
     }
 
+    // @inheritdoc VaultCore
     function burnForStrategy(uint256 amount)
         external
         override
@@ -54,8 +53,6 @@ contract OETHBaseVaultCore is OETHVaultCore {
             isMintWhitelistedStrategy[msg.sender] == true,
             "Not whitelisted strategy"
         );
-
-        require(amount < MAX_INT, "Amount too high");
 
         emit Redeem(msg.sender, amount);
 

@@ -264,7 +264,7 @@ addresses.mainnet.beaconChainDepositContract =
 
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =
-  "0x34edb2ee25751ee67f68a45813b22811687c0238";
+  "0x34eDb2ee25751eE67F68A45813B22811687C0238";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
@@ -300,6 +300,9 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
   "0xe96EB1EDa83d18cbac224233319FA5071464e1b9";
+
+// 2/8 Multisig
+addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

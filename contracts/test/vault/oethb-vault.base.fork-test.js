@@ -99,8 +99,7 @@ describe("ForkTest: OETHb Vault", function () {
 
   describe("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
-    const BIGGER_THAN_MAX_INT =
-      "57896044618658097711785492504343953926634992332820282019729";
+
     beforeEach(async () => {
       const { oethbVault, governor } = fixture;
 
@@ -174,24 +173,6 @@ describe("ForkTest: OETHb Vault", function () {
         .connect(await impersonateAndFund(addresses.dead))
         .burnForStrategy(amount);
       await expect(tx).to.be.revertedWith("Not whitelisted strategy");
-    });
-
-    it("Should not allow a strategy to mint if amount is too high", async () => {
-      const { oethbVault } = fixture;
-
-      const amount = oethUnits(BIGGER_THAN_MAX_INT);
-
-      const tx = oethbVault.connect(strategySigner).mintForStrategy(amount);
-      await expect(tx).to.be.revertedWith("Amount too high");
-    });
-
-    it("Should not allow a strategy to burn if amount is too high", async () => {
-      const { oethbVault } = fixture;
-
-      const amount = oethUnits(BIGGER_THAN_MAX_INT);
-
-      const tx = oethbVault.connect(strategySigner).burnForStrategy(amount);
-      await expect(tx).to.be.revertedWith("Amount too high");
     });
   });
 });

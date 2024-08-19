@@ -14,6 +14,7 @@ const {
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
+  isBaseUnitTest,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
@@ -48,6 +49,7 @@ const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -71,7 +73,7 @@ const paths = {};
 if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   // holesky deployment files are in contracts/deploy/holesky
   paths.deploy = "deploy/holesky";
-} else if (isBase || isBaseFork || isBaseForkTest) {
+} else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
@@ -303,8 +305,7 @@ module.exports = {
           : 0,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
-      // Base has no strategist
-      base: BASE_GOVERNOR,
+      base: BASE_STRATEGIST,
     },
   },
   contractSizer: {
