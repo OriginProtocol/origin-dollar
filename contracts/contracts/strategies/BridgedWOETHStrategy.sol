@@ -178,9 +178,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).mintForStrategy(oethToMint);
 
         // Transfer out minted OETHb
+        // slither-disable-next-line unchecked-transfer unused-return
         oethb.transfer(msg.sender, oethToMint);
 
         // Transfer in all bridged wOETH tokens
+        // slither-disable-next-line unchecked-transfer unused-return
         bridgedWOETH.transferFrom(msg.sender, address(this), woethAmount);
     }
 
@@ -206,9 +208,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);
 
         // Transfer WOETH back
+        // slither-disable-next-line unchecked-transfer unused-return
         bridgedWOETH.transfer(msg.sender, woethAmount);
 
         // Transfer in OETHb
+        // slither-disable-next-line unchecked-transfer unused-return
         oethb.transferFrom(msg.sender, address(this), oethToBurn);
 
         // Burn OETHb
