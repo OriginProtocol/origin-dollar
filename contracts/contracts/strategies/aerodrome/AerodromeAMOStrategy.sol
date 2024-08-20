@@ -834,9 +834,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override
-    {
-        IERC20(_asset).safeApprove(address(positionManager), type(uint256).max);
-        IERC20(_asset).safeApprove(address(swapRouter), type(uint256).max);
+    {   
+        // the deployer shall call safeApproveAllTokens() to set necessary approvals
+        revert("Unsupported method");
     }
 
     /**
