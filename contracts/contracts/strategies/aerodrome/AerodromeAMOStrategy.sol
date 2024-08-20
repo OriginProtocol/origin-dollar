@@ -572,12 +572,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(oethbRequired - oethbBalance);
         }
 
+        uint256 wethAmountSupplied;
+        uint256 oethbAmountSupplied;
         if (tokenId == 0) {
             (
                 uint256 mintedTokenId,
                 ,
-                uint256 wethAmountSupplied,
-                uint256 oethbAmountSupplied
+                uint256 _wethAmountSupplied,
+                uint256 _oethbAmountSupplied
             ) = positionManager.mint(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
                      * _checkLiquidityWithinExpectedShare
@@ -601,26 +603,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                     })
                 );
 
+            wethAmountSupplied = _wethAmountSupplied;
+            oethbAmountSupplied = _oethbAmountSupplied;
             tokenId = mintedTokenId;
-
-            _updateUnderlyingAssets();
-            emit LiquidityAdded(
-                wethBalance, // wethAmountDesired
-                oethbRequired, // oethbAmountDesired
-                wethAmountSupplied, // wethAmountSupplied
-                oethbAmountSupplied, // oethbAmountSupplied
-                mintedTokenId, // tokenId
-                underlyingAssets
-            );
         } else {
             (
                 ,
-                uint256 wethAmountSupplied,
-                uint256 oethbAmountSupplied
+                uint256 _wethAmountSupplied,
+                uint256 _oethbAmountSupplied
             ) = positionManager.increaseLiquidity(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
                      * _checkLiquidityWithinExpectedShare
-                     *
                      */
                     INonfungiblePositionManager.IncreaseLiquidityParams({
                         tokenId: tokenId,
@@ -631,17 +624,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                         deadline: block.timestamp
                     })
                 );
-
-            _updateUnderlyingAssets();
-            emit LiquidityAdded(
-                wethBalance, // wethAmountDesired
-                oethbRequired, // oethbAmountDesired
-                wethAmountSupplied, // wethAmountSupplied
-                oethbAmountSupplied, // oethbAmountSupplied
-                tokenId, // tokenId
-                underlyingAssets
-            );
+            
+            wethAmountSupplied = _wethAmountSupplied;
+            oethbAmountSupplied = _oethbAmountSupplied;
         }
+
+        _updateUnderlyingAssets();
+        emit LiquidityAdded(
+            wethBalance, // wethAmountDesired
+            oethbRequired, // oethbAmountDesired
+            wethAmountSupplied, // wethAmountSupplied
+            oethbAmountSupplied, // oethbAmountSupplied
+            tokenId, // tokenId
+            underlyingAssets
+        );
 
         // burn remaining OETHb
         _burnOethbOnTheContract();
@@ -707,6 +703,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(oethbBalance);
     }
 
+    /// @dev this function does assume there are no uncollected tokens left on the pool contract. 
+    ///      for that reason any liquidity withdrawals also collect the tokens
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
