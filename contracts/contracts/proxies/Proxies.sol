@@ -287,3 +287,10 @@ contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice BridgedWOETHStrategyProxy delegates calls to BridgedWOETHStrategy implementation
+ */
+contract BridgedWOETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
