@@ -91,7 +91,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     uint160 public immutable sqrtRatioX96TickClosestToParity;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
-    error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth);
+    error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
         uint256 requiredPoolWethShare,
