@@ -69,5 +69,5 @@ gitGraph
 - No changes are persisted to the actual node. All deployments and contract calls are only made on the forked node, not the actual node
 
 ### Environment Variables used on CI
-- `MAX_CHUNKS` - The number of runners to use to run fork tests parallely on CI, hardcoded to 4 in defi.yml file
+- `MAX_CHUNKS` - The number of runners to use to run fork tests parallelly on CI, hardcoded to 4 in defi.yml file
 - `CHUNK_ID` - Current runner ID (will be set by Github Actions), see defi.yml for the definition
