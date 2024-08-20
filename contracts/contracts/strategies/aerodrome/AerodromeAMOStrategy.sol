@@ -326,7 +326,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *             since there is no liquidity to perform the swap. In such a case the rebalancing transaction
      *             shall be reverted.
      *             Swap transaction is the one that shall fail. Unfortunately there is no easy way to query Aerodrome
-     *             slipstream pool for the amount of liquidity deposited. Even tokens on the contract can be from 
+     *             slipstream pool for the amount of liquidity deposited. Even tokens on the contract can be from
      *             fees, or liquidity that has been removed but not yet claimed.
      *             It becomes the responsibility of the strategist or deployer to add some liquidity in the configured
      *             tick ranges to the pool to facilitate the swap. Effectively turning Scenario 1 into a Scenario 2
@@ -354,7 +354,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove almost all of the liqudity, rebalance the pool to the desired token split and 
+     * @dev Remove almost all of the liqudity, rebalance the pool to the desired token split and
      * deposit all of the liquidity.
      */
     // rebalance already has reentrancy check
@@ -424,6 +424,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         tokenId = 0;
         emit LiquidityTokenBurned(tokenId);
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
@@ -624,7 +625,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                         deadline: block.timestamp
                     })
                 );
-            
+
             wethAmountSupplied = _wethAmountSupplied;
             oethbAmountSupplied = _oethbAmountSupplied;
         }
@@ -648,7 +649,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // slither-disable-end reentrancy-no-eth
 
     /**
-     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio
+     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio.
+     *      Reverts if it is not.
      */
     function _checkLiquidityWithinExpectedShare() internal {
         (
@@ -696,15 +698,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Burns any lingering OETHb tokens still remaining on the contract
+     * Burns any OETHb tokens remaining on the strategy contract
      */
     function _burnOethbOnTheContract() internal {
         uint256 oethbBalance = IERC20(OETHb).balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethbBalance);
     }
 
-    /// @dev this function does assume there are no uncollected tokens left on the pool contract. 
-    ///      for that reason any liquidity withdrawals also collect the tokens
+    /// @dev this function assumes there are no uncollected tokens in the clPool owned by the.
+    ///      strategy contract. For that reason any liquidity withdrawals also collect the tokens.
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
@@ -736,7 +738,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit all supported assets in this strategy contract to the platform
+     * @notice Deposit WETH to the strategy contract. This function does not add liquidity to the
+     *         underlying Aerodrome pool.
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
@@ -747,10 +750,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Withdraw an `amount` of assets from the platform and
-     * send to the `_recipient`.
-     * @param _recipient         Address to which the asset should be sent
-     * @param _asset             Address of the asset
-     * @param _amount            Units of asset to withdraw
+     *         send to the `_recipient`.
+     * @param _recipient  Address to which the asset should be sent
+     * @param _asset      WETH address
+     * @param _amount     Amount of WETH to withdraw
      */
     function withdraw(
         address _recipient,
@@ -784,8 +787,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Withdraw all supported assets from platform and
-     * sends to the OToken's Vault.
+     * @notice Withdraw WETH and sends it to the Vault.
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (tokenId > 0) {
@@ -802,7 +804,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     function _withdraw(address _recipient, uint256 _amount) internal {
         require(_amount > 0, "Must withdraw something");
-        require(_recipient != address(0), "Must specify recipient");
+        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
         IERC20(WETH).safeTransfer(_recipient, _amount);
         emit Withdrawal(WETH, address(0), _amount);
@@ -830,14 +832,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Internal method to respond to the addition of new asset / pTokens
             We need to give the Aerodrome pool approval to transfer the
             asset.
-     * @param _asset Address of the asset to approve
-     * @param _pToken Address of the pToken
      */
-    // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {   
+    function _abstractSetPToken(address, address) internal override {
         // the deployer shall call safeApproveAllTokens() to set necessary approvals
         revert("Unsupported method");
     }
@@ -851,8 +847,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         onlyGovernor
         nonReentrant
     {
+        // to add liquidity to the clPool
         IERC20(WETH).safeApprove(address(positionManager), type(uint256).max);
         IERC20(OETHb).safeApprove(address(positionManager), type(uint256).max);
+        // to be able to rebalance using the swapRouter
         IERC20(WETH).safeApprove(address(swapRouter), type(uint256).max);
         IERC20(OETHb).safeApprove(address(swapRouter), type(uint256).max);
     }
@@ -879,7 +877,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // also needs to be accounted for.
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         // just paranoia check, in case there is OETHb in the strategy that for some reason hasn't
-        // gotten burned yet.
+        // been burned yet.
         uint256 oethbBalance = IERC20(OETHb).balanceOf(address(this));
         return underlyingAssets + wethBalance + oethbBalance;
     }
@@ -906,19 +904,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
     }
 
+    /**
+     * @notice Returns the current pool price in X96 format
+     * @return sqrtRatioX96 Pool price
+     */
     function getPoolX96Price() public view returns (uint160 sqrtRatioX96) {
         (sqrtRatioX96, , , , , ) = clPool.slot0();
     }
 
     /**
-     * @dev get total amount of underlying pool tokens
+     * @notice Returns the amount of liquidity in the contract's LP position
+     * @return liquidity Amount of liquidity in the position
      */
-    function _getTotalPoolTokens() internal view returns (uint256 totalTokens) {
-        totalTokens =
-            IERC20(WETH).balanceOf(address(clPool)) +
-            IERC20(OETHb).balanceOf(address(clPool));
-    }
-
     function _getLiquidity() internal view returns (uint128 liquidity) {
         if (tokenId == 0) {
             revert("No LP position");
