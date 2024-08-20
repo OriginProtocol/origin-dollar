@@ -5,7 +5,7 @@ pragma abicoder v2;
 /// @title Non-fungible token for positions
 /// @notice Wraps CL positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-// slither-disable-start incorrect-erc20-interface
+// slither-disable-start erc20-interface
 interface INonfungiblePositionManager {
     /**
      * @dev See {IERC721-approve}.
@@ -164,4 +164,4 @@ interface INonfungiblePositionManager {
     /// @param _owner Address of the new Owner to be chosen
     function setOwner(address _owner) external;
 }
-// slither-disable-end incorrect-erc20-interface
+// slither-disable-end erc20-interface
