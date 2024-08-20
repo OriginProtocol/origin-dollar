@@ -121,3 +121,67 @@ def main():
     print("Sell 100 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(eth_out_after / 10**18))
     print("Curve ETH and OETH balances before",  "{:.6f}".format(balances_before[0] / 10**18), "{:.6f}".format(balances_before[1] / 10**18))
     print("Curve ETH and OETH balances after",  "{:.6f}".format(balances_after[0] / 10**18), "{:.6f}".format(balances_after[1]  / 10**18))
+
+# -------------------------------------
+# Aug 19, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogn, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGN,
+        oeth_for_ogn,
+        3.5
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        2
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Aug 19, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogn, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGN,
+        ousd_for_ogn,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))

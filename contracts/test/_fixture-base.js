@@ -72,6 +72,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
 
+  const woethStrategyProxy = await ethers.getContract(
+    "BridgedWOETHStrategyProxy"
+  );
+  const woethStrategy = await ethers.getContractAt(
+    "BridgedWOETHStrategy",
+    woethStrategyProxy.address
+  );
+
   const oracleRouter = await ethers.getContract(
     isFork ? "OETHBaseOracleRouter" : "MockOracleRouter"
   );
@@ -148,6 +156,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // Bridged WOETH
     woeth,
     woethProxy,
+    woethStrategy,
     oracleRouter,
 
     // Strategies

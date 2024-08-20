@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-// For testing OUSD's repsonse to oracle price changes
+// For testing OUSD's response to oracle price changes
 contract MockOracle {
     mapping(address => uint256) public price;
 

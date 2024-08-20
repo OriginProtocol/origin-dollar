@@ -228,15 +228,6 @@ interface IVault {
 
     function removeAsset(address _asset) external;
 
-    function addStrategyToMintWhitelist(address strategyAddr) external;
-
-    function removeStrategyFromMintWhitelist(address strategyAddr) external;
-
-    function isMintWhitelistedStrategy(address strategyAddr)
-        external
-        view
-        returns (bool);
-
     // These are OETH specific functions
     function addWithdrawalQueueLiquidity() external;
 
@@ -261,4 +252,14 @@ interface IVault {
         external
         view
         returns (VaultStorage.WithdrawalRequest memory);
+
+    // OETHb specific functions
+    function addStrategyToMintWhitelist(address strategyAddr) external;
+
+    function removeStrategyFromMintWhitelist(address strategyAddr) external;
+
+    function isMintWhitelistedStrategy(address strategyAddr)
+        external
+        view
+        returns (bool);
 }
