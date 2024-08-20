@@ -325,6 +325,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *             still at the value when last liquidity was in the pool and that trading price can not be moved
      *             since there is no liquidity to perform the swap. In such a case the rebalancing transaction
      *             shall be reverted.
+     *             Swap transaction is the one that shall fail. Unfortunately there is no easy way to query Aerodrome
+     *             slipstream pool for the amount of liquidity deposited. Even tokens on the contract can be from 
+     *             fees, or liquidity that has been removed but not yet claimed.
      *             It becomes the responsibility of the strategist or deployer to add some liquidity in the configured
      *             tick ranges to the pool to facilitate the swap. Effectively turning Scenario 1 into a Scenario 2
      * Scenario 2: When there is no liquidity in the pool from the strategy but there is from other LPs then
@@ -351,7 +354,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Rebalance the pool to the desired token split
+     * @dev Remove almost all of the liqudity, rebalance the pool to the desired token split and 
+     * deposit all of the liquidity.
      */
     // rebalance already has reentrancy check
     // slither-disable-start reentrancy-no-eth
@@ -364,8 +368,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * Would be nice to check if there is any total liquidity in the pool before performing this swap
          * but there is no easy way to do that in UniswapV3:
          * - clPool.liquidity() -> only liquidity in the active tick
-         * - asset1&2.balanceOf(address(clPool)) -> will include uncollected tokens of LP providers
-         *   after the liquidity has been decreased
+         * - asset[1&2].balanceOf(address(clPool)) -> will include uncollected tokens of LP providers
+         *   after their liquidity position has been decreased
          */
 
         /**
@@ -420,7 +424,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         tokenId = 0;
         emit LiquidityTokenBurned(tokenId);
     }
-
     // slither-disable-end reentrancy-no-eth
 
     /**
@@ -784,7 +787,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * sends to the OToken's Vault.
      */
     function withdrawAll() external override onlyVault nonReentrant {
-        _removeAllLiquidity();
+        if (tokenId > 0) {
+            _removeAllLiquidity();
+        }
 
         uint256 balance = IERC20(WETH).balanceOf(address(this));
         if (balance > 0) {
