@@ -811,7 +811,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Collect the AERO token from the gauge
      */
     function _collectRewardTokens() internal override {
-        clGauge.getReward(tokenId);
+        if (tokenId > 0) {
+            clGauge.getReward(tokenId);
+        }
         super._collectRewardTokens();
     }
 
