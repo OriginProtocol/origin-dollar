@@ -741,7 +741,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit all supported assets in this strategy contract to the platform
      */
     function depositAll() external override onlyVault nonReentrant {
-        _deposit(WETH, IERC20(WETH).balanceOf(address(this)));
+        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
+        if (wethBalance > 0) {
+            _deposit(WETH, wethBalance);
+        }
     }
 
     /**
