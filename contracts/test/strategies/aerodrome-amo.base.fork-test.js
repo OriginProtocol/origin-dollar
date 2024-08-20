@@ -230,7 +230,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         aerodromeAmoStrategy
           .connect(rafael)
           .setPoolWethShareVarianceAllowed(oethUnits("0.98"))
-      ).to.be.revertedWith("Caller is not the Governor");
+      ).to.be.revertedWith("Not the Governor or Strategist");
     });
 
     it("Can not set too large pool weth share allowance allowed", async () => {
