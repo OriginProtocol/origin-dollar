@@ -5,6 +5,7 @@ const addresses = require("../../utils/addresses");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWETH", []);
+  await deployWithConfirmation("MockAero", []);
 };
 
 const deployWOETH = async () => {
