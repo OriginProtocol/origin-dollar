@@ -217,13 +217,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice initialize function, to set up initial internal state
      * @param _rewardTokenAddresses Address of reward token for platform
-     * @param _assets Addresses of initial supported assets
-     * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
         address[] memory _rewardTokenAddresses,
-        address[] memory _assets,
-        address[] memory _pTokens
+        address[] memory,
+        address[] memory
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -391,6 +389,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _addLiquidity();
         _checkLiquidityWithinExpectedShare();
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
@@ -421,6 +420,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         tokenId = 0;
         emit LiquidityTokenBurned(tokenId);
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
@@ -572,7 +572,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (tokenId == 0) {
             (
                 uint256 mintedTokenId,
-                uint128 liquidity,
+                ,
                 uint256 wethAmountSupplied,
                 uint256 oethbAmountSupplied
             ) = positionManager.mint(
@@ -645,6 +645,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         positionManager.approve(address(clGauge), tokenId);
         clGauge.deposit(tokenId);
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
