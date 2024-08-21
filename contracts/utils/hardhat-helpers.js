@@ -121,12 +121,6 @@ const getHardhatNetworkProperties = () => {
       provider = holeskyProviderUrl;
     } else if (isBaseForkTest) {
       provider = baseProviderUrl;
-    } else if (
-      isForkTest &&
-      process.env.FORK_NETWORK_NAME != "mainnet" &&
-      process.env.FORK_NETWORK_NAME != ""
-    ) {
-      throw new Error("Unconfigured network");
     }
   }
 
