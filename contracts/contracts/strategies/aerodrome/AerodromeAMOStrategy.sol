@@ -24,6 +24,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
 
+    /************************************************
+            Important (!) setup configuration
+    *************************************************/
+
+    /**
+     * In order to be able to remove a reasonable amount of complexity from the contract one of the
+     * preconditions for this contract to function correctly is to have an outside account mint a small
+     * amount of liquidity in the tick space where the contract deploy's its liquidity and then send
+     * that NFT LP position to a dead address (transfer to zero address not allowed.) See example of such
+     * token: https://basescan.org/token/0x827922686190790b37229fd06084350e74485b72?a=413296#inventory
+     */
+
     /***************************************
             Storage slot members
     ****************************************/
@@ -45,12 +57,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * vary from the configured value after rebalancing. Expressed as 18 decimal point
      */
     uint256 public poolWethShareVarianceAllowed;
-    /**
-     * Share of liquidity to remove on rebalance expressed in 18 decimal points
-     */
-    uint128 public withdrawLiquidityShare;
     /// @dev reserved for inheritance
-    int256[45] private __reserved;
+    int256[46] private __reserved;
 
     /***************************************
           Constants, structs and events
@@ -94,16 +102,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
-        uint256 requiredPoolWethShare,
-        uint256 wethPositionBalance,
-        uint256 oethbPositionBalance
+        uint256 requiredPoolWethShare
     ); // 0x6c6108fb
 
     event PoolRebalanced(
         uint256 currentPoolWethShare,
-        uint256 targetPoolWethShare,
-        uint256 wethPositionBalance,
-        uint256 oethbPositionBalance
+        uint256 targetPoolWethShare
     );
 
     event PoolWethShareUpdated(uint256 newWethShare);
@@ -118,22 +122,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 oethbPositionBalance
     );
 
-    event WithdrawLiqiudityShareUpdated(uint128 newWithdrawLiquidityShare);
-
     event PoolWethShareVarianceAllowedUpdated(
         uint256 poolWethShareVarianceAllowed
     );
 
     event LiquidityRemoved(
-        uint128 withdrawLiquidityShare,
+        uint256 withdrawLiquidityShare,
         uint256 removedWETHAmount,
         uint256 removedOETHbAmount,
         uint256 wethAmountCollected,
         uint256 oethbAmountCollected,
         uint256 underlyingAssets
     );
-
-    event LiquidityTokenBurned(uint256 tokenId);
 
     event LiquidityAdded(
         uint256 wethAmountDesired,
@@ -245,18 +245,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         poolWethShare = _amount;
         emit PoolWethShareUpdated(_amount);
-    }
-
-    /**
-     * @notice Specifies the amount of liquidity that is to be removed when
-     *         a rebalancing happens.
-     * @param _amount The new amount specified in basis points
-     */
-    function setWithdrawLiquidityShare(uint128 _amount) external onlyGovernor {
-        require(_amount < 1e18, "Invalid withdrawLiquidityShare amount");
-
-        withdrawLiquidityShare = _amount;
-        emit WithdrawLiqiudityShareUpdated(_amount);
     }
 
     /**
@@ -373,11 +361,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          */
 
         /**
-         * When rebalance is called for the first time or after a withdrawAll there is no strategy's
+         * When rebalance is called for the first time there is no strategy's
          * liquidity in the pool yet. The partial removal is thus skipped.
          */
         if (tokenId != 0) {
-            _removePartialLiquidity(withdrawLiquidityShare);
+            _removeLiquidity(1e18);
         }
         // in some cases we will just want to add liquidity and not issue a swap to move the
         // active trading position within the pool
@@ -386,43 +374,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
-        if (tokenId != 0) {
-            _checkLiquidityWithinExpectedShare();
-        }
+        _checkForExpectedPoolPrice();
 
         _addLiquidity();
-        _checkLiquidityWithinExpectedShare();
-    }
-
-    // slither-disable-end reentrancy-no-eth
-
-    /**
-     * @dev Decrease partial liquidity from the pool.
-     * @param _partialLiquidityToDecrease The amount of liquidity to remove expressed in 18 decimals
-     */
-    function _removePartialLiquidity(uint256 _partialLiquidityToDecrease)
-        internal
-    {
-        require(_partialLiquidityToDecrease > 0, "Must remove some liquidity");
-        require(
-            _partialLiquidityToDecrease < 1e18,
-            "Mustn't remove all liquidity"
-        );
-
-        _removeLiquidity(_partialLiquidityToDecrease);
-    }
-
-    /**
-     * @dev Remove all liquidity from the pool.
-     */
-    // already check for reentrancy in withdrawAll
-    // slither-disable-start reentrancy-no-eth
-    function _removeAllLiquidity() internal {
-        _removeLiquidity(1e18);
-
-        positionManager.burn(tokenId);
-        tokenId = 0;
-        emit LiquidityTokenBurned(tokenId);
+        _checkForExpectedPoolPrice();
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -471,7 +426,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _updateUnderlyingAssets();
 
         emit LiquidityRemoved(
-            withdrawLiquidityShare,
+            _liquidityToDecrease,
             _amountWeth, //removedWethAmount
             _amountOethb, //removedOethbAmount
             _amountWethCollected,
@@ -514,7 +469,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // Swap it
         swapRouter.exactInputSingle(
             // sqrtPriceLimitX96 is just a rough sanity check that we are within 0 -> 1 tick
-            // a more fine check is performed in _checkLiquidityWithinExpectedShare
+            // a more fine check is performed in _checkForExpectedPoolPrice
             // TBD(!): this needs further work if we want to generalize this approach
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(_tokenToSwap),
@@ -570,7 +525,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         if (_oethbRequired > _oethbBalance) {
-            IVault(vaultAddress).mintForStrategy(_oethbRequired - _oethbBalance);
+            IVault(vaultAddress).mintForStrategy(
+                _oethbRequired - _oethbBalance
+            );
         }
 
         uint256 _wethAmountSupplied;
@@ -583,7 +540,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 uint256 __oethbAmountSupplied
             ) = positionManager.mint(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
-                     * _checkLiquidityWithinExpectedShare
+                     * _checkForExpectedPoolPrice
                      *
                      * Also sqrtPriceX96 is 0 because the pool is already created
                      * non zero amount attempts to create a new instance of the pool
@@ -614,7 +571,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 uint256 __oethbAmountSupplied
             ) = positionManager.increaseLiquidity(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
-                     * _checkLiquidityWithinExpectedShare
+                     * _checkForExpectedPoolPrice
                      */
                     INonfungiblePositionManager.IncreaseLiquidityParams({
                         tokenId: tokenId,
@@ -649,19 +606,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // slither-disable-end reentrancy-no-eth
 
     /**
-     * @dev Check that the liquidity in the pool is withing the expected WETH to OETHb ratio.
-     *      Reverts if it is not.
+     * @dev Check that the Aerodrome pool price is within the expected
+     *      parameters.
+     *      This function ignores whether the strategy contract has liquidity
+     *      position in the pool.
      */
-    function _checkLiquidityWithinExpectedShare() internal {
-        (
-            uint256 _wethPositionBalance,
-            uint256 _oethbPositionBalance
-        ) = getPositionPrincipal();
-        require(
-            _wethPositionBalance + _oethbPositionBalance > 0,
-            "No liquidity in position"
-        );
-
+    function _checkForExpectedPoolPrice() internal {
         uint160 _currentPrice = getPoolX96Price();
         // check we are in inspected tick range
         require(
@@ -670,30 +620,29 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             "Not in expected tick range"
         );
 
-        uint256 _currentWethShare = 0;
-        if (_wethPositionBalance != 0) {
-            _currentWethShare = _wethPositionBalance.divPrecisely(
-                _wethPositionBalance + _oethbPositionBalance
-            );
-        }
+        // If token addresses were reversed estimateAmount0 would
+        // be required here
+        uint256 normalizedWethAmount = 1 ether;
+        uint256 correspondingOETHAmount = helper.estimateAmount1(
+            normalizedWethAmount,
+            address(clPool),
+            _currentPrice,
+            lowerTick,
+            upperTick
+        );
 
-        uint256 wethDiff = Math.max(poolWethShare, _currentWethShare) -
-            Math.min(poolWethShare, _currentWethShare);
+        // 18 decimal number expressed weth tick share
+        uint256 wethSharePct = normalizedWethAmount.divPrecisely(
+            normalizedWethAmount + correspondingOETHAmount
+        );
+
+        uint256 wethDiff = Math.max(poolWethShare, wethSharePct) -
+            Math.min(poolWethShare, wethSharePct);
 
         if (wethDiff < poolWethShareVarianceAllowed) {
-            emit PoolRebalanced(
-                _currentWethShare,
-                poolWethShare,
-                _wethPositionBalance,
-                _oethbPositionBalance
-            );
+            emit PoolRebalanced(wethSharePct, poolWethShare);
         } else {
-            revert PoolRebalanceOutOfBounds(
-                _currentWethShare,
-                poolWethShare,
-                _wethPositionBalance,
-                _oethbPositionBalance
-            );
+            revert PoolRebalanceOutOfBounds(wethSharePct, poolWethShare);
         }
     }
 
@@ -778,12 +727,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             }
 
             uint256 shareOfWethToRemove = Math.min(
-                _additionalWethRequired.divPrecisely(
-                    _wethInThePool
-                ) + 1,
+                _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
                 1e18
             );
-            _removePartialLiquidity(shareOfWethToRemove);
+            _removeLiquidity(shareOfWethToRemove);
         }
 
         // burn remaining OETHb
@@ -796,7 +743,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (tokenId > 0) {
-            _removeAllLiquidity();
+            _removeLiquidity(1e18);
         }
 
         uint256 _balance = IERC20(WETH).balanceOf(address(this));
