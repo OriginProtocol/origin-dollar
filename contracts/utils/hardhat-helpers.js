@@ -114,12 +114,14 @@ const getHardhatNetworkProperties = () => {
   }
 
   let provider = providerUrl;
-  if (isArbForkTest) {
-    provider = arbitrumProviderUrl;
-  } else if (isHoleskyForkTest) {
-    provider = holeskyProviderUrl;
-  } else if (isBaseForkTest) {
-    provider = baseProviderUrl;
+  if (!providerUrl.includes("localhost")) {
+    if (isArbForkTest) {
+      provider = arbitrumProviderUrl;
+    } else if (isHoleskyForkTest) {
+      provider = holeskyProviderUrl;
+    } else if (isBaseForkTest) {
+      provider = baseProviderUrl;
+    }
   }
 
   return { chainId, provider };
