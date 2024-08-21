@@ -99,7 +99,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     governor,
     strategist,
     rafael,
-    aeroSwapRouter;
+    aeroSwapRouter,
+    aeroNftManager;
 
   beforeEach(async () => {
     fixture = await baseFixture();
@@ -112,6 +113,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     strategist = fixture.strategist;
     rafael = fixture.rafael;
     aeroSwapRouter = fixture.aeroSwapRouter;
+    aeroNftManager = fixture.aeroNftManager;
 
     await setup();
     await weth
@@ -144,6 +146,34 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         await strategist.getAddress()
       );
     });
+
+    it("Can safe approve all tokens", async function () {
+      const aerodromeSigner = await impersonateAndFund(aerodromeAmoStrategy.address);
+      await weth.connect(aerodromeSigner).approve(aeroNftManager.address, BigNumber.from("0"));
+      await oethb.connect(aerodromeSigner).approve(aeroNftManager.address, BigNumber.from("0"));
+
+      await weth.connect(aerodromeSigner).approve(aeroSwapRouter.address, BigNumber.from("0"));
+      await oethb.connect(aerodromeSigner).approve(aeroSwapRouter.address, BigNumber.from("0"));
+
+      await aerodromeAmoStrategy
+        .connect(governor)
+        .safeApproveAllTokens();
+    });
+
+    it("Should revert setting ptoken address", async function () {
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .setPTokenAddress(weth.address, aero.address)
+      ).to.be.revertedWith("Unsupported method")
+    });
+
+    it("Should revert setting ptoken address", async function () {
+      await expect(aerodromeAmoStrategy
+        .connect(governor)
+        .removePToken(weth.address)
+      ).to.be.revertedWith("Unsupported method")
+    });
+
   });
 
   describe("Configuration", function () {
