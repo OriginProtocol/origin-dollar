@@ -777,9 +777,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 );
             }
 
-            uint256 shareOfWethToRemove = _additionalWethRequired.divPrecisely(
-                _wethInThePool
-            ) + 1;
+            uint256 shareOfWethToRemove = Math.min(
+                _additionalWethRequired.divPrecisely(
+                    _wethInThePool
+                ) + 1,
+                1e18
+            );
             _removePartialLiquidity(shareOfWethToRemove);
         }
 
