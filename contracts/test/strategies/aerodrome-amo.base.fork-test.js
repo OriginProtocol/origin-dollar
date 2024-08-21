@@ -92,6 +92,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
 describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture,
     oethbVault,
+    oethbVaultSigner,
     oethb,
     aero,
     weth,
@@ -114,6 +115,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     rafael = fixture.rafael;
     aeroSwapRouter = fixture.aeroSwapRouter;
     aeroNftManager = fixture.aeroNftManager;
+    oethbVaultSigner = await impersonateAndFund(oethbVault.address);
+
 
     await setup();
     await weth
@@ -545,6 +548,18 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   describe("Deposit and rebalance", function () {
     it("Should be able to deposit to the strategy", async () => {
       await mintAndDepositToStrategy();
+    });
+
+    it("Should revert when not depositing WETH or amount is 0", async () => {
+      await expect(aerodromeAmoStrategy
+        .connect(oethbVaultSigner)
+        .deposit(aero.address, BigNumber.from("1"))
+      ).to.be.revertedWith("Unsupported asset");
+
+      await expect(aerodromeAmoStrategy
+        .connect(oethbVaultSigner)
+        .deposit(weth.address, BigNumber.from("0"))
+      ).to.be.revertedWith("Must deposit something");
     });
 
     it("Should be able to deposit to the pool & rebalance", async () => {
