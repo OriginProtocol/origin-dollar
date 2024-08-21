@@ -342,13 +342,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * expected ranges.
      *
      * @param _amountToSwap The amount of the token to swap
-     * @param _minTokenReceived Slippage check -> minimum amount of token expected in return
      * @param _swapWeth Swap using WETH when true, use OETHb when false
+     * @param _minTokenReceived Slippage check -> minimum amount of token expected in return
      */
     function rebalance(
         uint256 _amountToSwap,
-        uint256 _minTokenReceived,
-        bool _swapWeth
+        bool _swapWeth,
+        uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
         _rebalance(_amountToSwap, _minTokenReceived, _swapWeth);
     }

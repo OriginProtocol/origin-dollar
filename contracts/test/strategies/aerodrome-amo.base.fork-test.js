@@ -553,8 +553,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       // prettier-ignore
       const tx = await rebalance(
         oethUnits("0.00001"),
-        oethUnits("0.000009"),
-        true // _swapWETHs
+        true, // _swapWETHs
+        oethUnits("0.000009")
       );
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
@@ -582,7 +582,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         aerodromeAmoStrategy
           .connect(strategist)
-          .rebalance(oethUnits("0"), oethUnits("0"), false)
+          .rebalance(oethUnits("0"), false, oethUnits("0"))
       );
 
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
@@ -599,8 +599,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         rebalance(
           oethUnits("0.02"),
-          oethUnits("0.018"),
-          true // _swapWETH
+          true,  // _swapWETH
+          oethUnits("0.018")
         )
       ).to.be.revertedWith("NotEnoughWethForSwap");
     });
@@ -609,8 +609,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         rebalance(
           oethUnits("0.04"),
-          oethUnits("0.035"),
-          true // _swapWETH
+          true, // _swapWETH
+          oethUnits("0.035")
         )
       ).to.be.revertedWith("PoolRebalanceOutOfBounds");
     });
@@ -626,8 +626,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       await rebalance(
         oethUnits("0.055"),
-        oethUnits("0.054"),
-        true // _swapWETH
+        true, // _swapWETH
+        oethUnits("0.054")
       );
     });
 
@@ -639,8 +639,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       await rebalance(
         oethUnits("0.205"),
-        oethUnits("0.20"),
-        false // _swapWETH
+        false, // _swapWETH
+        oethUnits("0.20")
       );
     });
 
@@ -653,7 +653,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         await aerodromeAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(oethUnits("30.98"));
       // just add liquidity don't move the active trading position
-      await rebalance(BigNumber.from("0"), BigNumber.from("0"), true);
+      await rebalance(BigNumber.from("0"), true, BigNumber.from("0"));
 
       await expect(
         await aerodromeAmoStrategy.checkBalance(weth.address)
@@ -669,7 +669,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       });
 
       await expect(
-        rebalance(oethUnits("4.99"), oethUnits("4"), true)
+        rebalance(oethUnits("4.99"), true, oethUnits("4"))
       ).to.be.revertedWith("NotEnoughWethForSwap");
     });
   });
@@ -680,8 +680,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     // move the price to pre-configured 20% value
     await rebalance(
       oethUnits("0.0027"),
-      oethUnits("0.0026"),
-      true // _swapWETH
+      true, // _swapWETH
+      oethUnits("0.0026")
     );
   };
 
@@ -733,10 +733,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
   };
 
-  const rebalance = async (amountToSwap, minTokenReceived, swapWETH) => {
+  const rebalance = async (amountToSwap, swapWETH, minTokenReceived) => {
     return await aerodromeAmoStrategy
       .connect(strategist)
-      .rebalance(amountToSwap, minTokenReceived, swapWETH);
+      .rebalance(amountToSwap, swapWETH, minTokenReceived);
   };
 
   const mintAndDepositToStrategy = async ({ userOverride, amount } = {}) => {
