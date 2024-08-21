@@ -702,7 +702,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethbOnTheContract() internal {
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(_oethbBalance);
+        if (_oethbBalance > 0) {
+            IVault(vaultAddress).burnForStrategy(_oethbBalance);
+        }
     }
 
     /// @dev this function assumes there are no uncollected tokens in the clPool owned by the.
