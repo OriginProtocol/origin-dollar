@@ -105,6 +105,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 currentPoolWethShare,
         uint256 requiredPoolWethShare
     ); // 0x6c6108fb
+    error OutsideExpectedTickRange(
+        int24 currentTick,
+        int24 lowerTick,
+        int24 upperTick
+    ); // 0x46a58db6
 
     event PoolRebalanced(
         uint256 currentPoolWethShare,
@@ -510,11 +515,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint160 _currentPrice = getPoolX96Price();
         // sanity check active trading price is positioned within our desired tick
-        require(
-            _currentPrice > sqrtRatioX96Tick0 &&
-                _currentPrice < sqrtRatioX96Tick1,
-            "Not in expected tick range"
-        );
+        if (_currentPrice <= sqrtRatioX96Tick0 ||
+                _currentPrice >= sqrtRatioX96Tick1) {
+            int24 currentTick = getCurrentTradingTick();
+            revert OutsideExpectedTickRange(
+                currentTick,
+                lowerTick,
+                upperTick
+            );
+        }
 
         // in case oethb would be the 1st token we'd need to call estimateAmount0 here
         uint256 _oethbRequired = helper.estimateAmount1(
@@ -615,11 +624,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _checkForExpectedPoolPrice() internal {
         uint160 _currentPrice = getPoolX96Price();
         // check we are in inspected tick range
-        require(
-            _currentPrice >= sqrtRatioX96Tick0 &&
-                _currentPrice <= sqrtRatioX96Tick1,
-            "Not in expected tick range"
-        );
+
+        if (_currentPrice < sqrtRatioX96Tick0 ||
+            _currentPrice > sqrtRatioX96Tick1) {
+
+            int24 currentTick = getCurrentTradingTick();
+            revert OutsideExpectedTickRange(
+                currentTick,
+                lowerTick,
+                upperTick
+            );
+        }
 
         // If token addresses were reversed estimateAmount0 would
         // be required here
@@ -863,6 +878,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function getPoolX96Price() public view returns (uint160 _sqrtRatioX96) {
         (_sqrtRatioX96, , , , , ) = clPool.slot0();
+    }
+
+    /**
+     * @notice Returns the current active trading tick of the underlying pool
+     * @return _currentTick Current pool trading tick
+     */
+    function getCurrentTradingTick() internal view returns (int24 _currentTick) {
+        (, _currentTick, , , , ) = clPool.slot0();
     }
 
     /**

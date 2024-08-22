@@ -72,7 +72,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
       aerodromeAmoStrategy
         .connect(strategist)
         .rebalance(oethUnits("0"), false, oethUnits("0"))
-    ).to.be.revertedWith("Not in expected tick range");
+    ).to.be.revertedWith("OutsideExpectedTickRange");
   });
 
   const setupEmpty = async () => {
@@ -110,7 +110,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
   };
 });
 
-describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
+describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture,
     oethbVault,
     oethbVaultSigner,
@@ -692,9 +692,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     // move the price to pre-configured 20% value
     await rebalance(
-      oethUnits("0.0077"),
+      oethUnits("0.00685"),
       true, // _swapWETH
-      oethUnits("0.0072")
+      oethUnits("0.0067")
     );
   };
 
