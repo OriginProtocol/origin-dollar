@@ -71,21 +71,34 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     const poolDeployer = await impersonateAndFund(
       "0xFD9E6005187F448957a0972a7d0C0A6dA2911236"
     );
+    const deadSigner = await impersonateAndFund(
+      "0x000000000000000000000000000000000000dead"
+    );
 
     // remove all existing liquidity from the pool
-    for (const tokenId of [342186, 413296]) {
-      const { liquidity } = await aeroNftManager
-        .connect(poolDeployer)
-        .positions(tokenId);
+    const { liquidity } = await aeroNftManager
+      .connect(poolDeployer)
+      .positions(342186);
 
-      await aeroNftManager.connect(poolDeployer).decreaseLiquidity({
-        tokenId: tokenId,
-        liquidity: liquidity,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: futureEpoch,
-      });
-    }
+    await aeroNftManager.connect(poolDeployer).decreaseLiquidity({
+      tokenId: 342186,
+      liquidity: liquidity,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline: futureEpoch,
+    });
+
+    const positionInfo = await aeroNftManager
+      .connect(deadSigner)
+      .positions(413296);
+
+    await aeroNftManager.connect(deadSigner).decreaseLiquidity({
+      tokenId: 413296,
+      liquidity: positionInfo.liquidity,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline: futureEpoch,
+    });
   };
 });
 
@@ -117,7 +130,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     aeroNftManager = fixture.aeroNftManager;
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
 
-
     await setup();
     await weth
       .connect(rafael)
@@ -134,11 +146,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         await aerodromeAmoStrategy.poolWethShareVarianceAllowed()
       ).to.equal(oethUnits("0.02"));
 
-      // correct withdrawal liquity share
-      expect(await aerodromeAmoStrategy.withdrawLiquidityShare()).to.equal(
-        oethUnits("0.99")
-      );
-
       // correct pool weth share
       expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
         oethUnits("0.20")
@@ -151,32 +158,39 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
 
     it("Can safe approve all tokens", async function () {
-      const aerodromeSigner = await impersonateAndFund(aerodromeAmoStrategy.address);
-      await weth.connect(aerodromeSigner).approve(aeroNftManager.address, BigNumber.from("0"));
-      await oethb.connect(aerodromeSigner).approve(aeroNftManager.address, BigNumber.from("0"));
+      const aerodromeSigner = await impersonateAndFund(
+        aerodromeAmoStrategy.address
+      );
+      await weth
+        .connect(aerodromeSigner)
+        .approve(aeroNftManager.address, BigNumber.from("0"));
+      await oethb
+        .connect(aerodromeSigner)
+        .approve(aeroNftManager.address, BigNumber.from("0"));
 
-      await weth.connect(aerodromeSigner).approve(aeroSwapRouter.address, BigNumber.from("0"));
-      await oethb.connect(aerodromeSigner).approve(aeroSwapRouter.address, BigNumber.from("0"));
+      await weth
+        .connect(aerodromeSigner)
+        .approve(aeroSwapRouter.address, BigNumber.from("0"));
+      await oethb
+        .connect(aerodromeSigner)
+        .approve(aeroSwapRouter.address, BigNumber.from("0"));
 
-      await aerodromeAmoStrategy
-        .connect(governor)
-        .safeApproveAllTokens();
+      await aerodromeAmoStrategy.connect(governor).safeApproveAllTokens();
     });
 
     it("Should revert setting ptoken address", async function () {
-      await expect(aerodromeAmoStrategy
-        .connect(governor)
-        .setPTokenAddress(weth.address, aero.address)
-      ).to.be.revertedWith("Unsupported method")
+      await expect(
+        aerodromeAmoStrategy
+          .connect(governor)
+          .setPTokenAddress(weth.address, aero.address)
+      ).to.be.revertedWith("Unsupported method");
     });
 
     it("Should revert setting ptoken address", async function () {
-      await expect(aerodromeAmoStrategy
-        .connect(governor)
-        .removePToken(weth.address)
-      ).to.be.revertedWith("Unsupported method")
+      await expect(
+        aerodromeAmoStrategy.connect(governor).removePToken(weth.address)
+      ).to.be.revertedWith("Unsupported method");
     });
-
   });
 
   describe("Configuration", function () {
@@ -210,38 +224,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         aerodromeAmoStrategy.connect(governor).setPoolWethShare(oethUnits("0"))
       ).to.be.revertedWith("Invalid poolWethShare amount");
-    });
-
-    it("Governor can set the withdraw liquidity share", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
-
-      await aerodromeAmoStrategy
-        .connect(governor)
-        .setWithdrawLiquidityShare(oethUnits("0.98"));
-
-      expect(await aerodromeAmoStrategy.withdrawLiquidityShare()).to.equal(
-        oethUnits("0.98")
-      );
-    });
-
-    it("Only the governor can set the withdraw liquidity share", async () => {
-      const { rafael, aerodromeAmoStrategy } = fixture;
-
-      await expect(
-        aerodromeAmoStrategy
-          .connect(rafael)
-          .setWithdrawLiquidityShare(oethUnits("0.98"))
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("Can not set too large withdraw liquidity share", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
-
-      await expect(
-        aerodromeAmoStrategy
-          .connect(governor)
-          .setWithdrawLiquidityShare(oethUnits("1"))
-      ).to.be.revertedWith("Invalid withdrawLiquidityShare amount");
     });
 
     it("Governor can set the pool weth share allowance allowed", async () => {
@@ -551,14 +533,16 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
 
     it("Should revert when not depositing WETH or amount is 0", async () => {
-      await expect(aerodromeAmoStrategy
-        .connect(oethbVaultSigner)
-        .deposit(aero.address, BigNumber.from("1"))
+      await expect(
+        aerodromeAmoStrategy
+          .connect(oethbVaultSigner)
+          .deposit(aero.address, BigNumber.from("1"))
       ).to.be.revertedWith("Unsupported asset");
 
-      await expect(aerodromeAmoStrategy
-        .connect(oethbVaultSigner)
-        .deposit(weth.address, BigNumber.from("0"))
+      await expect(
+        aerodromeAmoStrategy
+          .connect(oethbVaultSigner)
+          .deposit(weth.address, BigNumber.from("0"))
       ).to.be.revertedWith("Must deposit something");
     });
 
@@ -613,9 +597,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       await expect(
         rebalance(
-          oethUnits("0.02"),
-          true,  // _swapWETH
-          oethUnits("0.018")
+          oethUnits("0.01"),
+          true, // _swapWETH
+          oethUnits("0.009")
         )
       ).to.be.revertedWith("NotEnoughWethForSwap");
     });
@@ -623,9 +607,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should revert when pool rebalance is off target", async () => {
       await expect(
         rebalance(
-          oethUnits("0.04"),
+          oethUnits("0.001"),
           true, // _swapWETH
-          oethUnits("0.035")
+          oethUnits("0.0009")
         )
       ).to.be.revertedWith("PoolRebalanceOutOfBounds");
     });
@@ -640,9 +624,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await mintAndDepositToStrategy({ amount: oethUnits("1") });
 
       await rebalance(
-        oethUnits("0.055"),
+        oethUnits("0.0023"),
         true, // _swapWETH
-        oethUnits("0.054")
+        oethUnits("0.0022")
       );
     });
 
@@ -653,9 +637,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       });
 
       await rebalance(
-        oethUnits("0.205"),
+        oethUnits("0.0080"),
         false, // _swapWETH
-        oethUnits("0.20")
+        oethUnits("0.0079")
       );
     });
 

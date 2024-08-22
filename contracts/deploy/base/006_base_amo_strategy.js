@@ -110,12 +110,6 @@ module.exports = deployOnBaseWithGuardian(
     await withConfirmation(
       cAMOStrategy
         .connect(sDeployer)
-        .setWithdrawLiquidityShare(oethUnits("0.99")) // 99%
-    );
-
-    await withConfirmation(
-      cAMOStrategy
-        .connect(sDeployer)
         .setPoolWethShareVarianceAllowed(oethUnits("0.02")) // 2%
     );
 
