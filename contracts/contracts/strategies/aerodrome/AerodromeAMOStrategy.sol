@@ -623,9 +623,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // If token addresses were reversed estimateAmount0 would
         // be required here
-        uint256 normalizedWethAmount = 1 ether;
-        uint256 correspondingOETHAmount = helper.estimateAmount1(
-            normalizedWethAmount,
+        uint256 _normalizedWethAmount = 1 ether;
+        uint256 _correspondingOETHAmount = helper.estimateAmount1(
+            _normalizedWethAmount,
             address(clPool),
             _currentPrice,
             lowerTick,
@@ -633,17 +633,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         // 18 decimal number expressed weth tick share
-        uint256 wethSharePct = normalizedWethAmount.divPrecisely(
-            normalizedWethAmount + correspondingOETHAmount
+        uint256 _wethSharePct = _normalizedWethAmount.divPrecisely(
+            _normalizedWethAmount + _correspondingOETHAmount
         );
 
-        uint256 wethDiff = Math.max(poolWethShare, wethSharePct) -
-            Math.min(poolWethShare, wethSharePct);
+        uint256 _wethDiff = Math.max(poolWethShare, _wethSharePct) -
+            Math.min(poolWethShare, _wethSharePct);
 
-        if (wethDiff < poolWethShareVarianceAllowed) {
-            emit PoolRebalanced(wethSharePct, poolWethShare);
+        if (_wethDiff < poolWethShareVarianceAllowed) {
+            emit PoolRebalanced(_wethSharePct, poolWethShare);
         } else {
-            revert PoolRebalanceOutOfBounds(wethSharePct, poolWethShare);
+            revert PoolRebalanceOutOfBounds(_wethSharePct, poolWethShare);
         }
     }
 
