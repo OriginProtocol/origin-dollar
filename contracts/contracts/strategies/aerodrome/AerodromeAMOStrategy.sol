@@ -31,9 +31,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * In order to be able to remove a reasonable amount of complexity from the contract one of the
      * preconditions for this contract to function correctly is to have an outside account mint a small
-     * amount of liquidity in the tick space where the contract deploy's its liquidity and then send
+     * amount of liquidity in the tick space where the contract will deploy's its liquidity and then send
      * that NFT LP position to a dead address (transfer to zero address not allowed.) See example of such
-     * token: https://basescan.org/token/0x827922686190790b37229fd06084350e74485b72?a=413296#inventory
+     * NFT LP token:
+     * https://basescan.org/token/0x827922686190790b37229fd06084350e74485b72?a=413296#inventory
      */
 
     /***************************************
