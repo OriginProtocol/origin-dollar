@@ -262,7 +262,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         aerodromeAmoStrategy
           .connect(governor)
-          .setPoolWethShareVarianceAllowed(oethUnits("0.40"))
+          .setPoolWethShareVarianceAllowed(oethUnits("0.40000000001"))
       ).to.be.revertedWith("Invalid poolWethShareVariance");
     });
   });

@@ -258,7 +258,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         onlyGovernorOrStrategist
     {
         // no sensible reason to ever allow this over 40%
-        require(_amount < 0.4 ether, "Invalid poolWethShareVariance");
+        require(_amount <= 0.4 ether, "Invalid poolWethShareVariance");
 
         poolWethShareVarianceAllowed = _amount;
         emit PoolWethShareVarianceAllowedUpdated(_amount);
