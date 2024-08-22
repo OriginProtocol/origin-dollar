@@ -238,7 +238,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Set the new desired WETH share
-     * @param _amount The new amount specified in basis points
+     * @param _amount The new amount expressed as an 18 decimal point
      */
     function setPoolWethShare(uint256 _amount) external onlyGovernor {
         require(_amount < 1e18, "Invalid poolWethShare amount");
@@ -251,7 +251,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
      *         vary from the configured value after rebalancing.
-     * @param _amount The new amount specified in basis points
+     * @param _amount The new amount expressed as an 18 decimal point
      */
     function setPoolWethShareVarianceAllowed(uint256 _amount)
         external
