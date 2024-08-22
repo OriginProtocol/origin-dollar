@@ -63,8 +63,16 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     await expect(
       aerodromeAmoStrategy
         .connect(strategist)
-        .rebalance(oethUnits("0.001"), oethUnits("0.0008"), false)
+        .rebalance(oethUnits("0.001"), false, oethUnits("0.0008"))
     ).to.be.revertedWith("Can not rebalance empty pool");
+  });
+
+  it("Should be reverted trying to rebalance and we are not in the correct tick", async () => {
+    await expect(
+      aerodromeAmoStrategy
+        .connect(strategist)
+        .rebalance(oethUnits("0"), false, oethUnits("0"))
+    ).to.be.revertedWith("Not in expected tick range");
   });
 
   const setupEmpty = async () => {
@@ -624,9 +632,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await mintAndDepositToStrategy({ amount: oethUnits("1") });
 
       await rebalance(
-        oethUnits("0.0023"),
+        oethUnits("0.0073"),
         true, // _swapWETH
-        oethUnits("0.0022")
+        oethUnits("0.0072")
       );
     });
 
@@ -637,9 +645,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       });
 
       await rebalance(
-        oethUnits("0.0080"),
+        oethUnits("0.0079"),
         false, // _swapWETH
-        oethUnits("0.0079")
+        oethUnits("0.0036")
       );
     });
 
@@ -657,6 +665,12 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         await aerodromeAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(oethUnits("54.9"));
+    });
+
+    it("Should revert on non WETH balance", async () => {
+      await expect(
+        aerodromeAmoStrategy.checkBalance(aero.address)
+      ).to.be.revertedWith("Only WETH supported");
     });
 
     it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
@@ -678,9 +692,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     // move the price to pre-configured 20% value
     await rebalance(
-      oethUnits("0.0027"),
+      oethUnits("0.0077"),
       true, // _swapWETH
-      oethUnits("0.0026")
+      oethUnits("0.0072")
     );
   };
 
