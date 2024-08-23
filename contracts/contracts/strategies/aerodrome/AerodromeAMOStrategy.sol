@@ -342,7 +342,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         bool _swapWeth,
         uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
-        _rebalance(_amountToSwap, _minTokenReceived, _swapWeth);
+        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
     }
 
     /**
@@ -353,8 +353,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // slither-disable-start reentrancy-no-eth
     function _rebalance(
         uint256 _amountToSwap,
-        uint256 _minTokenReceived,
-        bool _swapWeth
+        bool _swapWeth,
+        uint256 _minTokenReceived
     ) internal {
         /**
          * Would be nice to check if there is any total liquidity in the pool before performing this swap
