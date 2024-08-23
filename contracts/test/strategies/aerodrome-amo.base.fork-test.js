@@ -110,7 +110,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
   };
 });
 
-describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
+describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   let fixture,
     oethbVault,
     oethbVaultSigner,
@@ -149,15 +149,14 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   describe("ForkTest: Initial state (Base)", function () {
     it("Should have the correct initial state", async function () {
-      // correct pool weth share variance
+      // correct pool weth share interval
       expect(
-        await aerodromeAmoStrategy.poolWethShareVarianceAllowed()
-      ).to.equal(oethUnits("0.02"));
+        await aerodromeAmoStrategy.allowedWethShareStart()
+      ).to.equal(oethUnits("0.18"));
 
-      // correct pool weth share
-      expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
-        oethUnits("0.20")
-      );
+      expect(
+        await aerodromeAmoStrategy.allowedWethShareEnd()
+      ).to.equal(oethUnits("0.22"));
 
       // correct harvester set
       expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
@@ -202,15 +201,19 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   });
 
   describe("Configuration", function () {
-    it("Governor can set the pool weth share", async () => {
+    it("Governor can set the allowed pool weth share interval", async () => {
       const { governor, aerodromeAmoStrategy } = fixture;
 
       await aerodromeAmoStrategy
         .connect(governor)
-        .setPoolWethShare(oethUnits("0.5"));
+        .setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"));
 
-      expect(await aerodromeAmoStrategy.poolWethShare()).to.equal(
-        oethUnits("0.5")
+      expect(await aerodromeAmoStrategy.allowedWethShareStart()).to.equal(
+        oethUnits("0.19")
+      );
+
+      expect(await aerodromeAmoStrategy.allowedWethShareEnd()).to.equal(
+        oethUnits("0.23")
       );
     });
 
@@ -218,52 +221,33 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       const { rafael, aerodromeAmoStrategy } = fixture;
 
       await expect(
-        aerodromeAmoStrategy.connect(rafael).setPoolWethShare(oethUnits("0.5"))
+        aerodromeAmoStrategy.connect(rafael).setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Can not set too large or too small pool weth share", async () => {
+    it("Can not set incorrect pool WETH share intervals", async () => {
       const { governor, aerodromeAmoStrategy } = fixture;
 
       await expect(
-        aerodromeAmoStrategy.connect(governor).setPoolWethShare(oethUnits("1"))
-      ).to.be.revertedWith("Invalid poolWethShare amount");
+        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
+          oethUnits("0.5"),
+          oethUnits("0.4")
+        )
+      ).to.be.revertedWith("Invalid interval");
 
       await expect(
-        aerodromeAmoStrategy.connect(governor).setPoolWethShare(oethUnits("0"))
-      ).to.be.revertedWith("Invalid poolWethShare amount");
-    });
-
-    it("Governor can set the pool weth share allowance allowed", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
-
-      await aerodromeAmoStrategy
-        .connect(governor)
-        .setPoolWethShareVarianceAllowed(oethUnits("0.39"));
-
-      expect(
-        await aerodromeAmoStrategy.poolWethShareVarianceAllowed()
-      ).to.equal(oethUnits("0.39"));
-    });
-
-    it("Only the governor can set the pool weth share allowance allowed", async () => {
-      const { rafael, aerodromeAmoStrategy } = fixture;
+        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
+          oethUnits("0.0001"),
+          oethUnits("0.5")
+        )
+      ).to.be.revertedWith("Invalid interval start");
 
       await expect(
-        aerodromeAmoStrategy
-          .connect(rafael)
-          .setPoolWethShareVarianceAllowed(oethUnits("0.98"))
-      ).to.be.revertedWith("Not the Governor or Strategist");
-    });
-
-    it("Can not set too large pool weth share allowance allowed", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
-
-      await expect(
-        aerodromeAmoStrategy
-          .connect(governor)
-          .setPoolWethShareVarianceAllowed(oethUnits("0.40000000001"))
-      ).to.be.revertedWith("Invalid poolWethShareVariance");
+        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
+          oethUnits("0.2"),
+          oethUnits("0.96")
+        )
+      ).to.be.revertedWith("Invalid interval end");
     });
   });
 
@@ -315,6 +299,7 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       expect(amountWETHAfter).to.approxEqualTolerance(
         amountWETH.sub(oethUnits("1"))
       );
+
       expect(amountOETHbAfter).to.approxEqualTolerance(
         amountOETHb.sub(oethUnits("4"))
       );
@@ -654,17 +639,17 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should have the correct balance within some tolerance", async () => {
       await expect(
         await aerodromeAmoStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(oethUnits("24.98"));
+      ).to.approxEqualTolerance(oethUnits("24.35"));
       await mintAndDepositToStrategy({ amount: oethUnits("6") });
       await expect(
         await aerodromeAmoStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(oethUnits("30.98"));
+      ).to.approxEqualTolerance(oethUnits("30.35"));
       // just add liquidity don't move the active trading position
       await rebalance(BigNumber.from("0"), true, BigNumber.from("0"));
 
       await expect(
         await aerodromeAmoStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(oethUnits("54.9"));
+      ).to.approxEqualTolerance(oethUnits("53.61"));
     });
 
     it("Should revert on non WETH balance", async () => {
@@ -692,9 +677,9 @@ describe.only("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     // move the price to pre-configured 20% value
     await rebalance(
-      oethUnits("0.00685"),
+      oethUnits("0.00775"),
       true, // _swapWETH
-      oethUnits("0.0067")
+      oethUnits("0.0076")
     );
   };
 

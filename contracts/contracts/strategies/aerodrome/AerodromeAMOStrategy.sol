@@ -52,8 +52,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice Marks the end of the interval that defines the allowed range of WETH share in 
     /// the pre-configured pool's liquidity ticker
     uint256 public allowedWethShareEnd;
+    /// @dev is the NFT LP token deposited to CLGauge
+    bool public lpTokenDepositedToGauge;
     /// @dev reserved for inheritance
-    int256[46] private __reserved;
+    int256[45] private __reserved;
 
     /***************************************
           Constants, structs and events
@@ -157,13 +159,25 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * gauge it is not earning incentives.
      */
     modifier gaugeUnstakeAndRestake() {
-        if (tokenId != 0) {
+        if (tokenId != 0 && lpTokenDepositedToGauge) {
             clGauge.withdraw(tokenId);
+            lpTokenDepositedToGauge = false;
         }
         _;
-        if (tokenId != 0) {
-            positionManager.approve(address(clGauge), tokenId);
-            clGauge.deposit(tokenId);
+        if (tokenId != 0 && !lpTokenDepositedToGauge) {
+            (uint256 _wethPositionBalance, uint256 _oethbPositionBalance) = getPositionPrincipal();
+
+            /**
+             * It can happen that a withdrawal (or a full withdrawal) transactions would
+             * remove all of the liquidity from the token with a NFT token still existing.
+             * In that case the token can not be staked into the gauge, as some liquidity
+             * needs to be added to it first.
+             */
+            if (_wethPositionBalance + _oethbPositionBalance > 0) {
+                positionManager.approve(address(clGauge), tokenId);
+                clGauge.deposit(tokenId);
+                lpTokenDepositedToGauge = true;
+            }
         }
     }
 

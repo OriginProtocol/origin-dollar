@@ -104,13 +104,10 @@ module.exports = deployOnBaseWithGuardian(
     console.log("Initialized cAMOStrategyProxy and implementation");
 
     await withConfirmation(
-      cAMOStrategy.connect(sDeployer).setPoolWethShare(oethUnits("0.20")) // 20%
-    );
-
-    await withConfirmation(
-      cAMOStrategy
-        .connect(sDeployer)
-        .setPoolWethShareVarianceAllowed(oethUnits("0.02")) // 2%
+      cAMOStrategy.connect(sDeployer).setAllowedPoolWethShareInterval(
+        oethUnits("0.18"), // 18%
+        oethUnits("0.22") // 22%
+      )
     );
 
     await withConfirmation(
