@@ -648,7 +648,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // If token addresses were reversed estimateAmount0 would
         // be required here
         uint256 _normalizedWethAmount = 1 ether;
-        uint256 _correspondingOETHAmount = helper.estimateAmount1(
+        uint256 _correspondingOethAmount = helper.estimateAmount1(
             _normalizedWethAmount,
             address(clPool),
             _currentPrice,
