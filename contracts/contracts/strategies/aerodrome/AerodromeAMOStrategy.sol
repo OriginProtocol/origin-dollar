@@ -46,18 +46,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
     uint256 public underlyingAssets;
-    /**
-     * @notice Specifies WETH to OETHb ratio the strategy contract aims for after rebalancing
-     * as 18 decimal point
-     *
-     * e.g. 0.2e18 means 20% WETH 80% OETHb
-     */
-    uint256 public poolWethShare;
-    /**
-     * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
-     * vary from the configured value after rebalancing. Expressed as 18 decimal point
-     */
-    uint256 public poolWethShareVarianceAllowed;
+    /// @notice Marks the start of the interval that defines the allowed range of WETH share in 
+    /// the pre-configured pool's liquidity ticker
+    uint256 public allowedWethShareStart;
+    /// @notice Marks the end of the interval that defines the allowed range of WETH share in 
+    /// the pre-configured pool's liquidity ticker
+    uint256 public allowedWethShareEnd;
     /// @dev reserved for inheritance
     int256[46] private __reserved;
 
@@ -103,26 +97,24 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
-        uint256 requiredPoolWethShare
-    ); // 0x6c6108fb
+        uint256 allowedWethShareStart,
+        uint256 allowedWethShareEnd
+    ); // 0x3681e8e0
     error OutsideExpectedTickRange(int24 currentTick); // 0x46a58db6
 
     event PoolRebalanced(
-        uint256 currentPoolWethShare,
-        uint256 targetPoolWethShare
+        uint256 currentPoolWethShare
     );
 
-    event PoolWethShareUpdated(uint256 newWethShare);
+    event PoolWethShareIntervalUpdated(
+        uint256 allowedWethShareStart,
+        uint256 allowedWethShareEnd
+    );
 
     event PrincipalPositionAfterSwap(
         uint256 wethPositionBalance,
         uint256 oethbPositionBalance
     );
-
-    event PoolWethShareVarianceAllowedUpdated(
-        uint256 poolWethShareVarianceAllowed
-    );
-
     event LiquidityRemoved(
         uint256 withdrawLiquidityShare,
         uint256 removedWETHAmount,
@@ -255,31 +247,23 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Set the new desired WETH share
-     * @param _amount The new amount expressed as an 18 decimal point
+     * @notice Set allowed pool weth share interval. After the rebalance happens
+     * the share of WETH token in the ticker needs to be withing the specifications
+     * of the interval.
+     * 
+     * @param _allowedWethShareStart Start of WETH share interval expressed as 18 decimal amount
+     * @param _allowedWethShareEnd End of WETH share interval expressed as 18 decimal amount
      */
-    function setPoolWethShare(uint256 _amount) external onlyGovernor {
-        require(_amount < 1e18, "Invalid poolWethShare amount");
-        require(_amount > 0, "Invalid poolWethShare amount");
+    function setAllowedPoolWethShareInterval(uint256 _allowedWethShareStart, uint256 _allowedWethShareEnd) external onlyGovernor {
+        require(_allowedWethShareStart < _allowedWethShareEnd, "Invalid interval");
+        // can not go below 1% weth share
+        require(_allowedWethShareStart > 0.01 ether, "Invalid interval start");
+        // can not go above 95% weth share
+        require(_allowedWethShareEnd < 0.95 ether, "Invalid interval end");
 
-        poolWethShare = _amount;
-        emit PoolWethShareUpdated(_amount);
-    }
-
-    /**
-     * @notice Specifies how the target WETH share of the pool defined by the `poolWethShare` can
-     *         vary from the configured value after rebalancing.
-     * @param _amount The new amount expressed as an 18 decimal point
-     */
-    function setPoolWethShareVarianceAllowed(uint256 _amount)
-        external
-        onlyGovernorOrStrategist
-    {
-        // no sensible reason to ever allow this over 40%
-        require(_amount <= 0.4 ether, "Invalid poolWethShareVariance");
-
-        poolWethShareVarianceAllowed = _amount;
-        emit PoolWethShareVarianceAllowedUpdated(_amount);
+        allowedWethShareStart = _allowedWethShareStart;
+        allowedWethShareEnd = _allowedWethShareEnd;
+        emit PoolWethShareIntervalUpdated(allowedWethShareStart, allowedWethShareEnd);
     }
 
     /***************************************
@@ -495,7 +479,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         // emit an event so it is easier to find correct values off-chain
-        (_wethPositionBalance, _oethbPositionBalance) = getPositionPrincipal();
+        (uint256 _wethPositionBalance, uint256 _oethbPositionBalance) = getPositionPrincipal();
         emit PrincipalPositionAfterSwap(
             _wethPositionBalance,
             _oethbPositionBalance
@@ -504,10 +488,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Add liquidity into the pool in the pre-configured WETH to OETHb share ratios
-     * configured by the `poolWethShare` property. This function will respect liquidity
-     * ratios when there no liquidity yet in the pool. If liquidity is already present
-     * then it relies on the `_swapToDesiredPosition` function in a step before to already
-     * move the trading price to desired position (with some tolerance).
+     * defined by the allowedPoolWethShareStart|End interval. This function will respect
+     * liquidity ratios when there no liquidity yet in the pool. If liquidity is already
+     * present then it relies on the `_swapToDesiredPosition` function in a step before
+     * to already move the trading price to desired position (with some tolerance).
      */
     // rebalance already has re-entrency checks
     // slither-disable-start reentrancy-no-eth
@@ -656,13 +640,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _normalizedWethAmount + _correspondingOethAmount
         );
 
-        uint256 _wethDiff = Math.max(poolWethShare, _wethSharePct) -
-            Math.min(poolWethShare, _wethSharePct);
-
-        if (_wethDiff < poolWethShareVarianceAllowed) {
-            emit PoolRebalanced(_wethSharePct, poolWethShare);
+        if (_wethSharePct >= allowedWethShareStart &&
+            _wethSharePct <= allowedWethShareEnd
+        ) {
+            emit PoolRebalanced(_wethSharePct);
         } else {
-            revert PoolRebalanceOutOfBounds(_wethSharePct, poolWethShare);
+            revert PoolRebalanceOutOfBounds(
+                _wethSharePct,
+                allowedWethShareStart,
+                allowedWethShareEnd
+            );
         }
     }
 
