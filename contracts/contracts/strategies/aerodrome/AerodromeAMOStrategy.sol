@@ -544,14 +544,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _oethbAmountSupplied;
         if (tokenId == 0) {
             (
-                uint256 _mintedTokenId,
+                tokenId,
                 ,
-                uint256 __wethAmountSupplied,
-                uint256 __oethbAmountSupplied
+                _wethAmountSupplied,
+                _oethbAmountSupplied
             ) = positionManager.mint(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
                      * _checkForExpectedPoolPrice
-                     *
+                     *›
                      * Also sqrtPriceX96 is 0 because the pool is already created
                      * non zero amount attempts to create a new instance of the pool
                      */
@@ -570,15 +570,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                         sqrtPriceX96: 0
                     })
                 );
-
-            _wethAmountSupplied = __wethAmountSupplied;
-            _oethbAmountSupplied = __oethbAmountSupplied;
-            tokenId = _mintedTokenId;
         } else {
             (
                 ,
-                uint256 __wethAmountSupplied,
-                uint256 __oethbAmountSupplied
+                _wethAmountSupplied,
+                _oethbAmountSupplied
             ) = positionManager.increaseLiquidity(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
                      * _checkForExpectedPoolPrice
@@ -592,9 +588,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                         deadline: block.timestamp
                     })
                 );
-
-            _wethAmountSupplied = __wethAmountSupplied;
-            _oethbAmountSupplied = __oethbAmountSupplied;
         }
 
         _updateUnderlyingAssets();
