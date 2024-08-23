@@ -150,13 +150,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   describe("ForkTest: Initial state (Base)", function () {
     it("Should have the correct initial state", async function () {
       // correct pool weth share interval
-      expect(
-        await aerodromeAmoStrategy.allowedWethShareStart()
-      ).to.equal(oethUnits("0.18"));
+      expect(await aerodromeAmoStrategy.allowedWethShareStart()).to.equal(
+        oethUnits("0.18")
+      );
 
-      expect(
-        await aerodromeAmoStrategy.allowedWethShareEnd()
-      ).to.equal(oethUnits("0.22"));
+      expect(await aerodromeAmoStrategy.allowedWethShareEnd()).to.equal(
+        oethUnits("0.22")
+      );
 
       // correct harvester set
       expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
@@ -221,7 +221,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       const { rafael, aerodromeAmoStrategy } = fixture;
 
       await expect(
-        aerodromeAmoStrategy.connect(rafael).setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"))
+        aerodromeAmoStrategy
+          .connect(rafael)
+          .setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
@@ -229,24 +231,24 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       const { governor, aerodromeAmoStrategy } = fixture;
 
       await expect(
-        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
-          oethUnits("0.5"),
-          oethUnits("0.4")
-        )
+        aerodromeAmoStrategy
+          .connect(governor)
+          .setAllowedPoolWethShareInterval(oethUnits("0.5"), oethUnits("0.4"))
       ).to.be.revertedWith("Invalid interval");
 
       await expect(
-        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
-          oethUnits("0.0001"),
-          oethUnits("0.5")
-        )
+        aerodromeAmoStrategy
+          .connect(governor)
+          .setAllowedPoolWethShareInterval(
+            oethUnits("0.0001"),
+            oethUnits("0.5")
+          )
       ).to.be.revertedWith("Invalid interval start");
 
       await expect(
-        aerodromeAmoStrategy.connect(governor).setAllowedPoolWethShareInterval(
-          oethUnits("0.2"),
-          oethUnits("0.96")
-        )
+        aerodromeAmoStrategy
+          .connect(governor)
+          .setAllowedPoolWethShareInterval(oethUnits("0.2"), oethUnits("0.96"))
       ).to.be.revertedWith("Invalid interval end");
     });
   });

@@ -46,10 +46,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
     uint256 public underlyingAssets;
-    /// @notice Marks the start of the interval that defines the allowed range of WETH share in 
+    /// @notice Marks the start of the interval that defines the allowed range of WETH share in
     /// the pre-configured pool's liquidity ticker
     uint256 public allowedWethShareStart;
-    /// @notice Marks the end of the interval that defines the allowed range of WETH share in 
+    /// @notice Marks the end of the interval that defines the allowed range of WETH share in
     /// the pre-configured pool's liquidity ticker
     uint256 public allowedWethShareEnd;
     /// @dev is the NFT LP token deposited to CLGauge
@@ -104,9 +104,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ); // 0x3681e8e0
     error OutsideExpectedTickRange(int24 currentTick); // 0x46a58db6
 
-    event PoolRebalanced(
-        uint256 currentPoolWethShare
-    );
+    event PoolRebalanced(uint256 currentPoolWethShare);
 
     event PoolWethShareIntervalUpdated(
         uint256 allowedWethShareStart,
@@ -165,7 +163,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         _;
         if (tokenId != 0 && !lpTokenDepositedToGauge) {
-            (uint256 _wethPositionBalance, uint256 _oethbPositionBalance) = getPositionPrincipal();
+            (
+                uint256 _wethPositionBalance,
+                uint256 _oethbPositionBalance
+            ) = getPositionPrincipal();
 
             /**
              * It can happen that a withdrawal (or a full withdrawal) transactions would
@@ -264,12 +265,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Set allowed pool weth share interval. After the rebalance happens
      * the share of WETH token in the ticker needs to be withing the specifications
      * of the interval.
-     * 
+     *
      * @param _allowedWethShareStart Start of WETH share interval expressed as 18 decimal amount
      * @param _allowedWethShareEnd End of WETH share interval expressed as 18 decimal amount
      */
-    function setAllowedPoolWethShareInterval(uint256 _allowedWethShareStart, uint256 _allowedWethShareEnd) external onlyGovernor {
-        require(_allowedWethShareStart < _allowedWethShareEnd, "Invalid interval");
+    function setAllowedPoolWethShareInterval(
+        uint256 _allowedWethShareStart,
+        uint256 _allowedWethShareEnd
+    ) external onlyGovernor {
+        require(
+            _allowedWethShareStart < _allowedWethShareEnd,
+            "Invalid interval"
+        );
         // can not go below 1% weth share
         require(_allowedWethShareStart > 0.01 ether, "Invalid interval start");
         // can not go above 95% weth share
@@ -277,7 +284,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         allowedWethShareStart = _allowedWethShareStart;
         allowedWethShareEnd = _allowedWethShareEnd;
-        emit PoolWethShareIntervalUpdated(allowedWethShareStart, allowedWethShareEnd);
+        emit PoolWethShareIntervalUpdated(
+            allowedWethShareStart,
+            allowedWethShareEnd
+        );
     }
 
     /***************************************
@@ -493,7 +503,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         // emit an event so it is easier to find correct values off-chain
-        (uint256 _wethPositionBalance, uint256 _oethbPositionBalance) = getPositionPrincipal();
+        (
+            uint256 _wethPositionBalance,
+            uint256 _oethbPositionBalance
+        ) = getPositionPrincipal();
         emit PrincipalPositionAfterSwap(
             _wethPositionBalance,
             _oethbPositionBalance
@@ -532,9 +545,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * If estimateAmount1 call fails it could be due to _currentPrice being really
          * close to a tick and amount1 is a larger number than the sugar helper is able
          * to compute.
-         * 
+         *
          * If token addresses were reversed estimateAmount0 would be required here
-         */ 
+         */
         uint256 _oethbRequired = helper.estimateAmount1(
             _wethBalance,
             address(0), // no need to pass pool address when current price is specified
@@ -637,9 +650,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         /**
          * If estimateAmount1 call fails it could be due to _currentPrice being really
          * close to a tick and amount1 too big to compute.
-         * 
+         *
          * If token addresses were reversed estimateAmount0 would be required here
-         */ 
+         */
         uint256 _normalizedWethAmount = 1 ether;
         uint256 _correspondingOethAmount = helper.estimateAmount1(
             _normalizedWethAmount,
@@ -654,7 +667,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _normalizedWethAmount + _correspondingOethAmount
         );
 
-        if (_wethSharePct >= allowedWethShareStart &&
+        if (
+            _wethSharePct >= allowedWethShareStart &&
             _wethSharePct <= allowedWethShareEnd
         ) {
             emit PoolRebalanced(_wethSharePct);
