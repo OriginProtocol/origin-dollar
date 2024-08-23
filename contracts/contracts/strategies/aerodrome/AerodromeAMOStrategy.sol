@@ -148,6 +148,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 underlyingAssets
     );
 
+    event UnderlyingAssetsUpdated(
+        uint256 underlyingAssets
+    );
+
     /**
      * @dev Verifies that the caller is the Governor, or Strategist.
      */
@@ -158,6 +162,26 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             "Not the Governor or Strategist"
         );
         _;
+    }
+
+    /**
+     * @dev Un-stakes the token from the gauge for the execution duration of
+     * the function and after that re-stakes it back in.
+     *
+     * It is important that the token is unstaked and owned by the strategy contract
+     * during any liquidity altering operations and that it is re-staked back into the
+     * gauge after liquidity changes. If the token fails to re-stake back to the
+     * gauge it is not earning incentives.
+     */
+    modifier gaugeUnstakeAndRestake() {
+        if (tokenId != 0) {
+            clGauge.withdraw(tokenId);
+        }
+        _;
+        if (tokenId != 0) {
+            positionManager.approve(address(clGauge), tokenId);
+            clGauge.deposit(tokenId);
+        }
     }
 
     /// @notice the constructor
@@ -390,11 +414,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Decrease partial or all liquidity from the pool.
      * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
      */
-    function _removeLiquidity(uint256 _liquidityToDecrease) internal {
+    function _removeLiquidity(uint256 _liquidityToDecrease) gaugeUnstakeAndRestake internal {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
-
-        // unstake the position from the gauge
-        clGauge.withdraw(tokenId);
 
         uint128 _liquidity = _getLiquidity();
         // need to convert to uint256 since intermittent result is to big for uint128 to handle
@@ -506,7 +527,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     // rebalance already has re-entrency checks
     // slither-disable-start reentrancy-no-eth
-    function _addLiquidity() internal {
+    function _addLiquidity() gaugeUnstakeAndRestake internal {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
         require(_wethBalance > 0, "Must add some WETH");
@@ -598,8 +619,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // burn remaining OETHb
         _burnOethbOnTheContract();
-        positionManager.approve(address(clGauge), tokenId);
-        clGauge.deposit(tokenId);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -664,6 +683,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
+            emit UnderlyingAssetsUpdated(underlyingAssets);
             return;
         }
 
@@ -690,6 +710,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         require(_wethAmount == 0, "Non zero wethAmount");
         underlyingAssets = _oethbAmount;
+        emit UnderlyingAssetsUpdated(underlyingAssets);
     }
 
     /**
