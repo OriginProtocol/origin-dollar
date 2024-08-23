@@ -86,14 +86,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     INonfungiblePositionManager public immutable positionManager;
     /// @notice helper contract for liquidity and ticker math
     ISugarHelper public immutable helper;
-    /// @notice sqrtRatioX96Tick0
-    /// @dev tick 0 has value -1 and represents the lowest price of WETH priced in OETHb. Meaning the pool
+    /// @notice sqrtRatioX96TickLower
+    /// @dev tick lower has value -1 and represents the lowest price of WETH priced in OETHb. Meaning the pool
     /// offers less than 1 OETHb for 1 WETH. In other terms to get 1 OETHB the swap needs to offer 1.0001 WETH
     /// this is where purchasing OETHb with WETH within the liquidity position is most expensive
-    uint160 public immutable sqrtRatioX96Tick0;
-    /// @notice sqrtRatioX96Tick1
-    /// @dev tick 1 has value 0 and represents 1:1 price parity of WETH to OETHb
-    uint160 public immutable sqrtRatioX96Tick1;
+    uint160 public immutable sqrtRatioX96TickLower;
+    /// @notice sqrtRatioX96TickHigher
+    /// @dev tick higher has value 0 and represents 1:1 price parity of WETH to OETHb
+    uint160 public immutable sqrtRatioX96TickHigher;
     /// @dev tick closest to 1:1 price parity
     ///      Correctly assesing which tick is closer to 1:1 price parity is important since it affects
     ///      the way we calculate the underlying assets in check Balance
@@ -215,10 +215,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         clPool = ICLPool(_clPool);
         clGauge = ICLGauge(_clGauge);
         helper = ISugarHelper(_sugarHelper);
-        sqrtRatioX96Tick0 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(
+        sqrtRatioX96TickLower = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(
             _lowerBoundingTick
         );
-        sqrtRatioX96Tick1 = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(
+        sqrtRatioX96TickHigher = ISugarHelper(_sugarHelper).getSqrtRatioAtTick(
             _upperBoundingTick
         );
         sqrtRatioX96TickClosestToParity = ISugarHelper(_sugarHelper)
@@ -504,8 +504,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 amountIn: _amountToSwap,
                 amountOutMinimum: _minTokenReceived, // slippage check
                 sqrtPriceLimitX96: _swapWeth
-                    ? sqrtRatioX96Tick0
-                    : sqrtRatioX96Tick1
+                    ? sqrtRatioX96TickLower
+                    : sqrtRatioX96TickHigher
             })
         );
 
@@ -539,8 +539,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * count being within lower tick for the purpose of Sugar.estimateAmount calls
          */
         if (
-            _currentPrice <= sqrtRatioX96Tick0 ||
-            _currentPrice >= sqrtRatioX96Tick1
+            _currentPrice <= sqrtRatioX96TickLower ||
+            _currentPrice >= sqrtRatioX96TickHigher
         ) {
             revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
@@ -645,8 +645,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * count being within lower tick for the purpose of Sugar.estimateAmount calls
          */
         if (
-            _currentPrice <= sqrtRatioX96Tick0 ||
-            _currentPrice >= sqrtRatioX96Tick1
+            _currentPrice <= sqrtRatioX96TickLower ||
+            _currentPrice >= sqrtRatioX96TickHigher
         ) {
             revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
@@ -668,7 +668,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // 18 decimal number expressed weth tick share
         uint256 _wethSharePct = _normalizedWethAmount.divPrecisely(
-            _normalizedWethAmount + _correspondingOETHAmount
+            _normalizedWethAmount + _correspondingOethAmount
         );
 
         uint256 _wethDiff = Math.max(poolWethShare, _wethSharePct) -
@@ -716,8 +716,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         (uint256 _wethAmount, uint256 _oethbAmount) = helper
             .getAmountsForLiquidity(
                 sqrtRatioX96TickClosestToParity, // sqrtRatioX96
-                sqrtRatioX96Tick0, // sqrtRatioAX96
-                sqrtRatioX96Tick1, // sqrtRatioBX96
+                sqrtRatioX96TickLower, // sqrtRatioAX96
+                sqrtRatioX96TickHigher, // sqrtRatioBX96
                 _liquidity
             );
 
