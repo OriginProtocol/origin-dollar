@@ -106,9 +106,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 requiredPoolWethShare
     ); // 0x6c6108fb
     error OutsideExpectedTickRange(
-        int24 currentTick,
-        int24 lowerTick,
-        int24 upperTick
+        int24 currentTick
     ); // 0x46a58db6
 
     event PoolRebalanced(
@@ -519,9 +517,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 _currentPrice >= sqrtRatioX96Tick1) {
             int24 currentTick = getCurrentTradingTick();
             revert OutsideExpectedTickRange(
-                currentTick,
-                lowerTick,
-                upperTick
+                currentTick
             );
         }
 
@@ -623,9 +619,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
             int24 currentTick = getCurrentTradingTick();
             revert OutsideExpectedTickRange(
-                currentTick,
-                lowerTick,
-                upperTick
+                currentTick
             );
         }
 
