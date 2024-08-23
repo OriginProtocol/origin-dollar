@@ -545,7 +545,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
 
-        // in case oethb would be the 1st token we'd need to call estimateAmount0 here
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 is a larger number than the sugar helper is able
+         * to compute.
+         * 
+         * If token addresses were reversed estimateAmount0 would be required here
+         */ 
         uint256 _oethbRequired = helper.estimateAmount1(
             _wethBalance,
             address(0), // no need to pass pool address when current price is specified
@@ -645,8 +651,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
 
-        // If token addresses were reversed estimateAmount0 would
-        // be required here
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 too big to compute.
+         * 
+         * If token addresses were reversed estimateAmount0 would be required here
+         */ 
         uint256 _normalizedWethAmount = 1 ether;
         uint256 _correspondingOethAmount = helper.estimateAmount1(
             _normalizedWethAmount,
