@@ -670,31 +670,32 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
-        } else {
-            uint128 _liquidity = _getLiquidity();
-
-            /**
-             * Our net value represent the smallest amount of tokens we are able to extract from the position
-             * given our liquidity.
-             *
-             * The least amount of tokens extraditable from the position is where the active trading price is
-             * at the ticker 0 meaning the pool is offering 1:1 trades between WETH & OETHb. At that moment the pool
-             * consists completely of OETHb and no WETH.
-             *
-             * The more swaps from WETH -> OETHb happen on the pool the more the price starts to move towards the -1
-             * ticker making OETHb (priced in WETH) more expensive.
-             */
-            (uint256 _wethAmount, uint256 _oethbAmount) = helper
-                .getAmountsForLiquidity(
-                    sqrtRatioX96TickClosestToParity, // sqrtRatioX96
-                    sqrtRatioX96Tick0, // sqrtRatioAX96
-                    sqrtRatioX96Tick1, // sqrtRatioBX96
-                    _liquidity
-                );
-
-            require(_wethAmount == 0, "Non zero wethAmount");
-            underlyingAssets = _oethbAmount;
+            return
         }
+
+        uint128 _liquidity = _getLiquidity();
+
+        /**
+         * Our net value represent the smallest amount of tokens we are able to extract from the position
+         * given our liquidity.
+         *
+         * The least amount of tokens extraditable from the position is where the active trading price is
+         * at the ticker 0 meaning the pool is offering 1:1 trades between WETH & OETHb. At that moment the pool
+         * consists completely of OETHb and no WETH.
+         *
+         * The more swaps from WETH -> OETHb happen on the pool the more the price starts to move towards the -1
+         * ticker making OETHb (priced in WETH) more expensive.
+         */
+        (uint256 _wethAmount, uint256 _oethbAmount) = helper
+            .getAmountsForLiquidity(
+                sqrtRatioX96TickClosestToParity, // sqrtRatioX96
+                sqrtRatioX96Tick0, // sqrtRatioAX96
+                sqrtRatioX96Tick1, // sqrtRatioBX96
+                _liquidity
+            );
+
+        require(_wethAmount == 0, "Non zero wethAmount");
+        underlyingAssets = _oethbAmount;
     }
 
     /**
