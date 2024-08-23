@@ -664,7 +664,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
-            return
+            return;
         }
 
         uint128 _liquidity = _getLiquidity();
