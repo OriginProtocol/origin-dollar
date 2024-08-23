@@ -114,11 +114,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     event PoolWethShareUpdated(uint256 newWethShare);
 
-    event PrincipalPositionBeforeSwap(
-        uint256 wethPositionBalance,
-        uint256 oethbPositionBalance
-    );
-
     event PrincipalPositionAfterSwap(
         uint256 wethPositionBalance,
         uint256 oethbPositionBalance
@@ -479,16 +474,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
             }
         }
-
-        // emit an event so it is easier to find correct values off-chain
-        (
-            uint256 _wethPositionBalance,
-            uint256 _oethbPositionBalance
-        ) = getPositionPrincipal();
-        emit PrincipalPositionBeforeSwap(
-            _wethPositionBalance,
-            _oethbPositionBalance
-        );
 
         // Swap it
         swapRouter.exactInputSingle(
