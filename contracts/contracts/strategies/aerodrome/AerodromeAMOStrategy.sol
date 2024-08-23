@@ -105,9 +105,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 currentPoolWethShare,
         uint256 requiredPoolWethShare
     ); // 0x6c6108fb
-    error OutsideExpectedTickRange(
-        int24 currentTick
-    ); // 0x46a58db6
+    error OutsideExpectedTickRange(int24 currentTick); // 0x46a58db6
 
     event PoolRebalanced(
         uint256 currentPoolWethShare,
@@ -148,9 +146,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 underlyingAssets
     );
 
-    event UnderlyingAssetsUpdated(
-        uint256 underlyingAssets
-    );
+    event UnderlyingAssetsUpdated(uint256 underlyingAssets);
 
     /**
      * @dev Verifies that the caller is the Governor, or Strategist.
@@ -414,7 +410,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Decrease partial or all liquidity from the pool.
      * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
      */
-    function _removeLiquidity(uint256 _liquidityToDecrease) gaugeUnstakeAndRestake internal {
+    function _removeLiquidity(uint256 _liquidityToDecrease)
+        internal
+        gaugeUnstakeAndRestake
+    {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
 
         uint128 _liquidity = _getLiquidity();
@@ -527,19 +526,23 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     // rebalance already has re-entrency checks
     // slither-disable-start reentrancy-no-eth
-    function _addLiquidity() gaugeUnstakeAndRestake internal {
+    function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
         require(_wethBalance > 0, "Must add some WETH");
 
         uint160 _currentPrice = getPoolX96Price();
-        // sanity check active trading price is positioned within our desired tick
-        if (_currentPrice <= sqrtRatioX96Tick0 ||
-                _currentPrice >= sqrtRatioX96Tick1) {
-            int24 currentTick = getCurrentTradingTick();
-            revert OutsideExpectedTickRange(
-                currentTick
-            );
+        /**
+         * Sanity check active trading price is positioned within our desired tick.
+         *
+         * We revert even though price being equal to the lower tick would still
+         * count being within lower tick for the purpose of Sugar.estimateAmount calls
+         */
+        if (
+            _currentPrice <= sqrtRatioX96Tick0 ||
+            _currentPrice >= sqrtRatioX96Tick1
+        ) {
+            revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
 
         // in case oethb would be the 1st token we'd need to call estimateAmount0 here
@@ -566,33 +569,30 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 _wethAmountSupplied,
                 _oethbAmountSupplied
             ) = positionManager.mint(
-                    /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
-                     * _checkForExpectedPoolPrice
-                     *›
-                     * Also sqrtPriceX96 is 0 because the pool is already created
-                     * non zero amount attempts to create a new instance of the pool
-                     */
-                    INonfungiblePositionManager.MintParams({
-                        token0: WETH,
-                        token1: OETHb,
-                        tickSpacing: tickSpacing,
-                        tickLower: lowerTick,
-                        tickUpper: upperTick,
-                        amount0Desired: _wethBalance,
-                        amount1Desired: _oethbRequired,
-                        amount0Min: 0,
-                        amount1Min: 0,
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        sqrtPriceX96: 0
-                    })
-                );
+                /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
+                 * _checkForExpectedPoolPrice
+                 *›
+                 * Also sqrtPriceX96 is 0 because the pool is already created
+                 * non zero amount attempts to create a new instance of the pool
+                 */
+                INonfungiblePositionManager.MintParams({
+                    token0: WETH,
+                    token1: OETHb,
+                    tickSpacing: tickSpacing,
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
+                    amount0Desired: _wethBalance,
+                    amount1Desired: _oethbRequired,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    sqrtPriceX96: 0
+                })
+            );
         } else {
-            (
-                ,
-                _wethAmountSupplied,
-                _oethbAmountSupplied
-            ) = positionManager.increaseLiquidity(
+            (, _wethAmountSupplied, _oethbAmountSupplied) = positionManager
+                .increaseLiquidity(
                     /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
                      * _checkForExpectedPoolPrice
                      */
@@ -631,15 +631,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _checkForExpectedPoolPrice() internal {
         uint160 _currentPrice = getPoolX96Price();
-        // check we are in inspected tick range
 
-        if (_currentPrice < sqrtRatioX96Tick0 ||
-            _currentPrice > sqrtRatioX96Tick1) {
-
-            int24 currentTick = getCurrentTradingTick();
-            revert OutsideExpectedTickRange(
-                currentTick
-            );
+        /**
+         * First check we are in expected tick range
+         *
+         * We revert even though price being equal to the lower tick would still
+         * count being within lower tick for the purpose of Sugar.estimateAmount calls
+         */
+        if (
+            _currentPrice <= sqrtRatioX96Tick0 ||
+            _currentPrice >= sqrtRatioX96Tick1
+        ) {
+            revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
 
         // If token addresses were reversed estimateAmount0 would
@@ -893,7 +896,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Returns the current active trading tick of the underlying pool
      * @return _currentTick Current pool trading tick
      */
-    function getCurrentTradingTick() internal view returns (int24 _currentTick) {
+    function getCurrentTradingTick()
+        internal
+        view
+        returns (int24 _currentTick)
+    {
         (, _currentTick, , , , ) = clPool.slot0();
     }
 
