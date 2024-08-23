@@ -45,8 +45,7 @@ contract OETHBaseZapper {
         weth.deposit{ value: balance }();
 
         // Mint OETHb
-        uint256 toMint = weth.balanceOf(address(this));
-        vault.mint(address(weth), toMint, balance);
+        vault.mint(address(weth), weth.balanceOf(address(this)), balance);
 
         // State check
         uint256 mintedAmount = oethb.balanceOf(address(this));
