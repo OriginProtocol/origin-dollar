@@ -548,7 +548,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // in case oethb would be the 1st token we'd need to call estimateAmount0 here
         uint256 _oethbRequired = helper.estimateAmount1(
             _wethBalance,
-            address(clPool),
+            address(0), // no need to pass pool address when current price is specified
             _currentPrice,
             lowerTick,
             upperTick
@@ -650,7 +650,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _normalizedWethAmount = 1 ether;
         uint256 _correspondingOethAmount = helper.estimateAmount1(
             _normalizedWethAmount,
-            address(clPool),
+            address(0), // no need to pass pool address when current price is specified
             _currentPrice,
             lowerTick,
             upperTick
