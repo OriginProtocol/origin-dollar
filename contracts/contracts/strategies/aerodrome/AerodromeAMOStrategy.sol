@@ -203,6 +203,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         int24 _upperBoundingTick,
         int24 _tickClosestToParity
     ) InitializableAbstractStrategy(_stratConfig) {
+        require(
+            _lowerBoundingTick == _tickClosestToParity ||
+            _upperBoundingTick == _tickClosestToParity,
+            "Miss configured tickClosestToParity"
+        );
+
         WETH = _wethAddress;
         OETHb = _oethbAddress;
         swapRouter = ISwapRouter(_swapRouter);
