@@ -246,9 +246,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _rewardTokenAddresses Address of reward token for platform
      */
     function initialize(
-        address[] memory _rewardTokenAddresses,
-        address[] memory,
-        address[] memory
+        address[] memory _rewardTokenAddresses
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,

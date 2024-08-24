@@ -85,11 +85,9 @@ module.exports = deployOnBaseWithGuardian(
 
     // Init the AMO strategy
     const initData = cAMOStrategyImpl.interface.encodeFunctionData(
-      "initialize(address[],address[],address[])",
+      "initialize(address[])",
       [
-        [addresses.base.AERO], // rewardTokenAddresses
-        [], // assets
-        [], // pTokens
+        [addresses.base.AERO] // rewardTokenAddresses
       ]
     );
     // prettier-ignore
