@@ -12,6 +12,11 @@ interface INonfungiblePositionManager {
      */
     function approve(address to, uint256 tokenId) external;
 
+    /**
+     * @dev See {IERC721-getApproved}.
+     */
+    function getApproved(uint256 tokenId) external returns (address);
+
     /// @notice Returns the position information associated with a given token ID.
     /// @dev Throws if the token ID is not valid.
     /// @param tokenId The ID of the token that represents the position

@@ -554,6 +554,29 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
     });
 
+    it("Should be able to deposit to the pool & rebalance multiple times", async () => {
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+
+      // prettier-ignore
+      const tx = await rebalance(
+        oethUnits("0.00001"),
+        true, // _swapWETHs
+        oethUnits("0.000009")
+      );
+
+      await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx1 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+
+      await expect(tx1).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+    });
+
     it("Should check that add liquidity in difference cases leaves no to little weth on the contract", async () => {
       const amount = oethUnits("5");
 
