@@ -907,7 +907,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @return _currentTick Current pool trading tick
      */
     function getCurrentTradingTick()
-        internal
+        public
         view
         returns (int24 _currentTick)
     {
