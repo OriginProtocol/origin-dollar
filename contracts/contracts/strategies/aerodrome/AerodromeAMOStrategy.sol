@@ -388,7 +388,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         /**
          * When rebalance is called for the first time there is no strategy's
-         * liquidity in the pool yet. The partial removal is thus skipped.
+         * liquidity in the pool yet. The full liquidity removal is thus skipped.
          */
         if (tokenId != 0) {
             _removeLiquidity(1e18);
