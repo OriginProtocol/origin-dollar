@@ -702,9 +702,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     // move the price to pre-configured 20% value
     await rebalance(
-      oethUnits("0.00775"),
+      oethUnits("0.00875"),
       true, // _swapWETH
-      oethUnits("0.0076")
+      oethUnits("0.0086")
     );
   };
 
