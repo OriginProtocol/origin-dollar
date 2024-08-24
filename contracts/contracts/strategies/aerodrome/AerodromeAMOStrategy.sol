@@ -140,8 +140,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     modifier onlyGovernorOrStrategist() {
         require(
-            msg.sender == governor() ||
-                msg.sender == IVault(vaultAddress).strategistAddr(),
+            msg.sender == IVault(vaultAddress).strategistAddr() ||
+                msg.sender == governor(),
             "Not the Governor or Strategist"
         );
         _;
