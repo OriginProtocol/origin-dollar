@@ -156,6 +156,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * gauge after liquidity changes. If the token fails to re-stake back to the
      * gauge it is not earning incentives.
      */
+    // all functions using this modifier are used by functions with reentrancy check
+    // slither-disable-start reentrancy-no-eth
     modifier gaugeUnstakeAndRestake() {
         if (tokenId != 0 && lpTokenDepositedToGauge) {
             clGauge.withdraw(tokenId);
@@ -176,6 +178,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             }
         }
     }
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice the constructor
     /// @param _stratConfig the basic strategy configuration
