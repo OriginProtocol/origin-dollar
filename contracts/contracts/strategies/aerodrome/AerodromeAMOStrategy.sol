@@ -163,18 +163,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         _;
         if (tokenId != 0 && !lpTokenDepositedToGauge) {
-            (
-                uint256 _wethPositionBalance,
-                uint256 _oethbPositionBalance
-            ) = getPositionPrincipal();
-
             /**
              * It can happen that a withdrawal (or a full withdrawal) transactions would
              * remove all of the liquidity from the token with a NFT token still existing.
              * In that case the token can not be staked into the gauge, as some liquidity
              * needs to be added to it first.
              */
-            if (_wethPositionBalance + _oethbPositionBalance > 0) {
+            if (_getLiquidity() > 0) {
                 positionManager.approve(address(clGauge), tokenId);
                 clGauge.deposit(tokenId);
                 lpTokenDepositedToGauge = true;
