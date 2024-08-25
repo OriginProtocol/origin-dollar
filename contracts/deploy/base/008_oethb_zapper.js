@@ -7,12 +7,13 @@ module.exports = deployOnBaseWithGuardian(
     // ----------------
 
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
+    const cWOETHbProxy = await ethers.getContract("WOETHBaseProxy");
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
 
     // Deploy new Zapper
     await deployWithConfirmation(
       "OETHBaseZapper",
-      [cOETHbProxy.address, cOETHbVaultProxy.address],
+      [cOETHbProxy.address, cWOETHbProxy.address, cOETHbVaultProxy.address],
       undefined,
       true
     );
