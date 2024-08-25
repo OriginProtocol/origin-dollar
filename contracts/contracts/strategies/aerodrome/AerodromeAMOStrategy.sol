@@ -52,10 +52,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice Marks the end of the interval that defines the allowed range of WETH share in
     /// the pre-configured pool's liquidity ticker
     uint256 public allowedWethShareEnd;
-    /// @dev is the NFT LP token deposited to CLGauge
-    bool public lpTokenDepositedToGauge;
     /// @dev reserved for inheritance
-    int256[45] private __reserved;
+    int256[46] private __reserved;
 
     /***************************************
           Constants, structs and events
@@ -159,12 +157,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // all functions using this modifier are used by functions with reentrancy check
     // slither-disable-start reentrancy-no-eth
     modifier gaugeUnstakeAndRestake() {
-        if (tokenId != 0 && lpTokenDepositedToGauge) {
+        // because of solidity short-circuit _isLpTokenStakedToGauge doesn't get called
+        // when tokenId == 0
+        if (tokenId != 0 && _isLpTokenStakedToGauge()) {
             clGauge.withdraw(tokenId);
-            lpTokenDepositedToGauge = false;
         }
         _;
-        if (tokenId != 0 && !lpTokenDepositedToGauge) {
+        // because of solidity short-circuit _isLpTokenStakedToGauge doesn't get called
+        // when tokenId == 0
+        if (tokenId != 0 && !_isLpTokenStakedToGauge()) {
             /**
              * It can happen that a withdrawal (or a full withdrawal) transactions would
              * remove all of the liquidity from the token with a NFT token still existing.
@@ -174,10 +175,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             if (_getLiquidity() > 0) {
                 positionManager.approve(address(clGauge), tokenId);
                 clGauge.deposit(tokenId);
-                lpTokenDepositedToGauge = true;
             }
         }
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /// @notice the constructor
@@ -208,7 +209,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ) InitializableAbstractStrategy(_stratConfig) {
         require(
             _lowerBoundingTick == _tickClosestToParity ||
-            _upperBoundingTick == _tickClosestToParity,
+                _upperBoundingTick == _tickClosestToParity,
             "Miss configured tickClosestToParity"
         );
 
@@ -248,9 +249,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice initialize function, to set up initial internal state
      * @param _rewardTokenAddresses Address of reward token for platform
      */
-    function initialize(
-        address[] memory _rewardTokenAddresses
-    ) external onlyGovernor initializer {
+    function initialize(address[] memory _rewardTokenAddresses)
+        external
+        onlyGovernor
+        initializer
+    {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
             // these should all be empty
@@ -290,6 +293,21 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             allowedWethShareStart,
             allowedWethShareEnd
         );
+    }
+
+    /***************************************
+                Periphery utils
+    ****************************************/
+
+    function _isLpTokenStakedToGauge() internal view returns (bool) {
+        require(tokenId != 0, "Missing NFT LP token");
+
+        address owner = positionManager.ownerOf(tokenId);
+        require(
+            owner == address(clGauge) || owner == address(this),
+            "Unexpected token owner"
+        );
+        return owner == address(clGauge);
     }
 
     /***************************************
@@ -806,7 +824,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Collect the AERO token from the gauge
      */
     function _collectRewardTokens() internal override {
-        if (tokenId > 0) {
+        if (tokenId != 0 && _isLpTokenStakedToGauge()) {
             clGauge.getReward(tokenId);
         }
         super._collectRewardTokens();
@@ -908,11 +926,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Returns the current active trading tick of the underlying pool
      * @return _currentTick Current pool trading tick
      */
-    function getCurrentTradingTick()
-        public
-        view
-        returns (int24 _currentTick)
-    {
+    function getCurrentTradingTick() public view returns (int24 _currentTick) {
         (, _currentTick, , , , ) = clPool.slot0();
     }
 

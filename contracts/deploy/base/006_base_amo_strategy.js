@@ -87,7 +87,7 @@ module.exports = deployOnBaseWithGuardian(
     const initData = cAMOStrategyImpl.interface.encodeFunctionData(
       "initialize(address[])",
       [
-        [addresses.base.AERO] // rewardTokenAddresses
+        [addresses.base.AERO], // rewardTokenAddresses
       ]
     );
     // prettier-ignore

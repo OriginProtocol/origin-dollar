@@ -17,6 +17,11 @@ interface INonfungiblePositionManager {
      */
     function getApproved(uint256 tokenId) external returns (address);
 
+    /**
+     * @dev See {IERC721-ownerOf}.
+     */
+    function ownerOf(uint256 tokenId) external view returns (address);
+
     /// @notice Returns the position information associated with a given token ID.
     /// @dev Throws if the token ID is not valid.
     /// @param tokenId The ID of the token that represents the position
