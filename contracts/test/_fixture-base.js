@@ -77,7 +77,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     : await ethers.getContract("MockWETH");
 
   // Zapper
-  const zapper = await ethers.getContract("OETHBaseZapper");
+  const zapper = !isFork
+    ? undefined
+    : await ethers.getContract("OETHBaseZapper");
 
   const signers = await hre.ethers.getSigners();
 
