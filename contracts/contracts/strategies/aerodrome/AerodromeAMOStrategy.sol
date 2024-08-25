@@ -651,6 +651,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *      position in the pool.
      */
     function _checkForExpectedPoolPrice() internal {
+        require(
+            allowedWethShareStart != 0 && 
+            allowedWethShareEnd != 0
+        , "Weth share interval not set");
+        
         uint160 _currentPrice = getPoolX96Price();
 
         /**
