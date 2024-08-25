@@ -396,20 +396,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         bool _swapWeth,
         uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
-        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
-    }
-
-    /**
-     * @dev Remove almost all of the liqudity, rebalance the pool to the desired token split and
-     * deposit all of the liquidity.
-     */
-    // rebalance already has reentrancy check
-    // slither-disable-start reentrancy-no-eth
-    function _rebalance(
-        uint256 _amountToSwap,
-        bool _swapWeth,
-        uint256 _minTokenReceived
-    ) internal {
         /**
          * Would be nice to check if there is any total liquidity in the pool before performing this swap
          * but there is no easy way to do that in UniswapV3:
