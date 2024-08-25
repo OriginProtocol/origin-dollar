@@ -688,17 +688,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         if (
-            _wethSharePct >= allowedWethShareStart &&
-            _wethSharePct <= allowedWethShareEnd
+            _wethSharePct < allowedWethShareStart ||
+            _wethSharePct > allowedWethShareEnd
         ) {
-            emit PoolRebalanced(_wethSharePct);
-        } else {
             revert PoolRebalanceOutOfBounds(
                 _wethSharePct,
                 allowedWethShareStart,
                 allowedWethShareEnd
             );
         }
+        emit PoolRebalanced(_wethSharePct);
     }
 
     /**
