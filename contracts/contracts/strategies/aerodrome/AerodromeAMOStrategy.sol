@@ -330,6 +330,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice Deposit WETH to the strategy contract. This function does not add liquidity to the
+     *         underlying Aerodrome pool.
+     */
+    function depositAll() external override onlyVault nonReentrant {
+        uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
+        if (_wethBalance > 0) {
+            _deposit(WETH, _wethBalance);
+        }
+    }
+
+    /**
      * @dev Deposit WETH to the contract. This function doesn't deposit the liquidity to the
      *      pool, that is done via the rebalance call.
      * @param _asset Address of the asset to deposit
@@ -747,17 +758,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_wethAmount == 0, "Non zero wethAmount");
         underlyingAssets = _oethbAmount;
         emit UnderlyingAssetsUpdated(underlyingAssets);
-    }
-
-    /**
-     * @notice Deposit WETH to the strategy contract. This function does not add liquidity to the
-     *         underlying Aerodrome pool.
-     */
-    function depositAll() external override onlyVault nonReentrant {
-        uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > 0) {
-            _deposit(WETH, _wethBalance);
-        }
     }
 
     /**
