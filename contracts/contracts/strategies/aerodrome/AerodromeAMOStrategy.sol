@@ -495,12 +495,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         if (_balance < _amountToSwap) {
             // if swapping OETHb
-            if (!_swapWeth) {
-                uint256 mintForSwap = _amountToSwap - _balance;
-                IVault(vaultAddress).mintForStrategy(mintForSwap);
-            } else {
+            if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
             }
+            uint256 mintForSwap = _amountToSwap - _balance;
+            IVault(vaultAddress).mintForStrategy(mintForSwap);
         }
 
         // Swap it
