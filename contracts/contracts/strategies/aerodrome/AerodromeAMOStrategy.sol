@@ -212,6 +212,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 _upperBoundingTick == _tickClosestToParity,
             "Misconfigured tickClosestToParity"
         );
+        require(
+            ICLPool(_clPool).token0() == _wethAddress,
+            "Only WETH supported as token0"
+        );
+        require(
+            ICLPool(_clPool).token1() == _oethbAddress,
+            "Only OETHb supported as token1"
+        );
 
         WETH = _wethAddress;
         OETHb = _oethbAddress;
@@ -234,15 +242,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         lowerTick = _lowerBoundingTick;
         upperTick = _upperBoundingTick;
         tickSpacing = 1;
-
-        require(
-            ICLPool(_clPool).token0() == _wethAddress,
-            "Only WETH supported as token0"
-        );
-        require(
-            ICLPool(_clPool).token1() == _oethbAddress,
-            "Only OETHb supported as token1"
-        );
     }
 
     /**
