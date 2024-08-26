@@ -53,7 +53,7 @@ contract MockRewardPool {
         address _rewardTokenA,
         address _rewardTokenB,
         address _operator
-    ) public {
+    ) {
         pid = _pid;
         stakingToken = _stakingToken;
         rewardTokenA = _rewardTokenA;
@@ -108,10 +108,10 @@ contract MockRewardPool {
     }
 
     // solhint-disable-next-line no-unused-vars
-    function getReward(address _account, bool _claimExtras)
-        public
-        returns (bool)
-    {
+    function getReward(
+        address _account,
+        bool // _claimExtras
+    ) public returns (bool) {
         IMintableERC20(rewardTokenA).mint(2 * 1e18);
         IERC20(rewardTokenA).transfer(_account, 2 * 1e18);
 
@@ -122,6 +122,6 @@ contract MockRewardPool {
     }
 
     function getReward() public returns (bool) {
-        getReward(msg.sender, true);
+        return getReward(msg.sender, true);
     }
 }

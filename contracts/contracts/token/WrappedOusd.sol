@@ -28,7 +28,7 @@ contract WrappedOusd is ERC4626, Governable, Initializable {
 
     function name()
         public
-        view
+        pure
         override(ERC20, IERC20Metadata)
         returns (string memory)
     {
@@ -37,7 +37,7 @@ contract WrappedOusd is ERC4626, Governable, Initializable {
 
     function symbol()
         public
-        view
+        pure
         override(ERC20, IERC20Metadata)
         returns (string memory)
     {
