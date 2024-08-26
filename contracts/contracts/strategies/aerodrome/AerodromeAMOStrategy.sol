@@ -220,6 +220,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             ICLPool(_clPool).token1() == _oethbAddress,
             "Only OETHb supported as token1"
         );
+        int24 _tickSpacing = ICLPool(_clPool).tickSpacing();
+        // when we generalize AMO we might support other tick spacings
+        require(_tickSpacing == 1, "Unsupported tickSpacing");
 
         WETH = _wethAddress;
         OETHb = _oethbAddress;
@@ -241,7 +244,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         lowerTick = _lowerBoundingTick;
         upperTick = _upperBoundingTick;
-        tickSpacing = 1;
+        tickSpacing = _tickSpacing;
     }
 
     /**
@@ -648,10 +651,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _checkForExpectedPoolPrice() internal {
         require(
-            allowedWethShareStart != 0 && 
-            allowedWethShareEnd != 0
-        , "Weth share interval not set");
-        
+            allowedWethShareStart != 0 && allowedWethShareEnd != 0,
+            "Weth share interval not set"
+        );
+
         uint160 _currentPrice = getPoolX96Price();
 
         /**

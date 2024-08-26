@@ -25,6 +25,8 @@ interface ICLPool {
     /// @return The token contract address
     function token1() external view returns (address);
 
+    function tickSpacing() external view returns (int24);
+
     /// @notice The gauge corresponding to this pool
     /// @return The gauge contract address
     function gauge() external view returns (address);
