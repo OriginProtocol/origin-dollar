@@ -440,9 +440,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint128 _liquidity = _getLiquidity();
         // need to convert to uint256 since intermittent result is to big for uint128 to handle
-        uint128 liqudityToRemove = uint256(_liquidity)
+        uint128 _liqudityToRemove = uint256(_liquidity)
             .mulTruncate(_liquidityToDecrease)
             .toUint128();
+        require(_liqudityToRemove > 0, "Must remove some comp. liquidity");
 
         (uint256 _amountWeth, uint256 _amountOethb) = positionManager
             .decreaseLiquidity(
@@ -450,7 +451,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 // happen just before the liquidity removal.
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: liqudityToRemove,
+                    liquidity: _liqudityToRemove,
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
