@@ -210,7 +210,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(
             _lowerBoundingTick == _tickClosestToParity ||
                 _upperBoundingTick == _tickClosestToParity,
-            "Miss configured tickClosestToParity"
+            "Misconfigured tickClosestToParity"
         );
 
         WETH = _wethAddress;
