@@ -765,6 +765,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         if (_wethBalance < _amount) {
+            require(tokenId != 0, "No liquidity available");
             uint256 _additionalWethRequired = _amount - _wethBalance;
             (uint256 _wethInThePool, ) = getPositionPrincipal();
 
