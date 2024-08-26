@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ERC4626 } from "../../lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import { ERC4626, IERC20Metadata } from "../../lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -26,11 +26,21 @@ contract WrappedOusd is ERC4626, Governable, Initializable {
         OUSD(address(asset())).rebaseOptIn();
     }
 
-    function name() public view override returns (string memory) {
+    function name()
+        public
+        view
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "Wrapped OUSD";
     }
 
-    function symbol() public view override returns (string memory) {
+    function symbol()
+        public
+        view
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "WOUSD";
     }
 

@@ -85,7 +85,7 @@ const { provider, chainId } = getHardhatNetworkProperties();
 
 module.exports = {
   solidity: {
-    version: "0.8.7",
+    version: "0.8.26",
     settings: {
       optimizer: {
         enabled: true,
