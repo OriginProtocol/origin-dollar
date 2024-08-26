@@ -734,6 +734,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          *
          * The more swaps from WETH -> OETHb happen on the pool the more the price starts to move towards the -1
          * ticker making OETHb (priced in WETH) more expensive.
+         * 
+         * An additional note: when liquidity is 0 then the helper returns 0 for both token amounts. And the 
+         * function set underlying assets to 0.
          */
         (uint256 _wethAmount, uint256 _oethbAmount) = helper
             .getAmountsForLiquidity(
