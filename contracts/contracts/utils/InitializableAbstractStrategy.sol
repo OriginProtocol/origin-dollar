@@ -47,7 +47,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     address private _deprecated_vaultAddress;
 
     /// @notice asset => pToken (Platform Specific Token Address)
-    mapping(address => address) public assetToPToken;
+    mapping(address asset => address platformToken) public assetToPToken;
 
     /// @notice Full list of all assets supported by the strategy
     address[] internal assetsMapped;

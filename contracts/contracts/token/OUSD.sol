@@ -41,17 +41,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;
-    mapping(address => mapping(address => uint256)) private _allowances;
+    mapping(address account => mapping(address spender => uint256 allowance)) private _allowances;
     address public vaultAddress = address(0);
-    mapping(address => uint256) private _creditBalances;
+    mapping(address account => uint256) private _creditBalances;
     uint256 private _rebasingCredits;
     uint256 private _rebasingCreditsPerToken;
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
     uint256 public nonRebasingSupply;
-    mapping(address => uint256) public nonRebasingCreditsPerToken;
-    mapping(address => RebaseOptions) public rebaseState;
-    mapping(address => uint256) public isUpgraded;
+    mapping(address account => uint256) public nonRebasingCreditsPerToken;
+    mapping(address account => RebaseOptions) public rebaseState;
+    mapping(address account => uint256) public isUpgraded;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 

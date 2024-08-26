@@ -88,7 +88,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @dev mapping of supported vault assets to their configuration
     // slither-disable-next-line uninitialized-state
-    mapping(address => Asset) internal assets;
+    mapping(address asset => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
     // slither-disable-next-line uninitialized-state
     address[] internal allAssets;
@@ -100,7 +100,7 @@ contract VaultStorage is Initializable, Governable {
     }
     /// @dev mapping of strategy contracts to their configuration
     // slither-disable-next-line uninitialized-state
-    mapping(address => Strategy) internal strategies;
+    mapping(address strategy => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
 
@@ -142,7 +142,7 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
     // slither-disable-next-line uninitialized-state
-    mapping(address => address) public assetDefaultStrategies;
+    mapping(address asset => address strategy) public assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
     // slither-disable-next-line uninitialized-state
@@ -192,7 +192,7 @@ contract VaultStorage is Initializable, Governable {
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
     // slither-disable-next-line uninitialized-state
-    mapping(address => bool) public isMintWhitelistedStrategy;
+    mapping(address strategy => bool) public isMintWhitelistedStrategy;
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
@@ -234,7 +234,7 @@ contract VaultStorage is Initializable, Governable {
     }
 
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
-    mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
+    mapping(uint256 requestId => WithdrawalRequest) public withdrawalRequests;
 
     // For future use
     uint256[45] private __gap;
