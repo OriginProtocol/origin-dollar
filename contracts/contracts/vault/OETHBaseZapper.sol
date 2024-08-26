@@ -93,7 +93,7 @@ contract OETHBaseZapper {
     function depositWETHForWrappedTokens(
         uint256 wethAmount,
         uint256 minReceived
-    ) external payable returns (uint256) {
+    ) external returns (uint256) {
         // slither-disable-next-line unchecked-transfer unused-return
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
