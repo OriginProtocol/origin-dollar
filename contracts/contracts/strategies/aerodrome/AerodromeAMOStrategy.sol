@@ -443,7 +443,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint128 _liqudityToRemove = uint256(_liquidity)
             .mulTruncate(_liquidityToDecrease)
             .toUint128();
-        require(_liqudityToRemove > 0, "Must remove some comp. liquidity");
+
+        /**
+         * There is no liquidity to remove -> exit function early. This can happen after a
+         * withdraw/withdrawAll removes all of the liquidity while retaining the NFT token.
+         */
+        if (_liquidity == 0 || _liqudityToRemove == 0) {
+            return;
+        }
 
         (uint256 _amountWeth, uint256 _amountOethb) = positionManager
             .decreaseLiquidity(
@@ -735,8 +742,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          *
          * The more swaps from WETH -> OETHb happen on the pool the more the price starts to move towards the -1
          * ticker making OETHb (priced in WETH) more expensive.
-         * 
-         * An additional note: when liquidity is 0 then the helper returns 0 for both token amounts. And the 
+         *
+         * An additional note: when liquidity is 0 then the helper returns 0 for both token amounts. And the
          * function set underlying assets to 0.
          */
         (uint256 _wethAmount, uint256 _oethbAmount) = helper

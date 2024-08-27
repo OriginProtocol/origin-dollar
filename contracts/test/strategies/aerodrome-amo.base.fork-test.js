@@ -309,7 +309,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
 
       expect(amountOETHbAfter).to.approxEqualTolerance(
-        amountOETHb.sub(oethUnits("4")), 3
+        amountOETHb.sub(oethUnits("4")),
+        3
       );
 
       // Make sure there's no price movement
@@ -570,7 +571,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-
       await assetLpStakedInGauge();
     });
 
@@ -585,6 +585,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+      await assetLpStakedInGauge();
 
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
       // prettier-ignore
@@ -595,7 +596,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       );
 
       await expect(tx1).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-
       await assetLpStakedInGauge();
     });
 
@@ -729,6 +729,74 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
   });
 
+  describe("Perform multiple actions", function () {
+    it("LP token should stay staked with multiple deposit/withdraw actions", async () => {
+      const impersonatedVaultSigner = await impersonateAndFund(
+        oethbVault.address
+      );
+
+      // deposit into pool once
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx = await rebalance(
+        oethUnits("0.00001"),
+        true, // _swapWETHs
+        oethUnits("0.000009")
+      );
+      await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+      await assetLpStakedInGauge();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx1 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx1).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+      await assetLpStakedInGauge();
+
+      // Withdraw from the pool
+      await aerodromeAmoStrategy
+        .connect(impersonatedVaultSigner)
+        .withdraw(oethbVault.address, weth.address, oethUnits("1"));
+      await assetLpStakedInGauge();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx2 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx2).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+      await assetLpStakedInGauge();
+
+      // Withdraw from the pool
+      await aerodromeAmoStrategy
+        .connect(impersonatedVaultSigner)
+        .withdraw(oethbVault.address, weth.address, oethUnits("1"));
+      await assetLpStakedInGauge();
+
+      // Withdraw from the pool
+      await aerodromeAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
+      await assetLpNOTStakedInGauge();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx3 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx3).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+      await assetLpStakedInGauge();
+    });
+  });
+
   const assetLpStakedInGauge = async () => {
     const tokenId = await aerodromeAmoStrategy.tokenId();
     await expect(await aeroNftManager.ownerOf(tokenId)).to.equal(gauge.address);
@@ -736,7 +804,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   const assetLpNOTStakedInGauge = async () => {
     const tokenId = await aerodromeAmoStrategy.tokenId();
-    await expect(await aeroNftManager.ownerOf(tokenId)).to.equal(aerodromeAmoStrategy.address);
+    await expect(await aeroNftManager.ownerOf(tokenId)).to.equal(
+      aerodromeAmoStrategy.address
+    );
   };
 
   const setup = async () => {
