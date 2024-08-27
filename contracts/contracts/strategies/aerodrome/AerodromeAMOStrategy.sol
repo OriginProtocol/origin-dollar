@@ -416,7 +416,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // in some cases we will just want to add liquidity and not issue a swap to move the
         // active trading position within the pool
         if (_amountToSwap > 0) {
-            _swapToDesiredPosition(_amountToSwap, _minTokenReceived, _swapWeth);
+            _swapToDesiredPosition(_amountToSwap, _swapWeth, _minTokenReceived);
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
@@ -487,8 +487,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _swapToDesiredPosition(
         uint256 _amountToSwap,
-        uint256 _minTokenReceived,
-        bool _swapWeth
+        bool _swapWeth,
+        uint256 _minTokenReceived
     ) internal {
         IERC20 _tokenToSwap = IERC20(_swapWeth ? WETH : OETHb);
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
