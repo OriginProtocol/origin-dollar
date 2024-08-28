@@ -106,7 +106,7 @@ function deployOnBase(opts, fn) {
   return main;
 }
 function deployOnBaseWithGuardian(opts, fn) {
-  const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip } = opts;
+  const { deployName, dependencies, onlyOnFork, forceSkip } = opts;
 
   const runDeployment = async (hre) => {
     const tools = {
@@ -117,6 +117,11 @@ function deployOnBaseWithGuardian(opts, fn) {
     };
 
     const guardianAddr = addresses.base.governor;
+
+    if (onlyOnFork && !isFork) {
+      console.log("Skipping fork-only script");
+      return;
+    }
 
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
