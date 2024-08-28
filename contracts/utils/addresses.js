@@ -296,13 +296,25 @@ addresses.base.WETH = "0x4200000000000000000000000000000000000006";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
 addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// 2/8 Multisig
+addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
   "0xe96EB1EDa83d18cbac224233319FA5071464e1b9";
 
-// 2/8 Multisig
-addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+// Base Aerodrome
+addresses.base.nonFungiblePositionManager =
+  "0x827922686190790b37229fd06084350E74485b72";
+addresses.base.slipstreamPoolFactory =
+  "0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A";
+addresses.base.aerodromeOETHbWETHClPool =
+  "0x6446021F4E396dA3df4235C62537431372195D38";
+addresses.base.aerodromeOETHbWETHClGauge =
+  "0xdD234DBe2efF53BED9E8fC0e427ebcd74ed4F429";
+addresses.base.swapRouter = "0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5";
+addresses.base.sugarHelper = "0x0AD09A66af0154a84e86F761313d02d0abB6edd5";
+addresses.base.quoterV2 = "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
