@@ -1,6 +1,6 @@
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
-const { isFork, oethUnits } = require("../../test/helpers");
+const { isFork, oethUnits, isBase } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
 
 const deployMocks = async () => {
@@ -217,6 +217,6 @@ main.id = "000_mock";
 main.tags = ["base_unit_tests"];
 
 // Only run for unit tests
-main.skip = () => isFork;
+main.skip = () => isFork || isBase;
 
 module.exports = main;
