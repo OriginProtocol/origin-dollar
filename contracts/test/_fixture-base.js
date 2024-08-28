@@ -76,9 +76,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     ? await ethers.getContractAt("IWETH9", addresses.base.WETH)
     : await ethers.getContract("MockWETH");
 
+  // Zapper
+  const zapper = !isFork
+    ? undefined
+    : await ethers.getContract("OETHBaseZapper");
+
   const signers = await hre.ethers.getSigners();
 
-  const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
+  const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const { governorAddr } = await getNamedAccounts();
   const governor = await ethers.getSigner(governorAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
@@ -113,6 +118,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oethb,
     oethbVault,
     wOETHb,
+    zapper,
 
     // Bridged WOETH
     woeth,
@@ -131,6 +137,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     rafael,
     nick,
+    clement,
   };
 });
 
