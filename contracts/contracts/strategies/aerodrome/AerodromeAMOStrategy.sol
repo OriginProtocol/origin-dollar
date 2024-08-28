@@ -432,7 +432,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
-     * keep rebalancing the pool in both directions making the protocol slowly tiny amount of
+     * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
      * funds each time.
      *
      * Protocol must be at least SOLVENCY_THRESHOLD (99,8 %) backed in order for the rebalances to
