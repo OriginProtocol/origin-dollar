@@ -73,15 +73,9 @@ main()
     fi
 
     if [ -z "$1" ]; then
-        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
-            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.holesky.fork-test.js"
-        else
-            # Run all files with `.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.fork-test.js"
-        fi
+        # Run all files with `.fork-test.js` suffix when no file name param is given
+        # pass all other params along. Network level filtering happens in global hooks
+        params+="test/**/*.fork-test.js"
     else
         # Run specifc files when a param is given
         params+="$@"
