@@ -96,7 +96,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
-    uint256 public constant SOLVENCY_THREDHOLD = 0.998 ether;
+    uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
@@ -435,7 +435,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * keep rebalancing the pool in both directions making the protocol slowly tiny amount of
      * funds each time.
      *
-     * Protocol must be at least SOLVENCY_THREDHOLD (99,8 %) backed in order for the rebalances to
+     * Protocol must be at least SOLVENCY_THRESHOLD (99,8 %) backed in order for the rebalances to
      * function.
      */
     function _solvencyAssert() internal view {
@@ -444,7 +444,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         if (
             _totalVaultValue.divPrecisely(_totalOethbSupply) <
-            SOLVENCY_THREDHOLD
+            SOLVENCY_THRESHOLD
         ) {
             revert("Protocol insolvent");
         }
