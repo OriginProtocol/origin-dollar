@@ -92,7 +92,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///      Correctly assessing which tick is closer to 1:1 price parity is important since it affects
     ///      the way we calculate the underlying assets in check Balance. The underlying aerodrome pool
     ///      orders the tokens depending on the values of their addresses. If OETH token is token0 in the pool
-    ///      then sqrtRatioX96TickClosestToParity=sqrtRatioX96TickLower. If it is token1 in the pool then 
+    ///      then sqrtRatioX96TickClosestToParity=sqrtRatioX96TickLower. If it is token1 in the pool then
     ///      sqrtRatioX96TickClosestToParity=sqrtRatioX96TickHigher
     uint160 public immutable sqrtRatioX96TickClosestToParity;
 
@@ -161,15 +161,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // all functions using this modifier are used by functions with reentrancy check
     // slither-disable-start reentrancy-no-eth
     modifier gaugeUnstakeAndRestake() {
-        // because of solidity short-circuit _isLpTokenStakedToGauge doesn't get called
+        // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
         // when tokenId == 0
-        if (tokenId != 0 && _isLpTokenStakedToGauge()) {
+        if (tokenId != 0 && _isLpTokenStakedInGauge()) {
             clGauge.withdraw(tokenId);
         }
         _;
-        // because of solidity short-circuit _isLpTokenStakedToGauge doesn't get called
+        // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
         // when tokenId == 0
-        if (tokenId != 0 && !_isLpTokenStakedToGauge()) {
+        if (tokenId != 0 && !_isLpTokenStakedInGauge()) {
             /**
              * It can happen that a withdrawal (or a full withdrawal) transactions would
              * remove all of the liquidity from the token with a NFT token still existing.
@@ -177,6 +177,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
              * needs to be added to it first.
              */
             if (_getLiquidity() > 0) {
+                // if token liquidity changes the positionManager requires re-approval.
+                // to any contract pre-approved to handle the token.
                 positionManager.approve(address(clGauge), tokenId);
                 clGauge.deposit(tokenId);
             }
@@ -262,7 +264,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
-            // these should all be empty
             new address[](0),
             new address[](0)
         );
@@ -305,7 +306,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 Periphery utils
     ****************************************/
 
-    function _isLpTokenStakedToGauge() internal view returns (bool) {
+    function _isLpTokenStakedInGauge() internal view returns (bool) {
         require(tokenId != 0, "Missing NFT LP token");
 
         address owner = positionManager.ownerOf(tokenId);
@@ -363,33 +364,21 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * underlying aerodrome pool. Print the required amount of corresponding OETHb. After the rebalancing is
      * done burn any potentially remaining OETHb tokens still on the strategy contract.
      *
-     * This function has a slightly different behaviours depending on the status of the underlying Aerodrome
-     * slipstream pool. The function achieves its behaviour using the following 3 steps:
+     * This function has a slightly different behaviour depending on the status of the underlying Aerodrome
+     * slipstream pool. The function consists of the following 3 steps:
      * 1. withdrawPartialLiqidity -> so that moving the activeTrading price via  a swap is cheaper
      * 2. swapToDesiredPosition   -> move active trading price in the pool to be able to deposit WETH & OETHb
      *                               tokens with the desired pre-configured shares
      * 3. addLiquidity            -> add liquidity into the pool respecting share split configuration
      *
-     * Scenario 1: When there is yet no liquidity yet in the pool (from the strategy or others) that means that
-     *             someone has minted the pool, added the initial liquidity and removed the liquidity from the
-     *             pool. (See `aerodrome_amo_liquidity.py` brownie script on block 18558804 to test the situation).
-     *             Then the Aerodrome pool is in this particular state where active trading price of the pool is
-     *             still at the value when last liquidity was in the pool and that trading price can not be moved
-     *             since there is no liquidity to perform the swap. In such a case the rebalancing transaction
-     *             shall be reverted.
-     *             Swap transaction is the one that shall fail. Unfortunately there is no easy way to query Aerodrome
-     *             slipstream pool for the amount of liquidity deposited. Even tokens on the contract can be from
-     *             fees, or liquidity that has been removed but not yet claimed.
-     *             It becomes the responsibility of the strategist or deployer to add some liquidity in the configured
-     *             tick ranges to the pool to facilitate the swap. Effectively turning Scenario 1 into a Scenario 2
-     * Scenario 2: When there is no liquidity in the pool from the strategy but there is from other LPs then
+     * Scenario 1: When there is no liquidity in the pool from the strategy but there is from other LPs then
      *             only step 1 is skipped. (It is important to note that liquidity needs to exist in the configured
      *             strategy tick ranges in order for the swap to be possible) Step 3 mints new liquidity position
      *             instead of adding to an existing one.
-     * Scenario 3: When there is strategy's liquidity in the pool all 3 steps are taken
+     * Scenario 2: When there is strategy's liquidity in the pool all 3 steps are taken
      *
      *
-     * Exact _amountToSwap, _minTokenReceived & _swapWeth parameters shall be determined by simulating the
+     * Exact _amountToSwap, _swapWeth & _minTokenReceived parameters shall be determined by simulating the
      * transaction off-chain. The strategy checks that after the swap the share of the tokens is in the
      * expected ranges.
      *
@@ -411,7 +400,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          */
 
         /**
-         * When rebalance is called for the first time there is no strategy's
+         * When rebalance is called for the first time there is no strategy
          * liquidity in the pool yet. The full liquidity removal is thus skipped.
          */
         if (tokenId != 0) {
@@ -427,6 +416,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _checkForExpectedPoolPrice();
 
         _addLiquidity();
+        // this call shouldn't be necessary, since adding liquidity shouldn't affect the active
+        // trading price. It is a defensive programming measure.
         _checkForExpectedPoolPrice();
 
         // revert if protocol insolvent
@@ -452,8 +443,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             revert("Protocol insolvent");
         }
     }
-
-    // slither-disable-end reentrancy-no-eth
 
     /**
      * @dev Decrease partial or all liquidity from the pool.
@@ -574,8 +563,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         /**
          * Sanity check active trading price is positioned within our desired tick.
          *
-         * We revert even though price being equal to the lower tick would still
-         * count being within lower tick for the purpose of Sugar.estimateAmount calls
+         * We revert when price is equal to the lower tick even though that is still
+         * a valid amount in regards to ticker position by Sugar.estimateAmount call.
+         * Current price equaling tick bound at the 1:1 price parity results in
+         * uint overfow when calculating the OETHb balance to deposit.
          */
         if (
             _currentPrice <= sqrtRatioX96TickLower ||
@@ -671,8 +662,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Check that the Aerodrome pool price is within the expected
      *      parameters.
-     *      This function ignores whether the strategy contract has liquidity
-     *      position in the pool.
+     *      This function works whether the strategy contract has liquidity
+     *      position in the pool or not.
      */
     function _checkForExpectedPoolPrice() internal {
         require(
@@ -738,8 +729,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /// @dev this function assumes there are no uncollected tokens in the clPool owned by the.
-    ///      strategy contract. For that reason any liquidity withdrawals also collect the tokens.
+    /// @dev This function assumes there are no uncollected tokens in the clPool owned by the strategy contract.
+    ///      For that reason any liquidity withdrawals must also collect the tokens.
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
@@ -844,7 +835,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Collect the AERO token from the gauge
      */
     function _collectRewardTokens() internal override {
-        if (tokenId != 0 && _isLpTokenStakedToGauge()) {
+        if (tokenId != 0 && _isLpTokenStakedInGauge()) {
             clGauge.getReward(tokenId);
         }
         super._collectRewardTokens();
@@ -856,16 +847,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH;
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / pTokens
-            We need to give the Aerodrome pool approval to transfer the
-            asset.
-     */
-    function _abstractSetPToken(address, address) internal override {
-        // the deployer shall call safeApproveAllTokens() to set necessary approvals
-        revert("Unsupported method");
     }
 
     /**
@@ -974,6 +955,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @inheritdoc InitializableAbstractStrategy
     function removePToken(uint256) external override {
         // The pool tokens can never change.
+        revert("Unsupported method");
+    }
+
+    /**
+     * @dev Not supported
+     */
+    function _abstractSetPToken(address, address) internal override {
+        // the deployer shall call safeApproveAllTokens() to set necessary approvals
         revert("Unsupported method");
     }
 
