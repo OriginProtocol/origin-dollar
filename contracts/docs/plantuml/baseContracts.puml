@@ -15,6 +15,9 @@
 
 title "Base Origin Ether Contract Dependencies"
 
+object "OETHBaseZapper" as zap <<Origin>> #$originColor {
+    assets: ETH, WETH
+}
 
 object "BridgedBaseWOETH" as bridged <<Origin>><<Proxy>> #$originColor {
     symbol: wOETH
@@ -52,6 +55,10 @@ pairs:
 object "BridgedWOETHStrategy" as strat <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
+
+woeth <. zap
+zap ..> oeth
+zap ..> oethv
 
 woeth ..> oeth
 oeth <.> oethv
