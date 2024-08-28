@@ -6,7 +6,6 @@ const { utils } = require("ethers");
 module.exports = deployOnBaseWithGuardian(
   {
     deployName: "009_upgrade_vault",
-    forceSkip: true,
   },
   async ({ ethers }) => {
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
@@ -14,6 +13,7 @@ module.exports = deployOnBaseWithGuardian(
       "IVault",
       cOETHbVaultProxy.address
     );
+    const cOETHbDripperProxy = await ethers.getContract("OETHBaseDripperProxy");
 
     // Deploy new implementation
     const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
@@ -64,6 +64,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbVault,
           signature: "setTrusteeFeeBps(uint256)",
           args: [2000], // 20%
+        },
+        {
+          // 8. Set Dripper
+          contract: cOETHbVault,
+          signature: "setDripper(address)",
+          args: [cOETHbDripperProxy.address],
         },
       ],
     };

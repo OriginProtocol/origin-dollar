@@ -14,6 +14,96 @@ describe("ForkTest: OETHb Vault", function () {
     fixture = await baseFixture();
   });
 
+  describe("Mint & Permissioned redeems", function () {
+    async function _mint(signer) {
+      const { weth, oethbVault } = fixture;
+      await weth.connect(signer).deposit({ value: oethUnits("1") });
+      await weth.connect(signer).approve(oethbVault.address, oethUnits("1"));
+      await oethbVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
+    }
+
+    it("Should allow anyone to mint", async () => {
+      const { nick, weth, oethb, oethbVault } = fixture;
+
+      await oethbVault.rebase();
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(nick.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await _mint(nick);
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(nick.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.equal(totalSupplyBefore.add(oethUnits("1")));
+      expect(userBalanceAfter).to.equal(userBalanceBefore.add(oethUnits("1")));
+      expect(vaultBalanceAfter).to.equal(
+        vaultBalanceBefore.add(oethUnits("1"))
+      );
+    });
+
+    it("Should allow only Strategist to redeem", async () => {
+      const { strategist, oethbVault, oethb, weth } = fixture;
+
+      await oethbVault.rebase();
+      await _mint(strategist);
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(strategist.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await oethbVault.connect(strategist).redeem(oethUnits("1"), "0");
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(strategist.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(oethUnits("1")));
+      expect(userBalanceAfter).to.equal(userBalanceBefore.sub(oethUnits("1")));
+      expect(vaultBalanceAfter).to.equal(
+        vaultBalanceBefore.sub(oethUnits("1"))
+      );
+    });
+
+    it("Should allow only Governor to redeem", async () => {
+      const { governor, oethbVault, oethb, weth } = fixture;
+
+      await oethbVault.rebase();
+      await _mint(governor);
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(governor.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await oethbVault.connect(governor).redeem(oethUnits("1"), "0");
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(governor.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(oethUnits("1")));
+      expect(userBalanceAfter).to.equal(userBalanceBefore.sub(oethUnits("1")));
+      expect(vaultBalanceAfter).to.equal(
+        vaultBalanceBefore.sub(oethUnits("1"))
+      );
+    });
+
+    it("No one else can redeem", async () => {
+      const { rafael, nick, oethbVault } = fixture;
+
+      await oethbVault.rebase();
+
+      for (const signer of [rafael, nick]) {
+        await _mint(signer);
+        await expect(
+          oethbVault.connect(signer).redeem(oethUnits("1"), "0")
+        ).to.be.revertedWith("Caller is not the Strategist or Governor");
+      }
+    });
+  });
+
   describe("Mint Whitelist", function () {
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethbVault, governor } = fixture;
