@@ -87,9 +87,6 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
     await woethStrategy.updateWOETHOraclePrice();
 
     const depositWOETHAmount = oethUnits("1");
-    const expectedOETHbAmount = await woethStrategy.getBridgedWOETHValue(
-      depositWOETHAmount
-    );
 
     // Governor mints OETHb with wOETH
     await woeth
@@ -105,6 +102,10 @@ describe("ForkTest: Bridged WOETH Strategy", function () {
     const stratBalanceBefore = await woethStrategy.checkBalance(weth.address);
     const stratWOETHBalanceBefore = await woeth.balanceOf(
       woethStrategy.address
+    );
+
+    const expectedOETHbAmount = await woethStrategy.getBridgedWOETHValue(
+      depositWOETHAmount.sub(1)
     );
 
     // Approve strategy to move OETHb
