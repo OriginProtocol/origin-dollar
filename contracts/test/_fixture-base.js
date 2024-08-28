@@ -88,6 +88,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const governor = await ethers.getSigner(governorAddr);
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
 
+  let strategist;
+  if (isFork) {
+    // Impersonate strategist on Fork
+    strategist = await impersonateAndFund(addresses.base.strategist);
+    strategist.address = addresses.base.strategist;
+  }
+
   // Make sure we can print bridged WOETH for tests
   if (isBaseFork) {
     await impersonateAndFund(woethGovernor.address);
@@ -131,6 +138,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     // Signers
     governor,
+    strategist,
     woethGovernor,
     minter,
     burner,

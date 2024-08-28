@@ -59,4 +59,22 @@ contract OETHBaseVaultCore is OETHVaultCore {
         // Burn OTokens
         oUSD.burn(msg.sender, amount);
     }
+
+    // @inheritdoc OETHVaultCore
+    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        internal
+        virtual
+        override
+    {
+        // Only Strategist or Governor can redeem using the Vault for now.
+        // We don't have the onlyGovernorOrStrategist modifier on VaultCore.
+        // Since we won't be using that modifier anywhere in the VaultCore as well,
+        // the check has been added inline instead of moving it to VaultStorage.
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+
+        super._redeem(_amount, _minimumUnitAmount);
+    }
 }
