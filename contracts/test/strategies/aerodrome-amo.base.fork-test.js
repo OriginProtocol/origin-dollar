@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const { createFixtureLoader } = require("../_fixture");
 
+const addresses = require("../../utils/addresses");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
@@ -724,6 +725,26 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await expect(
         rebalance(oethUnits("4.99"), true, oethUnits("4"))
       ).to.be.revertedWith("NotEnoughWethForSwap");
+
+      await assetLpStakedInGauge();
+    });
+
+    it("Should not be able to rebalance when protocol is insolvent", async () => {
+      const stratSigner = await impersonateAndFund(
+        aerodromeAmoStrategy.address
+      );
+
+      await mintAndDepositToStrategy({ amount: oethUnits("10") });
+      // transfer WETH out making the protocol insolvent
+      await weth.connect(stratSigner).transfer(addresses.dead, oethUnits("5"));
+
+      await expect(
+        rebalance(
+          oethUnits("0.00001"),
+          true, // _swapWETHs
+          oethUnits("0.000009")
+        )
+      ).to.be.revertedWith("Protocol insolvent");
 
       await assetLpStakedInGauge();
     });

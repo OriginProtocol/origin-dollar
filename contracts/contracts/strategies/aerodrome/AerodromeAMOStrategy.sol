@@ -93,6 +93,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///      the way we calculate the underlying assets in check Balance
     uint160 public immutable sqrtRatioX96TickClosestToParity;
 
+    /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
+    ///      against a strategist / guardian being taken over and with multiple transactions draining the
+    ///      protocol funds.
+    uint256 public constant SOLVENCY_THREDHOLD = 0.998 ether;
+
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error PoolRebalanceOutOfBounds(
@@ -420,6 +425,29 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         _addLiquidity();
         _checkForExpectedPoolPrice();
+
+        // revert if protocol insolvent
+        _solvencyAssert();
+    }
+
+    /**
+     * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
+     * keep rebalancing the pool in both directions making the protocol slowly tiny amount of
+     * funds each time.
+     *
+     * Protocol must be at least SOLVENCY_THREDHOLD (99,8 %) backed in order for the rebalances to
+     * function.
+     */
+    function _solvencyAssert() internal view {
+        uint256 _totalVaultValue = IVault(vaultAddress).totalValue();
+        uint256 _totalOethbSupply = IERC20(OETHb).totalSupply();
+
+        if (
+            _totalVaultValue.divPrecisely(_totalOethbSupply) <
+            SOLVENCY_THREDHOLD
+        ) {
+            revert("Protocol insolvent");
+        }
     }
 
     // slither-disable-end reentrancy-no-eth
