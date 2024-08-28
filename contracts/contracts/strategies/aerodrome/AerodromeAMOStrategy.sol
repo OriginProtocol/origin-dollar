@@ -820,7 +820,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Withdraw WETH and sends it to the Vault.
      */
     function withdrawAll() external override onlyVault nonReentrant {
-        if (tokenId > 0) {
+        if (tokenId != 0) {
             _removeLiquidity(1e18);
         }
 
