@@ -537,7 +537,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         swapRouter.exactInputSingle(
             // sqrtPriceLimitX96 is just a rough sanity check that we are within 0 -> 1 tick
             // a more fine check is performed in _checkForExpectedPoolPrice
-            // TBD(!): this needs further work if we want to generalize this approach
+            // Note: this needs further work if we want to generalize this approach
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(_tokenToSwap),
                 tokenOut: _swapWeth ? OETHb : WETH,
