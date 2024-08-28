@@ -89,8 +89,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @dev tick higher has value 0 and represents 1:1 price parity of WETH to OETHb
     uint160 public immutable sqrtRatioX96TickHigher;
     /// @dev tick closest to 1:1 price parity
-    ///      Correctly assesing which tick is closer to 1:1 price parity is important since it affects
-    ///      the way we calculate the underlying assets in check Balance
+    ///      Correctly assessing which tick is closer to 1:1 price parity is important since it affects
+    ///      the way we calculate the underlying assets in check Balance. The underlying aerodrome pool
+    ///      orders the tokens depending on the values of their addresses. If OETH token is token0 in the pool
+    ///      then sqrtRatioX96TickClosestToParity=sqrtRatioX96TickLower. If it is token1 in the pool then 
+    ///      sqrtRatioX96TickClosestToParity=sqrtRatioX96TickHigher
     uint160 public immutable sqrtRatioX96TickClosestToParity;
 
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
