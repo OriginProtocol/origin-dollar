@@ -109,10 +109,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 allowedWethShareEnd
     );
 
-    event PrincipalPositionAfterSwap(
-        uint256 wethPositionBalance,
-        uint256 oethbPositionBalance
-    );
     event LiquidityRemoved(
         uint256 withdrawLiquidityShare,
         uint256 removedWETHAmount,
@@ -526,16 +522,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                     ? sqrtRatioX96TickLower
                     : sqrtRatioX96TickHigher
             })
-        );
-
-        // emit an event so it is easier to find correct values off-chain
-        (
-            uint256 _wethPositionBalance,
-            uint256 _oethbPositionBalance
-        ) = getPositionPrincipal();
-        emit PrincipalPositionAfterSwap(
-            _wethPositionBalance,
-            _oethbPositionBalance
         );
     }
 
