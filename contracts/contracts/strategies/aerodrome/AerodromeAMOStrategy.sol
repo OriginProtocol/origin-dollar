@@ -105,7 +105,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 allowedWethShareStart,
         uint256 allowedWethShareEnd
     ); // 0x3681e8e0
-    error OutsideExpectedTickRange(int24 currentTick); // 0x46a58db6
+    error OutsideExpectedTickRange(int24 currentTick); // 0x5a2eba75
 
     event PoolRebalanced(uint256 currentPoolWethShare);
 
