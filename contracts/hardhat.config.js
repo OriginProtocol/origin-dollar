@@ -103,6 +103,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      blockGasLimit: 1000000000,
       chainId,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
