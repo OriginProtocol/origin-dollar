@@ -66,3 +66,59 @@ def prices(p, decimals = 18):
 def pcts (p):
     return leading_whitespace('{:0.4f}%'.format(p), 16)
 
+class TemporaryForkForReallocations:
+    def __enter__(self):
+        self.txs = []
+        brownie.chain.snapshot()
+
+        return self.txs
+
+    def __exit__(self, *args, **kwargs):
+        brownie.chain.revert()
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(self.txs))
+        print("----")
+        print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
+
+class TemporaryForkForOETHbReallocations:
+    def __enter__(self):
+        self.txs = []
+        brownie.chain.snapshot()
+
+        return self.txs
+
+    def __exit__(self, *args, **kwargs):
+        brownie.chain.revert()
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(self.txs, OETHB_STRATEGIST, "8453"))
+        print("----")
+        print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
+
+def to_gnosis_json(txs, from_safe_address=STRATEGIST, chain="1"):
+    main = {
+        "version": "1.0",
+        "chainId": chain,
+        "createdAt": int(time.time()),
+        "meta": {
+            "name": "Transactions Batch",
+            "description": "",
+            "txBuilderVersion": "1.16.1",
+            "createdFromSafeAddress": from_safe_address,
+            "createdFromOwnerAddress": "",
+            # "checksum": "0x"
+        },
+        "transactions": [],
+    }
+    for tx in txs:
+        main["transactions"].append(
+            {
+                "to": tx.receiver,
+                "value": "0",
+                "data": tx.input,
+                "contractMethod": None,
+                "contractInputsValues": None,
+            }
+        )
+    return json.dumps(main)
