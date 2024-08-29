@@ -108,7 +108,7 @@ describe("ForkTest: OETHb Vault", function () {
     it("Should be disabled", async () => {
       const { oethbVault, nick } = fixture;
 
-      tx = oethbVault.connect(nick).requestWithdrawal(oethUnits("1"));
+      let tx = oethbVault.connect(nick).requestWithdrawal(oethUnits("1"));
 
       await expect(tx).to.be.revertedWith("Async withdrawals disabled");
 
