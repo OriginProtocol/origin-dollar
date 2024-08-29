@@ -77,4 +77,34 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
         super._redeem(_amount, _minimumUnitAmount);
     }
+
+    // @inheritdoc OETHVaultCore
+    function requestWithdrawal(uint256 _amount)
+        external
+        virtual
+        override
+        returns (uint256 requestId, uint256 queued)
+    {
+        revert("Async withdrawals disabled");
+    }
+
+    // @inheritdoc OETHVaultCore
+    function claimWithdrawal(uint256 _requestId)
+        external
+        virtual
+        override
+        returns (uint256 amount)
+    {
+        revert("Async withdrawals disabled");
+    }
+
+    // @inheritdoc OETHVaultCore
+    function claimWithdrawals(uint256[] memory _requestIds)
+        external
+        virtual
+        override
+        returns (uint256[] memory amounts, uint256 totalAmount)
+    {
+        revert("Async withdrawals disabled");
+    }
 }

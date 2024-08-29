@@ -104,6 +104,24 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
+  describe("Async withdrawals", function () {
+    it("Should be disabled", async () => {
+      const { oethbVault, nick } = fixture;
+
+      tx = oethbVault.connect(nick).requestWithdrawal(oethUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+
+      tx = oethbVault.connect(nick).claimWithdrawal(oethUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+
+      tx = oethbVault.connect(nick).claimWithdrawals([oethUnits("1")]);
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+    });
+  });
+
   describe("Mint Whitelist", function () {
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethbVault, governor } = fixture;
