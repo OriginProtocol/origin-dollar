@@ -6,5 +6,6 @@
   "005_mutlisig_harvester": 1723220782,
   "006_base_amo_strategy": 1724882095,
   "007_bridged_woeth_strategy": 1724168481,
-  "008_oethb_zapper": 1724651792
+  "008_oethb_zapper": 1724651792,
+  "009_upgrade_vault": 1724831516
 }
