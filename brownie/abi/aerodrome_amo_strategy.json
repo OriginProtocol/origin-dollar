@@ -107,23 +107,29 @@
     {
       "inputs": [
         {
+          "internalType": "int24",
+          "name": "currentTick",
+          "type": "int24"
+        }
+      ],
+      "name": "OutsideExpectedTickRange",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "currentPoolWethShare",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "requiredPoolWethShare",
+          "name": "allowedWethShareStart",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "wethPositionBalance",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "oethbPositionBalance",
+          "name": "allowedWethShareEnd",
           "type": "uint256"
         }
       ],
@@ -241,9 +247,9 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint128",
+          "internalType": "uint256",
           "name": "withdrawLiquidityShare",
-          "type": "uint128"
+          "type": "uint256"
         },
         {
           "indexed": false,
@@ -277,19 +283,6 @@
         }
       ],
       "name": "LiquidityRemoved",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "LiquidityTokenBurned",
       "type": "event"
     },
     {
@@ -357,24 +350,6 @@
           "internalType": "uint256",
           "name": "currentPoolWethShare",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "targetPoolWethShare",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "wethPositionBalance",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "oethbPositionBalance",
-          "type": "uint256"
         }
       ],
       "name": "PoolRebalanced",
@@ -386,62 +361,17 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "newWethShare",
-          "type": "uint256"
-        }
-      ],
-      "name": "PoolWethShareUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolWethShareVarianceAllowed",
-          "type": "uint256"
-        }
-      ],
-      "name": "PoolWethShareVarianceAllowedUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "wethPositionBalance",
+          "name": "allowedWethShareStart",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "oethbPositionBalance",
+          "name": "allowedWethShareEnd",
           "type": "uint256"
         }
       ],
-      "name": "PrincipalPositionAfterSwap",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "wethPositionBalance",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "oethbPositionBalance",
-          "type": "uint256"
-        }
-      ],
-      "name": "PrincipalPositionBeforeSwap",
+      "name": "PoolWethShareIntervalUpdated",
       "type": "event"
     },
     {
@@ -493,12 +423,12 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint128",
-          "name": "newWithdrawLiquidityShare",
-          "type": "uint128"
+          "internalType": "uint256",
+          "name": "underlyingAssets",
+          "type": "uint256"
         }
       ],
-      "name": "WithdrawLiqiudityShareUpdated",
+      "name": "UnderlyingAssetsUpdated",
       "type": "event"
     },
     {
@@ -541,12 +471,51 @@
     },
     {
       "inputs": [],
+      "name": "SOLVENCY_THRESHOLD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "WETH",
       "outputs": [
         {
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "allowedWethShareEnd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "allowedWethShareStart",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -657,6 +626,19 @@
     },
     {
       "inputs": [],
+      "name": "getCurrentTradingTick",
+      "outputs": [
+        {
+          "internalType": "int24",
+          "name": "_currentTick",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getPoolX96Price",
       "outputs": [
         {
@@ -744,16 +726,6 @@
           "internalType": "address[]",
           "name": "_rewardTokenAddresses",
           "type": "address[]"
-        },
-        {
-          "internalType": "address[]",
-          "name": "",
-          "type": "address[]"
-        },
-        {
-          "internalType": "address[]",
-          "name": "",
-          "type": "address[]"
         }
       ],
       "name": "initialize",
@@ -836,32 +808,6 @@
     },
     {
       "inputs": [],
-      "name": "poolWethShare",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "poolWethShareVarianceAllowed",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "positionManager",
       "outputs": [
         {
@@ -881,14 +827,14 @@
           "type": "uint256"
         },
         {
-          "internalType": "uint256",
-          "name": "_minTokenReceived",
-          "type": "uint256"
-        },
-        {
           "internalType": "bool",
           "name": "_swapWeth",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minTokenReceived",
+          "type": "uint256"
         }
       ],
       "name": "rebalance",
@@ -938,6 +884,24 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "_allowedWethShareStart",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_allowedWethShareEnd",
+          "type": "uint256"
+        }
+      ],
+      "name": "setAllowedPoolWethShareInterval",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "_harvesterAddress",
           "type": "address"
@@ -969,32 +933,6 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "setPoolWethShare",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "setPoolWethShareVarianceAllowed",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address[]",
           "name": "_rewardTokenAddresses",
           "type": "address[]"
@@ -1006,47 +944,34 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint128",
-          "name": "_amount",
-          "type": "uint128"
-        }
-      ],
-      "name": "setWithdrawLiquidityShare",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "sqrtRatioX96Tick0",
-      "outputs": [
-        {
-          "internalType": "uint160",
-          "name": "",
-          "type": "uint160"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "sqrtRatioX96Tick1",
-      "outputs": [
-        {
-          "internalType": "uint160",
-          "name": "",
-          "type": "uint160"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "sqrtRatioX96TickClosestToParity",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "sqrtRatioX96TickHigher",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "sqrtRatioX96TickLower",
       "outputs": [
         {
           "internalType": "uint160",
@@ -1213,19 +1138,6 @@
       "name": "withdrawAll",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "withdrawLiquidityShare",
-      "outputs": [
-        {
-          "internalType": "uint128",
-          "name": "",
-          "type": "uint128"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]

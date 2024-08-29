@@ -19,7 +19,6 @@ busd = load_contract('ERC20', BUSD)
 weth = load_contract('ERC20', WETH)
 ousd = load_contract('ousd', OUSD)
 oeth = load_contract('ousd', OETH)
-oethb = load_contract('ousd', OETHB)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)
 dai = load_contract('dai', DAI)
@@ -39,8 +38,6 @@ vault_admin = load_contract('vault_admin', VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', VAULT_PROXY_ADDRESS)
 vault_oeth_admin = load_contract('vault_admin', VAULT_OETH_PROXY_ADDRESS)
 vault_oeth_core = load_contract('vault_core', VAULT_OETH_PROXY_ADDRESS)
-vault_oethb_core = load_contract('vault_core', VAULT_OETHB_PROXY_ADDRESS)
-vault_oethb_admin = load_contract('vault_admin', VAULT_OETHB_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
 oeth_vault_value_checker = load_contract('vault_value_checker', OETH_VAULT_VALUE_CHECKER)
 dripper = load_contract('dripper', DRIPPER)
@@ -393,57 +390,12 @@ def show_governance_action(i, to, sig, data):
         else:
             print(" >> ", ORANGE+str(v)+ENDC)
 
-def to_gnosis_json(txs):
-    main = {
-        "version": "1.0",
-        "chainId": "1",
-        "createdAt": int(time.time()),
-        "meta": {
-            "name": "Transactions Batch",
-            "description": "",
-            "txBuilderVersion": "1.16.1",
-            "createdFromSafeAddress": "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC",
-            "createdFromOwnerAddress": "",
-            # "checksum": "0x"
-        },
-        "transactions": [],
-    }
-    for tx in txs:
-        main["transactions"].append(
-            {
-                "to": tx.receiver,
-                "value": "0",
-                "data": tx.input,
-                "contractMethod": None,
-                "contractInputsValues": None,
-            }
-        )
-    return json.dumps(main)
-
-
 def show_txs_data(txs):
     print("Schedule the following transactions on Gnosis Safe")
     for idx, item in enumerate(txs):
         print("Transaction ", idx)
         print("To: ", item.receiver)
         print("Data (Hex encoded): ", item.input, "\n")
-
-
-class TemporaryForkForReallocations:
-    def __enter__(self):
-        self.txs = []
-        brownie.chain.snapshot()
-
-        return self.txs
-
-    def __exit__(self, *args, **kwargs):
-        brownie.chain.revert()
-        print("----")
-        print("Gnosis json:")
-        print(to_gnosis_json(self.txs))
-        print("----")
-        print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
-
 
 class TemporaryForkForOUSD:
     def __enter__(self, profit_variance, vault_value_variance):
