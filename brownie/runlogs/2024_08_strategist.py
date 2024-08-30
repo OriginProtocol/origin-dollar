@@ -331,3 +331,11 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+
+# -------------------------------------
+# Aug 30, 2024 - OUSD Buyback
+# -------------------------------------
+from aerodrome_harvest import *
+def main():
+    harvest_and_swap()
