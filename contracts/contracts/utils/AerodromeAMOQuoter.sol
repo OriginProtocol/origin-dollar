@@ -4,6 +4,9 @@ pragma solidity ^0.8.7;
 import { IAMOStrategy } from "../interfaces/aerodrome/IAMOStrategy.sol";
 
 contract QuoterHelper {
+    ////////////////////////////////////////////////////////////////
+    /// --- STRUCTS & ENUMS
+    ////////////////////////////////////////////////////////////////
     enum RevertReasons {
         DefaultStatus,
         RebalanceOutOfBounds,
@@ -26,40 +29,60 @@ contract QuoterHelper {
         string revertMessage;
     }
 
-    struct QuoterParams {
-        address strategy;
-        bool swapWETHForOETHB;
-        uint256 minAmount;
-        uint256 maxAmount;
-        uint256 maxIterations;
-    }
+    ////////////////////////////////////////////////////////////////
+    /// --- CONSTANT & IMMUTABLE
+    ////////////////////////////////////////////////////////////////
+    uint256 public constant BINARY_MIN_AMOUNT = 0.000_000_01 ether;
+    uint256 public constant BINARY_MAX_AMOUNT = 1_000 ether;
+    uint256 public constant BINARY_MAX_ITERATIONS = 50;
 
+    ////////////////////////////////////////////////////////////////
+    /// --- VARIABLES STORAGE
+    ////////////////////////////////////////////////////////////////
+    IAMOStrategy public strategy;
+
+    ////////////////////////////////////////////////////////////////
+    /// --- ERRORS & EVENTS
+    ////////////////////////////////////////////////////////////////
     error UnexpectedError(string message);
     error OutOfIterations(uint256 iterations);
-    error ValidAmount(uint256 amount, uint256 iterations);
+    error ValidAmount(
+        uint256 amount,
+        uint256 iterations,
+        bool swapWETHForOETHB
+    );
 
+    ////////////////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    ////////////////////////////////////////////////////////////////
+    constructor(IAMOStrategy _strategy) {
+        strategy = _strategy;
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- FUNCTIONS
+    ////////////////////////////////////////////////////////////////
     /// @notice This call can only end with a revert.
-    function getAmountToSwapBeforeRebalance(QuoterParams memory params) public {
-        IAMOStrategy strategy = IAMOStrategy(params.strategy);
+    function getAmountToSwapBeforeRebalance() public {
         uint256 iterations;
-        uint256 low = params.minAmount;
-        uint256 high = params.maxAmount;
+        uint256 low = BINARY_MIN_AMOUNT;
+        uint256 high = BINARY_MAX_AMOUNT;
         int24 lowerTick = strategy.lowerTick();
         int24 upperTick = strategy.upperTick();
+        bool swapWETHForOETHB = getSwapDirection();
 
-        while (low <= high && iterations < params.maxIterations) {
+        while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
             uint256 mid = (low + high) / 2;
 
             RebalanceStatus memory status = getRebalanceStatus(
-                params.strategy,
                 mid,
-                params.swapWETHForOETHB
+                swapWETHForOETHB
             );
 
             // Best case, we found the `amount` that will reach the target pool share!
             // We can revert with the amount and the number of iterations
             if (status.reason == RevertReasons.Found) {
-                revert ValidAmount(mid, iterations);
+                revert ValidAmount(mid, iterations, swapWETHForOETHB);
             }
 
             // If the rebalance failed then we should try to change the amount.
@@ -70,7 +93,7 @@ contract QuoterHelper {
             if (status.reason == RevertReasons.RebalanceOutOfBounds) {
                 // If the current pool share is less than the target pool share, we need to increase the amount
                 if (
-                    params.swapWETHForOETHB
+                    swapWETHForOETHB
                         ? status.currentPoolWETHShare <
                             status.allowedWETHShareStart
                         : status.currentPoolWETHShare >
@@ -93,7 +116,7 @@ contract QuoterHelper {
                 // If we are selling OETHb and the current tick is less than the upper tick,
                 // we need to increase the amount in order to continue to push price up.
                 if (
-                    params.swapWETHForOETHB
+                    swapWETHForOETHB
                         ? status.currentTick > lowerTick
                         : status.currentTick < upperTick
                 ) {
@@ -133,12 +156,11 @@ contract QuoterHelper {
         revert OutOfIterations(iterations);
     }
 
-    function getRebalanceStatus(
-        address strategy,
-        uint256 amount,
-        bool swapWETH
-    ) public returns (RebalanceStatus memory status) {
-        try IAMOStrategy(strategy).rebalance(amount, swapWETH, 0) {
+    function getRebalanceStatus(uint256 amount, bool swapWETH)
+        public
+        returns (RebalanceStatus memory status)
+    {
+        try strategy.rebalance(amount, swapWETH, 0) {
             status.reason = RevertReasons.Found;
             return status;
         } catch Error(string memory reason) {
@@ -255,38 +277,52 @@ contract QuoterHelper {
                 });
         }
     }
+
+    function getSwapDirection() public view returns (bool) {
+        uint160 currentPrice = strategy.getPoolX96Price();
+        uint160 ticker0Price = strategy.sqrtRatioX96TickLower();
+        uint160 ticker1Price = strategy.sqrtRatioX96TickHigher();
+        uint160 targetPrice = (ticker0Price * 20 + ticker1Price * 80) / 100;
+
+        return currentPrice > targetPrice;
+    }
 }
 
 contract AerodromeAMOQuoter {
-    QuoterHelper public quoterHelper;
-
-    constructor() {
-        quoterHelper = new QuoterHelper();
-    }
-
+    ////////////////////////////////////////////////////////////////
+    /// --- STRUCTS & ENUMS
+    ///////////////////////////////////////////////////////////////
     struct Data {
         uint256 amount;
         uint256 iterations;
     }
 
-    event ValueFound(uint256 value, uint256 iterations);
+    ////////////////////////////////////////////////////////////////
+    /// --- VARIABLES STORAGE
+    ////////////////////////////////////////////////////////////////
+    QuoterHelper public quoterHelper;
+
+    ////////////////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    ////////////////////////////////////////////////////////////////
+    constructor(address _strategy) {
+        quoterHelper = new QuoterHelper(IAMOStrategy(_strategy));
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- ERRORS & EVENTS
+    ////////////////////////////////////////////////////////////////
+    event ValueFound(uint256 value, uint256 iterations, bool swapWETHForOETHB);
     event ValueNotFound(string message);
 
-    function quoteAmountToSwapBeforeRebalance(
-        address strategy,
-        bool swapWETHForOETHB,
-        uint256 minAmount,
-        uint256 maxAmount,
-        uint256 maxIterations
-    ) public returns (Data memory data) {
-        QuoterHelper.QuoterParams memory params = QuoterHelper.QuoterParams({
-            strategy: strategy,
-            swapWETHForOETHB: swapWETHForOETHB,
-            minAmount: minAmount,
-            maxAmount: maxAmount,
-            maxIterations: maxIterations
-        });
-        try quoterHelper.getAmountToSwapBeforeRebalance(params) {
+    ////////////////////////////////////////////////////////////////
+    /// --- FUNCTIONS
+    ////////////////////////////////////////////////////////////////
+    function quoteAmountToSwapBeforeRebalance()
+        public
+        returns (Data memory data)
+    {
+        try quoterHelper.getAmountToSwapBeforeRebalance() {
             revert("Previous call should only revert, it cannot succeed");
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
@@ -294,13 +330,15 @@ contract AerodromeAMOQuoter {
             if (receivedSelector == QuoterHelper.ValidAmount.selector) {
                 uint256 value;
                 uint256 iterations;
+                bool swapWETHForOETHB;
 
                 // solhint-disable-next-line no-inline-assembly
                 assembly {
                     value := mload(add(reason, 0x24))
                     iterations := mload(add(reason, 0x44))
+                    swapWETHForOETHB := mload(add(reason, 0x64))
                 }
-                emit ValueFound(value, iterations);
+                emit ValueFound(value, iterations, swapWETHForOETHB);
                 return Data({ amount: value, iterations: iterations });
             }
 

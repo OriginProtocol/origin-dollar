@@ -43,4 +43,10 @@ interface IAMOStrategy {
     function lowerTick() external view returns (int24);
 
     function upperTick() external view returns (int24);
+
+    function getPoolX96Price() external view returns (uint160 _sqrtRatioX96);
+
+    function sqrtRatioX96TickLower() external view returns (uint160);
+
+    function sqrtRatioX96TickHigher() external view returns (uint160);
 }
