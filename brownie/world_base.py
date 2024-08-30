@@ -4,8 +4,11 @@ weth = load_contract('ERC20', WETH_BASE)
 aero = load_contract('ERC20', AERO_BASE)
 oethb = load_contract('ousd', OETHB)
 
+base_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
+
 aero_router = load_contract('aerodrome_swap_router', AERODROME_SWAP_ROUTER_BASE)
 aero_pos_man = load_contract('aerodrome_nonfungible_position_manager', AERODROME_POSITION_MANAGER_BASE)
+aero_quoter = load_contract('aerodrome_quoter', AERODROME_QUOTER_BASE)
 aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR_HELPER_BASE)
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
 
