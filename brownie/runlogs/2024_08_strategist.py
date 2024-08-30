@@ -301,3 +301,33 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Aug 30, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogn, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGN,
+        ousd_for_ogn,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))
