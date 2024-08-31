@@ -886,17 +886,27 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   };
 
   const quoteAmountToSwapBeforeRebalance = async () => {
+    // Get the strategist address
+    const strategist = oethbVault.strategistAddr();
+
+    // Set Quoter as strategist to pass the `onlyGovernorOrStrategist` requirement
     await oethbVault
       .connect(await impersonateAndFund(addresses.base.governor))
       .setStrategistAddr(await quoter.quoterHelper());
+
+    // Get the quote
     const txResponse = await quoter.quoteAmountToSwapBeforeRebalance();
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
     const direction = transferEvent.args.swapWETHForOETHB;
+
+    // Set back the original strategist
     await oethbVault
       .connect(await impersonateAndFund(addresses.base.governor))
-      .setStrategistAddr(addresses.base.strategist);
+      .setStrategistAddr(strategist);
+
+    // Return the value and direction
     return { value, direction };
   };
 
