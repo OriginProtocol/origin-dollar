@@ -288,6 +288,8 @@ addresses.base.aeroFactoryAddress =
   "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";
 addresses.base.aeroGaugeGovernorAddress =
   "0xE6A41fE61E7a1996B59d508661e3f524d6A32075";
+addresses.base.aeroQuoterV2Address =
+  "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 
 addresses.base.ethUsdPriceFeed = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70";
 

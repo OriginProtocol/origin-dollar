@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.7;
 
+import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
+import { IQuoterV2 } from "../interfaces/aerodrome/IQuoterV2.sol";
 import { IAMOStrategy } from "../interfaces/aerodrome/IAMOStrategy.sol";
 
 contract QuoterHelper {
@@ -35,10 +37,14 @@ contract QuoterHelper {
     uint256 public constant BINARY_MIN_AMOUNT = 0.000_000_01 ether;
     uint256 public constant BINARY_MAX_AMOUNT = 1_000 ether;
     uint256 public constant BINARY_MAX_ITERATIONS = 50;
+    uint256 public constant PERCENTAGE_BASE = 1e27; // 100%
+    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e18; // 1%
 
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
     ////////////////////////////////////////////////////////////////
+    ICLPool public clPool;
+    IQuoterV2 public quoterV2;
     IAMOStrategy public strategy;
 
     ////////////////////////////////////////////////////////////////
@@ -55,8 +61,10 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////////////////
-    constructor(IAMOStrategy _strategy) {
+    constructor(IAMOStrategy _strategy, IQuoterV2 _quoterV2) {
         strategy = _strategy;
+        quoterV2 = _quoterV2;
+        clPool = strategy.clPool();
     }
 
     ////////////////////////////////////////////////////////////////
@@ -69,7 +77,7 @@ contract QuoterHelper {
         uint256 high = BINARY_MAX_AMOUNT;
         int24 lowerTick = strategy.lowerTick();
         int24 upperTick = strategy.upperTick();
-        bool swapWETHForOETHB = getSwapDirection();
+        bool swapWETHForOETHB = getSwapDirectionForRebalance();
 
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
             uint256 mid = (low + high) / 2;
@@ -278,13 +286,87 @@ contract QuoterHelper {
         }
     }
 
-    function getSwapDirection() public view returns (bool) {
+    function getSwapDirectionForRebalance() public view returns (bool) {
         uint160 currentPrice = strategy.getPoolX96Price();
         uint160 ticker0Price = strategy.sqrtRatioX96TickLower();
         uint160 ticker1Price = strategy.sqrtRatioX96TickHigher();
         uint160 targetPrice = (ticker0Price * 20 + ticker1Price * 80) / 100;
 
         return currentPrice > targetPrice;
+    }
+
+    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
+        public
+        returns (
+            uint256,
+            uint256,
+            bool,
+            uint160
+        )
+    {
+        uint256 iterations;
+        uint256 low = BINARY_MIN_AMOUNT;
+        uint256 high = BINARY_MAX_AMOUNT;
+        bool swapWETHForOETHB = getSwapDirection(sqrtPriceTargetX96);
+
+        while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
+            uint256 mid = (low + high) / 2;
+
+            // Call QuoterV2 from SugarHelper
+            (, uint160 sqrtPriceX96After, , ) = quoterV2.quoteExactInputSingle(
+                IQuoterV2.QuoteExactInputSingleParams({
+                    tokenIn: swapWETHForOETHB
+                        ? clPool.token0()
+                        : clPool.token1(),
+                    tokenOut: swapWETHForOETHB
+                        ? clPool.token1()
+                        : clPool.token0(),
+                    amountIn: mid,
+                    tickSpacing: strategy.tickSpacing(),
+                    sqrtPriceLimitX96: sqrtPriceTargetX96
+                })
+            );
+
+            if (
+                low == high ||
+                isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)
+            ) {
+                return (mid, iterations, swapWETHForOETHB, sqrtPriceX96After);
+            } else if (
+                swapWETHForOETHB
+                    ? sqrtPriceX96After > sqrtPriceTargetX96
+                    : sqrtPriceX96After < sqrtPriceTargetX96
+            ) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+            iterations++;
+        }
+
+        revert OutOfIterations(iterations);
+    }
+
+    function isWithinAllowedVariance(
+        uint160 sqrtPriceCurrentX96,
+        uint160 sqrtPriceTargetX96
+    ) public pure returns (bool) {
+        uint256 allowedVariance = (sqrtPriceTargetX96 *
+            ALLOWED_VARIANCE_PERCENTAGE) / PERCENTAGE_BASE;
+        if (sqrtPriceCurrentX96 > sqrtPriceTargetX96) {
+            return sqrtPriceCurrentX96 - sqrtPriceTargetX96 <= allowedVariance;
+        } else {
+            return sqrtPriceTargetX96 - sqrtPriceCurrentX96 <= allowedVariance;
+        }
+    }
+
+    function getSwapDirection(uint160 sqrtPriceTargetX96)
+        public
+        view
+        returns (bool)
+    {
+        uint160 currentPrice = strategy.getPoolX96Price();
+        return currentPrice > sqrtPriceTargetX96;
     }
 }
 
@@ -305,19 +387,31 @@ contract AerodromeAMOQuoter {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////////////////
-    constructor(address _strategy) {
-        quoterHelper = new QuoterHelper(IAMOStrategy(_strategy));
+    constructor(address _strategy, address _quoterV2) {
+        quoterHelper = new QuoterHelper(
+            IAMOStrategy(_strategy),
+            IQuoterV2(_quoterV2)
+        );
     }
 
     ////////////////////////////////////////////////////////////////
     /// --- ERRORS & EVENTS
     ////////////////////////////////////////////////////////////////
     event ValueFound(uint256 value, uint256 iterations, bool swapWETHForOETHB);
+    event ValueFoundBis(
+        uint256 value,
+        uint256 iterations,
+        bool swapWETHForOETHB,
+        uint160 sqrtPriceAfterX96
+    );
     event ValueNotFound(string message);
 
     ////////////////////////////////////////////////////////////////
     /// --- FUNCTIONS
     ////////////////////////////////////////////////////////////////
+    /// @notice Use this to get the amount to swap before rebalance
+    /// @dev This call will only revert, check the logs to get returned values
+    /// @return data Data struct with the amount and the number of iterations
     function quoteAmountToSwapBeforeRebalance()
         public
         returns (Data memory data)
@@ -350,5 +444,21 @@ contract AerodromeAMOQuoter {
             emit ValueNotFound("Unexpected error");
             revert(abi.decode(reason, (string)));
         }
+    }
+
+    function quoteAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public {
+        (
+            uint256 amount,
+            uint256 iterations,
+            bool swapWETHForOETHB,
+            uint160 sqrtPriceAfterX96
+        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96);
+
+        emit ValueFoundBis(
+            amount,
+            iterations,
+            swapWETHForOETHB,
+            sqrtPriceAfterX96
+        );
     }
 }

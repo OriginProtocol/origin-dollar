@@ -145,6 +145,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
     await deployWithConfirmation("AerodromeAMOQuoter", [
       aerodromeAmoStrategy.address,
+      addresses.base.aeroQuoterV2Address,
     ]);
     quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
 
