@@ -93,5 +93,6 @@
   "100_remove_multisig_from_timelock": 1719822421,
   "102_2nd_native_ssv_staking": 1720787923,
   "103_oeth_withdraw_queue": 1722834443,
-  "104_upgrade_staking_strategies": 1723926635
+  "104_upgrade_staking_strategies": 1723926635,
+  "105_ousd_remove_flux_strat": 1724650407
 }
