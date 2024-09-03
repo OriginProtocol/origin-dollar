@@ -267,13 +267,15 @@ module.exports = {
       localhost:
         process.env.FORK_NETWORK_NAME == "base"
           ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet"
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       hardhat:
         process.env.FORK_NETWORK_NAME == "base"
           ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet"
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
