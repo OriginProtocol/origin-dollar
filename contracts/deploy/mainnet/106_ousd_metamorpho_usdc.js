@@ -33,12 +33,17 @@ module.exports = deploymentWithGovernanceProposal(
     const dMetaMorphoProxy = await deployWithConfirmation(
       "MetaMorphoStrategyProxy"
     );
-    const cMetaMorphoProxy = await ethers.getContract("MetaMorphoStrategyProxy");
+    const cMetaMorphoProxy = await ethers.getContract(
+      "MetaMorphoStrategyProxy"
+    );
 
     // 2. Deploy new Generalized4626Strategy contract as there has been a number of gas optimizations since it was first deployed
     const dMetaMorphoStrategyImpl = await deployWithConfirmation(
       "Generalized4626Strategy",
-      [[addresses.mainnet.MetaMorphoUSDCSteakHouseVault, cVaultProxy.address], addresses.mainnet.USDC],
+      [
+        [addresses.mainnet.MetaMorphoUSDCSteakHouseVault, cVaultProxy.address],
+        addresses.mainnet.USDC,
+      ],
       undefined,
       true // storage slots have changed since FRAX strategy deployment so force a new deployment
     );
@@ -48,7 +53,10 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Construct initialize call data to initialize and configure the new strategy
-    const initData = cMetaMorpho.interface.encodeFunctionData("initialize()", []);
+    const initData = cMetaMorpho.interface.encodeFunctionData(
+      "initialize()",
+      []
+    );
 
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
     const initFunction = "initialize(address,address,bytes)";
