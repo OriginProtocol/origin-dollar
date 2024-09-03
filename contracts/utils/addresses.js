@@ -171,6 +171,7 @@ addresses.mainnet.MorphoStrategyProxy =
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
+addresses.mainnet.MetaMorphoUSDCSteakHouseVault = "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB"
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
