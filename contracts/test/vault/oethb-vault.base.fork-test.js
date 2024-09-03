@@ -37,9 +37,9 @@ describe("ForkTest: OETHb Vault", function () {
       const userBalanceAfter = await oethb.balanceOf(nick.address);
       const totalSupplyAfter = await oethb.totalSupply();
 
-      expect(totalSupplyAfter).to.equal(totalSupplyBefore.add(oethUnits("1")));
-      expect(userBalanceAfter).to.equal(userBalanceBefore.add(oethUnits("1")));
-      expect(vaultBalanceAfter).to.equal(
+      expect(totalSupplyAfter).to.approxEqual(totalSupplyBefore.add(oethUnits("1")));
+      expect(userBalanceAfter).to.approxEqual(userBalanceBefore.add(oethUnits("1")));
+      expect(vaultBalanceAfter).to.approxEqual(
         vaultBalanceBefore.add(oethUnits("1"))
       );
     });

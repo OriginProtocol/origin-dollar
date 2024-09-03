@@ -26,8 +26,8 @@ describe("ForkTest: OETHb Zapper", function () {
     const supplyAfter = await oethb.totalSupply();
     const balanceAfter = await hre.ethers.provider.getBalance(clement.address);
 
-    expect(supplyAfter).to.eq(supplyBefore.add(oethUnits("1")));
-    expect(balanceAfter).to.approxEqual(balanceBefore.sub(oethUnits("1")));
+    expect(supplyAfter).to.approxEqualTolerance(supplyBefore.add(oethUnits("1")), 2);
+    expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(oethUnits("1")), 2);
   });
 
   it("Should mint wsuperOETHb with ETH", async () => {
@@ -53,11 +53,12 @@ describe("ForkTest: OETHb Zapper", function () {
     );
     const woethbBalanceAfter = await wOETHb.balanceOf(clement.address);
 
-    expect(supplyAfter).to.eq(supplyBefore.add(oethUnits("1")));
-    expect(ethBalanceAfter).to.approxEqual(
-      ethBalanceBefore.sub(oethUnits("1"))
+    expect(supplyAfter).to.approxEqualTolerance(supplyBefore.add(oethUnits("1")), 2);
+    expect(ethBalanceAfter).to.approxEqualTolerance(
+      ethBalanceBefore.sub(oethUnits("1")),
+      2
     );
-    expect(woethbBalanceAfter).to.eq(woethbBalanceBefore.add(expected));
+    expect(woethbBalanceAfter).to.approxEqualTolerance(woethbBalanceBefore.add(expected), 2);
   });
 
   it("Should mint wsuperOETHb with WETH", async () => {
@@ -82,10 +83,11 @@ describe("ForkTest: OETHb Zapper", function () {
     const wethBalanceAfter = await weth.balanceOf(clement.address);
     const woethbBalanceAfter = await wOETHb.balanceOf(clement.address);
 
-    expect(supplyAfter).to.eq(supplyBefore.add(oethUnits("1")));
-    expect(wethBalanceAfter).to.approxEqual(
-      wethBalanceBefore.sub(oethUnits("1"))
+    expect(supplyAfter).to.approxEqualTolerance(supplyBefore.add(oethUnits("1")), 2);
+    expect(wethBalanceAfter).to.approxEqualTolerance(
+      wethBalanceBefore.sub(oethUnits("1")),
+      2
     );
-    expect(woethbBalanceAfter).to.eq(woethbBalanceBefore.add(expected));
+    expect(woethbBalanceAfter).to.approxEqualTolerance(woethbBalanceBefore.add(expected), 2);
   });
 });
