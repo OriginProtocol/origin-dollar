@@ -108,31 +108,29 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
-  const governor = await ethers.getSigner(governorAddr);
-  const woethGovernor = await ethers.getSigner(await woethProxy.governor());
+  const { governorAddr, strategistAddr, timelockAddr } =
+    await getNamedAccounts();
+  const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
+
+  const guardian = await ethers.getSigner(governorAddr);
+  const timelock = await ethers.getContractAt(
+    "ITimelockController",
+    timelockAddr
+  );
 
   let strategist;
   if (isFork) {
     // Impersonate strategist on Fork
     strategist = await impersonateAndFund(strategistAddr);
     strategist.address = strategistAddr;
+
+    await impersonateAndFund(governor.address);
+    await impersonateAndFund(timelock.address);
   }
 
   // Make sure we can print bridged WOETH for tests
-  if (isBaseFork) {
-    await impersonateAndFund(woethGovernor.address);
-
-    const woethImplAddr = await woethProxy.implementation();
-    const latestImplAddr = (await ethers.getContract("BridgedWOETH")).address;
-
-    if (woethImplAddr != latestImplAddr) {
-      await woethProxy.connect(woethGovernor).upgradeTo(latestImplAddr);
-    }
-  }
-
-  await woeth.connect(woethGovernor).grantRole(MINTER_ROLE, minter.address);
-  await woeth.connect(woethGovernor).grantRole(BURNER_ROLE, burner.address);
+  await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
+  await woeth.connect(governor).grantRole(BURNER_ROLE, burner.address);
 
   for (const user of [rafael, nick]) {
     // Mint some bridged WOETH
@@ -143,7 +141,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     await weth.connect(user).approve(oethbVault.address, oethUnits("50"));
   }
 
-  await woeth.connect(minter).mint(woethGovernor.address, oethUnits("1"));
+  await woeth.connect(minter).mint(governor.address, oethUnits("1"));
 
   if (isFork) {
     // Governor opts in for rebasing
@@ -189,8 +187,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     // Signers
     governor,
+    guardian,
+    timelock,
     strategist,
-    woethGovernor,
     minter,
     burner,
 
