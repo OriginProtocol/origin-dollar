@@ -164,6 +164,10 @@ contract QuoterHelper {
         revert OutOfIterations(iterations);
     }
 
+    /// @notice Get the status of the rebalance
+    /// @param amount The amount of token to swap
+    /// @param swapWETH True if we need to swap WETH for OETHb, false otherwise
+    /// @return status The status of the rebalance
     function getRebalanceStatus(uint256 amount, bool swapWETH)
         public
         returns (RebalanceStatus memory status)
@@ -286,6 +290,8 @@ contract QuoterHelper {
         }
     }
 
+    /// @notice Get the swap direction to reach the target price before rebalance.
+    /// @return bool True if we need to swap WETH for OETHb, false otherwise.
     function getSwapDirectionForRebalance() public view returns (bool) {
         uint160 currentPrice = strategy.getPoolX96Price();
         uint160 ticker0Price = strategy.sqrtRatioX96TickLower();
@@ -295,6 +301,13 @@ contract QuoterHelper {
         return currentPrice > targetPrice;
     }
 
+    /// @notice Get the amount of tokens to swap to reach the target price.
+    /// @dev This act like a quoter, i.e. the transaction is not performed.
+    /// @param sqrtPriceTargetX96 The target price to reach.
+    /// @return amount The amount of tokens to swap.
+    /// @return iterations The number of iterations to find the amount.
+    /// @return swapWETHForOETHB True if we need to swap WETH for OETHb, false otherwise.
+    /// @return sqrtPriceX96After The price after the swap.
     function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
         public
         returns (
@@ -347,6 +360,8 @@ contract QuoterHelper {
         revert OutOfIterations(iterations);
     }
 
+    /// @notice Check if the current price is within the allowed variance in comparison to the target price
+    /// @return bool True if the current price is within the allowed variance, false otherwise
     function isWithinAllowedVariance(
         uint160 sqrtPriceCurrentX96,
         uint160 sqrtPriceTargetX96
@@ -360,6 +375,9 @@ contract QuoterHelper {
         }
     }
 
+    /// @notice Get the swap direction to reach the target price.
+    /// @param sqrtPriceTargetX96 The target price to reach.
+    /// @return bool True if we need to swap WETH for OETHb, false otherwise.
     function getSwapDirection(uint160 sqrtPriceTargetX96)
         public
         view
@@ -446,6 +464,9 @@ contract AerodromeAMOQuoter {
         }
     }
 
+    /// @notice Use this to get the amount to swap to reach the target price after swap.
+    /// @dev This call will only revert, check the logs to get returned values.
+    /// @param sqrtPriceTargetX96 The target price to reach.
     function quoteAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public {
         (
             uint256 amount,
