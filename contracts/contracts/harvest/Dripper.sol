@@ -11,7 +11,7 @@ import { IVault } from "../interfaces/IVault.sol";
  *
  * The dripper contract smooths out the yield from point-in-time yield events
  * and spreads the yield out over a configurable time period. This ensures a
- * continuous per block yield to makes users happy as their next rebase
+ * continuous per second yield to makes users happy as their next rebase
  * amount is always moving up. Also, this makes historical day to day yields
  * smooth, rather than going from a near zero day, to a large APY day, then
  * back to a near zero day again.
@@ -49,7 +49,7 @@ contract Dripper is Governable {
 
     struct Drip {
         uint64 lastCollect; // overflows 262 billion years after the sun dies
-        uint192 perSecond; // drip rate per block
+        uint192 perSecond; // drip rate per second
     }
 
     address immutable vault; // OUSD vault
