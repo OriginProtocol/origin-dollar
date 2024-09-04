@@ -1006,7 +1006,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       .setStrategistAddr(await quoter.quoterHelper());
 
     // Get the quote
-    const txResponse = await quoter.quoteAmountToSwapBeforeRebalance();
+    const txResponse = await quoter["quoteAmountToSwapBeforeRebalance()"]();
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
