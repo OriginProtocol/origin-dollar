@@ -22,7 +22,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * in a week, which can make per block payouts have a rounding error. However
  * the total effect is not large - cents per day, and this money is
  * not lost, just distributed in the future. While we could use a higher
- * decimal precision for the drip perBlock, we chose simpler code.
+ * decimal precision for the drip perSecond, we chose simpler code.
  * - By calculating the changing drip rates on collects only, harvests and yield
  * events don't have to call anything on this contract or pay any extra gas.
  * Collect() is already be paying for a single write, since it has to reset
@@ -49,7 +49,7 @@ contract Dripper is Governable {
 
     struct Drip {
         uint64 lastCollect; // overflows 262 billion years after the sun dies
-        uint192 perBlock; // drip rate per block
+        uint192 perSecond; // drip rate per block
     }
 
     address immutable vault; // OUSD vault
@@ -113,7 +113,7 @@ contract Dripper is Governable {
         returns (uint256)
     {
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * _drip.perBlock);
+        uint256 allowed = (elapsed * _drip.perSecond);
         return (allowed > _balance) ? _balance : allowed;
     }
 
@@ -124,10 +124,10 @@ contract Dripper is Governable {
         uint256 balance = IERC20(token).balanceOf(address(this));
         uint256 amountToSend = _availableFunds(balance, drip);
         uint256 remaining = balance - amountToSend;
-        // Calculate new drip perBlock
+        // Calculate new drip perSecond
         //   Gas savings by setting entire struct at one time
         drip = Drip({
-            perBlock: uint192(remaining / dripDuration),
+            perSecond: uint192(remaining / dripDuration),
             lastCollect: uint64(block.timestamp)
         });
         // Send funds

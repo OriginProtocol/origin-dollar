@@ -98,7 +98,7 @@
         },
         {
           "internalType": "uint192",
-          "name": "perBlock",
+          "name": "perSecond",
           "type": "uint192"
         }
       ],
