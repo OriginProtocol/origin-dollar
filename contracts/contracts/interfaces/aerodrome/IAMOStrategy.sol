@@ -51,4 +51,8 @@ interface IAMOStrategy {
     function sqrtRatioX96TickHigher() external view returns (uint160);
 
     function tickSpacing() external view returns (int24);
+
+    function allowedWethShareStart() external view returns (uint256);
+
+    function allowedWethShareEnd() external view returns (uint256);
 }
