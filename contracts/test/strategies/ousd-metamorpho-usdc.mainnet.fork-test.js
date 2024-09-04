@@ -139,6 +139,9 @@ describe("ForkTest: MetaMorpho USDC Strategy", function () {
         ousdSupplyBefore.add(usdcDepositAmount),
         0.1 // 0.1% or 10 basis point
       );
+      expect(
+        await OUSDMetaMorphoStrategy.checkBalance(usdc.address)
+      ).to.approxEqualTolerance(usdcDepositAmount, 0.01); // 0.01% or 1 basis point
     });
     it("Only vault can deposit some USDC to the strategy", async function () {
       const {
