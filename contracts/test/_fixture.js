@@ -306,13 +306,15 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingFeeAccumulatorProxy.address
   );
 
-  const OUSDMetaMorphoStrategyProxy = await ethers.getContract(
-    "MetaMorphoStrategyProxy"
-  );
-  const OUSDMetaMorphoStrategy = await ethers.getContractAt(
-    "Generalized4626Strategy",
-    OUSDMetaMorphoStrategyProxy.address
-  );
+  const OUSDMetaMorphoStrategyProxy = !isFork
+    ? undefined
+    : await ethers.getContract("MetaMorphoStrategyProxy");
+  const OUSDMetaMorphoStrategy = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "Generalized4626Strategy",
+        OUSDMetaMorphoStrategyProxy.address
+      );
 
   let usdt,
     dai,
