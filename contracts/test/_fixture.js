@@ -41,6 +41,7 @@ const morphoAbi = require("./abi/morpho.json");
 const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 const sdaiAbi = require("./abi/sDAI.json");
+const metamorphoAbi = require("./abi/metamorpho.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
@@ -305,6 +306,16 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingFeeAccumulatorProxy.address
   );
 
+  const OUSDMetaMorphoStrategyProxy = !isFork
+    ? undefined
+    : await ethers.getContract("MetaMorphoStrategyProxy");
+  const OUSDMetaMorphoStrategy = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "Generalized4626Strategy",
+        OUSDMetaMorphoStrategyProxy.address
+      );
+
   let usdt,
     dai,
     tusd,
@@ -329,6 +340,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     sDAI,
+    usdcMetaMorphoSteakHouseVault,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD,
@@ -408,6 +420,10 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
       addresses.mainnet.MorphoLens
+    );
+    usdcMetaMorphoSteakHouseVault = await ethers.getContractAt(
+      metamorphoAbi,
+      addresses.mainnet.MetaMorphoUSDCSteakHouseVault
     );
     fdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.fDAI);
     fusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDC);
@@ -755,6 +771,8 @@ const defaultFixture = deployments.createFixture(async () => {
     liquidityRewardOUSD_USDT,
     flipper,
     wousd,
+    OUSDMetaMorphoStrategy,
+    usdcMetaMorphoSteakHouseVault,
 
     // Flux strategy
     fluxStrategy,
@@ -1413,6 +1431,58 @@ async function makerDsrFixture(
   } else {
     throw new Error(
       "Maker DSR strategy only supported in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with default USDC strategy to the MetaMorpho strategy.
+ */
+
+async function metaMorphoFixture(
+  config = {
+    usdcMintAmount: 0,
+    depositToStrategy: false,
+  }
+) {
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { usdc, josh, OUSDMetaMorphoStrategy, strategist, vault } = fixture;
+
+    // Impersonate the OUSD Vault
+    fixture.vaultSigner = await impersonateAndFund(vault.address);
+
+    // mint some OUSD using USDC if configured
+    if (config?.usdcMintAmount > 0) {
+      const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
+      await vault.connect(josh).rebase();
+      await vault.connect(josh).allocate();
+
+      // Approve the Vault to transfer USDC
+      await usdc.connect(josh).approve(vault.address, usdcMintAmount);
+
+      // Mint OUSD with USDC
+      // This will sit in the vault, not the strategy
+      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
+
+      // Add USDC to the MetaMorpho Strategy
+      if (config?.depositToStrategy) {
+        // The strategist deposits the USDC to the MetaMorpho strategy
+        await vault
+          .connect(strategist)
+          .depositToStrategy(
+            OUSDMetaMorphoStrategy.address,
+            [usdc.address],
+            [usdcMintAmount]
+          );
+      }
+    }
+  } else {
+    throw new Error(
+      "MetaMorpho USDC strategy only supported in forked test environment"
     );
   }
 
@@ -2461,6 +2531,7 @@ module.exports = {
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   makerDsrFixture,
+  metaMorphoFixture,
   morphoCompoundFixture,
   aaveFixture,
   morphoAaveFixture,

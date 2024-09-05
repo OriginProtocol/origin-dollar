@@ -301,3 +301,10 @@ contract AerodromeAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract BridgedWOETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
