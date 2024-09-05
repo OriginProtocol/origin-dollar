@@ -7,7 +7,7 @@
       "slot": "0",
       "type": "t_bool",
       "contract": "Initializable",
-      "src": "contracts/utils/Initializable.sol:8"
+      "src": "contracts/utils/Initializable.sol:12"
     },
     {
       "label": "initializing",
@@ -15,7 +15,7 @@
       "slot": "0",
       "type": "t_bool",
       "contract": "Initializable",
-      "src": "contracts/utils/Initializable.sol:13"
+      "src": "contracts/utils/Initializable.sol:17"
     },
     {
       "label": "______gap",
@@ -23,7 +23,7 @@
       "slot": "1",
       "type": "t_array(t_uint256)50_storage",
       "contract": "Initializable",
-      "src": "contracts/utils/Initializable.sol:37"
+      "src": "contracts/utils/Initializable.sol:41"
     },
     {
       "label": "_deprecated_platformAddress",
@@ -31,7 +31,7 @@
       "slot": "51",
       "type": "t_address",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:39"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
     },
     {
       "label": "_deprecated_vaultAddress",
@@ -39,7 +39,7 @@
       "slot": "52",
       "type": "t_address",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
     },
     {
       "label": "assetToPToken",
@@ -47,7 +47,7 @@
       "slot": "53",
       "type": "t_mapping(t_address,t_address)",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:46"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
     },
     {
       "label": "assetsMapped",
@@ -55,7 +55,7 @@
       "slot": "54",
       "type": "t_array(t_address)dyn_storage",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:49"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
     },
     {
       "label": "_deprecated_rewardTokenAddress",
@@ -63,7 +63,7 @@
       "slot": "55",
       "type": "t_address",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
     },
     {
       "label": "_deprecated_rewardLiquidationThreshold",
@@ -71,7 +71,7 @@
       "slot": "56",
       "type": "t_uint256",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
     },
     {
       "label": "harvesterAddress",
@@ -79,7 +79,7 @@
       "slot": "57",
       "type": "t_address",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:60"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
     },
     {
       "label": "rewardTokenAddresses",
@@ -87,7 +87,7 @@
       "slot": "58",
       "type": "t_array(t_address)dyn_storage",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:63"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
     },
     {
       "label": "_reserved",
@@ -95,7 +95,7 @@
       "slot": "59",
       "type": "t_array(t_int256)98_storage",
       "contract": "InitializableAbstractStrategy",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:69"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
     },
     {
       "label": "_deprecate_shareToken",
