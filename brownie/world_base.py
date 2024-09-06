@@ -16,3 +16,20 @@ amo_strat = load_contract('aerodrome_amo_strategy', OETHB_AERODROME_AMO_STRATEGY
 vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', OETHB_VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHECKER)
+
+decimalsMap = {
+    AERO_BASE: 18,
+    WETH_BASE: 18,
+    'human': 0,
+}
+
+def scale_amount(from_token, to_token, amount, decimals=0):
+    if from_token == to_token:
+        return amount
+
+    scaled_amount = (amount * 10 ** decimalsMap[to_token]) / (10 ** decimalsMap[from_token])
+
+    if decimals == 0:
+        return int(scaled_amount * 10**6) / 10**6
+
+    return int(scale_amount * 10**decimals) / (10**decimals)

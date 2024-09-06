@@ -62,3 +62,30 @@ def main():
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
 
+# -------------------------------
+# Sep 6, 2024 - OETHb Harvest
+# -------------------------------
+from aerodrome_harvest import *
+def main():
+    txs = []
+
+    amount = 604.1063751091 * 10**18
+
+    # Approve the swap router to move it
+    txs.append(
+        aero.approve(AERODROME_SWAP_ROUTER_BASE, amount, from_strategist)
+    )
+
+    # Do the swap
+    txs.append(
+        aero_router.exactInputSingle(
+            swap_params(amount, OETHB_VAULT_PROXY_ADDRESS),
+            from_strategist
+        )
+    )
+
+    txs.append(
+        vault_core.rebase(from_strategist)
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
