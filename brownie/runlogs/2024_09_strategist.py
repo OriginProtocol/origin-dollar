@@ -176,3 +176,37 @@ def main():
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
 
     txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': OETHB_STRATEGIST}))
+
+# -------------------------------
+# Sep 7, 2024 - OETHb Harvest
+# -------------------------------
+from aerodrome_harvest import *
+def main():
+    txs = []
+
+    amount = 3776.18127928752 * 10**18
+
+    # Collect AERO from the strategy
+    txs.append(
+        amo_strat.collectRewardTokens(from_strategist)
+    )
+
+    # Approve the swap router to move it
+    txs.append(
+        aero.approve(AERODROME_SWAP_ROUTER_BASE, amount, from_strategist)
+    )
+
+    # Do the swap
+    txs.append(
+        aero_router.exactInputSingle(
+            swap_params(amount, OETHB_DRIPPER),
+            from_strategist
+        )
+    )
+
+    # Collect & Rebase (to reset drip rate)
+    txs.append(
+        dripper.collectAndRebase(from_strategist)
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))

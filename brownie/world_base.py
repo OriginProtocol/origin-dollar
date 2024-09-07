@@ -17,6 +17,8 @@ vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', OETHB_VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHECKER)
 
+dripper = load_contract('dripper', OETHB_DRIPPER)
+
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
