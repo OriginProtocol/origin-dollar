@@ -308,3 +308,10 @@ contract BridgedWOETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHBaseHarvesterProxy delegates calls to a OETHBaseHarvester implementation
+ */
+contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
