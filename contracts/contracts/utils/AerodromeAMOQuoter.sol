@@ -36,7 +36,7 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     uint256 public constant BINARY_MIN_AMOUNT = 0.000_000_01 ether;
     uint256 public constant BINARY_MAX_AMOUNT = 1_000 ether;
-    uint256 public constant BINARY_MAX_ITERATIONS = 50;
+    uint256 public constant BINARY_MAX_ITERATIONS = 100;
     uint256 public constant PERCENTAGE_BASE = 1e27; // 100%
     uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e18; // 1%
 
