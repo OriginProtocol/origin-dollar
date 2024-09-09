@@ -807,7 +807,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       await mintAndDepositToStrategy({ amount: oethUnits("10") });
       // transfer WETH out making the protocol insolvent
-      await weth.connect(stratSigner).transfer(addresses.dead, oethUnits("5"));
+      const bal = await weth.balanceOf(aerodromeAmoStrategy.address);
+      await weth.connect(stratSigner).transfer(addresses.dead, bal);
 
       await expect(
         rebalance(
