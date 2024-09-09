@@ -667,10 +667,8 @@ const defaultFixture = deployments.createFixture(async () => {
   if (isFork) {
     governor = await ethers.provider.getSigner(governorAddr);
     strategist = await ethers.provider.getSigner(strategistAddr);
-    timelock = await ethers.provider.getSigner(timelockAddr);
-    oldTimelock = await ethers.provider.getSigner(
-      addresses.mainnet.OldTimelock
-    );
+    timelock = await impersonateAndFund(timelockAddr);
+    oldTimelock = await impersonateAndFund(addresses.mainnet.OldTimelock);
   } else {
     timelock = governor;
   }

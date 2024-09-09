@@ -1049,7 +1049,9 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const guardian = !isFork
     ? undefined
-    : await impersonateAndFund(addresses.mainnet.Guardian);
+    : await impersonateAndFund(
+        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+      );
 
   if (!isScheduled) {
     // Needs to be scheduled
@@ -1577,4 +1579,6 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+
+  handleTransitionGovernance,
 };

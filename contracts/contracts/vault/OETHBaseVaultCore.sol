@@ -79,31 +79,34 @@ contract OETHBaseVaultCore is OETHVaultCore {
     }
 
     // @inheritdoc OETHVaultCore
+    // solhint-disable-next-line no-unused-vars
     function requestWithdrawal(uint256 _amount)
         external
         virtual
         override
-        returns (uint256 requestId, uint256 queued)
+        returns (uint256, uint256)
     {
         revert("Async withdrawals disabled");
     }
 
     // @inheritdoc OETHVaultCore
+    // solhint-disable-next-line no-unused-vars
     function claimWithdrawal(uint256 _requestId)
         external
         virtual
         override
-        returns (uint256 amount)
+        returns (uint256)
     {
         revert("Async withdrawals disabled");
     }
 
     // @inheritdoc OETHVaultCore
+    // solhint-disable-next-line no-unused-vars
     function claimWithdrawals(uint256[] memory _requestIds)
         external
         virtual
         override
-        returns (uint256[] memory amounts, uint256 totalAmount)
+        returns (uint256[] memory, uint256)
     {
         revert("Async withdrawals disabled");
     }
