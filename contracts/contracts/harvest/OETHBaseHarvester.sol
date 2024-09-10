@@ -76,6 +76,17 @@ contract OETHBaseHarvester is Governable {
         aero.safeTransfer(strategistAddr, aeroBalance);
     }
 
+    /**
+     * @notice Harvests AERO from AMO strategy and then swaps some (or all)
+     *          of it into WETH to distribute yield and fee.
+     *         When `feeBps` is set to 10000 (100%), all WETH received is
+     *          sent to strategist.
+     *
+     * @param aeroToSwap Amount of AERO to swap
+     * @param minWETHExpected Min. amount of WETH to expect
+     * @param feeBps Performance fee bps (Sent to strategist)
+     * @param yieldRecipient Yield recipient (must be Vault or Dripper)
+     */
     function harvestAndSwap(
         uint256 aeroToSwap,
         uint256 minWETHExpected,

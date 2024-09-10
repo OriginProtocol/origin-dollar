@@ -11,7 +11,7 @@ describe("ForkTest: OETHb Harvester", function () {
   beforeEach(async () => {
     fixture = await baseFixture();
 
-    // Forward time & block to simulate some yield earnings
+    // Forward time & block to simulate some yields
     await advanceTime(12 * 60 * 60); // 12h
     await advanceBlocks(300);
   });
@@ -87,7 +87,7 @@ describe("ForkTest: OETHb Harvester", function () {
     const wethReceived = swapEvent.args.amountOut;
 
     const fee = wethReceived.mul(2000).div(10000);
-    const yield = wethReceived.sub(fee);
+    const protocolYield = wethReceived.sub(fee);
 
     // Check state
     const aeroBalanceAfter = await aero.balanceOf(strategist.address);
@@ -102,7 +102,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const vaultWethBalanceAfter = await weth.balanceOf(oethbVault.address);
     expect(vaultWethBalanceAfter).to.approxEqualTolerance(
-      vaultWethBalanceBefore.add(yield)
+      vaultWethBalanceBefore.add(protocolYield)
     );
 
     const pendingRewardsAfter = await aeroClGauge.earned(
@@ -149,7 +149,7 @@ describe("ForkTest: OETHb Harvester", function () {
     const wethReceived = swapEvent.args.amountOut;
 
     const fee = 0;
-    const yield = wethReceived;
+    const protocolYield = wethReceived;
 
     // Check state
     const aeroBalanceAfter = await aero.balanceOf(strategist.address);
@@ -164,7 +164,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const vaultWethBalanceAfter = await weth.balanceOf(oethbVault.address);
     expect(vaultWethBalanceAfter).to.approxEqualTolerance(
-      vaultWethBalanceBefore.add(yield)
+      vaultWethBalanceBefore.add(protocolYield)
     );
 
     const pendingRewardsAfter = await aeroClGauge.earned(
@@ -211,7 +211,7 @@ describe("ForkTest: OETHb Harvester", function () {
     const wethReceived = swapEvent.args.amountOut;
 
     const fee = wethReceived;
-    const yield = 0;
+    const protocolYield = 0;
 
     // Check state
     const aeroBalanceAfter = await aero.balanceOf(strategist.address);
@@ -226,7 +226,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const vaultWethBalanceAfter = await weth.balanceOf(oethbVault.address);
     expect(vaultWethBalanceAfter).to.approxEqualTolerance(
-      vaultWethBalanceBefore.add(yield)
+      vaultWethBalanceBefore.add(protocolYield)
     );
 
     const pendingRewardsAfter = await aeroClGauge.earned(
@@ -236,7 +236,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should not harvest & swap with incorrect yield recipient", async function () {
+  it("Should not harvest & swap with incorrect protocolYield recipient", async function () {
     const {
       strategist,
       clement,
@@ -244,8 +244,6 @@ describe("ForkTest: OETHb Harvester", function () {
       harvester,
       aerodromeAmoStrategy,
       aeroClGauge,
-      aero,
-      weth,
     } = fixture;
     const pendingRewards = await aeroClGauge.earned(
       aerodromeAmoStrategy.address,
@@ -268,7 +266,9 @@ describe("ForkTest: OETHb Harvester", function () {
         recipient
       );
 
-      await expect(tx).to.not.be.revertedWith("Invalid yield recipient");
+      await expect(tx).to.not.be.revertedWith(
+        "Invalid protocolYield recipient"
+      );
 
       await advanceTime(12 * 60 * 60); // 12h
       await advanceBlocks(300);
@@ -283,7 +283,7 @@ describe("ForkTest: OETHb Harvester", function () {
         recipient
       );
 
-      await expect(tx).to.be.revertedWith("Invalid yield recipient");
+      await expect(tx).to.be.revertedWith("Invalid protocolYield recipient");
     }
   });
 
