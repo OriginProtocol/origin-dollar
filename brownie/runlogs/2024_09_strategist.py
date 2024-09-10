@@ -210,3 +210,32 @@ def main():
     )
 
     print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------
+# Sep 10, 2024 - OETHb Harvest
+# -------------------------------
+from aerodrome_harvest import *
+def main():
+    txs = []
+
+    amount = 1095.07191359916 * 10**18
+
+    # Collect AERO from the strategy
+    txs.append(
+        amo_strat.collectRewardTokens(from_strategist)
+    )
+
+    # Approve the swap router to move it
+    txs.append(
+        aero.approve(AERODROME_SWAP_ROUTER_BASE, amount, from_strategist)
+    )
+
+    # Do the swap
+    txs.append(
+        aero_router.exactInputSingle(
+            swap_params(amount, OETHB_STRATEGIST),
+            from_strategist
+        )
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
