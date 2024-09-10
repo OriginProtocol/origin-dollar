@@ -19,7 +19,7 @@ contract OETHBaseHarvester is Governable {
     IERC20 public immutable weth;
     ISwapRouter public immutable swapRouter;
 
-    // Similar sig to `AbstractHarvester.RewardTokenSwapped` for 
+    // Similar sig to `AbstractHarvester.RewardTokenSwapped` for
     // future compatibility with monitoring
     event RewardTokenSwapped(
         address indexed rewardToken,
@@ -57,7 +57,7 @@ contract OETHBaseHarvester is Governable {
     /**
      * @notice Collects AERO from AMO strategy and
      *      sends it to the Strategist multisig.
-     *      Anyone can call it. 
+     *      Anyone can call it.
      */
     function harvest() external {
         address strategistAddr = vault.strategistAddr();
@@ -84,7 +84,7 @@ contract OETHBaseHarvester is Governable {
     ) external onlyGovernorOrStrategist {
         address strategistAddr = vault.strategistAddr();
         require(strategistAddr != address(0), "Guardian address not set");
-        
+
         require(feeBps <= 10000, "Invalid Fee Bps");
 
         // Collect all AERO
@@ -99,7 +99,7 @@ contract OETHBaseHarvester is Governable {
         if (aeroToSwap > 0) {
             require(aeroBalance >= aeroToSwap, "Insufficient balance for swap");
             _doSwap(aeroToSwap, minWETHExpected);
-            
+
             // Figure out AERO left in contract after swap
             aeroBalance = aero.balanceOf(address(this));
         }
@@ -110,15 +110,23 @@ contract OETHBaseHarvester is Governable {
         }
 
         // Computes using all balance the contract holds,
-        // not just the WETH received from swap. Use `transferToken` 
+        // not just the WETH received from swap. Use `transferToken`
         // if there's any WETH left that needs to be taken out
         uint256 availableWETHBalance = weth.balanceOf(address(this));
-        uint256 yield = availableWETHBalance * (10000 - feeBps);
-        uint256 fee = availableWETHBalance - yield;
+        // Computation rounds in favor of protocol
+        uint256 fee = (availableWETHBalance * feeBps) / 10000;
+        uint256 yield = availableWETHBalance - fee;
 
         // Transfer yield to yield recipient if any
         if (yield > 0) {
-            require(yieldRecipient == strategistAddr || yieldRecipient == vault.dripper(), "Invalid yield recipient");
+            // Yields can only be sent to the Vault or the Dripper.
+            // There's no address(0) check since Vault will break if there's
+            // no Dripper address set.
+            require(
+                yieldRecipient == address(vault) ||
+                    yieldRecipient == vault.dripper(),
+                "Invalid yield recipient"
+            );
             weth.safeTransfer(yieldRecipient, yield);
         }
 
@@ -142,9 +150,7 @@ contract OETHBaseHarvester is Governable {
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(aero),
                 tokenOut: address(weth),
-                // From AERO/WETH pool contract: 
-                // https://basescan.org/address/0x82321f3BEB69f503380D6B233857d5C43562e2D0#readContract
-                tickSpacing: 200,
+                tickSpacing: 200, // From AERO/WETH pool contract
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: aeroToSwap,

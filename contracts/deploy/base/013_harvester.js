@@ -29,7 +29,7 @@ module.exports = deployOnBaseWithGuardian(
       cAMOStrategyProxy.address,
       addresses.base.AERO,
       addresses.base.WETH,
-      addresses.base.aeroRouterAddress,
+      addresses.base.swapRouter,
     ]);
 
     const cAMOStrategy = await ethers.getContractAt(
