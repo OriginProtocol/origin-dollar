@@ -236,7 +236,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should not harvest & swap with incorrect protocolYield recipient", async function () {
+  it("Should not harvest & swap with incorrect yield recipient", async function () {
     const {
       strategist,
       clement,
@@ -267,7 +267,7 @@ describe("ForkTest: OETHb Harvester", function () {
       );
 
       await expect(tx).to.not.be.revertedWith(
-        "Invalid protocolYield recipient"
+        "Invalid yield recipient"
       );
 
       await advanceTime(12 * 60 * 60); // 12h
@@ -283,7 +283,7 @@ describe("ForkTest: OETHb Harvester", function () {
         recipient
       );
 
-      await expect(tx).to.be.revertedWith("Invalid protocolYield recipient");
+      await expect(tx).to.be.revertedWith("Invalid yield recipient");
     }
   });
 
