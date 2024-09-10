@@ -8,26 +8,28 @@ const addresses = require("../../utils/addresses");
 module.exports = deployOnBaseWithGuardian(
   {
     deployName: "013_harvester",
-    useTimelock: true
+    useTimelock: true,
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
-    const cAMOStrategyProxy = await ethers.getContract("AerodromeAMOStrategyProxy");
+    const cAMOStrategyProxy = await ethers.getContract(
+      "AerodromeAMOStrategyProxy"
+    );
 
     // Deploy proxy
     await deployWithConfirmation("OETHBaseHarvesterProxy");
-    const cHarvesterProxy = await ethers.getContract(
-      "OETHBaseHarvesterProxy"
-    );
+    const cHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
 
     // Deploy implementation
     const dHarvesterImpl = await deployWithConfirmation("OETHBaseHarvester", [
       cOETHbVaultProxy.address,
       cAMOStrategyProxy.address,
-      addresses.base.AERO
+      addresses.base.AERO,
+      addresses.base.WETH,
+      addresses.base.aeroRouterAddress,
     ]);
 
     const cAMOStrategy = await ethers.getContractAt(
@@ -53,7 +55,7 @@ module.exports = deployOnBaseWithGuardian(
           contract: cAMOStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
-        }
+        },
       ],
     };
   }
