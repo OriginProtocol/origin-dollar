@@ -614,7 +614,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance();
-      const tx = await rebalance(value, direction, 0);
+      const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
       await assetLpStakedInGauge();
@@ -624,7 +624,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance();
-      const tx = await rebalance(value, direction, 0);
+      const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
       await assetLpStakedInGauge();
@@ -710,7 +710,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       await mintAndDepositToStrategy({ amount: oethUnits("1") });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance();
-      await rebalance(value, direction, 0);
+      await rebalance(value, direction, value.mul("99").div("100"));
 
       await assetLpStakedInGauge();
     });
@@ -726,7 +726,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance();
-      await rebalance(value, direction, 0);
+      await rebalance(value, direction, value.mul("99").div("100"));
 
       await assetLpStakedInGauge();
     });
