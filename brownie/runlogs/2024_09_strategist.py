@@ -340,7 +340,7 @@ def main():
     supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
     profit = vault_change - supply_change
 
-    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': OETHB_STRATEGIST}))
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
 
     print("-----")
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
