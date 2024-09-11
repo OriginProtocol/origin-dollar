@@ -7,7 +7,6 @@ const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
 const ethers = require("ethers");
 const { impersonateAndFund } = require("../../utils/signers");
-const { deployWithConfirmation } = require("../../utils/deploy");
 //const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
@@ -39,6 +38,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     rafael = fixture.rafael;
     aeroSwapRouter = fixture.aeroSwapRouter;
     aeroNftManager = fixture.aeroNftManager;
+    quoter = fixture.quoter;
 
     await setupEmpty();
 
@@ -48,12 +48,6 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     await oethb
       .connect(rafael)
       .approve(aeroSwapRouter.address, oethUnits("1000"));
-
-    await deployWithConfirmation("AerodromeAMOQuoter", [
-      aerodromeAmoStrategy.address,
-      addresses.base.aeroQuoterV2Address,
-    ]);
-    quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
   });
 
   // Haven't found away to test for this in the strategy contract yet
@@ -138,25 +132,9 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     // Check if rafael as enough token to perfom swap
     // If not, mint some
     const balanceOETHb = await oethb.balanceOf(rafael.address);
-    const balanceWETH = await weth.balanceOf(rafael.address);
-    if (swapWeth && balanceWETH.lt(amount)) {
-      // Deal tokens
-      await setERC20TokenBalance(
-        rafael.address,
-        weth,
-        amount + balanceWETH,
-        hre
-      );
-    } else if (!swapWeth && balanceOETHb.lt(amount)) {
-      await setERC20TokenBalance(
-        rafael.address,
-        weth,
-        amount + balanceWETH,
-        hre
-      );
+    if (!swapWeth && balanceOETHb.lt(amount)) {
       await weth.connect(rafael).approve(oethbVault.address, amount);
       await oethbVault.connect(rafael).mint(weth.address, amount, amount);
-      // Deal WETH and mint OETHb
     }
 
     const sqrtRatioX96Tick1000 = BigNumber.from(
@@ -951,22 +929,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     // Check if rafael as enough token to perfom swap
     // If not, mint some
     const balanceOETHb = await oethb.balanceOf(rafael.address);
-    const balanceWETH = await weth.balanceOf(rafael.address);
-    if (swapWeth && balanceWETH.lt(amount)) {
-      // Deal tokens
-      await setERC20TokenBalance(
-        rafael.address,
-        weth,
-        amount + balanceWETH,
-        hre
-      );
-    } else if (!swapWeth && balanceOETHb.lt(amount)) {
-      await setERC20TokenBalance(
-        rafael.address,
-        weth,
-        amount + balanceWETH,
-        hre
-      );
+    if (!swapWeth && balanceOETHb.lt(amount)) {
       await weth.connect(rafael).approve(oethbVault.address, amount);
       await oethbVault.connect(rafael).mint(weth.address, amount, amount);
       // Deal WETH and mint OETHb
