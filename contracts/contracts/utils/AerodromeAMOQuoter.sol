@@ -5,6 +5,10 @@ import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
 import { IQuoterV2 } from "../interfaces/aerodrome/IQuoterV2.sol";
 import { IAMOStrategy } from "../interfaces/aerodrome/IAMOStrategy.sol";
 
+/// @title QuoterHelper
+/// @author Origin Protocol
+/// @notice Helper for Aerodrome AMO Quoter, as `_quoteAmountToSwapBeforeRebalance` use try/catch method and
+///         this can only be used when calling external contracts.
 contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     /// --- STRUCTS & ENUMS
@@ -409,6 +413,9 @@ contract QuoterHelper {
     }
 }
 
+/// @title AerodromeAMOQuoter
+/// @author Origin Protocol
+/// @notice Quoter for Aerodrome AMO
 contract AerodromeAMOQuoter {
     ////////////////////////////////////////////////////////////////
     /// --- STRUCTS & ENUMS
