@@ -4,6 +4,7 @@ const mocha = require("mocha");
 const { isFork, isBaseFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 
@@ -163,6 +164,12 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     addresses.base.nonFungiblePositionManager
   );
 
+  await deployWithConfirmation("AerodromeAMOQuoter", [
+    aerodromeAmoStrategy.address,
+    addresses.base.aeroQuoterV2Address,
+  ]);
+  const quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
+
   return {
     // Aerodrome
     aeroSwapRouter,
@@ -197,6 +204,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     rafael,
     nick,
     clement,
+
+    // Helper
+    quoter,
   };
 });
 

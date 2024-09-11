@@ -210,12 +210,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     aeroNftManager = fixture.aeroNftManager;
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
     gauge = fixture.aeroClGauge;
-
-    await deployWithConfirmation("AerodromeAMOQuoter", [
-      aerodromeAmoStrategy.address,
-      addresses.base.aeroQuoterV2Address,
-    ]);
-    quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
+    quoter = fixture.quoter;
 
     await setup();
     await weth
