@@ -391,11 +391,16 @@ contract QuoterHelper {
         uint160 sqrtPriceCurrentX96,
         uint160 sqrtPriceTargetX96
     ) public view returns (bool) {
-        uint160 range = strategy.sqrtRatioX96TickHigher() - strategy.sqrtRatioX96TickLower();
+        uint160 range = strategy.sqrtRatioX96TickHigher() -
+            strategy.sqrtRatioX96TickLower();
         if (sqrtPriceCurrentX96 > sqrtPriceTargetX96) {
-            return (sqrtPriceCurrentX96 - sqrtPriceTargetX96) * PERCENTAGE_BASE  <= ALLOWED_VARIANCE_PERCENTAGE * range;
+            return
+                (sqrtPriceCurrentX96 - sqrtPriceTargetX96) * PERCENTAGE_BASE <=
+                ALLOWED_VARIANCE_PERCENTAGE * range;
         } else {
-            return (sqrtPriceTargetX96 - sqrtPriceCurrentX96) * PERCENTAGE_BASE <= ALLOWED_VARIANCE_PERCENTAGE * range;
+            return
+                (sqrtPriceTargetX96 - sqrtPriceCurrentX96) * PERCENTAGE_BASE <=
+                ALLOWED_VARIANCE_PERCENTAGE * range;
         }
     }
 
