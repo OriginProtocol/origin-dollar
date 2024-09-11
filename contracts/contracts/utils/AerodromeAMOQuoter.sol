@@ -41,8 +41,8 @@ contract QuoterHelper {
     uint256 public constant BINARY_MIN_AMOUNT = 0.000_000_01 ether;
     uint256 public constant BINARY_MAX_AMOUNT = 1_000 ether;
     uint256 public constant BINARY_MAX_ITERATIONS = 100;
-    uint256 public constant PERCENTAGE_BASE = 1e27; // 100%
-    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e18; // 1%
+    uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
+    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e16; // 1%
 
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
@@ -390,13 +390,12 @@ contract QuoterHelper {
     function isWithinAllowedVariance(
         uint160 sqrtPriceCurrentX96,
         uint160 sqrtPriceTargetX96
-    ) public pure returns (bool) {
-        uint256 allowedVariance = (sqrtPriceTargetX96 *
-            ALLOWED_VARIANCE_PERCENTAGE) / PERCENTAGE_BASE;
+    ) public view returns (bool) {
+        uint160 range = strategy.sqrtRatioX96TickHigher() - strategy.sqrtRatioX96TickLower();
         if (sqrtPriceCurrentX96 > sqrtPriceTargetX96) {
-            return sqrtPriceCurrentX96 - sqrtPriceTargetX96 <= allowedVariance;
+            return (sqrtPriceCurrentX96 - sqrtPriceTargetX96) * PERCENTAGE_BASE  <= ALLOWED_VARIANCE_PERCENTAGE * range;
         } else {
-            return sqrtPriceTargetX96 - sqrtPriceCurrentX96 <= allowedVariance;
+            return (sqrtPriceTargetX96 - sqrtPriceCurrentX96) * PERCENTAGE_BASE <= ALLOWED_VARIANCE_PERCENTAGE * range;
         }
     }
 
