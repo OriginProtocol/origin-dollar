@@ -395,12 +395,12 @@ contract QuoterHelper {
             strategy.sqrtRatioX96TickLower();
         if (sqrtPriceCurrentX96 > sqrtPriceTargetX96) {
             return
-                (sqrtPriceCurrentX96 - sqrtPriceTargetX96) * PERCENTAGE_BASE <=
-                ALLOWED_VARIANCE_PERCENTAGE * range;
+                (sqrtPriceCurrentX96 - sqrtPriceTargetX96) <=
+                (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
         } else {
             return
-                (sqrtPriceTargetX96 - sqrtPriceCurrentX96) * PERCENTAGE_BASE <=
-                ALLOWED_VARIANCE_PERCENTAGE * range;
+                (sqrtPriceTargetX96 - sqrtPriceCurrentX96) <=
+                (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
         }
     }
 
