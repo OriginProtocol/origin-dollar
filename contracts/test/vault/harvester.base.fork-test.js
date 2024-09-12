@@ -272,7 +272,11 @@ describe("ForkTest: OETHb Harvester", function () {
       await advanceBlocks(300);
     }
 
-    for (const recipient of [strategist.address, clement.address, addresses.zero]) {
+    for (const recipient of [
+      strategist.address,
+      clement.address,
+      addresses.zero,
+    ]) {
       // Harvest
       const tx = harvester.connect(strategist).harvestAndSwap(
         swapAmount, // AERO amount
@@ -325,30 +329,26 @@ describe("ForkTest: OETHb Harvester", function () {
     }
 
     // Limit to smaller amount for test
-    const amount = pendingRewards.gt(oethUnits("100")) ? oethUnits("100") : pendingRewards
+    const amount = pendingRewards.gt(oethUnits("100"))
+      ? oethUnits("100")
+      : pendingRewards;
 
     // Let the contract move funds on behalf of strategist
-    await aero.connect(strategist).approve(harvester.address, oethUnits("1000000"))
-  
+    await aero
+      .connect(strategist)
+      .approve(harvester.address, oethUnits("1000000"));
+
     // Collect rewards first so strategist has itharvester
-    await harvester
-      .connect(strategist)
-      .harvest()
+    await harvester.connect(strategist).harvest();
 
-    const balanceBefore = await aero.balanceOf(strategist.address)
+    const balanceBefore = await aero.balanceOf(strategist.address);
 
     await harvester
       .connect(strategist)
-      .harvestAndSwap(
-        amount,
-        0,
-        2000,
-        oethbVault.address
-      );
+      .harvestAndSwap(amount, 0, 2000, oethbVault.address);
 
-    const balanceAfter = await aero.balanceOf(strategist.address)
-    expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(amount), 2)
-    
+    const balanceAfter = await aero.balanceOf(strategist.address);
+    expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(amount), 2);
   });
 
   it("Should not harvest/swap when strategist address isn't set", async () => {
