@@ -266,15 +266,13 @@ describe("ForkTest: OETHb Harvester", function () {
         recipient
       );
 
-      await expect(tx).to.not.be.revertedWith(
-        "Invalid yield recipient"
-      );
+      await expect(tx).to.not.be.revertedWith("Invalid yield recipient");
 
       await advanceTime(12 * 60 * 60); // 12h
       await advanceBlocks(300);
     }
 
-    for (const recipient of [strategist.address, clement.address]) {
+    for (const recipient of [strategist.address, clement.address, addresses.zero]) {
       // Harvest
       const tx = harvester.connect(strategist).harvestAndSwap(
         swapAmount, // AERO amount
@@ -307,11 +305,12 @@ describe("ForkTest: OETHb Harvester", function () {
     await expect(tx).to.be.revertedWith("Invalid Fee Bps");
   });
 
-  it("Should not allow harvest & swap with insufficient swap amount", async () => {
+  it("Should use strategist balance when needed for swaps", async () => {
     const {
       strategist,
       oethbVault,
       harvester,
+      aero,
       aerodromeAmoStrategy,
       aeroClGauge,
     } = fixture;
@@ -320,15 +319,36 @@ describe("ForkTest: OETHb Harvester", function () {
       await aerodromeAmoStrategy.tokenId()
     );
 
-    const tx = harvester
+    if (pendingRewards == 0) {
+      // Skip when there's nothing to test
+      return;
+    }
+
+    // Limit to smaller amount for test
+    const amount = pendingRewards.gt(oethUnits("100")) ? oethUnits("100") : pendingRewards
+
+    // Let the contract move funds on behalf of strategist
+    await aero.connect(strategist).approve(harvester.address, oethUnits("1000000"))
+  
+    // Collect rewards first so strategist has itharvester
+    await harvester
+      .connect(strategist)
+      .harvest()
+
+    const balanceBefore = await aero.balanceOf(strategist.address)
+
+    await harvester
       .connect(strategist)
       .harvestAndSwap(
-        oethUnits("10000").add(pendingRewards),
+        amount,
         0,
         2000,
         oethbVault.address
       );
-    await expect(tx).to.be.revertedWith("Insufficient balance for swap");
+
+    const balanceAfter = await aero.balanceOf(strategist.address)
+    expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(amount), 2)
+    
   });
 
   it("Should not harvest/swap when strategist address isn't set", async () => {

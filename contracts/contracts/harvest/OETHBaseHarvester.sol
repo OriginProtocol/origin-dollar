@@ -108,7 +108,15 @@ contract OETHBaseHarvester is Governable {
         }
 
         if (aeroToSwap > 0) {
-            require(aeroBalance >= aeroToSwap, "Insufficient balance for swap");
+            if (aeroBalance < aeroToSwap) {
+                // Transfer in balance from the multisig as needed
+                aero.transferFrom(
+                    strategistAddr,
+                    address(this),
+                    aeroToSwap - aeroBalance
+                );
+            }
+
             _doSwap(aeroToSwap, minWETHExpected);
 
             // Figure out AERO left in contract after swap
@@ -134,8 +142,9 @@ contract OETHBaseHarvester is Governable {
             // There's no address(0) check since Vault will break if there's
             // no Dripper address set.
             require(
-                yieldRecipient == address(vault) ||
-                    yieldRecipient == vault.dripper(),
+                yieldRecipient != address(0) &&
+                    (yieldRecipient == address(vault) ||
+                        yieldRecipient == vault.dripper()),
                 "Invalid yield recipient"
             );
             weth.safeTransfer(yieldRecipient, yield);
