@@ -52,9 +52,33 @@ pairs:
     Bridged wOETH/ETH
 }
 
-object "BridgedWOETHStrategy" as strat <<Origin>><<Proxy>> #$originColor {
+object "BridgedWOETHStrategy" as bridgeStrat <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
+
+object "AerodromeAMOStrategy" as aeroStrat <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+    reward: AERO
+}
+
+object "NonfungiblePositionManager" as pm <<Aerodrome>><<Proxy>> {
+    name: Slipstream Position NFT v1
+    symbol: AERO-CL-POS
+}
+
+object "CLPool" as clPool <<Aerodrome>><<Proxy>> {
+    name: Slipstream pool
+    assets: superOETHb, WETH
+}
+
+object "CLGauge" as clGauge <<Aerodrome>><<Proxy>> {
+    rewards: AERO
+}
+
+' object "SwapRouter" as swapRouter <<Aerodrome>> {
+'     rewards: AERO
+' }
+
 
 woeth <. zap
 zap ..> oeth
@@ -64,8 +88,15 @@ woeth ..> oeth
 oeth <.> oethv
 oethv <.> drip
 oethv ..> oracle
-oethv <...> strat
-strat ..> bridged
+oethv <...> bridgeStrat
+oethv <...> aeroStrat
+bridgeStrat ..> bridged
 
+aeroStrat ...> pm
+pm .> clPool
+aeroStrat ...> clPool
+aeroStrat ...> clGauge
+clPool <. clGauge
+' aeroStrat ...> swapRouter
 
 @enduml
