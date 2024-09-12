@@ -110,7 +110,8 @@ contract OETHBaseHarvester is Governable {
         if (aeroToSwap > 0) {
             if (aeroBalance < aeroToSwap) {
                 // Transfer in balance from the multisig as needed
-                aero.transferFrom(
+                // slither-disable-next-line unchecked-transfer arbitrary-send-erc20
+                aero.safeTransferFrom(
                     strategistAddr,
                     address(this),
                     aeroToSwap - aeroBalance
