@@ -239,3 +239,153 @@ def main():
     )
 
     print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------------
+# Sep 11, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogn, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGN,
+        oeth_for_ogn,
+        3.5
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        2
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Sep 11, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogn, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGN,
+        ousd_for_ogn,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------------
+# Sept 11 2024 - OETHb allocation & rebalance
+# -------------------------------------------
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+    # Deposit all WETH
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [weth.balanceOf(OETHB_VAULT_PROXY_ADDRESS)], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # deposit funds into the underlying strategy
+    txs.append(
+      amo_strat.rebalance(
+        0, 
+        True,
+        0,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+# -------------------------------------------
+# Sept 12 2024 - OETHb allocation & rebalance
+# -------------------------------------------
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+    # Deposit all WETH
+    wethAmount = weth.balanceOf(OETHB_VAULT_PROXY_ADDRESS)
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [wethAmount], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # deposit funds into the underlying strategy
+    txs.append(
+      amo_strat.rebalance(
+        0, 
+        True,
+        0,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+    print("-----")
+    print("WETH", "{:.6f}".format(wethAmount / 10**18), wethAmount)
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
