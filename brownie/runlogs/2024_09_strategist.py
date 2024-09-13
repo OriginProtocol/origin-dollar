@@ -457,7 +457,7 @@ from world import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Before
-    txs.append(vault_oeth_core.rebase({'from': STRATEGIST}))
+    txs.append(dripper.collectAndRebase({'from': STRATEGIST}))
     txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
 
     # Remove 50 WETH from strategy and burn equivalent OETH
