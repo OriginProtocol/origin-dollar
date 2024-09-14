@@ -17,7 +17,7 @@ Start a ganache fork in a terminal window:
 ```
 yarn run node:fork
 ```
-In a separate terminal, deploy the contracts then get the prices from the oracle by running"
+In a separate terminal, deploy the contracts then get the prices from the oracle by running
 ```
 yarn run deploy:fork
 BUIDLER_NETWORK=ganache FORK=true node all-price.js
