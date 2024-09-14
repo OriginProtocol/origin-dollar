@@ -101,6 +101,7 @@ const {
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
+const { sleep } = require("../utils/time");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -1245,6 +1246,42 @@ task("exitValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("exitValidators", "Starts the exit process from a list of validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await exitValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("exitValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "removeValidator",
   "Removes a validator from the SSV cluster after it has exited the beacon chain"
@@ -1272,6 +1309,45 @@ subtask(
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidators",
+  "Removes validators from the SSV cluster after they have exited the beacon chain"
+)
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await removeValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("removeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
