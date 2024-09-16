@@ -38,8 +38,10 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANT & IMMUTABLE
     ////////////////////////////////////////////////////////////////
-    uint256 public constant BINARY_MIN_AMOUNT = 0.000_000_01 ether;
-    uint256 public constant BINARY_MAX_AMOUNT = 1_000 ether;
+    uint256 public constant BINARY_MIN_AMOUNT = 1 wei;
+    uint256 public constant BINARY_MAX_AMOUNT_FOR_REBALANCE = 3_000 ether;
+    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 1_000 ether;
+
     uint256 public constant BINARY_MAX_ITERATIONS = 100;
     uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
     uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e16; // 1%
@@ -101,7 +103,7 @@ contract QuoterHelper {
         }
         uint256 iterations;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = BINARY_MAX_AMOUNT;
+        uint256 high = BINARY_MAX_AMOUNT_FOR_REBALANCE;
         int24 lowerTick = strategy.lowerTick();
         int24 upperTick = strategy.upperTick();
         bool swapWETHForOETHB = getSwapDirectionForRebalance();
@@ -352,7 +354,7 @@ contract QuoterHelper {
     {
         uint256 iterations;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = BINARY_MAX_AMOUNT;
+        uint256 high = BINARY_MAX_AMOUNT_FOR_PUSH_PRICE;
         bool swapWETHForOETHB = getSwapDirection(sqrtPriceTargetX96);
 
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
