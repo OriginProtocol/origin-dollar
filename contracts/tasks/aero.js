@@ -20,13 +20,18 @@ const snapAero = async ({ block }) => {
   const sugarHelper = await resolveContract(base.sugarHelper, "ISugarHelper");
 
   const Q96 = BigNumber.from(2).pow(96);
-  const sqrtRatioX96TickLower = BigNumber.from("79224201403219477170569942574"); // -1 tick
-  const sqrtRatioX96TickHigher = BigNumber.from(
-    "79228162514264337593543950336"
-  ); // 0 tick
+  const sqrtRatioX96TickLower = await aeroStrat
+    .connect(signer)
+    .sqrtRatioX96TickLower({ blockTag });
+  const sqrtRatioX96TickHigher = await aeroStrat
+    .connect(signer)
+    .sqrtRatioX96TickHigher({ blockTag });
+  const lowerTick = await aeroStrat.connect(signer).lowerTick({ blockTag });
 
   const { tick, sqrtPriceX96 } = await pool.connect(signer).slot0({ blockTag });
-  const { liquidityGross } = await pool.connect(signer).ticks(-1, { blockTag });
+  const { liquidityGross } = await pool
+    .connect(signer)
+    .ticks(lowerTick, { blockTag });
   const { amount0: tickWethBalance, amount1: tickOethBalance } =
     await sugarHelper
       .connect(signer)
@@ -95,7 +100,7 @@ const snapAero = async ({ block }) => {
     `Pool WETH        : ${formatUnits(poolWethBalance)} (${formatUnits(
       poolWethPercentage,
       2
-    )}%), ${poolWethBalance} wei`
+    )}%), ${poolWethBalance} wei (includes unclaimed WETH)`
   );
   console.log(
     `Pool OETH        : ${formatUnits(poolOethBalance)} (${formatUnits(
