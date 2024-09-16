@@ -576,3 +576,97 @@ def main():
     print("-----")
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+# -----------------------------------------------------
+# Sept 16 2024 - OETHb allocation & rebalance 12:00 CET
+# -----------------------------------------------------
+
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+    # Deposit all WETH
+    wethDepositAmount = weth.balanceOf(OETHB_VAULT_PROXY_ADDRESS)
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [wethDepositAmount], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+
+    # Rebalance the AMO pool
+    (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
+    wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    total = wethPoolBalance + superOETHbPoolBalance
+    nonStratWeth = wethPoolBalance - wethOwned
+    nonStratOethb = superOETHbPoolBalance - oethbOwned
+    stratTotal = wethOwned + oethbOwned
+
+    print("Strat WETH      ", "{:.6f}".format(wethOwned / 10**18), wethOwned * 100 / stratTotal)
+    print("Strat superOETH ", "{:.6f}".format(oethbOwned / 10**18), oethbOwned * 100 / stratTotal)
+    print("Non-Strat WETH      ", "{:.6f}".format(nonStratWeth / 10**18), nonStratWeth)
+    print("Non-Strate superOETH ", "{:.6f}".format(nonStratOethb / 10**18), nonStratOethb)
+    print("-----")
+
+    print("Pool WETH      ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / total)
+    print("Pool superOETH ", "{:.6f}".format(superOETHbPoolBalance / 10**18), superOETHbPoolBalance * 100 / total)
+    print("Pool Total     ", "{:.6f}".format(total / 10**18), total)
+    print("-----")
+    
+    swapWeth = True
+    swapAmount = 0
+    minAmount = swapAmount * 0.98
+
+    print("WETH Deposit", "{:.6f}".format(wethDepositAmount / 10**18), wethDepositAmount)
+    print("-----")
+    print("Swap amount", "{:.6f}".format(swapAmount / 10**18), swapAmount)
+    print("Min  amount", "{:.6f}".format(minAmount / 10**18), minAmount)
+    print("-----")
+
+    txs.append(
+      amo_strat.rebalance(
+        swapAmount,
+        swapWeth,
+        minAmount,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+    wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    total = wethPoolBalance + superOETHbPoolBalance
+
+    (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
+    nonStratWeth = wethPoolBalance - wethOwned
+    nonStratOethb = superOETHbPoolBalance - oethbOwned
+    stratTotal = wethOwned + oethbOwned
+
+
+    print("Strat WETH      ", "{:.6f}".format(wethOwned / 10**18), wethOwned * 100 / stratTotal)
+    print("Strat superOETH ", "{:.6f}".format(oethbOwned / 10**18), oethbOwned * 100 / stratTotal)
+    print("Non-Strat WETH      ", "{:.6f}".format(nonStratWeth / 10**18), nonStratWeth)
+    print("Non-Strate superOETH ", "{:.6f}".format(nonStratOethb / 10**18), nonStratOethb)
+    print("-----")
+    print("Pool WETH      ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / total)
+    print("Pool superOETH ", "{:.6f}".format(superOETHbPoolBalance / 10**18), superOETHbPoolBalance * 100 / total)
+    print("Pool Total     ", "{:.6f}".format(total / 10**18), total)
+    print("-----")
+    print("Strat WETH % ", "{:.6f}".format(wethOwned/stratTotal * 100))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
