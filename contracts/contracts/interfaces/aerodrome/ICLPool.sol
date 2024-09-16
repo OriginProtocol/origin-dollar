@@ -44,9 +44,11 @@ interface ICLPool {
     /// feeGrowthOutside0X128 the fee growth on the other side of the tick from the current tick in token0,
     /// feeGrowthOutside1X128 the fee growth on the other side of the tick from the current tick in token1,
     /// tickCumulativeOutside the cumulative tick value on the other side of the tick from the current tick
-    /// secondsPerLiquidityOutsideX128 the seconds spent per liquidity on the other side of the tick from the current tick,
+    /// secondsPerLiquidityOutsideX128 the seconds spent per liquidity on the other side of the tick from
+    /// the current tick,
     /// secondsOutside the seconds spent on the other side of the tick from the current tick,
-    /// initialized Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise equal to false.
+    /// initialized Set to true if the tick is initialized, i.e. liquidityGross is greater than 0, otherwise
+    /// equal to false.
     /// Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0.
     /// In addition, these values are only relative and must be used only in comparison to previous snapshots for
     /// a specific position.
