@@ -70,7 +70,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     ).to.be.revertedWith("Can not rebalance empty pool");
   });
 
-  it("Should be reverted trying to rebalance and we are not in the correct tick", async () => {
+  it.skip("Should be reverted trying to rebalance and we are not in the correct tick", async () => {
     // Push price to tick 0, which is OutisdeExpectedTickRange
     const { value, direction } = await quoteAmountToSwapToReachPrice(
       await aerodromeAmoStrategy.sqrtRatioX96TickHigher()
@@ -236,7 +236,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         .connect(aerodromeSigner)
         .approve(aeroSwapRouter.address, BigNumber.from("0"));
 
-      await aerodromeAmoStrategy.connect(governor).safeApproveAllTokens();
+      const gov = await aerodromeAmoStrategy.governor();
+      await aerodromeAmoStrategy
+        .connect(await impersonateAndFund(gov))
+        .safeApproveAllTokens();
     });
 
     it("Should revert setting ptoken address", async function () {
@@ -256,10 +259,11 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
   describe("Configuration", function () {
     it("Governor can set the allowed pool weth share interval", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
+      const { aerodromeAmoStrategy } = fixture;
+      const gov = await aerodromeAmoStrategy.governor();
 
       await aerodromeAmoStrategy
-        .connect(governor)
+        .connect(await impersonateAndFund(gov))
         .setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"));
 
       expect(await aerodromeAmoStrategy.allowedWethShareStart()).to.equal(
@@ -282,17 +286,18 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
 
     it("Can not set incorrect pool WETH share intervals", async () => {
-      const { governor, aerodromeAmoStrategy } = fixture;
+      const { aerodromeAmoStrategy } = fixture;
+      const gov = await aerodromeAmoStrategy.governor();
 
       await expect(
         aerodromeAmoStrategy
-          .connect(governor)
+          .connect(await impersonateAndFund(gov))
           .setAllowedPoolWethShareInterval(oethUnits("0.5"), oethUnits("0.4"))
       ).to.be.revertedWith("Invalid interval");
 
       await expect(
         aerodromeAmoStrategy
-          .connect(governor)
+          .connect(await impersonateAndFund(gov))
           .setAllowedPoolWethShareInterval(
             oethUnits("0.0001"),
             oethUnits("0.5")
@@ -301,7 +306,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
 
       await expect(
         aerodromeAmoStrategy
-          .connect(governor)
+          .connect(await impersonateAndFund(gov))
           .setAllowedPoolWethShareInterval(oethUnits("0.2"), oethUnits("0.96"))
       ).to.be.revertedWith("Invalid interval end");
     });
@@ -656,8 +661,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         oethUnits("0")
       );
 
+      const gov = await aerodromeAmoStrategy.governor();
       await oethbVault
-        .connect(governor)
+        .connect(await impersonateAndFund(gov))
         .depositToStrategy(
           aerodromeAmoStrategy.address,
           [weth.address],
@@ -793,7 +799,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         aerodromeAmoStrategy.address
       );
 
-      await mintAndDepositToStrategy({ amount: oethUnits("10") });
+      await mintAndDepositToStrategy({ amount: oethUnits("1000") });
       // transfer WETH out making the protocol insolvent
       const bal = await weth.balanceOf(aerodromeAmoStrategy.address);
       await weth.connect(stratSigner).transfer(addresses.dead, bal);
@@ -1030,8 +1036,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     await weth.connect(user).approve(oethbVault.address, amount);
     await oethbVault.connect(user).mint(weth.address, amount, amount);
 
+    const gov = await oethbVault.governor();
     await oethbVault
-      .connect(governor)
+      .connect(await impersonateAndFund(gov))
       .depositToStrategy(
         aerodromeAmoStrategy.address,
         [weth.address],

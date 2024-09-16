@@ -7,6 +7,7 @@ const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("../utils/logger")("test:fixtures-arb");
 
@@ -111,6 +112,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   const governor = await ethers.getSigner(governorAddr);
+  await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
   const woethGovernor = await ethers.getSigner(await woethProxy.governor());
 
   let strategist;
