@@ -26,7 +26,7 @@ const snapAero = async ({ block }) => {
   ); // 0 tick
 
   const { tick, sqrtPriceX96 } = await pool.connect(signer).slot0({ blockTag });
-  const { liquidityGross } = await pool.connect(signer).ticks(-1);
+  const { liquidityGross } = await pool.connect(signer).ticks(-1, { blockTag });
   const { amount0: tickWethBalance, amount1: tickOethBalance } =
     await sugarHelper
       .connect(signer)
@@ -34,7 +34,8 @@ const snapAero = async ({ block }) => {
         sqrtPriceX96,
         sqrtRatioX96TickLower,
         sqrtRatioX96TickHigher,
-        liquidityGross
+        liquidityGross,
+        { blockTag }
       );
 
   // Pool balances
