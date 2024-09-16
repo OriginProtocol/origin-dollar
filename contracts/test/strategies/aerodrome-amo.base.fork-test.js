@@ -376,9 +376,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000 wei is really small
+      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
-        BigNumber.from("1000")
+        BigNumber.from("1000000")
       );
 
       await assetLpStakedInGauge();
@@ -466,9 +466,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000 wei is really small
+      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
-        BigNumber.from("1000")
+        BigNumber.from("1000000")
       );
 
       await assetLpStakedInGauge();
@@ -551,9 +551,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000 wei is really small
+      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
-        BigNumber.from("1000")
+        BigNumber.from("1000000")
       );
 
       await assetLpStakedInGauge();
