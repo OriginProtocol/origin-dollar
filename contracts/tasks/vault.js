@@ -12,15 +12,23 @@ const log = require("../utils/logger")("task:vault");
 
 async function getContract(hre, symbol) {
   const contractPrefix = symbol === "OUSD" ? "" : symbol;
+
+  const { chainId } = await hre.ethers.provider.getNetwork();
+  const networkPrefix = networkMap[chainId] === "base" ? "Base" : "";
+
   const vaultProxy = await hre.ethers.getContract(
-    `${contractPrefix}VaultProxy`
+    `${contractPrefix}${networkPrefix}VaultProxy`
   );
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
-  log(`Resolved ${symbol} Vault to address ${vault.address}`);
+  log(`Resolved ${networkPrefix} ${symbol} Vault to address ${vault.address}`);
 
-  const oTokenProxy = await ethers.getContract(`${symbol}Proxy`);
+  const oTokenProxy = await ethers.getContract(
+    `${symbol}${networkPrefix}Proxy`
+  );
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
-  log(`Resolved ${symbol} OToken to address ${oToken.address}`);
+  log(
+    `Resolved ${networkPrefix} ${symbol} OToken to address ${oToken.address}`
+  );
 
   return {
     vault,
@@ -31,20 +39,18 @@ async function getContract(hre, symbol) {
 async function snapVault({ block }, hre) {
   const blockTag = getBlock(block);
 
-  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
-  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
-  const oethProxy = await hre.ethers.getContract(`OETHProxy`);
-  const oeth = await hre.ethers.getContractAt("OETH", oethProxy.address);
+  const { vault, oToken } = await getContract(hre, "OETH");
 
   const { chainId } = await hre.ethers.provider.getNetwork();
-  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const network = networkMap[chainId];
+  const wethAddress = addresses[network].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
 
   const wethBalance = await weth.balanceOf(vault.address, {
     blockTag,
   });
 
-  const totalSupply = await oeth.totalSupply({
+  const totalSupply = await oToken.totalSupply({
     blockTag,
   });
 
@@ -109,8 +115,7 @@ async function snapVault({ block }, hre) {
 async function addWithdrawalQueueLiquidity(_, hre) {
   const signer = await getSigner();
 
-  const vaultProxy = await hre.ethers.getContract(`OETHVaultProxy`);
-  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+  const { vault } = await getContract(hre, "OETH");
 
   log(
     `About to call addWithdrawalQueueLiquidity() on the vault with address ${vault.address}`
