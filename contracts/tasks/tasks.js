@@ -92,6 +92,7 @@ const {
   validatorOperationsConfig,
   exitValidator,
   doAccounting,
+  manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
@@ -101,6 +102,7 @@ const {
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
+const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 
 // can not import from utils/deploy since that imports hardhat globally
@@ -1378,6 +1380,53 @@ task("doAccounting").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "manuallyFixAccounting",
+  "Fix an accounting failure in a Native Staking Strategy"
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The delta of validators. Can be positive or negative.",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The delta of consensus rewards. Can be positive or negative.",
+    0,
+    types.float
+  )
+  .addOptionalParam(
+    "vault",
+    "The amount of Ether to convert to WETH and send to the Vault.",
+    0,
+    types.float
+  )
+  .setAction(async ({ index, rewards, validators, vault }) => {
+    const signer = await getSigner();
+
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
+
+    await manuallyFixAccounting({
+      signer,
+      nativeStakingStrategy,
+      validatorsDelta: validators,
+      consensusRewardsDelta: rewards,
+      ethToVaultAmount: vault,
+    });
+  });
+task("manuallyFixAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "resetStakeETHTally",
   "Resets the amount of Ether staked back to zero"
 ).addOptionalParam(
@@ -1641,5 +1690,32 @@ subtask(
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Simulations
+subtask(
+  "deployForceEtherSender",
+  "Deploy a ForceEtherSender contract for simulating hacks"
+).setAction(deployForceEtherSender);
+task("deployForceEtherSender").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("forceSend", "Force send ETH to a recipient using self destruct")
+  .addParam(
+    "sender",
+    "Address of the deployed ForceEtherSender contract",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "recipient",
+    "Address of the contract to receive the Ether",
+    undefined,
+    types.string
+  )
+  .setAction(forceSend);
+task("forceSend").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

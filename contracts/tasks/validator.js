@@ -134,6 +134,30 @@ async function doAccounting({ signer, nativeStakingStrategy }) {
   await logTxDetails(tx, "doAccounting");
 }
 
+async function manuallyFixAccounting({
+  signer,
+  nativeStakingStrategy,
+  validatorsDelta,
+  consensusRewardsDelta,
+  ethToVaultAmount,
+}) {
+  const consensusRewardsDeltaBN = parseEther(consensusRewardsDelta.toString());
+  const ethToVaultAmountBN = parseEther(ethToVaultAmount.toString());
+
+  log(
+    `About to manuallyFixAccounting with details ${validatorsDelta} validators, ${consensusRewardsDelta} consensus rewards, ${ethToVaultAmount} ETH to vault`
+  );
+
+  const tx = await nativeStakingStrategy
+    .connect(signer)
+    .manuallyFixAccounting(
+      validatorsDelta,
+      consensusRewardsDeltaBN,
+      ethToVaultAmountBN
+    );
+  await logTxDetails(tx, "manuallyFixAccounting");
+}
+
 async function resetStakeETHTally({ index, signer }) {
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
@@ -208,6 +232,7 @@ async function snapStaking({ block, admin, index }) {
     .mul(10)
     .div(parseEther("32"));
   const idleWethRequestsBN = idleWethValidatorsBN.div(16);
+  const paused = await strategy.paused({ blockTag });
 
   console.log(
     `Active validators        : ${await strategy.activeDepositedValidators({
@@ -257,6 +282,7 @@ async function snapStaking({ block, admin, index }) {
       1
     )} (${formatUnits(idleWethRequestsBN, 1)} requests)`
   );
+  console.log(`Strategy paused          : ${paused}`);
 
   if (admin) {
     console.log(
@@ -302,6 +328,7 @@ module.exports = {
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
+  manuallyFixAccounting,
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
