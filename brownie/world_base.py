@@ -35,3 +35,29 @@ def scale_amount(from_token, to_token, amount, decimals=0):
         return int(scaled_amount * 10**6) / 10**6
 
     return int(scale_amount * 10**decimals) / (10**decimals)
+
+def amo_snapsnot():
+    wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
+    total = wethPoolBalance + superOETHbPoolBalance
+
+    (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
+    nonStratWeth = wethPoolBalance - wethOwned
+    nonStratOethb = superOETHbPoolBalance - oethbOwned
+    stratTotal = wethOwned + oethbOwned 
+
+    print("------------------ AMO Strategy LP position ------------------")
+    print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
+    print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
+    print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
+
+    print("------------------ Others LP position ------------------------")
+    print("           ", leading_whitespace("Amount"))
+    print("WETH       ", c18(nonStratWeth))
+    print("superOETH  ", c18(nonStratOethb))
+    
+    print("--------------------- Pool stats -----------------------------")
+    print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
+    print("WETH       ", c18(wethPoolBalance), pcts(wethPoolBalance * 100 / total))
+    print("superOETH  ", c18(superOETHbPoolBalance), pcts(superOETHbPoolBalance * 100 / total))
+    print("Total      ", c18(total), pcts(100))
