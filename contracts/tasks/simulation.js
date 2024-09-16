@@ -4,7 +4,9 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:simulation");
 
-const deployForceEtherSender = async ({ signer }) => {
+const deployForceEtherSender = async () => {
+  const signer = await getSigner();
+
   log(`About to deploy the ForceEtherSender contract`);
 
   // Get the contract factory

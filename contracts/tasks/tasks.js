@@ -12,6 +12,7 @@ const {
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
 } = require("./crypto");
+const { advanceBlocks } = require("./block");
 const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
@@ -1398,14 +1399,14 @@ subtask(
   .addOptionalParam(
     "rewards",
     "The delta of consensus rewards. Can be positive or negative.",
-    0,
-    types.float
+    "0",
+    types.string
   )
   .addOptionalParam(
     "vault",
     "The amount of Ether to convert to WETH and send to the Vault.",
-    0,
-    types.float
+    "0",
+    types.string
   )
   .setAction(async ({ index, rewards, validators, vault }) => {
     const signer = await getSigner();
@@ -1717,5 +1718,14 @@ subtask("forceSend", "Force send ETH to a recipient using self destruct")
   )
   .setAction(forceSend);
 task("forceSend").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("mine", "Mines a number of blocks")
+  .addOptionalParam("blocks", "The number of blocks to mine", 1, types.int)
+  .setAction(async ({ blocks }) => {
+    await advanceBlocks(blocks);
+  });
+task("mine").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

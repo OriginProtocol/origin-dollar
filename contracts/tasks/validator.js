@@ -10,6 +10,7 @@ const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { convertToBigNumber } = require("../utils/units");
 const { validatorsThatCanBeStaked } = require("../utils/validator");
 
 const log = require("../utils/logger")("task:p2p");
@@ -141,11 +142,13 @@ async function manuallyFixAccounting({
   consensusRewardsDelta,
   ethToVaultAmount,
 }) {
-  const consensusRewardsDeltaBN = parseEther(consensusRewardsDelta.toString());
-  const ethToVaultAmountBN = parseEther(ethToVaultAmount.toString());
+  const consensusRewardsDeltaBN = convertToBigNumber(consensusRewardsDelta);
+  const ethToVaultAmountBN = convertToBigNumber(ethToVaultAmount);
 
   log(
-    `About to manuallyFixAccounting with details ${validatorsDelta} validators, ${consensusRewardsDelta} consensus rewards, ${ethToVaultAmount} ETH to vault`
+    `About to manuallyFixAccounting with details ${validatorsDelta} validators, ${formatUnits(
+      consensusRewardsDeltaBN
+    )} consensus rewards, ${formatUnits(ethToVaultAmountBN)} ETH to vault`
   );
 
   const tx = await nativeStakingStrategy
