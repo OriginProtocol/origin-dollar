@@ -600,35 +600,15 @@ def main():
       )
     )
 
-
-    # Rebalance the AMO pool
-    (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
-    wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
-    superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
-    total = wethPoolBalance + superOETHbPoolBalance
-    nonStratWeth = wethPoolBalance - wethOwned
-    nonStratOethb = superOETHbPoolBalance - oethbOwned
-    stratTotal = wethOwned + oethbOwned
-
-    print("Strat WETH      ", "{:.6f}".format(wethOwned / 10**18), wethOwned * 100 / stratTotal)
-    print("Strat superOETH ", "{:.6f}".format(oethbOwned / 10**18), oethbOwned * 100 / stratTotal)
-    print("Non-Strat WETH      ", "{:.6f}".format(nonStratWeth / 10**18), nonStratWeth)
-    print("Non-Strate superOETH ", "{:.6f}".format(nonStratOethb / 10**18), nonStratOethb)
-    print("-----")
-
-    print("Pool WETH      ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / total)
-    print("Pool superOETH ", "{:.6f}".format(superOETHbPoolBalance / 10**18), superOETHbPoolBalance * 100 / total)
-    print("Pool Total     ", "{:.6f}".format(total / 10**18), total)
-    print("-----")
-    
+    amo_snapsnot()
     swapWeth = True
     swapAmount = 0
     minAmount = swapAmount * 0.98
-
-    print("WETH Deposit", "{:.6f}".format(wethDepositAmount / 10**18), wethDepositAmount)
+    print("--------------------")
+    print("WETH Deposit ", c18(wethDepositAmount))
     print("-----")
-    print("Swap amount", "{:.6f}".format(swapAmount / 10**18), swapAmount)
-    print("Min  amount", "{:.6f}".format(minAmount / 10**18), minAmount)
+    print("Swap amount  ", c18(swapAmount))
+    print("Min  amount  ", c18(minAmount))
     print("-----")
 
     txs.append(
@@ -647,26 +627,7 @@ def main():
 
     txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
 
-    wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
-    superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
-    total = wethPoolBalance + superOETHbPoolBalance
-
-    (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
-    nonStratWeth = wethPoolBalance - wethOwned
-    nonStratOethb = superOETHbPoolBalance - oethbOwned
-    stratTotal = wethOwned + oethbOwned
-
-
-    print("Strat WETH      ", "{:.6f}".format(wethOwned / 10**18), wethOwned * 100 / stratTotal)
-    print("Strat superOETH ", "{:.6f}".format(oethbOwned / 10**18), oethbOwned * 100 / stratTotal)
-    print("Non-Strat WETH      ", "{:.6f}".format(nonStratWeth / 10**18), nonStratWeth)
-    print("Non-Strate superOETH ", "{:.6f}".format(nonStratOethb / 10**18), nonStratOethb)
-    print("-----")
-    print("Pool WETH      ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / total)
-    print("Pool superOETH ", "{:.6f}".format(superOETHbPoolBalance / 10**18), superOETHbPoolBalance * 100 / total)
-    print("Pool Total     ", "{:.6f}".format(total / 10**18), total)
-    print("-----")
-    print("Strat WETH % ", "{:.6f}".format(wethOwned/stratTotal * 100))
-    print("-----")
-    print("Profit", "{:.6f}".format(profit / 10**18), profit)
-    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    amo_snapsnot()
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
