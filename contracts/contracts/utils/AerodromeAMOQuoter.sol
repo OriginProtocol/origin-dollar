@@ -498,7 +498,7 @@ contract AerodromeAMOQuoter {
     function _quoteAmountToSwapBeforeRebalance(
         uint256 overrideBottomWethShare,
         uint256 overrideTopWethShare
-    ) public returns (Data memory data) {
+    ) internal returns (Data memory data) {
         try
             quoterHelper.getAmountToSwapBeforeRebalance(
                 overrideBottomWethShare,
