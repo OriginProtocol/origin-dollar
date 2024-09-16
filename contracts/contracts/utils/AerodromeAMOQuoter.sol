@@ -40,7 +40,7 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     uint256 public constant BINARY_MIN_AMOUNT = 1 wei;
     uint256 public constant BINARY_MAX_AMOUNT_FOR_REBALANCE = 3_000 ether;
-    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 1_000 ether;
+    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 50_000 ether;
 
     uint256 public constant BINARY_MAX_ITERATIONS = 100;
     uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
@@ -338,12 +338,18 @@ contract QuoterHelper {
 
     /// @notice Get the amount of tokens to swap to reach the target price.
     /// @dev This act like a quoter, i.e. the transaction is not performed.
+    /// @dev Because the amount to swap can be largely overestimated, because CLAMM alow partial orders,
+    /// i.e. when we ask to swap a very large amount, with a close priceLimite, it will swap only a part of it,
+    /// and not revert. So if overestimated amount is to high, use a custom maxAmount to avoid this issue.
     /// @param sqrtPriceTargetX96 The target price to reach.
     /// @return amount The amount of tokens to swap.
     /// @return iterations The number of iterations to find the amount.
     /// @return swapWETHForOETHB True if we need to swap WETH for OETHb, false otherwise.
     /// @return sqrtPriceX96After The price after the swap.
-    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
+    function getAmountToSwapToReachPrice(
+        uint160 sqrtPriceTargetX96,
+        uint256 maxAmount
+    )
         public
         returns (
             uint256,
@@ -354,7 +360,9 @@ contract QuoterHelper {
     {
         uint256 iterations;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = BINARY_MAX_AMOUNT_FOR_PUSH_PRICE;
+        uint256 high = maxAmount == 0
+            ? BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
+            : maxAmount;
         bool swapWETHForOETHB = getSwapDirection(sqrtPriceTargetX96);
 
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
@@ -560,13 +568,39 @@ contract AerodromeAMOQuoter {
     /// @notice Use this to get the amount to swap to reach the target price after swap.
     /// @dev This call will only revert, check the logs to get returned values.
     /// @param sqrtPriceTargetX96 The target price to reach.
+    /// @param maxAmount The maximum amount to swap. (See QuoterHelper for more details)
+    function quoteAmountToSwapToReachPrice(
+        uint160 sqrtPriceTargetX96,
+        uint256 maxAmount
+    ) public {
+        (
+            uint256 amount,
+            uint256 iterations,
+            bool swapWETHForOETHB,
+            uint160 sqrtPriceAfterX96
+        ) = quoterHelper.getAmountToSwapToReachPrice(
+                sqrtPriceTargetX96,
+                maxAmount
+            );
+
+        emit ValueFoundBis(
+            amount,
+            iterations,
+            swapWETHForOETHB,
+            sqrtPriceAfterX96
+        );
+    }
+
+    /// @notice Use this to get the amount to swap to reach the target price after swap.
+    /// @dev This call will only revert, check the logs to get returned values.
+    /// @param sqrtPriceTargetX96 The target price to reach.
     function quoteAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public {
         (
             uint256 amount,
             uint256 iterations,
             bool swapWETHForOETHB,
             uint160 sqrtPriceAfterX96
-        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96);
+        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96, 0);
 
         emit ValueFoundBis(
             amount,

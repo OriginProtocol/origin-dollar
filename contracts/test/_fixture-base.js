@@ -140,7 +140,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   for (const user of [rafael, nick]) {
     // Mint some bridged WOETH
     await woeth.connect(minter).mint(user.address, oethUnits("1"));
-    await weth.connect(user).deposit({ value: oethUnits("5000") });
+    await hhHelpers.setBalance(user.address, oethUnits("10000000"));
+    await weth.connect(user).deposit({ value: oethUnits("100000") });
 
     // Set allowance on the vault
     await weth.connect(user).approve(oethbVault.address, oethUnits("50"));

@@ -44,10 +44,10 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
 
     await weth
       .connect(rafael)
-      .approve(aeroSwapRouter.address, oethUnits("1000"));
+      .approve(aeroSwapRouter.address, oethUnits("1000000000"));
     await oethb
       .connect(rafael)
-      .approve(aeroSwapRouter.address, oethUnits("1000"));
+      .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
   // Haven't found away to test for this in the strategy contract yet
@@ -70,17 +70,51 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     ).to.be.revertedWith("Can not rebalance empty pool");
   });
 
-  it.skip("Should be reverted trying to rebalance and we are not in the correct tick", async () => {
-    // Push price to tick 0, which is OutisdeExpectedTickRange
-    const { value, direction } = await quoteAmountToSwapToReachPrice(
-      await aerodromeAmoStrategy.sqrtRatioX96TickHigher()
+  it("Should be reverted trying to rebalance and we are not in the correct tick, below", async () => {
+    // Push price to tick -2, which is OutisdeExpectedTickRange
+    const priceAtTickM2 = BigNumber.from("79220240490215316061937756561"); // tick -2
+    const { value, direction } = await quoteAmountToSwapToReachPrice({
+      price: priceAtTickM2,
+      maxAmount: 0,
+    });
+    await swap({
+      amount: value,
+      swapWeth: direction,
+      priceLimit: priceAtTickM2,
+    });
+
+    // Ensure the price has been pushed enough
+    expect(await aerodromeAmoStrategy.getPoolX96Price()).to.be.eq(
+      priceAtTickM2
     );
-    await swap({ amount: value, swapWeth: direction });
 
     await expect(
       aerodromeAmoStrategy
         .connect(strategist)
-        .rebalance(oethUnits("0"), false, oethUnits("0"))
+        .rebalance(oethUnits("0"), direction, oethUnits("0"))
+    ).to.be.revertedWith("OutsideExpectedTickRange");
+  });
+
+  it("Should be reverted trying to rebalance and we are not in the correct tick, above", async () => {
+    // Push price to tick 1, which is OutisdeExpectedTickRange
+    const priceAtTick1 = BigNumber.from("79232123823359799118286999568"); // tick 1
+    const { value, direction } = await quoteAmountToSwapToReachPrice({
+      price: priceAtTick1,
+      maxAmount: 0,
+    });
+    await swap({
+      amount: value,
+      swapWeth: direction,
+      priceLimit: priceAtTick1,
+    });
+
+    // Ensure the price has been pushed enough
+    expect(await aerodromeAmoStrategy.getPoolX96Price()).to.be.eq(priceAtTick1);
+
+    await expect(
+      aerodromeAmoStrategy
+        .connect(strategist)
+        .rebalance(oethUnits("0"), direction, oethUnits("0"))
     ).to.be.revertedWith("OutsideExpectedTickRange");
   });
 
@@ -118,8 +152,17 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     });
   };
 
-  const quoteAmountToSwapToReachPrice = async (price) => {
-    const txResponse = await quoter.quoteAmountToSwapToReachPrice(price);
+  const quoteAmountToSwapToReachPrice = async ({ price, maxAmount }) => {
+    let txResponse;
+    if (maxAmount == 0) {
+      txResponse = await quoter["quoteAmountToSwapToReachPrice(uint160)"](
+        price
+      );
+    } else {
+      txResponse = await quoter[
+        "quoteAmountToSwapToReachPrice(uint160,uint256)"
+      ](price, maxAmount);
+    }
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
@@ -128,7 +171,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
     return { value, direction, priceReached };
   };
 
-  const swap = async ({ amount, swapWeth }) => {
+  const swap = async ({ amount, swapWeth, priceLimit }) => {
     // Check if rafael as enough token to perfom swap
     // If not, mint some
     const balanceOETHb = await oethb.balanceOf(rafael.address);
@@ -151,9 +194,12 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", function ()
       deadline: 9999999999,
       amountIn: amount,
       amountOutMinimum: 0, // slippage check
-      sqrtPriceLimitX96: swapWeth
-        ? sqrtRatioX96TickM1000
-        : sqrtRatioX96Tick1000,
+      sqrtPriceLimitX96:
+        priceLimit == 0
+          ? swapWeth
+            ? sqrtRatioX96TickM1000
+            : sqrtRatioX96Tick1000
+          : priceLimit,
     });
   };
 });
@@ -193,10 +239,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     await setup();
     await weth
       .connect(rafael)
-      .approve(aeroSwapRouter.address, oethUnits("1000"));
+      .approve(aeroSwapRouter.address, oethUnits("1000000000"));
     await oethb
       .connect(rafael)
-      .approve(aeroSwapRouter.address, oethUnits("1000"));
+      .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
   describe("ForkTest: Initial state (Base)", function () {
@@ -715,7 +761,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should be able to rebalance the pool when price pushed to 1:1", async () => {
       const priceAtTick0 = await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
       let { value: value0, direction: direction0 } =
-        await quoteAmountToSwapToReachPrice(priceAtTick0);
+        await quoteAmountToSwapToReachPrice({
+          price: priceAtTick0,
+          maxAmount: oethUnits("2000"),
+        });
       await swap({
         amount: value0,
         swapWeth: direction0,
@@ -737,7 +786,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       const priceAtTickLower =
         await aerodromeAmoStrategy.sqrtRatioX96TickLower();
       let { value: value0, direction: direction0 } =
-        await quoteAmountToSwapToReachPrice(priceAtTickLower);
+        await quoteAmountToSwapToReachPrice({
+          price: priceAtTickLower,
+          maxAmount: oethUnits("2000"),
+        });
       await swap({
         amount: value0,
         swapWeth: direction0,
@@ -939,8 +991,17 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   //   console.log("price of OETHb   : ", displayedPoolPrice);
   // };
 
-  const quoteAmountToSwapToReachPrice = async (price) => {
-    const txResponse = await quoter.quoteAmountToSwapToReachPrice(price);
+  const quoteAmountToSwapToReachPrice = async ({ price, maxAmount }) => {
+    let txResponse;
+    if (maxAmount == 0) {
+      txResponse = await quoter["quoteAmountToSwapToReachPrice(uint160)"](
+        price
+      );
+    } else {
+      txResponse = await quoter[
+        "quoteAmountToSwapToReachPrice(uint160,uint256)"
+      ](price, maxAmount);
+    }
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
