@@ -50,9 +50,7 @@ interface ICLPool {
     /// Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0.
     /// In addition, these values are only relative and must be used only in comparison to previous snapshots for
     /// a specific position.
-    function ticks(
-        int24 tick
-    )
+    function ticks(int24 tick)
         external
         view
         returns (
