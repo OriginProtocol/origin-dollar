@@ -34,6 +34,12 @@ const snapAero = async ({ block }) => {
   const poolTotal = poolWethBalance.add(poolOethBalance);
   const poolWethPercentage = poolWethBalance.mul(10000).div(poolTotal);
   const poolOethPercentage = poolOethBalance.mul(10000).div(poolTotal);
+  const { _amountWeth: tickWethBalance, _amountOethb: tickOethBalance } =
+    await aeroStrat.getPositionPrincipal();
+  const tickTotal = tickWethBalance.add(tickOethBalance);
+  const tickWethPercentage = tickWethBalance.mul(10000).div(tickTotal);
+  const tickOethPercentage = tickOethBalance.mul(10000).div(tickTotal);
+  const tickTotalPercentage = tickTotal.mul(10000).div(poolTotal);
 
   const checkBalance = await aeroStrat
     .connect(signer)
@@ -59,6 +65,24 @@ const snapAero = async ({ block }) => {
     )}%), ${poolOethBalance} wei`
   );
   console.log(`Pool total       : ${formatUnits(poolTotal)}`);
+  console.log(
+    `Tick strat WETH  : ${formatUnits(tickWethBalance)} (${formatUnits(
+      tickWethPercentage,
+      2
+    )}%), ${poolWethBalance} wei`
+  );
+  console.log(
+    `Tick strat OETH  : ${formatUnits(tickOethBalance)} (${formatUnits(
+      tickOethPercentage,
+      2
+    )}%), ${poolOethBalance} wei`
+  );
+  console.log(
+    `Tick strat total : ${formatUnits(tickTotal)} ${formatUnits(
+      tickTotalPercentage,
+      2
+    )}% of pool`
+  );
   console.log(
     `Strategy balance : ${formatUnits(checkBalance)} ether, ${checkBalance} wei`
   );
