@@ -19,7 +19,7 @@ const {
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
-
+const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -1546,6 +1546,18 @@ subtask(
     await snapStaking({ ...taskArgs, signer });
   });
 task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapAero", "Takes a snapshot of the Aerodrome Strategy at a block")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapAero);
+task("snapAero").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
