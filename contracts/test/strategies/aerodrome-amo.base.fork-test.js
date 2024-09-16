@@ -613,7 +613,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should be able to deposit to the pool & rebalance", async () => {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
-      const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
+      });
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
@@ -623,7 +626,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     it("Should be able to deposit to the pool & rebalance multiple times", async () => {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
-      const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
+      });
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
@@ -690,11 +696,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
 
     it("Should revert when pool rebalance is off target", async () => {
-      const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0.90"),
+        highValue: oethUnits("0.92"),
+      });
 
-      await expect(
-        rebalance(value.mul("200").div("100"), direction, 0)
-      ).to.be.revertedWith("PoolRebalanceOutOfBounds");
+      await expect(rebalance(value, direction, 0)).to.be.revertedWith(
+        "PoolRebalanceOutOfBounds"
+      );
     });
 
     it("Should be able to rebalance the pool when price pushed to 1:1", async () => {
@@ -709,7 +718,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
       // supply some WETH for the rebalance
       await mintAndDepositToStrategy({ amount: oethUnits("1") });
 
-      const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
+      });
       await rebalance(value, direction, value.mul("99").div("100"));
 
       await assetLpStakedInGauge();
@@ -725,7 +737,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         swapWeth: direction0,
       });
 
-      const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
+      });
       await rebalance(value, direction, value.mul("99").div("100"));
 
       await assetLpStakedInGauge();
@@ -878,7 +893,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
   const setup = async () => {
     await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
-    const { value, direction } = await quoteAmountToSwapBeforeRebalance();
+    const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      lowValue: oethUnits("0"),
+      highValue: oethUnits("0"),
+    });
 
     // move the price to pre-configured 20% value
     await rebalance(
@@ -955,26 +973,41 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
     });
   };
 
-  const quoteAmountToSwapBeforeRebalance = async () => {
-    // Get the strategist address
-    const strategist = oethbVault.strategistAddr();
-
+  const quoteAmountToSwapBeforeRebalance = async ({ lowValue, highValue }) => {
     // Set Quoter as strategist to pass the `onlyGovernorOrStrategist` requirement
-    await oethbVault
-      .connect(await impersonateAndFund(addresses.base.governor))
-      .setStrategistAddr(await quoter.quoterHelper());
+    // Get governor
+    const gov = await aerodromeAmoStrategy.governor();
+    // Set pending governance to quoter helper
+    await aerodromeAmoStrategy
+      .connect(await impersonateAndFund(gov))
+      .transferGovernance(await quoter.quoterHelper());
+    // Quoter claim governance)
+    await quoter.claimGovernance();
 
+    let txResponse;
+    if (lowValue == 0 && highValue == 0) {
+      txResponse = await quoter["quoteAmountToSwapBeforeRebalance()"]();
+    } else {
+      txResponse = await quoter[
+        "quoteAmountToSwapBeforeRebalance(uint256,uint256)"
+      ](lowValue, highValue);
+    }
     // Get the quote
-    const txResponse = await quoter["quoteAmountToSwapBeforeRebalance()"]();
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
     const direction = transferEvent.args.swapWETHForOETHB;
 
     // Set back the original strategist
+    /*
     await oethbVault
       .connect(await impersonateAndFund(addresses.base.governor))
       .setStrategistAddr(strategist);
+    */
+    quoter.giveBackGovernance();
+    await aerodromeAmoStrategy
+      .connect(await impersonateAndFund(gov))
+      .claimGovernance();
 
     // Return the value and direction
     return { value, direction };

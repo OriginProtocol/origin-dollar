@@ -55,4 +55,8 @@ interface IAMOStrategy {
     function allowedWethShareStart() external view returns (uint256);
 
     function allowedWethShareEnd() external view returns (uint256);
+
+    function claimGovernance() external;
+
+    function transferGovernance(address _governor) external;
 }

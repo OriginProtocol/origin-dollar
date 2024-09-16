@@ -51,6 +51,8 @@ contract QuoterHelper {
     IQuoterV2 public quoterV2;
     IAMOStrategy public strategy;
 
+    address public originalGovernor;
+
     ////////////////////////////////////////////////////////////////
     /// --- ERRORS & EVENTS
     ////////////////////////////////////////////////////////////////
@@ -321,7 +323,13 @@ contract QuoterHelper {
         uint160 currentPrice = strategy.getPoolX96Price();
         uint160 ticker0Price = strategy.sqrtRatioX96TickLower();
         uint160 ticker1Price = strategy.sqrtRatioX96TickHigher();
-        uint160 targetPrice = (ticker0Price * 20 + ticker1Price * 80) / 100;
+        uint256 allowedWethShareStart = strategy.allowedWethShareStart();
+        uint256 allowedWethShareEnd = strategy.allowedWethShareEnd();
+        uint160 mid = uint160(allowedWethShareStart + allowedWethShareEnd) / 2;
+        uint160 targetPrice = (ticker0Price *
+            mid +
+            ticker1Price *
+            (1 ether - mid)) / 1 ether;
 
         return currentPrice > targetPrice;
     }
@@ -414,6 +422,19 @@ contract QuoterHelper {
     {
         uint160 currentPrice = strategy.getPoolX96Price();
         return currentPrice > sqrtPriceTargetX96;
+    }
+
+    function claimGovernanceOnAMO() public {
+        originalGovernor = strategy.governor();
+        strategy.claimGovernance();
+    }
+
+    function giveBackGovernanceOnAMO() public {
+        require(
+            originalGovernor != address(0),
+            "Quoter: Original governor not set"
+        );
+        strategy.transferGovernance(originalGovernor);
     }
 }
 
@@ -551,5 +572,13 @@ contract AerodromeAMOQuoter {
             swapWETHForOETHB,
             sqrtPriceAfterX96
         );
+    }
+
+    function claimGovernance() public {
+        quoterHelper.claimGovernanceOnAMO();
+    }
+
+    function giveBackGovernance() public {
+        quoterHelper.giveBackGovernanceOnAMO();
     }
 }
