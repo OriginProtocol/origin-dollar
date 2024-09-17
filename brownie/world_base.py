@@ -39,25 +39,40 @@ def scale_amount(from_token, to_token, amount, decimals=0):
 def amo_snapsnot():
     wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
-    total = wethPoolBalance + superOETHbPoolBalance
+    poolTotal = wethPoolBalance + superOETHbPoolBalance
 
     (wethOwned, oethbOwned) = amo_strat.getPositionPrincipal()
     nonStratWeth = wethPoolBalance - wethOwned
     nonStratOethb = superOETHbPoolBalance - oethbOwned
     stratTotal = wethOwned + oethbOwned 
+    othersTotal = nonStratWeth + nonStratOethb
+
+    liquidityGross = amo_pool.ticks(amo_strat.lowerTick())[0]
+    wethInTickTotal, oethbInTickTotal =  aero_helper.getAmountsForLiquidity(
+        amo_pool.slot0()[0], #sqrtPriceX96
+        amo_strat.sqrtRatioX96TickLower(), 
+        amo_strat.sqrtRatioX96TickHigher(),
+        liquidityGross
+    )
+    totalTickTokens = wethInTickTotal + oethbInTickTotal
 
     print("------------------ AMO Strategy LP position ------------------")
     print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
     print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
     print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
+    print("Total      ", c18(stratTotal), pcts(100))
+    print("Dominance  ", pcts(stratTotal / totalTickTokens * 100))
+
 
     print("------------------ Others LP position ------------------------")
     print("           ", leading_whitespace("Amount"))
     print("WETH       ", c18(nonStratWeth))
     print("superOETH  ", c18(nonStratOethb))
-    
-    print("--------------------- Pool stats -----------------------------")
-    print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
-    print("WETH       ", c18(wethPoolBalance), pcts(wethPoolBalance * 100 / total))
-    print("superOETH  ", c18(superOETHbPoolBalance), pcts(superOETHbPoolBalance * 100 / total))
-    print("Total      ", c18(total), pcts(100))
+    print("Total      ", c18(othersTotal), pcts(100))
+
+    # Maybe un-comment if you deem it useful    
+    # print("--------------------- Pool stats -----------------------------")
+    # print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
+    # print("WETH       ", c18(wethPoolBalance), pcts(wethPoolBalance * 100 / total))
+    # print("superOETH  ", c18(superOETHbPoolBalance), pcts(superOETHbPoolBalance * 100 / total))
+    # print("Total      ", c18(poolTotal), pcts(100))
