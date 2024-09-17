@@ -201,6 +201,19 @@ describe("ForkTest: ARM Buyback", function () {
     });
   });
 
+  it("Should check the configuration", async () => {
+    const { armBuyback, weth, ogn, rewardsSource } = fixture;
+    const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+    expect(await armBuyback.oToken()).to.be.eq(weth.address);
+    expect(await armBuyback.ogn()).to.be.eq(
+      ethers.utils.getAddress(ogn.address)
+    );
+    expect(await armBuyback.rewardsSource()).to.be.eq(rewardsSource.address);
+    expect(await armBuyback.swapRouter()).to.be.eq(cSwapper.address);
+    expect(await armBuyback.cvxShareBps()).to.be.eq(0);
+  });
+
   it("Should swap WETH for OGN", async () => {
     const { armBuyback, weth, oethVault, ogn, rewardsSource, strategist } =
       fixture;
