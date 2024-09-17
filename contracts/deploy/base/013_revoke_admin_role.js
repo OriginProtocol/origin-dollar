@@ -22,7 +22,7 @@ module.exports = deployOnBaseWithGuardian(
         {
           // 1. Revoke admin role from multisig on Bridged wOETH
           contract: cBridgedWOETH,
-          signature: "grantRole(bytes32,address)",
+          signature: "revokeRole(bytes32,address)",
           args: [ADMIN_ROLE, addresses.base.governor],
         },
       ],
