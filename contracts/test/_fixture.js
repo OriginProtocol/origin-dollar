@@ -2380,7 +2380,7 @@ async function buybackFixture() {
 
     await vault.connect(josh).mint(dai.address, oethUnits("1231"), "0");
     await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
-    await setERC20TokenBalance(armBuyback.address, weth, "100"); 
+    await setERC20TokenBalance(armBuyback.address, weth, "100");
 
     // Compute splits
     await oethBuyback.connect(timelock).updateBuybackSplits();

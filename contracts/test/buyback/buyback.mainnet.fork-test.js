@@ -201,7 +201,7 @@ describe("ForkTest: ARM Buyback", function () {
     });
   });
 
-  it.only("Should swap WETH for OGN", async () => {
+  it("Should swap WETH for OGN", async () => {
     const { armBuyback, weth, oethVault, ogn, rewardsSource, strategist } =
       fixture;
 
