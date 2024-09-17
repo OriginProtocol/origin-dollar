@@ -422,7 +422,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
+      // There may remain some WETH left on the strategy contract because:
+      // When calculating `shareOfWetToRemove` on `withdraw` function in `AerodromeAMOStrategy.sol`, the result is rounded up.
+      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
+      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
+      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
+      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
+      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
+      // However, during test the error values remains most of the time below 1e6wei.
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
         BigNumber.from("1000000")
       );
@@ -512,7 +519,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
+      // There may remain some WETH left on the strategy contract because:
+      // When calculating `shareOfWetToRemove` on `withdraw` function in `AerodromeAMOStrategy.sol`, the result is rounded up.
+      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
+      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
+      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
+      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
+      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
+      // However, during test the error values remains most of the time below 1e6wei.
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
         BigNumber.from("1000000")
       );
@@ -597,7 +611,14 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // Little to no weth should be left on the strategy contract - 1000000 wei is really small
+      // There may remain some WETH left on the strategy contract because:
+      // When calculating `shareOfWetToRemove` on `withdraw` function in `AerodromeAMOStrategy.sol`, the result is rounded up.
+      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
+      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
+      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
+      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
+      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
+      // However, during test the error values remains most of the time below 1e6wei.
       expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
         BigNumber.from("1000000")
       );
