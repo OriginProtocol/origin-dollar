@@ -741,3 +741,39 @@ def main():
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
+
+# -----------------------------------------------------
+# Sept 18 2024 - wOETH Strategy Deposit
+# -----------------------------------------------------
+from world_base import *
+
+def main():
+  txs = []
+
+  amount = 110 * 10**18
+
+  # Take Vault snapshot 
+  txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth.approve(OETHB_WOETH_STRATEGY, amount, { 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': OETHB_STRATEGIST }))
+
+  # Rebase so that any yields from price update and
+  # backing asset change from deposit are accounted for.
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Check Vault Value against snapshot
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+  supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_STRATEGIST}))
+
+  print("--------------------")
+  print("Profit       ", c18(profit), profit)
+  print("Vault Change ", c18(vault_change), vault_change)
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
