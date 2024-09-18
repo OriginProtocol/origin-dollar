@@ -191,7 +191,8 @@ addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 // OGN Governance
 addresses.mainnet.GovernorSix = "0x1D3Fbd4d129Ddd2372EA85c5Fa00b2682081c9EC";
 // Multisig
-addresses.mainnet.MultiSig2OutOf9 = "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC";
+addresses.mainnet.MultiSig2OutOf9 =
+  "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC";
 
 // OETH
 addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
