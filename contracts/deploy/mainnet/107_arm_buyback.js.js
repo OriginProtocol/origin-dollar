@@ -38,8 +38,8 @@ module.exports = deploymentWithGovernanceProposal(
       "initialize(address,address,address,address,uint256)",
       [
         cSwapper.address, // Swapper1InchV5
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC", // MS 2
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC", // MS 2
+        addresses.mainnet.MultiSig2OutOf9, // MS 2
+        addresses.mainnet.MultiSig2OutOf9, // MS 2
         addresses.mainnet.OGNRewardsSource, // FixedRateRewardsSourceProxy
         0,
       ]
