@@ -2345,15 +2345,18 @@ async function buybackFixture() {
     oethBuybackProxy.address
   );
 
-  const armBuybackProxy = await ethers.getContract("ARMBuybackProxy");
-  const armBuyback = await ethers.getContractAt(
-    "ARMBuyback",
-    armBuybackProxy.address
-  );
+  let armBuyback;
+  if (isFork) {
+    const armBuybackProxy = await ethers.getContract("ARMBuybackProxy");
+    armBuyback = await ethers.getContractAt(
+      "ARMBuyback",
+      armBuybackProxy.address
+    );
+    fixture.armBuyback = armBuyback;
+  }
 
   fixture.ousdBuyback = ousdBuyback;
   fixture.oethBuyback = oethBuyback;
-  fixture.armBuyback = armBuyback;
 
   const rewardsSourceAddress = await ousdBuyback.connect(josh).rewardsSource();
   fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
@@ -2403,12 +2406,12 @@ async function buybackFixture() {
     // Transfer those to the buyback contract
     await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
     await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
-    await weth.connect(josh).transfer(armBuyback.address, oethUnits("3"));
+    //await weth.connect(josh).transfer(armBuyback.address, oethUnits("3"));
 
     // Compute splits
     await oethBuyback.connect(governor).updateBuybackSplits();
     await ousdBuyback.connect(governor).updateBuybackSplits();
-    await armBuyback.connect(governor).updateBuybackSplits();
+    //await armBuyback.connect(governor).updateBuybackSplits();
   }
 
   return fixture;
