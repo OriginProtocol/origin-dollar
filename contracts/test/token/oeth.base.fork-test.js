@@ -27,7 +27,7 @@ describe("ForkTest: OETHb", function () {
 
   it("Should have the right governor", async () => {
     const { oethb } = fixture;
-    expect(await oethb.governor()).to.eq(addresses.base.governor);
+    expect(await oethb.governor()).to.eq(addresses.base.timelock);
   });
 
   it("Should have the right Vault address", async () => {

@@ -167,6 +167,7 @@ contract OETHVaultCore is VaultCore {
      */
     function requestWithdrawal(uint256 _amount)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 requestId, uint256 queued)
@@ -214,6 +215,7 @@ contract OETHVaultCore is VaultCore {
      */
     function claimWithdrawal(uint256 _requestId)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 amount)
@@ -254,6 +256,7 @@ contract OETHVaultCore is VaultCore {
      */
     function claimWithdrawals(uint256[] memory _requestIds)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)

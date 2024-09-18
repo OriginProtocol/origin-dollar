@@ -4,7 +4,9 @@ const {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
+  handleTransitionGovernance,
 } = require("./deploy");
+const { proposeGovernanceArgs } = require("./governor");
 const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
 
@@ -106,7 +108,7 @@ function deployOnBase(opts, fn) {
   return main;
 }
 function deployOnBaseWithGuardian(opts, fn) {
-  const { deployName, dependencies, onlyOnFork, forceSkip } = opts;
+  const { deployName, dependencies, onlyOnFork, forceSkip, useTimelock } = opts;
 
   const runDeployment = async (hre) => {
     const tools = {
@@ -132,37 +134,46 @@ function deployOnBaseWithGuardian(opts, fn) {
 
     const proposal = await fn(tools);
 
-    const sGuardian = !isFork
-      ? undefined
-      : await ethers.provider.getSigner(guardianAddr);
-    console.log("guardianAddr", guardianAddr);
+    if (useTimelock != false) {
+      // Using `!= false` because we want to treat `== undefined` as true by default as well
+      const propDescription = proposal.name || deployName;
+      const propArgs = await proposeGovernanceArgs(proposal.actions);
 
-    const guardianActions = [];
-    for (const action of proposal.actions) {
-      const { contract, signature, args } = action;
+      await handleTransitionGovernance(propDescription, propArgs);
+    } else {
+      // Handle Guardian governance
+      const sGuardian = !isFork
+        ? undefined
+        : await ethers.provider.getSigner(guardianAddr);
+      console.log("guardianAddr", guardianAddr);
 
-      if (isFork) {
-        log(`Sending governance action ${signature} to ${contract.address}`);
-        await withConfirmation(
-          contract.connect(sGuardian)[signature](...args, await getTxOpts())
-        );
+      const guardianActions = [];
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        if (isFork) {
+          log(`Sending governance action ${signature} to ${contract.address}`);
+          await withConfirmation(
+            contract.connect(sGuardian)[signature](...args, await getTxOpts())
+          );
+        }
+
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: contract.interface.encodeFunctionData(signature, args),
+          value: "0",
+        });
+
+        console.log(`... ${signature} completed`);
       }
 
-      guardianActions.push({
-        sig: signature,
-        args: args,
-        to: contract.address,
-        data: contract.interface.encodeFunctionData(signature, args),
-        value: "0",
-      });
-
-      console.log(`... ${signature} completed`);
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
     }
-
-    console.log(
-      "Execute the following actions using guardian safe: ",
-      guardianActions
-    );
   };
 
   const main = async (hre) => {
@@ -190,6 +201,7 @@ function deployOnBaseWithGuardian(opts, fn) {
 
   return main;
 }
+
 module.exports = {
   deployOnArb,
   deployOnBase,

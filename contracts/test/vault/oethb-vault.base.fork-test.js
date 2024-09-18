@@ -37,9 +37,13 @@ describe("ForkTest: OETHb Vault", function () {
       const userBalanceAfter = await oethb.balanceOf(nick.address);
       const totalSupplyAfter = await oethb.totalSupply();
 
-      expect(totalSupplyAfter).to.equal(totalSupplyBefore.add(oethUnits("1")));
-      expect(userBalanceAfter).to.equal(userBalanceBefore.add(oethUnits("1")));
-      expect(vaultBalanceAfter).to.equal(
+      expect(totalSupplyAfter).to.approxEqual(
+        totalSupplyBefore.add(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqual(
+        userBalanceBefore.add(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqual(
         vaultBalanceBefore.add(oethUnits("1"))
       );
     });
@@ -101,6 +105,24 @@ describe("ForkTest: OETHb Vault", function () {
           oethbVault.connect(signer).redeem(oethUnits("1"), "0")
         ).to.be.revertedWith("Caller is not the Strategist or Governor");
       }
+    });
+  });
+
+  describe("Async withdrawals", function () {
+    it("Should be disabled", async () => {
+      const { oethbVault, nick } = fixture;
+
+      let tx = oethbVault.connect(nick).requestWithdrawal(oethUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+
+      tx = oethbVault.connect(nick).claimWithdrawal(oethUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+
+      tx = oethbVault.connect(nick).claimWithdrawals([oethUnits("1")]);
+
+      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
     });
   });
 

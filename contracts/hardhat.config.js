@@ -266,15 +266,21 @@ module.exports = {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
-        process.env.FORK === "true"
+        process.env.FORK_NETWORK_NAME == "base"
+          ? addresses.base.timelock
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       hardhat:
-        process.env.FORK === "true"
+        process.env.FORK_NETWORK_NAME == "base"
+          ? addresses.base.timelock
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
-      // Base has no timelock
+      base: addresses.base.timelock,
     },
     guardianAddr: {
       default: 1,

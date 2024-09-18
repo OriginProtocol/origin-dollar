@@ -216,6 +216,8 @@ interface IVault {
 
     function setDripper(address _dripper) external;
 
+    function dripper() external view returns (address);
+
     function weth() external view returns (address);
 
     function cacheWETHAssetIndex() external;

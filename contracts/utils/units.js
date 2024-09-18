@@ -37,8 +37,22 @@ async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
 
+/**
+ * Converts a scaled amount or non scaled amount to a BigNumber.
+ * @param {*} amount can be a number, float or string
+ * @param {number} decimals
+ * @returns
+ */
+const convertToBigNumber = (amount, decimals = 18) => {
+  const amountStr = amount.toString();
+  return amountStr.length >= decimals - 3
+    ? BigNumber.from(amountStr)
+    : parseUnits(amountStr, decimals);
+};
+
 module.exports = {
   decimalsFor,
   scaleAmount,
   units,
+  convertToBigNumber,
 };

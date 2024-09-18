@@ -7,5 +7,8 @@
   "006_base_amo_strategy": 1724882095,
   "007_bridged_woeth_strategy": 1724168481,
   "008_oethb_zapper": 1724651792,
-  "009_upgrade_vault": 1724831516
+  "009_upgrade_vault": 1724831516,
+  "010_upgrade_vault_core": 1724933115,
+  "011_transfer_governance": 1725984158,
+  "012_claim_governance": 1725984162
 }
