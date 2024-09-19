@@ -399,9 +399,33 @@ contract VaultCore is VaultInitializer {
         // Only rachet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
         if (vaultValue > ousdSupply) {
+            uint256 _oldRebasingCreditsPerTokenHighres = oUSD.rebasingCreditsPerTokenHighres();
             oUSD.changeSupply(vaultValue);
+            _distibuteRebaseOverrides(_oldRebasingCreditsPerTokenHighres);
         }
         return vaultValue;
+    }
+
+    function _distibuteRebaseOverrides(uint256 _oldRebasingCreditsPerTokenHighres) 
+        internal whenNotRebasePaused returns (uint256) {
+        uint256 rebaseOverrideCount = rebaseOverrides.length;
+        uint256 rebasingCreditsPerTokenHighres = oUSD.rebasingCreditsPerTokenHighres();
+
+        for (uint256 i = 0; i < rebaseOverrideCount; ++i) {
+            address rebasingAccount = rebaseOverrides[i];
+            address rebasingTarget = rebaseOverrideTarget[rebasingAccount];
+            require(rebasingAccount != address(0), "No zero addresses");
+            require(rebasingTarget != address(0), "No zero addresses");
+
+            (uint256 _creditBalance, uint256 _creditsPerToken,) = oUSD.creditsBalanceOfHighres(rebasingAccount);
+            require(_creditsPerToken == rebasingCreditsPerTokenHighres / 1e9, "Account is not rebasing???");
+
+            uint256 rebaseBalanceIncrease = _creditBalance.divPrecisely(rebasingCreditsPerTokenHighres / 1e9) - 
+                _creditBalance.divPrecisely(_oldRebasingCreditsPerTokenHighres / 1e9);
+
+            // Vault will need an exception
+            oUSD.transferFrom(rebasingAccount, rebasingTarget, rebaseBalanceIncrease);
+        }
     }
 
     /**

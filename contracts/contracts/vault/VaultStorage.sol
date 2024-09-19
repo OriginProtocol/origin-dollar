@@ -173,6 +173,19 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     uint256 public netOusdMintForStrategyThreshold;
 
+    /// @notice Addresses that have their rebasing target overriden and rebase to another address
+    // only governor can add/remove from this list 
+    //
+    // IMPORTANT rebase opt out needs to be prevented for these accounts
+    // Implementation: a mapping(address => bool) of all addresses in this array can serve as an O(1)
+    // check that a rebaseOpOut function can do
+    address[] public rebaseOverrides;
+
+    /// @notice All addresses in rebaseOverrides have an alternate rebasing target
+    // slither-disable-next-line uninitialized-state
+    // only governor can add/remove from this list
+    mapping(address => address) public rebaseOverrideTarget;
+
     // slither-disable-end constable-states
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
