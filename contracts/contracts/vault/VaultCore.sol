@@ -423,7 +423,7 @@ contract VaultCore is VaultInitializer {
             uint256 rebaseBalanceIncrease = _creditBalance.divPrecisely(rebasingCreditsPerTokenHighres / 1e9) - 
                 _creditBalance.divPrecisely(_oldRebasingCreditsPerTokenHighres / 1e9);
 
-            // Vault will need an exception
+            // Vault would need a permissioned function
             oUSD.transferFrom(rebasingAccount, rebasingTarget, rebaseBalanceIncrease);
         }
     }
