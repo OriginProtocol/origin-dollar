@@ -432,9 +432,7 @@ contract VaultCore is VaultInitializer {
             // OR
 
             // ====== Approach 2 =========//
-            // silent change of balances no ERC20 Transfer event
-            //
-            // Vault would need a permissioned function
+            // no ERC20 Transfer event
             oUSD.rebaseToAnotherAccount(
                 rebasingAccount,
                 rebasingTarget,

@@ -610,5 +610,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // - last change in rebasingCreditsPerToken
         _creditBalances[_rebaseFrom] -= _creditsTransfer;
         _creditBalances[_rebaseTo] += _creditsTransfer;
+
+        // TODO: emit event
     }
 }
