@@ -10,6 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation }) => {
+    const { strategistAddr } = await getNamedAccounts();
+
     const cSwapper = await ethers.getContract("Swapper1InchV5");
 
     // Deployer Actions
@@ -38,8 +40,8 @@ module.exports = deploymentWithGovernanceProposal(
       "initialize(address,address,address,address,uint256)",
       [
         cSwapper.address, // Swapper1InchV5
-        addresses.mainnet.MultiSig2OutOf9, // MS 2
-        addresses.mainnet.MultiSig2OutOf9, // MS 2
+        strategistAddr, // MS 2
+        strategistAddr, // MS 2
         addresses.mainnet.OGNRewardsSource, // FixedRateRewardsSourceProxy
         0,
       ]
