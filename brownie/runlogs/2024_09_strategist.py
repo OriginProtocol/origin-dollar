@@ -792,3 +792,55 @@ def main():
   print("Vault Change ", c18(vault_change), vault_change)
 
   print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+
+# -----------------------------------------------------
+# Sept 19 2024 - wOETH Strategy Deposit
+# -----------------------------------------------------
+from world_base import *
+
+def main():
+  txs = []
+
+  treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
+  amount = 928 * 10**18
+
+  # Update oracle price
+  txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_STRATEGIST }))
+  
+  expected_oethb = woeth_strat.getBridgedWOETHValue(amount)
+
+  # Rebase
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Take Vault snapshot 
+  txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth.approve(OETHB_WOETH_STRATEGY, amount, { 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': OETHB_STRATEGIST }))
+
+  # Rebase so that any yields from price update and
+  # backing asset change from deposit are accounted for.
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Transfer to treasury
+  txs.append(oethb.transfer(treasury_address, expected_oethb, { 'from': OETHB_STRATEGIST }))
+
+  # Check Vault Value against snapshot
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+  supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_STRATEGIST}))
+
+  print("--------------------")
+  print("Deposited wOETH     ", c18(amount), amount)
+  print("Expected superOETHb ", c18(expected_oethb), expected_oethb)
+  print("--------------------")
+  print("Profit       ", c18(profit), profit)
+  print("Vault Change ", c18(vault_change), vault_change)
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
