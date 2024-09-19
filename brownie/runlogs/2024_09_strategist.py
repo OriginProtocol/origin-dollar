@@ -803,7 +803,7 @@ def main():
   txs = []
 
   treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
-  amount = 928 * 10**18
+  amount = 1224.0743864 * 10**18
 
   # Update oracle price
   txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_STRATEGIST }))
