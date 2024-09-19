@@ -417,11 +417,11 @@ contract VaultCore is VaultInitializer {
             require(rebasingAccount != address(0), "No zero addresses");
             require(rebasingTarget != address(0), "No zero addresses");
 
-            (uint256 _creditBalance, uint256 _creditsPerToken,) = oUSD.creditsBalanceOfHighres(rebasingAccount);
-            require(_creditsPerToken == rebasingCreditsPerTokenHighres / 1e9, "Account is not rebasing???");
+            (uint256 _creditBalanceHighres, uint256 _accountCreditsPerTokenHighres,) = oUSD.creditsBalanceOfHighres(rebasingAccount);
+            require(_accountCreditsPerTokenHighres == rebasingCreditsPerTokenHighres / 1e9, "Account is not rebasing???");
 
-            uint256 rebaseBalanceIncrease = _creditBalance.divPrecisely(rebasingCreditsPerTokenHighres / 1e9) - 
-                _creditBalance.divPrecisely(_oldRebasingCreditsPerTokenHighres / 1e9);
+            uint256 rebaseBalanceIncrease = _creditBalanceHighres.divPrecisely(rebasingCreditsPerTokenHighres) - 
+                _creditBalanceHighres.divPrecisely(_oldRebasingCreditsPerTokenHighres);
 
             // ====== Approach 1 =========//
             // will transmit an ERC20 transfer event
