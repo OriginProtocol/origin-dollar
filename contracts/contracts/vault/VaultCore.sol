@@ -418,7 +418,7 @@ contract VaultCore is VaultInitializer {
             require(rebasingTarget != address(0), "No zero addresses");
 
             (uint256 _creditBalanceHighres, uint256 _accountCreditsPerTokenHighres,) = oUSD.creditsBalanceOfHighres(rebasingAccount);
-            require(_accountCreditsPerTokenHighres == rebasingCreditsPerTokenHighres / 1e9, "Account is not rebasing???");
+            require(_accountCreditsPerTokenHighres == rebasingCreditsPerTokenHighres, "Account is not rebasing???");
 
             uint256 rebaseBalanceIncrease = _creditBalanceHighres.divPrecisely(rebasingCreditsPerTokenHighres) - 
                 _creditBalanceHighres.divPrecisely(_oldRebasingCreditsPerTokenHighres);
