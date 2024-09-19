@@ -423,8 +423,23 @@ contract VaultCore is VaultInitializer {
             uint256 rebaseBalanceIncrease = _creditBalance.divPrecisely(rebasingCreditsPerTokenHighres / 1e9) - 
                 _creditBalance.divPrecisely(_oldRebasingCreditsPerTokenHighres / 1e9);
 
-            // Vault would need a permissioned function
+            // ====== Approach 1 =========//
+            // will transmit an ERC20 transfer event
+            //
+            // Vault would need a permissioned function on OUSD
             oUSD.transferFrom(rebasingAccount, rebasingTarget, rebaseBalanceIncrease);
+
+            // OR
+
+            // ====== Approach 2 =========//
+            // silent change of balances no ERC20 Transfer event
+            //
+            // Vault would need a permissioned function
+            oUSD.rebaseToAnotherAccount(
+                rebasingAccount,
+                rebasingTarget,
+                rebaseBalanceIncrease.mulTruncate(rebasingCreditsPerTokenHighres / 1e9)
+            );
         }
     }
 

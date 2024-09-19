@@ -600,4 +600,15 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             _rebasingCreditsPerToken
         );
     }
+
+    function rebaseToAnotherAccount(address _rebaseFrom, address _rebaseTo, uint256 _creditsTransfer)
+        external
+        onlyVault
+    {
+        // maybe add some checks that _creditsTransfer is what one would expect according to: 
+        // - _creditBalances[_rebaseFrom]
+        // - last change in rebasingCreditsPerToken
+        _creditBalances[_rebaseFrom] -= _creditsTransfer;
+        _creditBalances[_rebaseTo] += _creditsTransfer;
+    }
 }
