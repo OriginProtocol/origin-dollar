@@ -436,7 +436,7 @@ contract VaultCore is VaultInitializer {
             oUSD.rebaseToAnotherAccount(
                 rebasingAccount,
                 rebasingTarget,
-                rebaseBalanceIncrease.mulTruncate(rebasingCreditsPerTokenHighres / 1e9)
+                rebaseBalanceIncrease.mulTruncate(rebasingCreditsPerTokenHighres)
             );
         }
     }
