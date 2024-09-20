@@ -15,6 +15,7 @@ import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
+import "hardhat/console.sol";
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -36,7 +37,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     enum RebaseOptions {
         NotSet,
         OptOut,
-        OptIn
+        OptIn,
+        // for delegated yield accounts
+        Delegate
     }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
@@ -52,8 +55,71 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
     mapping(address => uint256) public isUpgraded;
+    /**
+     * The delegatedRebases contains a mapping of: 
+     * rebaseSource => rebaseReceiver => creditsPerToken
+     * 
+     * This is all the additional storage logic required to track the balances when
+     * the rebaseSource wants to delegate its yield to a rebaseReceiver. We do this
+     * using the following principle: 
+     * - a yield delegation account freezes its own rebasing by setting RebaseOptions to 
+     *   `Delegate`. It copies the global creditsPerToken to a nonRebasingCreditsPerToken
+     *   mapping indicating its own balance doesn't rebase any longer.
+     * - an entry is added to delegatedRebases:
+     *   `delegatedRebases[rebaseSource] = [rebaseReceiver, _rebasingCreditsPerToken]
+     *   indicating the beginning of yield collection to a delegated account. The difference
+     *   in current global contract `_rebasingCreditsPerToken` and the credits per token
+     *   stored in the delegatedRebases marks all the yield accrued that has been delegating.
+     *   This way a global rebase an O(1) action manages to update the rebasing tokens and
+     *   the delegated rebase tokens. Without any other storage slot changes while rebasing.
+     * - IMPORTANT (!) this mapping is valid only as long as the `_creditBalances[rebaseSource]`
+     *   doesn't change. If transfer in/out happens the `Yield accounting Action` is triggered.
+     * - There are 4 types of Transfer functions to consider: 
+     *   -> Transfer TO rebaseSource
+     *      Transfer changes the amount of source credits that are rebasing to a receiverAccount.
+     *      Yield accounting action triggered
+     *   -> Transfer FROM rebaseSource
+     *      Transfer changes the amount of source credits that are rebasing to a receiverAccount.
+     *      Yield accounting action triggered
+     *   -> Transfer TO rebaseReceiver
+     *      The delegated credits need not be touched here. We just update the internal credits
+     *      of the rebaseReceiver
+     *   -> Transfer FROM rebaseReceiver
+     *      Receiver has credits from 2 sources in the contract:
+     *        1. delegated yield
+     *        2. its own internal credits
+     *      Its own internal credits might not be enough to facilitate the transfer.
+     *      Yield accounting action triggered
+     * 
+     *   Yield accounting Action
+     *     When a transfer from/to rebaseSrouce or transfer from rebaseReceiver happens all the 
+     *     delegated yield accruing in the `delegatedRebases` is materialized to 
+     *     _creditBalances[rebaseReceiver]. The delegatedRebases[rebaseSource]'s
+     *     creditsPerToken are updated to the latest global contract value.
+     *     In other words yield of an account represented by the delegation mapping is moved
+     *     to the receiver's creditBalances.
+     * 
+     * LIMITATIONS: 
+     *  - rebaseSource can delegate yield to only one rebaseReceiver
+     *  - rebaseReceiver can only have yield delegated from one rebaseSource
+     * 
+     */
+    mapping(address => RebaseDelegationData) private delegatedRebases;
+    /**
+     * The delegatedRebasesReversed is just the mapping in the other direction for purposes
+     * of data access. Any update to delegatedRebases needs to also reflect a change in 
+     * delegatedRebasesReversed.
+     * 
+     * rebaseReceiver => [rebaseSource, creditsPerToken]
+     */
+    mapping(address => RebaseDelegationData) private delegatedRebasesReversed;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
+
+    struct RebaseDelegationData {
+        address account; // can be either rebaseSource or rebaseReceiver
+        uint256 delegationStartCreditsPerToken;
+    }
 
     function initialize(
         string calldata _nameArg,
@@ -121,9 +187,14 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         override
         returns (uint256)
     {
-        if (_creditBalances[_account] == 0) return 0;
+        uint256 rebaseDelegatedValue = 0;
+        if (_hasRebaseDelegatedTo(_account)) {
+            rebaseDelegatedValue = _balanceOfRebaseDelegated(_account);
+        }
+
+        if (_creditBalances[_account] == 0) return rebaseDelegatedValue;
         return
-            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+            _creditBalances[_account].divPrecisely(_creditsPerToken(_account)) + rebaseDelegatedValue;
     }
 
     /**
@@ -138,6 +209,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256, uint256)
     {
+        // TODO make it work with rebase delegated
         uint256 cpt = _creditsPerToken(_account);
         if (cpt == 1e27) {
             // For a period before the resolution upgrade, we created all new
@@ -236,6 +308,15 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     ) internal {
         bool isNonRebasingTo = _isNonRebasingAccount(_to);
         bool isNonRebasingFrom = _isNonRebasingAccount(_from);
+        if (_delegatesRebase(_to)) {
+           _delegatedRebaseAccountingBySource(_to);
+        }
+        if (_delegatesRebase(_from)) {
+            _delegatedRebaseAccountingBySource(_from);
+        }
+        if (_hasRebaseDelegatedTo(_from)) {
+            _delegatedRebaseAccountingByReceiver(_from);
+        }
 
         // Credits deducted and credited might be different due to the
         // differing creditsPerToken used by each account
@@ -559,6 +640,107 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         emit AccountRebasingDisabled(msg.sender);
     }
 
+    function governanceDelegateYield(address _accountSource, address _accountReceiver)
+        public
+        onlyGovernor
+    {
+        _delegateYield(_accountSource, _accountReceiver);
+    }
+
+    function governanceStopYieldDelegation(address _accountSource)
+        public
+        onlyGovernor
+    {
+        _stopDelegateYield(_accountSource);
+    }
+
+    function _stopDelegateYield(address _accountSource) internal {
+        RebaseDelegationData memory delegationData = delegatedRebases[_accountSource];
+        require(delegationData.account != address(0), "No entry found");
+
+        delete delegatedRebases[_accountSource];
+        delete delegatedRebasesReversed[delegationData.account];
+        nonRebasingCreditsPerToken[_accountSource] = 0;
+    }
+
+    function _delegateYield(address _accountSource, address _accountReceiver) internal {
+        require(rebaseState[_accountSource] == RebaseOptions.OptIn ||
+            rebaseState[_accountSource] == RebaseOptions.NotSet, "Account not rebasing");
+
+        _resetYieldDelegation(_accountSource, _accountReceiver);
+        nonRebasingCreditsPerToken[_accountSource] = _rebasingCreditsPerToken;
+        rebaseState[_accountSource] = RebaseOptions.Delegate;
+    }
+
+    function _resetYieldDelegation(address _accountSource, address _accountReceiver) internal {
+        delegatedRebases[_accountSource] = RebaseDelegationData({
+            account: _accountReceiver,
+            delegationStartCreditsPerToken: _rebasingCreditsPerToken
+        });
+
+        delegatedRebasesReversed[_accountReceiver] = RebaseDelegationData({
+            account: _accountSource,
+            delegationStartCreditsPerToken: _rebasingCreditsPerToken 
+        });
+    }
+
+    // moves funds from delegatedRebases to creditBalances
+    function _delegatedRebaseAccountingBySource(address _accountSource) internal {
+        RebaseDelegationData memory delegationData = delegatedRebases[_accountSource];
+
+        // receiver has no pending rebases to account for
+        if (delegationData.delegationStartCreditsPerToken == _rebasingCreditsPerToken) {
+            return;
+        }
+        _delegatedRebaseAccounting(_accountSource, delegationData.account, delegationData.delegationStartCreditsPerToken);
+    }
+
+    // moves funds from delegatedRebases to creditBalances
+    function _delegatedRebaseAccountingByReceiver(address _accountReceiver) internal {
+        RebaseDelegationData memory delegationData = delegatedRebasesReversed[_accountReceiver];
+        // receiver has no pending rebases to account for
+        if (delegationData.delegationStartCreditsPerToken == _rebasingCreditsPerToken) {
+            return;
+        }
+        _delegatedRebaseAccounting(delegationData.account, _accountReceiver, delegationData.delegationStartCreditsPerToken);
+    }
+
+    function _delegatedRebaseAccounting(
+        address _accountSource,
+        address _accountReceiver,
+        uint256 _delegationStartCreditsPerToken
+    ) internal {
+        // TODO: possible to support non rebasing as well
+        require(rebaseState[_accountReceiver] == RebaseOptions.OptIn ||
+            rebaseState[_accountReceiver] == RebaseOptions.NotSet, "Account Receiver needs to support rebasing");
+
+        
+        _creditBalances[_accountReceiver] += _balanceOfRebaseDelegated(_accountSource, _delegationStartCreditsPerToken)
+            .mulTruncate(_rebasingCreditsPerToken);
+        _resetYieldDelegation(_accountSource, _accountReceiver);
+    }
+
+        
+    function _balanceOfRebaseDelegated(address _accountReceiver) internal view returns (uint256){
+        RebaseDelegationData memory delegationData = delegatedRebasesReversed[_accountReceiver];
+        return _balanceOfRebaseDelegated(delegationData.account, delegationData.delegationStartCreditsPerToken);
+    }
+
+    function _balanceOfRebaseDelegated(address _accountSource, uint256 _delegationStartCreditsPerToken) internal view returns (uint256){
+        return _creditBalances[_accountSource].divPrecisely(_rebasingCreditsPerToken) - 
+            _creditBalances[_accountSource].divPrecisely(_delegationStartCreditsPerToken);
+    }
+
+    // does account have a rebase delegated to itself?
+    function _hasRebaseDelegatedTo(address account) internal view returns (bool){
+        return delegatedRebasesReversed[account].delegationStartCreditsPerToken > 0;
+    }
+
+    // does account have delegate rebase?
+    function _delegatesRebase(address account) internal view returns (bool){
+        return delegatedRebases[account].delegationStartCreditsPerToken > 0;
+    }
+
     /**
      * @dev Modify the supply without minting new tokens. This uses a change in
      *      the exchange rate between "credits" and OUSD tokens to change balances.
@@ -599,18 +781,5 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             _rebasingCredits,
             _rebasingCreditsPerToken
         );
-    }
-
-    function rebaseToAnotherAccount(address _rebaseFrom, address _rebaseTo, uint256 _creditsTransferHighres)
-        external
-        onlyVault
-    {
-        // maybe add some checks that _creditsTransferHighres is what one would expect according to: 
-        // - _creditBalances[_rebaseFrom]
-        // - last change in rebasingCreditsPerToken
-        _creditBalances[_rebaseFrom] -= _creditsTransferHighres;
-        _creditBalances[_rebaseTo] += _creditsTransferHighres;
-
-        // TODO: emit event
     }
 }
