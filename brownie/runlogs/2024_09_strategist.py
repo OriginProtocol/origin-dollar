@@ -887,7 +887,7 @@ def main():
     )
 
 # -------------------------------------------
-# Sept 20 2024 - Add SSV to second Native Staking SSV Cluster
+# Sept 20 2024 - Add SSV to first Native Staking SSV Cluster
 # -------------------------------------------
 
 from world import *
