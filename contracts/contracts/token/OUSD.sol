@@ -15,7 +15,6 @@ import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
-import "hardhat/console.sol";
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -57,7 +56,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     mapping(address => uint256) public isUpgraded;
     /**
      * The delegatedRebases contains a mapping of: 
-     * rebaseSource => rebaseReceiver => creditsPerToken
+     * rebaseSource => [rebaseReceiver, creditsPerToken]
      * 
      * This is all the additional storage logic required to track the balances when
      * the rebaseSource wants to delegate its yield to a rebaseReceiver. We do this
