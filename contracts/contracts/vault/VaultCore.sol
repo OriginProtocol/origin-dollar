@@ -399,46 +399,9 @@ contract VaultCore is VaultInitializer {
         // Only rachet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
         if (vaultValue > ousdSupply) {
-            uint256 _oldRebasingCreditsPerTokenHighres = oUSD.rebasingCreditsPerTokenHighres();
             oUSD.changeSupply(vaultValue);
-            _distibuteRebaseOverrides(_oldRebasingCreditsPerTokenHighres);
         }
         return vaultValue;
-    }
-
-    function _distibuteRebaseOverrides(uint256 _oldRebasingCreditsPerTokenHighres) 
-        internal whenNotRebasePaused returns (uint256) {
-        uint256 rebaseOverrideCount = rebaseOverrides.length;
-        uint256 rebasingCreditsPerTokenHighres = oUSD.rebasingCreditsPerTokenHighres();
-
-        for (uint256 i = 0; i < rebaseOverrideCount; ++i) {
-            address rebasingAccount = rebaseOverrides[i];
-            address rebasingTarget = rebaseOverrideTarget[rebasingAccount];
-            require(rebasingAccount != address(0), "No zero addresses");
-            require(rebasingTarget != address(0), "No zero addresses");
-
-            (uint256 _creditBalanceHighres, uint256 _accountCreditsPerTokenHighres,) = oUSD.creditsBalanceOfHighres(rebasingAccount);
-            require(_accountCreditsPerTokenHighres == rebasingCreditsPerTokenHighres, "Account is not rebasing???");
-
-            uint256 rebaseBalanceIncrease = _creditBalanceHighres.divPrecisely(rebasingCreditsPerTokenHighres) - 
-                _creditBalanceHighres.divPrecisely(_oldRebasingCreditsPerTokenHighres);
-
-            // ====== Approach 1 =========//
-            // will transmit an ERC20 transfer event
-            //
-            // Vault would need a permissioned function on OUSD
-            oUSD.transferFrom(rebasingAccount, rebasingTarget, rebaseBalanceIncrease);
-
-            // OR
-
-            // ====== Approach 2 =========//
-            // no ERC20 Transfer event
-            oUSD.rebaseToAnotherAccount(
-                rebasingAccount,
-                rebasingTarget,
-                rebaseBalanceIncrease.mulTruncate(rebasingCreditsPerTokenHighres)
-            );
-        }
     }
 
     /**
