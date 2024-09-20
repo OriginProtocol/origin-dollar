@@ -885,3 +885,35 @@ def main():
         {'from': OETH_ARM}
       )
     )
+
+# -------------------------------------------
+# Sept 20 2024 - Add SSV to second Native Staking SSV Cluster
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Send 150 SSV to the first Native Staking Strategy
+    amount = 150 * 10**18
+    txs.append(
+      ssv.transfer(
+        OETH_NATIVE_STAKING_STRAT, 
+        amount,
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      native_staking_strat.depositSSV(
+        # SSV Operator Ids
+        [342, 343, 344, 345], 
+        amount,
+        # SSV Cluster details:
+        # validatorCount, networkFeeIndex, index, active, balance
+        [500, 76968331269, 0, True, 108066400915950000100],
+        {'from': STRATEGIST}
+      )
+    )
+
+
