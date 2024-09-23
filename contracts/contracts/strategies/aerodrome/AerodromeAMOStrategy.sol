@@ -188,6 +188,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     // slither-disable-end reentrancy-no-eth
 
     /// @notice the constructor
+    /// @dev This contract is intended to be used as a proxy. To prevent the
+    ///      potential confusion of having a functional implementation contract
+    ///      the constructor has the `initializer` modifier. This way the
+    ///      `initialize` function can not be called on the implementation contract.
+    ///      For the same reason the implementation contract also has the governor
+    ///      set to a zero address.
     /// @param _stratConfig the basic strategy configuration
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _oethbAddress Address of the Erc20 OETHb Token contract
@@ -252,7 +258,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         upperTick = _upperBoundingTick;
         tickSpacing = _tickSpacing;
 
-        // prevent implementation contract to be governed or initialized
+        // prevent implementation contract to be governed
         _setGovernor(address(0));
     }
 
