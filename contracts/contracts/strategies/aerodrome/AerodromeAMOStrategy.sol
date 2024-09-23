@@ -251,6 +251,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         lowerTick = _lowerBoundingTick;
         upperTick = _upperBoundingTick;
         tickSpacing = _tickSpacing;
+
+        // prevent implementation contract to be governed or initialized
+        initialized = true;
+        _setGovernor(address(0));
     }
 
     /**
