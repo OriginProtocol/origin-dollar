@@ -845,6 +845,78 @@ def main():
 
   print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
 
+# -------------------------------------------
+# Sept 20 2024 - Withdraw from OETH AMO Strategy
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(oeth_dripper.collectAndRebase({'from': STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+    # Remove 50 WETH from strategy and burn equivalent OETH
+    txs.append(
+      vault_oeth_admin.withdrawFromStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [weth], 
+        [500 * 10**18],
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+    # Test the OETH ARM can claim its withdrawal
+    # To see all the outstanding withdrawal requests, see Dune query https://dune.com/queries/4067211/6848601
+    txs.append(
+      vault_oeth_core.claimWithdrawals(
+        [58],
+        {'from': OETH_ARM}
+      )
+    )
+
+# -------------------------------------------
+# Sept 20 2024 - Add SSV to first Native Staking SSV Cluster
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Send 150 SSV to the first Native Staking Strategy
+    amount = 150 * 10**18
+    txs.append(
+      ssv.transfer(
+        OETH_NATIVE_STAKING_STRAT, 
+        amount,
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      native_staking_strat.depositSSV(
+        # SSV Operator Ids
+        [342, 343, 344, 345], 
+        amount,
+        # SSV Cluster details:
+        # validatorCount, networkFeeIndex, index, active, balance
+        [500, 76968331269, 0, True, 108066400915950000100],
+        {'from': STRATEGIST}
+      )
+    )
+
+
 # -----------------------------------------------------
 # Sept 22 2024 - Harvest & Swap
 # -----------------------------------------------------
