@@ -212,7 +212,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         int24 _lowerBoundingTick,
         int24 _upperBoundingTick,
         int24 _tickClosestToParity
-    ) InitializableAbstractStrategy(_stratConfig) {
+    ) initializer InitializableAbstractStrategy(_stratConfig) {
         require(
             _lowerBoundingTick == _tickClosestToParity ||
                 _upperBoundingTick == _tickClosestToParity,
@@ -253,7 +253,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         tickSpacing = _tickSpacing;
 
         // prevent implementation contract to be governed or initialized
-        initialized = true;
         _setGovernor(address(0));
     }
 
