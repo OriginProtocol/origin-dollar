@@ -26,13 +26,13 @@ module.exports = deployOnBaseWithGuardian(
         },
         {
           // 2. Recover funds from bribes contract
-          contract: cOETHbProxy,
+          contract: cOETHb,
           signature: "governanceTransfer(address,address)",
           args: [addresses.base.oethbBribesContract, addresses.base.strategist],
         },
         {
           // 3. Revert back OETHb implementation
-          contract: cOETHb,
+          contract: cOETHbProxy,
           signature: "upgradeTo(address)",
           args: [existingImpl],
         },
