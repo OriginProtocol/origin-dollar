@@ -375,7 +375,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *
      * This function has a slightly different behaviour depending on the status of the underlying Aerodrome
      * slipstream pool. The function consists of the following 3 steps:
-     * 1. withdrawPartialLiqidity -> so that moving the activeTrading price via  a swap is cheaper
+     * 1. withdrawPartialLiquidity -> so that moving the activeTrading price via  a swap is cheaper
      * 2. swapToDesiredPosition   -> move active trading price in the pool to be able to deposit WETH & OETHb
      *                               tokens with the desired pre-configured shares
      * 3. addLiquidity            -> add liquidity into the pool respecting share split configuration
@@ -465,7 +465,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         uint128 _liquidity = _getLiquidity();
         // need to convert to uint256 since intermittent result is to big for uint128 to handle
-        uint128 _liqudityToRemove = uint256(_liquidity)
+        uint128 _liquidityToRemove = uint256(_liquidity)
             .mulTruncate(_liquidityToDecrease)
             .toUint128();
 
@@ -473,7 +473,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * There is no liquidity to remove -> exit function early. This can happen after a
          * withdraw/withdrawAll removes all of the liquidity while retaining the NFT token.
          */
-        if (_liquidity == 0 || _liqudityToRemove == 0) {
+        if (_liquidity == 0 || _liquidityToRemove == 0) {
             return;
         }
 
@@ -483,7 +483,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 // happen just before the liquidity removal.
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: _liqudityToRemove,
+                    liquidity: _liquidityToRemove,
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
@@ -557,7 +557,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Add liquidity into the pool in the pre-configured WETH to OETHb share ratios
      * defined by the allowedPoolWethShareStart|End interval. This function will respect
-     * liquidity ratios when there no liquidity yet in the pool. If liquidity is already
+     * liquidity ratios when there is no liquidity yet in the pool. If liquidity is already
      * present then it relies on the `_swapToDesiredPosition` function in a step before
      * to already move the trading price to desired position (with some tolerance).
      */
