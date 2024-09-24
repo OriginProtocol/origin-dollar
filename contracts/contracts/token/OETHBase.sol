@@ -20,7 +20,7 @@ contract OETHBase is OUSD {
     }
 
     /**
-     * @dev Temporary one-off workaround to recover funds from 
+     * @dev Temporary one-off workaround to recover funds from
      *      the bribes contract. To be removed later.
      */
     function governanceRecover() external onlyGovernor {

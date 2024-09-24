@@ -1,6 +1,5 @@
 const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
-const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
@@ -10,7 +9,7 @@ module.exports = deployOnBaseWithGuardian(
     // Proxy
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
     const cOETHb = await ethers.getContractAt("OETHBase", cOETHbProxy.address);
-    
+
     // Deploy implementation
     const dOETHb = await deployWithConfirmation("OETHBase");
 
