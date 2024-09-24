@@ -348,9 +348,7 @@ contract QuoterHelper {
     /// @return iterations The number of iterations to find the amount.
     /// @return swapWETHForOETHB True if we need to swap WETH for OETHb, false otherwise.
     /// @return sqrtPriceX96After The price after the swap.
-    function getAmountToSwapToReachPrice(
-        uint160 sqrtPriceTargetX96
-    )
+    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
         public
         returns (
             uint256,
