@@ -18,4 +18,18 @@ contract OETHBase is OUSD {
     function initialize2() external onlyGovernor {
         InitializableERC20Detailed._initialize("Super OETH", "superOETHb", 18);
     }
+
+    /**
+     * @dev Temporary workaround to recover funds from an address.
+     *      Transfers out all balance to other address.
+     * @param _from Address to recover from
+     * @param _to Receiver address
+     */
+    function governanceTransfer(address _from, address _to) external onlyGovernor {
+        uint256 amount = balanceOf(_from);
+
+        _executeTransfer(_from, _to, amount);
+
+        emit Transfer(_from, _to, amount);
+    }
 }
