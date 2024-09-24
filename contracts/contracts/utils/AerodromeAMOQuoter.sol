@@ -40,11 +40,11 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     uint256 public constant BINARY_MIN_AMOUNT = 1 wei;
     uint256 public constant BINARY_MAX_AMOUNT_FOR_REBALANCE = 3_000 ether;
-    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 50_000 ether;
+    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 5_000_000 ether;
 
     uint256 public constant BINARY_MAX_ITERATIONS = 100;
     uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
-    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e16; // 1%
+    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e12; // 0.0001%
 
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
@@ -386,10 +386,13 @@ contract QuoterHelper {
             );
 
             if (
-                low == high ||
                 isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)
             ) {
                 return (mid, iterations, swapWETHForOETHB, sqrtPriceX96After);
+            } else if (low == high) {
+                // target swap amount not found.
+                // try increasing BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
+                revert("SwapAmountNotFound");
             } else if (
                 swapWETHForOETHB
                     ? sqrtPriceX96After > sqrtPriceTargetX96

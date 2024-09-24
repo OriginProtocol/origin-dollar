@@ -14,6 +14,7 @@ const log = require("../utils/logger")("test:fixtures-arb");
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 const aerodromeClGaugeAbi = require("./abi/aerodromeClGauge.json");
+const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -22,7 +23,7 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultBaseFixture = deployments.createFixture(async () => {
-  let aerodromeAmoStrategy, quoter;
+  let aerodromeAmoStrategy, quoter, sugar;
 
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
@@ -58,7 +59,10 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const wOETHb = await ethers.getContractAt("WOETHBase", wOETHbProxy.address);
 
   const dipperProxy = await ethers.getContract("OETHBaseDripperProxy");
-  const dripper = await ethers.getContractAt("OETHDripper", dipperProxy.address);
+  const dripper = await ethers.getContractAt(
+    "OETHDripper",
+    dipperProxy.address
+  );
 
   // OETHb Vault
   const oethbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
@@ -75,6 +79,11 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aerodromeAmoStrategy = await ethers.getContractAt(
       "AerodromeAMOStrategy",
       aerodromeAmoStrategyProxy.address
+    );
+
+    sugar = await ethers.getContractAt(
+      aerodromeSugarAbi,
+      addresses.base.sugarHelper
     );
 
     await deployWithConfirmation("AerodromeAMOQuoter", [
@@ -149,11 +158,11 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   for (const user of [rafael, nick]) {
     // Mint some bridged WOETH
     await woeth.connect(minter).mint(user.address, oethUnits("1"));
-    await hhHelpers.setBalance(user.address, oethUnits("10000000"));
-    await weth.connect(user).deposit({ value: oethUnits("100000") });
+    await hhHelpers.setBalance(user.address, oethUnits("100000000"));
+    await weth.connect(user).deposit({ value: oethUnits("10000000") });
 
     // Set allowance on the vault
-    await weth.connect(user).approve(oethbVault.address, oethUnits("50"));
+    await weth.connect(user).approve(oethbVault.address, oethUnits("5000"));
   }
 
   await woeth.connect(minter).mint(governor.address, oethUnits("1"));
@@ -216,6 +225,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     // Helper
     quoter,
+    sugar,
   };
 });
 
