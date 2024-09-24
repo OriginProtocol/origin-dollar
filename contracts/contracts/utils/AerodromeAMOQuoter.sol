@@ -49,9 +49,9 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
     ////////////////////////////////////////////////////////////////
-    ICLPool public clPool;
-    IQuoterV2 public quoterV2;
-    IAMOStrategy public strategy;
+    ICLPool public immutable clPool;
+    IQuoterV2 public immutable quoterV2;
+    IAMOStrategy public immutable strategy;
 
     address public originalGovernor;
 
@@ -72,7 +72,7 @@ contract QuoterHelper {
     constructor(IAMOStrategy _strategy, IQuoterV2 _quoterV2) {
         strategy = _strategy;
         quoterV2 = _quoterV2;
-        clPool = strategy.clPool();
+        clPool = _strategy.clPool();
     }
 
     ////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ contract QuoterHelper {
 
             strategy.setAllowedPoolWethShareInterval(shareStart, shareEnd);
         }
-        uint256 iterations;
+        uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
         uint256 high = BINARY_MAX_AMOUNT_FOR_REBALANCE;
         int24 lowerTick = strategy.lowerTick();
@@ -328,10 +328,12 @@ contract QuoterHelper {
         uint256 allowedWethShareStart = strategy.allowedWethShareStart();
         uint256 allowedWethShareEnd = strategy.allowedWethShareEnd();
         uint160 mid = uint160(allowedWethShareStart + allowedWethShareEnd) / 2;
+        // slither-disable-start divide-before-multiply
         uint160 targetPrice = (ticker0Price *
             mid +
             ticker1Price *
             (1 ether - mid)) / 1 ether;
+        // slither-disable-end divide-before-multiply
 
         return currentPrice > targetPrice;
     }
@@ -358,7 +360,7 @@ contract QuoterHelper {
             uint160
         )
     {
-        uint256 iterations;
+        uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
         uint256 high = maxAmount == 0
             ? BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
@@ -463,7 +465,7 @@ contract AerodromeAMOQuoter {
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
     ////////////////////////////////////////////////////////////////
-    QuoterHelper public quoterHelper;
+    QuoterHelper public immutable quoterHelper;
 
     ////////////////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
