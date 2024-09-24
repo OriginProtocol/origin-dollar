@@ -22,7 +22,7 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultBaseFixture = deployments.createFixture(async () => {
-  let aerodromeAmoStrategy;
+  let aerodromeAmoStrategy, quoter;
 
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
@@ -73,6 +73,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
       "AerodromeAMOStrategy",
       aerodromeAmoStrategyProxy.address
     );
+
+    await deployWithConfirmation("AerodromeAMOQuoter", [
+      aerodromeAmoStrategy.address,
+      addresses.base.aeroQuoterV2Address,
+    ]);
+
+    quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
   }
 
   // Bridged wOETH
@@ -164,12 +171,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aeroNonfungiblePositionManagerAbi,
     addresses.base.nonFungiblePositionManager
   );
-
-  await deployWithConfirmation("AerodromeAMOQuoter", [
-    aerodromeAmoStrategy.address,
-    addresses.base.aeroQuoterV2Address,
-  ]);
-  const quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
 
   return {
     // Aerodrome
