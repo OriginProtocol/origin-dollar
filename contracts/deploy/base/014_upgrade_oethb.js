@@ -9,9 +9,12 @@ module.exports = deployOnBaseWithGuardian(
   async ({ ethers }) => {
     // Proxy
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
-
+    const cOETHb = await ethers.getContractAt("OETHBase", cOETHbProxy.address);
+    
     // Deploy implementation
     const dOETHb = await deployWithConfirmation("OETHBase");
+
+    const existingImpl = await cOETHbProxy.implementation();
 
     return {
       actions: [
@@ -20,6 +23,18 @@ module.exports = deployOnBaseWithGuardian(
           contract: cOETHbProxy,
           signature: "upgradeTo(address)",
           args: [dOETHb.address],
+        },
+        {
+          // 2. Recover funds from bribes contract
+          contract: cOETHbProxy,
+          signature: "governanceTransfer(address,address)",
+          args: [addresses.base.oethbBribesContract, addresses.base.strategist],
+        },
+        {
+          // 3. Revert back OETHb implementation
+          contract: cOETHb,
+          signature: "upgradeTo(address)",
+          args: [existingImpl],
         },
       ],
     };
