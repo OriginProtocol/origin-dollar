@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
 const { isFork, isBaseFork, oethUnits } = require("./helpers");
-const { impersonateAndFund } = require("../utils/signers");
+const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
@@ -56,6 +56,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   // wOETHb (4626)
   const wOETHbProxy = await ethers.getContract("WOETHBaseProxy");
   const wOETHb = await ethers.getContractAt("WOETHBase", wOETHbProxy.address);
+
+  const dipperProxy = await ethers.getContract("OETHBaseDripperProxy");
+  const dripper = await ethers.getContractAt("OETHDripper", dipperProxy.address);
 
   // OETHb Vault
   const oethbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
@@ -127,6 +130,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     "ITimelockController",
     timelockAddr
   );
+  const oethVaultSigner = await impersonateAccount(oethbVault.address);
 
   let strategist;
   if (isFork) {
@@ -181,6 +185,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // OETHb
     oethb,
     oethbVault,
+    dripper,
     wOETHb,
     zapper,
 
@@ -203,6 +208,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     strategist,
     minter,
     burner,
+    oethVaultSigner,
 
     rafael,
     nick,
