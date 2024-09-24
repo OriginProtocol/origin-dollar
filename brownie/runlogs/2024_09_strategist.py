@@ -1108,3 +1108,44 @@ def main():
 
   print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
 
+# -------------------------------------
+# Sep 24, 2024 - Swap uperOETHb to OGN
+# -------------------------------------
+from aerodrome_harvest import *
+from eth_abi.packed import encode_packed
+import eth_abi
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = 7724739194962215297
+
+    # Collect AERO from the strategy
+    txs.append(
+        amo_strat.collectRewardTokens(from_strategist)
+    )
+
+    # Approve the router to move it
+    txs.append(
+        oethb.approve(AERODROME_ROUTER2_BASE, amount, from_strategist)
+    )
+
+    minOut = int(215147294464596380425240 * 99 / 100)
+
+    routes = [[
+      OETHB, # from
+      OGN_BASE, # to
+      False, # stable
+      "0x420DD381b31aEf6683db6B902084cB0FFECe40Da" # pool factory
+    ]]
+
+    # Swap
+    txs.append(
+      aero_router2.swapExactTokensForTokens(
+        amount,
+        minOut,
+        routes,
+        OETHB_STRATEGIST,
+        time.time() + (2 * 60 * 60), # deadline
+        from_strategist
+      )
+    )
