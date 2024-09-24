@@ -125,7 +125,7 @@
       "label": "rebaseState",
       "offset": 0,
       "slot": "162",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)975)",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)1006)",
       "contract": "OUSD",
       "src": "contracts/token/OUSD.sol:53"
     },
@@ -155,7 +155,7 @@
       "label": "bool",
       "numberOfBytes": "1"
     },
-    "t_enum(RebaseOptions)975": {
+    "t_enum(RebaseOptions)1006": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",
@@ -164,7 +164,7 @@
       ],
       "numberOfBytes": "1"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)975)": {
+    "t_mapping(t_address,t_enum(RebaseOptions)1006)": {
       "label": "mapping(address => enum OUSD.RebaseOptions)",
       "numberOfBytes": "32"
     },
