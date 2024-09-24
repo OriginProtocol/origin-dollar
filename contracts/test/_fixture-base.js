@@ -114,7 +114,6 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     await getNamedAccounts();
   const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
   await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
-  const woethGovernor = await ethers.getSigner(await woethProxy.governor());
 
   const guardian = await ethers.getSigner(governorAddr);
   const timelock = await ethers.getContractAt(
