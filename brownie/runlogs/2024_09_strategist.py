@@ -686,3 +686,292 @@ def main():
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
+
+# -----------------------------------------------------
+# Sept 18 2024 - OETHb allocation & rebalance 22:50 CET
+# -----------------------------------------------------
+
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+    # Deposit all WETH
+    wethDepositAmount = weth.balanceOf(OETHB_VAULT_PROXY_ADDRESS)
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [wethDepositAmount], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    amo_snapsnot()
+    swapWeth = True
+    swapAmount = 0
+    minAmount = swapAmount * 0.98
+    print("--------------------")
+    print("WETH Deposit ", c18(wethDepositAmount))
+    print("-----")
+    print("Swap amount  ", c18(swapAmount))
+    print("Min  amount  ", c18(minAmount))
+    print("-----")
+
+    txs.append(
+      amo_strat.rebalance(
+        swapAmount,
+        swapWeth,
+        minAmount,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+    amo_snapsnot()
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
+
+# -----------------------------------------------------
+# Sept 18 2024 - wOETH Strategy Deposit
+# -----------------------------------------------------
+from world_base import *
+
+def main():
+  txs = []
+
+  treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
+  amount = 110 * 10**18
+
+  # Update oracle price
+  txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_STRATEGIST }))
+  
+  expected_oethb = woeth_strat.getBridgedWOETHValue(amount)
+
+  # Rebase
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Take Vault snapshot 
+  txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth.approve(OETHB_WOETH_STRATEGY, amount, { 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': OETHB_STRATEGIST }))
+
+  # Rebase so that any yields from price update and
+  # backing asset change from deposit are accounted for.
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Transfer to treasury
+  txs.append(oethb.transfer(treasury_address, expected_oethb, { 'from': OETHB_STRATEGIST }))
+
+  # Check Vault Value against snapshot
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+  supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_STRATEGIST}))
+
+  print("--------------------")
+  print("Deposited wOETH     ", c18(amount), amount)
+  print("Expected superOETHb ", c18(expected_oethb), expected_oethb)
+  print("--------------------")
+  print("Profit       ", c18(profit), profit)
+  print("Vault Change ", c18(vault_change), vault_change)
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+
+# -----------------------------------------------------
+# Sept 19 2024 - wOETH Strategy Deposit
+# -----------------------------------------------------
+from world_base import *
+
+def main():
+  txs = []
+
+  treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
+  amount = 1224.0743864 * 10**18
+
+  # Update oracle price
+  txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_STRATEGIST }))
+  
+  expected_oethb = woeth_strat.getBridgedWOETHValue(amount)
+
+  # Rebase
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Take Vault snapshot 
+  txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth.approve(OETHB_WOETH_STRATEGY, amount, { 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': OETHB_STRATEGIST }))
+
+  # Rebase so that any yields from price update and
+  # backing asset change from deposit are accounted for.
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Transfer to treasury
+  txs.append(oethb.transfer(treasury_address, expected_oethb, { 'from': OETHB_STRATEGIST }))
+
+  # Check Vault Value against snapshot
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+  supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_STRATEGIST}))
+
+  print("--------------------")
+  print("Deposited wOETH     ", c18(amount), amount)
+  print("Expected superOETHb ", c18(expected_oethb), expected_oethb)
+  print("--------------------")
+  print("Profit       ", c18(profit), profit)
+  print("Vault Change ", c18(vault_change), vault_change)
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------------------
+# Sept 20 2024 - Withdraw from OETH AMO Strategy
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(oeth_dripper.collectAndRebase({'from': STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+    # Remove 50 WETH from strategy and burn equivalent OETH
+    txs.append(
+      vault_oeth_admin.withdrawFromStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [weth], 
+        [500 * 10**18],
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+    # Test the OETH ARM can claim its withdrawal
+    # To see all the outstanding withdrawal requests, see Dune query https://dune.com/queries/4067211/6848601
+    txs.append(
+      vault_oeth_core.claimWithdrawals(
+        [58],
+        {'from': OETH_ARM}
+      )
+    )
+
+# -------------------------------------------
+# Sept 20 2024 - Add SSV to first Native Staking SSV Cluster
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Send 150 SSV to the first Native Staking Strategy
+    amount = 150 * 10**18
+    txs.append(
+      ssv.transfer(
+        OETH_NATIVE_STAKING_STRAT, 
+        amount,
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      native_staking_strat.depositSSV(
+        # SSV Operator Ids
+        [342, 343, 344, 345], 
+        amount,
+        # SSV Cluster details:
+        # validatorCount, networkFeeIndex, index, active, balance
+        [500, 76968331269, 0, True, 108066400915950000100],
+        {'from': STRATEGIST}
+      )
+    )
+
+# -----------------------------------------------------
+# Sept 22 2024 - Harvest & Swap
+# -----------------------------------------------------
+from aerodrome_harvest import *
+def main():
+    txs = []
+
+    amount = 100000 * 10**18
+
+    # Collect AERO from the strategy
+    txs.append(
+        amo_strat.collectRewardTokens(from_strategist)
+    )
+
+    # Approve the swap router to move it
+    txs.append(
+        aero.approve(AERODROME_SWAP_ROUTER_BASE, amount, from_strategist)
+    )
+
+    # Do the swap
+    txs.append(
+        aero_router.exactInputSingle(
+            swap_params(amount, OETHB_STRATEGIST),
+            from_strategist
+        )
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------
+# Sep 22, 2024 - Withdraw from 2nd Native Staking Strategy
+# -------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(oeth_dripper.collectAndRebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+    # Withdraw 570 WETH from the Second Native Staking Strategy
+    txs.append(
+      vault_oeth_admin.withdrawFromStrategy(
+        OETH_NATIVE_STAKING_2_STRAT, 
+        [WETH], 
+        [570.472805877259861642 * 10**18],
+        std
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**17), vault_change, (1 * 10**17), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)

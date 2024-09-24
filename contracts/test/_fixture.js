@@ -2345,6 +2345,16 @@ async function buybackFixture() {
     oethBuybackProxy.address
   );
 
+  let armBuyback;
+  if (isFork) {
+    const armBuybackProxy = await ethers.getContract("ARMBuybackProxy");
+    armBuyback = await ethers.getContractAt(
+      "ARMBuyback",
+      armBuybackProxy.address
+    );
+    fixture.armBuyback = armBuyback;
+  }
+
   fixture.ousdBuyback = ousdBuyback;
   fixture.oethBuyback = oethBuyback;
 
@@ -2373,10 +2383,12 @@ async function buybackFixture() {
 
     await vault.connect(josh).mint(dai.address, oethUnits("1231"), "0");
     await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
+    await setERC20TokenBalance(armBuyback.address, weth, "100");
 
     // Compute splits
     await oethBuyback.connect(timelock).updateBuybackSplits();
     await ousdBuyback.connect(timelock).updateBuybackSplits();
+    await armBuyback.connect(timelock).updateBuybackSplits();
   } else {
     fixture.mockSwapper = await ethers.getContract("MockSwapper");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
@@ -2394,10 +2406,12 @@ async function buybackFixture() {
     // Transfer those to the buyback contract
     await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
     await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
+    //await weth.connect(josh).transfer(armBuyback.address, oethUnits("3"));
 
     // Compute splits
     await oethBuyback.connect(governor).updateBuybackSplits();
     await ousdBuyback.connect(governor).updateBuybackSplits();
+    //await armBuyback.connect(governor).updateBuybackSplits();
   }
 
   return fixture;

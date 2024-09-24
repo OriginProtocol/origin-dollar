@@ -308,3 +308,10 @@ contract BridgedWOETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ARMBuybackProxy delegates calls to Buyback implementation
+ */
+contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
