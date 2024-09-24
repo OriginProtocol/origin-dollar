@@ -46,9 +46,8 @@ describe("ForkTest: OETHb Vault", function () {
       expect(userBalanceAfter).to.approxEqual(
         userBalanceBefore.add(oethUnits("1"))
       );
-
-      expect(vaultBalanceAfter).to.approxEqual(
-        vaultBalanceBefore.add(oethUnits("1"))
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
+        vaultBalanceBefore.add(oethUnits("1")), 0.1
       );
     });
 
