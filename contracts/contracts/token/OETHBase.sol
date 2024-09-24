@@ -20,14 +20,16 @@ contract OETHBase is OUSD {
     }
 
     /**
-     * @dev Temporary workaround to recover funds from an address.
-     *      Transfers out all balance to other address.
-     * @param _from Address to recover from
-     * @param _to Receiver address
+     * @dev Temporary one-off workaround to recover funds from 
+     *      the bribes contract. To be removed later.
      */
-    function governanceTransfer(address _from, address _to) external onlyGovernor {
-        uint256 amount = balanceOf(_from);
-
+    function governanceRecover() external onlyGovernor {
+        // Bribes contract
+        address _from = 0x685cE0E36Ca4B81F13B7551C76143D962568f6DD;
+        // Strategist multisig
+        address _to = 0x28bce2eE5775B652D92bB7c2891A89F036619703;
+        // Amount to recover
+        uint256 amount = 38692983174128797556;
         _executeTransfer(_from, _to, amount);
 
         emit Transfer(_from, _to, amount);

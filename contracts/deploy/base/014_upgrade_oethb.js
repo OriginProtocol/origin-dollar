@@ -27,8 +27,8 @@ module.exports = deployOnBaseWithGuardian(
         {
           // 2. Recover funds from bribes contract
           contract: cOETHb,
-          signature: "governanceTransfer(address,address)",
-          args: [addresses.base.oethbBribesContract, addresses.base.strategist],
+          signature: "governanceRecover()",
+          args: [],
         },
         {
           // 3. Revert back OETHb implementation
