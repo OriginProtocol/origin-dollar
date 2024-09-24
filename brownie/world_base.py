@@ -15,6 +15,7 @@ aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
 
 ogn_pool = load_contract('aerodrome_ogn_pool', AERODROME_OGN_OETHB_POOL_BASE)
+oethb_weth_bribe = load_contract('aero_bribes', OETHB_WETH_BRIBE_CONTRACT)
 
 amo_strat = load_contract('aerodrome_amo_strategy', OETHB_AERODROME_AMO_STRATEGY)
 vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
