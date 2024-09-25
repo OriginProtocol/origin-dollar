@@ -1017,3 +1017,158 @@ def main():
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+
+
+# -------------------------------------
+# Sep 24, 2024 - Harvest & Pay Treasury
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  txs = []
+
+  treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
+  amount = 55555 * 10**18
+
+  # Collect AERO from the strategy
+  txs.append(
+      amo_strat.collectRewardTokens(from_strategist)
+  )
+
+  # Transfer 55,555 AERO to treasury
+  txs.append(
+    aero.transfer(treasury_address, amount, from_strategist)
+  )
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+
+# -------------------------------------
+# Sep 24, 2024 - Swap AERO to superOETHb
+# -------------------------------------
+from aerodrome_harvest import *
+from eth_abi.packed import encode_packed
+import eth_abi
+
+def main():
+  txs = []
+
+  ognSwapAmount = 22222 * 10**18
+  oethbSwapAmount = 111111 * 10**18
+
+  # Collect AERO from the strategy
+  txs.append(
+      amo_strat.collectRewardTokens(from_strategist)
+  )
+
+  # Approve the swap router to move it
+  txs.append(
+      aero.approve(AERODROME_SWAP_ROUTER_BASE, ognSwapAmount + oethbSwapAmount, from_strategist)
+  )
+
+  oethb_path = encode_packed(
+    ['address', 'int24', 'address', 'int24', 'address'],
+    [
+      AERO_BASE,
+      200, # AERO > WETH tickSpacing
+      WETH_BASE,
+      1, # WETH > OETHb tickSpacing
+      OETHB
+    ]
+  ).hex()
+
+  # Do the AERO > OETHb swap
+  txs.append(
+      aero_router.exactInput(
+          swap_params_multiple(
+            oethbSwapAmount, 
+            oethb_path,
+            recipient=OETHB_WETH_BRIBE_CONTRACT, 
+            to_token=AERO_BASE,
+            to_token_label="superOETHb"
+          ),
+          from_strategist
+      )
+  )
+
+  # Do the AERO > OETHb swap for OGN swap later
+  txs.append(
+      aero_router.exactInput(
+          swap_params_multiple(
+            ognSwapAmount, 
+            oethb_path,
+            recipient=OETHB_STRATEGIST, 
+            to_token=AERO_BASE,
+            to_token_label="superOETHb"
+          ),
+          from_strategist
+      )
+  )
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------------
+# Sep 24, 2024 - Swap uperOETHb to OGN
+# -------------------------------------
+from aerodrome_harvest import *
+from eth_abi.packed import encode_packed
+import eth_abi
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = 7724739194962215297
+
+    # Collect AERO from the strategy
+    txs.append(
+        amo_strat.collectRewardTokens(from_strategist)
+    )
+
+    # Approve the router to move it
+    txs.append(
+        oethb.approve(AERODROME_ROUTER2_BASE, amount, from_strategist)
+    )
+
+    minOut = int(215147294464596380425240 * 99 / 100)
+
+    routes = [[
+      OETHB, # from
+      OGN_BASE, # to
+      False, # stable
+      "0x420DD381b31aEf6683db6B902084cB0FFECe40Da" # pool factory
+    ]]
+
+    # Swap
+    txs.append(
+      aero_router2.swapExactTokensForTokens(
+        amount,
+        minOut,
+        routes,
+        OETHB_STRATEGIST,
+        time.time() + (2 * 60 * 60), # deadline
+        from_strategist
+      )
+    )
+
+# -------------------------------------
+# Sep 25, 2024 - Bribe with OETHb
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = 38692983174128797556
+
+    # Approve the bribes contract to move it
+    txs.append(
+        oethb.approve(OETHB_WETH_BRIBE_CONTRACT, amount, from_strategist)
+    )
+
+    # Bribe
+    txs.append(
+      oethb_weth_bribe.notifyRewardAmount(
+        OETHB,
+        amount,
+        from_strategist
+      )
+    )
