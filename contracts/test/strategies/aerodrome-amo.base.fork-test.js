@@ -167,7 +167,7 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
         aerodromeAmoStrategy
           .connect(strategist)
           .rebalance(oethUnits("0"), direction, oethUnits("0"))
-      ).to.be.revertedWith("OutsideExpectedTickRange");
+      ).to.be.revertedWithCustomError("OutsideExpectedTickRange(int24)");
     });
 
     it("Should be reverted trying to rebalance and we are not in the correct tick, above", async () => {
@@ -192,7 +192,7 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
         aerodromeAmoStrategy
           .connect(strategist)
           .rebalance(oethUnits("0"), direction, oethUnits("0"))
-      ).to.be.revertedWith("OutsideExpectedTickRange");
+      ).to.be.revertedWithCustomError("OutsideExpectedTickRange(int24)");
     });
 
     const setupEmpty = async () => {
@@ -867,7 +867,9 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
             true, // _swapWETH
             oethUnits("0.009")
           )
-        ).to.be.revertedWith("NotEnoughWethForSwap");
+        ).to.be.revertedWithCustomError(
+          "NotEnoughWethForSwap(uint256,uint256)"
+        );
       });
 
       it("Should revert when pool rebalance is off target", async () => {
@@ -876,8 +878,10 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
           highValue: oethUnits("0.92"),
         });
 
-        await expect(rebalance(value, direction, 0)).to.be.revertedWith(
-          "PoolRebalanceOutOfBounds"
+        await expect(
+          rebalance(value, direction, 0)
+        ).to.be.revertedWithCustomError(
+          "PoolRebalanceOutOfBounds(uint256,uint256,uint256)"
         );
       });
 
@@ -909,7 +913,9 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
         // is not liquid
         await expect(
           rebalance(value, direction, value.mul("99").div("100"))
-        ).to.be.revertedWith("NotEnoughWethForSwap");
+        ).to.be.revertedWithCustomError(
+          "NotEnoughWethForSwap(uint256,uint256)"
+        );
 
         // but if we help it out with some liquidity it should rebalance
         await weth
@@ -980,7 +986,9 @@ describe("ForkTest: Aerodrome AMO Strategy", async function () {
             true,
             oethUnits("4")
           )
-        ).to.be.revertedWith("NotEnoughWethForSwap");
+        ).to.be.revertedWithCustomError(
+          "NotEnoughWethForSwap(uint256,uint256)"
+        );
 
         await assetLpStakedInGauge();
       });
