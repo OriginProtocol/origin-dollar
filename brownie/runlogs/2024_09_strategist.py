@@ -1172,3 +1172,26 @@ def main():
         from_strategist
       )
     )
+
+# -------------------------------------
+# Sep 25, 2024 - Bribe with AERO
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = aero.balanceOf(OETHB_STRATEGIST)
+
+    # Approve the bribes contract to move it
+    txs.append(
+        aero.approve(OETHB_WETH_BRIBE_CONTRACT, amount, from_strategist)
+    )
+
+    # Bribe
+    txs.append(
+      oethb_weth_bribe.notifyRewardAmount(
+        AERO_BASE,
+        amount,
+        from_strategist
+      )
+    )
