@@ -1149,3 +1149,26 @@ def main():
         from_strategist
       )
     )
+
+# -------------------------------------
+# Sep 25, 2024 - Bribe with OETHb
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = 38692983174128797556
+
+    # Approve the bribes contract to move it
+    txs.append(
+        oethb.approve(OETHB_WETH_BRIBE_CONTRACT, amount, from_strategist)
+    )
+
+    # Bribe
+    txs.append(
+      oethb_weth_bribe.notifyRewardAmount(
+        OETHB,
+        amount,
+        from_strategist
+      )
+    )
