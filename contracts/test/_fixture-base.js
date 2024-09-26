@@ -20,7 +20,7 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultBaseFixture = deployments.createFixture(async () => {
-  let aerodromeAmoStrategy;
+  let aerodromeAmoStrategy, dripper;
 
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
@@ -70,6 +70,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aerodromeAmoStrategy = await ethers.getContractAt(
       "AerodromeAMOStrategy",
       aerodromeAmoStrategyProxy.address
+    );
+
+    // Dripper
+    const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
+    dripper = await ethers.getContractAt(
+      "FixedRateDripper",
+      dripperProxy.address
     );
   }
 
@@ -167,11 +174,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aeroNftManager,
     aeroClGauge,
     aero,
+
     // OETHb
     oethb,
     oethbVault,
     wOETHb,
     zapper,
+    dripper,
 
     // Bridged WOETH
     woeth,
