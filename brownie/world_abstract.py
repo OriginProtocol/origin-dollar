@@ -48,7 +48,7 @@ def c24(v):
     return commas(v, 24)
 
 # format BigNumber represented in 18 decimals
-def c18(v, truncate):
+def c18(v, truncate=True):
     return commas(v, 18, truncate)
 
 # format BigNumber represented in 12 decimals

@@ -319,6 +319,9 @@ addresses.base.swapRouter = "0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5";
 addresses.base.sugarHelper = "0x0AD09A66af0154a84e86F761313d02d0abB6edd5";
 addresses.base.quoterV2 = "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 
+addresses.base.oethbBribesContract =
+  "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 

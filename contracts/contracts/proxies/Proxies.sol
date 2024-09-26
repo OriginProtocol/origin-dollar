@@ -315,3 +315,10 @@ contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ARMBuybackProxy delegates calls to Buyback implementation
+ */
+contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
