@@ -31,10 +31,10 @@ describe("ForkTest: OETHb FixedRateDripper", function () {
     const oneDay = 24 * 60 * 60;
     await advanceTime(oneDay); // 1d
 
-    const pendingTime = BigNumber.from(currTimestamp)
+    const elapsedTime = BigNumber.from(currTimestamp)
       .sub(drip.lastCollect)
       .add(oneDay);
-    const expectedRewards = pendingTime.mul(drip.perSecond);
+    const expectedRewards = elapsedTime.mul(drip.perSecond);
 
     // Do a collect
     await dripper.collect();
@@ -53,6 +53,8 @@ describe("ForkTest: OETHb FixedRateDripper", function () {
     // Make sure drip rate hasn't changed
     const dripAfter = await dripper.drip();
     expect(dripAfter.perSecond).to.eq(drip.perSecond);
+    // ... and lastCollect has been updated
+    expect(dripAfter.lastCollect).to.gte(drip.lastCollect.add(elapsedTime));
   });
 
   it("Should allow strategist/governor to change rate", async () => {
