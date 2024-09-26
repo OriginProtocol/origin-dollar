@@ -19,6 +19,8 @@ contract OETHBaseHarvester is Governable {
     IERC20 public immutable weth;
     ISwapRouter public immutable swapRouter;
 
+    address public operatorAddr;
+
     // Similar sig to `AbstractHarvester.RewardTokenSwapped` for
     // future compatibility with monitoring
     event RewardTokenSwapped(
@@ -29,6 +31,8 @@ contract OETHBaseHarvester is Governable {
         uint256 amountOut
     );
 
+    event OperatorChanged(address oldOperator, address newOperator);
+
     /**
      * @notice Verifies that the caller is either Governor or Strategist.
      */
@@ -36,6 +40,19 @@ contract OETHBaseHarvester is Governable {
         require(
             msg.sender == vault.strategistAddr() || isGovernor(),
             "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    /**
+     * @notice Verifies that the caller is either Governor or Strategist.
+     */
+    modifier onlyGovernorOrStrategistOrOperator() {
+        require(
+            msg.sender == operatorAddr ||
+                msg.sender == vault.strategistAddr() ||
+                isGovernor(),
+            "Caller is not the Operator or Strategist or Governor"
         );
         _;
     }
@@ -55,11 +72,20 @@ contract OETHBaseHarvester is Governable {
     }
 
     /**
+     * @dev Changes the operator address which can call `harvest`
+     * @param _operatorAddr New operator address
+     */
+    function setOperatorAddr(address _operatorAddr) external onlyGovernor {
+        emit OperatorChanged(operatorAddr, _operatorAddr);
+        operatorAddr = _operatorAddr;
+    }
+
+    /**
      * @notice Collects AERO from AMO strategy and
      *      sends it to the Strategist multisig.
      *      Anyone can call it.
      */
-    function harvest() external {
+    function harvest() external onlyGovernorOrStrategistOrOperator {
         address strategistAddr = vault.strategistAddr();
         require(strategistAddr != address(0), "Guardian address not set");
 
