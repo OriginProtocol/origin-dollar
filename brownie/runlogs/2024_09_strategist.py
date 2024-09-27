@@ -1293,7 +1293,6 @@ def main():
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
 
-
 # -------------------------------
 # Sep 27, 2024 - Withdraw from 2nd Native Staking Strategy
 # -------------------------------
