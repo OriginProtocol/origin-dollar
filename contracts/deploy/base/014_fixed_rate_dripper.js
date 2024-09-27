@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "013_fixed_rate_dripper",
+    deployName: "014_fixed_rate_dripper",
   },
   async ({ ethers }) => {
     const cOETHbDripperProxy = await ethers.getContract("OETHBaseDripperProxy");
