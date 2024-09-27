@@ -60,6 +60,13 @@ contract FixedRateDripper is Dripper {
     function setDripRate(uint192 _perSecond) external onlyGovernorOrStrategist {
         emit DripRateUpdated(_perSecond, drip.perSecond);
 
+        /**
+         * Note: It's important to call `_collect` before updating
+         * the drip rate especially on a new proxy contract.
+         * When `lastCollect` is not set/initialized, the elapsed
+         * time would be calculated as `block.number` seconds,
+         * resulting in a huge yield, if `collect` isn't called first.
+         */
         // Collect at existing rate
         _collect();
 
