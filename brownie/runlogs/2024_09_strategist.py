@@ -1173,6 +1173,29 @@ def main():
       )
     )
 
+# -------------------------------------
+# Sep 25, 2024 - Bribe with AERO
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    amount = aero.balanceOf(OETHB_STRATEGIST)
+
+    # Approve the bribes contract to move it
+    txs.append(
+        aero.approve(OETHB_WETH_BRIBE_CONTRACT, amount, from_strategist)
+    )
+
+    # Bribe
+    txs.append(
+      oethb_weth_bribe.notifyRewardAmount(
+        AERO_BASE,
+        amount,
+        from_strategist
+      )
+    )
+
 # -----------------------------------------------------
 # Sept 18 2024 - OETHb allocation & rebalance 22:50 CET
 # -----------------------------------------------------
@@ -1227,3 +1250,77 @@ def main():
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
+
+
+# -------------------------------
+# Sep 27, 2024 - OUSD Reallocation 10k USDC from Morpho Aave to new MetaMorpho
+# -------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw 10k from Morpho Aave
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_AAVE_STRAT, 
+        [usdc], 
+        [10_000 * 10**6], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Put everything in new MetaMorpho
+    txs.append(
+      vault_admin.depositToStrategy(
+        MORPHO_META_USDC_STRAT, 
+        [usdc], 
+        [10_000*10**6], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+# -------------------------------
+# Sep 27, 2024 - Withdraw from 2nd Native Staking Strategy
+# -------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(oeth_dripper.collectAndRebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+    # Withdraw 16 WETH from the Second Native Staking Strategy
+    txs.append(
+      vault_oeth_admin.withdrawFromStrategy(
+        OETH_NATIVE_STAKING_2_STRAT, 
+        [WETH], 
+        [16 * 10**18],
+        std
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**17), vault_change, (1 * 10**17), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
