@@ -40,18 +40,18 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     uint256 public constant BINARY_MIN_AMOUNT = 1 wei;
     uint256 public constant BINARY_MAX_AMOUNT_FOR_REBALANCE = 3_000 ether;
-    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 50_000 ether;
+    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 5_000_000 ether;
 
     uint256 public constant BINARY_MAX_ITERATIONS = 100;
     uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
-    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e16; // 1%
+    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e12; // 0.0001%
 
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
     ////////////////////////////////////////////////////////////////
-    ICLPool public clPool;
-    IQuoterV2 public quoterV2;
-    IAMOStrategy public strategy;
+    ICLPool public immutable clPool;
+    IQuoterV2 public immutable quoterV2;
+    IAMOStrategy public immutable strategy;
 
     address public originalGovernor;
 
@@ -72,7 +72,7 @@ contract QuoterHelper {
     constructor(IAMOStrategy _strategy, IQuoterV2 _quoterV2) {
         strategy = _strategy;
         quoterV2 = _quoterV2;
-        clPool = strategy.clPool();
+        clPool = _strategy.clPool();
     }
 
     ////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ contract QuoterHelper {
 
             strategy.setAllowedPoolWethShareInterval(shareStart, shareEnd);
         }
-        uint256 iterations;
+        uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
         uint256 high = BINARY_MAX_AMOUNT_FOR_REBALANCE;
         int24 lowerTick = strategy.lowerTick();
@@ -328,10 +328,12 @@ contract QuoterHelper {
         uint256 allowedWethShareStart = strategy.allowedWethShareStart();
         uint256 allowedWethShareEnd = strategy.allowedWethShareEnd();
         uint160 mid = uint160(allowedWethShareStart + allowedWethShareEnd) / 2;
+        // slither-disable-start divide-before-multiply
         uint160 targetPrice = (ticker0Price *
             mid +
             ticker1Price *
             (1 ether - mid)) / 1 ether;
+        // slither-disable-end divide-before-multiply
 
         return currentPrice > targetPrice;
     }
@@ -346,10 +348,7 @@ contract QuoterHelper {
     /// @return iterations The number of iterations to find the amount.
     /// @return swapWETHForOETHB True if we need to swap WETH for OETHb, false otherwise.
     /// @return sqrtPriceX96After The price after the swap.
-    function getAmountToSwapToReachPrice(
-        uint160 sqrtPriceTargetX96,
-        uint256 maxAmount
-    )
+    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
         public
         returns (
             uint256,
@@ -358,11 +357,9 @@ contract QuoterHelper {
             uint160
         )
     {
-        uint256 iterations;
+        uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = maxAmount == 0
-            ? BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
-            : maxAmount;
+        uint256 high = BINARY_MAX_AMOUNT_FOR_PUSH_PRICE;
         bool swapWETHForOETHB = getSwapDirection(sqrtPriceTargetX96);
 
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
@@ -384,10 +381,13 @@ contract QuoterHelper {
             );
 
             if (
-                low == high ||
                 isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)
             ) {
                 return (mid, iterations, swapWETHForOETHB, sqrtPriceX96After);
+            } else if (low == high) {
+                // target swap amount not found.
+                // try increasing BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
+                revert("SwapAmountNotFound");
             } else if (
                 swapWETHForOETHB
                     ? sqrtPriceX96After > sqrtPriceTargetX96
@@ -463,7 +463,7 @@ contract AerodromeAMOQuoter {
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
     ////////////////////////////////////////////////////////////////
-    QuoterHelper public quoterHelper;
+    QuoterHelper public immutable quoterHelper;
 
     ////////////////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
@@ -568,39 +568,13 @@ contract AerodromeAMOQuoter {
     /// @notice Use this to get the amount to swap to reach the target price after swap.
     /// @dev This call will only revert, check the logs to get returned values.
     /// @param sqrtPriceTargetX96 The target price to reach.
-    /// @param maxAmount The maximum amount to swap. (See QuoterHelper for more details)
-    function quoteAmountToSwapToReachPrice(
-        uint160 sqrtPriceTargetX96,
-        uint256 maxAmount
-    ) public {
-        (
-            uint256 amount,
-            uint256 iterations,
-            bool swapWETHForOETHB,
-            uint160 sqrtPriceAfterX96
-        ) = quoterHelper.getAmountToSwapToReachPrice(
-                sqrtPriceTargetX96,
-                maxAmount
-            );
-
-        emit ValueFoundBis(
-            amount,
-            iterations,
-            swapWETHForOETHB,
-            sqrtPriceAfterX96
-        );
-    }
-
-    /// @notice Use this to get the amount to swap to reach the target price after swap.
-    /// @dev This call will only revert, check the logs to get returned values.
-    /// @param sqrtPriceTargetX96 The target price to reach.
     function quoteAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public {
         (
             uint256 amount,
             uint256 iterations,
             bool swapWETHForOETHB,
             uint160 sqrtPriceAfterX96
-        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96, 0);
+        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96);
 
         emit ValueFoundBis(
             amount,
