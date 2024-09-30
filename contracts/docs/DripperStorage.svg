@@ -39,7 +39,7 @@
 <polyline fill="none" stroke="black" points="512.47,-0.5 512.47,-50.1 "/>
 <text text-anchor="middle" x="717.5" y="-33.5" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
 <polyline fill="none" stroke="black" points="512.47,-25.3 922.53,-25.3 "/>
-<text text-anchor="middle" x="612.88" y="-8.7" font-family="Courier New" font-size="14.00">uint192: perBlock (24)</text>
+<text text-anchor="middle" x="612.88" y="-8.7" font-family="Courier New" font-size="14.00">uint192: perSecond (24)</text>
 <polyline fill="none" stroke="black" points="713.3,-0.5 713.3,-25.3 "/>
 <text text-anchor="middle" x="817.92" y="-8.7" font-family="Courier New" font-size="14.00">uint64: lastCollect (8)</text>
 </g>

@@ -9,14 +9,56 @@ AERO_WETH_TICKSPACING = 200
 
 SLIPPAGE = 1.0 # 1%
 
-def swap_params(amount_in, recipient=OETHB_STRATEGIST):
+def swap_params_multiple(amount_in, path, recipient=OETHB_STRATEGIST, to_token=WETH_BASE, to_token_label="WETH"):
+    # Get a quote
+    (amountOut, gasEstimate, ticksCrossed, sqrtPriceX96After) = aero_quoter.quoteExactInput.call(
+        path,
+        amount_in,
+        from_strategist
+    )
+
+    # Factor in slippage
+    minAmountOut = ((amountOut * (100 - SLIPPAGE)) / 100)
+
+    # TODO: Should a padding of +/- 1 be added here?
+    sqrtPriceLimitX96 = sqrtPriceX96After
+
+
+    print("\n--------------------")
+    print("###### AERO > {}: ".format(to_token_label))
+    print("--------------------")
+    print("AERO to use:                             {:.6f}".format(scale_amount(AERO_BASE, 'human', amount_in)))
+    print("Slippage:                                {:.2f}%".format(SLIPPAGE))
+    print("Min expected tokens:                     {:.6f}".format(scale_amount(to_token, 'human', minAmountOut)))
+    print("--------- Quote ----------")
+    print("Amount out:                              {:.6f}".format(scale_amount(to_token, 'human', amountOut)))
+
+
+    # Build the swap tx
+    params = [
+        path,
+        recipient,
+
+        # Setting deadline to zero doesn't disable it.
+        # We need to set a timestamp in future. It's not possible 
+        # to get the timestamp of the block this will be mined in.
+        # So, it adds 2 hours to the current time as deadline
+        time.time() + (2 * 60 * 60), # deadline
+
+        amount_in, # amountIn
+        minAmountOut, # minAmountOut
+    ]
+
+    return params
+
+def swap_params(amount_in, recipient=OETHB_STRATEGIST, to_token=WETH_BASE, tick_spacing=AERO_WETH_TICKSPACING):
     # Get a quote
     (amountOut, gasEstimate, ticksCrossed, sqrtPriceX96After) = aero_quoter.quoteExactInputSingle.call(
         [
             AERO_BASE, # from token
-            WETH_BASE, # to token
+            to_token, # to token
             amount_in, # amount_in
-            AERO_WETH_TICKSPACING, # tickSpacing
+            tick_spacing, # tickSpacing
             0, # sqrtPriceLimitX96
         ],
         from_strategist
@@ -34,9 +76,9 @@ def swap_params(amount_in, recipient=OETHB_STRATEGIST):
     print("--------------------")
     print("AERO to use:                             {:.6f}".format(scale_amount(AERO_BASE, 'human', amount_in)))
     print("Slippage:                                {:.2f}%".format(SLIPPAGE))
-    print("Min expected tokens:                     {:.6f}".format(scale_amount(WETH_BASE, 'human', minAmountOut)))
+    print("Min expected tokens:                     {:.6f}".format(scale_amount(to_token, 'human', minAmountOut)))
     print("--------- Quote ----------")
-    print("Amount out:                              {:.6f}".format(scale_amount(WETH_BASE, 'human', amountOut)))
+    print("Amount out:                              {:.6f}".format(scale_amount(to_token, 'human', amountOut)))
     print("Ticks crossed:                           {:.0f}".format(ticksCrossed))
     print("Price after (x96):                       {:.0f}".format(sqrtPriceX96After))
 
@@ -44,8 +86,8 @@ def swap_params(amount_in, recipient=OETHB_STRATEGIST):
     # Build the swap tx
     params = [
         AERO_BASE, # from token
-        WETH_BASE, # to token
-        AERO_WETH_TICKSPACING, # tickSpacing
+        to_token, # to token
+        tick_spacing, # tickSpacing
         recipient, # recipient
 
         # Setting deadline to zero doesn't disable it.

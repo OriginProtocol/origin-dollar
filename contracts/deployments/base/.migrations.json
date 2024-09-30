@@ -10,5 +10,7 @@
   "009_upgrade_vault": 1724831516,
   "010_upgrade_vault_core": 1724933115,
   "011_transfer_governance": 1725984158,
-  "012_claim_governance": 1725984162
+  "012_claim_governance": 1725984162,
+  "013_revoke_admin_role": 1727204761,
+  "014_fixed_rate_dripper": 1727409372
 }
