@@ -171,12 +171,12 @@ contract OETHBaseHarvester is Governable {
         uint256 fee = (availableWETHBalance * feeBps) / 10000;
         uint256 yield = availableWETHBalance - fee;
 
-        // Transfer yield to Dripper if any
+        // Transfer yield, if any
         if (yield > 0) {
             weth.safeTransfer(yieldRecipient, yield);
         }
 
-        // Transfer fee to Guardian if any
+        // Transfer fee to the Guardian, if any
         if (fee > 0) {
             weth.safeTransfer(strategistAddr, fee);
         }
