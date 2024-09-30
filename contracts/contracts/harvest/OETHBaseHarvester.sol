@@ -13,6 +13,8 @@ import { ISwapRouter } from "../interfaces/aerodrome/ISwapRouter.sol";
 contract OETHBaseHarvester is Governable {
     using SafeERC20 for IERC20;
 
+    event YieldSent(address recipient, uint256 yield, uint256 fee);
+
     IVault public immutable vault;
     IStrategy public immutable amoStrategy;
     IERC20 public immutable aero;
@@ -111,16 +113,18 @@ contract OETHBaseHarvester is Governable {
      * @param aeroToSwap Amount of AERO to swap
      * @param minWETHExpected Min. amount of WETH to expect
      * @param feeBps Performance fee bps (Sent to strategist)
-     * @param yieldRecipient Yield recipient (must be Vault or Dripper)
      */
     function harvestAndSwap(
         uint256 aeroToSwap,
         uint256 minWETHExpected,
-        uint256 feeBps,
-        address yieldRecipient
+        uint256 feeBps
     ) external onlyGovernorOrStrategist {
         address strategistAddr = vault.strategistAddr();
         require(strategistAddr != address(0), "Guardian address not set");
+
+        // Yields can only be sent to the Dripper.
+        address yieldRecipient = vault.dripper();
+        require(yieldRecipient != address(0), "Dripper address not set");
 
         require(feeBps <= 10000, "Invalid Fee Bps");
 
@@ -163,17 +167,8 @@ contract OETHBaseHarvester is Governable {
         uint256 fee = (availableWETHBalance * feeBps) / 10000;
         uint256 yield = availableWETHBalance - fee;
 
-        // Transfer yield to yield recipient if any
+        // Transfer yield to Dripper if any
         if (yield > 0) {
-            // Yields can only be sent to the Vault or the Dripper.
-            // There's no address(0) check since Vault will break if there's
-            // no Dripper address set.
-            require(
-                yieldRecipient != address(0) &&
-                    (yieldRecipient == address(vault) ||
-                        yieldRecipient == vault.dripper()),
-                "Invalid yield recipient"
-            );
             weth.safeTransfer(yieldRecipient, yield);
         }
 
@@ -181,6 +176,8 @@ contract OETHBaseHarvester is Governable {
         if (fee > 0) {
             weth.safeTransfer(strategistAddr, fee);
         }
+
+        emit YieldSent(yieldRecipient, yield, fee);
     }
 
     /**

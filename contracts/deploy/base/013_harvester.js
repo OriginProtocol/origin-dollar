@@ -48,6 +48,11 @@ module.exports = deployOnBaseWithGuardian(
     );
     console.log("Initialized OETHBaseHarvesterProxy");
 
+    const cHarvester = await ethers.getContractAt(
+      "OETHBaseHarvester",
+      cHarvesterProxy.address
+    );
+
     return {
       actions: [
         {
@@ -55,6 +60,12 @@ module.exports = deployOnBaseWithGuardian(
           contract: cAMOStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
+        },
+        {
+          // 2. Set Operator address
+          contract: cHarvester,
+          signature: "setOperatorAddr(address)",
+          args: [addresses.base.OZRelayerAddress],
         },
       ],
     };
