@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "013_harvester",
+    deployName: "015_harvester",
     useTimelock: true,
   },
   async ({ ethers }) => {
