@@ -80,7 +80,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
       harvesterProxy.address
     );
 
-    // Dripper
+    // Sugar Helper
     sugar = await ethers.getContractAt(
       aerodromeSugarAbi,
       addresses.base.sugarHelper
@@ -93,6 +93,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
 
+    // Dripper
     const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
     dripper = await ethers.getContractAt(
       "FixedRateDripper",
