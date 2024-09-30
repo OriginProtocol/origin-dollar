@@ -124,7 +124,7 @@ contract OETHBaseHarvester is Governable {
         address strategistAddr = vault.strategistAddr();
         require(strategistAddr != address(0), "Guardian address not set");
 
-        // Yields can only be sent to the Dripper.
+        // Yields can either be sent to Drippper or Strategist
         address yieldRecipient = sendYieldToDripper
             ? vault.dripper()
             : strategistAddr;
