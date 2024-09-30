@@ -71,7 +71,7 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async funct
     await weth.connect(rafael).approve(oethbVault.address, oethUnits("200"));
     await oethbVault
       .connect(rafael)
-      .mint(weth.address, oethUnits("200"), oethUnits("19.999"));
+      .mint(weth.address, oethUnits("200"), oethUnits("199.999"));
 
     // we need to supply liquidity in 2 separate transactions so liquidity position is populated
     // outside the active tick.
@@ -312,7 +312,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await weth.connect(rafael).approve(oethbVault.address, oethUnits("200"));
     await oethbVault
       .connect(rafael)
-      .mint(weth.address, oethUnits("200"), oethUnits("19.999"));
+      .mint(weth.address, oethUnits("200"), oethUnits("199.999"));
 
     // we need to supply liquidity in 2 separate transactions so liquidity position is populated
     // outside the active tick.
