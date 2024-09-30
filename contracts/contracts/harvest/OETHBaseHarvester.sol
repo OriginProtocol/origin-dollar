@@ -13,8 +13,6 @@ import { ISwapRouter } from "../interfaces/aerodrome/ISwapRouter.sol";
 contract OETHBaseHarvester is Governable {
     using SafeERC20 for IERC20;
 
-    event YieldSent(address recipient, uint256 yield, uint256 fee);
-
     IVault public immutable vault;
     IStrategy public immutable amoStrategy;
     IERC20 public immutable aero;
@@ -34,6 +32,7 @@ contract OETHBaseHarvester is Governable {
     );
 
     event OperatorChanged(address oldOperator, address newOperator);
+    event YieldSent(address recipient, uint256 yield, uint256 fee);
 
     /**
      * @notice Verifies that the caller is either Governor or Strategist.
