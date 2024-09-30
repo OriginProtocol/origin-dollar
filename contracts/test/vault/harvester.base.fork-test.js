@@ -305,7 +305,7 @@ describe("ForkTest: OETHb Harvester", function () {
     const tx = harvester
       .connect(governor)
       .harvestAndSwap(oethUnits("100"), 0, 2000, true);
-    await expect(tx).to.be.revertedWith("Dripper address not set");
+    await expect(tx).to.be.revertedWith("Yield recipient not set");
   });
 
   it("Should not allow harvest & swap by non-governor/strategist", async () => {
