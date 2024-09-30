@@ -113,17 +113,22 @@ contract OETHBaseHarvester is Governable {
      * @param aeroToSwap Amount of AERO to swap
      * @param minWETHExpected Min. amount of WETH to expect
      * @param feeBps Performance fee bps (Sent to strategist)
+     * @param sendYieldToDripper Sends yield to Dripper, if set to true.
+     *                           Otherwise, to the Guardian
      */
     function harvestAndSwap(
         uint256 aeroToSwap,
         uint256 minWETHExpected,
-        uint256 feeBps
+        uint256 feeBps,
+        bool sendYieldToDripper
     ) external onlyGovernorOrStrategist {
         address strategistAddr = vault.strategistAddr();
         require(strategistAddr != address(0), "Guardian address not set");
 
         // Yields can only be sent to the Dripper.
-        address yieldRecipient = vault.dripper();
+        address yieldRecipient = sendYieldToDripper
+            ? vault.dripper()
+            : strategistAddr;
         require(yieldRecipient != address(0), "Dripper address not set");
 
         require(feeBps <= 10000, "Invalid Fee Bps");

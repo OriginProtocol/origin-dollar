@@ -78,7 +78,8 @@ describe("ForkTest: OETHb Harvester", function () {
     const tx = await harvester.connect(strategist).harvestAndSwap(
       swapAmount, // Swap 100 AERO
       0, // minExpected WETH
-      2000 // 20% fee
+      2000, // 20% fee
+      true
     );
 
     const events = (await tx.wait()).events || [];
@@ -102,6 +103,68 @@ describe("ForkTest: OETHb Harvester", function () {
     const dripperWethBalanceAfter = await weth.balanceOf(dripper.address);
     expect(dripperWethBalanceAfter).to.approxEqualTolerance(
       dripperWethBalanceBefore.add(protocolYield)
+    );
+
+    const pendingRewardsAfter = await aeroClGauge.earned(
+      aerodromeAmoStrategy.address,
+      await aerodromeAmoStrategy.tokenId()
+    );
+    expect(pendingRewardsAfter).to.eq(0);
+  });
+
+  it("Should harvest and then swap but not fund Dripper", async function () {
+    const {
+      strategist,
+      dripper,
+      harvester,
+      aerodromeAmoStrategy,
+      aeroClGauge,
+      aero,
+      weth,
+    } = fixture;
+    const pendingRewards = await aeroClGauge.earned(
+      aerodromeAmoStrategy.address,
+      await aerodromeAmoStrategy.tokenId()
+    );
+    const aeroBalanceBefore = await aero.balanceOf(strategist.address);
+    const wethBalanceBefore = await weth.balanceOf(strategist.address);
+    const dripperWethBalanceBefore = await weth.balanceOf(dripper.address);
+
+    const swapAmount = oethUnits("100");
+    if (pendingRewards.lt(swapAmount)) {
+      // Skip test when there isn't enough AERO to test swap
+      return;
+    }
+
+    // Harvest
+    const tx = await harvester.connect(strategist).harvestAndSwap(
+      swapAmount, // Swap 100 AERO
+      0, // minExpected WETH
+      2000, // 20% fee
+      false
+    );
+
+    const events = (await tx.wait()).events || [];
+    const swapEvent = events.find((e) => e.event === "RewardTokenSwapped");
+    const wethReceived = swapEvent.args.amountOut;
+
+    const fee = wethReceived.mul(2000).div(10000);
+    const protocolYield = wethReceived.sub(fee);
+
+    // Check state
+    const aeroBalanceAfter = await aero.balanceOf(strategist.address);
+    expect(aeroBalanceAfter).to.be.gte(
+      aeroBalanceBefore.add(pendingRewards).sub(swapAmount)
+    );
+
+    const wethBalanceAfter = await weth.balanceOf(strategist.address);
+    expect(wethBalanceAfter).to.approxEqualTolerance(
+      wethBalanceBefore.add(fee).add(protocolYield)
+    );
+
+    const dripperWethBalanceAfter = await weth.balanceOf(dripper.address);
+    expect(dripperWethBalanceAfter).to.approxEqualTolerance(
+      dripperWethBalanceBefore
     );
 
     const pendingRewardsAfter = await aeroClGauge.earned(
@@ -139,7 +202,8 @@ describe("ForkTest: OETHb Harvester", function () {
     const tx = await harvester.connect(strategist).harvestAndSwap(
       swapAmount, // Swap 100 AERO
       0, // minExpected WETH
-      0 // 0% fee
+      0, // 0% fee
+      true
     );
 
     const events = (await tx.wait()).events || [];
@@ -200,7 +264,8 @@ describe("ForkTest: OETHb Harvester", function () {
     const tx = await harvester.connect(strategist).harvestAndSwap(
       swapAmount, // Swap 100 AERO
       0, // minExpected WETH
-      10000 // 100% fee
+      10000, // 100% fee
+      true
     );
 
     const events = (await tx.wait()).events || [];
@@ -239,7 +304,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const tx = harvester
       .connect(governor)
-      .harvestAndSwap(oethUnits("100"), 0, 2000);
+      .harvestAndSwap(oethUnits("100"), 0, 2000, true);
     await expect(tx).to.be.revertedWith("Dripper address not set");
   });
 
@@ -248,7 +313,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const tx = harvester
       .connect(nick)
-      .harvestAndSwap(oethUnits("100"), 0, 2000);
+      .harvestAndSwap(oethUnits("100"), 0, 2000, true);
     await expect(tx).to.be.revertedWith(
       "Caller is not the Strategist or Governor"
     );
@@ -259,7 +324,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const tx = harvester
       .connect(strategist)
-      .harvestAndSwap(oethUnits("100"), 0, 10001);
+      .harvestAndSwap(oethUnits("100"), 0, 10001, true);
     await expect(tx).to.be.revertedWith("Invalid Fee Bps");
   });
 
@@ -291,7 +356,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const balanceBefore = await aero.balanceOf(strategist.address);
 
-    await harvester.connect(strategist).harvestAndSwap(amount, 0, 2000);
+    await harvester.connect(strategist).harvestAndSwap(amount, 0, 2000, true);
 
     const balanceAfter = await aero.balanceOf(strategist.address);
     expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(amount), 2);
@@ -303,7 +368,7 @@ describe("ForkTest: OETHb Harvester", function () {
 
     const tx = harvester
       .connect(governor)
-      .harvestAndSwap(oethUnits("100"), 0, 2000);
+      .harvestAndSwap(oethUnits("100"), 0, 2000, true);
     await expect(tx).to.be.revertedWith("Guardian address not set");
   });
 
