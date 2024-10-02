@@ -45,4 +45,6 @@ interface ITimelockController {
     function isOperation(bytes32 opHash) external view returns (bool);
 
     function getMinDelay() external view returns (uint256);
+
+    function updateDelay(uint256 newDelay) external;
 }
