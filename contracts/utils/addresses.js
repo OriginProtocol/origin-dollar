@@ -324,6 +324,8 @@ addresses.base.quoterV2 = "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
+addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 
