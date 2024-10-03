@@ -1027,7 +1027,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       return minAmountReserved;
     };
 
-    it("Should not automatically deposit to strategy when below deposit threshold", async () => {
+    it("Should not automatically deposit to strategy when below vault buffer threshold", async () => {
       const minAmountReserved = await depositAllWethAndConfigure1Bp();
 
       await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
@@ -1050,7 +1050,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await assetLpStakedInGauge();
     });
 
-    it("Should deposit amount above the threshold to the strategy on mint", async () => {
+    it("Should deposit amount above the vault buffer threshold to the strategy on mint", async () => {
       const minAmountReserved = await depositAllWethAndConfigure1Bp();
 
       await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
