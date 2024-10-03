@@ -7,7 +7,7 @@ const {
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "016_upgrade_amo",
+    deployName: "017_upgrade_amo",
   },
   async ({ ethers }) => {
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
@@ -46,14 +46,24 @@ module.exports = deployOnBaseWithGuardian(
           signature: "setAutoAllocateThreshold(uint256)",
           args: [utils.parseUnits("0", 18)],
         },
+        // {
+        //   // 3. set that 0.04% (4 basis points) of Vualt TVL triggers the allocation.
+        //   // At the time of writing this is ~53 ETH
+        //   contract: cOETHbVault,
+        //   signature: "setVaultBuffer(uint256)",
+        //   args: [utils.parseUnits("4", 14)],
+        // },
         {
-          // 3. set that 0.04% (4 basis points) of Vualt TVL triggers the allocation.
-          // At the time of writing this is ~53 ETH
+          // 3. for now disable allocating weth
           contract: cOETHbVault,
           signature: "setVaultBuffer(uint256)",
-          //args: [utils.parseUnits("4", 14)],
-          // for now disable allocating WETH
           args: [utils.parseUnits("1", 18)],
+        },
+        {
+          // 3. for now disable allocating weth
+          contract: cOETHbVault,
+          signature: "setVaultBuffer(uint256)",
+          args: [utils.parseUnits("0", 18)],
         },
         {
           // 4. set aerodrome AMO as WETH asset default strategy

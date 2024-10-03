@@ -297,6 +297,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
+  const cofigureAutomaticDepositOnMint = async () => {
+    await oethbVault.setVaultBuffer(oethUnits("0.0001"));
+  };
+
   // tests need liquidity outside AMO ticks in order to test for fail states
   const depositLiquidityToPool = async () => {
     await weth
@@ -1003,6 +1007,22 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       ).to.be.revertedWith("Protocol insolvent");
 
       await assetLpStakedInGauge();
+    });
+
+    it("Should automatically deposit to strategy when deposit threshold reached", async () => {
+
+    });
+
+    it("Should not automatically deposit to strategy when deposit threshold not reached", async () => {
+
+    });
+
+    it("Should leave WETH on the contract when pool price outside allowed limits", async () => {
+
+    });
+
+    it("Test that assetLpStakedInGauge also tests no WETH is left on the strategy contract (or very little)", async () => {
+
     });
   });
 
