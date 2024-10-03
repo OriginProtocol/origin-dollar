@@ -297,8 +297,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
-  const cofigureAutomaticDepositOnMint = async () => {
-    await oethbVault.setVaultBuffer(oethUnits("0.0001"));
+  const cofigureAutomaticDepositOnMint = async (vaultBuffer) => {
+    await oethbVault.connect(governor).setVaultBuffer(vaultBuffer);
+
+    const totalValue = await oethbVault.totalValue();
+
+    // min mint to trigger deposits
+    return totalValue.mul(vaultBuffer).div(oethUnits("1"));
   };
 
   // tests need liquidity outside AMO ticks in order to test for fail states
@@ -1009,20 +1014,99 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await assetLpStakedInGauge();
     });
 
-    it("Should automatically deposit to strategy when deposit threshold reached", async () => {
+    const depositAllWethAndConfigure1Bp = async () => {
+      // configure to leave no WETH on the vault
+      await cofigureAutomaticDepositOnMint(oethUnits("0"));
+      // deposit all Vault's WETH
+      await depositAllVaultWeth();
+      // cnofigure to only keep 1bp of the Vault's totalValue in the Vault;
+      const minAmountReserved = await cofigureAutomaticDepositOnMint(
+        oethUnits("0.0001")
+      );
 
+      return minAmountReserved;
+    };
+
+    it("Should not automatically deposit to strategy when below deposit threshold", async () => {
+      const minAmountReserved = await depositAllWethAndConfigure1Bp();
+
+      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+        oethUnits("0")
+      );
+      await expect(await weth.balanceOf(oethbVault.address)).to.equal(
+        oethUnits("0")
+      );
+
+      const amountBelowThreshold = minAmountReserved.div(BigNumber.from("2"));
+
+      await mint({ amount: amountBelowThreshold });
+      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+        oethUnits("0")
+      );
+      await expect(
+        await weth.balanceOf(oethbVault.address)
+      ).to.approxEqualTolerance(amountBelowThreshold);
+
+      await assetLpStakedInGauge();
     });
 
-    it("Should not automatically deposit to strategy when deposit threshold not reached", async () => {
+    it("Should deposit amount above the threshold to the strategy on mint", async () => {
+      const minAmountReserved = await depositAllWethAndConfigure1Bp();
 
+      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+        oethUnits("0")
+      );
+      await expect(await weth.balanceOf(oethbVault.address)).to.equal(
+        oethUnits("0")
+      );
+
+      const amountDoubleThreshold = minAmountReserved.mul(BigNumber.from("2"));
+
+      await mint({ amount: amountDoubleThreshold });
+      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+        oethUnits("0")
+      );
+      // threshold amount should be left on the vault
+      await expect(
+        await weth.balanceOf(oethbVault.address)
+      ).to.approxEqualTolerance(minAmountReserved);
+
+      await assetLpStakedInGauge();
     });
 
     it("Should leave WETH on the contract when pool price outside allowed limits", async () => {
+      const minAmountReserved = await depositAllWethAndConfigure1Bp();
+      const amountDoubleThreshold = minAmountReserved.mul(BigNumber.from("2"));
 
-    });
+      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+        oethUnits("0")
+      );
 
-    it("Test that assetLpStakedInGauge also tests no WETH is left on the strategy contract (or very little)", async () => {
+      const priceAtTickLower =
+        await aerodromeAmoStrategy.sqrtRatioX96TickLower();
+      let { value: value0, direction: direction0 } =
+        await quoteAmountToSwapToReachPrice({
+          price: priceAtTickLower,
+        });
 
+      // push price so 1 OETHb costs 1.0001 WETH
+      await swap({
+        amount: value0,
+        swapWeth: direction0,
+      });
+
+      await mint({ amount: amountDoubleThreshold });
+
+      // roughly half of WETH should stay on the Aerodrome contract
+      await expect(
+        await weth.balanceOf(aerodromeAmoStrategy.address)
+      ).to.approxEqualTolerance(minAmountReserved);
+      // roughly half of WETH should stay on the Vault
+      await expect(
+        await weth.balanceOf(oethbVault.address)
+      ).to.approxEqualTolerance(minAmountReserved);
+
+      await assetLpStakedInGauge();
     });
   });
 
@@ -1234,6 +1318,39 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     return await aerodromeAmoStrategy
       .connect(strategist)
       .rebalance(amountToSwap, swapWETH, minTokenReceived);
+  };
+
+  const depositAllVaultWeth = async ({ returnTransaction } = {}) => {
+    const balance = weth.balanceOf(oethbVault.address);
+    const gov = await oethbVault.governor();
+    const tx = await oethbVault
+      .connect(await impersonateAndFund(gov))
+      .depositToStrategy(
+        aerodromeAmoStrategy.address,
+        [weth.address],
+        [balance]
+      );
+
+    if (returnTransaction) {
+      return tx;
+    }
+
+    await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
+  };
+
+  const mint = async ({ userOverride, amount } = {}) => {
+    const user = userOverride || rafael;
+    amount = amount || oethUnits("5");
+
+    const balance = weth.balanceOf(user.address);
+    if (balance < amount) {
+      await setERC20TokenBalance(user.address, weth, amount + balance, hre);
+    }
+    await weth.connect(user).approve(oethbVault.address, amount);
+    const tx = await oethbVault
+      .connect(user)
+      .mint(weth.address, amount, amount);
+    return tx;
   };
 
   const mintAndDepositToStrategy = async ({
