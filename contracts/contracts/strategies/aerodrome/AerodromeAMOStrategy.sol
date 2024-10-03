@@ -366,6 +366,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_asset == WETH, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(0), _amount);
+
+        // if the pool price is not within the expected interval leave the WETH on the contract
+        // as to not break the mints
+        if (_checkForExpectedPoolPrice(true)) {
+            // deposit funds into the underlying pool
+            _rebalance(0, false, 0);
+        }
     }
 
     /**
@@ -400,6 +407,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         bool _swapWeth,
         uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
+        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
+    }
+
+    function _rebalance(
+        uint256 _amountToSwap,
+        bool _swapWeth,
+        uint256 _minTokenReceived
+    ) internal {
         /**
          * Would be nice to check if there is any total liquidity in the pool before performing this swap
          * but there is no easy way to do that in UniswapV3:
@@ -422,12 +437,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
-        _checkForExpectedPoolPrice();
+        _checkForExpectedPoolPrice(false);
 
         _addLiquidity();
+
         // this call shouldn't be necessary, since adding liquidity shouldn't affect the active
         // trading price. It is a defensive programming measure.
-        _checkForExpectedPoolPrice();
+        _checkForExpectedPoolPrice(false);
 
         // revert if protocol insolvent
         _solvencyAssert();
@@ -534,6 +550,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(mintForSwap);
         }
 
+        // approve the specific amount of WETH required
+        if (_swapWeth) {
+            IERC20(WETH).safeApprove(address(swapRouter), 0);
+            IERC20(WETH).safeApprove(address(swapRouter), _amountToSwap);
+        }
+
         // Swap it
         swapRouter.exactInputSingle(
             // sqrtPriceLimitX96 is just a rough sanity check that we are within 0 -> 1 tick
@@ -605,6 +627,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
+        // approve the specific amount of WETH required
+        IERC20(WETH).safeApprove(address(positionManager), 0);
+        IERC20(WETH).safeApprove(address(positionManager), _wethBalance);
+
         uint256 _wethAmountSupplied;
         uint256 _oethbAmountSupplied;
         if (tokenId == 0) {
@@ -673,8 +699,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *      parameters.
      *      This function works whether the strategy contract has liquidity
      *      position in the pool or not.
+     * @param dryRun  when this property is set to true the function doesn't throw
+     *        an exception but returns a bool. `True` means price within expected
+     *        range and `false` means outside that range.
      */
-    function _checkForExpectedPoolPrice() internal {
+    function _checkForExpectedPoolPrice(bool dryRun) internal returns (bool) {
         require(
             allowedWethShareStart != 0 && allowedWethShareEnd != 0,
             "Weth share interval not set"
@@ -692,6 +721,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _currentPrice <= sqrtRatioX96TickLower ||
             _currentPrice >= sqrtRatioX96TickHigher
         ) {
+            if (dryRun) {
+                return false;
+            }
+
             revert OutsideExpectedTickRange(getCurrentTradingTick());
         }
 
@@ -719,11 +752,20 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _wethSharePct < allowedWethShareStart ||
             _wethSharePct > allowedWethShareEnd
         ) {
+            if (dryRun) {
+                return false;
+            }
+
             revert PoolRebalanceOutOfBounds(
                 _wethSharePct,
                 allowedWethShareStart,
                 allowedWethShareEnd
             );
+        }
+
+        // return before emitting the event is intentional
+        if (dryRun) {
+            return true;
         }
         emit PoolRebalanced(_wethSharePct);
     }
@@ -868,11 +910,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         // to add liquidity to the clPool
-        IERC20(WETH).safeApprove(address(positionManager), type(uint256).max);
+        IERC20(OETHb).safeApprove(address(positionManager), 0);
         IERC20(OETHb).safeApprove(address(positionManager), type(uint256).max);
         // to be able to rebalance using the swapRouter
-        IERC20(WETH).safeApprove(address(swapRouter), type(uint256).max);
+        IERC20(OETHb).safeApprove(address(swapRouter), 0);
         IERC20(OETHb).safeApprove(address(swapRouter), type(uint256).max);
+
+        /* the behaviour of this strategy has slightly changed and WETH could be
+         * present on the contract between the transactions. For that reason we are
+         * un-approving WETH to the swapRouter & positionManager and only approving
+         * the required amount before a transaction
+         */
+        IERC20(WETH).safeApprove(address(swapRouter), 0);
+        IERC20(WETH).safeApprove(address(positionManager), 0);
     }
 
     /***************************************

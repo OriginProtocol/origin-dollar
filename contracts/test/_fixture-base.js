@@ -93,6 +93,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
 
+    // Configure Aerodrome AMO
+
     // Dripper
     const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
     dripper = await ethers.getContractAt(
