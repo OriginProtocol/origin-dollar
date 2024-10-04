@@ -1,8 +1,6 @@
 from world_base import *
 import time
 
-from_strategist = {'from':OETHB_STRATEGIST}
-
 # From the pool contract
 # Ref: https://basescan.org/address/0x82321f3BEB69f503380D6B233857d5C43562e2D0#readContract
 AERO_WETH_TICKSPACING = 200 
