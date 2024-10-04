@@ -123,3 +123,48 @@ def main():
     )
 
     print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# ----------------------------------------------------------
+# Oct 5, 2024 - Swap AERO to superOETHb & payback treasury 
+# ----------------------------------------------------------
+from aerodrome_harvest import *
+from eth_abi.packed import encode_packed
+import eth_abi
+
+def main():
+  txs = []
+
+  oethbSwapAmount = 42000 * 10**18
+  treasury_address = "0x3c112E20141B65041C252a68a611EF145f58B7bc"
+
+  # Approve the swap router to move it
+  txs.append(
+      aero.approve(AERODROME_SWAP_ROUTER_BASE, oethbSwapAmount, from_strategist)
+  )
+
+  oethb_path = encode_packed(
+    ['address', 'int24', 'address', 'int24', 'address'],
+    [
+      AERO_BASE,
+      200, # AERO > WETH tickSpacing
+      WETH_BASE,
+      1, # WETH > OETHb tickSpacing
+      OETHB
+    ]
+  ).hex()
+
+  # Do the AERO > OETHb swap
+  txs.append(
+      aero_router.exactInput(
+          swap_params_multiple(
+            oethbSwapAmount, 
+            oethb_path,
+            recipient=treasury_address, 
+            to_token=AERO_BASE,
+            to_token_label="superOETHb"
+          ),
+          from_strategist
+      )
+  )
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
