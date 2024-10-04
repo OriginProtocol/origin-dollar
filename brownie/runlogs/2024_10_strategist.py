@@ -93,3 +93,33 @@ def main():
     print("-----")
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+
+
+# -----------------------------------
+# Oct 4, 2024 - OETHb Harvest & Swap
+# -----------------------------------
+from world_base import *
+def main():
+    txs = []
+
+    amount = 124406 * 10**18
+    min_amount = 58.44 * 10**18
+    fee_bps = 2000 # 20%
+
+    # Approve harvester to move AERO
+    txs.append(
+        aero.approve(OETHB_HARVESTER, amount, from_strategist)
+    )
+
+    # Collect AERO from the strategy
+    txs.append(
+        harvester.harvestAndSwap(amount, min_amount, fee_bps, True, from_strategist)
+    )
+
+    # Reset harvester allowance
+    txs.append(
+        aero.approve(OETHB_HARVESTER, 0, from_strategist)
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
