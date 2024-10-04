@@ -44,7 +44,7 @@ module.exports = deployOnBaseWithGuardian(
           // 2. set auto allocate threshold to 1 - gas is cheap
           contract: cOETHbVault,
           signature: "setAutoAllocateThreshold(uint256)",
-          args: [utils.parseUnits("1", 18)],
+          args: [utils.parseUnits("0.1", 18)],
         },
         // {
         //   // 3. set that 0.04% (4 basis points) of Vualt TVL triggers the allocation.
