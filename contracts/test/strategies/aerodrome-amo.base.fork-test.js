@@ -922,12 +922,47 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await assetLpStakedInGauge();
     });
 
-    it("Should be able to rebalance the pool when price pushed to close to 1 OETHb costing 1.0001 WETH", async () => {
+    it("Should be able to rebalance the pool when price pushed to over the 1 OETHb costing 1.0001 WETH", async () => {
       const priceAtTickLower =
         await aerodromeAmoStrategy.sqrtRatioX96TickLower();
+      const priceAtTickHigher =
+        await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
+      // 5% of the price diff within a single ticker
+      const fivePctTickerPrice = priceAtTickHigher
+        .sub(priceAtTickLower)
+        .div(20);
+
       let { value: value0, direction: direction0 } =
         await quoteAmountToSwapToReachPrice({
-          price: priceAtTickLower,
+          price: priceAtTickLower.add(fivePctTickerPrice),
+        });
+      await swap({
+        amount: value0,
+        swapWeth: direction0,
+      });
+
+      const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
+      });
+      await rebalance(value, direction, value.mul("99").div("100"));
+
+      await assetLpStakedInGauge();
+    });
+
+    it("Should be able to rebalance the pool when price pushed to close to the 1 OETHb costing 1.0001 WETH", async () => {
+      const priceAtTickLower =
+        await aerodromeAmoStrategy.sqrtRatioX96TickLower();
+      const priceAtTickHigher =
+        await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
+      // 5% of the price diff within a single ticker
+      const fivePctTickerPrice = priceAtTickHigher
+        .sub(priceAtTickLower)
+        .div(20);
+
+      let { value: value0, direction: direction0 } =
+        await quoteAmountToSwapToReachPrice({
+          price: priceAtTickLower.sub(fivePctTickerPrice),
         });
       await swap({
         amount: value0,

@@ -369,7 +369,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // if the pool price is not within the expected interval leave the WETH on the contract
         // as to not break the mints
-        if (_checkForExpectedPoolPrice(true)) {
+        (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
+        if (_isExpectedRange) {
             // deposit funds into the underlying pool
             _rebalance(0, false, 0);
         }
@@ -437,16 +438,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
-        _checkForExpectedPoolPrice(false);
+        _checkForExpectedPoolPrice(true);
 
         _addLiquidity();
 
         // this call shouldn't be necessary, since adding liquidity shouldn't affect the active
         // trading price. It is a defensive programming measure.
-        _checkForExpectedPoolPrice(false);
+        (, uint256 _wethSharePct) = _checkForExpectedPoolPrice(true);
 
         // revert if protocol insolvent
         _solvencyAssert();
+
+        emit PoolRebalanced(_wethSharePct);
     }
 
     /**
@@ -698,12 +701,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Check that the Aerodrome pool price is within the expected
      *      parameters.
      *      This function works whether the strategy contract has liquidity
-     *      position in the pool or not.
-     * @param dryRun  when this property is set to true the function doesn't throw
-     *        an exception but returns a bool. `True` means price within expected
-     *        range and `false` means outside that range.
+     *      position in the pool or not. The function returns _wethSharePct
+     *      as a gas optimization measure.
+     * @param throwException  when set to true the function throws an exception
+     *        when pool's price is not within expected range.
+     * @return _isExpectedRange  Bool expressing price is within expected range
+     * @return _wethSharePct  Share of WETH owned by this strategy contract in the
+     *         configured ticker.
      */
-    function _checkForExpectedPoolPrice(bool dryRun) internal returns (bool) {
+    function _checkForExpectedPoolPrice(bool throwException)
+        internal
+        returns (bool _isExpectedRange, uint256 _wethSharePct)
+    {
         require(
             allowedWethShareStart != 0 && allowedWethShareEnd != 0,
             "Weth share interval not set"
@@ -721,53 +730,30 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _currentPrice <= sqrtRatioX96TickLower ||
             _currentPrice >= sqrtRatioX96TickHigher
         ) {
-            if (dryRun) {
-                return false;
+            if (throwException) {
+                revert OutsideExpectedTickRange(getCurrentTradingTick());
             }
-
-            revert OutsideExpectedTickRange(getCurrentTradingTick());
+            return (false, 0);
         }
 
-        /**
-         * If estimateAmount1 call fails it could be due to _currentPrice being really
-         * close to a tick and amount1 too big to compute.
-         *
-         * If token addresses were reversed estimateAmount0 would be required here
-         */
-        uint256 _normalizedWethAmount = 1 ether;
-        uint256 _correspondingOethAmount = helper.estimateAmount1(
-            _normalizedWethAmount,
-            address(0), // no need to pass pool address when current price is specified
-            _currentPrice,
-            lowerTick,
-            upperTick
-        );
-
-        // 18 decimal number expressed weth tick share
-        uint256 _wethSharePct = _normalizedWethAmount.divPrecisely(
-            _normalizedWethAmount + _correspondingOethAmount
-        );
+        // 18 decimal number expressed WETH tick share
+        _wethSharePct = _getWethShare(_currentPrice);
 
         if (
             _wethSharePct < allowedWethShareStart ||
             _wethSharePct > allowedWethShareEnd
         ) {
-            if (dryRun) {
-                return false;
+            if (throwException) {
+                revert PoolRebalanceOutOfBounds(
+                    _wethSharePct,
+                    allowedWethShareStart,
+                    allowedWethShareEnd
+                );
             }
-
-            revert PoolRebalanceOutOfBounds(
-                _wethSharePct,
-                allowedWethShareStart,
-                allowedWethShareEnd
-            );
+            return (false, _wethSharePct);
         }
 
-        // return before emitting the event is intentional
-        if (dryRun) {
-            return true;
-        }
-        emit PoolRebalanced(_wethSharePct);
+        return (true, _wethSharePct);
     }
 
     /**
@@ -991,6 +977,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice Returns the percentage of WETH liquidity in the configured ticker
+     *         owned by this strategy contract.
+     * @return uint256 1e18 denominated percentage expressing the share
+     */
+    function getWETHShare() external view returns (uint256) {
+        uint160 _currentPrice = getPoolX96Price();
+        return _getWethShare(_currentPrice);
+    }
+
+    /**
      * @notice Returns the amount of liquidity in the contract's LP position
      * @return _liquidity Amount of liquidity in the position
      */
@@ -1000,6 +996,33 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         (, , , , , , , _liquidity, , , , ) = positionManager.positions(tokenId);
+    }
+
+    function _getWethShare(uint160 _currentPrice)
+        internal
+        view
+        returns (uint256)
+    {
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 too big to compute.
+         *
+         * If token addresses were reversed estimateAmount0 would be required here
+         */
+        uint256 _normalizedWethAmount = 1 ether;
+        uint256 _correspondingOethAmount = helper.estimateAmount1(
+            _normalizedWethAmount,
+            address(0), // no need to pass pool address when current price is specified
+            _currentPrice,
+            lowerTick,
+            upperTick
+        );
+
+        // 18 decimal number expressed weth tick share
+        return
+            _normalizedWethAmount.divPrecisely(
+                _normalizedWethAmount + _correspondingOethAmount
+            );
     }
 
     /***************************************
