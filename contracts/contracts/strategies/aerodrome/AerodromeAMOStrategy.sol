@@ -555,8 +555,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         // approve the specific amount of WETH required
         if (_swapWeth) {
-            IERC20(WETH).safeApprove(address(swapRouter), 0);
-            IERC20(WETH).safeApprove(address(swapRouter), _amountToSwap);
+            IERC20(WETH).approve(address(swapRouter), _amountToSwap);
         }
 
         // Swap it
@@ -631,8 +630,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         // approve the specific amount of WETH required
-        IERC20(WETH).safeApprove(address(positionManager), 0);
-        IERC20(WETH).safeApprove(address(positionManager), _wethBalance);
+        IERC20(WETH).approve(address(positionManager), _wethBalance);
 
         uint256 _wethAmountSupplied;
         uint256 _oethbAmountSupplied;
@@ -907,8 +905,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * un-approving WETH to the swapRouter & positionManager and only approving
          * the required amount before a transaction
          */
-        IERC20(WETH).safeApprove(address(swapRouter), 0);
-        IERC20(WETH).safeApprove(address(positionManager), 0);
+        IERC20(WETH).approve(address(swapRouter), 0);
+        IERC20(WETH).approve(address(positionManager), 0);
     }
 
     /***************************************
