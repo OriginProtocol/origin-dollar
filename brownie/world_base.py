@@ -46,7 +46,7 @@ def scale_amount(from_token, to_token, amount, decimals=0):
 
     return int(scale_amount * 10**decimals) / (10**decimals)
 
-def amo_snapsnot():
+def amo_snapshot():
     wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     poolTotal = wethPoolBalance + superOETHbPoolBalance
