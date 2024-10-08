@@ -434,7 +434,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       // exit validator from SSV network
       const exitTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .exitSsvValidator(testValidator.publicKey, testValidator.operatorIds);
+        .exitSsvValidators(
+          [testValidator.publicKey],
+          testValidator.operatorIds
+        );
 
       await expect(exitTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
@@ -446,8 +449,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .removeSsvValidator(
-          testValidator.publicKey,
+        .removeSsvValidators(
+          [testValidator.publicKey],
           testValidator.operatorIds,
           newCluster
         );
@@ -508,8 +511,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .removeSsvValidator(
-          testValidator.publicKey,
+        .removeSsvValidators(
+          [testValidator.publicKey],
           testValidator.operatorIds,
           newCluster
         );
