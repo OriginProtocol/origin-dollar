@@ -894,11 +894,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         // to add liquidity to the clPool
-        IERC20(OETHb).safeApprove(address(positionManager), 0);
-        IERC20(OETHb).safeApprove(address(positionManager), type(uint256).max);
+        IERC20(OETHb).approve(address(positionManager), type(uint256).max);
         // to be able to rebalance using the swapRouter
-        IERC20(OETHb).safeApprove(address(swapRouter), 0);
-        IERC20(OETHb).safeApprove(address(swapRouter), type(uint256).max);
+        IERC20(OETHb).approve(address(swapRouter), type(uint256).max);
 
         /* the behaviour of this strategy has slightly changed and WETH could be
          * present on the contract between the transactions. For that reason we are
