@@ -168,3 +168,44 @@ def main():
   )
 
   print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+
+# -------------------------------
+# Oct 8, 2024 - Remove default strategy for WETH and deposit to AMO
+# -------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(oeth_dripper.collectAndRebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+    # Remove the second Native Staking Strategy as the default strategy from WETH
+    txs.append(
+      vault_oeth_admin.setAssetDefaultStrategy(
+        WETH,
+        "0x0000000000000000000000000000000000000000", 
+        std
+      )
+    )
+
+    # Deposit WETH to the AMO
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [WETH], 
+        [900 * 10**18],
+        std
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**17), vault_change, (1 * 10**17), std))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
