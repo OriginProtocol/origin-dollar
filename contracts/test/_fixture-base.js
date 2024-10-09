@@ -156,6 +156,9 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);
+
+    // configure Vault to not automatically deposit to strategy
+    await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
   }
 
   // Make sure we can print bridged WOETH for tests

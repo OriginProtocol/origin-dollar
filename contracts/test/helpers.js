@@ -161,12 +161,19 @@ chai.Assertion.addMethod(
       txSucceeded = true;
     } catch (e) {
       const errorHash = keccak256(toUtf8Bytes(errorSignature)).substr(0, 10);
-      chai
-        .expect(e.message)
-        .to.contain(
-          errorHash,
-          `Expected error message with signature ${errorSignature} but another was thrown.`
+      const errorName = errorSignature.substring(
+        0,
+        errorSignature.indexOf("(")
+      );
+
+      const containsError =
+        e.message.includes(errorHash) || e.message.includes(errorName);
+
+      if (!containsError) {
+        chai.expect.fail(
+          `Expected error message with signature ${errorSignature} but another was thrown: ${e.message}`
         );
+      }
     }
 
     if (txSucceeded) {
