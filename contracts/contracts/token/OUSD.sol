@@ -345,37 +345,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Mints new tokens, increasing totalSupply.
      */
     function mint(address _account, uint256 _amount) external onlyVault {
-        _mint(_account, _amount);
-    }
-
-    /**
-     * @dev Creates `_amount` tokens and assigns them to `_account`, increasing
-     * the total supply.
-     *
-     * Emits a {Transfer} event with `from` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `to` cannot be the zero address.
-     */
-    function _mint(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Mint to the zero address");
-
-        bool isNonRebasingAccount = _isNonRebasingAccount(_account);
-
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
-
-        // If the account is non rebasing and doesn't have a set creditsPerToken
-        // then set it i.e. this is a mint from a fresh contract
-        if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.add(_amount);
-        } else {
-            _rebasingCredits = _rebasingCredits.add(creditAmount);
+        if (_amount == 0) {
+            return;
         }
 
-        _totalSupply = _totalSupply.add(_amount);
+        uint256 oldBalance = balanceOf(_account);
+        uint256 newBalance = oldBalance + _amount;
 
+        _setBalance(_account, newBalance, oldBalance);
+        _totalSupply += _amount;
         require(_totalSupply < MAX_SUPPLY, "Max supply");
 
         emit Transfer(address(0), _account, _amount);
@@ -385,54 +364,43 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Burns tokens, decreasing totalSupply.
      */
     function burn(address account, uint256 amount) external onlyVault {
-        _burn(account, amount);
-    }
-
-    /**
-     * @dev Destroys `_amount` tokens from `_account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `_account` cannot be the zero address.
-     * - `_account` must have at least `_amount` tokens.
-     */
-    function _burn(address _account, uint256 _amount) internal nonReentrant {
-        require(_account != address(0), "Burn from the zero address");
-        if (_amount == 0) {
+        require(account != address(0), "Burn from the zero address");
+        if (amount == 0) {
             return;
         }
 
+        uint256 oldBalance = balanceOf(account);
+        require(oldBalance >= amount, "Remove exceeds balance");
+        uint256 newBalance = oldBalance - amount;
+
+        _setBalance(account, newBalance, oldBalance);
+        _totalSupply -= amount;
+
+        emit Transfer(account, address(0), amount);
+    }
+
+    /** @dev Sets an account's balanace to a specified amount
+     * @param _account The account which will be adjusted
+     * @param _newBalance The new balance to set to
+     * @param _oldBalance The previous new balance we are changing from
+     */
+    function _setBalance(
+        address _account,
+        uint256 _newBalance,
+        uint256 _oldBalance
+    ) internal {
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        uint256 currentCredits = _creditBalances[_account];
-
-        // Remove the credits, burning rounding errors
-        if (
-            currentCredits == creditAmount || currentCredits - 1 == creditAmount
-        ) {
-            // Handle dust from rounding
-            _creditBalances[_account] = 0;
-        } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].sub(
-                creditAmount
-            );
-        } else {
-            revert("Remove exceeds balance");
-        }
-
-        // Remove from the credit tallies and non-rebasing supply
         if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.sub(_amount);
+            nonRebasingCreditsPerToken[_account] = 1e18;
+            _creditBalances[_account] = _newBalance;
+            nonRebasingSupply = nonRebasingSupply + _newBalance - _oldBalance;
         } else {
-            _rebasingCredits = _rebasingCredits.sub(creditAmount);
+            uint256 oldCredits = _creditBalances[_account];
+            uint256 newCredits = (_newBalance * _rebasingCreditsPerToken) /
+                1e18;
+            _creditBalances[_account] = newCredits;
+            _rebasingCredits = _rebasingCredits + newCredits - oldCredits;
         }
-
-        _totalSupply = _totalSupply.sub(_amount);
-
-        emit Transfer(_account, address(0), _amount);
     }
 
     /**
