@@ -4,7 +4,7 @@ const { utils } = require("ethers");
 
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
 
-describe("Token", function () {
+describe.only("Token", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -848,5 +848,32 @@ describe("Token", function () {
     await checkTransferOut(2);
     await checkTransferOut(5);
     await checkTransferOut(9);
+  });
+
+  it.only("Should delegate rebase to another account", async () => {
+    let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
+
+    await expect(josh).has.an.approxBalanceOf("100.00", ousd);
+    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+    await expect(anna).has.an.balanceOf("0", ousd);
+
+    ousd
+      .connect(governor)
+      // matt delegates yield to anna
+      .governanceDelegateYield(matt.address, anna.address);
+
+    // Transfer USDC into the Vault to simulate yield
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+    await vault.rebase();
+
+    await expect(josh).has.an.approxBalanceOf("200.00", ousd);
+    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+    await expect(anna).has.an.balanceOf("100", ousd);
+
+    await ousd.connect(anna).transfer(josh.address, ousdUnits("10"));
+
+    await expect(josh).has.an.approxBalanceOf("210.00", ousd);
+    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+    await expect(anna).has.an.balanceOf("90", ousd);
   });
 });
