@@ -6,12 +6,17 @@ oethb = load_contract('ousd', OETHB)
 woeth = load_contract('ERC20', BRIDGED_WOETH_BASE)
 
 base_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
+from_strategist = {'from':OETHB_STRATEGIST}
 
 aero_router = load_contract('aerodrome_swap_router', AERODROME_SWAP_ROUTER_BASE)
+aero_router2 = load_contract('aerodrome_v2_router', AERODROME_ROUTER2_BASE)
 aero_pos_man = load_contract('aerodrome_nonfungible_position_manager', AERODROME_POSITION_MANAGER_BASE)
 aero_quoter = load_contract('aerodrome_quoter', AERODROME_QUOTER_BASE)
 aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR_HELPER_BASE)
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
+
+ogn_pool = load_contract('aerodrome_ogn_pool', AERODROME_OGN_OETHB_POOL_BASE)
+oethb_weth_bribe = load_contract('aero_bribes', OETHB_WETH_BRIBE_CONTRACT)
 
 amo_strat = load_contract('aerodrome_amo_strategy', OETHB_AERODROME_AMO_STRATEGY)
 vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
@@ -21,6 +26,8 @@ vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHE
 woeth_strat = load_contract('woeth_strategy', OETHB_WOETH_STRATEGY)
 
 dripper = load_contract('dripper', OETHB_DRIPPER)
+
+harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
 decimalsMap = {
     AERO_BASE: 18,

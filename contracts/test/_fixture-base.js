@@ -2,16 +2,18 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
 const { isFork, isBaseFork, oethUnits } = require("./helpers");
-const { impersonateAndFund } = require("../utils/signers");
+const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("../utils/logger")("test:fixtures-arb");
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
-const aerodromeClGaugeAbi = require("./abi/aerodromeClGauge.json");
+const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -20,8 +22,6 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultBaseFixture = deployments.createFixture(async () => {
-  let aerodromeAmoStrategy;
-
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -62,6 +62,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oethbVaultProxy.address
   );
 
+  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -70,6 +71,33 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aerodromeAmoStrategy = await ethers.getContractAt(
       "AerodromeAMOStrategy",
       aerodromeAmoStrategyProxy.address
+    );
+
+    // Harvester
+    const harvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
+    harvester = await ethers.getContractAt(
+      "OETHBaseHarvester",
+      harvesterProxy.address
+    );
+
+    // Sugar Helper
+    sugar = await ethers.getContractAt(
+      aerodromeSugarAbi,
+      addresses.base.sugarHelper
+    );
+
+    await deployWithConfirmation("AerodromeAMOQuoter", [
+      aerodromeAmoStrategy.address,
+      addresses.base.aeroQuoterV2Address,
+    ]);
+
+    quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
+
+    // Dripper
+    const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
+    dripper = await ethers.getContractAt(
+      "FixedRateDripper",
+      dripperProxy.address
     );
   }
 
@@ -111,12 +139,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const { governorAddr, strategistAddr, timelockAddr } =
     await getNamedAccounts();
   const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
+  await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
 
   const guardian = await ethers.getSigner(governorAddr);
   const timelock = await ethers.getContractAt(
     "ITimelockController",
     timelockAddr
   );
+  const oethVaultSigner = await impersonateAccount(oethbVault.address);
 
   let strategist;
   if (isFork) {
@@ -132,13 +162,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   await woeth.connect(governor).grantRole(MINTER_ROLE, minter.address);
   await woeth.connect(governor).grantRole(BURNER_ROLE, burner.address);
 
-  for (const user of [rafael, nick]) {
+  for (const user of [rafael, nick, clement]) {
     // Mint some bridged WOETH
     await woeth.connect(minter).mint(user.address, oethUnits("1"));
-    await weth.connect(user).deposit({ value: oethUnits("100") });
+    await hhHelpers.setBalance(user.address, oethUnits("100000000"));
+    await weth.connect(user).deposit({ value: oethUnits("10000000") });
 
     // Set allowance on the vault
-    await weth.connect(user).approve(oethbVault.address, oethUnits("50"));
+    await weth.connect(user).approve(oethbVault.address, oethUnits("5000"));
   }
 
   await woeth.connect(minter).mint(governor.address, oethUnits("1"));
@@ -153,7 +184,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     addresses.base.swapRouter
   );
   const aeroClGauge = await ethers.getContractAt(
-    aerodromeClGaugeAbi,
+    "ICLGauge",
     addresses.base.aerodromeOETHbWETHClGauge
   );
   const aeroNftManager = await ethers.getContractAt(
@@ -167,11 +198,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     aeroNftManager,
     aeroClGauge,
     aero,
+
     // OETHb
     oethb,
     oethbVault,
     wOETHb,
     zapper,
+    harvester,
+    dripper,
 
     // Bridged WOETH
     woeth,
@@ -192,10 +226,15 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     strategist,
     minter,
     burner,
+    oethVaultSigner,
 
     rafael,
     nick,
     clement,
+
+    // Helper
+    quoter,
+    sugar,
   };
 });
 

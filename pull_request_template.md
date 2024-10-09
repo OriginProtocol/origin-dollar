@@ -20,6 +20,7 @@ Two reviewers complete the following checklist:
 ```
 - [ ] All deployed contracts are listed in the deploy PR's description
 - [ ] Deployed contract's verified code (and all dependencies) match the code in master
+- [ ] Contract constructors have correct arguments
 - [ ] The transactions that interacted with the newly deployed contract match the deploy script.
 - [ ] Governance proposal matches the deploy script
 - [ ] Smoke tests pass after fork test execution of the governance proposal

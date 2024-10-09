@@ -25,6 +25,9 @@ describe("ForkTest: OETHb Vault", function () {
     it("Should allow anyone to mint", async () => {
       const { nick, weth, oethb, oethbVault } = fixture;
 
+      // issue a pre-mint so that Dripper collect gets called so next mint
+      // doesn't include dripper funds
+      await _mint(nick);
       await oethbVault.rebase();
 
       const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
@@ -43,8 +46,9 @@ describe("ForkTest: OETHb Vault", function () {
       expect(userBalanceAfter).to.approxEqual(
         userBalanceBefore.add(oethUnits("1"))
       );
-      expect(vaultBalanceAfter).to.approxEqual(
-        vaultBalanceBefore.add(oethUnits("1"))
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
+        vaultBalanceBefore.add(oethUnits("1")),
+        0.1
       );
     });
 

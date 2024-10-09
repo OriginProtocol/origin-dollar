@@ -290,6 +290,8 @@ addresses.base.aeroFactoryAddress =
   "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";
 addresses.base.aeroGaugeGovernorAddress =
   "0xE6A41fE61E7a1996B59d508661e3f524d6A32075";
+addresses.base.aeroQuoterV2Address =
+  "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 
 addresses.base.ethUsdPriceFeed = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70";
 
@@ -318,6 +320,11 @@ addresses.base.aerodromeOETHbWETHClGauge =
 addresses.base.swapRouter = "0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5";
 addresses.base.sugarHelper = "0x0AD09A66af0154a84e86F761313d02d0abB6edd5";
 addresses.base.quoterV2 = "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
+
+addresses.base.oethbBribesContract =
+  "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
+
+addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
