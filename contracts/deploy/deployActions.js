@@ -1566,6 +1566,29 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
+const deployBaseAerodromeAMOStrategyImplementation = async () => {
+  const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
+  const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+
+  await deployWithConfirmation("AerodromeAMOStrategy", [
+    /* Check all these values match 006_base_amo_strategy deploy file
+     */
+    [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
+    addresses.base.WETH, // weth address
+    cOETHbProxy.address, // OETHb address
+    addresses.base.swapRouter, // swapRouter
+    addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
+    addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
+    addresses.base.aerodromeOETHbWETHClGauge, // gauge address
+    addresses.base.sugarHelper, // sugarHelper
+    -1, // lowerBoundingTick
+    0, // upperBoundingTick
+    0, // tickClosestToParity
+  ]);
+
+  return await ethers.getContract("AerodromeAMOStrategy");
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1600,4 +1623,5 @@ module.exports = {
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
+  deployBaseAerodromeAMOStrategyImplementation,
 };
