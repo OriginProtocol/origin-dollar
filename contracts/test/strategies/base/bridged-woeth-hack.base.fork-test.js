@@ -17,13 +17,18 @@ describe("ForkTest: Bridged WOETH Strategy exploit", function () {
   });
 
   it("with bad strategist", async () => {
-    const { woeth, oethb, oethbVault, weth, woethStrategy, strategist, governor } = fixture;
+    const { woeth, oethb, oethbVault, weth, woethStrategy, strategist, minter, governor } = fixture;
+    
+    // Increase wOETHb TVL share
+    await woeth.connect(minter).mint(strategist.address, oethUnits("150000"));
+    await woeth.connect(strategist).approve(woethStrategy.address, oethUnits("150000"));
+    await woethStrategy.connect(strategist).depositBridgedWOETH(oethUnits("150000"));
 
     // Rebase
     await oethbVault.rebase();
 
     const amount = oethUnits("100")
-    
+
     // Mint 100 superOETHb
     await impersonateAndFund(strategist.address, "10000")
     await weth.connect(strategist).deposit({ value: amount });
@@ -62,13 +67,12 @@ describe("ForkTest: Bridged WOETH Strategy exploit", function () {
 
     let nextPrice = roundData.answer.mul(1010).div(1000)
     for (let i = 0; i < 1000; i++) {
-      // Increase the price by 0.9%
+      // Increase the price by 1%
       await cMockOracleFeed.setPrice(nextPrice);
       
       // Pull inflated price
       await woethStrategy.updateWOETHOraclePrice();
 
-      // Set up for next price
       nextPrice = nextPrice.mul(1010).div(1000)
     }
 
@@ -78,11 +82,9 @@ describe("ForkTest: Bridged WOETH Strategy exploit", function () {
     console.log((await oethb.balanceOf(strategist.address)).toString())
 
     console.log("Balance", formatEther(await oethb.balanceOf(strategist.address)))
-    
-    // // Try to redeem
-    // await oethbVault.connect(strategist).redeem(oethUnits("1"), "0");
 
-
+    // Next withdraw from AMO
+    // Redeem using vault
   });
 
 });
