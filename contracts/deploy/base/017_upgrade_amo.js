@@ -41,7 +41,7 @@ module.exports = deployOnBaseWithGuardian(
           args: [],
         },
         {
-          // 2. set auto allocate threshold to 1 - gas is cheap
+          // 2. set auto allocate threshold to 0.1 - gas is cheap
           contract: cOETHbVault,
           signature: "setAutoAllocateThreshold(uint256)",
           args: [utils.parseUnits("0.1", 18)],
