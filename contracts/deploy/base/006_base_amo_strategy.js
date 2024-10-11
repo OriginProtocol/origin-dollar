@@ -5,6 +5,9 @@ const {
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { oethUnits } = require("../../test/helpers");
+const {
+  deployBaseAerodromeAMOStrategyImplementation,
+} = require("../deployActions");
 
 //const aeroVoterAbi = require("../../test/abi/aerodromeVoter.json");
 //const slipstreamPoolAbi = require("../../test/abi/aerodromeSlipstreamPool.json")
@@ -47,35 +50,18 @@ module.exports = deployOnBaseWithGuardian(
   async ({ ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
     const cOETHbVault = await ethers.getContractAt(
       "IVault",
       cOETHbVaultProxy.address
     );
 
+    const cAMOStrategyImpl =
+      await deployBaseAerodromeAMOStrategyImplementation();
     await deployWithConfirmation("AerodromeAMOStrategyProxy");
-    await deployWithConfirmation("AerodromeAMOStrategy", [
-      /* The pool address is not yet known. Might be created before we deploy the
-       * strategy or after.
-       */
-      [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
-      addresses.base.WETH, // weth address
-      cOETHbProxy.address, // OETHb address
-      addresses.base.swapRouter, // swapRouter
-      addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
-      addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
-      addresses.base.aerodromeOETHbWETHClGauge, // gauge address
-      addresses.base.sugarHelper, // sugarHelper
-      -1, // lowerBoundingTick
-      0, // upperBoundingTick
-      0, // tickClosestToParity
-    ]);
-
     const cAMOStrategyProxy = await ethers.getContract(
       "AerodromeAMOStrategyProxy"
     );
-    const cAMOStrategyImpl = await ethers.getContract("AerodromeAMOStrategy");
     const cAMOStrategy = await ethers.getContractAt(
       "AerodromeAMOStrategy",
       cAMOStrategyProxy.address
