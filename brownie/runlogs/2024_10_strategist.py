@@ -233,7 +233,7 @@ def main():
       )
     )
 
-    amo_snapsnot()
+    amo_snapshot()
     swapWeth = True
     swapAmount = 0
     minAmount = swapAmount * 0.98
@@ -260,7 +260,7 @@ def main():
 
     txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
 
-    amo_snapsnot()
+    amo_snapshot()
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
