@@ -25,7 +25,7 @@ vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHE
 
 woeth_strat = load_contract('woeth_strategy', OETHB_WOETH_STRATEGY)
 
-dripper = load_contract('dripper', OETHB_DRIPPER)
+dripper = load_contract('oethb_dripper', OETHB_DRIPPER)
 
 harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
