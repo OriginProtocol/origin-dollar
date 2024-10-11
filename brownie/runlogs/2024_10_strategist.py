@@ -264,3 +264,38 @@ def main():
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
+
+
+# ----------------------------------------------------------
+# Oct 11, 2024 - Fund dripper and change drip rate
+# ----------------------------------------------------------
+from world_base import *
+def main():
+    txs = []
+
+    amount = 79759 * 10**18
+    min_amount = 39.5 * 10**18
+    fee_bps = 2000 # 20%
+    send_to_dripper = True
+
+    # Approve harvester to move AERO
+    txs.append(
+        aero.approve(OETHB_HARVESTER, amount, from_strategist)
+    )
+
+    # Collect AERO from the strategy & swap to get yields
+    txs.append(
+        harvester.harvestAndSwap(amount, min_amount, fee_bps, send_to_dripper, from_strategist)
+    )
+
+    # Change dripper rate
+    txs.append(
+        dripper.setDripRate(106200624970822, from_strategist)
+    )
+
+    # Reset harvester allowance
+    txs.append(
+        aero.approve(OETHB_HARVESTER, 0, from_strategist)
+    )
+
+    print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
