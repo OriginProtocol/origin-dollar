@@ -166,7 +166,7 @@ contract OETHVaultCore is VaultCore {
      * @param queued Cumulative total of all WETH queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
-        external
+        public
         virtual
         whenNotCapitalPaused
         nonReentrant
@@ -285,6 +285,14 @@ contract OETHVaultCore is VaultCore {
 
     function _claimWithdrawal(uint256 requestId)
         internal
+        virtual
+        returns (uint256 amount)
+    {
+        return _claimWithdrawal(requestId, CLAIM_DELAY);
+    }
+
+    function _claimWithdrawal(uint256 requestId, uint256 claimDelay)
+        internal
         returns (uint256 amount)
     {
         // Load the structs from storage into memory
@@ -292,7 +300,7 @@ contract OETHVaultCore is VaultCore {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         require(
-            request.timestamp + CLAIM_DELAY <= block.timestamp,
+            request.timestamp + claimDelay <= block.timestamp,
             "Claim delay not met"
         );
         // If there isn't enough reserved liquidity in the queue to claim

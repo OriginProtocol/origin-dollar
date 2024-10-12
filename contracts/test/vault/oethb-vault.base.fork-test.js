@@ -3,7 +3,7 @@ const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
-const { oethUnits } = require("../helpers");
+const { oethUnits, advanceTime } = require("../helpers");
 const { deployWithConfirmation } = require("../../utils/deploy");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
@@ -14,14 +14,14 @@ describe("ForkTest: OETHb Vault", function () {
     fixture = await baseFixture();
   });
 
-  describe("Mint & Permissioned redeems", function () {
-    async function _mint(signer) {
-      const { weth, oethbVault } = fixture;
-      await weth.connect(signer).deposit({ value: oethUnits("1") });
-      await weth.connect(signer).approve(oethbVault.address, oethUnits("1"));
-      await oethbVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
-    }
+  async function _mint(signer) {
+    const { weth, oethbVault } = fixture;
+    await weth.connect(signer).deposit({ value: oethUnits("1") });
+    await weth.connect(signer).approve(oethbVault.address, oethUnits("1"));
+    await oethbVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
+  }
 
+  describe("Mint & Permissioned redeems", function () {
     it("Should allow anyone to mint", async () => {
       const { nick, weth, oethb, oethbVault } = fixture;
 
@@ -113,20 +113,28 @@ describe("ForkTest: OETHb Vault", function () {
   });
 
   describe("Async withdrawals", function () {
-    it("Should be disabled", async () => {
-      const { oethbVault, nick } = fixture;
+    it("Should allow 1:1 async withdrawals", async function () {
+      const { rafael, oethbVault } = fixture;
 
-      let tx = oethbVault.connect(nick).requestWithdrawal(oethUnits("1"));
+      const delayPeriod = await oethbVault.withdrawalClaimDelay();
 
-      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+      if (delayPeriod == 0) {
+        // Skip when disabled
+        return;
+      }
 
-      tx = oethbVault.connect(nick).claimWithdrawal(oethUnits("1"));
+      const { nextWithdrawalIndex: requestId } =
+        await oethbVault.withdrawalQueueMetadata();
 
-      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+      // Rafael mints 1 superOETHb
+      await _mint(rafael);
 
-      tx = oethbVault.connect(nick).claimWithdrawals([oethUnits("1")]);
+      // Rafael places an async withdrawal request
+      await oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
 
-      await expect(tx).to.be.revertedWith("Async withdrawals disabled");
+      // ... and tries to claim it after 1d
+      await advanceTime(delayPeriod);
+      await oethbVault.connect(rafael).claimWithdrawal(requestId);
     });
   });
 

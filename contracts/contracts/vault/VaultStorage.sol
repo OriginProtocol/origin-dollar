@@ -68,6 +68,7 @@ contract VaultStorage is Initializable, Governable {
         uint256 _amount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
+    event WithdrawalClaimDelayUpdated(uint256 _oldDelay, uint256 _newDelay);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -236,8 +237,11 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
+    /// @notice Used for superOETHb async withdrawal
+    uint256 public withdrawalClaimDelay;
+
     // For future use
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
