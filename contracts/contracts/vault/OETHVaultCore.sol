@@ -288,14 +288,15 @@ contract OETHVaultCore is VaultCore {
         internal
         returns (uint256 amount)
     {
-        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+        uint256 _claimDelay = withdrawalClaimDelay;
+        require(_claimDelay > 0, "Async withdrawals not enabled");
 
         // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         require(
-            request.timestamp + withdrawalClaimDelay <= block.timestamp,
+            request.timestamp + _claimDelay <= block.timestamp,
             "Claim delay not met"
         );
         // If there isn't enough reserved liquidity in the queue to claim
