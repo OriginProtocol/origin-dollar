@@ -104,6 +104,7 @@ module.exports = {
         mnemonic,
       },
       blockGasLimit: 1000000000,
+      allowUnlimitedContractSize: true,
       chainId,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
@@ -131,6 +132,7 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
+      allowUnlimitedContractSize: true,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
         : isBaseFork
@@ -351,6 +353,5 @@ module.exports = {
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
-  allowUnlimitedContractSize: true,
   paths,
 };
