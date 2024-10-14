@@ -473,18 +473,19 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
   describe("Harvest rewards", function () {
     it("Should be able to collect reward tokens", async () => {
-
       await setERC20TokenBalance(
         aerodromeAmoStrategy.address,
         aero,
         "1337",
         hre
       );
-      const aeroBalanceBefore = await aero.balanceOf(harvester);
-      const impersonatedHarvester = await impersonateAndFund(harvester.address)
-      await aerodromeAmoStrategy.connect(impersonatedHarvester).collectRewardTokens();
+      const aeroBalanceBefore = await aero.balanceOf(strategist.address);
+      const impersonatedHarvester = await impersonateAndFund(harvester.address);
+      await aerodromeAmoStrategy
+        .connect(impersonatedHarvester)
+        .collectRewardTokens();
 
-      const aeroBalancediff = (await aero.balanceOf(harvester)).sub(
+      const aeroBalancediff = (await aero.balanceOf(strategist.address)).sub(
         aeroBalanceBefore
       );
 
