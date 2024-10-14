@@ -77,26 +77,4 @@ contract OETHBaseVaultCore is OETHVaultCore {
 
         super._redeem(_amount, _minimumUnitAmount);
     }
-
-    // @inheritdoc OETHVaultCore
-    // solhint-disable-next-line no-unused-vars
-    function requestWithdrawal(uint256 _amount)
-        public
-        virtual
-        override
-        returns (uint256 requestId, uint256 queued)
-    {
-        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
-        return super.requestWithdrawal(_amount);
-    }
-
-    function _claimWithdrawal(uint256 requestId)
-        internal
-        virtual
-        override
-        returns (uint256 amount)
-    {
-        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
-        return _claimWithdrawal(requestId, withdrawalClaimDelay);
-    }
 }

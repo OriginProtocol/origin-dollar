@@ -164,13 +164,13 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Changes the async withdrawal claim period for superOETHb
-     * @param _delay Delay period (should be between 30mins to 7 days).
+     * @notice Changes the async withdrawal claim period for OETH & superOETHb
+     * @param _delay Delay period (should be between 10 mins to 7 days).
      *          Set to 0 to disable async withdrawals
      */
     function setWithdrawalClaimDelay(uint256 _delay) external onlyGovernor {
         require(
-            _delay == 0 || (_delay >= 30 minutes && _delay <= 7 days),
+            _delay == 0 || (_delay >= 10 minutes && _delay <= 7 days),
             "Invalid claim delay period"
         );
         emit WithdrawalClaimDelayUpdated(withdrawalClaimDelay, _delay);
