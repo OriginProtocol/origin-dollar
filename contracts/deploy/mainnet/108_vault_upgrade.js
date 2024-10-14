@@ -15,24 +15,12 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Deploy new OETH Vault Core and Admin implementations
-    const dVaultCore = await deployWithConfirmation(
-      "OETHVaultCore",
-      [addresses.mainnet.WETH],
-      null,
-      false,
-      {}, // libraries
-      3800000, // gasLimit
-      false // useFeeData
-    );
-    const dVaultAdmin = await deployWithConfirmation(
-      "OETHVaultAdmin",
-      [addresses.mainnet.WETH],
-      null,
-      false,
-      {}, // libraries
-      3200000, // gasLimit
-      false // useFeeData
-    );
+    const dVaultCore = await deployWithConfirmation("OETHVaultCore", [
+      addresses.mainnet.WETH,
+    ]);
+    const dVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+      addresses.mainnet.WETH,
+    ]);
 
     // 2. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");

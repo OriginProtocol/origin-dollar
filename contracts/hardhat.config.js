@@ -89,7 +89,6 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 500
       },
     },
   },
@@ -133,7 +132,6 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      allowUnlimitedContractSize: true,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
         : isBaseFork
