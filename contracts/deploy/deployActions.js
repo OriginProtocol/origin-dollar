@@ -498,7 +498,7 @@ const configureOETHVault = async (isSimpleOETH) => {
 
   // Set withdrawal claim delay to 10m
   await withConfirmation(
-    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60 * 60)
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
   );
 };
 

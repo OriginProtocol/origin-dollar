@@ -480,7 +480,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         hre
       );
       const aeroBalanceBefore = await aero.balanceOf(strategist.address);
-      await harvester.harvest();
+      await harvester.connect(strategist).harvest();
 
       const aeroBalancediff = (await aero.balanceOf(strategist.address)).sub(
         aeroBalanceBefore
