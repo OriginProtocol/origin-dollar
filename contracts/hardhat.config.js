@@ -340,7 +340,7 @@ module.exports = {
       },
       {
         network: "base",
-        chainId: 8543,
+        chainId: 8453,
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
