@@ -113,7 +113,7 @@ describe("ForkTest: OETHb Vault", function () {
   });
 
   describe("Async withdrawals", function () {
-    it("Should allow 1:1 async withdrawals", async function () {
+    it("Should allow 1:1 async withdrawals", async () => {
       const { rafael, oethbVault } = fixture;
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
@@ -135,6 +135,79 @@ describe("ForkTest: OETHb Vault", function () {
       // ... and tries to claim it after 1d
       await advanceTime(delayPeriod);
       await oethbVault.connect(rafael).claimWithdrawal(requestId);
+    });
+
+    it("Should not allow withdraw before claim delay", async () => {
+      const { rafael, oethbVault } = fixture;
+
+      const delayPeriod = await oethbVault.withdrawalClaimDelay();
+
+      if (delayPeriod == 0) {
+        // Skip when disabled
+        return;
+      }
+
+      const { nextWithdrawalIndex: requestId } =
+        await oethbVault.withdrawalQueueMetadata();
+
+      // Rafael mints 1 superOETHb
+      await _mint(rafael);
+
+      // Rafael places an async withdrawal request
+      await oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
+
+      // ... and tries to claim before the withdraw period
+      const tx = oethbVault.connect(rafael).claimWithdrawal(requestId);
+      await expect(tx).to.be.revertedWith("Claim delay not met");
+    });
+
+    it("Should enforce claim delay limits", async () => {
+      const { governor, oethbVault } = fixture;
+
+      // lower bound
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(
+        10 * 60 // 10 mins
+      );
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(10 * 60);
+
+      // upper bound
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(
+        7 * 24 * 60 * 60 // 7d
+      );
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(7 * 24 * 60 * 60);
+
+      // below lower bound
+      let tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
+        9 * 60 + 59 // 9 mins 59 sec
+      );
+      await expect(tx).to.be.revertedWith("Invalid claim delay period");
+
+      // above upper bound
+      tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
+        7 * 24 * 60 * 60 + 1 // 7d + 1s
+      );
+      await expect(tx).to.be.revertedWith("Invalid claim delay period");
+    });
+
+    it("Should allow governor to disable withdrawals", async () => {
+      const { governor, oethbVault, rafael } = fixture;
+
+      // Disable it
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(0);
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(0);
+
+      // No one can make requests
+      const tx = oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
+      await expect(tx).to.be.revertedWith("Async withdrawals not enabled");
+    });
+
+    it("Should not allow anyone else to disable withdrawals", async () => {
+      const { oethbVault, rafael, strategist } = fixture;
+
+      for (const signer of [rafael, strategist]) {
+        const tx = oethbVault.connect(signer).setWithdrawalClaimDelay(0);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
     });
   });
 
