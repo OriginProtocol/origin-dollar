@@ -237,7 +237,7 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
-    /// @notice Used for superOETHb async withdrawal
+    /// @notice Used for OETH & superOETHb async withdrawal
     uint256 public withdrawalClaimDelay;
 
     // For future use
