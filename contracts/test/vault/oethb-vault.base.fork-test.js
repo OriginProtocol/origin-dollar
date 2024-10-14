@@ -114,13 +114,15 @@ describe("ForkTest: OETHb Vault", function () {
 
   describe("Async withdrawals", function () {
     it("Should allow 1:1 async withdrawals", async () => {
-      const { rafael, oethbVault } = fixture;
+      const { rafael, governor, oethbVault } = fixture;
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 
       if (delayPeriod == 0) {
-        // Skip when disabled
-        return;
+        // Temporarily set to 10m if disabled
+        await oethbVault.connect(governor).setWithdrawalClaimDelay(
+          10 * 60 // 10 mins
+        );
       }
 
       const { nextWithdrawalIndex: requestId } =
@@ -138,13 +140,15 @@ describe("ForkTest: OETHb Vault", function () {
     });
 
     it("Should not allow withdraw before claim delay", async () => {
-      const { rafael, oethbVault } = fixture;
+      const { rafael, governor, oethbVault } = fixture;
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 
       if (delayPeriod == 0) {
-        // Skip when disabled
-        return;
+        // Temporarily set to 10m if disabled
+        await oethbVault.connect(governor).setWithdrawalClaimDelay(
+          10 * 60 // 10 mins
+        );
       }
 
       const { nextWithdrawalIndex: requestId } =

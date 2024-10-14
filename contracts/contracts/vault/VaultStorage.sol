@@ -237,7 +237,9 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Mapping of withdrawal request indices to the user withdrawal request data
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
 
-    /// @notice Used for OETH & superOETHb async withdrawal
+    /// @notice Sets a minimum delay that is required to elapse between 
+    ///     requesting async withdrawals and claiming the request. 
+    ///     When set to 0 async withdrawals are disabled.
     // slither-disable-start constable-states
     // slither-disable-next-line uninitialized-state
     uint256 public withdrawalClaimDelay;
