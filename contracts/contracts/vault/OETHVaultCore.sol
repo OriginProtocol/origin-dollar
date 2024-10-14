@@ -165,7 +165,7 @@ contract OETHVaultCore is VaultCore {
      * @param queued Cumulative total of all WETH queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
-        public
+        external
         virtual
         whenNotCapitalPaused
         nonReentrant
