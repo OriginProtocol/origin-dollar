@@ -429,8 +429,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * liquidity in the pool yet. The full liquidity removal is thus skipped.
          */
         if (tokenId != 0) {
-            _removeLiquidity(1e18);
+            _removeLiquidityToFacilitateSwap(_amountToSwap, _swapWeth);
         }
+
         // in some cases we will just want to add liquidity and not issue a swap to move the
         // active trading position within the pool
         if (_amountToSwap > 0) {
@@ -470,6 +471,29 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
+    }
+
+    /**
+     * @dev Remove just enough liquidity so that the swap operation can be performed. No need to
+     * add the gaugeUnstakeAndRestake modifier since the underlying _removeLiquidity function
+     * will do that.
+     * Good to consider that remaining liquidity will remain in the pool & staked to the gauge.
+     *
+     * @param _amountToSwap The amount of the token to swap
+     * @param _swapWeth Swap using WETH when true, use OETHb when false
+     */
+    function _removeLiquidityToFacilitateSwap(
+        uint256 _amountToSwap,
+        bool _swapWeth
+    ) internal {
+        if (!_swapWeth || _amountToSwap == 0) {
+            // swapping OETHb to WETH doesn't require liquidity removal
+            return;
+        }
+
+        _assureWETHBalance(_amountToSwap);
+
+        _removeLiquidity(_amountToSwap);
     }
 
     /**
@@ -590,7 +614,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        require(_wethBalance > 0, "Must add some WETH");
+        if (_wethBalance == 0) {
+            return;
+        }
 
         uint160 _currentPrice = getPoolX96Price();
         /**
@@ -803,20 +829,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Withdraw an `amount` of assets from the platform and
-     *         send to the `_recipient`.
-     * @param _recipient  Address to which the asset should be sent
-     * @param _asset      WETH address
-     * @param _amount     Amount of WETH to withdraw
+     * @dev This function removes the appropriate amount of liquidity to assure that the required
+     * amount of WETH is available on the contract
+     *
+     * @param _amount  WETH balance required on the contract
      */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
-        require(_asset == WETH, "Unsupported asset");
-        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
-
+    function _assureWETHBalance(uint256 _amount) internal {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         if (_wethBalance < _amount) {
             require(tokenId != 0, "No liquidity available");
@@ -836,6 +854,24 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
             _removeLiquidity(shareOfWethToRemove);
         }
+    }
+
+    /**
+     * @notice Withdraw an `amount` of assets from the platform and
+     *         send to the `_recipient`.
+     * @param _recipient  Address to which the asset should be sent
+     * @param _asset      WETH address
+     * @param _amount     Amount of WETH to withdraw
+     */
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
+        require(_asset == WETH, "Unsupported asset");
+        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
+
+        _assureWETHBalance(_amount);
 
         // burn remaining OETHb
         _burnOethbOnTheContract();
