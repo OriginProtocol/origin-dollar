@@ -148,7 +148,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   );
   const oethVaultSigner = await impersonateAccount(oethbVault.address);
 
-  let strategist;
+  let strategist, harvesterSigner;
   if (isFork) {
     // Impersonate strategist on Fork
     strategist = await impersonateAndFund(strategistAddr);
@@ -156,6 +156,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);
+    harvesterSigner = await impersonateAndFund(harvester.address);
 
     // configure Vault to not automatically deposit to strategy
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
@@ -208,6 +209,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     wOETHb,
     zapper,
     harvester,
+    harvesterSigner,
     dripper,
 
     // Bridged WOETH

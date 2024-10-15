@@ -486,8 +486,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _amountToSwap,
         bool _swapWeth
     ) internal {
+        // swapping OETHb to WETH doesn't require liquidity removal or when there 
+        // is no amount to be swapped
         if (!_swapWeth || _amountToSwap == 0) {
-            // swapping OETHb to WETH doesn't require liquidity removal
             return;
         }
 

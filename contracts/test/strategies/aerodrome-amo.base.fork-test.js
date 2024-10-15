@@ -270,6 +270,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     rafael,
     aeroSwapRouter,
     aeroNftManager,
+    harvester,
+    harvesterSigner,
     quoter;
 
   beforeEach(async () => {
@@ -286,6 +288,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     aeroNftManager = fixture.aeroNftManager;
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
     gauge = fixture.aeroClGauge;
+    harvester = fixture.harvester;
+    harvesterSigner = fixture.harvesterSigner;
     quoter = fixture.quoter;
 
     await setup();
@@ -369,7 +373,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
       // correct harvester set
       expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
-        await strategist.getAddress()
+        addresses.base.HarvesterProxy
       );
 
       await assetLpStakedInGauge();
@@ -471,18 +475,16 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
   describe("Harvest rewards", function () {
     it("Should be able to collect reward tokens", async () => {
-      const strategistAddr = await strategist.getAddress();
-
       await setERC20TokenBalance(
         aerodromeAmoStrategy.address,
         aero,
         "1337",
         hre
       );
-      const aeroBalanceBefore = await aero.balanceOf(strategistAddr);
-      await aerodromeAmoStrategy.connect(strategist).collectRewardTokens();
+      const aeroBalanceBefore = await aero.balanceOf(harvester.address);
+      await aerodromeAmoStrategy.connect(harvesterSigner).collectRewardTokens();
 
-      const aeroBalancediff = (await aero.balanceOf(strategistAddr)).sub(
+      const aeroBalancediff = (await aero.balanceOf(harvester.address)).sub(
         aeroBalanceBefore
       );
 
