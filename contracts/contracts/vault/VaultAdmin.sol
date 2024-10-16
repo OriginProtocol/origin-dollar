@@ -173,7 +173,7 @@ contract VaultAdmin is VaultStorage {
             _delay == 0 || (_delay >= 10 minutes && _delay <= 7 days),
             "Invalid claim delay period"
         );
-        emit WithdrawalClaimDelayUpdated(withdrawalClaimDelay, _delay);
+        emit WithdrawalClaimDelayUpdated(_delay);
         withdrawalClaimDelay = _delay;
     }
 

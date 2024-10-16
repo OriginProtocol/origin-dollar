@@ -18,7 +18,7 @@ import { Dripper } from "./Dripper.sol";
 contract FixedRateDripper is Dripper {
     using SafeERC20 for IERC20;
 
-    event DripRateUpdated(uint192 oldDripRate, uint192 newDripRate);
+    event DripRateUpdated(uint192 newDripRate);
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -58,7 +58,7 @@ contract FixedRateDripper is Dripper {
      * @param _perSecond Rate of WETH to drip per second
      */
     function setDripRate(uint192 _perSecond) external onlyGovernorOrStrategist {
-        emit DripRateUpdated(drip.perSecond, _perSecond);
+        emit DripRateUpdated(_perSecond);
 
         /**
          * Note: It's important to call `_collect` before updating

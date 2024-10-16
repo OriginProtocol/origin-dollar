@@ -68,7 +68,7 @@ contract VaultStorage is Initializable, Governable {
         uint256 _amount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
-    event WithdrawalClaimDelayUpdated(uint256 _oldDelay, uint256 _newDelay);
+    event WithdrawalClaimDelayUpdated(uint256 _newDelay);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
