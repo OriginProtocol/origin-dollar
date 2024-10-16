@@ -299,3 +299,86 @@ def main():
     )
 
     print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -------------------------------------------
+# Oct 16 2024 - Rebalance and Withdraw from OETH AMO Strategy
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+
+
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+    # AMO pool before
+    ethPoolBalance = oeth_metapool.balance()
+    oethPoolBalance = oeth.balanceOf(OETH_METAPOOL)
+    totalPool = ethPoolBalance + oethPoolBalance
+    eth_out_before = oeth_metapool.get_dy(1, 0, 10 * 10**18)
+
+    print("Curve OETH/ETH Pool before")  
+    print("Pool ETH      ", "{:.6f}".format(ethPoolBalance / 10**18), ethPoolBalance * 100 / totalPool)
+    print("Pool OETH ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total     ", "{:.6f}".format(totalPool / 10**18), totalPool)
+
+    # remove the 10k OETH to increase the price of OETH in the OETH/ETH Curve pool
+    metapool_virtual_price = 1001921431201396942
+    lp_amount = 1100 * 10**18 * 10**18 / metapool_virtual_price
+    txs.append(
+        oeth_meta_strat.removeAndBurnOTokens(
+        lp_amount, 
+        std
+        )
+    )
+
+    # Remove WETH from strategy and burn equivalent OETH
+    txs.append(
+      vault_oeth_admin.withdrawFromStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [weth], 
+        [310 * 10**18],
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    snap_value = oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    snap_supply = oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    print("Snap value ", "{:.6f}".format(snap_value / 10**18), snap_value)
+    print("Snap supply", "{:.6f}".format(snap_supply / 10**18), snap_supply)
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+
+    # AMO pool after
+    ethPoolBalance = oeth_metapool.balance()
+    oethPoolBalance = oeth.balanceOf(OETH_METAPOOL)
+    totalPool = ethPoolBalance + oethPoolBalance
+    eth_out_after = oeth_metapool.get_dy(1, 0, 10 * 10**18)
+
+    print("Curve OETH/ETH Pool after")  
+    print("Pool ETH      ", "{:.6f}".format(ethPoolBalance / 10**18), ethPoolBalance * 100 / totalPool)
+    print("Pool OETH ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total     ", "{:.6f}".format(totalPool / 10**18), totalPool)
+
+    print("-----")
+    print("Burn LP amount",  "{:.6f}".format(lp_amount / 10**18), lp_amount)
+    print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(eth_out_after / 10**18))
+
+    # Test the OETH ARM can claim its withdrawals
+    txs.append(
+      vault_oeth_core.claimWithdrawals(
+        [76, 77],
+        {'from': OETH_ARM}
+      )
+    )
