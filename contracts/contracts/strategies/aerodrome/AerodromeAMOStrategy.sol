@@ -493,8 +493,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         _assureWETHBalance(_amountToSwap);
-
-        _removeLiquidity(_amountToSwap);
     }
 
     /**
@@ -570,6 +568,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
 
         if (_balance < _amountToSwap) {
+            // This should never trigger since _removeLiquidityToFacilitateSwap will already
+            // throw an error if there is not enough WETH
             if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
             }
