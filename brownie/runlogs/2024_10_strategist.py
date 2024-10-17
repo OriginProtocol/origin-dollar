@@ -394,7 +394,7 @@ def main():
     txs.append(vault_core.rebase({'from':STRATEGIST}))
     txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
 
-    # Withdraw 200k from Morpho Aave
+    # Withdraw 2.483m from Morpho Aave
     txs.append(
       vault_admin.withdrawFromStrategy(
         MORPHO_AAVE_STRAT, 
