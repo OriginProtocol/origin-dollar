@@ -426,10 +426,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         /**
          * When rebalance is called for the first time there is no strategy
-         * liquidity in the pool yet. The full liquidity removal is thus skipped.
+         * liquidity in the pool yet. The liquidity removal is thus skipped.
          */
         if (tokenId != 0) {
-            _removeLiquidityToFacilitateSwap(_amountToSwap, _swapWeth);
+            _removeLiquidityToEnsureSwap(_amountToSwap, _swapWeth);
         }
 
         // in some cases we will just want to add liquidity and not issue a swap to move the
@@ -482,7 +482,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amountToSwap The amount of the token to swap
      * @param _swapWeth Swap using WETH when true, use OETHb when false
      */
-    function _removeLiquidityToFacilitateSwap(
+    function _removeLiquidityToEnsureSwap(
         uint256 _amountToSwap,
         bool _swapWeth
     ) internal {
@@ -492,7 +492,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             return;
         }
 
-        _assureWETHBalance(_amountToSwap);
+        _ensureWETHBalance(_amountToSwap);
+
+        // burn remaining OETHb
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -568,7 +571,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
 
         if (_balance < _amountToSwap) {
-            // This should never trigger since _removeLiquidityToFacilitateSwap will already
+            // This should never trigger since _removeLiquidityToEnsureSwap will already
             // throw an error if there is not enough WETH
             if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
@@ -835,26 +838,28 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *
      * @param _amount  WETH balance required on the contract
      */
-    function _assureWETHBalance(uint256 _amount) internal {
+    function _ensureWETHBalance(uint256 _amount) internal {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance < _amount) {
-            require(tokenId != 0, "No liquidity available");
-            uint256 _additionalWethRequired = _amount - _wethBalance;
-            (uint256 _wethInThePool, ) = getPositionPrincipal();
-
-            if (_wethInThePool < _additionalWethRequired) {
-                revert NotEnoughWethLiquidity(
-                    _wethInThePool,
-                    _additionalWethRequired
-                );
-            }
-
-            uint256 shareOfWethToRemove = Math.min(
-                _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
-                1e18
-            );
-            _removeLiquidity(shareOfWethToRemove);
+        if (_wethBalance >= _amount) {
+            return;
         }
+
+        require(tokenId != 0, "No liquidity available");
+        uint256 _additionalWethRequired = _amount - _wethBalance;
+        (uint256 _wethInThePool, ) = getPositionPrincipal();
+
+        if (_wethInThePool < _additionalWethRequired) {
+            revert NotEnoughWethLiquidity(
+                _wethInThePool,
+                _additionalWethRequired
+            );
+        }
+
+        uint256 shareOfWethToRemove = Math.min(
+            _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
+            1e18
+        );
+        _removeLiquidity(shareOfWethToRemove);
     }
 
     /**
@@ -872,7 +877,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_asset == WETH, "Unsupported asset");
         require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
-        _assureWETHBalance(_amount);
+        _ensureWETHBalance(_amount);
 
         // burn remaining OETHb
         _burnOethbOnTheContract();
