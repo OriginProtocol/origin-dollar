@@ -482,11 +482,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @param _amountToSwap The amount of the token to swap
      * @param _swapWeth Swap using WETH when true, use OETHb when false
      */
-    function _removeLiquidityToEnsureSwap(
-        uint256 _amountToSwap,
-        bool _swapWeth
-    ) internal {
-        // swapping OETHb to WETH doesn't require liquidity removal or when there 
+    function _removeLiquidityToEnsureSwap(uint256 _amountToSwap, bool _swapWeth)
+        internal
+    {
+        // swapping OETHb to WETH doesn't require liquidity removal or when there
         // is no amount to be swapped
         if (!_swapWeth || _amountToSwap == 0) {
             return;
