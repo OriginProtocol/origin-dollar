@@ -916,7 +916,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         highValue: oethUnits("0.19"),
       });
 
-  
       await rebalance(value, direction, value.mul("99").div("100"))
 
       await verifyEndConditions();
