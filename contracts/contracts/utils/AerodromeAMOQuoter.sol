@@ -81,10 +81,24 @@ contract QuoterHelper {
         uint256 overrideBottomWethShare,
         uint256 overrideTopWethShare
     ) public {
-        strategy.setAllowedPoolWethShareInterval(
-            overrideBottomWethShare,
-            overrideTopWethShare
-        );
+        if (
+            overrideBottomWethShare != type(uint256).max ||
+            overrideTopWethShare != type(uint256).max
+        ) {
+            // Current values
+            uint256 shareStart = strategy.allowedWethShareStart();
+            uint256 shareEnd = strategy.allowedWethShareEnd();
+
+            // Override values
+            if (overrideBottomWethShare != type(uint256).max) {
+                shareStart = overrideBottomWethShare;
+            }
+            if (overrideTopWethShare != type(uint256).max) {
+                shareEnd = overrideTopWethShare;
+            }
+
+            strategy.setAllowedPoolWethShareInterval(shareStart, shareEnd);
+        }
 
         uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
@@ -500,12 +514,32 @@ contract AerodromeAMOQuoter {
     );
     event ValueNotFound(string message);
 
+    ////////////////////////////////////////////////////////////////
+    /// --- FUNCTIONS
+    ////////////////////////////////////////////////////////////////
+    /// @notice Use this to get the amount to swap before rebalance
+    /// @dev This call will only revert, check the logs to get returned values.
+    /// @dev Need to perform this call while impersonating the governor or strategist of AMO.
+    /// @return data Data struct with the amount and the number of iterations
+    function quoteAmountToSwapBeforeRebalance()
+        public
+        returns (Data memory data)
+    {
+        return
+            _quoteAmountToSwapBeforeRebalance(
+                type(uint256).max,
+                type(uint256).max
+            );
+    }
+
     /// @notice Use this to get the amount to swap before rebalance and
     ///         update allowedWethShareStart and allowedWethShareEnd on AMO.
     /// @dev This call will only revert, check the logs to get returned values.
     /// @dev Need to perform this call while impersonating the governor of AMO.
     /// @param overrideBottomWethShare New value for the allowedWethShareStart on AMO.
+    ///         Use type(uint256).max to keep same value.
     /// @param overrideTopWethShare New value for the allowedWethShareEnd on AMO.
+    ///         Use type(uint256).max to keep same value.
     /// @return data Data struct with the amount and the number of iterations
     function quoteAmountToSwapBeforeRebalance(
         uint256 overrideBottomWethShare,

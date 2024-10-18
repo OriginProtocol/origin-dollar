@@ -910,13 +910,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         amount: value0,
         swapWeth: direction0,
       });
-
+      // TODO: add default STRAT values back in. Was stupid to move them out
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-        lowValue: oethUnits("0.15"),
-        highValue: oethUnits("0.19"),
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
       });
 
-      await rebalance(value, direction, value.mul("99").div("100"))
+      await rebalance(value, direction, value.mul("99").div("100"));
 
       await verifyEndConditions();
     });
@@ -941,8 +941,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-        lowValue: oethUnits("0.15"),
-        highValue: oethUnits("0.19"),
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
       });
       await rebalance(value, direction, value.mul("99").div("100"));
 
@@ -970,8 +970,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-        lowValue: oethUnits("0.15"),
-        highValue: oethUnits("0.19"),
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
       });
       await rebalance(value, direction, value.mul("99").div("100"));
 
@@ -1246,8 +1246,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
     const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-      lowValue: oethUnits("0.18"),
-      highValue: oethUnits("0.20"),
+      lowValue: oethUnits("0"),
+      highValue: oethUnits("0"),
     });
 
     // move the price close to pre-configured 20% value
@@ -1342,9 +1342,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await quoter.claimGovernance();
 
     let txResponse;
-    txResponse = await quoter[
-      "quoteAmountToSwapBeforeRebalance(uint256,uint256)"
-    ](lowValue, highValue);
+    if (lowValue == 0 && highValue == 0) {
+      txResponse = await quoter["quoteAmountToSwapBeforeRebalance()"]();
+    } else {
+      txResponse = await quoter[
+        "quoteAmountToSwapBeforeRebalance(uint256,uint256)"
+      ](lowValue, highValue);
+    }
     // Get the quote
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
