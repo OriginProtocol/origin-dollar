@@ -737,7 +737,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      *         configured ticker.
      */
     function _checkForExpectedPoolPrice(bool throwException)
-        internal
+        internal view
         returns (bool _isExpectedRange, uint256 _wethSharePct)
     {
         require(
