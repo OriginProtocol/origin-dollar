@@ -72,6 +72,7 @@ timelock = brownie.accounts.at(TIMELOCK, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)
+governor_six = load_contract('governor_five', '0x1D3Fbd4d129Ddd2372EA85c5Fa00b2682081c9EC')
 timelock_contract = load_contract('timelock', TIMELOCK)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
@@ -193,12 +194,13 @@ def show_aave_rewards():
 
 
 def create_gov_proposal(title, txs):
-    tx = governor.propose(
+    tx = governor_six.propose(
         [x.receiver for x in txs],
+        [0 for x in txs],
         [x.sig_string for x in txs],
         ['0x'+x.input[10:] for x in txs],
         title,
-        {'from': STRATEGIST}
+        {'from': GOV_MULTISIG}
     )
     tx.info()
     print("---------------------")
@@ -206,6 +208,7 @@ def create_gov_proposal(title, txs):
     print("TO: "+tx.receiver)
     print("DATA: "+tx.input)
     print("---------------------")
+    return tx.events['ProposalCreated']['proposalId']
 
 def sim_governor_execute(id):
     governor.queue(id, {'from': GOV_MULTISIG})
@@ -283,14 +286,6 @@ def show_ousd_metastrat_underlying_balance():
         scaled_balance = commas(total_3crv_lp_value * underlying_pct, 18)
         print("{} ({:.2f}%): {}".format(asset.symbol(), underlying_pct * 100 / 2, scaled_balance))
     print("---------------------")
-
-# crate a temporary fork of a node that cleans up ethereum state when exiting code block
-class TemporaryFork:
-    def __enter__(self):
-        brownie.chain.snapshot()
-
-    def __exit__(self, *args, **kwargs):
-        brownie.chain.revert()
 
 # show changes in Vault's & OUSD's supply once the code block exits 
 class SupplyChanges:
@@ -502,6 +497,25 @@ def sim_execute_governor_five(proposal_id):
     This skips the governance process time and block delays.
     """
     actions = governor_five.getActions(proposal_id)
+    timelock = brownie.accounts.at(TIMELOCK, force=True)
+    for i in range(0, len(actions[0])):
+        show_governance_action(
+            i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i]
+        )
+        # Build actual data
+        sighash = brownie.web3.keccak(text=actions[2][i]).hex()[:10]
+        data = sighash + str(actions[3][i])[2:]
+        # Send it
+        timelock.transfer(to=actions[0][i], data=data, amount=actions[1][i])
+
+def sim_execute_governor_six(proposal_id):
+    """
+    Bypasses the actual timelock/voting and just calls each governance action
+    as if the timelock sent the transaction individually.
+
+    This skips the governance process time and block delays.
+    """
+    actions = governor_six.getActions(proposal_id)
     timelock = brownie.accounts.at(TIMELOCK, force=True)
     for i in range(0, len(actions[0])):
         show_governance_action(
