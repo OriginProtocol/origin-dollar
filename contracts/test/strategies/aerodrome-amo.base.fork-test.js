@@ -910,7 +910,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         amount: value0,
         swapWeth: direction0,
       });
-      // TODO: add default STRAT values back in. Was stupid to move them out
+      
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
         lowValue: oethUnits("0"),
         highValue: oethUnits("0"),
