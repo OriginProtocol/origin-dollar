@@ -910,7 +910,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         amount: value0,
         swapWeth: direction0,
       });
-      
+
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
         lowValue: oethUnits("0"),
         highValue: oethUnits("0"),
