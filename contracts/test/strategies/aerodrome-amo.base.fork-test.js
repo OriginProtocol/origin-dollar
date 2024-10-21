@@ -801,8 +801,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-        lowValue: oethUnits("0.17"),
-        highValue: oethUnits("0.19"),
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
       });
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
@@ -814,8 +814,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
       const { value, direction } = await quoteAmountToSwapBeforeRebalance({
-        lowValue: oethUnits("0.17"),
-        highValue: oethUnits("0.19"),
+        lowValue: oethUnits("0"),
+        highValue: oethUnits("0"),
       });
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
