@@ -604,7 +604,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             })
         );
 
-        // burn remaining OETHb
+        /**
+         * In the interest of each function in _rebalance to leave the contract state as
+         * clean as possible the OETHb tokens here are burned. This decreases the
+         * dependence where `_swapToDesiredPosition` function relies on later functions
+         * (`addLiquidity`) to burn the OETHb. Reducing the risk of error introduction.
+         */
         _burnOethbOnTheContract();
     }
 
