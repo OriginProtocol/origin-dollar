@@ -104,6 +104,7 @@ module.exports = {
         mnemonic,
       },
       blockGasLimit: 1000000000,
+      allowUnlimitedContractSize: true,
       chainId,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }

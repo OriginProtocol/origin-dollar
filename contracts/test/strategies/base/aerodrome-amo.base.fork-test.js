@@ -3,19 +3,19 @@ const {
   createFixtureLoader,
   nodeRevert,
   nodeSnapshot,
-} = require("../_fixture");
+} = require("../../_fixture");
 
-const addresses = require("../../utils/addresses");
-const { defaultBaseFixture } = require("../_fixture-base");
+const addresses = require("../../../utils/addresses");
+const { defaultBaseFixture } = require("../../_fixture-base");
 const { expect } = require("chai");
-const { oethUnits } = require("../helpers");
+const { oethUnits } = require("../../helpers");
 const ethers = require("ethers");
-const { impersonateAndFund } = require("../../utils/signers");
+const { impersonateAndFund } = require("../../../utils/signers");
 //const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
-const { setERC20TokenBalance } = require("../_fund");
+const { setERC20TokenBalance } = require("../../_fund");
 const futureEpoch = 1924064072;
 
 describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async function () {
@@ -270,6 +270,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     rafael,
     aeroSwapRouter,
     aeroNftManager,
+    harvester,
     quoter;
 
   beforeEach(async () => {
@@ -287,6 +288,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
     gauge = fixture.aeroClGauge;
     quoter = fixture.quoter;
+    harvester = fixture.harvester;
 
     await setup();
     await weth
@@ -369,7 +371,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
       // correct harvester set
       expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
-        await strategist.getAddress()
+        harvester.address
       );
 
       await assetLpStakedInGauge();
@@ -471,18 +473,16 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
   describe("Harvest rewards", function () {
     it("Should be able to collect reward tokens", async () => {
-      const strategistAddr = await strategist.getAddress();
-
       await setERC20TokenBalance(
         aerodromeAmoStrategy.address,
         aero,
         "1337",
         hre
       );
-      const aeroBalanceBefore = await aero.balanceOf(strategistAddr);
-      await aerodromeAmoStrategy.connect(strategist).collectRewardTokens();
+      const aeroBalanceBefore = await aero.balanceOf(strategist.address);
+      await harvester.connect(strategist).harvest();
 
-      const aeroBalancediff = (await aero.balanceOf(strategistAddr)).sub(
+      const aeroBalancediff = (await aero.balanceOf(strategist.address)).sub(
         aeroBalanceBefore
       );
 
