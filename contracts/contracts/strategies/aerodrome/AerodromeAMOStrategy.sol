@@ -605,7 +605,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         // burn remaining OETHb
-        //_burnOethbOnTheContract();
+        _burnOethbOnTheContract();
     }
 
     /**
