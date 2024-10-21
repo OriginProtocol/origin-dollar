@@ -13,6 +13,7 @@ const {
   displayPortion,
   displayRatio,
 } = require("./curve");
+const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:curve");
 
@@ -333,7 +334,8 @@ async function mintAndAddOTokensTask(taskArguments) {
   const amountUnits = parseUnits(amount.toString());
   log(`Minting ${formatUnits(amountUnits)} ${symbol} and adding to Curve pool`);
 
-  await amoStrategy.connect(signer).mintAndAddOTokens(amountUnits);
+  const tx = await amoStrategy.connect(signer).mintAndAddOTokens(amountUnits);
+  await logTxDetails(tx, "mintAndAddOTokens");
 }
 
 async function removeAndBurnOTokensTask(taskArguments) {
@@ -358,7 +360,10 @@ async function removeAndBurnOTokensTask(taskArguments) {
     )} ${symbol} Curve LP tokens and burn the OTokens`
   );
 
-  await amoStrategy.connect(signer).removeAndBurnOTokens(amountUnits);
+  const tx = await amoStrategy
+    .connect(signer)
+    .removeAndBurnOTokens(amountUnits);
+  await logTxDetails(tx, "removeAndBurnOTokens");
 }
 
 async function removeOnlyAssetsTask(taskArguments) {
@@ -383,7 +388,8 @@ async function removeOnlyAssetsTask(taskArguments) {
     )} ${symbol} Curve LP tokens and add to ${symbol} Vault`
   );
 
-  await amoStrategy.connect(signer).removeOnlyAssets(amountUnits);
+  const tx = await amoStrategy.connect(signer).removeOnlyAssets(amountUnits);
+  await logTxDetails(tx, "removeOnlyAssets");
 }
 
 module.exports = {
