@@ -49,7 +49,7 @@ async function amoStrategyTask(taskArguments) {
     vault,
   } = await curveContracts(poolOTokenSymbol);
 
-  // Strategy's Metapool LPs in the Convex pool
+  // Strategy's Curve LPs in the Convex pool
   const vaultLPsBefore =
     diffBlocks &&
     (await cvxRewardPool.balanceOf(amoStrategy.address, {
@@ -331,7 +331,7 @@ async function mintAndAddOTokensTask(taskArguments) {
   const signer = await getSigner();
 
   const amountUnits = parseUnits(amount.toString());
-  log(`Minting ${formatUnits(amountUnits)} ${symbol} and adding to Metapool`);
+  log(`Minting ${formatUnits(amountUnits)} ${symbol} and adding to Curve pool`);
 
   await amoStrategy.connect(signer).mintAndAddOTokens(amountUnits);
 }
@@ -355,7 +355,7 @@ async function removeAndBurnOTokensTask(taskArguments) {
   log(
     `Remove OTokens using ${formatUnits(
       amountUnits
-    )} ${symbol} Metapool LP tokens and burn the OTokens`
+    )} ${symbol} Curve LP tokens and burn the OTokens`
   );
 
   await amoStrategy.connect(signer).removeAndBurnOTokens(amountUnits);
@@ -380,7 +380,7 @@ async function removeOnlyAssetsTask(taskArguments) {
   log(
     `Remove ETH using ${formatUnits(
       amountUnits
-    )} ${symbol} Metapool LP tokens and add to ${symbol} Vault`
+    )} ${symbol} Curve LP tokens and add to ${symbol} Vault`
   );
 
   await amoStrategy.connect(signer).removeOnlyAssets(amountUnits);

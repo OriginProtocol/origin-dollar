@@ -300,17 +300,22 @@ async function curveSwapTask(taskArguments) {
 
   const signer = await getSigner();
 
-  const fromAmount = parseUnits(from.toString());
+  const fromAmount = parseUnits(amount.toString());
   const minAmount = parseUnits(min.toString());
-  log(`Swapping ${formatUnits(fromAmount)} ${from}`);
 
   const fromIndex = from === "ETH" || from === "3CRV" ? 0 : 1;
   const toIndex = from === "ETH" || from === "3CRV" ? 1 : 0;
 
   const override = from === "ETH" ? { value: amount } : {};
+
+  log(
+    `Swapping ${formatUnits(
+      fromAmount
+    )} ${from} from index ${fromIndex} to index ${toIndex}`
+  );
   // prettier-ignore
   await pool
-    .connect(signer).exchange(
+    .connect(signer)["exchange(int128,int128,uint256,uint256)"](
           fromIndex,
           toIndex,
           fromAmount,
@@ -330,6 +335,7 @@ async function curveContracts(oTokenSymbol) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CurveOETHMetaPool
       : addresses.mainnet.CurveOUSDMetaPool;
+  log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
