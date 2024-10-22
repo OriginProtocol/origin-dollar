@@ -91,7 +91,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *      Yield accounting action triggered
      * 
      *   Yield accounting Action
-     *     When a transfer from/to rebaseSrouce or transfer from rebaseReceiver happens all the 
+     *     When a transfer from/to rebaseSource or transfer from rebaseReceiver happens all the 
      *     delegated yield accruing in the `delegatedRebases` is materialized to 
      *     _creditBalances[rebaseReceiver]. The delegatedRebases[rebaseSource]'s
      *     creditsPerToken are updated to the latest global contract value.
