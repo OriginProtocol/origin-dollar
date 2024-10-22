@@ -108,6 +108,10 @@ describe("ForkTest: MetaMorpho USDC Strategy", function () {
         vaultSigner,
       } = fixture;
 
+      const checkBalanceBefore = await OUSDMetaMorphoStrategy.checkBalance(
+        usdc.address
+      );
+
       const usdcDepositAmount = await units("1000", usdc);
 
       // Vault transfers USDC to strategy
@@ -141,7 +145,10 @@ describe("ForkTest: MetaMorpho USDC Strategy", function () {
       );
       expect(
         await OUSDMetaMorphoStrategy.checkBalance(usdc.address)
-      ).to.approxEqualTolerance(usdcDepositAmount, 0.01); // 0.01% or 1 basis point
+      ).to.approxEqualTolerance(
+        checkBalanceBefore.add(usdcDepositAmount),
+        0.01
+      ); // 0.01% or 1 basis point
     });
     it("Only vault can deposit some USDC to the strategy", async function () {
       const {
