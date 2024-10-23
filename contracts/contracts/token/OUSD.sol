@@ -446,11 +446,13 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256)
     {
-        if (nonRebasingCreditsPerToken[_account] != 0) {
-            return nonRebasingCreditsPerToken[_account];
-        } else {
-            return _rebasingCreditsPerToken;
+        // Read the account's non-rebasing credits per token from storage
+        uint256 creditsPerTokenMem = nonRebasingCreditsPerToken[_account];
+        if (creditsPerTokenMem != 0) {
+            return creditsPerTokenMem;
         }
+
+        return _rebasingCreditsPerToken;
     }
 
     /**
