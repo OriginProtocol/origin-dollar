@@ -459,13 +459,27 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Is an account using rebasing accounting or non-rebasing accounting?
      *      Also, ensure contracts are non-rebasing if they have not opted in.
      * @param _account Address of the account.
+     * @return bool True if the account is using non-rebasing accounting.
+     * False if the account is using rebasing accounting.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        bool isContract = Address.isContract(_account);
-        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
-            _ensureRebasingMigration(_account);
+        // Exit early if the account has already set its non-rebasing credits per token
+        if (nonRebasingCreditsPerToken[_account] > 0) {
+            return true;
         }
-        return nonRebasingCreditsPerToken[_account] > 0;
+
+        // If rebase option is not set and the account is a contract
+        // Do the contract check first as that is cheaper than reading a storage slot
+        if (
+            Address.isContract(_account) &&
+            rebaseState[_account] == RebaseOptions.NotSet
+        ) {
+            _ensureRebasingMigration(_account);
+            return true;
+        }
+
+        // Must be using rebasing accounting
+        return false;
     }
 
     /**
@@ -473,24 +487,20 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *      supply is updated following deployment of frozen yield change.
      */
     function _ensureRebasingMigration(address _account) internal {
-        if (nonRebasingCreditsPerToken[_account] == 0) {
-            emit AccountRebasingDisabled(_account);
-            if (_creditBalances[_account] == 0) {
-                // Since there is no existing balance, we can directly set to
-                // high resolution, and do not have to do any other bookkeeping
-                nonRebasingCreditsPerToken[_account] = 1e27;
-            } else {
-                // Migrate an existing account:
+        emit AccountRebasingDisabled(_account);
+        if (_creditBalances[_account] == 0) {
+            // Since there is no existing balance, we can directly set to
+            // high resolution, and do not have to do any other bookkeeping
+            nonRebasingCreditsPerToken[_account] = 1e27;
+        } else {
+            // Migrate an existing account:
 
-                // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-                // Update non rebasing supply
-                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-                // Update credit tallies
-                _rebasingCredits = _rebasingCredits.sub(
-                    _creditBalances[_account]
-                );
-            }
+            // Set fixed credits per token for this account
+            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+            // Update non rebasing supply
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+            // Update credit tallies
+            _rebasingCredits = _rebasingCredits.sub(_creditBalances[_account]);
         }
     }
 
