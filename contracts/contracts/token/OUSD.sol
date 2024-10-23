@@ -121,9 +121,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         override
         returns (uint256)
     {
-        if (_creditBalances[_account] == 0) return 0;
-        return
-            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        // Read credits from storage
+        uint256 credits = _creditBalances[_account];
+        if (credits == 0) return 0;
+        return credits.divPrecisely(_creditsPerToken(_account));
     }
 
     /**

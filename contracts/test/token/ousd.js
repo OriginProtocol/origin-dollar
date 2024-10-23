@@ -24,6 +24,38 @@ describe("Token", function () {
     expect(await ousd.decimals()).to.equal(18);
   });
 
+  describe("Should measure gas of balanceOf from", async () => {
+    it("rebasing account", async () => {
+      const { matt, ousd } = fixture;
+
+      const tx = await ousd
+        .connect(matt)
+        .populateTransaction.balanceOf(matt.getAddress());
+      await matt.sendTransaction(tx);
+    });
+
+    it("non rebasing account", async () => {
+      const { matt, ousd } = fixture;
+
+      await ousd.connect(matt).rebaseOptOut();
+      const tx = await ousd
+        .connect(matt)
+        .populateTransaction.balanceOf(matt.getAddress());
+      await matt.sendTransaction(tx);
+    });
+
+    it("zero balance account", async () => {
+      const { matt, ousd } = fixture;
+
+      const tx = await ousd
+        .connect(matt)
+        .populateTransaction.balanceOf(
+          "0x0000000000000000000000000000000000000001"
+        );
+      await matt.sendTransaction(tx);
+    });
+  });
+
   it("Should return 0 balance for the zero address", async () => {
     const { ousd } = fixture;
     expect(
