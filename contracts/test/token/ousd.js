@@ -106,338 +106,358 @@ describe("Token", function () {
     ).to.equal(ousdUnits("999"));
   });
 
-  it("Should transfer the correct amount from a rebasing account to a non-rebasing account and set creditsPerToken", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+  describe("Should transfer the correct amount from a", () => {
+    it("rebasing account to a non-rebasing account and set creditsPerToken", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
-    // Give contract 100 OUSD from Josh
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
 
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
 
-    const contractCreditsPerToken = await ousd.creditsBalanceOf(
-      mockNonRebasing.address
-    );
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
 
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
 
-    // Credits per token should be the same for the contract
-    contractCreditsPerToken ===
-      (await ousd.creditsBalanceOf(mockNonRebasing.address));
+      // Credits per token should be the same for the contract
+      contractCreditsPerToken ===
+        (await ousd.creditsBalanceOf(mockNonRebasing.address));
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
 
-  it("Should transfer the correct amount from a rebasing account to a non-rebasing account with previously set creditsPerToken", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    it("rebasing account to a non-rebasing account with previously set creditsPerToken", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    // Matt received all the yield
-    await expect(matt).has.an.approxBalanceOf("300.00", ousd);
-    // Give contract 100 OUSD from Matt
-    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("50"));
-    await expect(matt).has.an.approxBalanceOf("250", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      // Matt received all the yield
+      await expect(matt).has.an.approxBalanceOf("300.00", ousd);
+      // Give contract 100 OUSD from Matt
+      await ousd
+        .connect(matt)
+        .transfer(mockNonRebasing.address, ousdUnits("50"));
+      await expect(matt).has.an.approxBalanceOf("250", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
 
-  it("Should transfer the correct amount from a non-rebasing account without previously set creditssPerToken to a rebasing account", async () => {
-    let { ousd, matt, josh, mockNonRebasing } = fixture;
+    it("non-rebasing account without previously set creditsPerToken to a rebasing account", async () => {
+      let { ousd, matt, josh, mockNonRebasing } = fixture;
 
-    // Give contract 100 OUSD from Josh
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("200.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("200.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
 
-  it("Should transfer the correct amount from a non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    it("non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
-    // Give contract 100 OUSD from Josh
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    // Matt received all the yield
-    await expect(matt).has.an.approxBalanceOf("300.00", ousd);
-    // Give contract 100 OUSD from Matt
-    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("50"));
-    await expect(matt).has.an.approxBalanceOf("250", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
-    // Transfer contract balance to Josh
-    await mockNonRebasing.transfer(await josh.getAddress(), ousdUnits("150"));
-    await expect(matt).has.an.approxBalanceOf("250", ousd);
-    await expect(josh).has.an.approxBalanceOf("150", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      // Matt received all the yield
+      await expect(matt).has.an.approxBalanceOf("300.00", ousd);
+      // Give contract 100 OUSD from Matt
+      await ousd
+        .connect(matt)
+        .transfer(mockNonRebasing.address, ousdUnits("50"));
+      await expect(matt).has.an.approxBalanceOf("250", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
+      // Transfer contract balance to Josh
+      await mockNonRebasing.transfer(await josh.getAddress(), ousdUnits("150"));
+      await expect(matt).has.an.approxBalanceOf("250", ousd);
+      await expect(josh).has.an.approxBalanceOf("150", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
 
-  it("Should transfer the correct amount from a non-rebasing account to a non-rebasing account with different previously set creditsPerToken", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing, mockNonRebasingTwo } =
-      fixture;
-    // Give contract 100 OUSD from Josh
-    await ousd.connect(josh).transfer(mockNonRebasing.address, ousdUnits("50"));
-    await expect(mockNonRebasing).has.an.approxBalanceOf("50.00", ousd);
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasingTwo.address, ousdUnits("50"));
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("100"));
-    await vault.rebase();
-    await mockNonRebasing.transfer(mockNonRebasingTwo.address, ousdUnits("10"));
-    await expect(mockNonRebasing).has.an.approxBalanceOf("40", ousd);
-    await expect(mockNonRebasingTwo).has.an.approxBalanceOf("60", ousd);
+    it("non-rebasing account to a non-rebasing account with different previously set creditsPerToken", async () => {
+      let {
+        ousd,
+        vault,
+        matt,
+        usdc,
+        josh,
+        mockNonRebasing,
+        mockNonRebasingTwo,
+      } = fixture;
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("50"));
+      await expect(mockNonRebasing).has.an.approxBalanceOf("50.00", ousd);
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasingTwo.address, ousdUnits("50"));
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("100"));
+      await vault.rebase();
+      await mockNonRebasing.transfer(
+        mockNonRebasingTwo.address,
+        ousdUnits("10")
+      );
+      await expect(mockNonRebasing).has.an.approxBalanceOf("40", ousd);
+      await expect(mockNonRebasingTwo).has.an.approxBalanceOf("60", ousd);
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const creditBalanceMockNonRebasing = await ousd.creditsBalanceOf(
-      mockNonRebasing.address
-    );
-    const balanceMockNonRebasing = creditBalanceMockNonRebasing[0]
-      .mul(utils.parseUnits("1", 18))
-      .div(creditBalanceMockNonRebasing[1]);
-    const creditBalanceMockNonRebasingTwo = await ousd.creditsBalanceOf(
-      mockNonRebasingTwo.address
-    );
-    const balanceMockNonRebasingTwo = creditBalanceMockNonRebasingTwo[0]
-      .mul(utils.parseUnits("1", 18))
-      .div(creditBalanceMockNonRebasingTwo[1]);
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const creditBalanceMockNonRebasing = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
+      const balanceMockNonRebasing = creditBalanceMockNonRebasing[0]
+        .mul(utils.parseUnits("1", 18))
+        .div(creditBalanceMockNonRebasing[1]);
+      const creditBalanceMockNonRebasingTwo = await ousd.creditsBalanceOf(
+        mockNonRebasingTwo.address
+      );
+      const balanceMockNonRebasingTwo = creditBalanceMockNonRebasingTwo[0]
+        .mul(utils.parseUnits("1", 18))
+        .div(creditBalanceMockNonRebasingTwo[1]);
 
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(balanceMockNonRebasing)
-      .add(balanceMockNonRebasingTwo);
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(balanceMockNonRebasing)
+        .add(balanceMockNonRebasingTwo);
 
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
 
-  it("Should transferFrom the correct amount from a rebasing account to a non-rebasing account and set creditsPerToken", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    it("rebasing account to a non-rebasing account and set creditsPerToken", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
-    // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("100"));
-    // Give contract 100 OUSD from Matt via Josh
-    await ousd
-      .connect(josh)
-      .transferFrom(
+      // Give Josh an allowance to move Matt's OUSD
+      await ousd
+        .connect(matt)
+        .increaseAllowance(await josh.getAddress(), ousdUnits("100"));
+      // Give contract 100 OUSD from Matt via Josh
+      await ousd
+        .connect(josh)
+        .transferFrom(
+          await matt.getAddress(),
+          mockNonRebasing.address,
+          ousdUnits("100")
+        );
+      await expect(matt).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      // Credits per token should be the same for the contract
+      contractCreditsPerToken ===
+        (await ousd.creditsBalanceOf(mockNonRebasing.address));
+
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
+
+    it("rebasing account to a non-rebasing account with previously set creditsPerToken", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+
+      // Give Josh an allowance to move Matt's OUSD
+      await ousd
+        .connect(matt)
+        .increaseAllowance(await josh.getAddress(), ousdUnits("150"));
+      // Give contract 100 OUSD from Matt via Josh
+      await ousd
+        .connect(josh)
+        .transferFrom(
+          await matt.getAddress(),
+          mockNonRebasing.address,
+          ousdUnits("50")
+        );
+      await expect(matt).has.an.approxBalanceOf("50", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("50", ousd);
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      // Give contract 50 more OUSD from Matt via Josh
+      await ousd
+        .connect(josh)
+        .transferFrom(
+          await matt.getAddress(),
+          mockNonRebasing.address,
+          ousdUnits("50")
+        );
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100", ousd);
+
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
+
+    it("non-rebasing account without previously set creditsPerToken to a rebasing account", async () => {
+      let { ousd, matt, josh, mockNonRebasing } = fixture;
+
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      await mockNonRebasing.increaseAllowance(
         await matt.getAddress(),
-        mockNonRebasing.address,
         ousdUnits("100")
       );
-    await expect(matt).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    const contractCreditsPerToken = await ousd.creditsBalanceOf(
-      mockNonRebasing.address
-    );
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    // Credits per token should be the same for the contract
-    contractCreditsPerToken ===
-      (await ousd.creditsBalanceOf(mockNonRebasing.address));
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+      await ousd
+        .connect(matt)
+        .transferFrom(
+          mockNonRebasing.address,
+          await matt.getAddress(),
+          ousdUnits("100")
+        );
+      await expect(matt).has.an.approxBalanceOf("200.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
 
-  it("Should transferFrom the correct amount from a rebasing account to a non-rebasing account with previously set creditsPerToken", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
-
-    // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("150"));
-    // Give contract 100 OUSD from Matt via Josh
-    await ousd
-      .connect(josh)
-      .transferFrom(
-        await matt.getAddress(),
-        mockNonRebasing.address,
-        ousdUnits("50")
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
       );
-    await expect(matt).has.an.approxBalanceOf("50", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("50", ousd);
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    // Give contract 50 more OUSD from Matt via Josh
-    await ousd
-      .connect(josh)
-      .transferFrom(
-        await matt.getAddress(),
-        mockNonRebasing.address,
-        ousdUnits("50")
-      );
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100", ousd);
+    });
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
+    it("non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
+      let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
-  it("Should transferFrom the correct amount from a non-rebasing account without previously set creditsPerToken to a rebasing account", async () => {
-    let { ousd, matt, josh, mockNonRebasing } = fixture;
-
-    // Give contract 100 OUSD from Josh
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    await mockNonRebasing.increaseAllowance(
-      await matt.getAddress(),
-      ousdUnits("100")
-    );
-
-    await ousd
-      .connect(matt)
-      .transferFrom(
-        mockNonRebasing.address,
-        await matt.getAddress(),
-        ousdUnits("100")
-      );
-    await expect(matt).has.an.approxBalanceOf("200.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
-
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
-  });
-
-  it("Should transferFrom the correct amount from a non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
-    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
-
-    // Give contract 100 OUSD from Josh
-    await ousd
-      .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    // Transfer USDC into the Vault to simulate yield
-    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
-    await vault.rebase();
-    // Matt received all the yield
-    await expect(matt).has.an.approxBalanceOf("300.00", ousd);
-    // Give contract 100 OUSD from Matt
-    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("50"));
-    await expect(matt).has.an.approxBalanceOf("250", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
-    // Transfer contract balance to Josh
-    await mockNonRebasing.increaseAllowance(
-      await matt.getAddress(),
-      ousdUnits("150")
-    );
-
-    await ousd
-      .connect(matt)
-      .transferFrom(
-        mockNonRebasing.address,
+      // Give contract 100 OUSD from Josh
+      await ousd
+        .connect(josh)
+        .transfer(mockNonRebasing.address, ousdUnits("100"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+      // Matt received all the yield
+      await expect(matt).has.an.approxBalanceOf("300.00", ousd);
+      // Give contract 100 OUSD from Matt
+      await ousd
+        .connect(matt)
+        .transfer(mockNonRebasing.address, ousdUnits("50"));
+      await expect(matt).has.an.approxBalanceOf("250", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
+      // Transfer contract balance to Josh
+      await mockNonRebasing.increaseAllowance(
         await matt.getAddress(),
         ousdUnits("150")
       );
 
-    await expect(matt).has.an.approxBalanceOf("400", ousd);
-    await expect(josh).has.an.approxBalanceOf("0", ousd);
-    await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
+      await ousd
+        .connect(matt)
+        .transferFrom(
+          mockNonRebasing.address,
+          await matt.getAddress(),
+          ousdUnits("150")
+        );
 
-    // Validate rebasing and non rebasing credit accounting by calculating'
-    // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
-      .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerTokenHighres())
-      .add(await ousd.nonRebasingSupply());
-    await expect(calculatedTotalSupply).to.approxEqual(
-      await ousd.totalSupply()
-    );
+      await expect(matt).has.an.approxBalanceOf("400", ousd);
+      await expect(josh).has.an.approxBalanceOf("0", ousd);
+      await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
+
+      // Validate rebasing and non rebasing credit accounting by calculating'
+      // total supply manually
+      const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
+        .mul(utils.parseUnits("1", 18))
+        .div(await ousd.rebasingCreditsPerTokenHighres())
+        .add(await ousd.nonRebasingSupply());
+      await expect(calculatedTotalSupply).to.approxEqual(
+        await ousd.totalSupply()
+      );
+    });
   });
 
   it("Should maintain the correct balances when rebaseOptIn is called from non-rebasing contract", async () => {
