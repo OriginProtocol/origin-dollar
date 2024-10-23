@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const { utils } = require("ethers");
 
+const { impersonateAndFund } = require("../../utils/signers.js");
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
 
 describe("Token", function () {
@@ -54,6 +55,18 @@ describe("Token", function () {
         );
       await matt.sendTransaction(tx);
     });
+  });
+
+  it("Should measure gas of changeSupply", async () => {
+    const { ousd, vault } = fixture;
+
+    const vaultSigner = await impersonateAndFund(vault.address);
+    const currentSupply = await ousd.totalSupply();
+
+    const tx = await ousd
+      .connect(vaultSigner)
+      .populateTransaction.changeSupply(currentSupply.add(ousdUnits("1")));
+    await vaultSigner.sendTransaction(tx);
   });
 
   it("Should return 0 balance for the zero address", async () => {

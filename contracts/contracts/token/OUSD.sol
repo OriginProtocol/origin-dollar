@@ -447,9 +447,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         returns (uint256)
     {
         // Read the account's non-rebasing credits per token from storage
-        uint256 creditsPerTokenMem = nonRebasingCreditsPerToken[_account];
-        if (creditsPerTokenMem != 0) {
-            return creditsPerTokenMem;
+        uint256 nonRebasingCreditsPerTokenMem = nonRebasingCreditsPerToken[
+            _account
+        ];
+        if (nonRebasingCreditsPerTokenMem != 0) {
+            return nonRebasingCreditsPerTokenMem;
         }
 
         return _rebasingCreditsPerToken;
@@ -582,35 +584,46 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         onlyVault
         nonReentrant
     {
-        require(_totalSupply > 0, "Cannot increase 0 supply");
+        // Read values from storage into memory
+        uint256 totalSupplyMem = _totalSupply;
+        uint256 rebasingCreditsMem = _rebasingCredits;
+        uint256 rebasingCreditsPerTokenMem = _rebasingCreditsPerToken;
+        uint256 nonRebasingSupplyMem = nonRebasingSupply;
 
-        if (_totalSupply == _newTotalSupply) {
+        // Pre condition checks
+        require(totalSupplyMem > 0, "Cannot increase 0 supply");
+
+        if (totalSupplyMem == _newTotalSupply) {
             emit TotalSupplyUpdatedHighres(
-                _totalSupply,
-                _rebasingCredits,
-                _rebasingCreditsPerToken
+                totalSupplyMem,
+                rebasingCreditsMem,
+                rebasingCreditsPerTokenMem
             );
             return;
         }
 
-        _totalSupply = _newTotalSupply > MAX_SUPPLY
+        // Calculate the new values in memory
+        totalSupplyMem = _newTotalSupply > MAX_SUPPLY
             ? MAX_SUPPLY
             : _newTotalSupply;
-
-        _rebasingCreditsPerToken = _rebasingCredits.divPrecisely(
-            _totalSupply.sub(nonRebasingSupply)
+        rebasingCreditsPerTokenMem = rebasingCreditsMem.divPrecisely(
+            totalSupplyMem.sub(nonRebasingSupplyMem)
         );
+        totalSupplyMem = rebasingCreditsMem
+            .divPrecisely(rebasingCreditsPerTokenMem)
+            .add(nonRebasingSupplyMem);
 
-        require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
+        // Post condition checks
+        require(rebasingCreditsPerTokenMem > 0, "Invalid change in supply");
 
-        _totalSupply = _rebasingCredits
-            .divPrecisely(_rebasingCreditsPerToken)
-            .add(nonRebasingSupply);
+        // write the new values to storage
+        _totalSupply = totalSupplyMem;
+        _rebasingCreditsPerToken = rebasingCreditsPerTokenMem;
 
         emit TotalSupplyUpdatedHighres(
-            _totalSupply,
-            _rebasingCredits,
-            _rebasingCreditsPerToken
+            totalSupplyMem,
+            rebasingCreditsMem,
+            rebasingCreditsPerTokenMem
         );
     }
 }
