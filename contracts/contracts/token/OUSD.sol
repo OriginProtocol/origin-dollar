@@ -660,6 +660,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         delete delegatedRebases[_accountSource];
         delete delegatedRebasesReversed[delegationData.account];
         nonRebasingCreditsPerToken[_accountSource] = 0;
+
+        //TODO: emit event with rebasingCreditsPerToken?
     }
 
     function _delegateYield(address _accountSource, address _accountReceiver) internal {
@@ -668,7 +670,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         _resetYieldDelegation(_accountSource, _accountReceiver);
         nonRebasingCreditsPerToken[_accountSource] = _rebasingCreditsPerToken;
-        rebaseState[_accountSource] = RebaseOptions.Delegate;
+        // TODO remove?
+        //rebaseState[_accountSource] = RebaseOptions.Delegate;
+
+        //TODO: emit event with rebasingCreditsPerToken?
     }
 
     function _resetYieldDelegation(address _accountSource, address _accountReceiver) internal {
