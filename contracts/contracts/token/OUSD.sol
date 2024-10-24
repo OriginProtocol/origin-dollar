@@ -495,7 +495,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             // high resolution, and do not have to do any other bookkeeping
             nonRebasingCreditsPerToken[_account] = 1e27;
         } else {
-            // Migrate an existing account:
+            // Migrate an existing account
+            // this can happen if an address sends tokens to an EOA address
+            // and then deploys the contract to that same address using create2
+            // which allows for contract deploys to have predictable addresses.
+            // We don't need to update _creditBalances[_account] in this case since
+            // they already correspond to the global _rebasingCreditsPerToken.
 
             // Set fixed credits per token for this account
             nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
