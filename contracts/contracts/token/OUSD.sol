@@ -36,9 +36,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     enum RebaseOptions {
         NotSet,
         OptOut,
-        OptIn,
-        // for delegated yield accounts
-        Delegate
+        OptIn
     }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
@@ -61,9 +59,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * This is all the additional storage logic required to track the balances when
      * the rebaseSource wants to delegate its yield to a rebaseReceiver. We do this
      * using the following principle: 
-     * - a yield delegation account freezes its own rebasing by setting RebaseOptions to 
-     *   `Delegate`. It copies the global creditsPerToken to a nonRebasingCreditsPerToken
-     *   mapping indicating its own balance doesn't rebase any longer.
+     * - a yield delegation account freezes its own. It copies the global creditsPerToken to a 
+     *   nonRebasingCreditsPerToken mapping indicating its own balance doesn't rebase any longer.
      * - an entry is added to delegatedRebases:
      *   `delegatedRebases[rebaseSource] = [rebaseReceiver, _rebasingCreditsPerToken]
      *   indicating the beginning of yield collection to a delegated account. The difference
@@ -643,35 +640,25 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         public
         onlyGovernor
     {
-        _delegateYield(_accountSource, _accountReceiver);
+        require(rebaseState[_accountSource] == RebaseOptions.OptIn ||
+            rebaseState[_accountSource] == RebaseOptions.NotSet, "Account not rebasing");
+
+        _resetYieldDelegation(_accountSource, _accountReceiver);
+        nonRebasingCreditsPerToken[_accountSource] = _rebasingCreditsPerToken;
+
+        //TODO: emit event with rebasingCreditsPerToken?
     }
 
     function governanceStopYieldDelegation(address _accountSource)
         public
         onlyGovernor
     {
-        _stopDelegateYield(_accountSource);
-    }
-
-    function _stopDelegateYield(address _accountSource) internal {
         RebaseDelegationData memory delegationData = delegatedRebases[_accountSource];
         require(delegationData.account != address(0), "No entry found");
 
         delete delegatedRebases[_accountSource];
         delete delegatedRebasesReversed[delegationData.account];
         nonRebasingCreditsPerToken[_accountSource] = 0;
-
-        //TODO: emit event with rebasingCreditsPerToken?
-    }
-
-    function _delegateYield(address _accountSource, address _accountReceiver) internal {
-        require(rebaseState[_accountSource] == RebaseOptions.OptIn ||
-            rebaseState[_accountSource] == RebaseOptions.NotSet, "Account not rebasing");
-
-        _resetYieldDelegation(_accountSource, _accountReceiver);
-        nonRebasingCreditsPerToken[_accountSource] = _rebasingCreditsPerToken;
-        // TODO remove?
-        //rebaseState[_accountSource] = RebaseOptions.Delegate;
 
         //TODO: emit event with rebasingCreditsPerToken?
     }
