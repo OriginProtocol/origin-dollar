@@ -427,9 +427,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         /**
          * When rebalance is called for the first time there is no strategy
          * liquidity in the pool yet. The liquidity removal is thus skipped.
+         * Also execute this function when WETH is required for the swap.
          */
-        if (tokenId != 0) {
-            _removeLiquidityToEnsureSwap(_amountToSwap, _swapWeth);
+        if (tokenId != 0 && _swapWeth && _amountToSwap > 0) {
+            _ensureWETHBalance(_amountToSwap);
+
+            // burn remaining OETHb -- TODO: 
+            _burnOethbOnTheContract();
         }
 
         // in some cases we will just want to add liquidity and not issue a swap to move the
@@ -471,30 +475,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
-    }
-
-    /**
-     * @dev Remove just enough liquidity so that the swap operation can be performed. No need to
-     * add the gaugeUnstakeAndRestake modifier since the underlying _removeLiquidity function
-     * will do that.
-     * Good to consider that remaining liquidity will remain in the pool & staked to the gauge.
-     *
-     * @param _amountToSwap The amount of the token to swap
-     * @param _swapWeth Swap using WETH when true, use OETHb when false
-     */
-    function _removeLiquidityToEnsureSwap(uint256 _amountToSwap, bool _swapWeth)
-        internal
-    {
-        // swapping OETHb to WETH doesn't require liquidity removal or when there
-        // is no amount to be swapped
-        if (!_swapWeth || _amountToSwap == 0) {
-            return;
-        }
-
-        _ensureWETHBalance(_amountToSwap);
-
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
     }
 
     /**
