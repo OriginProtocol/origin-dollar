@@ -121,9 +121,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         override
         returns (uint256)
     {
-        if (_creditBalances[_account] == 0) return 0;
-        return
-            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        // Read credits from storage
+        uint256 credits = _creditBalances[_account];
+        if (credits == 0) return 0;
+        return credits.divPrecisely(_creditsPerToken(_account));
     }
 
     /**
@@ -445,24 +446,42 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256)
     {
-        if (nonRebasingCreditsPerToken[_account] != 0) {
-            return nonRebasingCreditsPerToken[_account];
-        } else {
-            return _rebasingCreditsPerToken;
+        // Read the account's non-rebasing credits per token from storage
+        uint256 nonRebasingCreditsPerTokenMem = nonRebasingCreditsPerToken[
+            _account
+        ];
+        if (nonRebasingCreditsPerTokenMem != 0) {
+            return nonRebasingCreditsPerTokenMem;
         }
+
+        return _rebasingCreditsPerToken;
     }
 
     /**
      * @dev Is an account using rebasing accounting or non-rebasing accounting?
      *      Also, ensure contracts are non-rebasing if they have not opted in.
      * @param _account Address of the account.
+     * @return bool True if the account is using non-rebasing accounting.
+     * False if the account is using rebasing accounting.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        bool isContract = Address.isContract(_account);
-        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
-            _ensureRebasingMigration(_account);
+        // Exit early if the account has already set its non-rebasing credits per token
+        if (nonRebasingCreditsPerToken[_account] > 0) {
+            return true;
         }
-        return nonRebasingCreditsPerToken[_account] > 0;
+
+        // If rebase option is not set and the account is a contract
+        // Do the contract check first as that is cheaper than reading a storage slot
+        if (
+            Address.isContract(_account) &&
+            rebaseState[_account] == RebaseOptions.NotSet
+        ) {
+            _ensureRebasingMigration(_account);
+            return true;
+        }
+
+        // Must be using rebasing accounting
+        return false;
     }
 
     /**
@@ -470,29 +489,25 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *      supply is updated following deployment of frozen yield change.
      */
     function _ensureRebasingMigration(address _account) internal {
-        if (nonRebasingCreditsPerToken[_account] == 0) {
-            emit AccountRebasingDisabled(_account);
-            if (_creditBalances[_account] == 0) {
-                // Since there is no existing balance, we can directly set to
-                // high resolution, and do not have to do any other bookkeeping
-                nonRebasingCreditsPerToken[_account] = 1e27;
-            } else {
-                // Migrate an existing account
-                // this an happen if an address sends tokens to an EOA address
-                // and then deploys the contract to that same address using create2
-                // which allows for contract deploys to predictable addresses.
-                // We don't need to update _creditBalances[_account] in this case since
-                // they already correspond to the global _rebasingCreditsPerToken.
+        emit AccountRebasingDisabled(_account);
+        if (_creditBalances[_account] == 0) {
+            // Since there is no existing balance, we can directly set to
+            // high resolution, and do not have to do any other bookkeeping
+            nonRebasingCreditsPerToken[_account] = 1e27;
+        } else {
+            // Migrate an existing account
+            // this can happen if an address sends tokens to an EOA address
+            // and then deploys the contract to that same address using create2
+            // which allows for contract deploys to have predictable addresses.
+            // We don't need to update _creditBalances[_account] in this case since
+            // they already correspond to the global _rebasingCreditsPerToken.
 
-                // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-                // Update non rebasing supply
-                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-                // Update credit tallies
-                _rebasingCredits = _rebasingCredits.sub(
-                    _creditBalances[_account]
-                );
-            }
+            // Set fixed credits per token for this account
+            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+            // Update non rebasing supply
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+            // Update credit tallies
+            _rebasingCredits = _rebasingCredits.sub(_creditBalances[_account]);
         }
     }
 
@@ -574,35 +589,46 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         onlyVault
         nonReentrant
     {
-        require(_totalSupply > 0, "Cannot increase 0 supply");
+        // Read values from storage into memory
+        uint256 totalSupplyMem = _totalSupply;
+        uint256 rebasingCreditsMem = _rebasingCredits;
+        uint256 rebasingCreditsPerTokenMem = _rebasingCreditsPerToken;
+        uint256 nonRebasingSupplyMem = nonRebasingSupply;
 
-        if (_totalSupply == _newTotalSupply) {
+        // Pre condition checks
+        require(totalSupplyMem > 0, "Cannot increase 0 supply");
+
+        if (totalSupplyMem == _newTotalSupply) {
             emit TotalSupplyUpdatedHighres(
-                _totalSupply,
-                _rebasingCredits,
-                _rebasingCreditsPerToken
+                totalSupplyMem,
+                rebasingCreditsMem,
+                rebasingCreditsPerTokenMem
             );
             return;
         }
 
-        _totalSupply = _newTotalSupply > MAX_SUPPLY
+        // Calculate the new values in memory
+        totalSupplyMem = _newTotalSupply > MAX_SUPPLY
             ? MAX_SUPPLY
             : _newTotalSupply;
-
-        _rebasingCreditsPerToken = _rebasingCredits.divPrecisely(
-            _totalSupply.sub(nonRebasingSupply)
+        rebasingCreditsPerTokenMem = rebasingCreditsMem.divPrecisely(
+            totalSupplyMem.sub(nonRebasingSupplyMem)
         );
+        totalSupplyMem = rebasingCreditsMem
+            .divPrecisely(rebasingCreditsPerTokenMem)
+            .add(nonRebasingSupplyMem);
 
-        require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
+        // Post condition checks
+        require(rebasingCreditsPerTokenMem > 0, "Invalid change in supply");
 
-        _totalSupply = _rebasingCredits
-            .divPrecisely(_rebasingCreditsPerToken)
-            .add(nonRebasingSupply);
+        // write the new values to storage
+        _totalSupply = totalSupplyMem;
+        _rebasingCreditsPerToken = rebasingCreditsPerTokenMem;
 
         emit TotalSupplyUpdatedHighres(
-            _totalSupply,
-            _rebasingCredits,
-            _rebasingCreditsPerToken
+            totalSupplyMem,
+            rebasingCreditsMem,
+            rebasingCreditsPerTokenMem
         );
     }
 }
