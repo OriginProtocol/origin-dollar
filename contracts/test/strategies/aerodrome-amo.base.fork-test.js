@@ -682,7 +682,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
 
-      await assetLpNOTStakedInGauge();
+      await verifyEndConditions(false);
     });
 
     it("Should withdraw when there's little OETHb in the pool", async () => {
@@ -774,13 +774,15 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
 
-      await assetLpNOTStakedInGauge();
+      await verifyEndConditions(false);
     });
   });
 
   describe("Deposit and rebalance", function () {
     it("Should be able to deposit to the strategy", async () => {
       await mintAndDepositToStrategy();
+
+      await verifyEndConditions();
     });
 
     it("Should revert when not depositing WETH or amount is 0", async () => {
@@ -1219,8 +1221,12 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
    * - nft LP token should remain staked
    * - there should be no substantial amount of WETH / OETHb left on the strategy contract
    */
-  const verifyEndConditions = async () => {
-    await assetLpStakedInGauge();
+  const verifyEndConditions = async (lpStaked = true) => {
+    if (lpStaked) {
+      await assetLpStakedInGauge();
+    } else {
+      await assetLpNOTStakedInGauge();
+    }
 
     await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
       oethUnits("0.00001")

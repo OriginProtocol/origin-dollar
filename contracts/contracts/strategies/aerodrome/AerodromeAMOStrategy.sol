@@ -476,26 +476,25 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Decrease partial or all liquidity from the pool.
-     * @param _liquidityToDecrease The amount of liquidity units in Aerodrome/Univ3 format
+     * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
      */
-    function _removeLiquidity(uint128 _liquidityToDecrease)
+    function _removeLiquidity(uint256 _liquidityToDecrease)
         internal
         gaugeUnstakeAndRestake
     {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
 
         uint128 _liquidity = _getLiquidity();
-        // because we overshoot for 1 wei in _ensureWETHBalance  this precautionary
-        // step is taken
-        _liquidityToDecrease = uint128(
-            Math.min(uint256(_liquidityToDecrease), uint256(_liquidity))
-        );
+        // need to convert to uint256 since intermittent result is to big for uint128 to handle
+        uint128 _liquidityToRemove = uint256(_liquidity)
+            .mulTruncate(_liquidityToDecrease)
+            .toUint128();
 
         /**
          * There is no liquidity to remove -> exit function early. This can happen after a
          * withdraw/withdrawAll removes all of the liquidity while retaining the NFT token.
          */
-        if (_liquidity == 0 || _liquidityToDecrease == 0) {
+        if (_liquidity == 0 || _liquidityToRemove == 0) {
             return;
         }
 
@@ -505,7 +504,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 // happen just before the liquidity removal.
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: _liquidityToDecrease,
+                    liquidity: _liquidityToRemove,
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
@@ -530,7 +529,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _liquidityToDecreasePct = _liquidityToDecrease / _liquidity;
 
         emit LiquidityRemoved(
-            _liquidityToDecreasePct,
+            _liquidityToRemove,
             _amountWeth, //removedWethAmount
             _amountOethb, //removedOethbAmount
             _amountWethCollected,
@@ -841,7 +840,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         // `getLiquidityForAmounts` when estimating the exact required amount of liquidity
         // to withdraw in order to get the desired amount of tokens. For that reason we overshoot
         // for 1 wei offsetting the potential rounding error.
-        uint256 _additionalWethRequired = _amount - _wethBalance + 1;
+        uint256 _additionalWethRequired = _amount - _wethBalance;
         (uint256 _wethInThePool, ) = getPositionPrincipal();
 
         if (_wethInThePool < _additionalWethRequired) {
@@ -851,34 +850,12 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
-        /**
-         * If estimateAmount1 call fails it could be due to _currentPrice being really
-         * close to a tick and amount1 is a larger number than the sugar helper is able
-         * to compute.
-         *
-         * If token addresses were reversed estimateAmount0 would be required here
-         *
-         * The function calculates exactly how much OETH will be withdrawn alongside 
-         * specific amount of WETH.
-         */
-        uint160 _currentPrice = getPoolX96Price();
-        uint256 _oethbToWithdraw = helper.estimateAmount1(
-            _additionalWethRequired,
-            address(0), // no need to pass pool address when current price is specified
-            _currentPrice,
-            lowerTick,
-            upperTick
+        uint256 shareOfWethToRemove = Math.min(
+            _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
+            1e18
         );
 
-        uint128 liquidityToRemove = helper.getLiquidityForAmounts(
-            _additionalWethRequired,
-            _oethbToWithdraw,
-            _currentPrice,
-            sqrtRatioX96TickLower,
-            sqrtRatioX96TickHigher
-        );
-
-        _removeLiquidity(liquidityToRemove);
+        _removeLiquidity(shareOfWethToRemove);
     }
 
     /**
@@ -906,7 +883,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (tokenId != 0) {
-            _removeLiquidity(_getLiquidity());
+            _removeLiquidity(1e18);
         }
 
         uint256 _balance = IERC20(WETH).balanceOf(address(this));
