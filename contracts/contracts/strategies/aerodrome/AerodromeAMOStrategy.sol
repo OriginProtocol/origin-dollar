@@ -351,7 +351,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > 0) {
+        if (_wethBalance > 1e12) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -431,9 +431,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          */
         if (tokenId != 0 && _swapWeth && _amountToSwap > 0) {
             _ensureWETHBalance(_amountToSwap);
-
-            // burn remaining OETHb -- TODO: 
-            _burnOethbOnTheContract();
         }
 
         // in some cases we will just want to add liquidity and not issue a swap to move the
@@ -536,6 +533,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _amountOethbCollected,
             underlyingAssets
         );
+
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -550,7 +549,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
 
         if (_balance < _amountToSwap) {
-            // This should never trigger since _removeLiquidityToEnsureSwap will already
+            // This should never trigger since _ensureWETHBalance will already
             // throw an error if there is not enough WETH
             if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
@@ -605,7 +604,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        if (_wethBalance == 0) {
+        // don't deposit small liquidity amounts
+        if (_wethBalance <= 1e12) {
             return;
         }
 
@@ -867,8 +867,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         _ensureWETHBalance(_amount);
 
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
         _withdraw(_recipient, _amount);
     }
 
@@ -884,8 +882,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (_balance > 0) {
             _withdraw(vaultAddress, _balance);
         }
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
     }
 
     function _withdraw(address _recipient, uint256 _amount) internal {
