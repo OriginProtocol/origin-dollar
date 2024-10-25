@@ -52,8 +52,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     /// @notice Marks the end of the interval that defines the allowed range of WETH share in
     /// the pre-configured pool's liquidity ticker
     uint256 public allowedWethShareEnd;
+    /// @notice An account that can call rebalances respecting volume limits
+    address public rebalancer;
+    /// @notice Volume limit a rebalancer can operate within 300 blocks (~roughly an hour)
+    uint256 public rebalancerVolumeLimit;
+    /// @dev information regarding the trading volume of the rebalancer
+    RebalancerVolumeTally public rebalancerVolumeTally;
     /// @dev reserved for inheritance
-    int256[46] private __reserved;
+    int256[42] private __reserved;
 
     /***************************************
           Constants, structs and events
@@ -101,6 +107,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     ///      protocol funds.
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
 
+    /// @dev block interval within which the rebalancerVolumeLimit applies. 300 blocks equals ~1 hour
+    uint256 public constant REBALANCER_TRADE_INTERVAL_BLOCKS = 300;
+
+    /// @dev information regarding the trading volume of the rebalancer
+    struct RebalancerVolumeTally {
+        uint256 startBlock;
+        uint256 volumeRebalaced;
+    }
+
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error PoolRebalanceOutOfBounds(
@@ -137,6 +152,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     event UnderlyingAssetsUpdated(uint256 underlyingAssets);
 
+    event RebalacerVolumeLimitUpdated(uint256 rebalancerVolumeLimit);
+
+    event RebalacerUpdated(address rebalancer);
+
     /**
      * @dev Verifies that the caller is the Governor, or Strategist.
      */
@@ -145,6 +164,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             msg.sender == IVault(vaultAddress).strategistAddr() ||
                 msg.sender == governor(),
             "Not the Governor or Strategist"
+        );
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Rebalancer
+     */
+    modifier onlyRebalancer() {
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr() ||
+                msg.sender == governor(),
+            "Not the Rebalancer"
         );
         _;
     }
@@ -311,6 +342,23 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
     }
 
+    /**
+     * @notice Sets the volume limit a rebalancer is allowed to trade within the
+     * 300 block period
+     */
+    function setRebalancerVolumeLimit(uint256 _rebalancerVolumeLimit) external onlyGovernor {
+        rebalancerVolumeLimit = _rebalancerVolumeLimit;
+        emit RebalacerVolumeLimitUpdated(_rebalancerVolumeLimit);
+    }
+
+    /**
+     * @notice Sets the rebalancer account
+     */
+    function setRebalancer(address _rebalancer) external onlyGovernor {
+        rebalancer = _rebalancer;
+        emit RebalacerUpdated(_rebalancer);
+    }
+
     /***************************************
                 Periphery utils
     ****************************************/
@@ -408,6 +456,26 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         bool _swapWeth,
         uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
+        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
+    }
+
+    function rebalanceWithVolumeLimit(
+        uint256 _amountToSwap,
+        bool _swapWeth,
+        uint256 _minTokenReceived
+    ) external nonReentrant onlyRebalancer {
+        uint256 volumeRebalancedCurrentPeriod = _amountToSwap;
+
+        // no rebalance transaction from the rebalancer in the last hour
+        if (rebalancerVolumeTally.startBlock + REBALANCER_TRADE_INTERVAL_BLOCKS < block.number) {
+            rebalancerVolumeTally.startBlock = block.number;
+        } else {
+            volumeRebalancedCurrentPeriod += rebalancerVolumeTally.volumeRebalaced;
+        }
+
+        require(volumeRebalancedCurrentPeriod <= rebalancerVolumeLimit, "Amount to swap exceeds limit");
+        rebalancerVolumeTally.volumeRebalaced = volumeRebalancedCurrentPeriod;
+
         _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
     }
 
