@@ -6,6 +6,9 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isFork,
+  isTest,
+  isBaseUnitTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1589,6 +1592,47 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deployDirectStakingHandler = async () => {
+  if (isFork || !isTest) {
+    // Only works in unit tests
+    return;
+  }
+
+  // Deploy mock router
+  await deployWithConfirmation("MockCCIPRouter");
+  const router = await ethers.getContract("MockCCIPRouter");
+
+  if (isBaseUnitTest) {
+    const weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
+    const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
+
+    await deployWithConfirmation("DirectStakingHandlerL2", [
+      router.address,
+      weth.address,
+      woethProxy.address,
+    ]);
+
+    const handler = await ethers.getContract("DirectStakingHandlerL2");
+    await withConfirmation(handler.approveAllTokens());
+  } else {
+    const weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
+    const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const oethProxy = await ethers.getContract("OETHProxy");
+    const woethProxy = await ethers.getContract("WOETHProxy");
+
+    await deployWithConfirmation("DirectStakingHandlerMainnet", [
+      router.address,
+      weth.address,
+      oethVaultProxy.address,
+      oethProxy.address,
+      woethProxy.address,
+    ]);
+
+    const handler = await ethers.getContract("DirectStakingHandlerMainnet");
+    await withConfirmation(handler.approveAllTokens());
+  }
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1624,4 +1668,5 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deployDirectStakingHandler,
 };

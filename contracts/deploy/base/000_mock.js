@@ -2,9 +2,18 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
 const { isFork, oethUnits, isBase } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
+const { deployDirectStakingHandler } = require("../deployActions");
+const { replaceContractAt } = require("../../utils/hardhat");
+const { hardhatSetBalance } = require("../../test/_fund");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWETH", []);
+
+  // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  const mockWETH = await ethers.getContract("MockWETH");
+  await replaceContractAt(addresses.base.WETH, mockWETH);
+  await hardhatSetBalance(addresses.base.WETH, "999999999999999");
+
   await deployWithConfirmation("MockAero", []);
 };
 
@@ -211,6 +220,8 @@ const main = async () => {
   await deployOracleRouter();
   await deployCore();
   await deployBridgedWOETHStrategy();
+
+  await deployDirectStakingHandler();
 };
 
 main.id = "000_mock";

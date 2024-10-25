@@ -14,6 +14,8 @@ const log = require("../utils/logger")("test:fixtures-arb");
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
+const { MAINNET_SELECTOR } = require("../utils/ccip-chain-selectors");
+const { hardhatSetBalance } = require("./_fund");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -124,7 +126,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
     aero = await ethers.getContractAt(erc20Abi, addresses.base.AERO);
   } else {
-    weth = await ethers.getContract("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
     aero = await ethers.getContract("MockAero");
   }
 
@@ -241,6 +243,37 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   };
 });
 
+const directStakingFixture = async () => {
+  const fixture = await defaultBaseFixture();
+
+  const directStakingHandler = await ethers.getContract(
+    "DirectStakingHandlerL2"
+  );
+
+  if (isFork) {
+    const { deployerAddr } = await getNamedAccounts();
+    await impersonateAndFund(deployerAddr);
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    await directStakingHandler.connect(sDeployer).addChainConfig(
+      MAINNET_SELECTOR,
+      addresses.base.strategist // for testing, change later to mainnet handler
+    );
+
+    await hardhatSetBalance(directStakingHandler.address);
+
+    // Deploy mock router
+    await deployWithConfirmation("MockCCIPRouter");
+    const router = await ethers.getContract("MockCCIPRouter");
+
+    fixture.mockRouter = router;
+  }
+
+  fixture.directStakingHandler = directStakingHandler;
+
+  return fixture;
+};
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -249,6 +282,7 @@ mocha.after(async () => {
 
 module.exports = {
   defaultBaseFixture,
+  directStakingFixture,
   MINTER_ROLE,
   BURNER_ROLE,
 };

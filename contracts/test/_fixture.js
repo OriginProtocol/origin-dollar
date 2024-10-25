@@ -53,6 +53,8 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
+const { BASE_SELECTOR } = require("../utils/ccip-chain-selectors.js");
+const { deployWithConfirmation } = require("../utils/deploy.js");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -2474,6 +2476,37 @@ async function woethCcipZapperFixture() {
   return fixture;
 }
 
+async function directStakingFixture() {
+  const fixture = await defaultFixture();
+
+  const directStakingHandler = await ethers.getContract(
+    "DirectStakingHandlerMainnet"
+  );
+
+  if (isFork) {
+    const { deployerAddr } = await getNamedAccounts();
+    await impersonateAndFund(deployerAddr);
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    await directStakingHandler.connect(sDeployer).addChainConfig(
+      BASE_SELECTOR,
+      await fixture.strategist.getAddress() // for testing, change later to Base handler
+    );
+
+    await hardhatSetBalance(directStakingHandler.address);
+
+    // Deploy mock router
+    await deployWithConfirmation("MockCCIPRouter");
+    const router = await ethers.getContract("MockCCIPRouter");
+
+    fixture.mockRouter = router;
+  }
+
+  fixture.directStakingHandler = directStakingHandler;
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2568,4 +2601,5 @@ module.exports = {
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,
+  directStakingFixture,
 };

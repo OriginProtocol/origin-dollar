@@ -123,8 +123,7 @@ addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 addresses.mainnet.chainlinkBAL_ETH =
   "0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b";
-addresses.mainnet.ccipRouterMainnet =
-  "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
+addresses.mainnet.ccipRouter = "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D";
 addresses.mainnet.ccipWoethTokenPool =
   "0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0";
 
@@ -325,6 +324,8 @@ addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+
+addresses.base.ccipRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
