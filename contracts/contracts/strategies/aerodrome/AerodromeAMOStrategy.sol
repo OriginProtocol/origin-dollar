@@ -499,9 +499,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             return;
         }
 
-        // safe since _liquidity != 0 check happens 1 line above
-        uint256 _liquidityToDecreasePct = _liquidityToDecrease / _liquidity;
-
         (uint256 _amountWeth, uint256 _amountOethb) = positionManager
             .decreaseLiquidity(
                 // Both expected amounts can be 0 since we don't really care if any swaps
@@ -528,6 +525,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
 
         _updateUnderlyingAssets();
+
+        // safe since _liquidity != 0 check happens above
+        uint256 _liquidityToDecreasePct = _liquidityToDecrease / _liquidity;
 
         emit LiquidityRemoved(
             _liquidityToDecreasePct,
