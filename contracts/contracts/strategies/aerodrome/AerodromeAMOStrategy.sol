@@ -11,6 +11,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { GlobalMemoryVariables } from "../../utils/GlobalMemoryVariables.sol";
 
 import { ISugarHelper } from "../../interfaces/aerodrome/ISugarHelper.sol";
 import { INonfungiblePositionManager } from "../../interfaces/aerodrome/INonfungiblePositionManager.sol";
@@ -19,7 +20,7 @@ import { ICLPool } from "../../interfaces/aerodrome/ICLPool.sol";
 import { ICLGauge } from "../../interfaces/aerodrome/ICLGauge.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 
-contract AerodromeAMOStrategy is InitializableAbstractStrategy {
+contract AerodromeAMOStrategy is InitializableAbstractStrategy, GlobalMemoryVariables {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
@@ -341,6 +342,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         override
         onlyVault
         nonReentrant
+        scopeVariableWithAssertion("BURN_OETH", 2)
     {
         _deposit(_asset, _amount);
     }
@@ -349,7 +351,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @notice Deposit WETH to the strategy contract. This function does not add liquidity to the
      *         underlying Aerodrome pool.
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll()
+        external
+        override
+        onlyVault
+        nonReentrant
+        scopeVariableWithAssertion("BURN_OETH", 2)
+    {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         if (_wethBalance > 0) {
             _deposit(WETH, _wethBalance);
@@ -407,7 +415,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _amountToSwap,
         bool _swapWeth,
         uint256 _minTokenReceived
-    ) external nonReentrant onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist scopeVariableWithAssertion("BURN_OETH", 2){
         _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
     }
 
@@ -431,9 +439,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          */
         if (tokenId != 0 && _swapWeth && _amountToSwap > 0) {
             _ensureWETHBalance(_amountToSwap);
-
-            // burn remaining OETHb -- TODO: 
-            _burnOethbOnTheContract();
         }
 
         // in some cases we will just want to add liquidity and not issue a swap to move the
@@ -455,6 +460,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _solvencyAssert();
 
         emit PoolRebalanced(_wethSharePct);
+
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -536,6 +543,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _amountOethbCollected,
             underlyingAssets
         );
+
+        _setGlobalVariable("BURN_OETH", 3);
     }
 
     /**
@@ -590,7 +599,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          * dependence where `_swapToDesiredPosition` function relies on later functions
          * (`addLiquidity`) to burn the OETHb. Reducing the risk of error introduction.
          */
-        _burnOethbOnTheContract();
+        //_burnOethbOnTheContract();
+        _setGlobalVariable("BURN_OETH", 3);
     }
 
     /**
@@ -707,7 +717,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         );
 
         // burn remaining OETHb
-        _burnOethbOnTheContract();
+        //_burnOethbOnTheContract();
+        _setGlobalVariable("BURN_OETH", 3);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -780,6 +791,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (_oethbBalance > 0) {
             IVault(vaultAddress).burnForStrategy(_oethbBalance);
         }
+        // Mark BURN_OETH == 2 meaning it has been burned
+        _setGlobalVariable("BURN_OETH", 2);
     }
 
     /// @dev This function assumes there are no uncollected tokens in the clPool owned by the strategy contract.
@@ -861,7 +874,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant scopeVariableWithAssertion("BURN_OETH", 2){
         require(_asset == WETH, "Unsupported asset");
         require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
@@ -874,8 +887,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Withdraw WETH and sends it to the Vault.
+     * 
      */
-    function withdrawAll() external override onlyVault nonReentrant {
+    function withdrawAll() external override onlyVault nonReentrant scopeVariableWithAssertion("BURN_OETH", 2){
         if (tokenId != 0) {
             _removeLiquidity(1e18);
         }
