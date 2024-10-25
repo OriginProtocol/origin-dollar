@@ -858,7 +858,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          *
          * If token addresses were reversed estimateAmount0 would be required here
          *
-         * The function calculates exactly how much OETH
+         * The function calculates exactly how much OETH will be withdrawn alongside 
+         * specific amount of WETH.
          */
         uint160 _currentPrice = getPoolX96Price();
         uint256 _oethbToWithdraw = helper.estimateAmount1(
