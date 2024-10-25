@@ -525,11 +525,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         _updateUnderlyingAssets();
 
-        // safe since _liquidity != 0 check happens above
-        uint256 _liquidityToDecreasePct = _liquidityToDecrease / _liquidity;
-
         emit LiquidityRemoved(
-            _liquidityToRemove,
+            _liquidityToDecrease,
             _amountWeth, //removedWethAmount
             _amountOethb, //removedOethbAmount
             _amountWethCollected,
@@ -836,10 +833,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         require(tokenId != 0, "No liquidity available");
-        // there are rounding issues when calling the combination of `estimateAmount1` &
-        // `getLiquidityForAmounts` when estimating the exact required amount of liquidity
-        // to withdraw in order to get the desired amount of tokens. For that reason we overshoot
-        // for 1 wei offsetting the potential rounding error.
         uint256 _additionalWethRequired = _amount - _wethBalance;
         (uint256 _wethInThePool, ) = getPositionPrincipal();
 
@@ -854,7 +847,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
             1e18
         );
-
         _removeLiquidity(shareOfWethToRemove);
     }
 
