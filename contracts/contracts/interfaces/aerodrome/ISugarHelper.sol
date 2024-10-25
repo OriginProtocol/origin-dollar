@@ -29,7 +29,7 @@ interface ISugarHelper {
         uint160 sqrtRatioX96,
         uint160 sqrtRatioAX96,
         uint160 sqrtRatioBX96
-    ) external pure returns (uint256 liquidity);
+    ) external pure returns (uint128 liquidity);
 
     /// @notice Computes the amount of token0 for a given amount of token1 and price range
     /// @param amount1 Amount of token1 to estimate liquidity

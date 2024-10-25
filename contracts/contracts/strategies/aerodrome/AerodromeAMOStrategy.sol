@@ -351,7 +351,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > 0) {
+        if (_wethBalance > 1e12) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -431,9 +431,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
          */
         if (tokenId != 0 && _swapWeth && _amountToSwap > 0) {
             _ensureWETHBalance(_amountToSwap);
-
-            // burn remaining OETHb -- TODO: 
-            _burnOethbOnTheContract();
         }
 
         // in some cases we will just want to add liquidity and not issue a swap to move the
@@ -479,27 +476,31 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Decrease partial or all liquidity from the pool.
-     * @param _liquidityToDecrease The amount of liquidity to remove expressed in 18 decimal point
+     * @param _liquidityToDecrease The amount of liquidity units in Aerodrome/Univ3 format
      */
-    function _removeLiquidity(uint256 _liquidityToDecrease)
+    function _removeLiquidity(uint128 _liquidityToDecrease)
         internal
         gaugeUnstakeAndRestake
     {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
 
         uint128 _liquidity = _getLiquidity();
-        // need to convert to uint256 since intermittent result is to big for uint128 to handle
-        uint128 _liquidityToRemove = uint256(_liquidity)
-            .mulTruncate(_liquidityToDecrease)
-            .toUint128();
+        // because we overshoot for 1 wei in _ensureWETHBalance  this precautionary
+        // step is taken
+        _liquidityToDecrease = uint128(
+            Math.min(uint256(_liquidityToDecrease), uint256(_liquidity))
+        );
 
         /**
          * There is no liquidity to remove -> exit function early. This can happen after a
          * withdraw/withdrawAll removes all of the liquidity while retaining the NFT token.
          */
-        if (_liquidity == 0 || _liquidityToRemove == 0) {
+        if (_liquidity == 0 || _liquidityToDecrease == 0) {
             return;
         }
+
+        // safe since _liquidity != 0 check happens 1 line above
+        uint256 _liquidityToDecreasePct = _liquidityToDecrease / _liquidity;
 
         (uint256 _amountWeth, uint256 _amountOethb) = positionManager
             .decreaseLiquidity(
@@ -507,7 +508,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 // happen just before the liquidity removal.
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: _liquidityToRemove,
+                    liquidity: _liquidityToDecrease,
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
@@ -529,13 +530,15 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         _updateUnderlyingAssets();
 
         emit LiquidityRemoved(
-            _liquidityToDecrease,
+            _liquidityToDecreasePct,
             _amountWeth, //removedWethAmount
             _amountOethb, //removedOethbAmount
             _amountWethCollected,
             _amountOethbCollected,
             underlyingAssets
         );
+
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -550,7 +553,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
 
         if (_balance < _amountToSwap) {
-            // This should never trigger since _removeLiquidityToEnsureSwap will already
+            // This should never trigger since _ensureWETHBalance will already
             // throw an error if there is not enough WETH
             if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
@@ -605,7 +608,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        if (_wethBalance == 0) {
+        // don't deposit small liquidity amounts
+        if (_wethBalance <= 1e12) {
             return;
         }
 
@@ -833,7 +837,11 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         require(tokenId != 0, "No liquidity available");
-        uint256 _additionalWethRequired = _amount - _wethBalance;
+        // there are rounding issues when calling the combination of `estimateAmount1` &
+        // `getLiquidityForAmounts` when estimating the exact required amount of liquidity
+        // to withdraw in order to get the desired amount of tokens. For that reason we overshoot
+        // for 1 wei offsetting the potential rounding error.
+        uint256 _additionalWethRequired = _amount - _wethBalance + 1;
         (uint256 _wethInThePool, ) = getPositionPrincipal();
 
         if (_wethInThePool < _additionalWethRequired) {
@@ -843,11 +851,33 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
-        uint256 shareOfWethToRemove = Math.min(
-            _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
-            1e18
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 is a larger number than the sugar helper is able
+         * to compute.
+         *
+         * If token addresses were reversed estimateAmount0 would be required here
+         *
+         * The function calculates exactly how much OETH
+         */
+        uint160 _currentPrice = getPoolX96Price();
+        uint256 _oethbToWithdraw = helper.estimateAmount1(
+            _additionalWethRequired,
+            address(0), // no need to pass pool address when current price is specified
+            _currentPrice,
+            lowerTick,
+            upperTick
         );
-        _removeLiquidity(shareOfWethToRemove);
+
+        uint128 liquidityToRemove = helper.getLiquidityForAmounts(
+            _additionalWethRequired,
+            _oethbToWithdraw,
+            _currentPrice,
+            sqrtRatioX96TickLower,
+            sqrtRatioX96TickHigher
+        );
+
+        _removeLiquidity(liquidityToRemove);
     }
 
     /**
@@ -867,8 +897,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         _ensureWETHBalance(_amount);
 
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
         _withdraw(_recipient, _amount);
     }
 
@@ -877,15 +905,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (tokenId != 0) {
-            _removeLiquidity(1e18);
+            _removeLiquidity(_getLiquidity());
         }
 
         uint256 _balance = IERC20(WETH).balanceOf(address(this));
         if (_balance > 0) {
             _withdraw(vaultAddress, _balance);
         }
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
     }
 
     function _withdraw(address _recipient, uint256 _amount) internal {
