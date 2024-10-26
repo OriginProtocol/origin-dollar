@@ -176,7 +176,7 @@ describe("ForkTest: OETHb Vault", function () {
 
       // upper bound
       await oethbVault.connect(governor).setWithdrawalClaimDelay(
-        7 * 24 * 60 * 60 // 7d
+        15 * 24 * 60 * 60 // 7d
       );
       expect(await oethbVault.withdrawalClaimDelay()).to.eq(7 * 24 * 60 * 60);
 
@@ -188,7 +188,7 @@ describe("ForkTest: OETHb Vault", function () {
 
       // above upper bound
       tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
-        7 * 24 * 60 * 60 + 1 // 7d + 1s
+        15 * 24 * 60 * 60 + 1 // 7d + 1s
       );
       await expect(tx).to.be.revertedWith("Invalid claim delay period");
     });
