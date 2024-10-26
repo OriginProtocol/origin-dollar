@@ -173,8 +173,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     modifier onlyRebalancer() {
         require(
-            msg.sender == IVault(vaultAddress).strategistAddr() ||
-                msg.sender == governor(),
+            msg.sender == rebalancer,
             "Not the Rebalancer"
         );
         _;
