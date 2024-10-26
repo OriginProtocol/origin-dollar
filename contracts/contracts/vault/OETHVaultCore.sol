@@ -288,9 +288,7 @@ contract OETHVaultCore is VaultCore {
         internal
         returns (uint256 amount)
     {
-        // Note: When `withdrawalClaimDelay` is set to 0, users can
-        // no longer place withdrawal requests. However, any existing
-        // unclaimed request would become immediately claimable.
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
 
         // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];

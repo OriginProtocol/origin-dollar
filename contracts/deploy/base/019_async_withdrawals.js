@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "018_async_withdrawals",
+    deployName: "019_async_withdrawals",
   },
   async ({ ethers }) => {
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");

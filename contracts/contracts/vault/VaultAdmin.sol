@@ -170,11 +170,11 @@ contract VaultAdmin is VaultStorage {
      */
     function setWithdrawalClaimDelay(uint256 _delay) external onlyGovernor {
         require(
-            _delay == 0 || (_delay >= 10 minutes && _delay <= 7 days),
+            _delay == 0 || (_delay >= 10 minutes && _delay <= 15 days),
             "Invalid claim delay period"
         );
-        emit WithdrawalClaimDelayUpdated(_delay);
         withdrawalClaimDelay = _delay;
+        emit WithdrawalClaimDelayUpdated(_delay);
     }
 
     /***************************************
