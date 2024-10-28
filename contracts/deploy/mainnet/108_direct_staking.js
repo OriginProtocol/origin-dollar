@@ -1,4 +1,6 @@
+const { isFork } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
+// const { BASE_SELECTOR } = require("../../utils/ccip-chain-selectors");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
 
@@ -11,12 +13,28 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
+    const { deployerAddr } = await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    if (isFork) {
+      await impersonateAndFund(deployerAddr);
+    }
+
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy contract
+    // 1. Deploy proxy and implementation contract
+    await deployWithConfirmation("DirectStakingMainnetHandlerProxy");
+    const cMainnetHandlerProxy = await ethers.getContract(
+      "DirectStakingMainnetHandlerProxy"
+    );
+    console.log(
+      "DirectStakingMainnetHandlerProxy deployed at",
+      cMainnetHandlerProxy.address
+    );
+
     const dMainnetHandler = await deployWithConfirmation(
-      "DirectStakingHandlerMainnet",
+      "DirectStakingMainnetHandler",
       [
         addresses.mainnet.ccipRouter,
         addresses.mainnet.WETH,
@@ -26,21 +44,43 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
     console.log(
-      "Deployed DirectStakingHandlerMainnet",
+      "Deployed DirectStakingMainnetHandler",
       dMainnetHandler.address
     );
 
-    const { deployerAddr } = await getNamedAccounts();
-    await impersonateAndFund(deployerAddr);
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    const cMainnetHandler = await ethers.getContract(
-      "DirectStakingHandlerMainnet"
-    );
+    // prettier-ignore
     await withConfirmation(
-      cMainnetHandler.connect(sDeployer).approveAllTokens()
+      cMainnetHandlerProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dMainnetHandler.address,
+          addresses.base.timelock,
+          "0x"
+        )
+    );
+    console.log("Initialized DirectStakingMainnetHandlerProxy");
+
+    const cMainnetHandler = await ethers.getContractAt(
+      "DirectStakingMainnetHandler",
+      cMainnetHandlerProxy.address
     );
 
-    return {};
+    return {
+      actions: [
+        {
+          contract: cMainnetHandler,
+          signature: "approveAllTokens()",
+          args: [],
+        },
+        // TODO: Enable after deploying proxy
+        // {
+        //   contract: cMainnetHandler,
+        //   signature: "addChainConfig(uint64,address)",
+        //   args: [
+        //     BASE_SELECTOR,
+        //     addresses.base.DirectStakingHandler
+        //   ]
+        // }
+      ],
+    };
   }
 );

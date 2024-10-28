@@ -2479,16 +2479,15 @@ async function woethCcipZapperFixture() {
 async function directStakingFixture() {
   const fixture = await defaultFixture();
 
-  const directStakingHandler = await ethers.getContract(
-    "DirectStakingHandlerMainnet"
+  const directStakingHandlerProxy = await ethers.getContract(
+    "DirectStakingMainnetHandlerProxy"
   );
-
+  const directStakingHandler = await ethers.getContractAt(
+    "DirectStakingMainnetHandler",
+    directStakingHandlerProxy.address
+  );
   if (isFork) {
-    const { deployerAddr } = await getNamedAccounts();
-    await impersonateAndFund(deployerAddr);
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    await directStakingHandler.connect(sDeployer).addChainConfig(
+    await directStakingHandler.connect(fixture.timelock).addChainConfig(
       BASE_SELECTOR,
       await fixture.strategist.getAddress() // for testing, change later to Base handler
     );

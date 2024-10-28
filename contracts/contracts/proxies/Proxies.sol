@@ -322,3 +322,21 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice DirectStakingMainnetHandlerProxy delegates calls to DirectStakingMainnetHandler implementation
+ */
+contract DirectStakingMainnetHandlerProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice DirectStakingBaseHandlerProxy delegates calls to DirectStakingL2Handler implementation
+ */
+contract DirectStakingBaseHandlerProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}

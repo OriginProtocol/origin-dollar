@@ -8,8 +8,20 @@ import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Inter
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IDirectStakingCaller } from "../interfaces/IDirectStakingCaller.sol";
 
-contract BridgedWOETHStrategy is InitializableAbstractStrategy {
+interface IDirectStakingHandler {
+    function stake(
+        uint256 wethAmount,
+        uint256 minAmountOut,
+        bool callback
+    ) external payable returns (bytes32);
+}
+
+contract BridgedWOETHStrategy is
+    InitializableAbstractStrategy,
+    IDirectStakingCaller
+{
     using StableMath for uint256;
     using StableMath for uint128;
     using SafeCast for uint256;
@@ -27,6 +39,20 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     uint128 public lastOraclePrice;
     uint128 public maxPriceDiffBps;
 
+    uint256 public constant MIN_DEPOSIT_THRESHOLD = 1 ether;
+
+    uint256 public pendingStakedWETH;
+
+    IDirectStakingHandler public immutable directStakingHandler;
+
+    struct DirectStakeRequest {
+        bool processed;
+        uint256 amountIn;
+        uint256 minAmountOut;
+    }
+
+    mapping(bytes32 => DirectStakeRequest) stakeRequests;
+
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
      */
@@ -42,11 +68,14 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         BaseStrategyConfig memory _stratConfig,
         address _weth,
         address _bridgedWOETH,
-        address _oethb
+        address _oethb,
+        address _directStakingHandler
     ) InitializableAbstractStrategy(_stratConfig) {
         weth = IWETH9(_weth);
         bridgedWOETH = IERC20(_bridgedWOETH);
         oethb = IERC20(_oethb);
+
+        directStakingHandler = IDirectStakingHandler(_directStakingHandler);
     }
 
     function initialize(uint128 _maxPriceDiffBps)
@@ -207,7 +236,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // There's no pToken, however, it just uses WOETH address in the event
         emit Withdrawal(address(weth), address(bridgedWOETH), oethToBurn);
 
-        // Transfer WOETH back
+        // Transfer wOETH back
         // slither-disable-next-line unchecked-transfer unused-return
         bridgedWOETH.transfer(msg.sender, woethAmount);
 
@@ -222,15 +251,19 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     /**
      * @notice Returns the amount of backing WETH the strategy holds
      * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
+     * @return            Total value of the asset in the platform
      */
     function checkBalance(address _asset)
         external
         view
         override
-        returns (uint256 balance)
+        returns (uint256)
     {
         require(_asset == address(weth), "Unsupported asset");
+
+        // Any undeposited WETH in the strategy and ones that are bridged
+        // for staking on mainnet
+        uint256 wethBalance = pendingStakedWETH + weth.balanceOf(address(this));
 
         // Figure out how much wOETH is worth at the time.
         // Always uses the last stored oracle price.
@@ -244,9 +277,10 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // If `updateWOETHOraclePrice()` hasn't been called in a while,
         // the strategy will underreport its holdings but never overreport it.
 
-        balance =
-            (bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) /
-            1 ether;
+        return
+            wethBalance +
+            ((bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) /
+                1 ether);
     }
 
     /**
@@ -262,44 +296,96 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-               Overridden methods
+               Direct Staking
     ****************************************/
     /**
      * @inheritdoc InitializableAbstractStrategy
      */
-    function transferToken(address _asset, uint256 _amount)
-        public
-        override
-        onlyGovernor
-    {
-        require(
-            _asset != address(bridgedWOETH) && _asset != address(weth),
-            "Cannot transfer supported asset"
-        );
-        IERC20(_asset).safeTransfer(governor(), _amount);
-    }
-
-    /**
-     * @notice deposit() function not used for this strategy
-     */
-    function deposit(address, uint256)
+    function deposit(address asset, uint256 amount)
         external
         override
         onlyVault
         nonReentrant
     {
-        // Use depositBridgedWOETH() instead
-        require(false, "Deposit disabled");
+        _deposit(asset, amount);
     }
 
     /**
-     * @notice depositAll() function not used for this strategy
+     * @inheritdoc InitializableAbstractStrategy
      */
     function depositAll() external override onlyVault nonReentrant {
-        // Use depositBridgedWOETH() instead
-        require(false, "Deposit disabled");
+        _deposit(address(weth), weth.balanceOf(address(this)));
     }
 
+    /**
+     * @dev Deposits specified amount of WETH into
+     *      DirectStakingHandler contract to swap
+     *      it into bridged wOETH from mainnet.
+     * @param asset Address of the asset
+     * @param amount Amount of asset to deposit
+     */
+    function _deposit(address asset, uint256 amount) internal {
+        require(asset == address(weth), "Unsupported asset");
+
+        if (amount < MIN_DEPOSIT_THRESHOLD) {
+            return;
+        }
+
+        // Add to pending amount
+        pendingStakedWETH += amount;
+
+        // Update wOETH price
+        uint256 oraclePrice = _updateWOETHOraclePrice();
+
+        // Figure out how much `amount` is worth to use as minAmount
+        uint256 woethAmount = (amount * 1 ether) / oraclePrice;
+
+        // Create the request
+        bytes32 requestId = IDirectStakingHandler(directStakingHandler).stake(
+            amount,
+            woethAmount,
+            true
+        );
+
+        // Store the data
+        stakeRequests[requestId] = DirectStakeRequest({
+            processed: false,
+            amountIn: amount,
+            minAmountOut: woethAmount
+        });
+
+        // There's no pToken, however, it just uses WOETH address in the event
+        emit Deposit(address(weth), address(bridgedWOETH), woethAmount);
+    }
+
+    /**
+     * @inheritdoc IDirectStakingCaller
+     */
+    function onDirectStakingRequestCompletion(
+        bytes32 messageId,
+        uint256 amountOut
+    ) external override {
+        require(
+            msg.sender == address(directStakingHandler),
+            "Not DirectStakingHandler"
+        );
+
+        DirectStakeRequest memory dsReq = stakeRequests[messageId];
+
+        require(!dsReq.processed, "Already processed");
+        require(amountOut >= dsReq.minAmountOut, "Slippage error");
+
+        // Mark as processed
+        stakeRequests[messageId].processed = true;
+
+        // Deduct the initial stake amount
+        // (to avoid double accounting in `checkBalance`)
+        pendingStakedWETH -= dsReq.amountIn;
+    }
+
+    /***************************************
+               Direct Unstaking
+    ****************************************/
     /**
      * @notice withdraw() function not used for this strategy
      */
@@ -319,6 +405,24 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdrawal disabled
+    }
+
+    /***************************************
+               Overridden methods
+    ****************************************/
+    /**
+     * @inheritdoc InitializableAbstractStrategy
+     */
+    function transferToken(address _asset, uint256 _amount)
+        public
+        override
+        onlyGovernor
+    {
+        require(
+            _asset != address(bridgedWOETH) && _asset != address(weth),
+            "Cannot transfer supported asset"
+        );
+        IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     function _abstractSetPToken(address, address) internal override {

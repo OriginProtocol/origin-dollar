@@ -1606,13 +1606,13 @@ const deployDirectStakingHandler = async () => {
     const weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
     const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
 
-    await deployWithConfirmation("DirectStakingHandlerL2", [
+    await deployWithConfirmation("DirectStakingL2Handler", [
       router.address,
       weth.address,
       woethProxy.address,
     ]);
 
-    const handler = await ethers.getContract("DirectStakingHandlerL2");
+    const handler = await ethers.getContract("DirectStakingL2Handler");
     await withConfirmation(handler.approveAllTokens());
   } else {
     const weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
@@ -1620,7 +1620,7 @@ const deployDirectStakingHandler = async () => {
     const oethProxy = await ethers.getContract("OETHProxy");
     const woethProxy = await ethers.getContract("WOETHProxy");
 
-    await deployWithConfirmation("DirectStakingHandlerMainnet", [
+    await deployWithConfirmation("DirectStakingMainnetHandler", [
       router.address,
       weth.address,
       oethVaultProxy.address,
@@ -1628,7 +1628,7 @@ const deployDirectStakingHandler = async () => {
       woethProxy.address,
     ]);
 
-    const handler = await ethers.getContract("DirectStakingHandlerMainnet");
+    const handler = await ethers.getContract("DirectStakingMainnetHandler");
     await withConfirmation(handler.approveAllTokens());
   }
 };

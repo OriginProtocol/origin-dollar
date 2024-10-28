@@ -246,16 +246,16 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 const directStakingFixture = async () => {
   const fixture = await defaultBaseFixture();
 
-  const directStakingHandler = await ethers.getContract(
-    "DirectStakingHandlerL2"
+  const directStakingHandlerProxy = await ethers.getContract(
+    "DirectStakingL2HandlerProxy"
+  );
+  const directStakingHandler = await ethers.getContractAt(
+    "DirectStakingL2Handler",
+    directStakingHandlerProxy.address
   );
 
   if (isFork) {
-    const { deployerAddr } = await getNamedAccounts();
-    await impersonateAndFund(deployerAddr);
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    await directStakingHandler.connect(sDeployer).addChainConfig(
+    await directStakingHandler.connect(fixture.timelock).addChainConfig(
       MAINNET_SELECTOR,
       addresses.base.strategist // for testing, change later to mainnet handler
     );

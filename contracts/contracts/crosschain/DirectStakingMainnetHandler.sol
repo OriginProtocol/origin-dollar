@@ -13,7 +13,7 @@ import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 
 import { AbstractDirectStakingHandler } from "./AbstractDirectStakingHandler.sol";
 
-contract DirectStakingHandlerMainnet is AbstractDirectStakingHandler {
+contract DirectStakingMainnetHandler is AbstractDirectStakingHandler {
     IERC20 public immutable weth;
     IVault public immutable oethVault;
     IOUSD public immutable oeth;

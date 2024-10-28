@@ -7,6 +7,7 @@ import { IRouterClient } from "@chainlink/contracts-ccip/src/v0.8/ccip/interface
 
 import { IVault } from "../interfaces/IVault.sol";
 import { IOUSD } from "../interfaces/IOUSD.sol";
+import { IDirectStakingCaller } from "../interfaces/IDirectStakingCaller.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -15,14 +16,7 @@ import { AbstractDirectStakingHandler } from "./AbstractDirectStakingHandler.sol
 
 import { MAINNET_SELECTOR } from "./CCIPChainSelector.sol";
 
-interface IDirectStakingCaller {
-    function onDirectStakingRequestCompletion(
-        bytes32 messageId,
-        uint256 amountOut
-    ) external;
-}
-
-contract DirectStakingHandlerL2 is AbstractDirectStakingHandler {
+contract DirectStakingL2Handler is AbstractDirectStakingHandler {
     IERC20 public immutable weth;
     IERC4626 public immutable woeth;
 
@@ -126,7 +120,7 @@ contract DirectStakingHandlerL2 is AbstractDirectStakingHandler {
         uint256 wethAmount,
         uint256 minAmountOut,
         bool callback
-    ) external returns (bytes32) {
+    ) external payable returns (bytes32) {
         // Transfer WETH in
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
@@ -137,7 +131,7 @@ contract DirectStakingHandlerL2 is AbstractDirectStakingHandler {
             address(weth),
             wethAmount,
             // Just a rough gas estimation
-            400000
+            700000
         );
 
         bytes32 messageId = IRouterClient(i_router).ccipSend{ value: fee }(

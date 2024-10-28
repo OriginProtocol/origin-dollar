@@ -42,8 +42,8 @@ abstract contract AbstractDirectStakingHandler is CCIPReceiver, Governable {
     }
 
     constructor(address _router) CCIPReceiver(_router) {
-        // TODO: Change to address(0) later
-        _setGovernor(msg.sender);
+        // Nobody owns the implementation
+        _setGovernor(address(0));
     }
 
     /**
@@ -169,6 +169,13 @@ abstract contract AbstractDirectStakingHandler is CCIPReceiver, Governable {
         onlyGovernor
         nonReentrant
     {
+        if (token == address(0)) {
+            // Transfer out Native token to governor
+            (bool success, ) = _governor().call{ value: amount }("");
+            require(success, "Native token transfer failed");
+            return;
+        }
+
         IERC20(token).safeTransfer(_governor(), amount);
     }
 
