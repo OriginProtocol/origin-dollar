@@ -850,7 +850,7 @@ describe("Token", function () {
     await checkTransferOut(9);
   });
 
-  it.only("Should delegate rebase to another account", async () => {
+  it("Should delegate rebase to another account", async () => {
     let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
 
     await ousd.connect(matt).transfer(anna.address, ousdUnits("10"));
@@ -881,7 +881,7 @@ describe("Token", function () {
     await expect(anna).has.an.balanceOf("90", ousd);
   });
 
-  it.only("Should delegate rebase to another account initially having 0 balance", async () => {
+  it("Should delegate rebase to another account initially having 0 balance", async () => {
     let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
 
     await expect(josh).has.an.approxBalanceOf("100.00", ousd);
