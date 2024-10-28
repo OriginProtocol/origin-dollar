@@ -39,12 +39,10 @@ contract QuoterHelper {
     /// --- CONSTANT & IMMUTABLE
     ////////////////////////////////////////////////////////////////
     uint256 public constant BINARY_MIN_AMOUNT = 1 wei;
-    uint256 public constant BINARY_MAX_AMOUNT_FOR_REBALANCE = 3_000 ether;
-    uint256 public constant BINARY_MAX_AMOUNT_FOR_PUSH_PRICE = 5_000_000 ether;
 
-    uint256 public constant BINARY_MAX_ITERATIONS = 100;
+    uint256 public constant BINARY_MAX_ITERATIONS = 40;
     uint256 public constant PERCENTAGE_BASE = 1e18; // 100%
-    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e12; // 0.0001%
+    uint256 public constant ALLOWED_VARIANCE_PERCENTAGE = 1e15; // 0.1%
 
     ////////////////////////////////////////////////////////////////
     /// --- VARIABLES STORAGE
@@ -101,9 +99,11 @@ contract QuoterHelper {
 
             strategy.setAllowedPoolWethShareInterval(shareStart, shareEnd);
         }
+
         uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = BINARY_MAX_AMOUNT_FOR_REBALANCE;
+        uint256 high;
+        (high, ) = strategy.getPositionPrincipal();
         int24 lowerTick = strategy.lowerTick();
         int24 upperTick = strategy.upperTick();
         bool swapWETHForOETHB = getSwapDirectionForRebalance();
@@ -338,6 +338,14 @@ contract QuoterHelper {
         return currentPrice > targetPrice;
     }
 
+    // returns total amount in the position principal of the Aerodrome AMO strategy. Needed as a
+    // separate function because of the limitation in local variable count in getAmountToSwapToReachPrice
+    function getTotalStrategyPosition() internal returns (uint256) {
+        (uint256 wethAmount, uint256 oethBalance) = strategy
+            .getPositionPrincipal();
+        return wethAmount + oethBalance;
+    }
+
     /// @notice Get the amount of tokens to swap to reach the target price.
     /// @dev This act like a quoter, i.e. the transaction is not performed.
     /// @dev Because the amount to swap can be largely overestimated, because CLAMM alow partial orders,
@@ -359,34 +367,53 @@ contract QuoterHelper {
     {
         uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
-        uint256 high = BINARY_MAX_AMOUNT_FOR_PUSH_PRICE;
+        // high search start is twice the position principle of Aerodrome AMO strategy.
+        // should be more than enough
+        uint256 high = getTotalStrategyPosition() * 2;
         bool swapWETHForOETHB = getSwapDirection(sqrtPriceTargetX96);
 
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
             uint256 mid = (low + high) / 2;
 
             // Call QuoterV2 from SugarHelper
-            (, uint160 sqrtPriceX96After, , ) = quoterV2.quoteExactInputSingle(
-                IQuoterV2.QuoteExactInputSingleParams({
-                    tokenIn: swapWETHForOETHB
-                        ? clPool.token0()
-                        : clPool.token1(),
-                    tokenOut: swapWETHForOETHB
-                        ? clPool.token1()
-                        : clPool.token0(),
-                    amountIn: mid,
-                    tickSpacing: strategy.tickSpacing(),
-                    sqrtPriceLimitX96: sqrtPriceTargetX96
-                })
-            );
+            (uint256 amountOut, uint160 sqrtPriceX96After, , ) = quoterV2
+                .quoteExactInputSingle(
+                    IQuoterV2.QuoteExactInputSingleParams({
+                        tokenIn: swapWETHForOETHB
+                            ? clPool.token0()
+                            : clPool.token1(),
+                        tokenOut: swapWETHForOETHB
+                            ? clPool.token1()
+                            : clPool.token0(),
+                        amountIn: mid,
+                        tickSpacing: strategy.tickSpacing(),
+                        sqrtPriceLimitX96: sqrtPriceTargetX96
+                    })
+                );
 
             if (
                 isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)
             ) {
-                return (mid, iterations, swapWETHForOETHB, sqrtPriceX96After);
+                /** Very important to return `amountOut` instead of `mid` as the first return parameter.
+                 * The issues was that when quoting we impose a swap price limit (sqrtPriceLimitX96: sqrtPriceTargetX96)
+                 * and in that case the `amountIn` acts like a maximum amount to swap. And we don't know how much
+                 * of that amount was actually consumed. For that reason we "estimate" it by returning the
+                 * amountOut since that is only going to be a couple of basis point away from amountIn in the
+                 * worst cases.
+                 *
+                 * Note: we could be returning mid instead of amountOut in cases when those values are only basis
+                 * points apart (assuming that complete balance of amountIn has been consumed) but that might increase
+                 * complexity too much in an already complex contract.
+                 */
+                return (
+                    amountOut,
+                    iterations,
+                    swapWETHForOETHB,
+                    sqrtPriceX96After
+                );
             } else if (low == high) {
                 // target swap amount not found.
-                // try increasing BINARY_MAX_AMOUNT_FOR_PUSH_PRICE
+                // might be that "high" amount is too low on start
                 revert("SwapAmountNotFound");
             } else if (
                 swapWETHForOETHB
@@ -539,7 +566,6 @@ contract AerodromeAMOQuoter {
             revert("Previous call should only revert, it cannot succeed");
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
-
             if (receivedSelector == QuoterHelper.ValidAmount.selector) {
                 uint256 value;
                 uint256 iterations;

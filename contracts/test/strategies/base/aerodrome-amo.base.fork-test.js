@@ -142,9 +142,9 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async funct
     });
 
     // Ensure the price has been pushed enough
-    expect(await aerodromeAmoStrategy.getPoolX96Price()).to.be.eq(
-      priceAtTickM2
-    );
+    expect(
+      await aerodromeAmoStrategy.getPoolX96Price()
+    ).to.be.approxEqualTolerance(priceAtTickM2);
 
     await expect(
       aerodromeAmoStrategy
@@ -167,7 +167,9 @@ describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async funct
     });
 
     // Ensure the price has been pushed enough
-    expect(await aerodromeAmoStrategy.getPoolX96Price()).to.be.eq(priceAtTick1);
+    expect(
+      await aerodromeAmoStrategy.getPoolX96Price()
+    ).to.be.approxEqualTolerance(priceAtTick1);
 
     await expect(
       aerodromeAmoStrategy
@@ -287,8 +289,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     aeroNftManager = fixture.aeroNftManager;
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
     gauge = fixture.aeroClGauge;
-    quoter = fixture.quoter;
     harvester = fixture.harvester;
+    quoter = fixture.quoter;
 
     await setup();
     await weth
@@ -374,7 +376,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         harvester.address
       );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Can safe approve all tokens", async function () {
@@ -487,7 +489,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       );
 
       expect(aeroBalancediff).to.gte(oethUnits("1337")); // Gte to take into account rewards already accumulated.
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
   });
 
@@ -545,7 +547,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         BigNumber.from("1000000")
       );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should allow withdrawAll when the pool is 80:20 balanced", async () => {
@@ -642,7 +644,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         BigNumber.from("1000000")
       );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should withdrawAll when there's little WETH in the pool", async () => {
@@ -678,7 +680,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
 
-      await assetLpNOTStakedInGauge();
+      await verifyEndConditions(false);
     });
 
     it("Should withdraw when there's little OETHb in the pool", async () => {
@@ -734,7 +736,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         BigNumber.from("1000000")
       );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should withdrawAll when there's little OETHb in the pool", async () => {
@@ -770,13 +772,15 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
 
-      await assetLpNOTStakedInGauge();
+      await verifyEndConditions(false);
     });
   });
 
   describe("Deposit and rebalance", function () {
     it("Should be able to deposit to the strategy", async () => {
       await mintAndDepositToStrategy();
+
+      await verifyEndConditions();
     });
 
     it("Should revert when not depositing WETH or amount is 0", async () => {
@@ -803,7 +807,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should be able to deposit to the pool & rebalance multiple times", async () => {
@@ -816,7 +820,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       const tx = await rebalance(value, direction, value.mul("99").div("100"));
 
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
       // prettier-ignore
@@ -827,7 +831,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       );
 
       await expect(tx1).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should check that add liquidity in difference cases leaves no to little weth on the contract", async () => {
@@ -852,7 +856,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should revert when there is not enough WETH to perform a swap", async () => {
@@ -867,7 +871,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
           true, // _swapWETH
           oethUnits("0.009")
         )
-      ).to.be.revertedWithCustomError("NotEnoughWethForSwap(uint256,uint256)");
+      ).to.be.revertedWithCustomError(
+        "NotEnoughWethLiquidity(uint256,uint256)"
+      );
     });
 
     it("Should revert when pool rebalance is off target", async () => {
@@ -883,16 +889,21 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       );
     });
 
-    it("Should be able to rebalance the pool when price pushed to 1:1", async () => {
+    it("Should be able to rebalance the pool when price pushed very close to 1:1", async () => {
       await depositLiquidityToPool();
 
       // supply some WETH for the rebalance
       await mintAndDepositToStrategy({ amount: oethUnits("1") });
 
-      const priceAtTick0 = await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
+      const priceAtTickLower =
+        await aerodromeAmoStrategy.sqrtRatioX96TickLower();
+      const priceAtTickHigher =
+        await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
+      const pctTickerPrice = priceAtTickHigher.sub(priceAtTickLower).div(100);
+
       let { value: value0, direction: direction0 } =
         await quoteAmountToSwapToReachPrice({
-          price: priceAtTick0,
+          price: priceAtTickHigher.sub(pctTickerPrice),
         });
 
       await swap({
@@ -905,21 +916,9 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         highValue: oethUnits("0"),
       });
 
-      // when price is pushed close to 1:1 the strategy has mostly OETHb and no WETH liquidity
-      // and is for that reason not able to rebalance the position. In other words the protocol
-      // is not liquid
-      await expect(
-        rebalance(value, direction, value.mul("99").div("100"))
-      ).to.be.revertedWithCustomError("NotEnoughWethForSwap(uint256,uint256)");
-
-      // but if we help it out with some liquidity it should rebalance. Add a surplus of 1 WETH so that
-      // some liquidity gets deployed on rebalance.
-      await weth
-        .connect(rafael)
-        .transfer(aerodromeAmoStrategy.address, value.add(oethUnits("1")));
       await rebalance(value, direction, value.mul("99").div("100"));
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should be able to rebalance the pool when price pushed to over the 1 OETHb costing 1.0001 WETH", async () => {
@@ -928,13 +927,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       const priceAtTickHigher =
         await aerodromeAmoStrategy.sqrtRatioX96TickHigher();
       // 5% of the price diff within a single ticker
-      const fivePctTickerPrice = priceAtTickHigher
+      const twentyPctTickerPrice = priceAtTickHigher
         .sub(priceAtTickLower)
         .div(20);
 
       let { value: value0, direction: direction0 } =
         await quoteAmountToSwapToReachPrice({
-          price: priceAtTickLower.add(fivePctTickerPrice),
+          price: priceAtTickLower.add(twentyPctTickerPrice),
         });
       await swap({
         amount: value0,
@@ -947,7 +946,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       });
       await rebalance(value, direction, value.mul("99").div("100"));
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should be able to rebalance the pool when price pushed to close to the 1 OETHb costing 1.0001 WETH", async () => {
@@ -964,6 +963,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         await quoteAmountToSwapToReachPrice({
           price: priceAtTickLower.sub(fivePctTickerPrice),
         });
+
       await swap({
         amount: value0,
         swapWeth: direction0,
@@ -975,7 +975,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       });
       await rebalance(value, direction, value.mul("99").div("100"));
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should have the correct balance within some tolerance", async () => {
@@ -989,7 +989,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         await aerodromeAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(balance.add(oethUnits("6").mul("4")), 1.5);
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should revert on non WETH balance", async () => {
@@ -1012,9 +1012,11 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
           true,
           oethUnits("4")
         )
-      ).to.be.revertedWithCustomError("NotEnoughWethForSwap(uint256,uint256)");
+      ).to.be.revertedWithCustomError(
+        "NotEnoughWethLiquidity(uint256,uint256)"
+      );
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should not be able to rebalance when protocol is insolvent", async () => {
@@ -1082,7 +1084,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         await weth.balanceOf(oethbVault.address)
       ).to.approxEqualTolerance(amountBelowThreshold);
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should deposit amount above the vault buffer threshold to the strategy on mint", async () => {
@@ -1106,7 +1108,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         await weth.balanceOf(oethbVault.address)
       ).to.approxEqualTolerance(minAmountReserved);
 
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
 
     it("Should leave WETH on the contract when pool price outside allowed limits", async () => {
@@ -1160,7 +1162,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0.000009")
       );
       await expect(tx).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       // deposit into pool again
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
@@ -1171,13 +1173,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
       await expect(tx1).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       // Withdraw from the pool
       await aerodromeAmoStrategy
         .connect(impersonatedVaultSigner)
         .withdraw(oethbVault.address, weth.address, oethUnits("1"));
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       // deposit into pool again
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
@@ -1188,13 +1190,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
       await expect(tx2).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       // Withdraw from the pool
       await aerodromeAmoStrategy
         .connect(impersonatedVaultSigner)
         .withdraw(oethbVault.address, weth.address, oethUnits("1"));
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
 
       // Withdraw from the pool
       await aerodromeAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
@@ -1209,9 +1211,28 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         oethUnits("0")
       );
       await expect(tx3).to.emit(aerodromeAmoStrategy, "PoolRebalanced");
-      await assetLpStakedInGauge();
+      await verifyEndConditions();
     });
   });
+
+  /** When tests finish:
+   * - nft LP token should remain staked
+   * - there should be no substantial amount of WETH / OETHb left on the strategy contract
+   */
+  const verifyEndConditions = async (lpStaked = true) => {
+    if (lpStaked) {
+      await assetLpStakedInGauge();
+    } else {
+      await assetLpNOTStakedInGauge();
+    }
+
+    await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.lte(
+      oethUnits("0.00001")
+    );
+    await expect(await oethb.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+      oethUnits("0")
+    );
+  };
 
   const assetLpStakedInGauge = async () => {
     const tokenId = await aerodromeAmoStrategy.tokenId();
@@ -1233,7 +1254,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       highValue: oethUnits("0"),
     });
 
-    // move the price to pre-configured 20% value
+    // move the price close to pre-configured 20% value
     await rebalance(
       value,
       direction, // _swapWETH
@@ -1269,9 +1290,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   // };
 
   const quoteAmountToSwapToReachPrice = async ({ price }) => {
-    let txResponse = await quoter["quoteAmountToSwapToReachPrice(uint160)"](
-      price
-    );
+    let txResponse = await quoter.quoteAmountToSwapToReachPrice(price);
     const txReceipt = await txResponse.wait();
     const [transferEvent] = txReceipt.events;
     const value = transferEvent.args.value;
@@ -1325,10 +1344,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       .transferGovernance(await quoter.quoterHelper());
     // Quoter claim governance)
     await quoter.claimGovernance();
-    // send WETH so rebalance is possible
-    await weth
-      .connect(rafael)
-      .transfer(aerodromeAmoStrategy.address, oethUnits("10000"));
 
     let txResponse;
     if (lowValue == 0 && highValue == 0) {
