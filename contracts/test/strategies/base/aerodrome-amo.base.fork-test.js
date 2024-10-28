@@ -3,19 +3,19 @@ const {
   createFixtureLoader,
   nodeRevert,
   nodeSnapshot,
-} = require("../_fixture");
+} = require("../../_fixture");
 
-const addresses = require("../../utils/addresses");
-const { defaultBaseFixture } = require("../_fixture-base");
+const addresses = require("../../../utils/addresses");
+const { defaultBaseFixture } = require("../../_fixture-base");
 const { expect } = require("chai");
-const { oethUnits } = require("../helpers");
+const { oethUnits } = require("../../helpers");
 const ethers = require("ethers");
-const { impersonateAndFund } = require("../../utils/signers");
+const { impersonateAndFund } = require("../../../utils/signers");
 //const { formatUnits } = ethers.utils;
 const { BigNumber } = ethers;
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
-const { setERC20TokenBalance } = require("../_fund");
+const { setERC20TokenBalance } = require("../../_fund");
 const futureEpoch = 1924064072;
 
 describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async function () {
@@ -273,7 +273,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     aeroSwapRouter,
     aeroNftManager,
     harvester,
-    harvesterSigner,
     quoter;
 
   beforeEach(async () => {
@@ -291,7 +290,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
     gauge = fixture.aeroClGauge;
     harvester = fixture.harvester;
-    harvesterSigner = fixture.harvesterSigner;
     quoter = fixture.quoter;
 
     await setup();
@@ -375,7 +373,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
       // correct harvester set
       expect(await aerodromeAmoStrategy.harvesterAddress()).to.equal(
-        addresses.base.HarvesterProxy
+        harvester.address
       );
 
       await verifyEndConditions();
@@ -483,10 +481,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         "1337",
         hre
       );
-      const aeroBalanceBefore = await aero.balanceOf(harvester.address);
-      await aerodromeAmoStrategy.connect(harvesterSigner).collectRewardTokens();
+      const aeroBalanceBefore = await aero.balanceOf(strategist.address);
+      await harvester.connect(strategist).harvest();
 
-      const aeroBalancediff = (await aero.balanceOf(harvester.address)).sub(
+      const aeroBalancediff = (await aero.balanceOf(strategist.address)).sub(
         aeroBalanceBefore
       );
 
