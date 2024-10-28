@@ -5,7 +5,7 @@ const {
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "018_upgrade_amo",
+    deployName: "020_upgrade_amo",
   },
   async ({ ethers }) => {
     const cAMOStrategyProxy = await ethers.getContract(
