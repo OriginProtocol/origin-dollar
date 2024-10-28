@@ -178,7 +178,7 @@ describe("ForkTest: OETHb Vault", function () {
       await oethbVault.connect(governor).setWithdrawalClaimDelay(
         15 * 24 * 60 * 60 // 7d
       );
-      expect(await oethbVault.withdrawalClaimDelay()).to.eq(7 * 24 * 60 * 60);
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(15 * 24 * 60 * 60);
 
       // below lower bound
       let tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
