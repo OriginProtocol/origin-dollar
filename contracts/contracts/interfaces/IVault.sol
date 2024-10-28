@@ -264,4 +264,8 @@ interface IVault {
         external
         view
         returns (bool);
+
+    function withdrawalClaimDelay() external view returns (uint256);
+
+    function setWithdrawalClaimDelay(uint256 newDelay) external;
 }
