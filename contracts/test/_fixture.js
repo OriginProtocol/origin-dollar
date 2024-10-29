@@ -1915,12 +1915,21 @@ async function convexOETHMetaVaultFixture(
     await oethVault.connect(josh).rebase();
     await oethVault.connect(josh).allocate();
 
-    // Approve the Vault to transfer WETH
-    await weth.connect(josh).approve(oethVault.address, wethAmount);
+    // Calculate how much to mint based on the WETH in the vault,
+    // the withdrawal queue, and the WETH to be sent to the strategy
+    const wethBalance = await weth.balanceOf(oethVault.address);
+    const queue = await oethVault.withdrawalQueueMetadata();
+    const available = wethBalance.add(queue.claimed).sub(queue.queued);
+    const mintAmount = wethAmount.sub(available);
 
-    // Mint OETH with WETH
-    // This will sit in the vault, not the strategy
-    await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
+    if (mintAmount.gt(0)) {
+      // Approve the Vault to transfer WETH
+      await weth.connect(josh).approve(oethVault.address, mintAmount);
+
+      // Mint OETH with WETH
+      // This will sit in the vault, not the strategy
+      await oethVault.connect(josh).mint(weth.address, mintAmount, 0);
+    }
 
     // Add ETH to the Metapool
     if (config?.depositToStrategy) {
