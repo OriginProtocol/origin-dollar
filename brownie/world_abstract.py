@@ -66,6 +66,14 @@ def prices(p, decimals = 18):
 def pcts (p):
     return leading_whitespace('{:0.4f}%'.format(p), 16)
 
+# crate a temporary fork of a node that cleans up ethereum state when exiting code block
+class TemporaryFork:
+    def __enter__(self):
+        brownie.chain.snapshot()
+
+    def __exit__(self, *args, **kwargs):
+        brownie.chain.revert()
+
 class TemporaryForkForReallocations:
     def __enter__(self):
         self.txs = []

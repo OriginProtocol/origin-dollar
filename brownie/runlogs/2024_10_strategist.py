@@ -169,6 +169,47 @@ def main():
 
   print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
 
+# ----------------------------------------------------------
+# Oct 7, 2024 - Compensation Claims Shutdown
+# ----------------------------------------------------------
+
+from world import *
+compensation_claims = Contract.from_explorer('0x9C94df9d594BA1eb94430C006c269C314B1A8281')
+
+with TemporaryFork():
+  tx1 = compensation_claims.collect(ousd, {'from': TIMELOCK})
+  tx1.sig_string = "collect(address)"
+  tx2 = ousd.transfer('0x806CAFaA1B34C9b9d2fC33BBAe3DE209E9D137E0', 1155813200310749364224, {'from': TIMELOCK})
+  tx2.sig_string = "transfer(address,uint256)"
+  tx3 = ousd.transfer('0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc', 20151176137921749424057, {'from': TIMELOCK})
+  tx3.sig_string = "transfer(address,uint256)"
+  txs = [tx1, tx2, tx3]
+
+description = """Close out OUSD claims 
+
+In 2020, during the a pre-audit beta of OUSD, the contract was hacked. This has been the only loss of user funds in Origin's history. The Origin team created two  compensation contracts and funded them with team funds to make OUSD users whole. Both compensation contracts had time limited claims periods.
+
+The contract holding the OUSD portion of the claims handed out almost all claims before the deadline, with only 21,306 OUSD remaining on the contract. However, those remaining funds on the OUSD claims contract had never been collected back to an Origin team wallet, and have instead sat on the claims contract for the past several years.
+
+This proposal:
+
+1. Collects all OUSD remaining on the claims contract
+2. Sends the user 0x806CAFaA1B34C9b9d2fC33BBAe3DE209E9D137E0 the 1,155 OUSD that the claims contract had on that account, as thanks for bringing these funds to our attention.
+3. Transfers the remaining 20,151 OUSD to a team wallet.
+"""
+with TemporaryFork():
+  proposal_id =create_gov_proposal(description, txs)
+
+  print("---")
+  print("Compensation:", ousd.balanceOf('0x9C94df9d594BA1eb94430C006c269C314B1A8281')/1e18)
+  print("User:",ousd.balanceOf('0x806CAFaA1B34C9b9d2fC33BBAe3DE209E9D137E0')/1e18)
+  print("Team:",ousd.balanceOf('0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc')/1e18)
+  sim_execute_governor_six(proposal_id)
+  print("---")
+  print("Compensation:", ousd.balanceOf('0x9C94df9d594BA1eb94430C006c269C314B1A8281')/1e18)
+  print("User:",ousd.balanceOf('0x806CAFaA1B34C9b9d2fC33BBAe3DE209E9D137E0')/1e18)
+  print("Team:",ousd.balanceOf('0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc')/1e18)
+  print("---")
 
 # -------------------------------
 # Oct 8, 2024 - Remove default strategy for WETH and deposit to AMO
