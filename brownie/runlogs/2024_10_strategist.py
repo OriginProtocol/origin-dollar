@@ -514,3 +514,109 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -----------------------------------------------------
+# Oct 28 2024 - wOETH Strategy Deposit
+# -----------------------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  txs = []
+
+  amount = woeth.balanceOf(OETHB_STRATEGIST)
+
+  # Update oracle price
+  txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_STRATEGIST }))
+  
+  expected_oethb = woeth_strat.getBridgedWOETHValue(amount)
+
+  # Rebase
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Take Vault snapshot 
+  txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+  # Deposit to wOETH strategy
+  txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': OETHB_STRATEGIST }))
+
+  # Rebase so that any yields from price update and
+  # backing asset change from deposit are accounted for.
+  txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+
+  # Approve the swap router to move superOETHb
+  txs.append(
+    oethb.approve(AERODROME_SWAP_ROUTER_BASE, expected_oethb, { 'from': OETHB_STRATEGIST })
+  )
+
+  # Do the swap
+  params = [
+    OETHB,
+    WETH_BASE,
+    1, # Tick spacing
+    OETHB_STRATEGIST,
+    time.time() + (2 * 60 * 60), # deadline
+    expected_oethb,
+    int(expected_oethb * 0.99), # minExpected
+    0 # sqrtPriceLimitX96
+  ]
+  txs.append(
+    aero_router.exactInputSingle(
+      params,
+      { 'from': OETHB_STRATEGIST }
+    )
+  )
+
+  # Check Vault Value against snapshot
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+  supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+  print("--------------------")
+  print("Deposited wOETH     ", c18(amount), amount)
+  print("Expected superOETHb ", c18(expected_oethb), expected_oethb)
+  print("--------------------")
+  print("Profit       ", c18(profit), profit)
+  print("Vault Change ", c18(vault_change), vault_change)
+
+  print(to_gnosis_json(txs, OETHB_STRATEGIST, "8453"))
+
+# -----------------------------------------------------
+# Oct 28 2024 - Mint And wrap OETH
+# -----------------------------------------------------
+from world import *
+from brownie import accounts
+
+def main():
+  txs = []
+
+  amount = 997962417999999999996 # weth.balanceOf(STRATEGIST)
+
+  txs.append(oeth_vault_core.rebase(std))
+
+  # strategist = accounts.at(STRATEGIST, force=True)
+  # txs.append(
+  #   zapper.deposit({'from': STRATEGIST, 'value': amount })
+  # )
+
+  # # Approve Vault to move WETH
+  # txs.append(
+  #   weth.approve(OETH_VAULT, "115792089237316195423570985008687907853269984665640564039457584007913129639935", std)
+  # )
+
+  # Mint OETH with WETH, 1:1
+  txs.append(
+    oeth_vault_core.mint(WETH, amount, amount, std)
+  )
+
+  # # Approve wOETH to move OETH
+  # txs.append(
+  #   oeth.approve(WOETH, "115792089237316195423570985008687907853269984665640564039457584007913129639935", std)
+  # )
+
+  txs.append(
+    woeth.deposit(amount, STRATEGIST, std)
+  )
+
+  print(to_gnosis_json(txs, STRATEGIST, "1"))
