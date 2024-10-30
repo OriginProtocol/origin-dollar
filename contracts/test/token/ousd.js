@@ -908,5 +908,9 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(anna).has.an.balanceOf("90", ousd);
     });
+
+    it("should be able to chenge yield delegation", async () => {
+      //A Should delegate to account B, rebase with profit, delegate to account C and all have correct balances
+    });
   });
 });

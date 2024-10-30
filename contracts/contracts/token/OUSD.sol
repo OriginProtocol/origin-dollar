@@ -32,6 +32,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     );
     event AccountRebasingEnabled(address account);
     event AccountRebasingDisabled(address account);
+    event YieldDelegationStart(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
+    event YieldDelegationStop(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
 
     enum RebaseOptions {
         NotSet,
@@ -640,13 +642,14 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         public
         onlyGovernor
     {
-        require(rebaseState[_accountSource] == RebaseOptions.OptIn ||
-            rebaseState[_accountSource] == RebaseOptions.NotSet, "Account not rebasing");
+        if (rebaseState[_accountSource] != RebaseOptions.OptIn) {
+            _rebaseOptIn(_accountSource);
+        }
 
         _resetYieldDelegation(_accountSource, _accountReceiver);
         nonRebasingCreditsPerToken[_accountSource] = _rebasingCreditsPerToken;
 
-        //TODO: emit event with rebasingCreditsPerToken?
+        emit YieldDelegationStart(_accountSource, _accountReceiver, _rebasingCreditsPerToken);
     }
 
     function governanceStopYieldDelegation(address _accountSource)
@@ -656,13 +659,20 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         RebaseDelegationData memory delegationData = delegatedRebases[_accountSource];
         require(delegationData.account != address(0), "No entry found");
 
+        _delegatedRebaseAccounting(_accountSource, delegationData.account, delegationData.delegationStartCreditsPerToken);
         delete delegatedRebases[_accountSource];
         delete delegatedRebasesReversed[delegationData.account];
         nonRebasingCreditsPerToken[_accountSource] = 0;
 
-        //TODO: emit event with rebasingCreditsPerToken?
+        emit YieldDelegationStart(_accountSource, delegationData.account, _rebasingCreditsPerToken);
     }
 
+    /**
+     * @dev adds or updates a yield delegation mapping and resets the `delegationStartCreditsPerToken` to a 
+     * recent rebasing credits per token. The latter reset action nullifies any accrued yield since the accrued
+     * yield increases by the growing difference between contract's global _rebasingCreditsPerToken and 
+     * and the one stored in the mapping.
+     */
     function _resetYieldDelegation(address _accountSource, address _accountReceiver) internal {
         delegatedRebases[_accountSource] = RebaseDelegationData({
             account: _accountReceiver,
