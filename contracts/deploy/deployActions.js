@@ -498,6 +498,11 @@ const configureOETHVault = async (isSimpleOETH) => {
       .connect(sGovernor)
       .setAutoAllocateThreshold(ethers.utils.parseUnits("5", 18))
   );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
+  );
 };
 
 const deployOUSDHarvester = async (ousdDripper) => {
