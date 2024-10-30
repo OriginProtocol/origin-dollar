@@ -861,7 +861,7 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("80.00", ousd);
       await expect(anna).has.an.approxBalanceOf("10", ousd);
 
-      ousd
+      await ousd
         .connect(governor)
         // matt delegates yield to anna
         .governanceDelegateYield(matt.address, anna.address);
@@ -889,7 +889,7 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(anna).has.an.balanceOf("0", ousd);
 
-      ousd
+      await ousd
         .connect(governor)
         // matt delegates yield to anna
         .governanceDelegateYield(matt.address, anna.address);

@@ -642,8 +642,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         public
         onlyGovernor
     {
-        if (rebaseState[_accountSource] != RebaseOptions.OptIn) {
+        if (rebaseState[_accountSource] == RebaseOptions.OptOut) {
             _rebaseOptIn(_accountSource);
+        } else if (rebaseState[_accountSource] == RebaseOptions.NotSet) {
+            rebaseState[_accountSource] == RebaseOptions.OptIn;
         }
 
         _resetYieldDelegation(_accountSource, _accountReceiver);
@@ -712,6 +714,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 _delegationStartCreditsPerToken
     ) internal {
         // TODO: possible to support non rebasing as well
+        // TODO probably delete this part
         require(rebaseState[_accountReceiver] == RebaseOptions.OptIn ||
             rebaseState[_accountReceiver] == RebaseOptions.NotSet, "Account Receiver needs to support rebasing");
 
