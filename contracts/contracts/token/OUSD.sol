@@ -14,7 +14,8 @@ import { Initializable } from "../utils/Initializable.sol";
 import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
-
+// TODO DELETE
+import "hardhat/console.sol";
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -32,17 +33,35 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     );
     event AccountRebasingEnabled(address account);
     event AccountRebasingDisabled(address account);
+    event YieldDelegationStart(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
+    event YieldDelegationStop(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
 
     enum RebaseOptions {
         NotSet,
         OptOut,
-        OptIn
+        OptIn,
+        Delegator,
+        Delegatee
     }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
+    /**
+     * This used to represent rebasing credits where balance would be derived using 
+     * global contract `rebasingCreditsPerToken`. Or non rebasing where balance is derived
+     * using the account specific `nonRebasingCreditsPerToken`.
+     * 
+     * While the above functionality still stands the _creditBalances alone only partly represents
+     * the third type of accounts which are part of yield delegation (delegators and delegatees). 
+     * In those cases the _creditBalances express the amount of balance that counts towards the
+     * yield of a specific account. The `_amountAdjustement` supplements the balances logic and 
+     * subtracts token balances from yield delegatees and adds to yield delegators to make up the
+     * exact token balances. The `_amountAdjustement` retain their value between rebases.
+     * TODO (might need more in dept explanation of _amountAdjustement)
+     *
+     */
     mapping(address => uint256) private _creditBalances;
     uint256 private _rebasingCredits;
     uint256 private _rebasingCreditsPerToken;
@@ -52,6 +71,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
     mapping(address => uint256) public isUpgraded;
+    /**
+     * Facilitates the correct token balances in accounts affected by yield delegation
+     */
+    mapping(address => uint256) private _amountAdjustement;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 
@@ -121,9 +144,26 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         override
         returns (uint256)
     {
-        if (_creditBalances[_account] == 0) return 0;
-        return
-            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        uint256 nonDelegatedBalance;
+        if (_creditBalances[_account] == 0) nonDelegatedBalance = 0;
+        else {
+            nonDelegatedBalance = _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        } 
+
+        return _adjustBalanceForYieldDelegation(_account, nonDelegatedBalance);
+    }
+
+    function _adjustBalanceForYieldDelegation(address _account, uint256 _nonDelegatedBalance)
+        internal
+        view
+        returns(uint256)
+    {
+        if (rebaseState[_account] == RebaseOptions.Delegator) {
+            return _nonDelegatedBalance + _amountAdjustement[_account];
+        } else if (rebaseState[_account] == RebaseOptions.Delegatee) {
+            return _nonDelegatedBalance - _amountAdjustement[_account];
+        }
+        return _nonDelegatedBalance;
     }
 
     /**
@@ -138,6 +178,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256, uint256)
     {
+        // TODO add yield delegation
         uint256 cpt = _creditsPerToken(_account);
         if (cpt == 1e27) {
             // For a period before the resolution upgrade, we created all new
@@ -167,6 +208,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             bool
         )
     {
+        // TODO add yield delegation
         return (
             _creditBalances[_account],
             _creditsPerToken(_account),
@@ -460,6 +502,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         bool isContract = Address.isContract(_account);
         if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
+            // TODO: make sure this never executes with yield delegators or delegatees
             _ensureRebasingMigration(_account);
         }
         return nonRebasingCreditsPerToken[_account] > 0;
@@ -557,6 +600,37 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // Mark explicitly opted out of rebasing
         rebaseState[msg.sender] = RebaseOptions.OptOut;
         emit AccountRebasingDisabled(msg.sender);
+    }
+
+    function governanceDelegateYield(address _accountSource, address _accountReceiver)
+        public
+        onlyGovernor
+    {
+        if (rebaseState[_accountSource] == RebaseOptions.OptOut) {
+            _rebaseOptIn(_accountSource);
+        }
+        if (rebaseState[_accountReceiver] == RebaseOptions.OptOut) {
+            _rebaseOptIn(_accountSource);
+        }
+        uint256 accountSourceBalance = balanceOf(_accountSource);
+
+        rebaseState[_accountSource] = RebaseOptions.Delegator;
+        rebaseState[_accountReceiver] = RebaseOptions.Delegatee;
+
+        // delegate all yield and adjust for balances
+        _creditBalances[_accountReceiver] += _creditBalances[_accountSource];
+        _creditBalances[_accountSource] = 0;
+        _amountAdjustement[_accountSource] = accountSourceBalance;
+        _amountAdjustement[_accountReceiver] = accountSourceBalance; 
+
+        emit YieldDelegationStart(_accountSource, _accountReceiver, _rebasingCreditsPerToken);
+    }
+
+    function governanceStopYieldDelegation(address _accountSource)
+        public
+        onlyGovernor
+    {
+        require(false, "Needs implementation");
     }
 
     /**
