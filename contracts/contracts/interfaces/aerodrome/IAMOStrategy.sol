@@ -59,4 +59,9 @@ interface IAMOStrategy {
     function claimGovernance() external;
 
     function transferGovernance(address _governor) external;
+
+    function getPositionPrincipal()
+        external
+        view
+        returns (uint256 _amountWeth, uint256 _amountOethb);
 }

@@ -51,20 +51,33 @@ const harvest = async (
   signer,
   stratDesc
 ) => {
-  const nativeStakingStrategy1 = new ethers.Contract(
+  const nativeStakingStrategy = new ethers.Contract(
     nativeStakingProxyAddress,
     nativeStakingStrategyAbi,
     signer
   );
-  const consensusRewards = await nativeStakingStrategy1.consensusRewards();
+  const consensusRewards = await nativeStakingStrategy.consensusRewards();
   log(`Consensus rewards for ${stratDesc}: ${formatUnits(consensusRewards)}`);
-  if (consensusRewards.gt(parseEther("1"))) {
+
+  const feeAccumulatorAddress =
+    await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
+  const executionRewards = await signer.provider.getBalance(
+    feeAccumulatorAddress
+  );
+  log(`Execution rewards for ${stratDesc}: ${formatUnits(executionRewards)}`);
+
+  if (
+    consensusRewards.gt(parseEther("1")) ||
+    executionRewards.gt(parseEther("0.5"))
+  ) {
     const tx1 = await harvester
       .connect(signer)
       .harvestAndSwap(nativeStakingProxyAddress);
     await logTxDetails(tx1, `${stratDesc} harvestAndSwap`);
   } else {
-    log(`Skipping ${stratDesc} harvestAndSwap due to low consensus rewards`);
+    log(
+      `Skipping ${stratDesc} harvestAndSwap due to low consensus and execution rewards`
+    );
   }
 };
 

@@ -396,7 +396,7 @@ contract VaultCore is VaultInitializer {
             emit YieldDistribution(_trusteeAddress, yield, fee);
         }
 
-        // Only rachet OToken supply upwards
+        // Only ratchet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
         if (vaultValue > ousdSupply) {
             oUSD.changeSupply(vaultValue);

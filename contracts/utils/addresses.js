@@ -267,6 +267,8 @@ addresses.mainnet.beaconChainDepositContract =
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =
   "0x34eDb2ee25751eE67F68A45813B22811687C0238";
+addresses.mainnet.NativeStakingSSVStrategy2Proxy =
+  "0x4685dB8bF2Df743c861d71E6cFb5347222992076";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
@@ -282,6 +284,7 @@ addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
 // Base
 addresses.base = {};
+addresses.base.HarvesterProxy = "0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29";
 addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 addresses.base.aeroRouterAddress = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";

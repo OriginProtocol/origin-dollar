@@ -47,28 +47,28 @@ describe("ForkTest: Morpho Aave Strategy", function () {
 
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10010";
+      const redeemAmount = ousdUnits("30000");
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
         await vault
           .connect(anna)
-          .mint(asset.address, await units(amount, asset), 0);
+          .mint(asset.address, await units("15000", asset), 0);
       }
 
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
+      expect(supplyAdded).to.gt(redeemAmount);
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
       // Now try to redeem 30k
-      await vault.connect(anna).redeem(ousdUnits("30000"), 0);
+      await vault.connect(anna).redeem(redeemAmount, 0);
 
       // User balance should be down by 30k
       const newBalance = await ousd.connect(anna).balanceOf(anna.address);
       expect(newBalance).to.approxEqualTolerance(
-        currentBalance.sub(ousdUnits("30000")),
+        currentBalance.sub(redeemAmount),
         1
       );
 

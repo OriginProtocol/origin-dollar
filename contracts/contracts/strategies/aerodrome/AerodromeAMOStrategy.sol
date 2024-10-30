@@ -351,7 +351,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > 0) {
+        if (_wethBalance > 1e12) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -366,6 +366,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_asset == WETH, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(0), _amount);
+
+        // if the pool price is not within the expected interval leave the WETH on the contract
+        // as to not break the mints
+        (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
+        if (_isExpectedRange) {
+            // deposit funds into the underlying pool
+            _rebalance(0, false, 0);
+        }
     }
 
     /**
@@ -400,6 +408,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         bool _swapWeth,
         uint256 _minTokenReceived
     ) external nonReentrant onlyGovernorOrStrategist {
+        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
+    }
+
+    function _rebalance(
+        uint256 _amountToSwap,
+        bool _swapWeth,
+        uint256 _minTokenReceived
+    ) internal {
         /**
          * Would be nice to check if there is any total liquidity in the pool before performing this swap
          * but there is no easy way to do that in UniswapV3:
@@ -410,11 +426,13 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
 
         /**
          * When rebalance is called for the first time there is no strategy
-         * liquidity in the pool yet. The full liquidity removal is thus skipped.
+         * liquidity in the pool yet. The liquidity removal is thus skipped.
+         * Also execute this function when WETH is required for the swap.
          */
-        if (tokenId != 0) {
-            _removeLiquidity(1e18);
+        if (tokenId != 0 && _swapWeth && _amountToSwap > 0) {
+            _ensureWETHBalance(_amountToSwap);
         }
+
         // in some cases we will just want to add liquidity and not issue a swap to move the
         // active trading position within the pool
         if (_amountToSwap > 0) {
@@ -422,15 +440,18 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
         // calling check liquidity early so we don't get unexpected errors when adding liquidity
         // in the later stages of this function
-        _checkForExpectedPoolPrice();
+        _checkForExpectedPoolPrice(true);
 
         _addLiquidity();
+
         // this call shouldn't be necessary, since adding liquidity shouldn't affect the active
         // trading price. It is a defensive programming measure.
-        _checkForExpectedPoolPrice();
+        (, uint256 _wethSharePct) = _checkForExpectedPoolPrice(true);
 
         // revert if protocol insolvent
         _solvencyAssert();
+
+        emit PoolRebalanced(_wethSharePct);
     }
 
     /**
@@ -512,6 +533,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _amountOethbCollected,
             underlyingAssets
         );
+
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -526,12 +549,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         uint256 _balance = _tokenToSwap.balanceOf(address(this));
 
         if (_balance < _amountToSwap) {
+            // This should never trigger since _ensureWETHBalance will already
+            // throw an error if there is not enough WETH
             if (_swapWeth) {
                 revert NotEnoughWethForSwap(_balance, _amountToSwap);
             }
             // if swapping OETHb
             uint256 mintForSwap = _amountToSwap - _balance;
             IVault(vaultAddress).mintForStrategy(mintForSwap);
+        }
+
+        // approve the specific amount of WETH required
+        if (_swapWeth) {
+            IERC20(WETH).approve(address(swapRouter), _amountToSwap);
         }
 
         // Swap it
@@ -552,6 +582,14 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                     : sqrtRatioX96TickHigher
             })
         );
+
+        /**
+         * In the interest of each function in _rebalance to leave the contract state as
+         * clean as possible the OETHb tokens here are burned. This decreases the
+         * dependence where `_swapToDesiredPosition` function relies on later functions
+         * (`addLiquidity`) to burn the OETHb. Reducing the risk of error introduction.
+         */
+        _burnOethbOnTheContract();
     }
 
     /**
@@ -566,7 +604,10 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        require(_wethBalance > 0, "Must add some WETH");
+        // don't deposit small liquidity amounts
+        if (_wethBalance <= 1e12) {
+            return;
+        }
 
         uint160 _currentPrice = getPoolX96Price();
         /**
@@ -604,6 +645,9 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
                 _oethbRequired - _oethbBalance
             );
         }
+
+        // approve the specific amount of WETH required
+        IERC20(WETH).approve(address(positionManager), _wethBalance);
 
         uint256 _wethAmountSupplied;
         uint256 _oethbAmountSupplied;
@@ -672,9 +716,19 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      * @dev Check that the Aerodrome pool price is within the expected
      *      parameters.
      *      This function works whether the strategy contract has liquidity
-     *      position in the pool or not.
+     *      position in the pool or not. The function returns _wethSharePct
+     *      as a gas optimization measure.
+     * @param throwException  when set to true the function throws an exception
+     *        when pool's price is not within expected range.
+     * @return _isExpectedRange  Bool expressing price is within expected range
+     * @return _wethSharePct  Share of WETH owned by this strategy contract in the
+     *         configured ticker.
      */
-    function _checkForExpectedPoolPrice() internal {
+    function _checkForExpectedPoolPrice(bool throwException)
+        internal
+        view
+        returns (bool _isExpectedRange, uint256 _wethSharePct)
+    {
         require(
             allowedWethShareStart != 0 && allowedWethShareEnd != 0,
             "Weth share interval not set"
@@ -692,40 +746,30 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
             _currentPrice <= sqrtRatioX96TickLower ||
             _currentPrice >= sqrtRatioX96TickHigher
         ) {
-            revert OutsideExpectedTickRange(getCurrentTradingTick());
+            if (throwException) {
+                revert OutsideExpectedTickRange(getCurrentTradingTick());
+            }
+            return (false, 0);
         }
 
-        /**
-         * If estimateAmount1 call fails it could be due to _currentPrice being really
-         * close to a tick and amount1 too big to compute.
-         *
-         * If token addresses were reversed estimateAmount0 would be required here
-         */
-        uint256 _normalizedWethAmount = 1 ether;
-        uint256 _correspondingOethAmount = helper.estimateAmount1(
-            _normalizedWethAmount,
-            address(0), // no need to pass pool address when current price is specified
-            _currentPrice,
-            lowerTick,
-            upperTick
-        );
-
-        // 18 decimal number expressed weth tick share
-        uint256 _wethSharePct = _normalizedWethAmount.divPrecisely(
-            _normalizedWethAmount + _correspondingOethAmount
-        );
+        // 18 decimal number expressed WETH tick share
+        _wethSharePct = _getWethShare(_currentPrice);
 
         if (
             _wethSharePct < allowedWethShareStart ||
             _wethSharePct > allowedWethShareEnd
         ) {
-            revert PoolRebalanceOutOfBounds(
-                _wethSharePct,
-                allowedWethShareStart,
-                allowedWethShareEnd
-            );
+            if (throwException) {
+                revert PoolRebalanceOutOfBounds(
+                    _wethSharePct,
+                    allowedWethShareStart,
+                    allowedWethShareEnd
+                );
+            }
+            return (false, _wethSharePct);
         }
-        emit PoolRebalanced(_wethSharePct);
+
+        return (true, _wethSharePct);
     }
 
     /**
@@ -733,7 +777,7 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethbOnTheContract() internal {
         uint256 _oethbBalance = IERC20(OETHb).balanceOf(address(this));
-        if (_oethbBalance > 0) {
+        if (_oethbBalance > 1e12) {
             IVault(vaultAddress).burnForStrategy(_oethbBalance);
         }
     }
@@ -777,6 +821,36 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev This function removes the appropriate amount of liquidity to assure that the required
+     * amount of WETH is available on the contract
+     *
+     * @param _amount  WETH balance required on the contract
+     */
+    function _ensureWETHBalance(uint256 _amount) internal {
+        uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
+        if (_wethBalance >= _amount) {
+            return;
+        }
+
+        require(tokenId != 0, "No liquidity available");
+        uint256 _additionalWethRequired = _amount - _wethBalance;
+        (uint256 _wethInThePool, ) = getPositionPrincipal();
+
+        if (_wethInThePool < _additionalWethRequired) {
+            revert NotEnoughWethLiquidity(
+                _wethInThePool,
+                _additionalWethRequired
+            );
+        }
+
+        uint256 shareOfWethToRemove = Math.min(
+            _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
+            1e18
+        );
+        _removeLiquidity(shareOfWethToRemove);
+    }
+
+    /**
      * @notice Withdraw an `amount` of assets from the platform and
      *         send to the `_recipient`.
      * @param _recipient  Address to which the asset should be sent
@@ -791,28 +865,8 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         require(_asset == WETH, "Unsupported asset");
         require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
-        uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance < _amount) {
-            require(tokenId != 0, "No liquidity available");
-            uint256 _additionalWethRequired = _amount - _wethBalance;
-            (uint256 _wethInThePool, ) = getPositionPrincipal();
+        _ensureWETHBalance(_amount);
 
-            if (_wethInThePool < _additionalWethRequired) {
-                revert NotEnoughWethLiquidity(
-                    _wethInThePool,
-                    _additionalWethRequired
-                );
-            }
-
-            uint256 shareOfWethToRemove = Math.min(
-                _additionalWethRequired.divPrecisely(_wethInThePool) + 1,
-                1e18
-            );
-            _removeLiquidity(shareOfWethToRemove);
-        }
-
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
         _withdraw(_recipient, _amount);
     }
 
@@ -828,8 +882,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         if (_balance > 0) {
             _withdraw(vaultAddress, _balance);
         }
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
     }
 
     function _withdraw(address _recipient, uint256 _amount) internal {
@@ -868,11 +920,17 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         // to add liquidity to the clPool
-        IERC20(WETH).safeApprove(address(positionManager), type(uint256).max);
-        IERC20(OETHb).safeApprove(address(positionManager), type(uint256).max);
+        IERC20(OETHb).approve(address(positionManager), type(uint256).max);
         // to be able to rebalance using the swapRouter
-        IERC20(WETH).safeApprove(address(swapRouter), type(uint256).max);
-        IERC20(OETHb).safeApprove(address(swapRouter), type(uint256).max);
+        IERC20(OETHb).approve(address(swapRouter), type(uint256).max);
+
+        /* the behaviour of this strategy has slightly changed and WETH could be
+         * present on the contract between the transactions. For that reason we are
+         * un-approving WETH to the swapRouter & positionManager and only approving
+         * the required amount before a transaction
+         */
+        IERC20(WETH).approve(address(swapRouter), 0);
+        IERC20(WETH).approve(address(positionManager), 0);
     }
 
     /***************************************
@@ -941,6 +999,16 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice Returns the percentage of WETH liquidity in the configured ticker
+     *         owned by this strategy contract.
+     * @return uint256 1e18 denominated percentage expressing the share
+     */
+    function getWETHShare() external view returns (uint256) {
+        uint160 _currentPrice = getPoolX96Price();
+        return _getWethShare(_currentPrice);
+    }
+
+    /**
      * @notice Returns the amount of liquidity in the contract's LP position
      * @return _liquidity Amount of liquidity in the position
      */
@@ -950,6 +1018,33 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
         }
 
         (, , , , , , , _liquidity, , , , ) = positionManager.positions(tokenId);
+    }
+
+    function _getWethShare(uint160 _currentPrice)
+        internal
+        view
+        returns (uint256)
+    {
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 too big to compute.
+         *
+         * If token addresses were reversed estimateAmount0 would be required here
+         */
+        uint256 _normalizedWethAmount = 1 ether;
+        uint256 _correspondingOethAmount = helper.estimateAmount1(
+            _normalizedWethAmount,
+            address(0), // no need to pass pool address when current price is specified
+            _currentPrice,
+            lowerTick,
+            upperTick
+        );
+
+        // 18 decimal number expressed weth tick share
+        return
+            _normalizedWethAmount.divPrecisely(
+                _normalizedWethAmount + _correspondingOethAmount
+            );
     }
 
     /***************************************

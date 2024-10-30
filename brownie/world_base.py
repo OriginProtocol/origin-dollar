@@ -25,7 +25,7 @@ vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHE
 
 woeth_strat = load_contract('woeth_strategy', OETHB_WOETH_STRATEGY)
 
-dripper = load_contract('dripper', OETHB_DRIPPER)
+dripper = load_contract('oethb_dripper', OETHB_DRIPPER)
 
 harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
@@ -46,7 +46,7 @@ def scale_amount(from_token, to_token, amount, decimals=0):
 
     return int(scale_amount * 10**decimals) / (10**decimals)
 
-def amo_snapsnot():
+def amo_snapshot():
     wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     poolTotal = wethPoolBalance + superOETHbPoolBalance

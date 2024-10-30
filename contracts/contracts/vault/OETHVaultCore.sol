@@ -18,7 +18,6 @@ contract OETHVaultCore is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    uint256 public constant CLAIM_DELAY = 10 minutes;
     address public immutable weth;
     uint256 public wethAssetIndex;
 
@@ -172,6 +171,8 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
         // The check that the requester has enough OETH is done in to later burn call
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
@@ -287,12 +288,14 @@ contract OETHVaultCore is VaultCore {
         internal
         returns (uint256 amount)
     {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
         // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         require(
-            request.timestamp + CLAIM_DELAY <= block.timestamp,
+            request.timestamp + withdrawalClaimDelay <= block.timestamp,
             "Claim delay not met"
         );
         // If there isn't enough reserved liquidity in the queue to claim
