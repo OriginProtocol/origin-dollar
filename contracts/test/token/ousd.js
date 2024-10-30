@@ -880,6 +880,15 @@ describe("Token", function () {
       await expect(josh).has.an.approxBalanceOf("230.00", ousd);
       await expect(matt).has.an.approxBalanceOf("80.00", ousd);
       await expect(anna).has.an.balanceOf("90", ousd);
+
+      console.log("Matt transfering to josh");
+      await ousd.connect(matt).transfer(josh.address, ousdUnits("80"));
+      console.log("Anna transfering to josh");
+      await ousd.connect(anna).transfer(josh.address, ousdUnits("90"))
+
+      await expect(josh).has.an.approxBalanceOf("400", ousd);
+      await expect(matt).has.an.approxBalanceOf("0", ousd);
+      await expect(anna).has.an.balanceOf("0", ousd);
     });
 
     it("Should delegate rebase to another account initially having 0 balance", async () => {
