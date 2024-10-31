@@ -541,7 +541,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
             _ensureRebasingMigration(_account);
         }
-        return nonRebasingCreditsPerToken[_account] > 0;
+        // nonRebasingCreditsPerToken that are part of yield delegation are not considered nonRebasingAccounts
+        return nonRebasingCreditsPerToken[_account] > 0 && delegatedRebases[_account].account == address(0);
     }
 
     /**
