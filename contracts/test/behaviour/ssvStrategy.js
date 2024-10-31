@@ -160,9 +160,17 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
 
-      // Add WETH to the strategy via a Vualt deposit
-      await weth.connect(domen).transfer(oethVault.address, amount);
+      // Add enough WETH to the Vault so it can be deposited to the strategy
+      // This needs to take into account any withdrawal queue shortfall
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const transferAmount = amount.sub(available);
+      if (transferAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, transferAmount);
+      }
 
+      // Deposit to the strategy
       return await oethVault
         .connect(strategist)
         .depositToStrategy(

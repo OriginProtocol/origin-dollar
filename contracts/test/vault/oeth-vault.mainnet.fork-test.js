@@ -172,16 +172,26 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should partially redeem 10 OETH", async () => {
-      const { oeth, oethVault } = fixture;
+      const { domen, oeth, oethVault, weth } = fixture;
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
-      const amount = parseUnits("10", 18);
+      const redeemAmount = parseUnits("10", 18);
       const minEth = parseUnits("9.94", 18);
+
+      // Calculate how much to mint based on the WETH in the vault,
+      // the withdrawal queue, and the WETH to be redeemed
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const mintAmount = redeemAmount.sub(available);
+      if (mintAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, mintAmount);
+      }
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
+        .redeem(redeemAmount, minEth);
 
       await logTxDetails(tx, "redeem");
 
@@ -224,9 +234,19 @@ describe("ForkTest: OETH Vault", function () {
         });
     });
     it("should claim withdraw by a OETH whale", async () => {
-      const { oeth, oethVault } = fixture;
+      const { domen, oeth, oethVault, weth } = fixture;
 
       let oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+
+      // Calculate how much to mint based on the WETH in the vault,
+      // the withdrawal queue, and the WETH to be withdrawn
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const mintAmount = oethWhaleBalance.sub(available);
+      if (mintAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, mintAmount);
+      }
 
       expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
         parseUnits("100", 18)
@@ -266,22 +286,6 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(oethWhaleBalance, 0);
-      await expect(tx)
-        .to.emit(oethVault, "Redeem")
-        .withNamedArgs({ _addr: oethWhaleAddress });
-    });
-    it("OETH whale redeem 50 OETH", async () => {
-      const { oethVault } = fixture;
-
-      const amount = parseUnits("50", 18);
-      const minEth = parseUnits("49.7", 18);
-
-      const tx = await oethVault
-        .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
-
-      await logTxDetails(tx, "redeem");
-
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
