@@ -121,7 +121,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       nativeStakingStrategyProxy.address
     );
   } else {
-    weth = await ethers.getContractAt("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ssv = await ethers.getContract("MockSSV");
 
     const nativeStakingStrategyProxy = await ethers.getContract(
@@ -2508,6 +2508,10 @@ async function directStakingFixture() {
     const router = await ethers.getContract("MockCCIPRouter");
 
     fixture.mockRouter = router;
+
+    fixture.ccipRouterSigner = await impersonateAndFund(
+      addresses.mainnet.ccipRouter
+    );
   }
 
   fixture.directStakingHandler = directStakingHandler;

@@ -20,12 +20,12 @@ module.exports = deployOnBaseWithGuardian(
     // ----------------
 
     // 1. Deploy proxy and implementation contract
-    await deployWithConfirmation("DirectStakingL2HandlerProxy");
+    await deployWithConfirmation("DirectStakingBaseHandlerProxy");
     const cL2HandlerProxy = await ethers.getContract(
-      "DirectStakingL2HandlerProxy"
+      "DirectStakingBaseHandlerProxy"
     );
     console.log(
-      "DirectStakingL2HandlerProxy deployed at",
+      "DirectStakingBaseHandlerProxy deployed at",
       cL2HandlerProxy.address
     );
 
@@ -45,7 +45,7 @@ module.exports = deployOnBaseWithGuardian(
           "0x"
         )
     );
-    console.log("Initialized DirectStakingL2HandlerProxy");
+    console.log("Initialized DirectStakingBaseHandlerProxy");
 
     const cL2Handler = await ethers.getContractAt(
       "DirectStakingL2Handler",

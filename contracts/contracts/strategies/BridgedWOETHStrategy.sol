@@ -9,14 +9,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IDirectStakingCaller } from "../interfaces/IDirectStakingCaller.sol";
-
-interface IDirectStakingHandler {
-    function stake(
-        uint256 wethAmount,
-        uint256 minAmountOut,
-        bool callback
-    ) external payable returns (bytes32);
-}
+import { IDirectStakingHandler } from "../interfaces/IDirectStakingHandler.sol";
 
 contract BridgedWOETHStrategy is
     InitializableAbstractStrategy,
@@ -51,7 +44,7 @@ contract BridgedWOETHStrategy is
         uint256 minAmountOut;
     }
 
-    mapping(bytes32 => DirectStakeRequest) stakeRequests;
+    mapping(bytes32 => DirectStakeRequest) public directStakeRequests;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -327,6 +320,9 @@ contract BridgedWOETHStrategy is
     function _deposit(address asset, uint256 amount) internal {
         require(asset == address(weth), "Unsupported asset");
 
+        // There's no pToken, however, it just uses wOETH address in the event
+        emit Deposit(address(weth), address(bridgedWOETH), amount);
+
         if (amount < MIN_DEPOSIT_THRESHOLD) {
             return;
         }
@@ -340,22 +336,22 @@ contract BridgedWOETHStrategy is
         // Figure out how much `amount` is worth to use as minAmount
         uint256 woethAmount = (amount * 1 ether) / oraclePrice;
 
+        // Approve handler to move WETH
+        weth.approve(address(directStakingHandler), amount);
+
         // Create the request
-        bytes32 requestId = IDirectStakingHandler(directStakingHandler).stake(
+        bytes32 requestId = directStakingHandler.stake(
             amount,
             woethAmount,
             true
         );
 
         // Store the data
-        stakeRequests[requestId] = DirectStakeRequest({
+        directStakeRequests[requestId] = DirectStakeRequest({
             processed: false,
             amountIn: amount,
             minAmountOut: woethAmount
         });
-
-        // There's no pToken, however, it just uses WOETH address in the event
-        emit Deposit(address(weth), address(bridgedWOETH), woethAmount);
     }
 
     /**
@@ -364,19 +360,19 @@ contract BridgedWOETHStrategy is
     function onDirectStakingRequestCompletion(
         bytes32 messageId,
         uint256 amountOut
-    ) external override {
+    ) external override nonReentrant {
         require(
             msg.sender == address(directStakingHandler),
             "Not DirectStakingHandler"
         );
 
-        DirectStakeRequest memory dsReq = stakeRequests[messageId];
+        DirectStakeRequest memory dsReq = directStakeRequests[messageId];
 
         require(!dsReq.processed, "Already processed");
         require(amountOut >= dsReq.minAmountOut, "Slippage error");
 
         // Mark as processed
-        stakeRequests[messageId].processed = true;
+        directStakeRequests[messageId].processed = true;
 
         // Deduct the initial stake amount
         // (to avoid double accounting in `checkBalance`)

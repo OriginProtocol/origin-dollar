@@ -247,7 +247,7 @@ const directStakingFixture = async () => {
   const fixture = await defaultBaseFixture();
 
   const directStakingHandlerProxy = await ethers.getContract(
-    "DirectStakingL2HandlerProxy"
+    "DirectStakingBaseHandlerProxy"
   );
   const directStakingHandler = await ethers.getContractAt(
     "DirectStakingL2Handler",
@@ -267,6 +267,10 @@ const directStakingFixture = async () => {
     const router = await ethers.getContract("MockCCIPRouter");
 
     fixture.mockRouter = router;
+  } else {
+    fixture.mockDirectStakingHandler = await ethers.getContract(
+      "MockDirectStakingHandler"
+    );
   }
 
   fixture.directStakingHandler = directStakingHandler;

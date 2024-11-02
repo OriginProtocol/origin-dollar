@@ -47,6 +47,7 @@ contract DirectStakingMainnetHandler is AbstractDirectStakingHandler {
         virtual
         override
         onlyIfNotCursed
+        nonReentrant
     {
         ChainConfig memory cc = chainConfigs[message.sourceChainSelector];
 

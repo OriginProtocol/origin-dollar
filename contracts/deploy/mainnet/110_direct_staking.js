@@ -6,7 +6,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "108_direct_staking",
+    deployName: "110_direct_staking",
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
     deployerIsProposer: false, // just to solve the issue of later active proposals failing
@@ -53,7 +53,7 @@ module.exports = deploymentWithGovernanceProposal(
       cMainnetHandlerProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dMainnetHandler.address,
-          addresses.base.timelock,
+          addresses.mainnet.Timelock,
           "0x"
         )
     );
@@ -65,6 +65,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
+      name: "Deploy direct staking contract",
       actions: [
         {
           contract: cMainnetHandler,

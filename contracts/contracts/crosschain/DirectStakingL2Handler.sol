@@ -57,6 +57,7 @@ contract DirectStakingL2Handler is AbstractDirectStakingHandler {
         virtual
         override
         onlyIfNotCursed
+        nonReentrant
     {
         // Make sure it's from mainnet
         require(
@@ -120,7 +121,7 @@ contract DirectStakingL2Handler is AbstractDirectStakingHandler {
         uint256 wethAmount,
         uint256 minAmountOut,
         bool callback
-    ) external payable returns (bytes32) {
+    ) external payable nonReentrant returns (bytes32) {
         // Transfer WETH in
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
