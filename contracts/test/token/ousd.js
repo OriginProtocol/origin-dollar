@@ -4,7 +4,7 @@ const { utils } = require("ethers");
 
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
 
-describe("Token", function () {
+describe.only("Token", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -850,7 +850,7 @@ describe("Token", function () {
     await checkTransferOut(9);
   });
 
-  describe.only("Delegating yield", function () {
+  describe("Delegating yield", function () {
     // TODO delete below test later
     // it.only("Figure out gas costs", async () => {
     //   let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;

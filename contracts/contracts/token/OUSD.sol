@@ -306,15 +306,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     ) internal {
         bool isNonRebasingTo = _isNonRebasingAccount(_to);
         bool isNonRebasingFrom = _isNonRebasingAccount(_from);
-        if (_delegatesRebase(_to)) {
-           _delegatedRebaseAccountingBySource(_to);
-        }
-        if (_delegatesRebase(_from)) {
-            _delegatedRebaseAccountingBySource(_from);
-        }
-        if (_hasRebaseDelegatedTo(_from)) {
-            _delegatedRebaseAccountingByReceiver(_from);
-        }
+        
+        _onBeforeTokenCredited(_to);
+        _onBeforeTokenDeducted(_from);
 
         // Credits deducted and credited might be different due to the
         // differing creditsPerToken used by each account
@@ -339,6 +333,23 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             nonRebasingSupply = nonRebasingSupply.sub(_value);
             // Update rebasingCredits by adding the credited amount
             _rebasingCredits = _rebasingCredits.add(creditsCredited);
+        }
+    }
+
+    // before token is going to be credited to internal credits of an account
+    function _onBeforeTokenCredited(address _receiver) internal {
+        if (_delegatesRebase(_receiver)) {
+           _delegatedRebaseAccountingBySource(_receiver);
+        }
+    }
+
+    // before token is going to be deducted from internal credits of an account
+    function _onBeforeTokenDeducted(address _sender) internal {
+        if (_delegatesRebase(_sender)) {
+            _delegatedRebaseAccountingBySource(_sender);
+        }
+        else if (_hasRebaseDelegatedTo(_sender)) {
+            _delegatedRebaseAccountingByReceiver(_sender);
         }
     }
 
@@ -442,6 +453,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
 
+        _onBeforeTokenCredited(_account);
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
 
@@ -484,6 +496,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             return;
         }
 
+        _onBeforeTokenDeducted(_account);
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         uint256 currentCredits = _creditBalances[_account];
