@@ -432,7 +432,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
 
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
+        _adjustCreditsForAccount(_account, int256(creditAmount), int256(_amount));
 
         // If the account is non rebasing and doesn't have a set creditsPerToken
         // then set it i.e. this is a mint from a fresh contract
@@ -478,15 +478,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 currentCredits = _creditBalances[_account];
 
         // Remove the credits, burning rounding errors
-        if (
-            currentCredits == creditAmount || currentCredits - 1 == creditAmount
-        ) {
-            // Handle dust from rounding
-            _creditBalances[_account] = 0;
-        } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].sub(
-                creditAmount
-            );
+        if (currentCredits == creditAmount + 1) {
+            creditAmount += 1;
+        }
+        
+        if (currentCredits >= creditAmount) {
+            _adjustCreditsForAccount(_account, -int256(creditAmount), -int256(_amount));
         } else {
             revert("Remove exceeds balance");
         }
