@@ -852,7 +852,7 @@ describe("Token", function () {
 
   describe.only("Delegating yield", function () {
     // TODO delete below test later
-    it.only("Figure out gas costs", async () => {
+    it("Figure out gas costs", async () => {
       let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
 
       await expect(josh).has.an.approxBalanceOf("100", ousd);

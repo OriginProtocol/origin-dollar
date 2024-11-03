@@ -76,13 +76,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     mapping(address => uint256) private _amountAdjustement;
     /**
-     * @dev accounts delegating yield to another account
+     * @dev mapping of accounts delegating yield to another account
      */
-    mapping(address => address) public yieldDelegateFrom;
-    /**
-     * @dev accounts having yield delegated from another account
-     */
-    mapping(address => address) public yieldDelegateTo;
+    mapping(address => address) public yieldDelegation;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 
@@ -293,38 +289,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
         uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
 
-        if (rebaseState[_from] == RebaseOptions.Delegator) {
-            address delegatee = yieldDelegateFrom[_from];
-            // adjust delegator and delegatee fixed amounts
-            _amountAdjustement[_from] -= _value;
-            _amountAdjustement[delegatee] -= _value;
-            // also adjust the reduced yield of the delegatee
-            _creditBalances[delegatee] = _creditBalances[delegatee].sub(
-                creditsDeducted,
-                //"Transfer amount exceeds balance"
-                "Transfer amount exceeds balance delegatee"
-            );
-        } else {
-            // can not deduct _creditBalances that have been delegated since
-            // balance checks in transfer & transferFrom prevent it
-            _creditBalances[_from] = _creditBalances[_from].sub(
-                creditsDeducted,
-                "Transfer amount exceeds balance"
-            );
-
-        }
-
-        if (rebaseState[_to] == RebaseOptions.Delegator) {
-            address delegator = yieldDelegateTo[_to];
-            // adjust delegator and delegatee fixed amounts
-            _amountAdjustement[_to] += _value;
-            _amountAdjustement[delegator] += _value;
-            // also adjust the additional yield of the delegator
-            _creditBalances[delegator] = _creditBalances[delegator]
-                .add(creditsCredited);
-        } else {
-            _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
-        }
+        _adjustCreditsForAccount(_from, -int256(creditsDeducted), -int256(_value));
+        _adjustCreditsForAccount(_to, int256(creditsCredited), int256(_value));
 
         if (isNonRebasingTo && !isNonRebasingFrom) {
             // Transfer to non-rebasing account from rebasing account, credits
@@ -339,6 +305,30 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             // Update rebasingCredits by adding the credited amount
             _rebasingCredits = _rebasingCredits.add(creditsCredited);
         }
+    }
+
+    function _adjustCreditsForAccount(address _account, int256 _creditsDiff, int256 _valueDiff) 
+        internal
+    {
+        address alterCreditsAccount = _account;
+        // only when transferring to/from the Delegators the amount adjustments need to happen
+        if (rebaseState[_account] == RebaseOptions.Delegator) {
+            address delegatee = yieldDelegation[_account];
+            // adjust delegator and delegatee fixed amounts
+            _amountAdjustement[_account] = uint256(int256(_amountAdjustement[_account]) + _valueDiff);
+            _amountAdjustement[delegatee] = uint256(int256(_amountAdjustement[delegatee]) + _valueDiff);
+
+            // also adjust the reduced yield of the delegatee. Even though creditsDeducted
+            // is derived using Delegator's _creditsPerToken it is ok since both the delegator
+            // and delegatee operate with contract's global creditsPerToken
+            alterCreditsAccount = delegatee;
+        }
+
+        uint256 creditsBalance = _creditBalances[alterCreditsAccount];
+        if ((int256(creditsBalance) + _creditsDiff) < 0) {
+            revert("Transfer exceeds balance");
+        }
+        _creditBalances[alterCreditsAccount] = uint256(int256(creditsBalance) + _creditsDiff);
     }
 
     /**
@@ -658,8 +648,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         _creditBalances[_accountSource] = 0;
         _amountAdjustement[_accountSource] = accountSourceBalance;
         _amountAdjustement[_accountReceiver] = accountSourceBalance; 
-        yieldDelegateFrom[_accountSource] = _accountReceiver;
-        yieldDelegateTo[_accountReceiver] = _accountSource;
+        yieldDelegation[_accountSource] = _accountReceiver;        
 
         emit YieldDelegationStart(_accountSource, _accountReceiver, _rebasingCreditsPerToken);
     }
