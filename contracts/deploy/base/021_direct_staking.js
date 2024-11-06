@@ -2,7 +2,7 @@ const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
 const { isFork } = require("../../test/helpers");
-// const { MAINNET_SELECTOR } = require("../../utils/ccip-chain-selectors");
+const { MAINNET_SELECTOR } = require("../../utils/ccip-chain-selectors");
 
 module.exports = deployOnBaseWithGuardian(
   {
@@ -59,15 +59,11 @@ module.exports = deployOnBaseWithGuardian(
           signature: "approveAllTokens()",
           args: [],
         },
-        // TODO: Enable after deploying proxy
-        // {
-        //   contract: cL2Handler,
-        //   signature: "addChainConfig(uint64,address)",
-        //   args: [
-        //     MAINNET_SELECTOR,
-        //     addresses.mainnet.DirectStakingHandler
-        //   ]
-        // }
+        {
+          contract: cL2Handler,
+          signature: "addChainConfig(uint64,address)",
+          args: [MAINNET_SELECTOR, addresses.mainnet.DirectStakingHandler],
+        },
       ],
     };
   }

@@ -1,6 +1,6 @@
 const { isFork } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
-// const { BASE_SELECTOR } = require("../../utils/ccip-chain-selectors");
+const { BASE_SELECTOR } = require("../../utils/ccip-chain-selectors");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
 
@@ -9,6 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "110_direct_staking",
     // forceSkip: true,
     // onlyOnFork: true, // this is only executed in forked environment
+    reduceQueueTime: true,
     deployerIsProposer: false, // just to solve the issue of later active proposals failing
     proposalId: "",
   },
@@ -72,15 +73,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveAllTokens()",
           args: [],
         },
-        // TODO: Enable after deploying proxy
-        // {
-        //   contract: cMainnetHandler,
-        //   signature: "addChainConfig(uint64,address)",
-        //   args: [
-        //     BASE_SELECTOR,
-        //     addresses.base.DirectStakingHandler
-        //   ]
-        // }
+        {
+          contract: cMainnetHandler,
+          signature: "addChainConfig(uint64,address)",
+          args: [BASE_SELECTOR, addresses.base.DirectStakingHandler],
+        },
       ],
     };
   }

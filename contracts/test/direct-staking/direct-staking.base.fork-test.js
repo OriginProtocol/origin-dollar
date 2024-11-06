@@ -12,6 +12,10 @@ const baseFixture = createFixtureLoader(directStakingFixture);
 
 describe("ForkTest: Direct Staking (Base)", function () {
   let fixture;
+
+  const mockRequestID =
+    "0xdeadfeed00000000000000000000000000000000000000000000000000000000";
+
   beforeEach(async () => {
     fixture = await baseFixture();
   });
@@ -84,5 +88,26 @@ describe("ForkTest: Direct Staking (Base)", function () {
     req = await directStakingHandler.stakeRequests(messageId);
     expect(req.processed).to.eq(true);
     expect(req.amountReceived).to.eq(oethUnits("0.9"));
+  });
+
+  it("Should only accept requests from mainnet handler", async () => {
+    const { directStakingHandler, ccipRouterSigner } = fixture;
+
+    await directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.MAINNET_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        // TODO: Change values after deploying proxies
+        [addresses.base.strategist]
+      ), // Just mock set in fixtures
+      data: utils.defaultAbiCoder.encode(["bytes32"], [mockRequestID]), // encoded message
+      destTokenAmounts: [
+        {
+          token: addresses.base.BridgedWOETH,
+          amount: oethUnits("0.9"),
+        },
+      ],
+    });
   });
 });

@@ -267,6 +267,10 @@ const directStakingFixture = async () => {
     const router = await ethers.getContract("MockCCIPRouter");
 
     fixture.mockRouter = router;
+
+    fixture.ccipRouterSigner = await impersonateAndFund(
+      addresses.base.ccipRouter
+    );
   } else {
     fixture.mockDirectStakingHandler = await ethers.getContract(
       "MockDirectStakingHandler"
