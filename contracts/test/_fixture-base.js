@@ -14,7 +14,6 @@ const log = require("../utils/logger")("test:fixtures-arb");
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
-const { MAINNET_SELECTOR } = require("../utils/ccip-chain-selectors");
 const { hardhatSetBalance } = require("./_fund");
 
 const MINTER_ROLE =
@@ -255,18 +254,19 @@ const directStakingFixture = async () => {
   );
 
   if (isFork) {
-    await directStakingHandler.connect(fixture.timelock).addChainConfig(
-      MAINNET_SELECTOR,
-      addresses.base.strategist // for testing, change later to mainnet handler
-    );
+    // await directStakingHandler.connect(fixture.governor).addChainConfig(
+    //   MAINNET_SELECTOR,
+    //   addresses.base.strategist // for testing, change later to mainnet handler
+    // );
 
+    // Fund handler
     await hardhatSetBalance(directStakingHandler.address);
 
-    // Deploy mock router
-    await deployWithConfirmation("MockCCIPRouter");
-    const router = await ethers.getContract("MockCCIPRouter");
+    // // Deploy mock router
+    // await deployWithConfirmation("MockCCIPRouter");
+    // const router = await ethers.getContract("MockCCIPRouter");
 
-    fixture.mockRouter = router;
+    // fixture.mockRouter = router;
 
     fixture.ccipRouterSigner = await impersonateAndFund(
       addresses.base.ccipRouter

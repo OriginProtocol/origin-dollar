@@ -122,6 +122,13 @@ contract DirectStakingL2Handler is AbstractDirectStakingHandler {
         uint256 minAmountOut,
         bool callback
     ) external payable nonReentrant returns (bytes32) {
+        require(wethAmount > 0, "Invalid amount");
+
+        ChainConfig memory cc = chainConfigs[MAINNET_SELECTOR];
+
+        // Make sure mainnet is marked as supported
+        require(cc.isSupported, "Mainnet not configured");
+
         // Transfer WETH in
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
