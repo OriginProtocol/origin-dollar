@@ -9,8 +9,6 @@ pragma solidity ^0.8.0;
  */
 import { Governable } from "../governance/Governable.sol";
 
-//import {console} from "forge-std/Test.sol";
-
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -505,10 +503,9 @@ contract OUSD is Governable {
         bool isContract = _account.code.length > 0;
         if (
             isContract &&
-            rebaseState[_account] == RebaseOptions.NotSet &&
-            alternativeCreditsPerToken[_account] != 0
+            rebaseState[_account] == RebaseOptions.NotSet
         ) {
-            _rebaseOptOut(msg.sender);
+            _rebaseOptOut(_account);
         }
         return alternativeCreditsPerToken[_account] > 0;
     }
@@ -550,8 +547,7 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptIn(address _account) internal {
-        // TODO below line fails when deploying core001
-        //require(alternativeCreditsPerToken[_account] != 0, "Account must be non-rebasing");
+        require(_isNonRebasingAccount(_account), "Account must be non-rebasing");
         RebaseOptions state = rebaseState[_account];
         require(
             state == RebaseOptions.StdNonRebasing ||
@@ -578,11 +574,14 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptOut(address _account) internal {
-        require(
-            alternativeCreditsPerToken[_account] == 0,
-            "Account must be rebasing"
-        );
         RebaseOptions state = rebaseState[_account];
+        if (state == RebaseOptions.StdRebasing) {
+            require(
+                alternativeCreditsPerToken[_account] == 0,
+                "Account must be rebasing"
+            );
+        }
+
         require(
             state == RebaseOptions.StdRebasing || state == RebaseOptions.NotSet,
             "Only standard rebasing accounts can opt out"
@@ -712,7 +711,7 @@ contract OUSD is Governable {
         _creditBalances[from] = fromBalance;
         alternativeCreditsPerToken[from] = 1e18;
         _creditBalances[to] = toNewCredits;
-        alternativeCreditsPerToken[to] = 0; // Should be not be needed
+        alternativeCreditsPerToken[to] = 0; // Is needed otherwise rebaseOptOut check will not pass
 
         // Global
         nonRebasingSupply += fromBalance;
