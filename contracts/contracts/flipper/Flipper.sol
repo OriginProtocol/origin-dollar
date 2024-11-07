@@ -54,7 +54,10 @@ contract Flipper is Governable {
             dai.transferFrom(msg.sender, address(this), amount),
             "DAI transfer failed"
         );
-        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
+        require(
+            IERC20(ousd).transfer(msg.sender, amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Sell OUSD for Dai
@@ -77,7 +80,10 @@ contract Flipper is Governable {
             usdc.transferFrom(msg.sender, address(this), amount / 1e12),
             "USDC transfer failed"
         );
-        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
+        require(
+            IERC20(ousd).transfer(msg.sender, amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Sell OUSD for USDC
@@ -102,7 +108,10 @@ contract Flipper is Governable {
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transferFrom(msg.sender, address(this), amount / 1e12);
-        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
+        require(
+            IERC20(ousd).transfer(msg.sender, amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Sell OUSD for USDT
@@ -142,7 +151,10 @@ contract Flipper is Governable {
     /// again by transferring assets to the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
-        IERC20(ousd).safeTransfer(_governor(), IERC20(ousd).balanceOf(address(this)));
+        IERC20(ousd).safeTransfer(
+            _governor(),
+            IERC20(ousd).balanceOf(address(this))
+        );
         IERC20(address(usdt)).safeTransfer(
             _governor(),
             usdt.balanceOf(address(this))

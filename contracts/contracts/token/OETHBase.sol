@@ -8,15 +8,15 @@ import { OUSD } from "./OUSD.sol";
  * @author Origin Protocol Inc
  */
 contract OETHBase is OUSD {
-    function symbol() external override pure returns (string memory) {
+    function symbol() external pure override returns (string memory) {
         return "superOETHb";
     }
 
-    function name() external override pure returns (string memory) {
+    function name() external pure override returns (string memory) {
         return "Super OETH";
     }
 
-    function decimals() external override pure returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return 18;
     }
 }
