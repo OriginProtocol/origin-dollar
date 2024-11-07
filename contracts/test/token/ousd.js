@@ -442,7 +442,8 @@ describe("Token", function () {
 
     const creditsAdded = ousdUnits("99.50")
       .mul(rebasingCreditsPerTokenHighres)
-      .div(utils.parseUnits("1", 18));
+      .div(utils.parseUnits("1", 18))
+      .add(1);
 
     await expect(rebasingCredits).to.equal(
       initialRebasingCredits.add(creditsAdded)
@@ -500,7 +501,7 @@ describe("Token", function () {
   it("Should not allow EOA to call rebaseOptIn when already opted in to rebasing", async () => {
     let { ousd, matt } = fixture;
     await expect(ousd.connect(matt).rebaseOptIn()).to.be.revertedWith(
-      "Account has not opted out"
+      "Account must be non-rebasing"
     );
   });
 
@@ -508,7 +509,7 @@ describe("Token", function () {
     let { ousd, matt } = fixture;
     await ousd.connect(matt).rebaseOptOut();
     await expect(ousd.connect(matt).rebaseOptOut()).to.be.revertedWith(
-      "Account has not opted in"
+      "Only standard rebasing accounts can opt out"
     );
   });
 
@@ -516,14 +517,14 @@ describe("Token", function () {
     let { mockNonRebasing } = fixture;
     await mockNonRebasing.rebaseOptIn();
     await expect(mockNonRebasing.rebaseOptIn()).to.be.revertedWith(
-      "Account has not opted out"
+      "Account must be non-rebasing"
     );
   });
 
   it("Should not allow contract to call rebaseOptOut when already opted out of rebasing", async () => {
     let { mockNonRebasing } = fixture;
     await expect(mockNonRebasing.rebaseOptOut()).to.be.revertedWith(
-      "Account has not opted in"
+      "Account must be rebasing"
     );
   });
 
