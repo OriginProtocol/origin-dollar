@@ -1,15 +1,49 @@
 const { createFixtureLoader } = require("../../_fixture");
-const { defaultBaseFixture } = require("../../_fixture-base");
+const {
+  defaultBaseFixture,
+  directStakingFixture,
+} = require("../../_fixture-base");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
+const { impersonateAndFund } = require("../../../utils/signers");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
+const dsFixture = createFixtureLoader(directStakingFixture);
 
 describe("Bridged WOETH Strategy", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await baseFixture();
   });
+
+  const mockRequestID =
+    "0xdeadfeed00000000000000000000000000000000000000000000000000000000";
+
+  const depositToStratTx = async (
+    depositAmount = oethUnits("100"),
+    price = oethUnits("1.02")
+  ) => {
+    const { oethbVault, woethStrategy, weth } = fixture;
+
+    const vaultSigner = await impersonateAndFund(oethbVault.address);
+
+    // Change oracle price
+    const priceFeed = await ethers.getContract("MockPriceFeedWOETH");
+    await priceFeed.setPrice(price);
+
+    const expectedWOETH = depositAmount.mul(oethUnits("1")).div(price);
+    await weth.mintTo(woethStrategy.address, depositAmount);
+
+    const tx = await woethStrategy
+      .connect(vaultSigner)
+      .deposit(weth.address, depositAmount);
+
+    return {
+      tx,
+      depositAmount,
+      expectedWOETH,
+    };
+  };
 
   describe("Oracle price", () => {
     it("Should get price from Oracle", async () => {
@@ -93,7 +127,7 @@ describe("Bridged WOETH Strategy", function () {
     });
   });
 
-  describe("Deposit", () => {
+  describe("Deposit wOETH", () => {
     it("Should allow governor/strategist to deposit", async () => {
       const { governor, woethStrategy, woeth, oethb, weth } = fixture;
 
@@ -161,6 +195,162 @@ describe("Bridged WOETH Strategy", function () {
           woethStrategy.connect(user).depositBridgedWOETH(depositAmount)
         ).to.be.revertedWith("Caller is not the Strategist or Governor");
       }
+    });
+  });
+
+  describe("Deposit WETH", async () => {
+    beforeEach(async () => {
+      fixture = await dsFixture();
+    });
+
+    it("Should accept WETH and create stake requests", async () => {
+      const { woethStrategy, weth, mockDirectStakingHandler } = fixture;
+
+      const { tx, depositAmount, expectedWOETH } = await depositToStratTx();
+
+      await expect(tx).to.emit(woethStrategy, "Deposit");
+
+      const wethBalanceAfter = await weth.balanceOf(
+        mockDirectStakingHandler.address
+      );
+      expect(wethBalanceAfter).to.eq(depositAmount);
+
+      const req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
+      expect(req.amountIn).to.eq(depositAmount);
+      expect(req.minAmountOut).to.eq(expectedWOETH);
+    });
+
+    it("Should skip if deposit amount is less than threshold", async () => {
+      const { woethStrategy, weth, mockDirectStakingHandler } = fixture;
+
+      const { tx, depositAmount } = await depositToStratTx(oethUnits("0.9999"));
+
+      await expect(tx).to.emit(woethStrategy, "Deposit");
+
+      // Should not stake
+      expect(await weth.balanceOf(mockDirectStakingHandler.address)).to.eq(0);
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(0);
+      expect(await weth.balanceOf(woethStrategy.address)).to.eq(depositAmount);
+
+      const req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
+      expect(req.amountIn).to.eq(0);
+      expect(req.minAmountOut).to.eq(0);
+    });
+
+    it("Should revert if asset is unsupported", async () => {
+      const { oethbVault, woethStrategy, woeth } = fixture;
+      const vaultSigner = await impersonateAndFund(oethbVault.address);
+
+      const tx = woethStrategy
+        .connect(vaultSigner)
+        .deposit(woeth.address, oethUnits("10"));
+
+      await expect(tx).to.be.revertedWith("Unsupported asset");
+    });
+
+    it("Should handle callbacks from DirectStakingHandler", async () => {
+      const { woethStrategy, weth, woeth, mockDirectStakingHandler } = fixture;
+
+      const { tx, depositAmount, expectedWOETH } = await depositToStratTx();
+
+      await expect(tx).to.emit(woethStrategy, "Deposit");
+
+      const wethBalanceAfter = await weth.balanceOf(
+        mockDirectStakingHandler.address
+      );
+      expect(wethBalanceAfter).to.eq(depositAmount);
+
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(depositAmount);
+
+      let req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
+      expect(req.amountIn).to.eq(depositAmount);
+      expect(req.minAmountOut).to.eq(expectedWOETH);
+
+      const balanceBefore = await woeth.balanceOf(woethStrategy.address);
+
+      await mockDirectStakingHandler.mockInvokeCallback();
+
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(0);
+
+      const balanceAfter = await woeth.balanceOf(woethStrategy.address);
+      expect(balanceAfter).to.eq(balanceBefore.add(req.minAmountOut));
+
+      req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.true;
+    });
+
+    it("Should only accept callbacks from handler", async () => {
+      const { woethStrategy, governor } = fixture;
+
+      const tx = woethStrategy
+        .connect(governor)
+        .onDirectStakingRequestCompletion(mockRequestID, oethUnits("100"));
+      await expect(tx).to.be.revertedWith("Not DirectStakingHandler");
+    });
+
+    it("Should not process callbacks twice for same request", async () => {
+      const { woethStrategy, weth, mockDirectStakingHandler } = fixture;
+
+      const { tx, depositAmount, expectedWOETH } = await depositToStratTx();
+
+      await expect(tx).to.emit(woethStrategy, "Deposit");
+
+      const wethBalanceAfter = await weth.balanceOf(
+        mockDirectStakingHandler.address
+      );
+      expect(wethBalanceAfter).to.eq(depositAmount);
+
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(depositAmount);
+
+      let req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
+      expect(req.amountIn).to.eq(depositAmount);
+      expect(req.minAmountOut).to.eq(expectedWOETH);
+
+      await mockDirectStakingHandler.mockInvokeCallback();
+      req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.true;
+
+      const secondTx = mockDirectStakingHandler.mockInvokeCallback();
+      await expect(secondTx).to.be.revertedWith("Already processed");
+    });
+
+    it("Should revert if received amount is low", async () => {
+      const { woethStrategy, weth, woeth, mockDirectStakingHandler } = fixture;
+
+      const { tx, depositAmount, expectedWOETH } = await depositToStratTx();
+
+      await expect(tx).to.emit(woethStrategy, "Deposit");
+
+      const wethBalanceAfter = await weth.balanceOf(
+        mockDirectStakingHandler.address
+      );
+      expect(wethBalanceAfter).to.eq(depositAmount);
+
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(depositAmount);
+
+      let req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
+      expect(req.amountIn).to.eq(depositAmount);
+      expect(req.minAmountOut).to.eq(expectedWOETH);
+
+      const balanceBefore = await woeth.balanceOf(woethStrategy.address);
+
+      await mockDirectStakingHandler.setNextMinOut(oethUnits("1"));
+
+      const cbtx = mockDirectStakingHandler.mockInvokeCallback();
+      await expect(cbtx).to.be.revertedWith("Slippage error");
+
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(depositAmount);
+
+      const balanceAfter = await woeth.balanceOf(woethStrategy.address);
+      expect(balanceAfter).to.eq(balanceBefore);
+
+      req = await woethStrategy.directStakeRequests(mockRequestID);
+      expect(req.processed).to.be.false;
     });
   });
 
@@ -249,6 +439,47 @@ describe("Bridged WOETH Strategy", function () {
       const { woethStrategy, weth, woeth } = fixture;
       expect(await woethStrategy.supportsAsset(woeth.address)).to.be.false;
       expect(await woethStrategy.supportsAsset(weth.address)).to.be.true;
+    });
+
+    it("Should include WETH dust in balance", async () => {
+      const { governor, woethStrategy, woeth, weth } = fixture;
+
+      // Transfer some wOETH to strategy
+      await woeth
+        .connect(governor)
+        .transfer(woethStrategy.address, oethUnits("1"));
+
+      // Change oracle price
+      const priceFeed = await ethers.getContract("MockPriceFeedWOETH");
+      await priceFeed.setPrice(oethUnits("1.02"));
+
+      // Update price
+      await woethStrategy.updateWOETHOraclePrice();
+
+      // Take snapshot
+      const balanceBefore = await woethStrategy.checkBalance(weth.address);
+
+      // Donate some WETH
+      await weth.mintTo(woethStrategy.address, oethUnits("9876"));
+
+      // Ensure it works as expected
+      const balanceAfter = await woethStrategy.checkBalance(weth.address);
+      expect(balanceAfter).to.eq(balanceBefore.add(oethUnits("9876")));
+    });
+
+    it("Should include pending direct stake amounts", async () => {
+      const { woethStrategy, weth } = fixture;
+
+      // Take snapshot
+      const balanceBefore = await woethStrategy.checkBalance(weth.address);
+
+      // Do some stake
+      const { depositAmount } = await depositToStratTx(oethUnits("123.56"));
+
+      // Ensure it works as expected
+      const balanceAfter = await woethStrategy.checkBalance(weth.address);
+      expect(await woethStrategy.pendingStakedWETH()).to.eq(depositAmount);
+      expect(balanceAfter).to.eq(balanceBefore.add(depositAmount));
     });
   });
 });

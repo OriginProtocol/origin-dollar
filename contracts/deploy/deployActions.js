@@ -6,6 +6,9 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isFork,
+  isTest,
+  isBaseUnitTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1508,6 +1511,28 @@ const deployWOusd = async () => {
   ](dWrappedOusdImpl.address, governorAddr, initData);
 };
 
+const deployWOETH = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  const dwoethImpl = await deployWithConfirmation("WOETH", [
+    oeth.address,
+    "Wrapped OETH",
+    "WOETH",
+  ]);
+  await deployWithConfirmation("WOETHProxy");
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  const initData = woeth.interface.encodeFunctionData("initialize()", []);
+
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dwoethImpl.address, governorAddr, initData);
+};
+
 const deployOETHSwapper = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1523,7 +1548,7 @@ const deployOETHSwapper = async () => {
   await deployWithConfirmation("Swapper1InchV5");
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
-  cSwapper
+  await cSwapper
     .connect(sDeployer)
     .approveAssets([
       assetAddresses.RETH,
@@ -1555,7 +1580,7 @@ const deployOUSDSwapper = async () => {
   // Assumes deployOETHSwapper has already been run
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
-  cSwapper
+  await cSwapper
     .connect(sDeployer)
     .approveAssets([
       assetAddresses.DAI,
@@ -1594,6 +1619,92 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deployDirectStakingHandler = async () => {
+  if (isFork || !isTest) {
+    // Only works in unit tests
+    return;
+  }
+
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Deploy mock router
+  await deployWithConfirmation("MockCCIPRouter");
+  const router = await ethers.getContract("MockCCIPRouter");
+
+  if (isBaseUnitTest) {
+    const weth = await ethers.getContractAt("MockWETH", addresses.base.WETH);
+    const woethProxy = await ethers.getContract("BridgedBaseWOETHProxy");
+
+    await deployWithConfirmation("DirectStakingBaseHandlerProxy");
+    const cL2HandlerProxy = await ethers.getContract(
+      "DirectStakingBaseHandlerProxy"
+    );
+
+    await deployWithConfirmation("DirectStakingL2Handler", [
+      router.address,
+      weth.address,
+      woethProxy.address,
+    ]);
+    const dL2Handler = await ethers.getContract("DirectStakingL2Handler");
+
+    // prettier-ignore
+    await withConfirmation(
+      cL2HandlerProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dL2Handler.address,
+          governorAddr,
+          "0x"
+        )
+    );
+
+    const cL2Handler = await ethers.getContractAt(
+      "DirectStakingL2Handler",
+      cL2HandlerProxy.address
+    );
+    await withConfirmation(cL2Handler.connect(sGovernor).approveAllTokens());
+  } else {
+    const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+    const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const oethProxy = await ethers.getContract("OETHProxy");
+    const woethProxy = await ethers.getContract("WOETHProxy");
+
+    await deployWithConfirmation("DirectStakingMainnetHandlerProxy");
+    const cMainnetHandlerProxy = await ethers.getContract(
+      "DirectStakingMainnetHandlerProxy"
+    );
+
+    await deployWithConfirmation("DirectStakingMainnetHandler", [
+      router.address,
+      weth.address,
+      oethVaultProxy.address,
+      oethProxy.address,
+      woethProxy.address,
+    ]);
+    const dMainnetHandler = await ethers.getContract(
+      "DirectStakingMainnetHandler"
+    );
+
+    // prettier-ignore
+    await withConfirmation(
+      cMainnetHandlerProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dMainnetHandler.address,
+          governorAddr,
+          "0x"
+        )
+    );
+    const cMainnetHandler = await ethers.getContractAt(
+      "DirectStakingMainnetHandler",
+      cMainnetHandlerProxy.address
+    );
+    await withConfirmation(
+      cMainnetHandler.connect(sGovernor).approveAllTokens()
+    );
+  }
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1624,9 +1735,11 @@ module.exports = {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOETH,
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deployDirectStakingHandler,
 };

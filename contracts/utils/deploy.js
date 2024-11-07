@@ -1431,44 +1431,55 @@ function deploymentWithProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
-    /** Just for context of fork env change the id of the deployment script. This is required
-     * in circumstances when:
-     * - the deployment script has already been run on the mainnet
-     * - proposal has been either "Queued" or is still "New"
-     * - all the deployment artifacts and migration information is already present in the repo
-     *
-     * Problem: as part of normal deployment procedure we want to be able to simulate the
-     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
-     * since deployment artifacts are already present and migration file has already been updated
-     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
-     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
-     *
-     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
-     * as a workaround so that Hardhat executes it. If proposal has already been executed the
-     * `runDeployment` function will exit without applying the deployment.
-     *
-     * And we can not package this inside of `skip` function since without this workaround it
-     * doesn't even get evaluated.
-     */
-    if (isFork && proposalId) {
-      main.id = `${deployName}_force`;
-    }
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isFork
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
 
-    main.skip = async () => {
-      // running on fork with a proposalId already available
+    // Skip if proposal is older than 14 days
+    const olderProposal =
+      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
+    if (olderProposal) {
+      main.skip = () => true;
+    } else {
+      /** Just for context of fork env change the id of the deployment script. This is required
+       * in circumstances when:
+       * - the deployment script has already been run on the mainnet
+       * - proposal has been either "Queued" or is still "New"
+       * - all the deployment artifacts and migration information is already present in the repo
+       *
+       * Problem: as part of normal deployment procedure we want to be able to simulate the
+       * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
+       * since deployment artifacts are already present and migration file has already been updated
+       * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
+       * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
+       *
+       * For that reason for any deployment ran on fork with proposalId we change the id of deployment
+       * as a workaround so that Hardhat executes it. If proposal has already been executed the
+       * `runDeployment` function will exit without applying the deployment.
+       *
+       * And we can not package this inside of `skip` function since without this workaround it
+       * doesn't even get evaluated.
+       */
       if (isFork && proposalId) {
-        return false;
-        /* running on fork, and proposal not yet submitted. This is usually during development
-         * before kicking off deploy.
-         */
-      } else if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
-        return Boolean(migrations[deployName]);
-      } else {
-        return onlyOnFork ? true : !isMainnet || isSmokeTest;
+        main.id = `${deployName}_force`;
       }
-    };
+
+      main.skip = async () => {
+        // running on fork with a proposalId already available
+        if (isFork && proposalId) {
+          return false;
+          /* running on fork, and proposal not yet submitted. This is usually during development
+           * before kicking off deploy.
+           */
+        } else if (isFork) {
+          return Boolean(migrations[deployName]);
+        } else {
+          return onlyOnFork ? true : !isMainnet || isSmokeTest;
+        }
+      };
+    }
   }
   return main;
 }

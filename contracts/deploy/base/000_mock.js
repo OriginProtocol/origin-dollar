@@ -2,9 +2,18 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
 const { isFork, oethUnits, isBase } = require("../../test/helpers");
 const addresses = require("../../utils/addresses");
+const { deployDirectStakingHandler } = require("../deployActions");
+const { replaceContractAt } = require("../../utils/hardhat");
+const { hardhatSetBalance } = require("../../test/_fund");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWETH", []);
+
+  // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  const mockWETH = await ethers.getContract("MockWETH");
+  await replaceContractAt(addresses.base.WETH, mockWETH);
+  await hardhatSetBalance(addresses.base.WETH, "999999999999999");
+
   await deployWithConfirmation("MockAero", []);
 };
 
@@ -38,7 +47,7 @@ const deployWOETH = async () => {
 
 const deployOracleRouter = async () => {
   const cWOETHProxy = await ethers.getContract("BridgedBaseWOETHProxy");
-  const cWETH = await ethers.getContract("MockWETH");
+  const cWETH = await ethers.getContractAt("MockWETH", addresses.base.WETH);
 
   await deployWithConfirmation("MockOracleRouter");
   const cOracleRouter = await ethers.getContract("MockOracleRouter");
@@ -67,7 +76,7 @@ const deployCore = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  const cWETH = await ethers.getContract("MockWETH");
+  const cWETH = await ethers.getContractAt("MockWETH", addresses.base.WETH);
 
   // Proxies
   await deployWithConfirmation("OETHBaseProxy");
@@ -158,8 +167,12 @@ const deployBridgedWOETHStrategy = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  const cWETH = await ethers.getContract("MockWETH");
+  const cWETH = await ethers.getContractAt("MockWETH", addresses.base.WETH);
   const cWOETHProxy = await ethers.getContract("BridgedBaseWOETHProxy");
+  const cWOETH = await ethers.getContractAt(
+    "BridgedWOETH",
+    cWOETHProxy.address
+  );
 
   const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
   const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
@@ -167,6 +180,17 @@ const deployBridgedWOETHStrategy = async () => {
     "IVault",
     cOETHbVaultProxy.address
   );
+
+  await deployWithConfirmation("MockDirectStakingHandler", [
+    cWOETHProxy.address,
+    cWETH.address,
+  ]);
+  const cMockDSHandler = await ethers.getContract("MockDirectStakingHandler");
+  const MINTER_ROLE =
+    "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+  await cWOETH
+    .connect(sGovernor)
+    .grantRole(MINTER_ROLE, cMockDSHandler.address);
 
   await deployWithConfirmation("BridgedWOETHStrategyProxy");
   const cStrategyProxy = await ethers.getContract("BridgedWOETHStrategyProxy");
@@ -176,6 +200,7 @@ const deployBridgedWOETHStrategy = async () => {
     cWETH.address,
     cWOETHProxy.address,
     cOETHbProxy.address,
+    cMockDSHandler.address,
   ]);
   const cStrategy = await ethers.getContractAt(
     "BridgedWOETHStrategy",
@@ -211,6 +236,8 @@ const main = async () => {
   await deployOracleRouter();
   await deployCore();
   await deployBridgedWOETHStrategy();
+
+  await deployDirectStakingHandler();
 };
 
 main.id = "000_mock";

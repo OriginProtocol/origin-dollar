@@ -119,7 +119,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       nativeStakingStrategyProxy.address
     );
   } else {
-    weth = await ethers.getContractAt("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ssv = await ethers.getContract("MockSSV");
 
     const nativeStakingStrategyProxy = await ethers.getContract(
@@ -2483,6 +2483,30 @@ async function woethCcipZapperFixture() {
   return fixture;
 }
 
+async function directStakingFixture() {
+  const fixture = await defaultFixture();
+
+  const directStakingHandlerProxy = await ethers.getContract(
+    "DirectStakingMainnetHandlerProxy"
+  );
+  const directStakingHandler = await ethers.getContractAt(
+    "DirectStakingMainnetHandler",
+    directStakingHandlerProxy.address
+  );
+  if (isFork) {
+    // Fund staking contract
+    await hardhatSetBalance(directStakingHandler.address);
+
+    fixture.ccipRouterSigner = await impersonateAndFund(
+      addresses.mainnet.ccipRouter
+    );
+  }
+
+  fixture.directStakingHandler = directStakingHandler;
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2577,4 +2601,5 @@ module.exports = {
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,
+  directStakingFixture,
 };

@@ -15,7 +15,7 @@ module.exports = deploymentWithGovernanceProposal(
     const woethOnSourceChain = addresses.mainnet.WOETHProxy;
     const woethOnDestinationChain = addresses.arbitrumOne.WOETHProxy;
     const oethZapper = addresses.mainnet.OETHZapper;
-    const ccipRouter = addresses.mainnet.ccipRouterMainnet;
+    const ccipRouter = addresses.mainnet.ccipRouter;
     const oeth = addresses.mainnet.OETHProxy;
 
     await deployWithConfirmation("WOETHCCIPZapper", [

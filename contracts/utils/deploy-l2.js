@@ -113,6 +113,7 @@ function deployOnBaseWithGuardian(opts, fn) {
   const runDeployment = async (hre) => {
     const tools = {
       deployWithConfirmation,
+      withConfirmation,
       ethers: hre.ethers,
       getTxOpts: getTxOpts,
       withConfirmation,
