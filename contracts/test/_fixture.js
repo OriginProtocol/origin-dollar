@@ -53,8 +53,6 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
-const { BASE_SELECTOR } = require("../utils/ccip-chain-selectors.js");
-const { deployWithConfirmation } = require("../utils/deploy.js");
 
 const log = require("../utils/logger")("test:fixtures");
 
@@ -2496,18 +2494,8 @@ async function directStakingFixture() {
     directStakingHandlerProxy.address
   );
   if (isFork) {
-    await directStakingHandler.connect(fixture.timelock).addChainConfig(
-      BASE_SELECTOR,
-      await fixture.strategist.getAddress() // for testing, change later to Base handler
-    );
-
+    // Fund staking contract
     await hardhatSetBalance(directStakingHandler.address);
-
-    // Deploy mock router
-    await deployWithConfirmation("MockCCIPRouter");
-    const router = await ethers.getContract("MockCCIPRouter");
-
-    fixture.mockRouter = router;
 
     fixture.ccipRouterSigner = await impersonateAndFund(
       addresses.mainnet.ccipRouter

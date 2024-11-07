@@ -1,16 +1,18 @@
 const { createFixtureLoader, directStakingFixture } = require("../_fixture");
-// const { expect } = require("chai");
+const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { oethUnits } = require("../helpers");
 const ccipChainSelectors = require("../../utils/ccip-chain-selectors");
-const { impersonateAndFund } = require("../../utils/signers");
 const { utils } = require("ethers");
-// const { replaceContractAt } = require("../../utils/hardhat");
 
 const runFixtures = createFixtureLoader(directStakingFixture);
 
 describe("ForkTest: Direct Staking (Mainnet)", function () {
   let fixture;
+
+  const mockRequestID =
+    "0xdeadfeed00000000000000000000000000000000000000000000000000000000";
+
   beforeEach(async () => {
     fixture = await runFixtures();
   });
@@ -19,12 +21,11 @@ describe("ForkTest: Direct Staking (Mainnet)", function () {
     const {
       directStakingHandler,
       weth,
+      woeth,
       domen,
-      strategist,
+      oethDripper,
+      ccipRouterSigner,
       oeth,
-      oethVault,
-      //   woeth,
-      //   mockRouter,
     } = fixture;
 
     // Mock token transfer
@@ -32,41 +33,20 @@ describe("ForkTest: Direct Staking (Mainnet)", function () {
       .connect(domen)
       .transfer(directStakingHandler.address, oethUnits("1"));
 
-    // Mock request
-    const messageId =
-      "0x000000000000000000000000000000000000000000000000000000000000dead";
+    await oethDripper.collectAndRebase();
+    const expectedWOETH = await woeth.previewDeposit(oethUnits("1"));
 
-    await oethVault.rebase();
     const supBefore = await oeth.totalSupply();
+    const woethSupBefore = await woeth.totalSupply();
 
-    // // Mock router
-    // await replaceContractAt(addresses.mainnet.ccipRouter, mockRouter)
-    // const ccipRouter = await ethers.getContractAt("MockCCIPRouter", addresses.mainnet.ccipRouter)
-    // await ccipRouter.setFee(oethUnits("0.001"));
-
-    // await ccipRouter.mockSend(
-    //     directStakingHandler.address,
-    //     ccipChainSelectors.BASE_SELECTOR,
-    //     await strategist.getAddress(),
-    //     utils.defaultAbiCoder.encode(["bytes32"], [messageId]), // encoded message
-    //     [{
-    //         token: addresses.mainnet.WETH,
-    //         amount: oethUnits("1")
-    //     }]
-    // )
-
-    // Impersoanted router
-    const ccipRouterSigner = await impersonateAndFund(
-      addresses.mainnet.ccipRouter
-    );
     await directStakingHandler.connect(ccipRouterSigner).ccipReceive({
-      messageId, // Just any value to mock
-      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR, // from base
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
       sender: utils.defaultAbiCoder.encode(
         ["address"],
-        [await strategist.getAddress()]
-      ), // Just mock set in fixtures
-      data: utils.defaultAbiCoder.encode(["bytes32"], [messageId]), // encoded message
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("0.8")]), // minReceived
       destTokenAmounts: [
         {
           token: addresses.mainnet.WETH,
@@ -76,7 +56,150 @@ describe("ForkTest: Direct Staking (Mainnet)", function () {
     });
 
     const supAfter = await oeth.totalSupply();
+    const woethSupAfter = await woeth.totalSupply();
 
-    console.log("Supply diff", supAfter - supBefore);
+    expect(supAfter.sub(supBefore)).to.approxEqualTolerance(oethUnits("1"));
+    expect(woethSupAfter.sub(woethSupBefore)).to.approxEqualTolerance(
+      expectedWOETH
+    );
+  });
+
+  it("Should revert if chain is unsupported", async () => {
+    const { directStakingHandler, ccipRouterSigner, timelock } = fixture;
+
+    await directStakingHandler
+      .connect(timelock)
+      .removeChainConfig(ccipChainSelectors.BASE_SELECTOR);
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("10")]), // encoded message
+      destTokenAmounts: [
+        {
+          token: addresses.mainnet.WETH,
+          amount: oethUnits("1"),
+        },
+      ],
+    });
+
+    await expect(tx).to.be.revertedWith("Unsupported source chain");
+  });
+
+  it("Should only accept requests from known handlers", async () => {
+    const { directStakingHandler, ccipRouterSigner } = fixture;
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.strategist]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("10")]), // encoded message
+      destTokenAmounts: [
+        {
+          token: addresses.mainnet.WETH,
+          amount: oethUnits("1"),
+        },
+      ],
+    });
+
+    await expect(tx).to.be.revertedWith("Unknown sender");
+  });
+
+  it("Should revert on invalid token count", async () => {
+    const { directStakingHandler, ccipRouterSigner } = fixture;
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("10")]), // encoded message
+      destTokenAmounts: [],
+    });
+
+    await expect(tx).to.be.revertedWith("Invalid tokens sent");
+  });
+
+  it("Should revert if received token is not WETH", async () => {
+    const { directStakingHandler, ccipRouterSigner } = fixture;
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("10")]), // encoded message
+      destTokenAmounts: [
+        {
+          token: addresses.mainnet.WOETHProxy,
+          amount: oethUnits("1"),
+        },
+      ],
+    });
+
+    await expect(tx).to.be.revertedWith("Unsupported source token");
+  });
+
+  it("Should revert if no WETH sent", async () => {
+    const { directStakingHandler, ccipRouterSigner } = fixture;
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("10")]), // encoded message
+      destTokenAmounts: [
+        {
+          token: addresses.mainnet.WETH,
+          amount: 0,
+        },
+      ],
+    });
+
+    await expect(tx).to.be.revertedWith("No tokens sent");
+  });
+
+  it("Should revert on high slippage", async () => {
+    const { directStakingHandler, weth, domen, oethDripper, ccipRouterSigner } =
+      fixture;
+
+    // Mock token transfer
+    await weth
+      .connect(domen)
+      .transfer(directStakingHandler.address, oethUnits("1"));
+
+    await oethDripper.collectAndRebase();
+
+    const tx = directStakingHandler.connect(ccipRouterSigner).ccipReceive({
+      messageId: mockRequestID,
+      sourceChainSelector: ccipChainSelectors.BASE_SELECTOR,
+      sender: utils.defaultAbiCoder.encode(
+        ["address"],
+        [addresses.base.DirectStakingHandler]
+      ),
+      data: utils.defaultAbiCoder.encode(["uint256"], [oethUnits("1.2")]), // minReceived
+      destTokenAmounts: [
+        {
+          token: addresses.mainnet.WETH,
+          amount: oethUnits("1"),
+        },
+      ],
+    });
+
+    await expect(tx).to.be.revertedWith("Slippage issue");
   });
 });

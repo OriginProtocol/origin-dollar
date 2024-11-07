@@ -95,8 +95,6 @@ contract DirectStakingMainnetHandler is AbstractDirectStakingHandler {
                 400000
             );
 
-        woeth.allowance(address(this), i_router);
-
         // Send message through CCIP
         IRouterClient router = IRouterClient(i_router);
         bytes32 nextMessageId = router.ccipSend{ value: fee }(
