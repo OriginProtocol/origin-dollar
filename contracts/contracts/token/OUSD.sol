@@ -132,7 +132,7 @@ contract OUSD is Governable {
     function balanceOf(address _account) public view returns (uint256) {
         RebaseOptions state = rebaseState[_account];
         if (state == RebaseOptions.YieldDelegationSource) {
-            // Saves a slot read when transfering to or from a yield delegating source
+            // Saves a slot read when transferring to or from a yield delegating source
             // since we know creditBalances equals the balance.
             return _creditBalances[_account];
         }
@@ -501,10 +501,7 @@ contract OUSD is Governable {
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         bool isContract = _account.code.length > 0;
-        if (
-            isContract &&
-            rebaseState[_account] == RebaseOptions.NotSet
-        ) {
+        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
             _rebaseOptOut(_account);
         }
         return alternativeCreditsPerToken[_account] > 0;
@@ -515,7 +512,7 @@ contract OUSD is Governable {
         view
         returns (uint256)
     {
-        // Rounds up, because we need to ensure that accounts allways have
+        // Rounds up, because we need to ensure that accounts always have
         // at least the balance that they should have.
         // Note this should always be used on an absolute account value,
         // not on a possibly negative diff, because then the rounding would be wrong.
@@ -547,7 +544,10 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptIn(address _account) internal {
-        require(_isNonRebasingAccount(_account), "Account must be non-rebasing");
+        require(
+            _isNonRebasingAccount(_account),
+            "Account must be non-rebasing"
+        );
         RebaseOptions state = rebaseState[_account];
         require(
             state == RebaseOptions.StdNonRebasing ||
@@ -692,7 +692,7 @@ contract OUSD is Governable {
     }
 
     function undelegateYield(address from) external onlyGovernor nonReentrant {
-        // Require a delegation, which will also ensure a vaild delegation
+        // Require a delegation, which will also ensure a valid delegation
         require(yieldTo[from] != address(0), "");
 
         address to = yieldTo[from];
