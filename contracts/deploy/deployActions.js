@@ -1174,7 +1174,7 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETH
       .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+      .initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1262,7 +1262,7 @@ const deployOUSDCore = async () => {
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
+      .initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
 };

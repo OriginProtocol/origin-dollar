@@ -57,8 +57,6 @@ contract OUSD is Governable {
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 
     function initialize(
-        string calldata,
-        string calldata,
         address _vaultAddress,
         uint256 _initialCreditsPerToken
     ) external onlyGovernor {
@@ -91,35 +89,35 @@ contract OUSD is Governable {
     /**
      * @return The total supply of OUSD.
      */
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
 
     /**
      * @return High resolution rebasingCreditsPerToken
      */
-    function rebasingCreditsPerTokenHighres() public view returns (uint256) {
+    function rebasingCreditsPerTokenHighres() external view returns (uint256) {
         return _rebasingCreditsPerToken;
     }
 
     /**
      * @return Low resolution rebasingCreditsPerToken
      */
-    function rebasingCreditsPerToken() public view returns (uint256) {
+    function rebasingCreditsPerToken() external view returns (uint256) {
         return _rebasingCreditsPerToken / RESOLUTION_INCREASE;
     }
 
     /**
      * @return High resolution total number of rebasing credits
      */
-    function rebasingCreditsHighres() public view returns (uint256) {
+    function rebasingCreditsHighres() external view returns (uint256) {
         return _rebasingCredits;
     }
 
     /**
      * @return Low resolution total number of rebasing credits
      */
-    function rebasingCredits() public view returns (uint256) {
+    function rebasingCredits() external view returns (uint256) {
         return _rebasingCredits / RESOLUTION_INCREASE;
     }
 
@@ -207,7 +205,7 @@ contract OUSD is Governable {
      * @param _value the amount to be transferred.
      * @return true on success.
      */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) external returns (bool) {
         require(_to != address(0), "Transfer to zero address");
 
         _executeTransfer(msg.sender, _to, _value);
@@ -227,7 +225,7 @@ contract OUSD is Governable {
         address _from,
         address _to,
         uint256 _value
-    ) public returns (bool) {
+    ) external returns (bool) {
         require(_to != address(0), "Transfer to zero address");
 
         _allowances[_from][msg.sender] =
@@ -347,7 +345,7 @@ contract OUSD is Governable {
      * @return The number of tokens still available for the _spender.
      */
     function allowance(address _owner, address _spender)
-        public
+        external
         view
         returns (uint256)
     {
@@ -360,7 +358,7 @@ contract OUSD is Governable {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value) external returns (bool) {
         _allowances[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -375,7 +373,7 @@ contract OUSD is Governable {
      * @param _addedValue The amount of tokens to increase the allowance by.
      */
     function increaseAllowance(address _spender, uint256 _addedValue)
-        public
+        external
         returns (bool)
     {
         uint256 updatedAllowance = _allowances[msg.sender][_spender] +
@@ -393,7 +391,7 @@ contract OUSD is Governable {
      *        by.
      */
     function decreaseAllowance(address _spender, uint256 _subtractedValue)
-        public
+        external
         returns (bool)
     {
         uint256 oldValue = _allowances[msg.sender][_spender];
@@ -527,7 +525,7 @@ contract OUSD is Governable {
      * @param _account Address of the account.
      */
     function governanceRebaseOptIn(address _account)
-        public
+        external
         nonReentrant
         onlyGovernor
     {
@@ -539,7 +537,7 @@ contract OUSD is Governable {
      * address's balance will be part of rebases and the account will be exposed
      * to upside and downside.
      */
-    function rebaseOptIn() public nonReentrant {
+    function rebaseOptIn() external nonReentrant {
         _rebaseOptIn(msg.sender);
     }
 
@@ -569,7 +567,7 @@ contract OUSD is Governable {
         emit AccountRebasingEnabled(_account);
     }
 
-    function rebaseOptOut() public nonReentrant {
+    function rebaseOptOut() external nonReentrant {
         _rebaseOptOut(msg.sender);
     }
 
