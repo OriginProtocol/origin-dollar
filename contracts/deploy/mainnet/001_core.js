@@ -23,6 +23,7 @@ const {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOETH,
   deployOETHSwapper,
   deployOUSDSwapper,
   deployDirectStakingHandler,
@@ -55,6 +56,7 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultValueChecker();
   await deployWOusd();
+  await deployWOETH();
   await deployOETHSwapper();
   await deployOUSDSwapper();
 

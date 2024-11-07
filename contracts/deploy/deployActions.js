@@ -1511,6 +1511,28 @@ const deployWOusd = async () => {
   ](dWrappedOusdImpl.address, governorAddr, initData);
 };
 
+const deployWOETH = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  const dwoethImpl = await deployWithConfirmation("WOETH", [
+    oeth.address,
+    "Wrapped OETH",
+    "WOETH",
+  ]);
+  await deployWithConfirmation("WOETHProxy");
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  const initData = woeth.interface.encodeFunctionData("initialize()", []);
+
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dwoethImpl.address, governorAddr, initData);
+};
+
 const deployOETHSwapper = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1527,7 +1549,7 @@ const deployOETHSwapper = async () => {
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
   await cSwapper
-    .connect(sGovernor)
+    .connect(sDeployer)
     .approveAssets([
       assetAddresses.RETH,
       assetAddresses.stETH,
@@ -1559,7 +1581,7 @@ const deployOUSDSwapper = async () => {
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
   await cSwapper
-    .connect(sGovernor)
+    .connect(sDeployer)
     .approveAssets([
       assetAddresses.DAI,
       assetAddresses.USDC,
@@ -1713,6 +1735,7 @@ module.exports = {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOETH,
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
