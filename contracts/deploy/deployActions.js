@@ -1527,7 +1527,7 @@ const deployOETHSwapper = async () => {
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
   await cSwapper
-    .connect(sDeployer)
+    .connect(sGovernor)
     .approveAssets([
       assetAddresses.RETH,
       assetAddresses.stETH,
@@ -1559,7 +1559,7 @@ const deployOUSDSwapper = async () => {
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
   await cSwapper
-    .connect(sDeployer)
+    .connect(sGovernor)
     .approveAssets([
       assetAddresses.DAI,
       assetAddresses.USDC,
