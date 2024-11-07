@@ -56,10 +56,10 @@ contract OUSD is Governable {
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 
-    function initialize(
-        address _vaultAddress,
-        uint256 _initialCreditsPerToken
-    ) external onlyGovernor {
+    function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
+        external
+        onlyGovernor
+    {
         require(vaultAddress == address(0), "Already initialized");
         require(_rebasingCreditsPerToken == 0, "Already initialized");
         _rebasingCreditsPerToken = _initialCreditsPerToken;
@@ -502,11 +502,15 @@ contract OUSD is Governable {
         // In the older contract implementation: https://github.com/OriginProtocol/origin-dollar/blob/20a21d00a4a6ea9f42940ac194e82655fcda882e/contracts/contracts/token/OUSD.sol#L479-L489
         // a an account could have non 0 balance, be (or become) a contract with the rebase state
         // set to default balanceRebaseOptions.NotSet and alternativeCreditsPerToken > 0. The latter would happen
-        // when such account would already be once `migrated` by running `_ensureRebasingMigration`. Executing the 
+        // when such account would already be once `migrated` by running `_ensureRebasingMigration`. Executing the
         // migration for a second time would cause great errors.
         // With the current code that is no longer possible since accounts have their rebaseState marked
         // as `StdNonRebasing` when running `_rebaseOptOut`
-        if (isContract && rebaseState[_account] == RebaseOptions.NotSet && alternativeCreditsPerToken[_account] == 0) {
+        if (
+            isContract &&
+            rebaseState[_account] == RebaseOptions.NotSet &&
+            alternativeCreditsPerToken[_account] == 0
+        ) {
             _rebaseOptOut(_account);
         }
         return alternativeCreditsPerToken[_account] > 0;

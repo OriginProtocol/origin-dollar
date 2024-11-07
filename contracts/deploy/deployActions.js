@@ -1172,9 +1172,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH
-      .connect(sGovernor)
-      .initialize(cOETHVaultProxy.address, resolution)
+    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1260,9 +1258,7 @@ const deployOUSDCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOUSD
-      .connect(sGovernor)
-      .initialize(cVaultProxy.address, resolution)
+    cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
 };
