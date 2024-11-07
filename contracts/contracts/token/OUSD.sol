@@ -7,24 +7,16 @@ pragma solidity ^0.8.0;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-
-import { Initializable } from "../utils/Initializable.sol";
-import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
-import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
-// TODO DELETE
-import "hardhat/console.sol";
+//import {console} from "forge-std/Test.sol";
+
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
  * rebasing design. Any integrations with OUSD should be aware.
  */
 
-contract OUSD is Initializable, InitializableERC20Detailed, Governable {
-    using SafeMath for uint256;
-    using StableMath for uint256;
+contract OUSD is Governable {
 
     event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
@@ -33,64 +25,55 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     );
     event AccountRebasingEnabled(address account);
     event AccountRebasingDisabled(address account);
-    event YieldDelegationStart(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
-    event YieldDelegationStop(address fromAccount, address toAccount, uint256 rebasingCreditsPerToken);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     enum RebaseOptions {
         NotSet,
-        OptOut,
-        OptIn,
-        Delegator,
-        Delegatee
+        StdNonRebasing,
+        StdRebasing,
+        YieldDelegationSource,
+        YieldDelegationTarget
     }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
-    /**
-     * This used to represent rebasing credits where balance would be derived using 
-     * global contract `rebasingCreditsPerToken`. Or non rebasing where balance is derived
-     * using the account specific `nonRebasingCreditsPerToken`.
-     * 
-     * While the above functionality still stands the _creditBalances alone only partly represents
-     * the third type of accounts which are part of yield delegation (delegators and delegatees). 
-     * In those cases the _creditBalances express the amount of balance that counts towards the
-     * yield of a specific account. The `_amountAdjustement` supplements the balances logic and 
-     * subtracts token balances from yield delegatees and adds to yield delegators to make up the
-     * exact token balances. The `_amountAdjustement` retain their value between rebases.
-     * TODO (might need more in dept explanation of _amountAdjustement)
-     *
-     */
     mapping(address => uint256) private _creditBalances;
-    uint256 private _rebasingCredits;
+    uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts)
     uint256 private _rebasingCreditsPerToken;
-    // Frozen address/credits are non rebasing (value is held in contracts which
-    // do not receive yield unless they explicitly opt in)
-    uint256 public nonRebasingSupply;
-    mapping(address => uint256) public nonRebasingCreditsPerToken;
+    uint256 public nonRebasingSupply;  // All nonrebasing balances
+    mapping(address => uint256) private alternativeCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
     mapping(address => uint256) public isUpgraded;
-    /**
-     * Facilitates the correct token balances in accounts affected by yield delegation
-     */
-    mapping(address => uint256) private _amountAdjustement;
-    /**
-     * @dev mapping of accounts delegating yield to another account
-     */
-    mapping(address => address) public yieldDelegation;
+    mapping(address => address) public yieldTo;
+    mapping(address => address) public yieldFrom;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
 
     function initialize(
-        string calldata _nameArg,
-        string calldata _symbolArg,
+        string calldata,
+        string calldata,
         address _vaultAddress,
         uint256 _initialCreditsPerToken
-    ) external onlyGovernor initializer {
-        InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
+    ) external onlyGovernor {
+        require(vaultAddress == address(0), "Already initialized");
+        require(_rebasingCreditsPerToken == 0, "Already initialized");
         _rebasingCreditsPerToken = _initialCreditsPerToken;
         vaultAddress = _vaultAddress;
+    }
+
+    function symbol() external virtual pure returns (string memory) {
+        return "OUSD";
+    }
+
+    function name() external virtual pure returns (string memory) {
+        return "Origin Dollar";
+    }
+
+    function decimals() external virtual pure returns (uint8) {
+        return 18;
     }
 
     /**
@@ -104,22 +87,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     /**
      * @return The total supply of OUSD.
      */
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return _totalSupply;
-    }
-
-    /**
-     * @return Low resolution rebasingCreditsPerToken
-     */
-    function rebasingCreditsPerToken() public view returns (uint256) {
-        return _rebasingCreditsPerToken / RESOLUTION_INCREASE;
-    }
-
-    /**
-     * @return Low resolution total number of rebasing credits
-     */
-    function rebasingCredits() public view returns (uint256) {
-        return _rebasingCredits / RESOLUTION_INCREASE;
     }
 
     /**
@@ -130,10 +99,24 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
+     * @return Low resolution rebasingCreditsPerToken
+     */
+    function rebasingCreditsPerToken() public view returns (uint256) {
+        return _rebasingCreditsPerToken / RESOLUTION_INCREASE;
+    }
+
+    /**
      * @return High resolution total number of rebasing credits
      */
     function rebasingCreditsHighres() public view returns (uint256) {
         return _rebasingCredits;
+    }
+
+    /**
+     * @return Low resolution total number of rebasing credits
+     */
+    function rebasingCredits() public view returns (uint256) {
+        return _rebasingCredits / RESOLUTION_INCREASE;
     }
 
     /**
@@ -145,30 +128,19 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function balanceOf(address _account)
         public
         view
-        override
         returns (uint256)
     {
-        uint256 nonDelegatedBalance;
-        if (_creditBalances[_account] == 0) nonDelegatedBalance = 0;
-        else {
-            nonDelegatedBalance = _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
-        } 
-
-        return _adjustBalanceForYieldDelegation(_account, nonDelegatedBalance);
-    }
-
-    function _adjustBalanceForYieldDelegation(address _account, uint256 _nonDelegatedBalance)
-        internal
-        view
-        returns(uint256)
-    {
-
-        if (rebaseState[_account] == RebaseOptions.Delegator) {
-            return _nonDelegatedBalance + _amountAdjustement[_account];
-        } else if (rebaseState[_account] == RebaseOptions.Delegatee) {
-            return _nonDelegatedBalance - _amountAdjustement[_account];
+        RebaseOptions state = rebaseState[_account];
+        if(state == RebaseOptions.YieldDelegationSource){
+            // Saves a slot read when transfering to or from a yield delegating source
+            // since we know creditBalances equals the balance.
+            return _creditBalances[_account];
         }
-        return _nonDelegatedBalance;
+        uint256 baseBalance = _creditBalances[_account] * 1e18 / _creditsPerToken(_account);
+        if (state == RebaseOptions.YieldDelegationTarget) {
+            return baseBalance - _creditBalances[yieldFrom[_account]];
+        }
+        return baseBalance;
     }
 
     /**
@@ -183,7 +155,6 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256, uint256)
     {
-        // TODO add yield delegation
         uint256 cpt = _creditsPerToken(_account);
         if (cpt == 1e27) {
             // For a period before the resolution upgrade, we created all new
@@ -213,12 +184,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             bool
         )
     {
-        // TODO add yield delegation
         return (
             _creditBalances[_account],
             _creditsPerToken(_account),
             isUpgraded[_account] == 1
         );
+    }
+
+    // Backwards compatible view
+    function nonRebasingCreditsPerToken(address _account) external view returns (uint256) {
+        return alternativeCreditsPerToken[_account];
     }
 
     /**
@@ -229,14 +204,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function transfer(address _to, uint256 _value)
         public
-        override
         returns (bool)
     {
         require(_to != address(0), "Transfer to zero address");
-        require(
-            _value <= balanceOf(msg.sender),
-            "Transfer greater than balance"
-        );
 
         _executeTransfer(msg.sender, _to, _value);
 
@@ -255,13 +225,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         address _from,
         address _to,
         uint256 _value
-    ) public override returns (bool) {
+    ) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
-        require(_value <= balanceOf(_from), "Transfer greater than balance");
 
-        _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
-            _value
-        );
+        _allowances[_from][msg.sender] = _allowances[_from][msg.sender] - _value;
 
         _executeTransfer(_from, _to, _value);
 
@@ -281,54 +248,68 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         address _to,
         uint256 _value
     ) internal {
-        bool isNonRebasingTo = _isNonRebasingAccount(_to);
-        bool isNonRebasingFrom = _isNonRebasingAccount(_from);
+        if(_from == _to){
+            return;
+        }
 
-        // Credits deducted and credited might be different due to the
-        // differing creditsPerToken used by each account
-        uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
-        uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
+        (int256 fromRebasingCreditsDiff, int256 fromNonRebasingSupplyDiff) 
+            = _adjustAccount(_from, -int256(_value));
+        (int256 toRebasingCreditsDiff, int256 toNonRebasingSupplyDiff) 
+            = _adjustAccount(_to, int256(_value));
 
-        _adjustCreditsForAccount(_from, -int256(creditsDeducted), -int256(_value));
-        _adjustCreditsForAccount(_to, int256(creditsCredited), int256(_value));
+        _adjustGlobals(
+            fromRebasingCreditsDiff + toRebasingCreditsDiff,
+            fromNonRebasingSupplyDiff + toNonRebasingSupplyDiff
+        );
+    }
 
-        if (isNonRebasingTo && !isNonRebasingFrom) {
-            // Transfer to non-rebasing account from rebasing account, credits
-            // are removed from the non rebasing tally
-            nonRebasingSupply = nonRebasingSupply.add(_value);
-            // Update rebasingCredits by subtracting the deducted amount
-            _rebasingCredits = _rebasingCredits.sub(creditsDeducted);
-        } else if (!isNonRebasingTo && isNonRebasingFrom) {
-            // Transfer to rebasing account from non-rebasing account
-            // Decreasing non-rebasing credits by the amount that was sent
-            nonRebasingSupply = nonRebasingSupply.sub(_value);
-            // Update rebasingCredits by adding the credited amount
-            _rebasingCredits = _rebasingCredits.add(creditsCredited);
+    function _adjustAccount(address account, int256 balanceChange) internal returns (int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff) {
+        RebaseOptions state = rebaseState[account];
+        int256 currentBalance = int256(balanceOf(account));
+        uint256 newBalance = uint256(int256(currentBalance) + int256(balanceChange));
+        if(newBalance < 0){
+            revert("Transfer amount exceeds balance");
+        }
+        if (state == RebaseOptions.YieldDelegationSource) {
+            address target = yieldTo[account];
+            uint256 targetOldBalance = balanceOf(target);
+            uint256 targetNewCredits = _balanceToRebasingCredits(targetOldBalance + newBalance);
+            rebasingCreditsDiff = int256(targetNewCredits) - int256(_creditBalances[target]);
+
+            _creditBalances[account] = newBalance;
+            _creditBalances[target] = targetNewCredits;
+            alternativeCreditsPerToken[account] = 1e18;
+
+        } else if (state == RebaseOptions.YieldDelegationTarget) {
+            uint256 newCredits = _balanceToRebasingCredits(newBalance + _creditBalances[yieldFrom[account]]);
+            rebasingCreditsDiff = int256(newCredits) - int256(_creditBalances[account]);
+            _creditBalances[account] = newCredits;
+
+        } else if(_isNonRebasingAccount(account)){
+            nonRebasingSupplyDiff = balanceChange;
+            alternativeCreditsPerToken[account] = 1e18;
+            _creditBalances[account] = newBalance;
+
+        } else {
+            uint256 newCredits = _balanceToRebasingCredits(newBalance);
+            rebasingCreditsDiff = int256(newCredits) - int256(_creditBalances[account]);
+            _creditBalances[account] = newCredits;
         }
     }
 
-    function _adjustCreditsForAccount(address _account, int256 _creditsDiff, int256 _valueDiff) 
-        internal
-    {
-        address alterCreditsAccount = _account;
-        // only when transferring to/from the Delegators the amount adjustments need to happen
-        if (rebaseState[_account] == RebaseOptions.Delegator) {
-            address delegatee = yieldDelegation[_account];
-            // adjust delegator and delegatee fixed amounts
-            _amountAdjustement[_account] = uint256(int256(_amountAdjustement[_account]) + _valueDiff);
-            _amountAdjustement[delegatee] = uint256(int256(_amountAdjustement[delegatee]) + _valueDiff);
-
-            // also adjust the reduced yield of the delegatee. Even though creditsDeducted
-            // is derived using Delegator's _creditsPerToken it is ok since both the delegator
-            // and delegatee operate with contract's global creditsPerToken
-            alterCreditsAccount = delegatee;
+    function _adjustGlobals(int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff) internal {
+        if(rebasingCreditsDiff !=0){
+            if (uint256(int256(_rebasingCredits) + rebasingCreditsDiff) < 0){
+                revert("rebasingCredits underflow");
+            }
+            _rebasingCredits = uint256(int256(_rebasingCredits) + rebasingCreditsDiff);
         }
-
-        uint256 creditsBalance = _creditBalances[alterCreditsAccount];
-        if ((int256(creditsBalance) + _creditsDiff) < 0) {
-            revert("Transfer exceeds balance");
+        if(nonRebasingSupplyDiff !=0){
+            if (int256(nonRebasingSupply) + nonRebasingSupplyDiff < 0){
+                revert("nonRebasingSupply underflow");
+            }
+            nonRebasingSupply = uint256(int256(nonRebasingSupply) + nonRebasingSupplyDiff);
         }
-        _creditBalances[alterCreditsAccount] = uint256(int256(creditsBalance) + _creditsDiff);
     }
 
     /**
@@ -341,7 +322,6 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function allowance(address _owner, address _spender)
         public
         view
-        override
         returns (uint256)
     {
         return _allowances[_owner][_spender];
@@ -349,20 +329,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
     /**
      * @dev Approve the passed address to spend the specified amount of tokens
-     *      on behalf of msg.sender. This method is included for ERC20
-     *      compatibility. `increaseAllowance` and `decreaseAllowance` should be
-     *      used instead.
-     *
-     *      Changing an allowance with this method brings the risk that someone
-     *      may transfer both the old and the new allowance - if they are both
-     *      greater than zero - if a transfer transaction is mined before the
-     *      later approve() call is mined.
+     *      on behalf of msg.sender.
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
     function approve(address _spender, uint256 _value)
         public
-        override
         returns (bool)
     {
         _allowances[msg.sender][_spender] = _value;
@@ -382,9 +354,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         public
         returns (bool)
     {
-        _allowances[msg.sender][_spender] = _allowances[msg.sender][_spender]
-            .add(_addedValue);
-        emit Approval(msg.sender, _spender, _allowances[msg.sender][_spender]);
+        uint256 updatedAllowance = _allowances[msg.sender][_spender] + _addedValue;
+        _allowances[msg.sender][_spender] = updatedAllowance;
+        emit Approval(msg.sender, _spender, updatedAllowance);
         return true;
     }
 
@@ -400,12 +372,14 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         returns (bool)
     {
         uint256 oldValue = _allowances[msg.sender][_spender];
+        uint256 newValue;
         if (_subtractedValue >= oldValue) {
-            _allowances[msg.sender][_spender] = 0;
+            newValue = 0;
         } else {
-            _allowances[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+            newValue = oldValue - _subtractedValue;
         }
-        emit Approval(msg.sender, _spender, _allowances[msg.sender][_spender]);
+        _allowances[msg.sender][_spender] = newValue;
+        emit Approval(msg.sender, _spender, newValue);
         return true;
     }
 
@@ -429,23 +403,14 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _mint(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Mint to the zero address");
 
-        bool isNonRebasingAccount = _isNonRebasingAccount(_account);
-
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        _adjustCreditsForAccount(_account, int256(creditAmount), int256(_amount));
-
-        // If the account is non rebasing and doesn't have a set creditsPerToken
-        // then set it i.e. this is a mint from a fresh contract
-        if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.add(_amount);
-        } else {
-            _rebasingCredits = _rebasingCredits.add(creditAmount);
-        }
-
-        _totalSupply = _totalSupply.add(_amount);
+        // Account
+        (int256 toRebasingCreditsDiff, int256 toNonRebasingSupplyDiff) 
+            = _adjustAccount(_account, int256(_amount));
+        // Globals
+        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _totalSupply = _totalSupply + _amount;
 
         require(_totalSupply < MAX_SUPPLY, "Max supply");
-
         emit Transfer(address(0), _account, _amount);
     }
 
@@ -473,29 +438,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             return;
         }
 
-        bool isNonRebasingAccount = _isNonRebasingAccount(_account);
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        uint256 currentCredits = _creditBalances[_account];
-
-        // Remove the credits, burning rounding errors
-        if (currentCredits == creditAmount + 1) {
-            creditAmount += 1;
-        }
-        
-        if (currentCredits >= creditAmount) {
-            _adjustCreditsForAccount(_account, -int256(creditAmount), -int256(_amount));
-        } else {
-            revert("Remove exceeds balance");
-        }
-
-        // Remove from the credit tallies and non-rebasing supply
-        if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.sub(_amount);
-        } else {
-            _rebasingCredits = _rebasingCredits.sub(creditAmount);
-        }
-
-        _totalSupply = _totalSupply.sub(_amount);
+        // Account
+        (int256 toRebasingCreditsDiff, int256 toNonRebasingSupplyDiff) 
+            = _adjustAccount(_account, -int256(_amount));
+        // Globals
+        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _totalSupply = _totalSupply - _amount;
 
         emit Transfer(_account, address(0), _amount);
     }
@@ -510,8 +458,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256)
     {
-        if (nonRebasingCreditsPerToken[_account] != 0) {
-            return nonRebasingCreditsPerToken[_account];
+        if (alternativeCreditsPerToken[_account] != 0) {
+            return alternativeCreditsPerToken[_account];
         } else {
             return _rebasingCreditsPerToken;
         }
@@ -523,38 +471,19 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        bool isContract = Address.isContract(_account);
-        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
-            // TODO: make sure this never executes with yield delegators or delegatees
-            _ensureRebasingMigration(_account);
+        bool isContract = _account.code.length > 0;
+        if (isContract && rebaseState[_account] == RebaseOptions.NotSet && alternativeCreditsPerToken[_account] != 0) {
+            _rebaseOptOut(msg.sender);
         }
-        return nonRebasingCreditsPerToken[_account] > 0;
+        return alternativeCreditsPerToken[_account] > 0;
     }
 
-    /**
-     * @dev Ensures internal account for rebasing and non-rebasing credits and
-     *      supply is updated following deployment of frozen yield change.
-     */
-    function _ensureRebasingMigration(address _account) internal {
-        if (nonRebasingCreditsPerToken[_account] == 0) {
-            emit AccountRebasingDisabled(_account);
-            if (_creditBalances[_account] == 0) {
-                // Since there is no existing balance, we can directly set to
-                // high resolution, and do not have to do any other bookkeeping
-                nonRebasingCreditsPerToken[_account] = 1e27;
-            } else {
-                // Migrate an existing account:
-
-                // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-                // Update non rebasing supply
-                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-                // Update credit tallies
-                _rebasingCredits = _rebasingCredits.sub(
-                    _creditBalances[_account]
-                );
-            }
-        }
+    function _balanceToRebasingCredits(uint256 balance) internal view returns (uint256) {
+        // Rounds up, because we need to ensure that accounts allways have
+        // at least the balance that they should have.
+        // Note this should always be used on an absolute account value,
+        // not on a possibly negative diff, because then the rounding would be wrong.
+        return ((balance) * _rebasingCreditsPerToken + 1e18 - 1) / 1e18;
     }
 
     /**
@@ -582,79 +511,47 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     function _rebaseOptIn(address _account) internal {
-        require(_isNonRebasingAccount(_account), "Account has not opted out");
+        // TODO below line fails when deploying core001
+        //require(alternativeCreditsPerToken[_account] != 0, "Account must be non-rebasing");
+        RebaseOptions state = rebaseState[_account];
+        require(state == RebaseOptions.StdNonRebasing || state == RebaseOptions.NotSet, "Only standard non-rebasing accounts can opt out");
 
-        // Convert balance into the same amount at the current exchange rate
-        uint256 newCreditBalance = _creditBalances[_account]
-            .mul(_rebasingCreditsPerToken)
-            .div(_creditsPerToken(_account));
+        uint256 balance = balanceOf(msg.sender);
+        
+        // Account
+        rebaseState[msg.sender] = RebaseOptions.StdRebasing;
+        alternativeCreditsPerToken[msg.sender] = 0;
+        _creditBalances[msg.sender] = _balanceToRebasingCredits(balance);
 
-        // Decreasing non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(_account));
+        // Globals
+        nonRebasingSupply -= balance;
+        _rebasingCredits += _creditBalances[msg.sender];
 
-        _creditBalances[_account] = newCreditBalance;
-
-        // Increase rebasing credits, totalSupply remains unchanged so no
-        // adjustment necessary
-        _rebasingCredits = _rebasingCredits.add(_creditBalances[_account]);
-
-        rebaseState[_account] = RebaseOptions.OptIn;
-
-        // Delete any fixed credits per token
-        delete nonRebasingCreditsPerToken[_account];
         emit AccountRebasingEnabled(_account);
     }
 
-    /**
-     * @dev Explicitly mark that an address is non-rebasing.
-     */
     function rebaseOptOut() public nonReentrant {
-        require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");
-
-        // Increase non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
-        // Set fixed credits per token
-        nonRebasingCreditsPerToken[msg.sender] = _rebasingCreditsPerToken;
-
-        // Decrease rebasing credits, total supply remains unchanged so no
-        // adjustment necessary
-        _rebasingCredits = _rebasingCredits.sub(_creditBalances[msg.sender]);
-
-        // Mark explicitly opted out of rebasing
-        rebaseState[msg.sender] = RebaseOptions.OptOut;
-        emit AccountRebasingDisabled(msg.sender);
+        _rebaseOptOut(msg.sender);
     }
 
-    function governanceDelegateYield(address _accountSource, address _accountReceiver)
-        public
-        onlyGovernor
-    {
-        if (rebaseState[_accountSource] == RebaseOptions.OptOut) {
-            _rebaseOptIn(_accountSource);
-        }
-        if (rebaseState[_accountReceiver] == RebaseOptions.OptOut) {
-            _rebaseOptIn(_accountSource);
-        }
-        uint256 accountSourceBalance = balanceOf(_accountSource);
+    function _rebaseOptOut(address _account) internal {
+        require(alternativeCreditsPerToken[_account] == 0, "Account must be rebasing");
+        RebaseOptions state = rebaseState[_account];
+        require(state == RebaseOptions.StdRebasing || state == RebaseOptions.NotSet, "Only standard rebasing accounts can opt out");
+        
+        uint256 oldCredits = _creditBalances[_account];
+        uint256 balance = balanceOf(_account);
+        
+        // Account
+        rebaseState[_account] = RebaseOptions.StdNonRebasing;
+        alternativeCreditsPerToken[_account] = 1e18;
+        _creditBalances[_account] = balance;
 
-        rebaseState[_accountSource] = RebaseOptions.Delegator;
-        rebaseState[_accountReceiver] = RebaseOptions.Delegatee;
+        // Globals
+        nonRebasingSupply += balance;
+        _rebasingCredits -= oldCredits;
 
-        // delegate all yield and adjust for balances
-        _creditBalances[_accountReceiver] += _creditBalances[_accountSource];
-        _creditBalances[_accountSource] = 0;
-        _amountAdjustement[_accountSource] = accountSourceBalance;
-        _amountAdjustement[_accountReceiver] = accountSourceBalance; 
-        yieldDelegation[_accountSource] = _accountReceiver;        
-
-        emit YieldDelegationStart(_accountSource, _accountReceiver, _rebasingCreditsPerToken);
-    }
-
-    function governanceStopYieldDelegation(address _accountSource)
-        public
-        onlyGovernor
-    {
-        require(false, "Needs implementation");
+        emit AccountRebasingDisabled(_account);
     }
 
     /**
@@ -682,20 +579,77 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             ? MAX_SUPPLY
             : _newTotalSupply;
 
-        _rebasingCreditsPerToken = _rebasingCredits.divPrecisely(
-            _totalSupply.sub(nonRebasingSupply)
-        );
+        _rebasingCreditsPerToken = _rebasingCredits 
+            * 1e18 / (_totalSupply - nonRebasingSupply);
 
         require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        _totalSupply = _rebasingCredits
-            .divPrecisely(_rebasingCreditsPerToken)
-            .add(nonRebasingSupply);
+        _totalSupply = (_rebasingCredits * 1e18 / _rebasingCreditsPerToken)
+            + nonRebasingSupply;
 
         emit TotalSupplyUpdatedHighres(
             _totalSupply,
             _rebasingCredits,
             _rebasingCreditsPerToken
         );
+    }
+
+    function delegateYield(address from, address to) external onlyGovernor nonReentrant() {
+        require(from != to, "Cannot delegate to self");
+        require(
+            yieldFrom[to] == address(0) 
+            && yieldTo[to] == address(0)
+            && yieldFrom[from] == address(0)
+            && yieldTo[from] == address(0)
+            , "Blocked by existing yield delegation");
+        RebaseOptions stateFrom = rebaseState[from];
+        RebaseOptions stateTo = rebaseState[to];
+        require(_isNonRebasingAccount(from) && (stateFrom == RebaseOptions.NotSet || stateFrom == RebaseOptions.StdNonRebasing), "Must delegate from a non-rebasing account");
+        require(!_isNonRebasingAccount(to) && (stateTo == RebaseOptions.NotSet || stateTo == RebaseOptions.StdRebasing), "Must delegate to a rebasing account");
+        
+        // Set up the bidirectional links
+        yieldTo[from] = to;
+        yieldFrom[to] = from;
+        rebaseState[from] = RebaseOptions.YieldDelegationSource;
+        rebaseState[to] = RebaseOptions.YieldDelegationTarget;
+
+        uint256 balance = balanceOf(from);
+        uint256 credits = _balanceToRebasingCredits(balance);
+
+        // Local
+        _creditBalances[from] = balance;
+        alternativeCreditsPerToken[from] = 1e18;
+        _creditBalances[to] += credits;
+
+        // Global
+        nonRebasingSupply -= balance;
+        _rebasingCredits += credits;
+    }
+
+    function undelegateYield(address from) external onlyGovernor nonReentrant() {
+        // Require a delegation, which will also ensure a vaild delegation
+        require(yieldTo[from] != address(0), ""); 
+
+        address to = yieldTo[from];
+        uint256 fromBalance = balanceOf(from);
+        uint256 toBalance = balanceOf(to);
+        uint256 toCreditsBefore = _creditBalances[to];
+        uint256 toNewCredits = _balanceToRebasingCredits(toBalance);
+        
+        // Remove the bidirectional links
+        yieldFrom[yieldTo[from]] = address(0);
+        yieldTo[from] = address(0);
+        rebaseState[from] = RebaseOptions.StdNonRebasing;
+        rebaseState[to] = RebaseOptions.StdRebasing;
+
+        // Local
+        _creditBalances[from] = fromBalance;
+        alternativeCreditsPerToken[from] = 1e18;
+        _creditBalances[to] = toNewCredits;
+        alternativeCreditsPerToken[to] = 0; // Should be not be needed
+
+        // Global
+        nonRebasingSupply += fromBalance;
+        _rebasingCredits -= (toCreditsBefore - toNewCredits); // Should always go down or stay the same
     }
 }

@@ -19,7 +19,7 @@ contract Flipper is Governable {
 
     // Settable coin addresses allow easy testing and use of mock currencies.
     IERC20 immutable dai;
-    OUSD immutable ousd;
+    address immutable ousd;
     IERC20 immutable usdc;
     Tether immutable usdt;
 
@@ -37,7 +37,7 @@ contract Flipper is Governable {
         require(address(_usdc) != address(0));
         require(address(_usdt) != address(0));
         dai = IERC20(_dai);
-        ousd = OUSD(_ousd);
+        ousd = _ousd;
         usdc = IERC20(_usdc);
         usdt = Tether(_usdt);
     }
@@ -54,7 +54,7 @@ contract Flipper is Governable {
             dai.transferFrom(msg.sender, address(this), amount),
             "DAI transfer failed"
         );
-        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
+        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for Dai
@@ -63,7 +63,7 @@ contract Flipper is Governable {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(dai.transfer(msg.sender, amount), "DAI transfer failed");
         require(
-            ousd.transferFrom(msg.sender, address(this), amount),
+            IERC20(ousd).transferFrom(msg.sender, address(this), amount),
             "OUSD transfer failed"
         );
     }
@@ -77,7 +77,7 @@ contract Flipper is Governable {
             usdc.transferFrom(msg.sender, address(this), amount / 1e12),
             "USDC transfer failed"
         );
-        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
+        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for USDC
@@ -89,7 +89,7 @@ contract Flipper is Governable {
             "USDC transfer failed"
         );
         require(
-            ousd.transferFrom(msg.sender, address(this), amount),
+            IERC20(ousd).transferFrom(msg.sender, address(this), amount),
             "OUSD transfer failed"
         );
     }
@@ -102,7 +102,7 @@ contract Flipper is Governable {
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transferFrom(msg.sender, address(this), amount / 1e12);
-        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
+        require(IERC20(ousd).transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for USDT
@@ -113,7 +113,7 @@ contract Flipper is Governable {
         // so no need for a require.
         usdt.transfer(msg.sender, amount / 1e12);
         require(
-            ousd.transferFrom(msg.sender, address(this), amount),
+            IERC20(ousd).transferFrom(msg.sender, address(this), amount),
             "OUSD transfer failed"
         );
     }
@@ -125,7 +125,7 @@ contract Flipper is Governable {
     /// @dev Opting into yield reduces the gas cost per transfer by about 4K, since
     /// ousd needs to do less accounting and one less storage write.
     function rebaseOptIn() external onlyGovernor nonReentrant {
-        ousd.rebaseOptIn();
+        OUSD(ousd).rebaseOptIn();
     }
 
     /// @notice Owner function to withdraw a specific amount of a token
@@ -142,7 +142,7 @@ contract Flipper is Governable {
     /// again by transferring assets to the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
-        IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));
+        IERC20(ousd).safeTransfer(_governor(), IERC20(ousd).balanceOf(address(this)));
         IERC20(address(usdt)).safeTransfer(
             _governor(),
             usdt.balanceOf(address(this))
