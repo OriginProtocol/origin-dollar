@@ -40,6 +40,8 @@ contract OUSD is Governable {
         YieldDelegationTarget
     }
 
+    // Add slots to align with deployed OUSD contract
+    uint256[154] private _gap;
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
