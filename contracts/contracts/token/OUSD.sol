@@ -583,14 +583,11 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptOut(address _account) internal {
+        require(
+            alternativeCreditsPerToken[_account] == 0,
+            "Account must be rebasing"
+        );
         RebaseOptions state = rebaseState[_account];
-        if (state == RebaseOptions.StdRebasing) {
-            require(
-                alternativeCreditsPerToken[_account] == 0,
-                "Account must be rebasing"
-            );
-        }
-
         require(
             state == RebaseOptions.StdRebasing || state == RebaseOptions.NotSet,
             "Only standard rebasing accounts can opt out"
