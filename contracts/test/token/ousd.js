@@ -852,26 +852,6 @@ describe("Token", function () {
   });
 
   describe("Delegating yield", function () {
-    // TODO delete below test later
-    it("Figure out gas costs", async () => {
-      let { ousd, matt, josh, anna, governor } = fixture;
-
-      await expect(josh).has.an.approxBalanceOf("100", ousd);
-      await expect(matt).has.an.approxBalanceOf("100", ousd);
-      await expect(anna).has.an.approxBalanceOf("0", ousd);
-
-      await ousd
-        .connect(governor)
-        // matt delegates yield to anna
-        .governanceDelegateYield(matt.address, anna.address);
-
-      // await ousd.connect(josh).transfer(matt.address, ousdUnits("2"));
-      // await ousd.connect(josh).transfer(matt.address, ousdUnits("2"));
-
-      await ousd.connect(matt).transfer(josh.address, ousdUnits("2"));
-      await ousd.connect(matt).transfer(josh.address, ousdUnits("2"));
-    });
-
     it("Should delegate rebase to another account", async () => {
       let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
 
@@ -882,10 +862,12 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("80.00", ousd);
       await expect(anna).has.an.approxBalanceOf("10", ousd);
 
+      // TODO: delete rebase opt out later
+      await ousd.connect(matt).rebaseOptOut();
       await ousd
         .connect(governor)
         // matt delegates yield to anna
-        .governanceDelegateYield(matt.address, anna.address);
+        .delegateYield(matt.address, anna.address);
 
       // Transfer USDC into the Vault to simulate yield
       await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
@@ -919,10 +901,12 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(anna).has.an.balanceOf("0", ousd);
 
+      // TODO: delete rebase opt out later
+      await ousd.connect(matt).rebaseOptOut();
       await ousd
         .connect(governor)
         // matt delegates yield to anna
-        .governanceDelegateYield(matt.address, anna.address);
+        .delegateYield(matt.address, anna.address);
 
       // Transfer USDC into the Vault to simulate yield
       await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
