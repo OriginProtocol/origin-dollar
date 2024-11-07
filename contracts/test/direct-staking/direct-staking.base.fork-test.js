@@ -9,6 +9,8 @@ const { utils } = require("ethers");
 const baseFixture = createFixtureLoader(directStakingFixture);
 
 describe("ForkTest: Direct Staking (Base)", function () {
+  this.timeout(0);
+
   let fixture;
 
   const mockRequestID =

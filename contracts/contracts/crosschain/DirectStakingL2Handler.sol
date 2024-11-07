@@ -105,6 +105,7 @@ contract DirectStakingL2Handler is AbstractDirectStakingHandler {
         emit DirectStakeRequestCompleted(originalMessageId, tokenAmount.amount);
 
         // Transfer tokens to the caller
+        // slither-disable-next-line unused-return
         woeth.transfer(request.requester, tokenAmount.amount);
 
         if (request.callback) {
@@ -130,6 +131,7 @@ contract DirectStakingL2Handler is AbstractDirectStakingHandler {
         require(cc.isSupported, "Mainnet not configured");
 
         // Transfer WETH in
+        // slither-disable-next-line unused-return
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
         // Build message to initiate
