@@ -1431,6 +1431,15 @@ function deploymentWithProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isFork
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
+    // Skip if proposal is older than 14 days
+    const olderProposal =
+      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
     /** Just for context of fork env change the id of the deployment script. This is required
      * in circumstances when:
      * - the deployment script has already been run on the mainnet
@@ -1450,11 +1459,15 @@ function deploymentWithProposal(opts, fn) {
      * And we can not package this inside of `skip` function since without this workaround it
      * doesn't even get evaluated.
      */
-    if (isFork && proposalId) {
+    if (isFork && proposalId && !olderProposal) {
       main.id = `${deployName}_force`;
     }
 
     main.skip = async () => {
+      if (olderProposal) {
+        return true;
+      }
+
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
