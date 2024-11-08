@@ -10,19 +10,37 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async () => {
-    const cOUSDMorphoAaveProxy = await ethers.getContract("MorphoAaveStrategyProxy")
-    const cOUSDMorphoCompoundProxy = await ethers.getContract("MorphoCompoundStrategyProxy")
-    const cOETHMorphoAaveProxy = await ethers.getContract("OETHMorphoAaveStrategyProxy")
+    const cOUSDMorphoAaveProxy = await ethers.getContract(
+      "MorphoAaveStrategyProxy"
+    );
+    const cOUSDMorphoCompoundProxy = await ethers.getContract(
+      "MorphoCompoundStrategyProxy"
+    );
+    const cOETHMorphoAaveProxy = await ethers.getContract(
+      "OETHMorphoAaveStrategyProxy"
+    );
 
-    const cOUSDMorphoAave = await ethers.getContractAt("InitializableAbstractStrategy", cOUSDMorphoAaveProxy.address)
-    const cOUSDMorphoCompound = await ethers.getContractAt("InitializableAbstractStrategy", cOUSDMorphoCompoundProxy.address)
-    const cOETHMorphoAave = await ethers.getContractAt("InitializableAbstractStrategy", cOETHMorphoAaveProxy.address)
+    const cOUSDMorphoAave = await ethers.getContractAt(
+      "InitializableAbstractStrategy",
+      cOUSDMorphoAaveProxy.address
+    );
+    const cOUSDMorphoCompound = await ethers.getContractAt(
+      "InitializableAbstractStrategy",
+      cOUSDMorphoCompoundProxy.address
+    );
+    const cOETHMorphoAave = await ethers.getContractAt(
+      "InitializableAbstractStrategy",
+      cOETHMorphoAaveProxy.address
+    );
 
-    const morpho = await ethers.getContractAt("IERC20", "0x9994e35db50125e0df82e4c2dde62496ce330999")
+    const morpho = await ethers.getContractAt(
+      "IERC20",
+      "0x9994e35db50125e0df82e4c2dde62496ce330999"
+    );
 
-    const ousdAaveBalance = await morpho.balanceOf(cOUSDMorphoAave.address)
-    const ousdCompBalance = await morpho.balanceOf(cOUSDMorphoCompound.address)
-    const oethAaveBalance = await morpho.balanceOf(cOETHMorphoAave.address)
+    const ousdAaveBalance = await morpho.balanceOf(cOUSDMorphoAave.address);
+    const ousdCompBalance = await morpho.balanceOf(cOUSDMorphoCompound.address);
+    const oethAaveBalance = await morpho.balanceOf(cOETHMorphoAave.address);
 
     // Governance Actions
     // ----------------
