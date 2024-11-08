@@ -500,7 +500,7 @@ contract OUSD is Governable {
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         bool isContract = _account.code.length > 0;
         // In the older contract implementation: https://github.com/OriginProtocol/origin-dollar/blob/20a21d00a4a6ea9f42940ac194e82655fcda882e/contracts/contracts/token/OUSD.sol#L479-L489
-        // a an account could have non 0 balance, be (or become) a contract with the rebase state
+        // an account could have non 0 balance, be (or become) a contract with the rebase state
         // set to default balanceRebaseOptions.NotSet and alternativeCreditsPerToken > 0. The latter would happen
         // when such account would already be once `migrated` by running `_ensureRebasingMigration`. Executing the
         // migration for a second time would cause great errors.
@@ -665,12 +665,11 @@ contract OUSD is Governable {
         );
         RebaseOptions stateFrom = rebaseState[from];
         RebaseOptions stateTo = rebaseState[to];
-        require(
-            _isNonRebasingAccount(from) &&
+        if (!_isNonRebasingAccount(from) &&
                 (stateFrom == RebaseOptions.NotSet ||
-                    stateFrom == RebaseOptions.StdNonRebasing),
-            "Must delegate from a non-rebasing account"
-        );
+                    stateFrom == RebaseOptions.StdRebasing)) {
+            _rebaseOptOut(from);
+        }
         require(
             !_isNonRebasingAccount(to) &&
                 (stateTo == RebaseOptions.NotSet ||
