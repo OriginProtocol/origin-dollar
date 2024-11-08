@@ -5,6 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "109_transfer_morpho",
     forceDeploy: false,
     // forceSkip: true,
+    skipSimulation: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId: "",
