@@ -670,12 +670,11 @@ contract OUSD is Governable {
                     stateFrom == RebaseOptions.StdRebasing)) {
             _rebaseOptOut(from);
         }
-        require(
-            !_isNonRebasingAccount(to) &&
+        if(_isNonRebasingAccount(to) &&
                 (stateTo == RebaseOptions.NotSet ||
-                    stateTo == RebaseOptions.StdRebasing),
-            "Must delegate to a rebasing account"
-        );
+                    stateTo == RebaseOptions.StdNonRebasing)) {
+            _rebaseOptIn(to);
+        }
 
         // Set up the bidirectional links
         yieldTo[from] = to;
