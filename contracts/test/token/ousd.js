@@ -509,7 +509,7 @@ describe("Token", function () {
     let { ousd, matt } = fixture;
     await ousd.connect(matt).rebaseOptOut();
     await expect(ousd.connect(matt).rebaseOptOut()).to.be.revertedWith(
-      "Only standard rebasing accounts can opt out"
+      "Account must be rebasing"
     );
   });
 
@@ -522,10 +522,19 @@ describe("Token", function () {
   });
 
   it("Should not allow contract to call rebaseOptOut when already opted out of rebasing", async () => {
-    let { mockNonRebasing } = fixture;
+    let { mockNonRebasing, ousd, matt } = fixture;
+    // send some OUSD to trigger the automatic "migration" of mockNonRebasing account to nonRebasing
+    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("1"));
+
     await expect(mockNonRebasing.rebaseOptOut()).to.be.revertedWith(
       "Account must be rebasing"
     );
+  });
+
+  it("Should allow a contract to call rebaseOptOut if no other action causing auto-converting has happened", async () => {
+    let { mockNonRebasing } = fixture;
+
+    await mockNonRebasing.rebaseOptOut();
   });
 
   it("Should maintain the correct balance on a partial transfer for a non-rebasing account without previously set creditsPerToken", async () => {
