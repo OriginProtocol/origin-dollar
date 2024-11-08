@@ -77,7 +77,7 @@ timelock_contract = load_contract('timelock', TIMELOCK)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
-weth = load_contract('ERC20', WETH)
+weth = load_contract('weth', WETH)
 reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
 frxeth = load_contract('ERC20', FRXETH)

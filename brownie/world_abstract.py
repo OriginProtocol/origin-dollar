@@ -123,7 +123,7 @@ def to_gnosis_json(txs, from_safe_address=STRATEGIST, chain="1"):
         main["transactions"].append(
             {
                 "to": tx.receiver,
-                "value": tx.value,
+                "value": str(tx.value),
                 "data": tx.input,
                 "contractMethod": None,
                 "contractInputsValues": None,
