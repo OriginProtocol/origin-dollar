@@ -31,3 +31,36 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# Nov 8, 2024 - CCIP Bridging
+# -------------------------------------
+from world import *
+import eth_abi
+from eth_abi.packed import encode_packed
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    amount = woeth.balanceOf(STRATEGIST)
+
+    txs.append(
+      woeth.approve(CCIP_ROUTER, amount, std)
+    )
+
+    BASE_CHAIN_SELECTOR = 15971525489660198786
+
+    fee_amount = 0.003 * 10**18
+
+    txs.append(
+      ccip_router.ccipSend(
+        BASE_CHAIN_SELECTOR,
+        [
+          eth_abi.encode(['address'], [OETHB_STRATEGIST]),
+          '0x',
+          [(WOETH, amount)],
+          ADDR_ZERO,
+          '0x97a657c900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        ],
+        { 'value': fee_amount, 'from': STRATEGIST }
+      )
+    )

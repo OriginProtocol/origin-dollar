@@ -87,6 +87,7 @@ oeth_vault_core = load_contract('vault_core', OETH_VAULT)
 oeth_metapool = load_contract('oeth_metapool', OETH_METAPOOL)
 
 woeth = load_contract('wrapped_ousd', WOETH)
+ccip_router = load_contract('ccip_router', CCIP_ROUTER)
 zapper = load_contract('oethzapper', OETH_ZAPPER)
 
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
