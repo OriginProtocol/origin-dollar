@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { Governable } from "../governance/Governable.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
@@ -16,6 +17,8 @@ import { Governable } from "../governance/Governable.sol";
  */
 
 contract OUSD is Governable {
+    using SafeCast for int256;
+
     event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
         uint256 rebasingCredits,
@@ -275,9 +278,7 @@ contract OUSD is Governable {
     {
         RebaseOptions state = rebaseState[account];
         int256 currentBalance = int256(balanceOf(account));
-        uint256 newBalance = uint256(
-            int256(currentBalance) + int256(balanceChange)
-        );
+        uint256 newBalance = (currentBalance + balanceChange).toUint256();
         if (newBalance < 0) {
             revert("Transfer amount exceeds balance");
         }
@@ -320,20 +321,16 @@ contract OUSD is Governable {
         int256 nonRebasingSupplyDiff
     ) internal {
         if (rebasingCreditsDiff != 0) {
-            if (uint256(int256(_rebasingCredits) + rebasingCreditsDiff) < 0) {
+            if (int256(_rebasingCredits) + rebasingCreditsDiff < 0) {
                 revert("rebasingCredits underflow");
             }
-            _rebasingCredits = uint256(
-                int256(_rebasingCredits) + rebasingCreditsDiff
-            );
+            _rebasingCredits = (int256(_rebasingCredits) + rebasingCreditsDiff).toUint256();
         }
         if (nonRebasingSupplyDiff != 0) {
             if (int256(nonRebasingSupply) + nonRebasingSupplyDiff < 0) {
                 revert("nonRebasingSupply underflow");
             }
-            nonRebasingSupply = uint256(
-                int256(nonRebasingSupply) + nonRebasingSupplyDiff
-            );
+            nonRebasingSupply = (int256(nonRebasingSupply) + nonRebasingSupplyDiff).toUint256();
         }
     }
 
