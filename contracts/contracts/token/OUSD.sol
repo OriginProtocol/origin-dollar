@@ -665,14 +665,33 @@ contract OUSD is Governable {
         );
         RebaseOptions stateFrom = rebaseState[from];
         RebaseOptions stateTo = rebaseState[to];
-        if (!_isNonRebasingAccount(from) &&
-                (stateFrom == RebaseOptions.NotSet ||
-                    stateFrom == RebaseOptions.StdRebasing)) {
+
+        require(
+            stateFrom == RebaseOptions.NotSet ||
+                stateFrom == RebaseOptions.StdNonRebasing ||
+                stateFrom == RebaseOptions.StdRebasing,
+            "Invalid rebaseState from"
+        );
+
+        require(
+            stateTo == RebaseOptions.NotSet ||
+                stateTo == RebaseOptions.StdNonRebasing ||
+                stateTo == RebaseOptions.StdRebasing,
+            "Invalid rebaseState to"
+        );
+
+        if (
+            !_isNonRebasingAccount(from) &&
+            (stateFrom == RebaseOptions.NotSet ||
+                stateFrom == RebaseOptions.StdRebasing)
+        ) {
             _rebaseOptOut(from);
         }
-        if(_isNonRebasingAccount(to) &&
-                (stateTo == RebaseOptions.NotSet ||
-                    stateTo == RebaseOptions.StdNonRebasing)) {
+        if (
+            _isNonRebasingAccount(to) &&
+            (stateTo == RebaseOptions.NotSet ||
+                stateTo == RebaseOptions.StdNonRebasing)
+        ) {
             _rebaseOptIn(to);
         }
 
