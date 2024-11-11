@@ -254,25 +254,15 @@ contract OUSD is Governable {
             return;
         }
 
-        (
-            int256 fromRebasingCreditsDiff,
-            int256 fromNonRebasingSupplyDiff
-        ) = _adjustAccount(_from, -int256(_value));
-        (
-            int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_to, int256(_value));
-
-        _adjustGlobals(
-            fromRebasingCreditsDiff + toRebasingCreditsDiff,
-            fromNonRebasingSupplyDiff + toNonRebasingSupplyDiff
-        );
+        _adjustAccount(_from, -int256(_value));
+        _adjustAccount(_to, int256(_value));
     }
 
     function _adjustAccount(address account, int256 balanceChange)
         internal
-        returns (int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff)
     {
+        int256 rebasingCreditsDiff;
+        int256 nonRebasingSupplyDiff;
         RebaseOptions state = rebaseState[account];
         int256 currentBalance = int256(balanceOf(account));
         uint256 newBalance = uint256(
@@ -313,6 +303,11 @@ contract OUSD is Governable {
                 int256(_creditBalances[account]);
             _creditBalances[account] = newCredits;
         }
+
+        _adjustGlobals(
+            rebasingCreditsDiff,
+            nonRebasingSupplyDiff
+        );
     }
 
     function _adjustGlobals(
@@ -427,12 +422,7 @@ contract OUSD is Governable {
         require(_account != address(0), "Mint to the zero address");
 
         // Account
-        (
-            int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_account, int256(_amount));
-        // Globals
-        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _adjustAccount(_account, int256(_amount));
         _totalSupply = _totalSupply + _amount;
 
         require(_totalSupply < MAX_SUPPLY, "Max supply");
@@ -464,12 +454,7 @@ contract OUSD is Governable {
         }
 
         // Account
-        (
-            int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_account, -int256(_amount));
-        // Globals
-        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _adjustAccount(_account, -int256(_amount));
         _totalSupply = _totalSupply - _amount;
 
         emit Transfer(_account, address(0), _amount);

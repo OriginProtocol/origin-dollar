@@ -861,6 +861,17 @@ describe("Token", function () {
   });
 
   describe("Delegating yield", function () {
+    it.only("test gas consumption", async () => {
+      let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
+
+      await ousd
+        .connect(governor)
+        // matt delegates yield to anna
+        .delegateYield(matt.address, anna.address);
+
+      await ousd.connect(matt).transfer(anna.address, ousdUnits("10"));
+    });
+
     it("Should delegate rebase to another account", async () => {
       let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
 
