@@ -18,6 +18,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract OUSD is Governable {
     using SafeCast for int256;
+    using SafeCast for uint256;
 
     event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
@@ -260,11 +261,11 @@ contract OUSD is Governable {
         (
             int256 fromRebasingCreditsDiff,
             int256 fromNonRebasingSupplyDiff
-        ) = _adjustAccount(_from, -int256(_value));
+        ) = _adjustAccount(_from, -_value.toInt256());
         (
             int256 toRebasingCreditsDiff,
             int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_to, int256(_value));
+        ) = _adjustAccount(_to, _value.toInt256());
 
         _adjustGlobals(
             fromRebasingCreditsDiff + toRebasingCreditsDiff,
@@ -277,8 +278,8 @@ contract OUSD is Governable {
         returns (int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff)
     {
         RebaseOptions state = rebaseState[account];
-        int256 currentBalance = int256(balanceOf(account));
-        uint256 newBalance = (currentBalance + balanceChange).toUint256();
+        int256 currentBalance = balanceOf(account).toInt256();
+        int256 newBalance = currentBalance + balanceChange;
         if (newBalance < 0) {
             revert("Transfer amount exceeds balance");
         }
@@ -286,32 +287,32 @@ contract OUSD is Governable {
             address target = yieldTo[account];
             uint256 targetOldBalance = balanceOf(target);
             uint256 targetNewCredits = _balanceToRebasingCredits(
-                targetOldBalance + newBalance
+                targetOldBalance + newBalance.toUint256()
             );
             rebasingCreditsDiff =
-                int256(targetNewCredits) -
-                int256(_creditBalances[target]);
+                targetNewCredits.toInt256() -
+                _creditBalances[target].toInt256();
 
-            _creditBalances[account] = newBalance;
+            _creditBalances[account] = newBalance.toUint256();
             _creditBalances[target] = targetNewCredits;
             alternativeCreditsPerToken[account] = 1e18;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
             uint256 newCredits = _balanceToRebasingCredits(
-                newBalance + _creditBalances[yieldFrom[account]]
+                newBalance.toUint256() + _creditBalances[yieldFrom[account]]
             );
             rebasingCreditsDiff =
-                int256(newCredits) -
-                int256(_creditBalances[account]);
+                newCredits.toInt256() -
+                _creditBalances[account].toInt256();
             _creditBalances[account] = newCredits;
         } else if (_isNonRebasingAccount(account)) {
             nonRebasingSupplyDiff = balanceChange;
             alternativeCreditsPerToken[account] = 1e18;
-            _creditBalances[account] = newBalance;
+            _creditBalances[account] = newBalance.toUint256();
         } else {
-            uint256 newCredits = _balanceToRebasingCredits(newBalance);
+            uint256 newCredits = _balanceToRebasingCredits(newBalance.toUint256());
             rebasingCreditsDiff =
-                int256(newCredits) -
-                int256(_creditBalances[account]);
+                newCredits.toInt256() -
+                _creditBalances[account].toInt256();
             _creditBalances[account] = newCredits;
         }
     }
@@ -321,16 +322,16 @@ contract OUSD is Governable {
         int256 nonRebasingSupplyDiff
     ) internal {
         if (rebasingCreditsDiff != 0) {
-            if (int256(_rebasingCredits) + rebasingCreditsDiff < 0) {
+            if (_rebasingCredits.toInt256() + rebasingCreditsDiff < 0) {
                 revert("rebasingCredits underflow");
             }
-            _rebasingCredits = (int256(_rebasingCredits) + rebasingCreditsDiff).toUint256();
+            _rebasingCredits = (_rebasingCredits.toInt256() + rebasingCreditsDiff).toUint256();
         }
         if (nonRebasingSupplyDiff != 0) {
-            if (int256(nonRebasingSupply) + nonRebasingSupplyDiff < 0) {
+            if (nonRebasingSupply.toInt256() + nonRebasingSupplyDiff < 0) {
                 revert("nonRebasingSupply underflow");
             }
-            nonRebasingSupply = (int256(nonRebasingSupply) + nonRebasingSupplyDiff).toUint256();
+            nonRebasingSupply = (nonRebasingSupply.toInt256() + nonRebasingSupplyDiff).toUint256();
         }
     }
 
@@ -427,7 +428,7 @@ contract OUSD is Governable {
         (
             int256 toRebasingCreditsDiff,
             int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_account, int256(_amount));
+        ) = _adjustAccount(_account, _amount.toInt256());
         // Globals
         _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
         _totalSupply = _totalSupply + _amount;
@@ -464,7 +465,7 @@ contract OUSD is Governable {
         (
             int256 toRebasingCreditsDiff,
             int256 toNonRebasingSupplyDiff
-        ) = _adjustAccount(_account, -int256(_amount));
+        ) = _adjustAccount(_account, -_amount.toInt256());
         // Globals
         _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
         _totalSupply = _totalSupply - _amount;
