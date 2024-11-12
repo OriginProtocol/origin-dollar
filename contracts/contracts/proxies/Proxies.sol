@@ -247,6 +247,24 @@ contract NativeStakingFeeAccumulator2Proxy is
 }
 
 /**
+ * @notice NativeStakingSSVStrategy3Proxy delegates calls to NativeStakingSSVStrategy implementation
+ */
+contract NativeStakingSSVStrategy3Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulator3Proxy delegates calls to FeeAccumulator implementation
+ */
+contract NativeStakingFeeAccumulator3Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
  * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
  */
 contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
