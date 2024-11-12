@@ -9,12 +9,12 @@ pragma solidity ^0.8.0;
  */
 import { Governable } from "../governance/Governable.sol";
 
+import "hardhat/console.sol";
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
  * rebasing design. Any integrations with OUSD should be aware.
  */
-
 contract OUSD is Governable {
     event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
@@ -40,13 +40,13 @@ contract OUSD is Governable {
 
     // Add slots to align with deployed OUSD contract
     uint256[154] private _gap;
-    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
+    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1 
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
-    mapping(address => uint256) private _creditBalances;
-    uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts)
-    uint256 private _rebasingCreditsPerToken;
+    mapping(address => uint256) private _creditBalances; // [1e27 denominated]
+    uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts) [1e27 denominated]
+    uint256 private _rebasingCreditsPerToken; // [1e27 denominated]
     uint256 public nonRebasingSupply; // All nonrebasing balances
     mapping(address => uint256) private alternativeCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
@@ -132,12 +132,17 @@ contract OUSD is Governable {
         if (state == RebaseOptions.YieldDelegationSource) {
             // Saves a slot read when transferring to or from a yield delegating source
             // since we know creditBalances equals the balance.
-            return _creditBalances[_account];
+            return _creditBalances[_account] / RESOLUTION_INCREASE;
         }
+        // denominated in 1e18 because of: 1e27 * 1e18 / 1e27
         uint256 baseBalance = (_creditBalances[_account] * 1e18) /
             _creditsPerToken(_account);
         if (state == RebaseOptions.YieldDelegationTarget) {
-            return baseBalance - _creditBalances[yieldFrom[_account]];
+            console.log("Balance of ");
+            console.log(baseBalance);
+            console.log(_creditBalances[_account]);
+            console.log(_creditsPerToken(_account));
+            return baseBalance - _creditBalances[yieldFrom[_account]] / RESOLUTION_INCREASE;
         }
         return baseBalance;
     }
@@ -154,18 +159,10 @@ contract OUSD is Governable {
         view
         returns (uint256, uint256)
     {
-        uint256 cpt = _creditsPerToken(_account);
-        if (cpt == 1e27) {
-            // For a period before the resolution upgrade, we created all new
-            // contract accounts at high resolution. Since they are not changing
-            // as a result of this upgrade, we will return their true values
-            return (_creditBalances[_account], cpt);
-        } else {
-            return (
-                _creditBalances[_account] / RESOLUTION_INCREASE,
-                cpt / RESOLUTION_INCREASE
-            );
-        }
+        return (
+            _creditBalances[_account] / RESOLUTION_INCREASE,
+            _creditsPerToken(_account) / RESOLUTION_INCREASE
+        );
     }
 
     /**
@@ -196,7 +193,7 @@ contract OUSD is Governable {
         view
         returns (uint256)
     {
-        return alternativeCreditsPerToken[_account];
+        return alternativeCreditsPerToken[_account] / RESOLUTION_INCREASE;
     }
 
     /**
@@ -275,7 +272,7 @@ contract OUSD is Governable {
     {
         RebaseOptions state = rebaseState[account];
         int256 currentBalance = int256(balanceOf(account));
-        uint256 newBalance = uint256(
+        int256 newBalance = uint256(
             int256(currentBalance) + int256(balanceChange)
         );
         if (newBalance < 0) {
@@ -291,21 +288,25 @@ contract OUSD is Governable {
                 int256(targetNewCredits) -
                 int256(_creditBalances[target]);
 
-            _creditBalances[account] = newBalance;
+            _creditBalances[account] = newBalance * RESOLUTION_INCREASE;
             _creditBalances[target] = targetNewCredits;
-            alternativeCreditsPerToken[account] = 1e18;
+            alternativeCreditsPerToken[account] = 1e27;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
+            console.log("Execute transfer");
             uint256 newCredits = _balanceToRebasingCredits(
-                newBalance + _creditBalances[yieldFrom[account]]
+                newBalance + _creditBalances[yieldFrom[account]] / RESOLUTION_INCREASE
             );
+            console.log(balanceOf(account));
+            console.log(newCredits);
+            console.log(newBalance);
             rebasingCreditsDiff =
                 int256(newCredits) -
                 int256(_creditBalances[account]);
             _creditBalances[account] = newCredits;
         } else if (_isNonRebasingAccount(account)) {
             nonRebasingSupplyDiff = balanceChange;
-            alternativeCreditsPerToken[account] = 1e18;
-            _creditBalances[account] = newBalance;
+            alternativeCreditsPerToken[account] = 1e27;
+            _creditBalances[account] = newBalance * RESOLUTION_INCREASE;
         } else {
             uint256 newCredits = _balanceToRebasingCredits(newBalance);
             rebasingCreditsDiff =
@@ -516,6 +517,9 @@ contract OUSD is Governable {
         return alternativeCreditsPerToken[_account] > 0;
     }
 
+    /**
+     * Returns rebasing credits 1e27 denominated
+     */
     function _balanceToRebasingCredits(uint256 balance)
         internal
         view
@@ -525,7 +529,7 @@ contract OUSD is Governable {
         // at least the balance that they should have.
         // Note this should always be used on an absolute account value,
         // not on a possibly negative diff, because then the rounding would be wrong.
-        return ((balance) * _rebasingCreditsPerToken + 1e18 - 1) / 1e18;
+        return ((balance) * RESOLUTION_INCREASE * _rebasingCreditsPerToken + 1e27 - 1) / 1e27;
     }
 
     /**
@@ -598,8 +602,8 @@ contract OUSD is Governable {
 
         // Account
         rebaseState[_account] = RebaseOptions.StdNonRebasing;
-        alternativeCreditsPerToken[_account] = 1e18;
-        _creditBalances[_account] = balance;
+        alternativeCreditsPerToken[_account] = 1e27;
+        _creditBalances[_account] = balance * RESOLUTION_INCREASE;
 
         // Globals
         nonRebasingSupply += balance;
@@ -633,12 +637,16 @@ contract OUSD is Governable {
             ? MAX_SUPPLY
             : _newTotalSupply;
 
+        // _rebasingCreditsPerToken, _rebasingCredits are 1e27
+        // _totalSupply, nonRebasingSupply are 1e18
         _rebasingCreditsPerToken =
             (_rebasingCredits * 1e18) /
             (_totalSupply - nonRebasingSupply);
 
         require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
 
+        // _rebasingCreditsPerToken, _rebasingCredits are 1e27
+        // _totalSupply, nonRebasingSupply are 1e18
         _totalSupply =
             ((_rebasingCredits * 1e18) / _rebasingCreditsPerToken) +
             nonRebasingSupply;
@@ -705,8 +713,8 @@ contract OUSD is Governable {
         uint256 credits = _balanceToRebasingCredits(balance);
 
         // Local
-        _creditBalances[from] = balance;
-        alternativeCreditsPerToken[from] = 1e18;
+        _creditBalances[from] = balance * RESOLUTION_INCREASE;
+        alternativeCreditsPerToken[from] = 1e27;
         _creditBalances[to] += credits;
 
         // Global
@@ -732,7 +740,7 @@ contract OUSD is Governable {
 
         // Local
         _creditBalances[from] = fromBalance;
-        alternativeCreditsPerToken[from] = 1e18;
+        alternativeCreditsPerToken[from] = 1e27;
         _creditBalances[to] = toNewCredits;
         alternativeCreditsPerToken[to] = 0; // Is needed otherwise rebaseOptOut check will not pass
 
