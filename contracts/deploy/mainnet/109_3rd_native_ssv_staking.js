@@ -127,7 +127,7 @@ module.exports = deploymentWithGovernanceProposal(
        * to initialize the proxy contract
        *
        * Run the following to make it happen, and comment this error block out:
-       * yarn run hardhat transferGovernanceNativeStakingProxy --address 0xdeployerAddress  --network mainnet
+       * yarn run hardhat transferGovernanceNativeStakingProxy --index 3 --deployer 0xdeployerAddress --network mainnet
        */
       if (proxyGovernor != deployerAddr) {
         throw new Error(
