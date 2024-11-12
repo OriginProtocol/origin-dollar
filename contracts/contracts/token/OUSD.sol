@@ -10,7 +10,6 @@ pragma solidity ^0.8.0;
 import { Governable } from "../governance/Governable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import "hardhat/console.sol";
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -142,10 +141,6 @@ contract OUSD is Governable {
         uint256 baseBalance = (_creditBalances[_account] * 1e18) /
             _creditsPerToken(_account);
         if (state == RebaseOptions.YieldDelegationTarget) {
-            console.log("Balance of ");
-            console.log(baseBalance);
-            console.log(_creditBalances[_account]);
-            console.log(_creditsPerToken(_account));
             return baseBalance - _creditBalances[yieldFrom[_account]] / RESOLUTION_INCREASE;
         }
         return baseBalance;
@@ -295,12 +290,9 @@ contract OUSD is Governable {
             _creditBalances[target] = targetNewCredits;
             alternativeCreditsPerToken[account] = 1e27;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
-            console.log("Execute transfer");
             uint256 newCredits = _balanceToRebasingCredits(
                 newBalance.toUint256() + _creditBalances[yieldFrom[account]] / RESOLUTION_INCREASE
             );
-            console.log(balanceOf(account));
-            console.log(newCredits);
             rebasingCreditsDiff =
                 newCredits.toInt256() -
                 _creditBalances[account].toInt256();
