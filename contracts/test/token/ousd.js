@@ -250,7 +250,8 @@ describe("Token", function () {
     // Give Josh an allowance to move Matt's OUSD
     await ousd
       .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("100"));
+      .approve(await josh.getAddress(), ousdUnits("100"));
+
     // Give contract 100 OUSD from Matt via Josh
     await ousd
       .connect(josh)
@@ -288,7 +289,7 @@ describe("Token", function () {
     // Give Josh an allowance to move Matt's OUSD
     await ousd
       .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("150"));
+      .approve(await josh.getAddress(), ousdUnits("150"));
     // Give contract 100 OUSD from Matt via Josh
     await ousd
       .connect(josh)
@@ -333,7 +334,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("100.00", ousd);
     await expect(josh).has.an.approxBalanceOf("0", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    await mockNonRebasing.increaseAllowance(
+    await mockNonRebasing.approve(
       await matt.getAddress(),
       ousdUnits("100")
     );
@@ -380,7 +381,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("250", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
     // Transfer contract balance to Josh
-    await mockNonRebasing.increaseAllowance(
+    await mockNonRebasing.approve(
       await matt.getAddress(),
       ousdUnits("150")
     );
@@ -628,39 +629,6 @@ describe("Token", function () {
     ).to.be.revertedWith("panic code 0x11");
   });
 
-  it("Should allow to increase/decrease allowance", async () => {
-    const { ousd, anna, matt } = fixture;
-    // Approve OUSD
-    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("1000"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("1000"));
-
-    // Decrease allowance
-    await ousd
-      .connect(matt)
-      .decreaseAllowance(await anna.getAddress(), ousdUnits("100"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("900"));
-
-    // Increase allowance
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await anna.getAddress(), ousdUnits("20"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("920"));
-
-    // Decrease allowance more than what's there
-    await ousd
-      .connect(matt)
-      .decreaseAllowance(await anna.getAddress(), ousdUnits("950"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("0"));
-  });
-
   it("Should increase users balance on supply increase", async () => {
     const { ousd, usdc, vault, anna, matt } = fixture;
     // Transfer 1 to Anna, so we can check different amounts
@@ -893,9 +861,7 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("80.00", ousd);
       await expect(anna).has.an.balanceOf("90", ousd);
 
-      console.log("Matt transfering to josh");
       await ousd.connect(matt).transfer(josh.address, ousdUnits("80"));
-      console.log("Anna transfering to josh");
       await ousd.connect(anna).transfer(josh.address, ousdUnits("90"));
 
       await expect(josh).has.an.approxBalanceOf("400", ousd);
