@@ -385,7 +385,7 @@ contract OUSD is Governable {
      *
      * - `to` cannot be the zero address.
      */
-    function _mint(address _account, uint256 _amount) internal nonReentrant {
+    function _mint(address _account, uint256 _amount) internal {
         require(_account != address(0), "Mint to the zero address");
 
         // Account
@@ -419,7 +419,7 @@ contract OUSD is Governable {
      * - `_account` cannot be the zero address.
      * - `_account` must have at least `_amount` tokens.
      */
-    function _burn(address _account, uint256 _amount) internal nonReentrant {
+    function _burn(address _account, uint256 _amount) internal {
         require(_account != address(0), "Burn from the zero address");
         if (_amount == 0) {
             return;
@@ -513,7 +513,6 @@ contract OUSD is Governable {
      */
     function governanceRebaseOptIn(address _account)
         external
-        nonReentrant
         onlyGovernor
     {
         _rebaseOptIn(_account);
@@ -524,7 +523,7 @@ contract OUSD is Governable {
      * address's balance will be part of rebases and the account will be exposed
      * to upside and downside.
      */
-    function rebaseOptIn() external nonReentrant {
+    function rebaseOptIn() external {
         _rebaseOptIn(msg.sender);
     }
 
@@ -556,7 +555,7 @@ contract OUSD is Governable {
         emit AccountRebasingEnabled(_account);
     }
 
-    function rebaseOptOut() external nonReentrant {
+    function rebaseOptOut() external {
         _rebaseOptOut(msg.sender);
     }
 
@@ -594,7 +593,6 @@ contract OUSD is Governable {
     function changeSupply(uint256 _newTotalSupply)
         external
         onlyVault
-        nonReentrant
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
@@ -631,7 +629,6 @@ contract OUSD is Governable {
     function delegateYield(address from, address to)
         external
         onlyGovernor
-        nonReentrant
     {
         require(from != to, "Cannot delegate to self");
         require(
@@ -693,7 +690,7 @@ contract OUSD is Governable {
         _rebasingCredits += credits;
     }
 
-    function undelegateYield(address from) external onlyGovernor nonReentrant {
+    function undelegateYield(address from) external onlyGovernor {
         // Require a delegation, which will also ensure a valid delegation
         require(yieldTo[from] != address(0), "");
 
