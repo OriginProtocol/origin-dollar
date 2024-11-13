@@ -279,26 +279,27 @@ contract OUSD is Governable {
     {
         RebaseOptions state = rebaseState[account];
         int256 currentBalance = balanceOf(account).toInt256();
-        int256 newBalance = currentBalance + balanceChange;
-        if (newBalance < 0) {
+        if (currentBalance + balanceChange < 0) {
             revert("Transfer amount exceeds balance");
         }
+        uint256 newBalance = (currentBalance + balanceChange).toUint256();
+
         if (state == RebaseOptions.YieldDelegationSource) {
             address target = yieldTo[account];
             uint256 targetOldBalance = balanceOf(target);
             uint256 targetNewCredits = _balanceToRebasingCredits(
-                targetOldBalance + newBalance.toUint256()
+                targetOldBalance + newBalance
             );
             rebasingCreditsDiff =
                 targetNewCredits.toInt256() -
                 _creditBalances[target].toInt256();
 
-            _creditBalances[account] = newBalance.toUint256();
+            _creditBalances[account] = newBalance;
             _creditBalances[target] = targetNewCredits;
             alternativeCreditsPerToken[account] = 1e18;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
             uint256 newCredits = _balanceToRebasingCredits(
-                newBalance.toUint256() + _creditBalances[yieldFrom[account]]
+                newBalance + _creditBalances[yieldFrom[account]]
             );
             rebasingCreditsDiff =
                 newCredits.toInt256() -
@@ -307,9 +308,9 @@ contract OUSD is Governable {
         } else if (_isNonRebasingAccount(account)) {
             nonRebasingSupplyDiff = balanceChange;
             alternativeCreditsPerToken[account] = 1e18;
-            _creditBalances[account] = newBalance.toUint256();
+            _creditBalances[account] = newBalance;
         } else {
-            uint256 newCredits = _balanceToRebasingCredits(newBalance.toUint256());
+            uint256 newCredits = _balanceToRebasingCredits(newBalance);
             rebasingCreditsDiff =
                 newCredits.toInt256() -
                 _creditBalances[account].toInt256();
@@ -325,13 +326,15 @@ contract OUSD is Governable {
             if (_rebasingCredits.toInt256() + rebasingCreditsDiff < 0) {
                 revert("rebasingCredits underflow");
             }
-            _rebasingCredits = (_rebasingCredits.toInt256() + rebasingCreditsDiff).toUint256();
+            _rebasingCredits = (_rebasingCredits.toInt256() +
+                rebasingCreditsDiff).toUint256();
         }
         if (nonRebasingSupplyDiff != 0) {
             if (nonRebasingSupply.toInt256() + nonRebasingSupplyDiff < 0) {
                 revert("nonRebasingSupply underflow");
             }
-            nonRebasingSupply = (nonRebasingSupply.toInt256() + nonRebasingSupplyDiff).toUint256();
+            nonRebasingSupply = (nonRebasingSupply.toInt256() +
+                nonRebasingSupplyDiff).toUint256();
         }
     }
 
