@@ -176,16 +176,16 @@ There is inevitable rounding error when rebasing, since there is no possible way
 ## Other invariants
 
 <!-- Invarient -->
-After a non-reverting call to `rebaseOptIn()` the `alternativeCreditsPerToken[account] == 0`
+> After a non-reverting call to `rebaseOptIn()` the `alternativeCreditsPerToken[account] == 0`
 
 <!-- Invarient -->
-After a non-reverting call to `rebaseOptOut()` the `alternativeCreditsPerToken[account] == 1e18`
+> After a non-reverting call to `rebaseOptOut()` the `alternativeCreditsPerToken[account] == 1e18`
 
 <!-- Invarient -->
-A successful mint() call by the vault results in the target account's balance increasing by the amount specified
+> A successful mint() call by the vault results in the target account's balance increasing by the amount specified
 
 <!-- Invarient -->
-A successful burn() call by the vault results in the target account's balance decreasing by the amount specified
+> A successful burn() call by the vault results in the target account's balance decreasing by the amount specified
 
 
 [^1]: From the current code base. Historically there may be different data stored in storage slots.
