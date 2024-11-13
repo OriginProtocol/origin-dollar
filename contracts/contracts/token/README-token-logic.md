@@ -4,12 +4,12 @@ We are revamping the our rebasing token contract.
 
 The primary objective is to allow delegated yield. Delegated yield allows an account to seamlessly transfer all earned yield to another account.
 
-Secondarily, we'd like to fix the tiny rounding issues around transfers and between local account information and global tracking slots.
+Secondarily, we'd like to fix the tiny rounding issues around both transfers and local account information vs global tracking variables.
 
 
 ## How OUSD works.
 
-OUSD is a rebasing token. It's mission in life is to be able to distribute increases in backing assets on to users by having user's balances go up each time the token rebases. 
+OUSD is a rebasing token. Its mission in life is to be able to distribute increases in backing assets on to users by having user's balances go up each time the token rebases. 
 
 **`_rebasingCreditsPerToken`** is a global variable that converts between "credits" stored on a account, and the actual balance of the account. This allows this single variable to be updated and in turn all "rebasing" users have their account balance change proportionally. Counterintuitively, this is not a multiplier on users credits, but a divider. So it's `user balance = user credits / _rebasingCreditsPerToken`. Because it's a divider, OUSD will slowly lose resolution over very long timeframes, as opposed to  abruptly stopping working suddenly once enough yield has been earned.
 
@@ -23,9 +23,13 @@ OUSD is a rebasing token. It's mission in life is to be able to distribute incre
 
 ## Account Types
 
+There are four account types in the system. 
+
+The new code is more explicit in its writes than the old code. Thus there's two sections for each type, the old values that could be read, and the format of the new values that the new code writes.
+
 ### StdRebasing Account (Default)
 
-This is the "normal" account in the system. It gets yield and its balance goes up over time. Almost every account is of this type.
+This is the "normal" account in the system. It receives yield and its balance goes up over time. Almost every account is of this type.
 
 Reads:
 
@@ -142,7 +146,7 @@ There are four different account types, two of which link to each other behind t
 > The sum of all `RebaseOptions.StdNonRebasing` accounts equals the nonRebasingSupply. [^1] [^2] 
 
 <!-- Invarient -->
-> The sum of the credits in all NotSet, StdRebasing, and YieldDelegationTarget accounts equal the rebasingCredits.
+> The sum of the credits in all NotSet, StdRebasing, and YieldDelegationTarget accounts equal the rebasingCredits. [^1]
 
 <!-- Invarient -->
 > The balanceOf on each account equals `_creditBalances[account] * (alternativeCreditsPerToken[account] > 0 ? alternativeCreditsPerToken[account] : _rebasingCreditsPerToken) - (yieldFrom[account] == 0 ? 0 : _creditBalances[yieldFrom[account]])`
@@ -150,9 +154,11 @@ There are four different account types, two of which link to each other behind t
 
 ## Rebasing
 
-The token is designed to gently degrade once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
+The token distributes yield to users by "rebasing" (changing supply). This leaves all non-rebasing users with the same account balance.
 
-There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly matched. Total supply moves up exactly as it is set.
+The token is designed to gently degrade in resolutions once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
+
+There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly the result of all the things that make it up. totalSupply must be exactly equal to the set value, nonRebasingSupply does not change, and we handle rounding errors by rounding down the rebasingCreditsPerToken. The resulting gap is distributed to users the next time the token rebases upwards.
 
 
 ## Rebasing invariants
@@ -163,7 +169,23 @@ There is inevitable rounding error when rebasing, since there is no possible way
 <!-- Invarient -->
 > After a call to changeSupply(), the new totalSupply should always match what was passed into the call or the call revert. 
 
+<!-- Invarient -->
+> Only transfers change the balance of `StdNonRebasing` and `YieldDelegationSource` accounts.
 
+
+## Other invariants
+
+<!-- Invarient -->
+After a non-reverting call to `rebaseOptIn()` the `alternativeCreditsPerToken[account] == 0`
+
+<!-- Invarient -->
+After a non-reverting call to `rebaseOptOut()` the `alternativeCreditsPerToken[account] == 1e18`
+
+<!-- Invarient -->
+A successful mint() call by the vault results in the target account's balance increasing by the amount specified
+
+<!-- Invarient -->
+A successful burn() call by the vault results in the target account's balance decreasing by the amount specified
 
 
 [^1]: From the current code base. Historically there may be different data stored in storage slots.
