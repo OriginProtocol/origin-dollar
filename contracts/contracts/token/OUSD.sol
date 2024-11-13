@@ -513,7 +513,10 @@ contract OUSD is Governable {
         ) {
             _rebaseOptOut(_account);
         }
-        return alternativeCreditsPerToken[_account] > 0;
+
+        return rebaseState[_account] != RebaseOptions.YieldDelegationSource &&
+            rebaseState[_account] != RebaseOptions.YieldDelegationTarget &&
+            alternativeCreditsPerToken[_account] > 0;
     }
 
     function _balanceToRebasingCredits(uint256 balance)
