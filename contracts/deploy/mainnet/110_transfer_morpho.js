@@ -2,9 +2,9 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "109_transfer_morpho",
+    deployName: "110_transfer_morpho",
     forceDeploy: false,
-    // forceSkip: true,
+    forceSkip: true,
     skipSimulation: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
