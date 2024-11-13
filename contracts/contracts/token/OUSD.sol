@@ -52,7 +52,7 @@ contract OUSD is Governable {
     uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts)
     uint256 private _rebasingCreditsPerToken;
     uint256 public nonRebasingSupply; // All nonrebasing balances
-    mapping(address => uint256) private alternativeCreditsPerToken;
+    mapping(address => uint256) internal alternativeCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
     mapping(address => uint256) public isUpgraded;
     mapping(address => address) public yieldTo;
@@ -305,16 +305,19 @@ contract OUSD is Governable {
                 newCredits.toInt256() -
                 _creditBalances[account].toInt256();
             _creditBalances[account] = newCredits;
-        } else if (_isNonRebasingAccount(account)) {
-            nonRebasingSupplyDiff = balanceChange;
-            alternativeCreditsPerToken[account] = 1e18;
-            _creditBalances[account] = newBalance;
         } else {
-            uint256 newCredits = _balanceToRebasingCredits(newBalance);
-            rebasingCreditsDiff =
-                newCredits.toInt256() -
-                _creditBalances[account].toInt256();
-            _creditBalances[account] = newCredits;
+            _autoMigrate(account);
+            if (alternativeCreditsPerToken[account] > 0) {
+                nonRebasingSupplyDiff = balanceChange;
+                alternativeCreditsPerToken[account] = 1e18;
+                _creditBalances[account] = newBalance;
+            } else {
+                uint256 newCredits = _balanceToRebasingCredits(newBalance);
+                rebasingCreditsDiff =
+                    newCredits.toInt256() -
+                    _creditBalances[account].toInt256();
+                _creditBalances[account] = newCredits;
+            }
         }
     }
 
@@ -452,11 +455,26 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Is an account using rebasing accounting or non-rebasing accounting?
-     *      Also, ensure contracts are non-rebasing if they have not opted in.
+     * @dev Before a `rebaseOptIn` or non yield delegating token `transfer` can be executed contract
+     *      accounts need to have a more explicitly defined rebasing state set. 
+     *      
+     *      Contract account can be in the following states before `autoMigrate` is called:
+     *      1. Under any token contract codebase they haven't been part of any token transfers yet
+     *         having rebaseState `NotSet` and `alternativeCreditsPerToken == 0`
+     *      2. Under older token contract codebase they have the default rebaseState set to `NotSet` and
+     *         the codebase has "auto-migrated" them by setting the `alternativeCreditsPerToken` to some 
+     *         value greater than 0.
+     *      3. Contract has under any token contract codebase explicitly requested to be opted out of rebasing
+     *
+     *     Case 1. Needs to be migrated using autoMigrate to a nonRebasing account.
+     *     
+     *     Note: Even with this _autoMigrate function in place there will still be Case 2 accounts existing that
+     *           will behave exactly like RebaseState StdNonRebasing account, and still having their rebase state
+     *           set to `NotSet`
+     * 
      * @param _account Address of the account.
      */
-    function _isNonRebasingAccount(address _account) internal returns (bool) {
+    function _autoMigrate(address _account) internal returns (bool) {
         bool isContract = _account.code.length > 0;
         // In the older contract implementation: https://github.com/OriginProtocol/origin-dollar/blob/20a21d00a4a6ea9f42940ac194e82655fcda882e/contracts/contracts/token/OUSD.sol#L479-L489
         // an account could have non 0 balance, be (or become) a contract with the rebase state
@@ -472,10 +490,6 @@ contract OUSD is Governable {
         ) {
             _rebaseOptOut(_account);
         }
-
-        return rebaseState[_account] != RebaseOptions.YieldDelegationSource &&
-            rebaseState[_account] != RebaseOptions.YieldDelegationTarget &&
-            alternativeCreditsPerToken[_account] > 0;
     }
 
     function _balanceToRebasingCredits(uint256 balance)
@@ -515,15 +529,17 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptIn(address _account) internal {
+        _autoMigrate(_account);
+
         require(
-            _isNonRebasingAccount(_account),
+            alternativeCreditsPerToken[_account] > 0,
             "Account must be non-rebasing"
         );
         RebaseOptions state = rebaseState[_account];
         require(
             state == RebaseOptions.StdNonRebasing ||
-                state == RebaseOptions.NotSet,
-            "Only standard non-rebasing accounts can opt out"
+            state == RebaseOptions.NotSet,
+            "Only standard non-rebasing accounts can opt in"
         );
 
         uint256 balance = balanceOf(msg.sender);
@@ -642,15 +658,16 @@ contract OUSD is Governable {
             "Invalid rebaseState to"
         );
 
+
         if (
-            !_isNonRebasingAccount(from) &&
+            alternativeCreditsPerToken[from] == 0 &&
             (stateFrom == RebaseOptions.NotSet ||
                 stateFrom == RebaseOptions.StdRebasing)
         ) {
             _rebaseOptOut(from);
         }
         if (
-            _isNonRebasingAccount(to) &&
+            alternativeCreditsPerToken[to] > 0 &&
             (stateTo == RebaseOptions.NotSet ||
                 stateTo == RebaseOptions.StdNonRebasing)
         ) {
