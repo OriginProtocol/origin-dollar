@@ -23,7 +23,7 @@ contract YieldAggregator {
 
     event ProtocolFeeTransferred(uint256 feeAmount);
 
-    event GaugeBribeDeposited(uint256 amount);
+    event IncentivesDeposited(address asset, uint256 amount);
 
     constructor(address _oToken, address _manager, address _gauge) {
         manager = IYieldAggregatorManager(_manager);
@@ -61,7 +61,7 @@ contract YieldAggregator {
         emit ProtocolFeeTransferred(feeAmount);
     }
 
-    function bribe() external {
+    function deposit() external {
         payPendingFee();
 
         uint256 availableTokens = oToken.balanceOf(address(this));
@@ -70,7 +70,9 @@ contract YieldAggregator {
 
         gauge.notifyRewardAmount(address(oToken), availableTokens);
 
-        emit GaugeBribeDeposited(availableTokens);
+        taxedAmount = 0;
+
+        emit IncentivesDeposited(address(oToken), availableTokens);
     }
 
     function version() external pure returns (uint256) {
