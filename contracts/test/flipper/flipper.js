@@ -62,7 +62,9 @@ describe("Flipper", function () {
           // eslint-disable-next-line
           `buyOusdWith${titleName}`
         ](ousdUnits("1"));
-        await expect(call).to.be.revertedWith("Transfer amount exceeds balance");
+        await expect(call).to.be.revertedWith(
+          "Transfer amount exceeds balance"
+        );
       }
     );
   });
