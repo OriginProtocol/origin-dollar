@@ -2,7 +2,7 @@
 
 We are revamping the our rebasing token contract.
 
-The primary objective is to allow delegated yield. Delegated yield allows an account to seemlessly transfer all earned yield to another account.
+The primary objective is to allow delegated yield. Delegated yield allows an account to seamlessly transfer all earned yield to another account.
 
 Secondarily, we'd like to fix the tiny rounding issues around transfers and between local account information and global tracking slots.
 
@@ -13,11 +13,15 @@ OUSD is a rebasing token. It's mission in life is to be able to distribute incre
 
 **`_rebasingCreditsPerToken`** is a global variable that converts between "credits" stored on a account, and the actual balance of the account. This allows this single variable to be updated and in turn all "rebasing" users have their account balance change proportionally. Counterintuitively, this is not a multiplier on users credits, but a divider. So it's `user balance = user credits / _rebasingCreditsPerToken`. Because it's a divider, OUSD will slowly lose resolution over very long timeframes, as opposed to  abruptly stopping working suddenly once enough yield has been earned.
 
-**_creditBalances[account]** This per account mapping stores the internal credits for each account. 
+**_creditBalances[account]** This per account mapping stores the internal credits for each account.
 
 **alternativeCreditsPerToken[account]** This per account mapping stores an alternative, optional conversion factor for the value used in creditBalances. When it is set to zero, it means that it is unused, and the global `_rebasingCreditsPerToken` should be used instead. Because this alternative conversion factor does not update on rebases, it allows an account to be "frozen" and no longer change balances as rebases happen.
 
 **rebaseState[account]** This holds user preferences for what type of accounting is used on an account. For historical reasons the default, `NotSet` value on this could mean that the account is using either `StdRebasing` or `StdNonRebasing` accounting (see details later).
+
+**totalSupply** Notationally the sum of all account balances.
+
+## Account Types
 
 ### StdRebasing Account (Default)
 
@@ -95,3 +99,73 @@ Reads / Writes (no historical accounts to deal with!):
 
 Transitions to:
 - to `StdRebasing` if `undelegateYield()` is called on the yield delegation
+
+## Account invariants
+
+
+<!-- Invarient -->
+> Any account with a zero value in `alternativeCreditsPerToken` has a `rebaseState` that is one of (NotSet, StdRebasing, or YieldDelegationTarget) [^1]
+
+<!-- Invarient -->
+> Any account with value of 1e18 in `alternativeCreditsPerToken` has a `rebaseState` that is one of (StdNonRebasing, YieldDelegationSource) [^1]
+
+<!-- Invarient -->
+> `alternativeCreditsPerToken` can only be set to 0 or 1e18, no other values [^1]
+
+<!-- Invarient -->
+> Any account with `rebaseState` = `YieldDelegationSource` has a nonZero `yieldTo`
+
+<!-- Invarient -->
+> Any account with `rebaseState` = `YieldDelegationTarget` has a nonZero `yieldFrom`
+
+<!-- Invarient -->
+> Any non zero `YieldFrom` points to an account that has a `YieldTo` pointing back to it
+
+
+## Balance Invariants
+
+There are four different account types, two of which link to each other behind the scenes. Because of this, checks on overall balances cannot only look at the to / from accounts in a transfer.
+
+<!-- Invarient -->
+> No non-vault accounts cannot increase or decrease the sum of all balances. (This covers all actions including optIn/out, and yield delegation, not just transfers) [^2]
+
+<!-- Invarient -->
+> The from account in a transfer should have its balance reduced by the amount of the transfer, [^2]
+
+<!-- Invarient -->
+> The To account in a transfer should have its balance increased by the amount of the transfer. [^2]
+
+<!-- Invarient -->
+> The sum of all account balanceOf's is less or equal to than the totalSupply [^2]
+
+<!-- Invarient -->
+> The sum of all `RebaseOptions.StdNonRebasing` accounts equals the nonRebasingSupply. [^1] [^2] 
+
+<!-- Invarient -->
+> The sum of the credits in all NotSet, StdRebasing, and YieldDelegationTarget accounts equal the rebasingCredits.
+
+<!-- Invarient -->
+> The balanceOf on each account equals `_creditBalances[account] * (alternativeCreditsPerToken[account] > 0 ? alternativeCreditsPerToken[account] : _rebasingCreditsPerToken) - (yieldFrom[account] == 0 ? 0 : _creditBalances[yieldFrom[account]])`
+
+
+## Rebasing
+
+The token is designed to gently degrade once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
+
+There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly matched. Total supply moves up exactly as it is set.
+
+
+## Rebasing invariants
+
+<!-- Invarient -->
+> After a call to changeSupply() then `nonRebasingCredits + (rebasingCredits / rebasingCreditsPer) <= totalSupply`
+
+<!-- Invarient -->
+> After a call to changeSupply(), the new totalSupply should always match what was passed into the call or the call revert. 
+
+
+
+
+[^1]: From the current code base. Historically there may be different data stored in storage slots.
+
+[^2]: As long as the token has sufficient resolution
