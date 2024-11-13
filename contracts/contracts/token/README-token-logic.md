@@ -52,7 +52,9 @@ Transitions to:
 
 ### StdNonRebasing Account (Default)
 
-This account does not earn yield. It was originally created for backwards compatibility with systems that did not support balance changes, as well not wasting yield on third party contracts holding tokens that did not support any distribution to users. As a side benefit, regular users earn at a higher rate than the increase in assets.
+This account does not earn yield. It was originally created for backwards compatibility with contracts that did not support non-transfer balance changes, as well as to not waste giving yield to third party contracts that did not support any yield distribution to users.
+
+As a side benefit, because of these contracts, regular users earn at a higher rate than they would otherwise get.
 
 Reads:
 
@@ -158,7 +160,7 @@ The token distributes yield to users by "rebasing" (changing supply). This leave
 
 The token is designed to gently degrade in resolutions once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
 
-There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly the result of all the things that make it up. totalSupply must be exactly equal to the set value, nonRebasingSupply does not change, and we handle rounding errors by rounding down the rebasingCreditsPerToken. The resulting gap is distributed to users the next time the token rebases upwards.
+There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly the result of all the things that make it up. This is because totalSupply must be exactly equal to the new value and nonRebasingSupply must not change. The only option is to handle rounding errors by rounding down the rebasingCreditsPerToken. The resulting gap of undistributed yield is later distributed to users the next time the token rebases upwards.
 
 
 ## Rebasing invariants
@@ -167,7 +169,7 @@ There is inevitable rounding error when rebasing, since there is no possible way
 > After a call to changeSupply() then `nonRebasingCredits + (rebasingCredits / rebasingCreditsPer) <= totalSupply`
 
 <!-- Invarient -->
-> After a call to changeSupply(), the new totalSupply should always match what was passed into the call or the call revert. 
+> After a non-reverting call to changeSupply(), the new totalSupply should always match what was passed into the call. 
 
 <!-- Invarient -->
 > Only transfers change the balance of `StdNonRebasing` and `YieldDelegationSource` accounts.
@@ -179,7 +181,16 @@ There is inevitable rounding error when rebasing, since there is no possible way
 > After a non-reverting call to `rebaseOptIn()` the `alternativeCreditsPerToken[account] == 0`
 
 <!-- Invarient -->
+> Calling `rebaseOptIn()` does not result in a change in account balance. [^2]
+
+<!-- Invarient -->
 > After a non-reverting call to `rebaseOptOut()` the `alternativeCreditsPerToken[account] == 1e18`
+
+<!-- Invarient -->
+> Calling `rebaseOptOut()` does not result in a change in account balance.
+
+<!-- Invarient -->
+> Only `transfer`, `transferFrom`, `mint`, `burn`, and `changeSupply` result in a change in any account's balance.
 
 <!-- Invarient -->
 > A successful mint() call by the vault results in the target account's balance increasing by the amount specified
