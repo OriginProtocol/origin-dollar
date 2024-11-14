@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { loadTokenTransferFixture } = require("../_fixture");
 
-const { isFork } = require("../helpers");
+const { isFork, ousdUnits} = require("../helpers");
 
 describe.only("Token Transfers", function () {
   if (isFork) {
@@ -12,7 +12,7 @@ describe.only("Token Transfers", function () {
     fixture = await loadTokenTransferFixture();
   });
 
-  it("Accounts should have correct initial states", async () => {
+  it("Accounts and ousd contract should have correct initial states", async () => {
     const {
       rebase_eoa_notset_0,
       rebase_eoa_notset_1,
@@ -32,7 +32,7 @@ describe.only("Token Transfers", function () {
       rebase_source_1,
       rebase_target_0,
       rebase_target_1,
-      ousd
+      ousd,
     } = fixture;
     
     expect(await ousd.rebaseState(rebase_eoa_notset_0.address)).to.equal(0); // rebaseState:NotSet
@@ -79,5 +79,10 @@ describe.only("Token Transfers", function () {
     await expect(rebase_target_0).has.a.balanceOf("77", ousd);
     expect(await ousd.rebaseState(rebase_target_1.address)).to.equal(4); // rebaseState:YieldDelegationTarget
     await expect(rebase_target_1).has.a.balanceOf("88", ousd);
+
+    const totalSupply = 11 + 12 + 21 + 22 + 33 + 34 + 44 + 45 + 55 + 56 + 65 + 66 + 76 + 87 + 77 + 88;
+    const nonRebasingSupply = 44 + 45 + 55 + 56 + 65 + 66;
+    expect(await ousd.totalSupply()).to.equal(ousdUnits(`${totalSupply}`));
+    expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits(`${nonRebasingSupply}`));
   });
 });

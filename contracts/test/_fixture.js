@@ -376,6 +376,9 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     .connect(governor)
     .delegateYield(rebase_source_1.address, rebase_target_1.address);
 
+  // matt burn remaining OUSD
+  await vault.connect(matt).redeemAll(ousdUnits("0"));
+
   return {
     rebase_eoa_notset_0,
     rebase_eoa_notset_1,
