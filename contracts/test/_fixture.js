@@ -266,7 +266,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
 
     const contract = await ethers.getContract(fullName);
     await contract.setOUSD(ousd.address);
-
+    
     return contract;
   };
 

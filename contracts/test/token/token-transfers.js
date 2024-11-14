@@ -3,7 +3,7 @@ const { loadTokenTransferFixture } = require("../_fixture");
 
 const { isFork, ousdUnits} = require("../helpers");
 
-describe.only("Token Transfers", function () {
+describe("Token Transfers", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -85,4 +85,70 @@ describe.only("Token Transfers", function () {
     expect(await ousd.totalSupply()).to.equal(ousdUnits(`${totalSupply}`));
     expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits(`${nonRebasingSupply}`));
   });
+
+  const fromAccounts = [
+    {name: "rebase_eoa_notset_0", affectsRebasingCredits: true, isContract: false},
+    {name: "rebase_eoa_stdRebasing_0", affectsRebasingCredits: true, isContract: false},
+    {name: "rebase_contract_0", affectsRebasingCredits: true, isContract: true},
+    {name: "nonrebase_eoa_0", affectsRebasingCredits: false, isContract: false},
+    {name: "nonrebase_cotract_0", affectsRebasingCredits: false, isContract: true},
+    // can not initiate a transfer from below contract since it has the balance of 0
+    //{name: "nonrebase_cotract_notSet_0", affectsRebasingCredits: false, isContract: true},
+    {name: "nonrebase_cotract_notSet_altcpt_gt_0", affectsRebasingCredits: false, isContract: true},
+    {name: "rebase_source_0", affectsRebasingCredits: true, isContract: false},
+    {name: "rebase_target_0", affectsRebasingCredits: true, isContract: false},
+  ];
+
+  const toAccounts = [
+    {name: "rebase_eoa_notset_1", affectsRebasingCredits: true},
+    {name: "rebase_eoa_stdRebasing_1", affectsRebasingCredits: true},
+    {name: "rebase_contract_1", affectsRebasingCredits: true},
+    {name: "nonrebase_eoa_1", affectsRebasingCredits: false},
+    {name: "nonrebase_cotract_1", affectsRebasingCredits: false},
+    {name: "nonrebase_cotract_notSet_1", affectsRebasingCredits: false},
+    {name: "nonrebase_cotract_notSet_altcpt_gt_1", affectsRebasingCredits: false},
+    {name: "rebase_source_1", affectsRebasingCredits: true},
+    {name: "rebase_target_1", affectsRebasingCredits: true},
+  ];
+
+  const totalSupply = ousdUnits("792");
+  const nonRebasingSupply = ousdUnits("331");
+  for (let i = 0; i < fromAccounts.length; i++) {
+    for (let j = 0; j < toAccounts.length; j++) {
+      const {name: fromName, affectsRebasingCredits: fromAffectsRC, isContract } = fromAccounts[i];
+      const {name: toName, affectsRebasingCredits: toAffectsRC } = toAccounts[j];
+
+      it(`Should transfer from ${fromName} to ${toName}`, async () => {
+        const fromAccount = fixture[fromName];
+        const toAccount = fixture[toName];
+        const { ousd } = fixture;
+
+        const fromBalance = await ousd.balanceOf(fromAccount.address);
+        const toBalance = await ousd.balanceOf(toAccount.address);
+        // Random transfer between 2-8
+        const amount = ousdUnits(`${2 + Math.random() * 6}`);
+
+        if (isContract) {
+          await fromAccount.transfer(toAccount.address, amount);
+        } else {
+          await ousd.connect(fromAccount).transfer(toAccount.address, amount);
+        }
+
+        // check balances
+        await expect(await ousd.balanceOf(fromAccount.address)).to.equal(fromBalance.sub(amount));
+        await expect(await ousd.balanceOf(toAccount.address)).to.equal(toBalance.add(amount));
+
+        let expectedNonRebasingSupply = nonRebasingSupply;
+        if (!fromAffectsRC) {
+          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(amount);
+        }
+        if (!toAffectsRC) {
+          expectedNonRebasingSupply = expectedNonRebasingSupply.add(amount);
+        }
+        // check global contract (in)variants
+        await expect(await ousd.totalSupply()).to.equal(totalSupply);
+        await expect(await ousd.nonRebasingSupply()).to.equal(expectedNonRebasingSupply);
+      });
+    }
+  }
 });
