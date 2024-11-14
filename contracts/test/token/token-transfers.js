@@ -28,10 +28,10 @@ describe("Token Transfers", function () {
       nonrebase_cotract_notSet_1,
       nonrebase_cotract_notSet_altcpt_gt_0,
       nonrebase_cotract_notSet_altcpt_gt_1,
-      rebase_source_0,
-      rebase_source_1,
-      rebase_target_0,
-      rebase_target_1,
+      rebase_delegate_source_0,
+      rebase_delegate_source_1,
+      rebase_delegate_target_0,
+      rebase_delegate_target_1,
       ousd,
     } = fixture;
 
@@ -88,33 +88,27 @@ describe("Token Transfers", function () {
       ousd
     );
 
-    expect(await ousd.rebaseState(rebase_source_0.address)).to.equal(3); // rebaseState:YieldDelegationSource
-    await expect(rebase_source_0).has.a.balanceOf("76", ousd);
-    expect(await ousd.rebaseState(rebase_source_1.address)).to.equal(3); // rebaseState:YieldDelegationSource
-    await expect(rebase_source_1).has.a.balanceOf("87", ousd);
+    expect(await ousd.rebaseState(rebase_delegate_source_0.address)).to.equal(
+      3
+    ); // rebaseState:YieldDelegationSource
+    await expect(rebase_delegate_source_0).has.a.balanceOf("76", ousd);
+    expect(await ousd.rebaseState(rebase_delegate_source_1.address)).to.equal(
+      3
+    ); // rebaseState:YieldDelegationSource
+    await expect(rebase_delegate_source_1).has.a.balanceOf("87", ousd);
 
-    expect(await ousd.rebaseState(rebase_target_0.address)).to.equal(4); // rebaseState:YieldDelegationTarget
-    await expect(rebase_target_0).has.a.balanceOf("77", ousd);
-    expect(await ousd.rebaseState(rebase_target_1.address)).to.equal(4); // rebaseState:YieldDelegationTarget
-    await expect(rebase_target_1).has.a.balanceOf("88", ousd);
+    expect(await ousd.rebaseState(rebase_delegate_target_0.address)).to.equal(
+      4
+    ); // rebaseState:YieldDelegationTarget
+    await expect(rebase_delegate_target_0).has.a.balanceOf("77", ousd);
+    expect(await ousd.rebaseState(rebase_delegate_target_1.address)).to.equal(
+      4
+    ); // rebaseState:YieldDelegationTarget
+    await expect(rebase_delegate_target_1).has.a.balanceOf("88", ousd);
 
-    const totalSupply =
-      11 +
-      12 +
-      21 +
-      22 +
-      33 +
-      34 +
-      44 +
-      45 +
-      55 +
-      56 +
-      65 +
-      66 +
-      76 +
-      87 +
-      77 +
-      88;
+    // prettier-ignore
+    const totalSupply = 11 + 12 + 21 + 22 + 33 + 34 + 44 +
+      45 + 55 + 56 + 65 + 66 + 76 + 87 + 77 + 88;
     const nonRebasingSupply = 44 + 45 + 55 + 56 + 65 + 66;
     expect(await ousd.totalSupply()).to.equal(ousdUnits(`${totalSupply}`));
     expect(await ousd.nonRebasingSupply()).to.equal(
@@ -156,12 +150,12 @@ describe("Token Transfers", function () {
       isContract: true,
     },
     {
-      name: "rebase_source_0",
+      name: "rebase_delegate_source_0",
       affectsRebasingCredits: true,
       isContract: false,
     },
     {
-      name: "rebase_target_0",
+      name: "rebase_delegate_target_0",
       affectsRebasingCredits: true,
       isContract: false,
     },
@@ -178,8 +172,8 @@ describe("Token Transfers", function () {
       name: "nonrebase_cotract_notSet_altcpt_gt_1",
       affectsRebasingCredits: false,
     },
-    { name: "rebase_source_1", affectsRebasingCredits: true },
-    { name: "rebase_target_1", affectsRebasingCredits: true },
+    { name: "rebase_delegate_source_1", affectsRebasingCredits: true },
+    { name: "rebase_delegate_target_1", affectsRebasingCredits: true },
   ];
 
   const totalSupply = ousdUnits("792");

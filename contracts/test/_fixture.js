@@ -236,6 +236,11 @@ const getVaultAndTokenConracts = async () => {
   };
 };
 
+/**
+ * This fixture creates the 4 different OUSD contract account types in all of
+ * the possible storage configuration: StdRebasing, StdNonRebasing, YieldDelegationSource,
+ * YieldDelegationTarget
+ */
 const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   const signers = await hre.ethers.getSigners();
   const matt = signers[4];
@@ -390,46 +395,84 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
       balance: ousdUnits("66"),
     });
 
-  const rebase_source_0 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_source_0.address, ousdUnits("76"));
-  const rebase_target_0 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_target_0.address, ousdUnits("77"));
+  const rebase_delegate_source_0 = await createAccount();
+  await ousd
+    .connect(matt)
+    .transfer(rebase_delegate_source_0.address, ousdUnits("76"));
+  const rebase_delegate_target_0 = await createAccount();
+  await ousd
+    .connect(matt)
+    .transfer(rebase_delegate_target_0.address, ousdUnits("77"));
 
   await ousd
     .connect(governor)
-    .delegateYield(rebase_source_0.address, rebase_target_0.address);
+    .delegateYield(
+      rebase_delegate_source_0.address,
+      rebase_delegate_target_0.address
+    );
 
-  const rebase_source_1 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_source_1.address, ousdUnits("87"));
-  const rebase_target_1 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_target_1.address, ousdUnits("88"));
+  const rebase_delegate_source_1 = await createAccount();
+  await ousd
+    .connect(matt)
+    .transfer(rebase_delegate_source_1.address, ousdUnits("87"));
+  const rebase_delegate_target_1 = await createAccount();
+  await ousd
+    .connect(matt)
+    .transfer(rebase_delegate_target_1.address, ousdUnits("88"));
 
   await ousd
     .connect(governor)
-    .delegateYield(rebase_source_1.address, rebase_target_1.address);
+    .delegateYield(
+      rebase_delegate_source_1.address,
+      rebase_delegate_target_1.address
+    );
 
   // matt burn remaining OUSD
   await vault.connect(matt).redeemAll(ousdUnits("0"));
 
   return {
+    // StdRebasing account type:
+    // - all have alternativeCreditsPerToken = 0
+    // - _creditBalances non zero using global contract's rebasingCredits to compute balance
+
+    // EOA account that has rebaseState: NotSet
     rebase_eoa_notset_0,
     rebase_eoa_notset_1,
+    // EOA account that has rebaseState: StdRebasing
     rebase_eoa_stdRebasing_0,
     rebase_eoa_stdRebasing_1,
+    // contract account that has rebaseState: StdRebasing
     rebase_contract_0,
     rebase_contract_1,
+
+    // StdNonRebasing account type:
+    // - alternativeCreditsPerToken > 0 & 1e18 for new accounts
+    // - _creditBalances non zero:
+    //   - new accounts match _creditBalances to their token balance
+    //   - older accounts use _creditBalances & alternativeCreditsPerToken to compute token balance
+
+    // EOA account that has rebaseState: StdNonRebasing
     nonrebase_eoa_0,
     nonrebase_eoa_1,
+    // contract account that has rebaseState: StdNonRebasing
     nonrebase_cotract_0,
     nonrebase_cotract_1,
+    // contract account that has rebaseState: NotSet
     nonrebase_cotract_notSet_0,
     nonrebase_cotract_notSet_1,
+    // contract account that has rebaseState: NotSet & alternativeCreditsPerToken > 0
+    // note: these are older accounts that have been migrated by the older versions of
+    //       of the code without explicitly setting rebaseState to StdNonRebasing
     nonrebase_cotract_notSet_altcpt_gt_0,
     nonrebase_cotract_notSet_altcpt_gt_1,
-    rebase_source_0,
-    rebase_source_1,
-    rebase_target_0,
-    rebase_target_1,
+
+    // account delegating yield
+    rebase_delegate_source_0,
+    rebase_delegate_source_1,
+
+    // account receiving delegated yield
+    rebase_delegate_target_0,
+    rebase_delegate_target_1,
   };
 };
 
