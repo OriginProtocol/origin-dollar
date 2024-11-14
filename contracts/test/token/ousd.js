@@ -248,9 +248,7 @@ describe("Token", function () {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
     // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .approve(await josh.getAddress(), ousdUnits("100"));
+    await ousd.connect(matt).approve(await josh.getAddress(), ousdUnits("100"));
 
     // Give contract 100 OUSD from Matt via Josh
     await ousd
@@ -287,9 +285,7 @@ describe("Token", function () {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
     // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .approve(await josh.getAddress(), ousdUnits("150"));
+    await ousd.connect(matt).approve(await josh.getAddress(), ousdUnits("150"));
     // Give contract 100 OUSD from Matt via Josh
     await ousd
       .connect(josh)
@@ -334,10 +330,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("100.00", ousd);
     await expect(josh).has.an.approxBalanceOf("0", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    await mockNonRebasing.approve(
-      await matt.getAddress(),
-      ousdUnits("100")
-    );
+    await mockNonRebasing.approve(await matt.getAddress(), ousdUnits("100"));
 
     await ousd
       .connect(matt)
@@ -381,10 +374,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("250", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
     // Transfer contract balance to Josh
-    await mockNonRebasing.approve(
-      await matt.getAddress(),
-      ousdUnits("150")
-    );
+    await mockNonRebasing.approve(await matt.getAddress(), ousdUnits("150"));
 
     await ousd
       .connect(matt)

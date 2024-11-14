@@ -196,7 +196,10 @@ const getVaultAndTokenConracts = async () => {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   // the same contract as the "ousd" one just with some unlocked features
-  const ousdUnlocked = await ethers.getContractAt("TestUpgradedOUSD", ousdProxy.address);
+  const ousdUnlocked = await ethers.getContractAt(
+    "TestUpgradedOUSD",
+    ousdProxy.address
+  );
 
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
@@ -229,7 +232,7 @@ const getVaultAndTokenConracts = async () => {
     oeth,
     woeth,
     mockNonRebasing,
-    mockNonRebasingTwo
+    mockNonRebasingTwo,
   };
 };
 
@@ -239,7 +242,6 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   const governor = signers[1];
 
   if (!isFork) {
-
     await fundAccounts();
     const dai = await ethers.getContract("MockDAI");
     await dai.connect(matt).approve(vault.address, daiUnits("1000"));
@@ -253,12 +255,12 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     let account = ethers.Wallet.createRandom();
     // Give ETH to user
     await hardhatSetBalance(account.address, "1000000");
-    account =  account.connect(ethers.provider);
+    account = account.connect(ethers.provider);
     return account;
   };
 
   const createContract = async (name) => {
-    const fullName = `MockNonRebasing_${name}`
+    const fullName = `MockNonRebasing_${name}`;
     await deploy(fullName, {
       from: matt.address,
       contract: "MockNonRebasing",
@@ -266,7 +268,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
 
     const contract = await ethers.getContract(fullName);
     await contract.setOUSD(ousd.address);
-    
+
     return contract;
   };
 
@@ -275,48 +277,68 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   const generateCreditsBalancePair = ({ creditsPerToken, tokenBalance }) => {
     const creditsPerTokenBN = parseUnits(`${creditsPerToken}`, 27);
     // 1e18 * 1e27 / 1e18
-    const creditsBalanceBN = tokenBalance.mul(creditsPerTokenBN).div(parseUnits('1', 18));
+    const creditsBalanceBN = tokenBalance
+      .mul(creditsPerTokenBN)
+      .div(parseUnits("1", 18));
 
     return {
       creditsPerTokenBN,
-      creditsBalanceBN
+      creditsBalanceBN,
     };
-  }
+  };
 
-  const createNonRebasingNotSetAlternativeCptContract = async ({ name, creditsPerToken, balance }) => {
+  const createNonRebasingNotSetAlternativeCptContract = async ({
+    name,
+    creditsPerToken,
+    balance,
+  }) => {
     const nonrebase_cotract_notSet_altcpt_gt = await createContract(name);
-    await ousd.connect(matt).transfer(nonrebase_cotract_notSet_altcpt_gt.address, balance);
+    await ousd
+      .connect(matt)
+      .transfer(nonrebase_cotract_notSet_altcpt_gt.address, balance);
     const { creditsPerTokenBN, creditsBalanceBN } = generateCreditsBalancePair({
       creditsPerToken,
-      tokenBalance: balance
+      tokenBalance: balance,
     });
-    await ousdUnlocked.connect(matt).overwriteCreditBalances(
-      nonrebase_cotract_notSet_altcpt_gt.address,
-      creditsBalanceBN
-    );
-    await ousdUnlocked.connect(matt).overwriteAlternativeCPT(
-      nonrebase_cotract_notSet_altcpt_gt.address,
-      creditsPerTokenBN
-    );
+    await ousdUnlocked
+      .connect(matt)
+      .overwriteCreditBalances(
+        nonrebase_cotract_notSet_altcpt_gt.address,
+        creditsBalanceBN
+      );
+    await ousdUnlocked
+      .connect(matt)
+      .overwriteAlternativeCPT(
+        nonrebase_cotract_notSet_altcpt_gt.address,
+        creditsPerTokenBN
+      );
     await ousdUnlocked.connect(matt).overwriteRebaseState(
       nonrebase_cotract_notSet_altcpt_gt.address,
       0 // NotSet
     );
 
     return nonrebase_cotract_notSet_altcpt_gt;
-  }
+  };
 
   const rebase_eoa_notset_0 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_eoa_notset_0.address, ousdUnits("11"));
+  await ousd
+    .connect(matt)
+    .transfer(rebase_eoa_notset_0.address, ousdUnits("11"));
   const rebase_eoa_notset_1 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_eoa_notset_1.address, ousdUnits("12"));
+  await ousd
+    .connect(matt)
+    .transfer(rebase_eoa_notset_1.address, ousdUnits("12"));
 
   const rebase_eoa_stdRebasing_0 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_eoa_stdRebasing_0.address, ousdUnits("21"));
+  await ousd
+    .connect(matt)
+    .transfer(rebase_eoa_stdRebasing_0.address, ousdUnits("21"));
   await ousd.connect(rebase_eoa_stdRebasing_0).rebaseOptOut();
   await ousd.connect(rebase_eoa_stdRebasing_0).rebaseOptIn();
   const rebase_eoa_stdRebasing_1 = await createAccount();
-  await ousd.connect(matt).transfer(rebase_eoa_stdRebasing_1.address, ousdUnits("22"));
+  await ousd
+    .connect(matt)
+    .transfer(rebase_eoa_stdRebasing_1.address, ousdUnits("22"));
   await ousd.connect(rebase_eoa_stdRebasing_1).rebaseOptOut();
   await ousd.connect(rebase_eoa_stdRebasing_1).rebaseOptIn();
 
@@ -335,28 +357,38 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   await ousd.connect(nonrebase_eoa_1).rebaseOptOut();
 
   const nonrebase_cotract_0 = await createContract("nonrebase_cotract_0");
-  await ousd.connect(matt).transfer(nonrebase_cotract_0.address, ousdUnits("55"));
+  await ousd
+    .connect(matt)
+    .transfer(nonrebase_cotract_0.address, ousdUnits("55"));
   await nonrebase_cotract_0.connect(matt).rebaseOptIn();
   await nonrebase_cotract_0.connect(matt).rebaseOptOut();
   const nonrebase_cotract_1 = await createContract("nonrebase_cotract_1");
-  await ousd.connect(matt).transfer(nonrebase_cotract_1.address, ousdUnits("56"));
+  await ousd
+    .connect(matt)
+    .transfer(nonrebase_cotract_1.address, ousdUnits("56"));
   await nonrebase_cotract_1.connect(matt).rebaseOptIn();
   await nonrebase_cotract_1.connect(matt).rebaseOptOut();
 
-  const nonrebase_cotract_notSet_0 = await createContract("nonrebase_cotract_notSet_0");
-  const nonrebase_cotract_notSet_1 = await createContract("nonrebase_cotract_notSet_1");
+  const nonrebase_cotract_notSet_0 = await createContract(
+    "nonrebase_cotract_notSet_0"
+  );
+  const nonrebase_cotract_notSet_1 = await createContract(
+    "nonrebase_cotract_notSet_1"
+  );
 
-  const nonrebase_cotract_notSet_altcpt_gt_0 = await createNonRebasingNotSetAlternativeCptContract({
-    name: "nonrebase_cotract_notSet_altcpt_gt_0",
-    creditsPerToken: 0.934232,
-    balance: ousdUnits("65")
-  });
+  const nonrebase_cotract_notSet_altcpt_gt_0 =
+    await createNonRebasingNotSetAlternativeCptContract({
+      name: "nonrebase_cotract_notSet_altcpt_gt_0",
+      creditsPerToken: 0.934232,
+      balance: ousdUnits("65"),
+    });
 
-  const nonrebase_cotract_notSet_altcpt_gt_1 = await createNonRebasingNotSetAlternativeCptContract({
-    name: "nonrebase_cotract_notSet_altcpt_gt_1",
-    creditsPerToken: 0.890232,
-    balance: ousdUnits("66")
-  });
+  const nonrebase_cotract_notSet_altcpt_gt_1 =
+    await createNonRebasingNotSetAlternativeCptContract({
+      name: "nonrebase_cotract_notSet_altcpt_gt_1",
+      creditsPerToken: 0.890232,
+      balance: ousdUnits("66"),
+    });
 
   const rebase_source_0 = await createAccount();
   await ousd.connect(matt).transfer(rebase_source_0.address, ousdUnits("76"));
@@ -398,8 +430,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     rebase_source_1,
     rebase_target_0,
     rebase_target_1,
-  }
-
+  };
 };
 
 /**
@@ -437,8 +468,8 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
     ...accountTypes,
     governorAddr,
     strategistAddr,
-    timelockAddr
-  }
+    timelockAddr,
+  };
 });
 
 const defaultFixture = deployments.createFixture(async () => {
@@ -875,7 +906,9 @@ const defaultFixture = deployments.createFixture(async () => {
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Add TUSD in fixture, it is disabled by default in deployment
-    await vaultAndTokenConracts.vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, 0);
+    await vaultAndTokenConracts.vault
+      .connect(sGovernor)
+      .supportAsset(assetAddresses.TUSD, 0);
 
     // Enable capital movement
     await vaultAndTokenConracts.vault.connect(sGovernor).unpauseCapital();
@@ -904,8 +937,12 @@ const defaultFixture = deployments.createFixture(async () => {
 
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
-      await dai.connect(user).approve(vaultAndTokenConracts.vault.address, daiUnits("100"));
-      await vaultAndTokenConracts.vault.connect(user).mint(dai.address, daiUnits("100"), 0);
+      await dai
+        .connect(user)
+        .approve(vaultAndTokenConracts.vault.address, daiUnits("100"));
+      await vaultAndTokenConracts.vault
+        .connect(user)
+        .mint(dai.address, daiUnits("100"), 0);
     }
   }
   return {

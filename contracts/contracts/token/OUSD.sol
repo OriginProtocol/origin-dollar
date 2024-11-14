@@ -456,22 +456,22 @@ contract OUSD is Governable {
 
     /**
      * @dev Before a `rebaseOptIn` or non yield delegating token `transfer` can be executed contract
-     *      accounts need to have a more explicitly defined rebasing state set. 
-     *      
+     *      accounts need to have a more explicitly defined rebasing state set.
+     *
      *      Contract account can be in the following states before `autoMigrate` is called:
      *      1. Under any token contract codebase they haven't been part of any token transfers yet
      *         having rebaseState `NotSet` and `alternativeCreditsPerToken == 0`
      *      2. Under older token contract codebase they have the default rebaseState set to `NotSet` and
-     *         the codebase has "auto-migrated" them by setting the `alternativeCreditsPerToken` to some 
+     *         the codebase has "auto-migrated" them by setting the `alternativeCreditsPerToken` to some
      *         value greater than 0.
      *      3. Contract has under any token contract codebase explicitly requested to be opted out of rebasing
      *
      *     Case 1. Needs to be migrated using autoMigrate to a nonRebasing account.
-     *     
+     *
      *     Note: Even with this _autoMigrate function in place there will still be Case 2 accounts existing that
      *           will behave exactly like RebaseState StdNonRebasing account, and still having their rebase state
      *           set to `NotSet`
-     * 
+     *
      * @param _account Address of the account.
      */
     function _autoMigrate(address _account) internal returns (bool) {
@@ -511,10 +511,7 @@ contract OUSD is Governable {
      * to upside and downside.
      * @param _account Address of the account.
      */
-    function governanceRebaseOptIn(address _account)
-        external
-        onlyGovernor
-    {
+    function governanceRebaseOptIn(address _account) external onlyGovernor {
         _rebaseOptIn(_account);
     }
 
@@ -537,7 +534,7 @@ contract OUSD is Governable {
         RebaseOptions state = rebaseState[_account];
         require(
             state == RebaseOptions.StdNonRebasing ||
-            state == RebaseOptions.NotSet,
+                state == RebaseOptions.NotSet,
             "Only standard non-rebasing accounts can opt in"
         );
 
@@ -590,10 +587,7 @@ contract OUSD is Governable {
      *      the exchange rate between "credits" and OUSD tokens to change balances.
      * @param _newTotalSupply New total supply of OUSD.
      */
-    function changeSupply(uint256 _newTotalSupply)
-        external
-        onlyVault
-    {
+    function changeSupply(uint256 _newTotalSupply) external onlyVault {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (_totalSupply == _newTotalSupply) {
@@ -626,10 +620,7 @@ contract OUSD is Governable {
         );
     }
 
-    function delegateYield(address from, address to)
-        external
-        onlyGovernor
-    {
+    function delegateYield(address from, address to) external onlyGovernor {
         require(from != to, "Cannot delegate to self");
         require(
             yieldFrom[to] == address(0) &&
@@ -654,7 +645,6 @@ contract OUSD is Governable {
                 stateTo == RebaseOptions.StdRebasing,
             "Invalid rebaseState to"
         );
-
 
         if (
             alternativeCreditsPerToken[from] == 0 &&
