@@ -6,6 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1190,7 +1191,12 @@ const deployOUSDCore = async () => {
   await deployWithConfirmation("VaultProxy");
 
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
+  let dOUSD;
+  if (isTest) {
+    dOUSD = await deployWithConfirmation("TestUpgradedOUSD");
+  } else {
+    dOUSD = await deployWithConfirmation("OUSD");
+  }
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
