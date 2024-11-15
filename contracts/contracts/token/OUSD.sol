@@ -296,7 +296,6 @@ contract OUSD is Governable {
 
             _creditBalances[account] = newBalance;
             _creditBalances[target] = targetNewCredits;
-            alternativeCreditsPerToken[account] = 1e18;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
             uint256 newCredits = _balanceToRebasingCredits(
                 newBalance + _creditBalances[yieldFrom[account]]
@@ -694,9 +693,7 @@ contract OUSD is Governable {
 
         // Local
         _creditBalances[from] = fromBalance;
-        alternativeCreditsPerToken[from] = 1e18;
         _creditBalances[to] = toNewCredits;
-        alternativeCreditsPerToken[to] = 0; // Is needed otherwise rebaseOptOut check will not pass
 
         // Global
         nonRebasingSupply += fromBalance;
