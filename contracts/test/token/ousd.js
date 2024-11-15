@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture, loadTokenTransferFixture } = require("../_fixture");
 const { utils } = require("ethers");
 
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
@@ -890,6 +890,24 @@ describe("Token", function () {
 
     it("should be able to chenge yield delegation", async () => {
       //A Should delegate to account B, rebase with profit, delegate to account C and all have correct balances
+    });
+  });
+
+  describe("Old code migrated contract accounts", function () {
+    beforeEach(async () => {
+      fixture = await loadTokenTransferFixture();
+    });
+
+    it("Old code auto migrated contract when calling rebase OptIn shouldn't affect invariables", async () => {
+      const {
+        nonrebase_cotract_notSet_altcpt_gt_0: contract_account,
+        ousd
+      } = fixture;
+
+      const nonRebasingSupply = await ousd.nonRebasingSupply();
+      await contract_account.rebaseOptIn();
+
+      await expect(nonRebasingSupply).to.equal(await ousd.nonRebasingSupply());
     });
   });
 });
