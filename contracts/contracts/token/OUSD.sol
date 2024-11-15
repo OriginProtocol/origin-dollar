@@ -650,18 +650,10 @@ contract OUSD is Governable {
             "Invalid rebaseState to"
         );
 
-        if (
-            alternativeCreditsPerToken[from] == 0 &&
-            (stateFrom == RebaseOptions.NotSet ||
-                stateFrom == RebaseOptions.StdRebasing)
-        ) {
+        if (alternativeCreditsPerToken[from] == 0) {
             _rebaseOptOut(from);
         }
-        if (
-            alternativeCreditsPerToken[to] > 0 &&
-            (stateTo == RebaseOptions.NotSet ||
-                stateTo == RebaseOptions.StdNonRebasing)
-        ) {
+        if (alternativeCreditsPerToken[to] > 0) {
             _rebaseOptIn(to);
         }
 
