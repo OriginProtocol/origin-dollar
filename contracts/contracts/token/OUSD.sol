@@ -48,7 +48,7 @@ contract OUSD is Governable {
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
-    mapping(address => uint256) private _creditBalances;
+    mapping(address => uint256) internal _creditBalances;
     uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts)
     uint256 private _rebasingCreditsPerToken;
     uint256 public nonRebasingSupply; // All nonrebasing balances
@@ -538,7 +538,7 @@ contract OUSD is Governable {
         // prettier-ignore
         require(
             state == RebaseOptions.StdNonRebasing ||
-            state == RebaseOptions.NotSet,
+                state == RebaseOptions.NotSet,
             "Only standard non-rebasing accounts can opt in"
         );
 

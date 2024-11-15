@@ -786,7 +786,7 @@ describe("Token", function () {
       const beforeReceiver = await ousd.balanceOf(mockNonRebasing.address);
       await ousd.connect(matt).transfer(mockNonRebasing.address, amount);
       const afterReceiver = await ousd.balanceOf(mockNonRebasing.address);
-      expect(beforeReceiver.add(amount)).to.equal(afterReceiver);
+      await expect(beforeReceiver.add(amount)).to.equal(afterReceiver);
     };
 
     // Helper to verify balance-exact transfers out
@@ -794,7 +794,7 @@ describe("Token", function () {
       const beforeReceiver = await ousd.balanceOf(mockNonRebasing.address);
       await mockNonRebasing.transfer(matt.address, amount);
       const afterReceiver = await ousd.balanceOf(mockNonRebasing.address);
-      expect(beforeReceiver.sub(amount)).to.equal(afterReceiver);
+      await expect(beforeReceiver.sub(amount)).to.equal(afterReceiver);
     };
 
     // In
