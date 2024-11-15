@@ -141,6 +141,7 @@ contract OUSD is Governable {
         uint256 baseBalance = (_creditBalances[_account] * 1e18) /
             _creditsPerToken(_account);
         if (state == RebaseOptions.YieldDelegationTarget) {
+            // _creditBalances of yieldFrom accounts equals token balances
             return baseBalance - _creditBalances[yieldFrom[_account]];
         }
         return baseBalance;
@@ -154,7 +155,7 @@ contract OUSD is Governable {
      *         address
      */
     function creditsBalanceOf(address _account)
-        public
+        external
         view
         returns (uint256, uint256)
     {
@@ -179,7 +180,7 @@ contract OUSD is Governable {
      *         address, and isUpgraded
      */
     function creditsBalanceOfHighres(address _account)
-        public
+        external
         view
         returns (
             uint256,
