@@ -624,8 +624,8 @@ contract OUSD is Governable {
     }
 
     function delegateYield(address from, address to) external onlyGovernor {
-        require(yieldTo[from] != address(0), "Zero from address not allowed");
-        require(yieldTo[to] != address(0), "Zero to address not allowed");
+        require(from != address(0), "Zero from address not allowed");
+        require(to != address(0), "Zero to address not allowed");
 
         require(from != to, "Cannot delegate to self");
         require(
@@ -689,7 +689,7 @@ contract OUSD is Governable {
         uint256 toNewCredits = _balanceToRebasingCredits(toBalance);
 
         // Remove the bidirectional links
-        yieldFrom[yieldTo[from]] = address(0);
+        yieldFrom[to] = address(0);
         yieldTo[from] = address(0);
         rebaseState[from] = RebaseOptions.StdNonRebasing;
         rebaseState[to] = RebaseOptions.StdRebasing;
