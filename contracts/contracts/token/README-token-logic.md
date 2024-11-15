@@ -125,8 +125,7 @@ Transitions to:
 > Any account with `rebaseState` = `YieldDelegationTarget` has a nonZero `yieldFrom`
 
 <!-- Invarient -->
-> Any non zero `YieldFrom` points to an account that has a `YieldTo` pointing back to it
-
+> Any non zero valued `YieldFrom` points to an account that has a `YieldTo` pointing back to the starting account.
 
 ## Balance Invariants
 
@@ -160,8 +159,6 @@ The token distributes yield to users by "rebasing" (changing supply). This leave
 
 The token is designed to gently degrade in resolutions once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
 
-There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly the result of all the things that make it up. This is because totalSupply must be exactly equal to the new value and nonRebasingSupply must not change. The only option is to handle rounding errors by rounding down the rebasingCreditsPerToken. The resulting gap of undistributed yield is later distributed to users the next time the token rebases upwards.
-
 
 ## Rebasing invariants
 
@@ -172,7 +169,7 @@ There is inevitable rounding error when rebasing, since there is no possible way
 > After a non-reverting call to changeSupply(), the new totalSupply should always match what was passed into the call. 
 
 <!-- Invarient -->
-> Only transfers change the balance of `StdNonRebasing` and `YieldDelegationSource` accounts.
+> Only transfers, mints, and burns change the balance of `StdNonRebasing` and `YieldDelegationSource` accounts.
 
 
 ## Other invariants
