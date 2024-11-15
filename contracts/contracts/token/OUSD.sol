@@ -624,6 +624,9 @@ contract OUSD is Governable {
     }
 
     function delegateYield(address from, address to) external onlyGovernor {
+        require(yieldTo[from] != address(0), "Zero from address not allowed");
+        require(yieldTo[to] != address(0), "Zero to address not allowed");
+
         require(from != to, "Cannot delegate to self");
         require(
             yieldFrom[to] == address(0) &&
@@ -677,7 +680,7 @@ contract OUSD is Governable {
 
     function undelegateYield(address from) external onlyGovernor {
         // Require a delegation, which will also ensure a valid delegation
-        require(yieldTo[from] != address(0), "");
+        require(yieldTo[from] != address(0), "Zero address not allowed");
 
         address to = yieldTo[from];
         uint256 fromBalance = balanceOf(from);
