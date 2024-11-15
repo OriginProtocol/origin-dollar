@@ -232,6 +232,7 @@ contract OUSD is Governable {
         uint256 _value
     ) external returns (bool) {
         require(_to != address(0), "Transfer to zero address");
+        require(_value <= _allowances[_from][msg.sender], "Allowance exceeded");
 
         _allowances[_from][msg.sender] =
             _allowances[_from][msg.sender] -
