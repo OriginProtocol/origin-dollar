@@ -899,15 +899,15 @@ describe("Token", function () {
     });
 
     it("Old code auto migrated contract when calling rebase OptIn shouldn't affect invariables", async () => {
-      const {
-        nonrebase_cotract_notSet_altcpt_gt_0: contract_account,
-        ousd
-      } = fixture;
+      const { nonrebase_cotract_notSet_altcpt_gt_0: contract_account, ousd } =
+        fixture;
 
       const nonRebasingSupply = await ousd.nonRebasingSupply();
       await contract_account.rebaseOptIn();
 
-      await expect(nonRebasingSupply).to.equal(await ousd.nonRebasingSupply());
+      await expect(
+        nonRebasingSupply.sub(await ousd.balanceOf(contract_account.address))
+      ).to.equal(await ousd.nonRebasingSupply());
     });
   });
 });
