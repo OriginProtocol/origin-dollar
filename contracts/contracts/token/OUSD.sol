@@ -370,13 +370,6 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Mints new tokens, increasing totalSupply.
-     */
-    function mint(address _account, uint256 _amount) external onlyVault {
-        _mint(_account, _amount);
-    }
-
-    /**
      * @dev Creates `_amount` tokens and assigns them to `_account`, increasing
      * the total supply.
      *
@@ -386,7 +379,7 @@ contract OUSD is Governable {
      *
      * - `to` cannot be the zero address.
      */
-    function _mint(address _account, uint256 _amount) internal {
+    function mint(address _account, uint256 _amount) external onlyVault {
         require(_account != address(0), "Mint to the zero address");
 
         // Account
@@ -403,13 +396,6 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Burns tokens, decreasing totalSupply.
-     */
-    function burn(address account, uint256 amount) external onlyVault {
-        _burn(account, amount);
-    }
-
-    /**
      * @dev Destroys `_amount` tokens from `_account`, reducing the
      * total supply.
      *
@@ -420,7 +406,7 @@ contract OUSD is Governable {
      * - `_account` cannot be the zero address.
      * - `_account` must have at least `_amount` tokens.
      */
-    function _burn(address _account, uint256 _amount) internal {
+    function burn(address _account, uint256 _amount) external onlyVault {
         require(_account != address(0), "Burn from the zero address");
         if (_amount == 0) {
             return;

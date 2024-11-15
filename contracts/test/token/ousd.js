@@ -616,7 +616,7 @@ describe("Token", function () {
           await anna.getAddress(),
           ousdUnits("100")
         )
-    ).to.be.revertedWith("panic code 0x11");
+    ).to.be.revertedWith("Allowance exceeded");
   });
 
   it("Should increase users balance on supply increase", async () => {
