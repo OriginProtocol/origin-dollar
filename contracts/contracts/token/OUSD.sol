@@ -541,7 +541,6 @@ contract OUSD is Governable {
             "Only standard rebasing accounts can opt out"
         );
 
-        uint256 oldCredits = _creditBalances[_account];
         uint256 balance = balanceOf(_account);
 
         // Account
@@ -549,7 +548,7 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[_account] = 1e18;
         _creditBalances[_account] = balance;
 
-        _adjustGlobals(-oldCredits.toInt256(), balance.toInt256());
+        _adjustGlobals(-_creditBalances[_account].toInt256(), balance.toInt256());
 
         emit AccountRebasingDisabled(_account);
     }
