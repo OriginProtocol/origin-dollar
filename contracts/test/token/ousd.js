@@ -490,10 +490,23 @@ describe("Token", function () {
   });
 
   it("Should not allow EOA to call rebaseOptIn when already opted in to rebasing", async () => {
-    let { ousd, matt } = fixture;
+    let { ousd, matt, usdc } = fixture;
+    await usdc.connect(matt).mint(usdcUnits("2"));
+
     await expect(ousd.connect(matt).rebaseOptIn()).to.be.revertedWith(
-      "Account must be non-rebasing or empty contract"
+      "Account must be non-rebasing"
     );
+  });
+
+  it("Should allow an EOA to call rebaseOptIn when already opted in to rebasing", async () => {
+    let { ousd, matt, usdc, josh } = fixture;
+    await usdc.connect(matt).mint(usdcUnits("2"));
+    // transfer all OUSD out
+    await ousd.connect(matt).transfer(josh.address, await ousd.balanceOf(matt.address));
+
+    // user is allowed to override its NotSet rebasing state to Rebasing without negatively affecting
+    // any of the token contract's invariants
+    await ousd.connect(matt).rebaseOptIn();
   });
 
   it("Should not allow EOA to call rebaseOptOut when already opted out of rebasing", async () => {

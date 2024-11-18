@@ -498,12 +498,13 @@ contract OUSD is Governable {
     function _rebaseOptIn(address _account) internal {
         // prettier-ignore
         require(
-            alternativeCreditsPerToken[_account] > 0 || (
-                _account.code.length > 0 && // isContract
+            alternativeCreditsPerToken[_account] > 0 ||
+                // new empty contracts that haven't been yet autoMigrated to StdNonRebasing can
+                // explicitly call `rebaseOptIn`. Side effect is that also already rebasing EOA
+                // accounts that have 0 balance can call RebaseOptIn
                 balanceOf(_account) == 0
-            )
             ,
-            "Account must be non-rebasing or empty contract"
+            "Account must be non-rebasing"
         );
         RebaseOptions state = rebaseState[_account];
         // prettier-ignore
