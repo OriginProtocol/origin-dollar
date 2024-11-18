@@ -632,23 +632,23 @@ contract OUSD is Governable {
             _rebaseOptIn(to);
         }
 
+        uint256 balanceFrom = balanceOf(from);
+        uint256 creditsFrom = _balanceToRebasingCredits(balanceFrom);
+
         // Set up the bidirectional links
         yieldTo[from] = to;
         yieldFrom[to] = from;
         rebaseState[from] = RebaseOptions.YieldDelegationSource;
         rebaseState[to] = RebaseOptions.YieldDelegationTarget;
 
-        uint256 balance = balanceOf(from);
-        uint256 credits = _balanceToRebasingCredits(balance);
-
         // Local
-        _creditBalances[from] = balance;
+        _creditBalances[from] = balanceFrom;
         alternativeCreditsPerToken[from] = 1e18;
-        _creditBalances[to] += credits;
+        _creditBalances[to] += creditsFrom;
 
         // Global
-        nonRebasingSupply -= balance;
-        _rebasingCredits += credits;
+        nonRebasingSupply -= balanceFrom;
+        _rebasingCredits += creditsFrom;
     }
 
     function undelegateYield(address from) external onlyGovernor {
