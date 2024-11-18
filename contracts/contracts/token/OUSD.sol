@@ -250,10 +250,6 @@ contract OUSD is Governable {
         address _to,
         uint256 _value
     ) internal {
-        if (_from == _to) {
-            return;
-        }
-
         (
             int256 fromRebasingCreditsDiff,
             int256 fromNonRebasingSupplyDiff
