@@ -64,8 +64,9 @@ contract OUSD is Governable {
         external
         onlyGovernor
     {
+        require(_vaultAddress != address(0), "Zero vault address");
         require(vaultAddress == address(0), "Already initialized");
-        require(_rebasingCreditsPerToken == 0, "Already initialized");
+
         _rebasingCreditsPerToken = _initialCreditsPerToken;
         vaultAddress = _vaultAddress;
     }
