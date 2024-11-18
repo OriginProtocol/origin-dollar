@@ -253,9 +253,6 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     await vault.connect(matt).mint(dai.address, daiUnits("1000"), 0);
   }
 
-  // yiedlsource
-  // yieldtarget
-
   const createAccount = async () => {
     let account = ethers.Wallet.createRandom();
     // Give ETH to user
