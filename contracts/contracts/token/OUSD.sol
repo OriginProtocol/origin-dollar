@@ -514,14 +514,14 @@ contract OUSD is Governable {
             "Only standard non-rebasing accounts can opt in"
         );
 
-        uint256 balance = balanceOf(msg.sender);
+        uint256 balance = balanceOf(_account);
 
         // Account
-        rebaseState[msg.sender] = RebaseOptions.StdRebasing;
-        alternativeCreditsPerToken[msg.sender] = 0;
-        _creditBalances[msg.sender] = _balanceToRebasingCredits(balance);
+        rebaseState[_account] = RebaseOptions.StdRebasing;
+        alternativeCreditsPerToken[_account] = 0;
+        _creditBalances[_account] = _balanceToRebasingCredits(balance);
 
-        _adjustGlobals(_creditBalances[msg.sender].toInt256(), -balance.toInt256());
+        _adjustGlobals(_creditBalances[_account].toInt256(), -balance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }
