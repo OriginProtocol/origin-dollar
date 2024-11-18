@@ -666,6 +666,8 @@ contract OUSD is Governable {
 
         // Local
         _creditBalances[from] = fromBalance;
+        // no need to set the alternativeCreditsPerToken of the from account since
+        // that one is already set to 1e18 by the `delegateYield` function.
         _creditBalances[to] -= creditsFrom;
 
         _adjustGlobals(-(creditsFrom).toInt256(), fromBalance.toInt256());
