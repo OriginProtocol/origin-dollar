@@ -317,16 +317,10 @@ contract OUSD is Governable {
         int256 nonRebasingSupplyDiff
     ) internal {
         if (rebasingCreditsDiff != 0) {
-            if (_rebasingCredits.toInt256() + rebasingCreditsDiff < 0) {
-                revert("rebasingCredits underflow");
-            }
             _rebasingCredits = (_rebasingCredits.toInt256() +
                 rebasingCreditsDiff).toUint256();
         }
         if (nonRebasingSupplyDiff != 0) {
-            if (nonRebasingSupply.toInt256() + nonRebasingSupplyDiff < 0) {
-                revert("nonRebasingSupply underflow");
-            }
             nonRebasingSupply = (nonRebasingSupply.toInt256() +
                 nonRebasingSupplyDiff).toUint256();
         }
