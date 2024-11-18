@@ -45,7 +45,7 @@ contract OUSD is Governable {
     // Add slots to align with deployed OUSD contract
     uint256[154] private _gap;
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
-    uint256 public _totalSupply;
+    uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
     mapping(address => uint256) internal _creditBalances;
@@ -88,13 +88,6 @@ contract OUSD is Governable {
     modifier onlyVault() {
         require(vaultAddress == msg.sender, "Caller is not the Vault");
         _;
-    }
-
-    /**
-     * @return The total supply of OUSD.
-     */
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
     }
 
     /**
@@ -389,9 +382,9 @@ contract OUSD is Governable {
         ) = _adjustAccount(_account, _amount.toInt256());
         // Globals
         _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
-        _totalSupply = _totalSupply + _amount;
+        totalSupply = totalSupply + _amount;
 
-        require(_totalSupply < MAX_SUPPLY, "Max supply");
+        require(totalSupply < MAX_SUPPLY, "Max supply");
         emit Transfer(address(0), _account, _amount);
     }
 
@@ -419,7 +412,7 @@ contract OUSD is Governable {
         ) = _adjustAccount(_account, -_amount.toInt256());
         // Globals
         _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
-        _totalSupply = _totalSupply - _amount;
+        totalSupply = totalSupply - _amount;
 
         emit Transfer(_account, address(0), _amount);
     }
@@ -579,33 +572,33 @@ contract OUSD is Governable {
      * @param _newTotalSupply New total supply of OUSD.
      */
     function changeSupply(uint256 _newTotalSupply) external onlyVault {
-        require(_totalSupply > 0, "Cannot increase 0 supply");
+        require(totalSupply > 0, "Cannot increase 0 supply");
 
-        if (_totalSupply == _newTotalSupply) {
+        if (totalSupply == _newTotalSupply) {
             emit TotalSupplyUpdatedHighres(
-                _totalSupply,
+                totalSupply,
                 _rebasingCredits,
                 _rebasingCreditsPerToken
             );
             return;
         }
 
-        _totalSupply = _newTotalSupply > MAX_SUPPLY
+        totalSupply = _newTotalSupply > MAX_SUPPLY
             ? MAX_SUPPLY
             : _newTotalSupply;
 
         _rebasingCreditsPerToken =
             (_rebasingCredits * 1e18) /
-            (_totalSupply - nonRebasingSupply);
+            (totalSupply - nonRebasingSupply);
 
         require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        _totalSupply =
+        totalSupply =
             ((_rebasingCredits * 1e18) / _rebasingCreditsPerToken) +
             nonRebasingSupply;
 
         emit TotalSupplyUpdatedHighres(
-            _totalSupply,
+            totalSupply,
             _rebasingCredits,
             _rebasingCreditsPerToken
         );
