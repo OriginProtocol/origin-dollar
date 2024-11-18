@@ -54,7 +54,7 @@ contract OUSD is Governable {
     uint256 public nonRebasingSupply; // All nonrebasing balances
     mapping(address => uint256) internal alternativeCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
-    mapping(address => uint256) public isUpgraded;
+    mapping(address => uint256) private __deprecated_isUpgraded;
     mapping(address => address) public yieldTo;
     mapping(address => address) public yieldFrom;
 
@@ -191,7 +191,7 @@ contract OUSD is Governable {
         return (
             _creditBalances[_account],
             _creditsPerToken(_account),
-            isUpgraded[_account] == 1
+            true // all accounts have their resolution "upgraded"
         );
     }
 
