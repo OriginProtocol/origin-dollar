@@ -521,9 +521,7 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[msg.sender] = 0;
         _creditBalances[msg.sender] = _balanceToRebasingCredits(balance);
 
-        // Globals
-        nonRebasingSupply -= balance;
-        _rebasingCredits += _creditBalances[msg.sender];
+        _adjustGlobals(_creditBalances[msg.sender].toInt256(), -balance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }
@@ -551,9 +549,7 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[_account] = 1e18;
         _creditBalances[_account] = balance;
 
-        // Globals
-        nonRebasingSupply += balance;
-        _rebasingCredits -= oldCredits;
+        _adjustGlobals(-oldCredits.toInt256(), balance.toInt256());
 
         emit AccountRebasingDisabled(_account);
     }
