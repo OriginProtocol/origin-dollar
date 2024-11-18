@@ -656,7 +656,7 @@ contract OUSD is Governable {
         address to = yieldTo[from];
         uint256 fromBalance = balanceOf(from);
         // these are credits of from account if it were rebasing
-        uint256 fromCredits = _balanceToRebasingCredits(fromBalance);
+        uint256 creditsFrom = _balanceToRebasingCredits(fromBalance);
 
         // Remove the bidirectional links
         yieldFrom[to] = address(0);
@@ -666,8 +666,8 @@ contract OUSD is Governable {
 
         // Local
         _creditBalances[from] = fromBalance;
-        _creditBalances[to] -= fromCredits;
+        _creditBalances[to] -= creditsFrom;
 
-        _adjustGlobals(-(fromCredits).toInt256(), fromBalance.toInt256());
+        _adjustGlobals(-(creditsFrom).toInt256(), fromBalance.toInt256());
     }
 }
