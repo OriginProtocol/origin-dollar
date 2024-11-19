@@ -49,7 +49,7 @@ contract OUSD is Governable {
     uint256 private constant MAX_SUPPLY = type(uint128).max;
     uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
-    address public vaultAddress = address(0);
+    address public vaultAddress;
     mapping(address => uint256) internal _creditBalances;
     uint256 private _rebasingCredits; // Sum of all rebasing credits (_creditBalances for rebasing accounts)
     uint256 private _rebasingCreditsPerToken;
