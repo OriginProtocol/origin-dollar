@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "",
+    proposalId:
+      "105762082509768776202240604338417692927766202901146189706379006167687855789299",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
@@ -111,6 +112,13 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
 
+    /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+     * of the proxy to the deployer account that shall be deploying this script so it will be able
+     * to initialize the proxy contract
+     *
+     * Run the following to make it happen, and comment this error block out:
+     * yarn run hardhat transferGovernanceNativeStakingProxy --index 3 --deployer 0xdeployerAddress --network mainnet
+     */
     const proxyGovernor = await cNativeStakingStrategyProxy.governor();
     if (isFork && proxyGovernor != deployerAddr) {
       const relayerSigner = await impersonateAccount(
@@ -121,19 +129,6 @@ module.exports = deploymentWithGovernanceProposal(
           .connect(relayerSigner)
           .transferGovernance(deployerAddr, await getTxOpts())
       );
-    } else {
-      /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
-       * of the proxy to the deployer account that shall be deploying this script so it will be able
-       * to initialize the proxy contract
-       *
-       * Run the following to make it happen, and comment this error block out:
-       * yarn run hardhat transferGovernanceNativeStakingProxy --index 3 --deployer 0xdeployerAddress --network mainnet
-       */
-      if (proxyGovernor != deployerAddr) {
-        throw new Error(
-          `Native Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${deployerAddr}`
-        );
-      }
     }
 
     // 7. Transfer governance of the Native Staking Strategy proxy to the deployer
@@ -145,7 +140,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 8. Init the proxy to point at the implementation, set the governor, and call initialize
-    console.log(`About to initialize of NativeStakingStrategy2`);
+    console.log(`About to initialize of NativeStakingStrategy`);
     await withConfirmation(
       cNativeStakingStrategyProxy.connect(sDeployer)[proxyInitFunction](
         cNativeStakingStrategyImpl.address, // implementation address
