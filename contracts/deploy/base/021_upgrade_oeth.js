@@ -6,7 +6,7 @@ module.exports = deployOnBaseWithGuardian(
     deployName: "021_upgrade_oeth",
   },
   async ({ ethers }) => {
-    const dOETHb = await deployWithConfirmation("OETH", [], "OETH", true);
+    const dOETHb = await deployWithConfirmation("OETHBase");
 
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
 
