@@ -33,6 +33,8 @@ contract OUSD is Governable {
         address indexed spender,
         uint256 value
     );
+    event YieldDelegated(address source, address target);
+    event YieldUndelegated(address source, address target);
 
     enum RebaseOptions {
         NotSet,
@@ -641,6 +643,7 @@ contract OUSD is Governable {
         _creditBalances[to] += creditsFrom;
 
         _adjustGlobals(creditsFrom.toInt256(), -fromBalance.toInt256());
+        emit YieldDelegated(from, to);
     }
 
     function undelegateYield(address from) external onlyGovernor {
@@ -665,5 +668,6 @@ contract OUSD is Governable {
         _creditBalances[to] -= creditsFrom;
 
         _adjustGlobals(-(creditsFrom).toInt256(), fromBalance.toInt256());
+        emit YieldUndelegated(from, to);
     }
 }
