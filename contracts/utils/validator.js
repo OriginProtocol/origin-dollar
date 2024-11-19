@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const { storePrivateKeyToS3 } = require("./amazon");
 const { sleep } = require("./time");
 const { p2pApiEncodedKey } = require("./constants");
+const { getValidators } = require("../tasks/beaconchain");
 
 const log = require("./logger")("task:p2p");
 
@@ -203,6 +204,7 @@ const stakeValidators = async ({
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
   s3BucketName,
+  beaconChainApiKey,
 }) => {
   if (await stakingContractPaused(nativeStakingStrategy)) {
     log(`Native staking contract is paused... exiting`);
@@ -287,7 +289,8 @@ const stakeValidators = async ({
           signer,
           nativeStakingStrategy,
           currentState.metadata.pubkeys,
-          currentState.metadata.depositData
+          currentState.metadata.depositData,
+          beaconChainApiKey
         );
         currentState = await getState(store);
       }
@@ -577,11 +580,27 @@ const depositEth = async (
   signer,
   nativeStakingStrategy,
   pubkeys,
-  depositData
+  depositData,
+  beaconChainApiKey
 ) => {
-  // const { signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
+
+    // Check non of the validators are already registered
+    try {
+      await getValidators(pubkeys, beaconChainApiKey);
+
+      console.log(`The validators have already been registered`);
+      process.exit(1);
+    } catch (err) {
+      if (
+        err.message !==
+        'Call to Beaconcha.in API failed. Error: "ERROR: invalid validator argument, pubkey(s) did not resolve to a validator index"'
+      ) {
+        log(`Failed to get validators with error: `, err.message);
+        throw err;
+      }
+    }
 
     const validatorsStakeData = depositData.map((d) => ({
       pubkey: d.pubkey,

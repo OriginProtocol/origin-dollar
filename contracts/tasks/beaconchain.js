@@ -2,8 +2,10 @@ const fetch = require("node-fetch");
 const API_URL = "https://beaconcha.in/api/v1/";
 const log = require("../utils/logger")("task:p2p");
 
-const beaconchainRequest = async (endpoint) => {
-  const apikey = process.env.BEACONCHAIN_API_KEY;
+const beaconchainRequest = async (endpoint, BEACONCHAIN_API_KEY) => {
+  const apikey = BEACONCHAIN_API_KEY
+    ? BEACONCHAIN_API_KEY
+    : process.env.BEACONCHAIN_API_KEY;
   const url = `${API_URL}${endpoint}`;
   if (!apikey) {
     throw new Error(
@@ -44,9 +46,9 @@ const getValidator = async (pubkey) => {
   return await beaconchainRequest(`validator/${pubkey}`);
 };
 
-const getValidators = async (pubkeys) => {
+const getValidators = async (pubkeys, beaconChainApiKey) => {
   const encodedPubkeys = encodeURIComponent(pubkeys);
-  return await beaconchainRequest(`validator/${encodedPubkeys}`);
+  return await beaconchainRequest(`validator/${encodedPubkeys}`, beaconChainApiKey);
 };
 
 const getEpoch = async (epochId = "latest") => {

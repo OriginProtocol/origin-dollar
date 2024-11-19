@@ -60,6 +60,7 @@ const handler = async (event) => {
   const awsS3AccessKeyId = event.secrets.AWS_ACCESS_S3_KEY_ID;
   const awsS3SexcretAccessKeyId = event.secrets.AWS_SECRET_S3_ACCESS_KEY;
   const s3BucketName = event.secrets.VALIDATOR_KEYS_S3_BUCKET_NAME;
+  const beaconChainApiKey = event.secrets.BEACONCHAIN_API_KEY
 
   if (!awsS3AccessKeyId) {
     throw new Error("Secret AWS_ACCESS_S3_KEY_ID not set");
@@ -81,6 +82,7 @@ const handler = async (event) => {
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
     s3BucketName,
+    beaconChainApiKey
   });
 };
 
