@@ -44,7 +44,7 @@ contract OUSD is Governable {
 
     // Add slots to align with deployed OUSD contract
     uint256[154] private _gap;
-    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
+    uint256 private constant MAX_SUPPLY = type(uint128).max;
     uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
