@@ -100,6 +100,7 @@ const {
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
+  snapValidators
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
@@ -1570,6 +1571,24 @@ subtask("snapVault", "Takes a snapshot of a OETH Vault")
   )
   .setAction(snapVault);
 task("snapVault").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapValidators", "Takes a snapshot of a validator")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .setAction(snapValidators);
+task("snapValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

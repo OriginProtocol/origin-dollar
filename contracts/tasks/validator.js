@@ -5,13 +5,14 @@ const {
 
 const { getBlock } = require("./block");
 const { checkPubkeyFormat } = require("./taskUtils");
-const { getValidator, getEpoch } = require("./beaconchain");
+const { getValidator, getValidators, getEpoch } = require("./beaconchain");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { convertToBigNumber } = require("../utils/units");
 const { validatorsThatCanBeStaked } = require("../utils/validator");
+const { validatorKeys } = require("../utils/regex");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -108,6 +109,35 @@ async function verifyMinActivationTime({ pubkey }) {
     throw new Error(
       `Can not exit validator. Validator needs to be ` +
         `active for 256 epoch. Current one active for ${epochDiff}`
+    );
+  }
+}
+
+async function getValidatorBalances({ pubkeys }) {
+  const validator = await getValidators(pubkeys);
+
+  // for
+  log(
+    `Validator balance of ${formatUnits(
+      validator.balance
+    )} for pub keys ${pubkeys}`
+  );
+  return validator.balance;
+}
+
+async function snapValidators({ pubkeys }) {
+  if (!pubkeys.match(validatorKeys)) {
+    throw Error(`Public keys not a comma-separated list of public keys with 0x prefixes`);
+  }
+  const validators = await getValidators(pubkeys);
+
+  console.log(`Validators details`);
+  console.log(`pubkey, balance, status, withdrawalcredentials`);
+  for (const validator of validators) {
+    console.log(
+      `${validator.pubkey}, ${formatUnits(validator.balance, 9)}, ${
+        validator.status
+      }, ${validator.withdrawalcredentials}`
     );
   }
 }
@@ -336,4 +366,6 @@ module.exports = {
   snapStaking,
   resolveNativeStakingStrategyProxy,
   resolveFeeAccumulatorProxy,
+  getValidatorBalances,
+  snapValidators,
 };

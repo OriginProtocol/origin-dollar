@@ -44,11 +44,17 @@ const getValidator = async (pubkey) => {
   return await beaconchainRequest(`validator/${pubkey}`);
 };
 
+const getValidators = async (pubkeys) => {
+  const encodedPubkeys = encodeURIComponent(pubkeys);
+  return await beaconchainRequest(`validator/${encodedPubkeys}`);
+};
+
 const getEpoch = async (epochId = "latest") => {
   return await beaconchainRequest(`epoch/${epochId}`);
 };
 
 module.exports = {
   getValidator,
+  getValidators,
   getEpoch,
 };
