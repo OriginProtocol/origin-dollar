@@ -228,9 +228,7 @@ contract OUSD is Governable {
         require(_to != address(0), "Transfer to zero address");
         require(_value <= _allowances[_from][msg.sender], "Allowance exceeded");
 
-        _allowances[_from][msg.sender] =
-            _allowances[_from][msg.sender] -
-            _value;
+        _allowances[_from][msg.sender] -= _value;
 
         _executeTransfer(_from, _to, _value);
 
