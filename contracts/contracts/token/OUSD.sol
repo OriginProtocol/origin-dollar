@@ -445,7 +445,7 @@ contract OUSD is Governable {
      *
      * @param _account Address of the account.
      */
-    function _autoMigrate(address _account) internal returns (bool) {
+    function _autoMigrate(address _account) internal {
         bool isContract = _account.code.length > 0;
         // In the older contract implementation: https://github.com/OriginProtocol/origin-dollar/blob/20a21d00a4a6ea9f42940ac194e82655fcda882e/contracts/contracts/token/OUSD.sol#L479-L489
         // an account could have non 0 balance, be (or become) a contract with the rebase state
