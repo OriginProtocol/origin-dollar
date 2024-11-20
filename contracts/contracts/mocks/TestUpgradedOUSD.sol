@@ -10,7 +10,7 @@ contract TestUpgradedOUSD is OUSD {
     function overwriteCreditBalances(address _account, uint256 _creditBalance)
         public
     {
-        _creditBalances[_account] = _creditBalance;
+        creditBalances[_account] = _creditBalance;
     }
 
     function overwriteAlternativeCPT(address _account, uint256 _acpt) public {
