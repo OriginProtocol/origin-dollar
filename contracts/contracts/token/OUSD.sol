@@ -447,12 +447,14 @@ contract OUSD is Governable {
     }
 
     function _rebaseOptIn(address _account) internal {
+        uint256 balance = balanceOf(_account);
+        
         // prettier-ignore
         require(
             alternativeCreditsPerToken[_account] > 0 ||
                 // Accounts may explicitly `rebaseOptIn` regardless of
                 // accounting if they have a 0 balance.
-                balanceOf(_account) == 0
+                balance == 0
             ,
             "Account must be non-rebasing"
         );
@@ -463,8 +465,6 @@ contract OUSD is Governable {
                 state == RebaseOptions.NotSet,
             "Only standard non-rebasing accounts can opt in"
         );
-
-        uint256 balance = balanceOf(_account);
 
         // Account
         rebaseState[_account] = RebaseOptions.StdRebasing;
