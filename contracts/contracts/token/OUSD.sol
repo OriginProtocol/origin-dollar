@@ -479,9 +479,8 @@ contract OUSD is Governable {
 
     /**
      * @notice Enable rebasing for an account.
-     * @dev Add a contract address to the non-rebasing exception list. The
-     * address's balance will be part of rebases and the account will be exposed
-     * to upside and downside.
+     * @dev Mark the account's `rebaseState` as `StdRebasing`. The address's balance
+     * will be part of rebases and the account will be exposed to the upside.
      * @param _account Address of the account.
      */
     function governanceRebaseOptIn(address _account) external onlyGovernor {
@@ -489,9 +488,9 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Add a contract address to the non-rebasing exception list. The
-     * address's balance will be part of rebases and the account will be exposed
-     * to upside and downside.
+     * @notice Enable rebasing for the caller's account.
+     * @dev Mark the account's `rebaseState` as `StdRebasing`. The address's balance
+     * will be part of rebases and the account will be exposed to the upside.
      */
     function rebaseOptIn() external {
         _rebaseOptIn(msg.sender);
@@ -528,6 +527,11 @@ contract OUSD is Governable {
         emit AccountRebasingEnabled(_account);
     }
 
+    /**
+     * @notice Disable rebasing for the caller's account.
+     * @dev Mark the account's `rebaseState` as `StdNonRebasing`. The address's balance
+     * will not change on rebases.
+     */
     function rebaseOptOut() external {
         _rebaseOptOut(msg.sender);
     }
