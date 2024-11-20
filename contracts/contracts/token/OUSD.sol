@@ -582,7 +582,7 @@ contract OUSD is Governable {
         }
 
         uint256 fromBalance = balanceOf(_from);
-        uint256 creditsFrom = _balanceToRebasingCredits(fromBalance);
+        uint256 toBalance = balanceOf(_to);
 
         // Set up the bidirectional links
         yieldTo[_from] = _to;
@@ -593,9 +593,9 @@ contract OUSD is Governable {
         // Local
         creditBalances[_from] = fromBalance;
         alternativeCreditsPerToken[_from] = 1e18;
-        creditBalances[_to] += creditsFrom;
+        creditBalances[_to] = _balanceToRebasingCredits(fromBalance + toBalance);
         // Global
-        _adjustGlobals(creditsFrom.toInt256(), -fromBalance.toInt256());
+        _adjustGlobals(_balanceToRebasingCredits(fromBalance).toInt256(), -fromBalance.toInt256());
         emit YieldDelegated(_from, _to);
     }
 
@@ -608,8 +608,7 @@ contract OUSD is Governable {
 
         address to = yieldTo[_from];
         uint256 fromBalance = balanceOf(_from);
-        // these are credits of from account if it were rebasing
-        uint256 creditsFrom = _balanceToRebasingCredits(fromBalance);
+        uint256 toBalance = balanceOf(to);
 
         // Remove the bidirectional links
         yieldFrom[to] = address(0);
@@ -621,9 +620,9 @@ contract OUSD is Governable {
         // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
         creditBalances[_from] = fromBalance;
         // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
-        creditBalances[to] -= creditsFrom;
+        creditBalances[to] = _balanceToRebasingCredits(toBalance);
         // Global
-        _adjustGlobals(-(creditsFrom).toInt256(), fromBalance.toInt256());
+        _adjustGlobals(-(_balanceToRebasingCredits(fromBalance).toInt256()), fromBalance.toInt256());
         emit YieldUndelegated(_from, to);
     }
 }
