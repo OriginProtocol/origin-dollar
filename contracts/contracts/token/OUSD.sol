@@ -405,7 +405,7 @@ contract OUSD is Governable {
      */
     function _autoMigrate(address _account) internal {
         bool isContract = _account.code.length > 0;
-        // In previous code versions, contracts would not have had thier
+        // In previous code versions, contracts would not have had their
         // rebaseState[_account] set to RebaseOptions.NonRebasing when migrated
         // therefor we check the actual accounting used on the account instead.
         if (
@@ -540,7 +540,7 @@ contract OUSD is Governable {
     }
 
     /*
-     * @notice Send the yield from one account to another acount.
+     * @notice Send the yield from one account to another account.
      *     Each account keeps their own balances.
      */
     function delegateYield(address from, address to) external onlyGovernor {
@@ -599,7 +599,7 @@ contract OUSD is Governable {
     }
 
     /*
-     * @notice Stop sending the yield from one account to another acount.
+     * @notice Stop sending the yield from one account to another account.
      */
     function undelegateYield(address from) external onlyGovernor {
         // Require a delegation, which will also ensure a valid delegation
