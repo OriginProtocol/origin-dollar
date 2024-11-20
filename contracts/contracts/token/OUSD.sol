@@ -240,22 +240,22 @@ contract OUSD is Governable {
     ) internal {
         (
             int256 fromRebasingCreditsDiff,
-            int256 fromNonRebasingSupplyDiff
+            int256 fromNonRebasingCreditsDiff
         ) = _adjustAccount(_from, -_value.toInt256());
         (
             int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
+            int256 toNonRebasingCreditsDiff
         ) = _adjustAccount(_to, _value.toInt256());
 
         _adjustGlobals(
             fromRebasingCreditsDiff + toRebasingCreditsDiff,
-            fromNonRebasingSupplyDiff + toNonRebasingSupplyDiff
+            fromNonRebasingCreditsDiff + toNonRebasingCreditsDiff
         );
     }
 
     function _adjustAccount(address _account, int256 _balanceChange)
         internal
-        returns (int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff)
+        returns (int256 rebasingCreditsDiff, int256 nonRebasingCreditsDiff)
     {
         RebaseOptions state = rebaseState[_account];
         int256 currentBalance = balanceOf(_account).toInt256();
@@ -287,7 +287,11 @@ contract OUSD is Governable {
         } else {
             _autoMigrate(_account);
             if (alternativeCreditsPerToken[_account] > 0) {
-                nonRebasingSupplyDiff = _balanceChange;
+                if (_balanceChange >= 0) {
+                   nonRebasingCreditsDiff = (_balanceToRebasingCredits(_balanceChange.toUint256()).toInt256());
+                } else {
+                   nonRebasingCreditsDiff = -_balanceToRebasingCredits((-_balanceChange).toUint256()).toInt256();
+                }
                 alternativeCreditsPerToken[_account] = 1e18;
                 creditBalances[_account] = newBalance;
             } else {
@@ -302,15 +306,16 @@ contract OUSD is Governable {
 
     function _adjustGlobals(
         int256 _rebasingCreditsDiff,
-        int256 _nonRebasingSupplyDiff
+        int256 _nonRebasingCreditsDiff
     ) internal {
         if (_rebasingCreditsDiff != 0) {
             rebasingCredits_ = (rebasingCredits_.toInt256() +
                 _rebasingCreditsDiff).toUint256();
         }
-        if (_nonRebasingSupplyDiff != 0) {
+        if (_nonRebasingCreditsDiff != 0) {
+            int256 nonRebasingSupplyDiff =  _nonRebasingCreditsDiff * 1e18 / rebasingCreditsPerToken_.toInt256();
             nonRebasingSupply = (nonRebasingSupply.toInt256() +
-                _nonRebasingSupplyDiff).toUint256();
+                nonRebasingSupplyDiff).toUint256();
         }
     }
 
@@ -351,10 +356,10 @@ contract OUSD is Governable {
         // Account
         (
             int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
+            int256 toNonRebasingCreditsDiff
         ) = _adjustAccount(_account, _amount.toInt256());
         // Globals
-        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingCreditsDiff);
         totalSupply = totalSupply + _amount;
 
         require(totalSupply < MAX_SUPPLY, "Max supply");
@@ -374,10 +379,10 @@ contract OUSD is Governable {
         // Account
         (
             int256 toRebasingCreditsDiff,
-            int256 toNonRebasingSupplyDiff
+            int256 toNonRebasingCreditsDiff
         ) = _adjustAccount(_account, -_amount.toInt256());
         // Globals
-        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);
+        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingCreditsDiff);
         totalSupply = totalSupply - _amount;
 
         emit Transfer(_account, address(0), _amount);
@@ -471,7 +476,8 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[_account] = 0;
         creditBalances[_account] = _balanceToRebasingCredits(balance);
         // Globals
-        _adjustGlobals(creditBalances[_account].toInt256(), -balance.toInt256());
+        int256 creditsDiff = creditBalances[_account].toInt256();
+        _adjustGlobals(creditsDiff, -creditsDiff);
 
         emit AccountRebasingEnabled(_account);
     }
@@ -502,7 +508,8 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[_account] = 1e18;
         creditBalances[_account] = balance;
         // Globals
-        _adjustGlobals(-oldCredits.toInt256(), balance.toInt256());
+        int256 creditsDiff = -oldCredits.toInt256();
+        _adjustGlobals(creditsDiff, -creditsDiff);
 
         emit AccountRebasingDisabled(_account);
     }
@@ -595,7 +602,8 @@ contract OUSD is Governable {
         alternativeCreditsPerToken[_from] = 1e18;
         creditBalances[_to] = _balanceToRebasingCredits(fromBalance + toBalance);
         // Global
-        _adjustGlobals(_balanceToRebasingCredits(fromBalance).toInt256(), -fromBalance.toInt256());
+        int256 creditsDiff = _balanceToRebasingCredits(fromBalance).toInt256();
+        _adjustGlobals(creditsDiff, -creditsDiff);
         emit YieldDelegated(_from, _to);
     }
 
@@ -622,7 +630,8 @@ contract OUSD is Governable {
         // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
         creditBalances[to] = _balanceToRebasingCredits(toBalance);
         // Global
-        _adjustGlobals(-(_balanceToRebasingCredits(fromBalance).toInt256()), fromBalance.toInt256());
+        int256 creditsDiff = -(_balanceToRebasingCredits(fromBalance).toInt256());
+        _adjustGlobals(creditsDiff, -creditsDiff);
         emit YieldUndelegated(_from, to);
     }
 }
