@@ -495,12 +495,15 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
 
   const vaultAndTokenConracts = await getVaultAndTokenConracts();
 
+  const signers = await hre.ethers.getSigners();
+  let governor = signers[1];
+  let strategist = signers[0];
+
   const accountTypes = await createAccountTypes({
     ousd: vaultAndTokenConracts.ousd,
     ousdUnlocked: vaultAndTokenConracts.ousdUnlocked,
     vault: vaultAndTokenConracts.vault,
     deploy: deployments.deploy,
-    governor: deployments.governor,
   });
 
   return {
@@ -509,6 +512,8 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
     governorAddr,
     strategistAddr,
     timelockAddr,
+    governor,
+    strategist,
   };
 });
 

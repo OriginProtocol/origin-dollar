@@ -3,7 +3,7 @@ const { loadTokenTransferFixture } = require("../_fixture");
 
 const { isFork, ousdUnits } = require("../helpers");
 
-describe("Token Transfers", function () {
+describe("Account type variations", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -119,61 +119,107 @@ describe("Token Transfers", function () {
   const fromAccounts = [
     {
       name: "rebase_eoa_notset_0",
-      affectsRebasingCredits: true,
+      balancePartOfRebasingCredits: true,
       isContract: false,
+      inYieldDelegation: false,
     },
     {
       name: "rebase_eoa_stdRebasing_0",
-      affectsRebasingCredits: true,
+      balancePartOfRebasingCredits: true,
       isContract: false,
+      inYieldDelegation: false,
     },
     {
       name: "rebase_contract_0",
-      affectsRebasingCredits: true,
+      balancePartOfRebasingCredits: true,
       isContract: true,
+      inYieldDelegation: false,
     },
     {
       name: "nonrebase_eoa_0",
-      affectsRebasingCredits: false,
+      balancePartOfRebasingCredits: false,
       isContract: false,
+      inYieldDelegation: false,
     },
     {
       name: "nonrebase_cotract_0",
-      affectsRebasingCredits: false,
+      balancePartOfRebasingCredits: false,
       isContract: true,
+      inYieldDelegation: false,
     },
-    // can not initiate a transfer from below contract since it has the balance of 0
-    //{name: "nonrebase_cotract_notSet_0", affectsRebasingCredits: false, isContract: true},
+    {
+      name: "nonrebase_cotract_notSet_0",
+      balancePartOfRebasingCredits: false,
+      skipTransferTest: true,
+      isContract: true,
+      inYieldDelegation: false,
+    },
     {
       name: "nonrebase_cotract_notSet_altcpt_gt_0",
-      affectsRebasingCredits: false,
+      balancePartOfRebasingCredits: false,
       isContract: true,
+      inYieldDelegation: false,
     },
     {
       name: "rebase_delegate_source_0",
-      affectsRebasingCredits: true,
+      balancePartOfRebasingCredits: true,
       isContract: false,
+      inYieldDelegation: true,
     },
     {
       name: "rebase_delegate_target_0",
-      affectsRebasingCredits: true,
+      balancePartOfRebasingCredits: true,
       isContract: false,
+      inYieldDelegation: true,
     },
   ];
 
   const toAccounts = [
-    { name: "rebase_eoa_notset_1", affectsRebasingCredits: true },
-    { name: "rebase_eoa_stdRebasing_1", affectsRebasingCredits: true },
-    { name: "rebase_contract_1", affectsRebasingCredits: true },
-    { name: "nonrebase_eoa_1", affectsRebasingCredits: false },
-    { name: "nonrebase_cotract_1", affectsRebasingCredits: false },
-    { name: "nonrebase_cotract_notSet_1", affectsRebasingCredits: false },
+    {
+      name: "rebase_eoa_notset_1",
+      balancePartOfRebasingCredits: true,
+      inYieldDelegation: false,
+    },
+    {
+      name: "rebase_eoa_stdRebasing_1",
+      balancePartOfRebasingCredits: true,
+      inYieldDelegation: false,
+    },
+    {
+      name: "rebase_contract_1",
+      balancePartOfRebasingCredits: true,
+      inYieldDelegation: false,
+    },
+    {
+      name: "nonrebase_eoa_1",
+      balancePartOfRebasingCredits: false,
+      inYieldDelegation: false,
+    },
+    {
+      name: "nonrebase_cotract_1",
+      balancePartOfRebasingCredits: false,
+      inYieldDelegation: false,
+    },
+    {
+      name: "nonrebase_cotract_notSet_1",
+      balancePartOfRebasingCredits: false,
+      inYieldDelegation: false,
+    },
     {
       name: "nonrebase_cotract_notSet_altcpt_gt_1",
-      affectsRebasingCredits: false,
+      balancePartOfRebasingCredits: false,
+      inYieldDelegation: false,
     },
-    { name: "rebase_delegate_source_1", affectsRebasingCredits: true },
-    { name: "rebase_delegate_target_1", affectsRebasingCredits: true },
+    {
+      name: "rebase_delegate_source_1",
+      balancePartOfRebasingCredits: true,
+      inYieldDelegation: true,
+    },
+    { 
+      name: "rebase_delegate_target_1",
+      balancePartOfRebasingCredits: true,
+      inYieldDelegation: true,
+    },
   ];
 
   const totalSupply = ousdUnits("792");
@@ -182,13 +228,14 @@ describe("Token Transfers", function () {
     for (let j = 0; j < toAccounts.length; j++) {
       const {
         name: fromName,
-        affectsRebasingCredits: fromAffectsRC,
+        balancePartOfRebasingCredits: fromAffectsRC,
+        skipTransferTest,
         isContract,
       } = fromAccounts[i];
-      const { name: toName, affectsRebasingCredits: toAffectsRC } =
+      const { name: toName, balancePartOfRebasingCredits: toAffectsRC } =
         toAccounts[j];
 
-      it(`Should transfer from ${fromName} to ${toName}`, async () => {
+      (skipTransferTest ? it.skip : it)(`Should transfer from ${fromName} to ${toName}`, async () => {
         const fromAccount = fixture[fromName];
         const toAccount = fixture[toName];
         const { ousd } = fixture;
@@ -219,6 +266,59 @@ describe("Token Transfers", function () {
         if (!toAffectsRC) {
           expectedNonRebasingSupply = expectedNonRebasingSupply.add(amount);
         }
+
+        // check global contract (in)variants
+        await expect(await ousd.totalSupply()).to.equal(totalSupply);
+        await expect(await ousd.nonRebasingSupply()).to.equal(
+          expectedNonRebasingSupply
+        );
+      });
+    }
+  }
+
+  for (let i = 0; i < fromAccounts.length; i++) {
+    for (let j = 0; j < toAccounts.length; j++) {
+      const {
+        name: fromName,
+        balancePartOfRebasingCredits: fromBalancePartOfRC,
+        inYieldDelegation: inYieldDelegationSource,
+      } = fromAccounts[i];
+      const {
+        name: toName,
+        balancePartOfRebasingCredits: toBalancePartOfRC,
+        inYieldDelegation: inYieldDelegationTarget
+      } = toAccounts[j];
+
+      (inYieldDelegationSource || inYieldDelegationTarget ? it.skip : it)(`Non rebasing supply should be correct when ${fromName} delegates to ${toName}`, async () => {
+        const fromAccount = fixture[fromName];
+        const toAccount = fixture[toName];
+        const { ousd, governor } = fixture;
+
+        const fromBalance = await ousd.balanceOf(fromAccount.address);
+        const toBalance = await ousd.balanceOf(toAccount.address);
+        let expectedNonRebasingSupply = nonRebasingSupply;
+
+        await ousd
+          .connect(governor)
+          .delegateYield(fromAccount.address, toAccount.address);
+
+        // check balances haven't changed
+        await expect(await ousd.balanceOf(fromAccount.address)).to.equal(
+          fromBalance
+        );
+        await expect(await ousd.balanceOf(toAccount.address)).to.equal(
+          toBalance
+        );
+
+        // account was non rebasing and became rebasing
+        if (!fromBalancePartOfRC) {
+          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(fromBalance);
+        }
+        // account was non rebasing and became rebasing
+        if (!toBalancePartOfRC) {
+          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(toBalance);
+        }
+
         // check global contract (in)variants
         await expect(await ousd.totalSupply()).to.equal(totalSupply);
         await expect(await ousd.nonRebasingSupply()).to.equal(

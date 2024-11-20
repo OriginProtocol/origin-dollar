@@ -842,8 +842,6 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("80.00", ousd);
       await expect(anna).has.an.approxBalanceOf("10", ousd);
 
-      // TODO: delete rebase opt out later
-      await ousd.connect(matt).rebaseOptOut();
       await ousd
         .connect(governor)
         // matt delegates yield to anna
