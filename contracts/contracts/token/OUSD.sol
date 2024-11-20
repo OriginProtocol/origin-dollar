@@ -301,6 +301,14 @@ contract OUSD is Governable {
         }
     }
 
+    /**
+     * Adjust rebasingCredits and nonRebasingSupply. The later can either be adjusted by specifying diff in:
+     *  - token balance format using _nonRebasingSupplyDiff
+     *  - credits balance format using _nonRebasingCreditsDiff
+     * 
+     * These 2 parameters affect the nonRebasingSupply independently. Both formats are used in the interest
+     * of minimizing rounding errors.
+     */
     function _adjustGlobals(
         int256 _rebasingCreditsDiff,
         int256 _nonRebasingSupplyDiff,
