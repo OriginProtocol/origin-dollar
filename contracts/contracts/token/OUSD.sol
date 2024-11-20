@@ -581,10 +581,6 @@ contract OUSD is Governable {
 
         require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        totalSupply =
-            ((_rebasingCredits * 1e18) / _rebasingCreditsPerToken) +
-            nonRebasingSupply;
-
         emit TotalSupplyUpdatedHighres(
             totalSupply,
             _rebasingCredits,
