@@ -10,12 +10,6 @@ pragma solidity ^0.8.0;
 import { Governable } from "../governance/Governable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-/**
- * NOTE that this is an ERC20 token but the invariant that the sum of
- * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
- * rebasing design. Any integrations with OUSD should be aware.
- */
-
 contract OUSD is Governable {
     using SafeCast for int256;
     using SafeCast for uint256;
@@ -44,8 +38,8 @@ contract OUSD is Governable {
         YieldDelegationTarget
     }
 
-    // Add slots to align with deployed OUSD contract
-    uint256[154] private _gap;
+    
+    uint256[154] private _gap; // Slots to align with deployed contract
     uint256 private constant MAX_SUPPLY = type(uint128).max;
     uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -61,8 +55,7 @@ contract OUSD is Governable {
     mapping(address => address) public yieldFrom;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
-    // including below gap totals up to 200
-    uint256[38] private __gap;
+    uint256[38] private __gap; // including below gap totals up to 200
 
     function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
         external
@@ -124,7 +117,7 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Gets the balance of the specified address.
+     * @notice Gets the balance of the specified address.
      * @param _account Address to query the balance of.
      * @return A uint256 representing the amount of base units owned by the
      *         specified address.
@@ -146,7 +139,7 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Gets the credits balance of the specified address.
+     * @notice Gets the credits balance of the specified address.
      * @dev Backwards compatible with old low res credits per token.
      * @param _account The address to query the balance of.
      * @return (uint256, uint256) Credit balance and credits per token of the
@@ -172,7 +165,7 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Gets the credits balance of the specified address.
+     * @notice Gets the credits balance of the specified address.
      * @param _account The address to query the balance of.
      * @return (uint256, uint256, bool) Credit balance, credits per token of the
      *         address, and isUpgraded
@@ -203,7 +196,7 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Transfer tokens to a specified address.
+     * @notice Transfer tokens to a specified address.
      * @param _to the address to transfer to.
      * @param _value the amount to be transferred.
      * @return true on success.
@@ -214,12 +207,11 @@ contract OUSD is Governable {
         _executeTransfer(msg.sender, _to, _value);
 
         emit Transfer(msg.sender, _to, _value);
-
         return true;
     }
 
     /**
-     * @dev Transfer tokens from one address to another.
+     * @notice Transfer tokens from one address to another.
      * @param _from The address you want to send tokens from.
      * @param _to The address you want to transfer to.
      * @param _value The amount of tokens to be transferred.
@@ -233,20 +225,12 @@ contract OUSD is Governable {
         require(_value <= _allowances[_from][msg.sender], "Allowance exceeded");
 
         _allowances[_from][msg.sender] -= _value;
-
         _executeTransfer(_from, _to, _value);
 
         emit Transfer(_from, _to, _value);
-
         return true;
     }
 
-    /**
-     * @dev Update the count of non rebasing credits in response to a transfer
-     * @param _from The address you want to send tokens from.
-     * @param _to The address you want to transfer to.
-     * @param _value Amount of OUSD to transfer
-     */
     function _executeTransfer(
         address _from,
         address _to,
@@ -329,8 +313,8 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Function to check the amount of tokens that _owner has allowed to
-     *      `_spender`.
+     * @notice Function to check the amount of tokens that _owner has allowed 
+     *      to `_spender`.
      * @param _owner The address which owns the funds.
      * @param _spender The address which will spend the funds.
      * @return The number of tokens still available for the _spender.
@@ -344,8 +328,8 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Approve the passed address to spend the specified amount of tokens
-     *      on behalf of msg.sender.
+     * @notice Approve the passed address to spend the specified amount of
+     *      tokens on behalf of msg.sender.
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
@@ -356,14 +340,8 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Creates `_amount` tokens and assigns them to `_account`, increasing
-     * the total supply.
-     *
-     * Emits a {Transfer} event with `from` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `to` cannot be the zero address.
+     * @notice Creates `_amount` tokens and assigns them to `_account`, 
+     *     increasing the total supply.
      */
     function mint(address _account, uint256 _amount) external onlyVault {
         require(_account != address(0), "Mint to the zero address");
@@ -382,15 +360,8 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Destroys `_amount` tokens from `_account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `_account` cannot be the zero address.
-     * - `_account` must have at least `_amount` tokens.
+     * @notice Destroys `_amount` tokens from `_account`,
+     *     reducing the total supply.
      */
     function burn(address _account, uint256 _amount) external onlyVault {
         require(_account != address(0), "Burn from the zero address");
@@ -428,34 +399,15 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Before a `rebaseOptIn` or non yield delegating token `transfer` can be executed contract
-     *      accounts need to have a more explicitly defined rebasing state set.
-     *
-     *      Contract account can be in the following states before `autoMigrate` is called:
-     *      1. Under any token contract codebase they haven't been part of any token transfers yet
-     *         having rebaseState `NotSet` and `alternativeCreditsPerToken == 0`
-     *      2. Under older token contract codebase they have the default rebaseState set to `NotSet` and
-     *         the codebase has "auto-migrated" them by setting the `alternativeCreditsPerToken` to some
-     *         value greater than 0.
-     *      3. Contract has under any token contract codebase explicitly requested to be opted out of rebasing
-     *
-     *     Case 1. Needs to be migrated using autoMigrate to a nonRebasing account.
-     *
-     *     Note: Even with this _autoMigrate function in place there will still be Case 2 accounts existing that
-     *           will behave exactly like RebaseState StdNonRebasing account, and still having their rebase state
-     *           set to `NotSet`
-     *
+     * @dev Auto migrate contracts to be non rebasing,
+     *     unless they have opted into yield.
      * @param _account Address of the account.
      */
     function _autoMigrate(address _account) internal {
         bool isContract = _account.code.length > 0;
-        // In the older contract implementation: https://github.com/OriginProtocol/origin-dollar/blob/20a21d00a4a6ea9f42940ac194e82655fcda882e/contracts/contracts/token/OUSD.sol#L479-L489
-        // an account could have non 0 balance, be (or become) a contract with the rebase state
-        // set to default balanceRebaseOptions.NotSet and alternativeCreditsPerToken > 0. The latter would happen
-        // when such account would already be once `migrated` by running `_ensureRebasingMigration`. Executing the
-        // migration for a second time would cause great errors.
-        // With the current code that is no longer possible since accounts have their rebaseState marked
-        // as `StdNonRebasing` when running `_rebaseOptOut`
+        // In previous code versions, contracts would not have had thier
+        // rebaseState[_account] set to RebaseOptions.NonRebasing when migrated
+        // therefor we check the actual accounting used on the account instead.
         if (
             isContract &&
             rebaseState[_account] == RebaseOptions.NotSet &&
@@ -479,9 +431,6 @@ contract OUSD is Governable {
 
     /**
      * @notice Enable rebasing for an account.
-     * @dev Add a contract address to the non-rebasing exception list. The
-     * address's balance will be part of rebases and the account will be exposed
-     * to upside and downside.
      * @param _account Address of the account.
      */
     function governanceRebaseOptIn(address _account) external onlyGovernor {
@@ -489,9 +438,7 @@ contract OUSD is Governable {
     }
 
     /**
-     * @dev Add a contract address to the non-rebasing exception list. The
-     * address's balance will be part of rebases and the account will be exposed
-     * to upside and downside.
+     * @notice The calling account will start receiving yield after a successful call.
      */
     function rebaseOptIn() external {
         _rebaseOptIn(msg.sender);
@@ -501,9 +448,8 @@ contract OUSD is Governable {
         // prettier-ignore
         require(
             alternativeCreditsPerToken[_account] > 0 ||
-                // new empty contracts that haven't been yet autoMigrated to StdNonRebasing can
-                // explicitly call `rebaseOptIn`. Side effect is that also already rebasing EOA
-                // accounts that have 0 balance can call RebaseOptIn
+                // Accounts may explicitly `rebaseOptIn` regardless of
+                // accounting if they have a 0 balance.
                 balanceOf(_account) == 0
             ,
             "Account must be non-rebasing"
@@ -522,12 +468,15 @@ contract OUSD is Governable {
         rebaseState[_account] = RebaseOptions.StdRebasing;
         alternativeCreditsPerToken[_account] = 0;
         _creditBalances[_account] = _balanceToRebasingCredits(balance);
-
+        // Globals
         _adjustGlobals(_creditBalances[_account].toInt256(), -balance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }
 
+    /**
+     * @notice The calling account will no longer receive yield
+     */
     function rebaseOptOut() external {
         _rebaseOptOut(msg.sender);
     }
@@ -550,15 +499,15 @@ contract OUSD is Governable {
         rebaseState[_account] = RebaseOptions.StdNonRebasing;
         alternativeCreditsPerToken[_account] = 1e18;
         _creditBalances[_account] = balance;
-
+        // Globals
         _adjustGlobals(-oldCredits.toInt256(), balance.toInt256());
 
         emit AccountRebasingDisabled(_account);
     }
 
     /**
-     * @dev Modify the supply without minting new tokens. This uses a change in
-     *      the exchange rate between "credits" and OUSD tokens to change balances.
+     * @notice Distribute yield to users. This changes the exchange rate
+     *  between "credits" and OUSD tokens to change rebasing user's balances.
      * @param _newTotalSupply New total supply of OUSD.
      */
     function changeSupply(uint256 _newTotalSupply) external onlyVault {
@@ -590,6 +539,10 @@ contract OUSD is Governable {
         );
     }
 
+    /*
+     * @notice Send the yield from one account to another acount.
+     *     Each account keeps their own balances.
+     */
     function delegateYield(address from, address to) external onlyGovernor {
         require(from != address(0), "Zero from address not allowed");
         require(to != address(0), "Zero to address not allowed");
@@ -639,11 +592,15 @@ contract OUSD is Governable {
         _creditBalances[from] = fromBalance;
         alternativeCreditsPerToken[from] = 1e18;
         _creditBalances[to] += creditsFrom;
-
+        // Global
         _adjustGlobals(creditsFrom.toInt256(), -fromBalance.toInt256());
+
         emit YieldDelegated(from, to);
     }
 
+    /*
+     * @notice Stop sending the yield from one account to another acount.
+     */
     function undelegateYield(address from) external onlyGovernor {
         // Require a delegation, which will also ensure a valid delegation
         require(yieldTo[from] != address(0), "Zero address not allowed");
@@ -660,12 +617,13 @@ contract OUSD is Governable {
         rebaseState[to] = RebaseOptions.StdRebasing;
 
         // Local
+        // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
         _creditBalances[from] = fromBalance;
-        // no need to set the alternativeCreditsPerToken of the from account since
-        // that one is already set to 1e18 by the `delegateYield` function.
+        // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
         _creditBalances[to] -= creditsFrom;
-
+        // Global
         _adjustGlobals(-(creditsFrom).toInt256(), fromBalance.toInt256());
+
         emit YieldUndelegated(from, to);
     }
 }
