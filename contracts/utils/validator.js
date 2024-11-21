@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const { ethers } = require("ethers");
 const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther, keccak256 } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
