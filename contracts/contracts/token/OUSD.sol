@@ -485,7 +485,7 @@ contract OUSD is Governable {
         creditBalances[_account] = newCredits;
         // Globals
         _adjustGlobals(
-            creditBalances[_account].toInt256(),
+            newCredits.toInt256(),
             -newBalance.toInt256()
         );
 
