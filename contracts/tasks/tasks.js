@@ -100,7 +100,7 @@ const {
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
-  snapValidators
+  snapValidators,
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");

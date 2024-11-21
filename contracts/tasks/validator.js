@@ -127,7 +127,9 @@ async function getValidatorBalances({ pubkeys }) {
 
 async function snapValidators({ pubkeys }) {
   if (!pubkeys.match(validatorKeys)) {
-    throw Error(`Public keys not a comma-separated list of public keys with 0x prefixes`);
+    throw Error(
+      `Public keys not a comma-separated list of public keys with 0x prefixes`
+    );
   }
   const validators = await getValidators(pubkeys);
 
