@@ -56,7 +56,7 @@ contract OUSD is Governable {
     mapping(address => address) public yieldFrom;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
-    uint256[38] private __gap; // including below gap totals up to 200
+    uint256[34] private __gap; // including below gap totals up to 200
 
     function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
         external
