@@ -421,7 +421,7 @@ contract OUSD is Governable {
     /**
      * @dev Calculates credits from contract's global rebasingCreditsPerToken_, and
      *      also balance that corresponds to those credits. The latter is important
-     *      when adjusting the contract's global rebasingCredits to circumvent any
+     *      when adjusting the contract's global nonRebasingSupply to circumvent any
      *      possible rounding errors.
      *
      * @param _balance Address of the account.
