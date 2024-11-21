@@ -267,7 +267,7 @@ contract OUSD is Governable {
         if (state == RebaseOptions.YieldDelegationSource) {
             address target = yieldTo[_account];
             uint256 targetOldBalance = balanceOf(target);
-            uint256 targetNewCredits = _balanceToRebasingCredits(
+            (uint256 targetNewCredits,) = _balanceToRebasingCredits(
                 targetOldBalance + newBalance
             );
             rebasingCreditsDiff =
@@ -277,7 +277,7 @@ contract OUSD is Governable {
             creditBalances[_account] = newBalance;
             creditBalances[target] = targetNewCredits;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
-            uint256 newCredits = _balanceToRebasingCredits(
+            (uint256 newCredits,) = _balanceToRebasingCredits(
                 newBalance + creditBalances[yieldFrom[_account]]
             );
             rebasingCreditsDiff =
@@ -291,7 +291,7 @@ contract OUSD is Governable {
                 alternativeCreditsPerToken[_account] = 1e18;
                 creditBalances[_account] = newBalance;
             } else {
-                uint256 newCredits = _balanceToRebasingCredits(newBalance);
+                (uint256 newCredits,) = _balanceToRebasingCredits(newBalance);
                 rebasingCreditsDiff =
                     newCredits.toInt256() -
                     creditBalances[_account].toInt256();
@@ -419,16 +419,25 @@ contract OUSD is Governable {
         }
     }
 
+    /**
+     * @dev Calculates credits from contract's global rebasingCreditsPerToken_, and
+     *      also balance that corresponds to those credits. The latter is important
+     *      when adjusting the contract's global rebasingCredits to circumvent any
+     *      possible rounding errors.
+     * 
+     * @param _balance Address of the account.
+     */
     function _balanceToRebasingCredits(uint256 _balance)
         internal
         view
-        returns (uint256)
+        returns (uint256 rebasingCredits, uint256 balance)
     {
         // Rounds up, because we need to ensure that accounts always have
         // at least the balance that they should have.
         // Note this should always be used on an absolute account value,
         // not on a possibly negative diff, because then the rounding would be wrong.
-        return ((_balance) * rebasingCreditsPerToken_ + 1e18 - 1) / 1e18;
+        rebasingCredits = ((_balance) * rebasingCreditsPerToken_ + 1e18 - 1) / 1e18;
+        balance = rebasingCredits * 1e18 / rebasingCreditsPerToken_;
     }
 
     /**
@@ -469,9 +478,10 @@ contract OUSD is Governable {
         // Account
         rebaseState[_account] = RebaseOptions.StdRebasing;
         alternativeCreditsPerToken[_account] = 0;
-        creditBalances[_account] = _balanceToRebasingCredits(balance);
+        (uint256 newCredits, uint256 newBalance) = _balanceToRebasingCredits(balance);
+        creditBalances[_account] = newCredits;
         // Globals
-        _adjustGlobals(creditBalances[_account].toInt256(), -balance.toInt256());
+        _adjustGlobals(creditBalances[_account].toInt256(), -newBalance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }
@@ -593,9 +603,10 @@ contract OUSD is Governable {
         // Local
         creditBalances[_from] = fromBalance;
         alternativeCreditsPerToken[_from] = 1e18;
-        creditBalances[_to] = _balanceToRebasingCredits(fromBalance + toBalance);
+        (creditBalances[_to],) = _balanceToRebasingCredits(fromBalance + toBalance);
         // Global
-        _adjustGlobals(_balanceToRebasingCredits(fromBalance).toInt256(), -fromBalance.toInt256());
+        (uint256 fromCredits, uint256 fromBalanceAccurate) = _balanceToRebasingCredits(fromBalance);
+        _adjustGlobals(fromCredits.toInt256(), -fromBalanceAccurate.toInt256());
         emit YieldDelegated(_from, _to);
     }
 
@@ -620,9 +631,10 @@ contract OUSD is Governable {
         // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
         creditBalances[_from] = fromBalance;
         // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
-        creditBalances[to] = _balanceToRebasingCredits(toBalance);
+        (creditBalances[to],) = _balanceToRebasingCredits(toBalance);
         // Global
-        _adjustGlobals(-(_balanceToRebasingCredits(fromBalance).toInt256()), fromBalance.toInt256());
+        (uint256 fromCredits, uint256 fromBalanceAccurate) = _balanceToRebasingCredits(fromBalance);
+        _adjustGlobals(-(fromCredits.toInt256()), fromBalanceAccurate.toInt256());
         emit YieldUndelegated(_from, to);
     }
 }
