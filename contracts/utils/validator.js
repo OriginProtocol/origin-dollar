@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const { storePrivateKeyToS3 } = require("./amazon");
 const { sleep } = require("./time");
 const { p2pApiEncodedKey } = require("./constants");
-const { getValidators } = require("../tasks/beaconchain");
+const { mainnet } = require("./addresses");
 
 const log = require("./logger")("task:p2p");
 
@@ -204,7 +204,6 @@ const stakeValidators = async ({
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
   s3BucketName,
-  beaconChainApiKey,
 }) => {
   if (await stakingContractPaused(nativeStakingStrategy)) {
     log(`Native staking contract is paused... exiting`);
@@ -289,8 +288,7 @@ const stakeValidators = async ({
           signer,
           nativeStakingStrategy,
           currentState.metadata.pubkeys,
-          currentState.metadata.depositData,
-          beaconChainApiKey
+          currentState.metadata.depositData
         );
         currentState = await getState(store);
       }
@@ -580,27 +578,13 @@ const depositEth = async (
   signer,
   nativeStakingStrategy,
   pubkeys,
-  depositData,
-  beaconChainApiKey
+  depositData
 ) => {
   try {
     log(`About to stake ETH with:`);
 
-    // Check non of the validators are already registered
-    try {
-      await getValidators(pubkeys, beaconChainApiKey);
-
-      console.log(`The validators have already been registered`);
-      process.exit(1);
-    } catch (err) {
-      if (
-        err.message !==
-        'Call to Beaconcha.in API failed. Error: "ERROR: invalid validator argument, pubkey(s) did not resolve to a validator index"'
-      ) {
-        log(`Failed to get validators with error: `, err.message);
-        throw err;
-      }
-    }
+    // Check none of the validators are already registered
+    await depositFrontRunCheck(pubkeys, nativeStakingStrategy.provider);
 
     const validatorsStakeData = depositData.map((d) => ({
       pubkey: d.pubkey,
@@ -621,6 +605,44 @@ const depositEth = async (
     log(`Submitting transaction failed with: `, e);
     //await clearState(uuid, store, `Transaction to deposit to validator fails`)
     throw e;
+  }
+};
+
+const depositFrontRunCheck = async (pubkeys, provider) => {
+  const latestBlock = await provider.getBlockNumber();
+
+  // Create a contract instance
+  const depositContract = new ethers.Contract(
+    // Address
+    mainnet.beaconChainDepositContract,
+    // ABI
+    [
+      "event DepositEvent(bytes pubkey, bytes withdrawal_credentials, bytes amount, bytes signature, bytes index)",
+    ],
+    provider
+  );
+
+  // Check the events from the last 1000 blocks
+  const recentBlocks = 1000;
+  const filter = {
+    address: depositContract.address,
+    topics: [
+      "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5",
+    ],
+    fromBlock: latestBlock - recentBlocks,
+    toBlock: "latest",
+  };
+  const logs = await provider.getLogs(filter);
+  log(`Checking ${logs.length} logs for duplicate deposits of public keys:`);
+  log(pubkeys);
+
+  for (const eventLog of logs) {
+    const parsedLog = depositContract.interface.parseLog(eventLog);
+    const eventPubkey = parsedLog.args.pubkey;
+
+    if (pubkeys.includes(eventPubkey.toLowerCase())) {
+      throw Error(`Validator with pubkey ${eventPubkey} has already deposited`);
+    }
   }
 };
 
