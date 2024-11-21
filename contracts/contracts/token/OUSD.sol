@@ -429,7 +429,7 @@ contract OUSD is Governable {
     function _balanceToRebasingCredits(uint256 _balance)
         internal
         view
-        returns (uint256 rebasingCredits, uint256 balance)
+        returns (uint256 rebasingCredits, uint256 actualBalance)
     {
         uint256 rebasingCreditsPerTokenMem = rebasingCreditsPerToken_;
         // Rounds up, because we need to ensure that accounts always have
@@ -439,7 +439,7 @@ contract OUSD is Governable {
         rebasingCredits =
             ((_balance) * rebasingCreditsPerTokenMem + 1e18 - 1) /
             1e18;
-        balance = (rebasingCredits * 1e18) / rebasingCreditsPerTokenMem;
+        actualBalance = (rebasingCredits * 1e18) / rebasingCreditsPerTokenMem;
     }
 
     /**
