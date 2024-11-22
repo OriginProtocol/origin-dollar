@@ -489,6 +489,26 @@ describe("Token", function () {
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 
+  it("Calling rebaseOptIn / optOut in loop shouldn't keep increasing account's balance", async () => {
+    let { ousd, vault, matt, usdc, josh } = fixture;
+
+    // Transfer USDC into the Vault to simulate yield
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+    await vault.rebase();
+
+    await ousd.connect(josh).rebaseOptOut();
+    await ousd.connect(josh).rebaseOptIn();
+
+    const balanceBefore = await ousd.balanceOf(josh.address);
+
+    for (let i = 0; i < 10 ; i++) {
+      await ousd.connect(josh).rebaseOptOut();
+      await ousd.connect(josh).rebaseOptIn();
+    }
+    
+    expect(await ousd.balanceOf(josh.address)).to.equal(balanceBefore);
+  });
+
   it("Should not allow EOA to call rebaseOptIn when already opted in to rebasing", async () => {
     let { ousd, matt, usdc } = fixture;
     await usdc.connect(matt).mint(usdcUnits("2"));
@@ -502,7 +522,9 @@ describe("Token", function () {
     let { ousd, matt, usdc, josh } = fixture;
     await usdc.connect(matt).mint(usdcUnits("2"));
     // transfer all OUSD out
-    await ousd.connect(matt).transfer(josh.address, await ousd.balanceOf(matt.address));
+    await ousd
+      .connect(matt)
+      .transfer(josh.address, await ousd.balanceOf(matt.address));
 
     // user is allowed to override its NotSet rebasing state to Rebasing without negatively affecting
     // any of the token contract's invariants
