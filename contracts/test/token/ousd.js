@@ -399,6 +399,20 @@ describe("Token", function () {
     );
   });
 
+  it("Should allow a governanceRebaseOptIn call", async () => {
+    let { ousd, governor, mockNonRebasing } = fixture;
+    await ousd.connect(governor).governanceRebaseOptIn(mockNonRebasing.address);
+  });
+
+  it("Should not allow a governanceRebaseOptIn of a zero address", async () => {
+    let { ousd, governor } = fixture;
+    await expect(
+      ousd
+        .connect(governor)
+        .governanceRebaseOptIn("0x0000000000000000000000000000000000000000")
+    ).to.be.revertedWith("Zero address not allowed");
+  });
+
   it("Should maintain the correct balances when rebaseOptIn is called from non-rebasing contract", async () => {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
@@ -501,11 +515,11 @@ describe("Token", function () {
 
     const balanceBefore = await ousd.balanceOf(josh.address);
 
-    for (let i = 0; i < 10 ; i++) {
+    for (let i = 0; i < 10; i++) {
       await ousd.connect(josh).rebaseOptOut();
       await ousd.connect(josh).rebaseOptIn();
     }
-    
+
     expect(await ousd.balanceOf(josh.address)).to.equal(balanceBefore);
   });
 
