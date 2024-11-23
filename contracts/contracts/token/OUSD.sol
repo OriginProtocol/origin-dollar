@@ -447,6 +447,7 @@ contract OUSD is Governable {
      * @param _account Address of the account.
      */
     function governanceRebaseOptIn(address _account) external onlyGovernor {
+        require(_account != address(0), "Zero address not allowed");
         _rebaseOptIn(_account);
     }
 
