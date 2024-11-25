@@ -976,6 +976,25 @@ describe("Token", function () {
       const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
       await expect(contractCreditsPerToken[0]).to.equal(_10_1e27);
       await expect(contractCreditsPerToken[1]).to.equal(_1e27);
-  });
+    });
+
+    it("Should report correct creditBalanceOf and creditsBalanceOfHighres", async () => {
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } = fixture;
+
+      await ousd.connect(rebase_eoa_notset_0).transfer(mockNonRebasing.address, ousdUnits("10"));
+      const _5_1e26 = BigNumber.from("500000000000000000000000000");
+      const _5_1e17 = BigNumber.from("500000000000000000"); // 5 * 1e26 / RESOLUTION_INCREASE
+      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteCreditBalances(mockNonRebasing.address, _5_1e26)
+      // 1e27
+      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteAlternativeCPT(mockNonRebasing.address, _5_1e26)
+
+      const contractCreditsPerTokenHighres = await ousd.creditsBalanceOfHighres(mockNonRebasing.address);
+      await expect(contractCreditsPerTokenHighres[0]).to.equal(_5_1e26);
+      await expect(contractCreditsPerTokenHighres[1]).to.equal(_5_1e26);
+
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
+      await expect(contractCreditsPerToken[0]).to.equal(_5_1e17);
+      await expect(contractCreditsPerToken[1]).to.equal(_5_1e17);
+    });
   });
 });
