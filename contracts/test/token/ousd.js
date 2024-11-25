@@ -939,10 +939,6 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(anna).has.an.balanceOf("90", ousd);
     });
-
-    it("should be able to chenge yield delegation", async () => {
-      //A Should delegate to account B, rebase with profit, delegate to account C and all have correct balances
-    });
   });
 
   describe("Old code migrated contract accounts", function () {
@@ -996,6 +992,21 @@ describe("Token", function () {
       const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
       await expect(contractCreditsPerToken[0]).to.equal(_5_1e17);
       await expect(contractCreditsPerToken[1]).to.equal(_5_1e17);
+    });
+
+    it("Contract should auto migrate to StdNonRebasing", async () => {
+      let { ousd, nonrebase_cotract_notSet_0, rebase_eoa_notset_0} = fixture;
+
+      await expect(await ousd.rebaseState(nonrebase_cotract_notSet_0.address)).to.equal(0); // NotSet
+      await ousd.connect(rebase_eoa_notset_0).transfer(nonrebase_cotract_notSet_0.address, ousdUnits("10"));
+      await expect(await ousd.rebaseState(nonrebase_cotract_notSet_0.address)).to.equal(1); // StdNonRebasing
+    });
+
+    it("Yield delegating account should not rebase opt out", async () => {
+      let { ousd, rebase_delegate_target_0 } = fixture;
+      await expect(ousd.connect(rebase_delegate_target_0).rebaseOptOut()).to.be.revertedWith(
+        "Only standard rebasing accounts can opt out"
+      );
     });
   });
 });
