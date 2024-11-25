@@ -22,7 +22,7 @@ object "OETHZapper" as zap <<Origin>> #$originColor {
 ' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
 ' }
 
-object "OETH ARM" as arm <<Origin>><<Proxy>> #$newColor {
+object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
     assets: WETH, OETH
 }
 
@@ -76,6 +76,15 @@ object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColo
 }
 
 object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
+object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
+}
+
+object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
@@ -182,6 +191,13 @@ nativeStrat <..> feeAcc
 harv <..> nativeStrat2
 oethv <...> nativeStrat2
 nativeStrat2 <..> feeAcc2
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
+
+
+harv <..> nativeStrat3
+oethv <...> nativeStrat3
+nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> bDep
 
