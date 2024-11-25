@@ -961,5 +961,21 @@ describe("Token", function () {
         nonRebasingSupply.sub(await ousd.balanceOf(contract_account.address))
       ).to.equal(await ousd.nonRebasingSupply());
     });
+
+    it("Non rebasing accounts with cpt set to 1e27 should return value non corrected for resolution increase", async () => {
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } = fixture;
+
+      await ousd.connect(rebase_eoa_notset_0).transfer(mockNonRebasing.address, ousdUnits("10"));
+      // 10 * 1e27
+      const _10_1e27 = BigNumber.from("100000000000000000000000000000");
+      const _1e27 = BigNumber.from("1000000000000000000000000000");
+      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteCreditBalances(mockNonRebasing.address, _10_1e27)
+      // 1e27
+      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteAlternativeCPT(mockNonRebasing.address, _1e27)
+
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
+      await expect(contractCreditsPerToken[0]).to.equal(_10_1e27);
+      await expect(contractCreditsPerToken[1]).to.equal(_1e27);
+  });
   });
 });
