@@ -156,6 +156,13 @@ contract OUSD is Governable {
             // contract accounts at high resolution. Since they are not changing
             // as a result of this upgrade, we will return their true values
             return (creditBalances[_account], cpt);
+        } else if (cpt == 1e18) {
+            // This is the current implementation's non rebasing account where cpt
+            // equals 1e18 and creditBalaces of the account equal the token balances
+            return (
+                creditBalances[_account],
+                cpt
+            );
         } else {
             return (
                 creditBalances[_account] / RESOLUTION_INCREASE,
