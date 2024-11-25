@@ -159,6 +159,8 @@ The token distributes yield to users by "rebasing" (changing supply). This leave
 
 The token is designed to gently degrade in resolutions once a huge amount of APY has been earned. Once this crosses a certain point, and enough resolution is no longer possible, transfers should slightly round up.
 
+There is inevitable rounding error when rebasing, since there is no possible way to ensure that totalSupply is exactly the result of all the things that make it up. This is because totalSupply must be exactly equal to the new value and nonRebasingSupply must not change. The only option is to handle rounding errors by rounding down the rebasingCreditsPerToken. The resulting gap of undistributed yield is later distributed to users the next time the token rebases upwards.
+
 
 ## Rebasing invariants
 
@@ -194,6 +196,16 @@ The token is designed to gently degrade in resolutions once a huge amount of APY
 
 <!-- Invarient -->
 > A successful burn() call by the vault results in the target account's balance decreasing by the amount specified
+
+## External integrations
+
+In production, the following things are true:
+
+- changeSupply can move up only. This is hardcoded into the vault.
+- There will aways be 1e16+ dead rebasing tokens (we send them to a dead address at deploy time)
+
+
+
 
 
 [^1]: From the current code base. Historically there may be different data stored in storage slots.
