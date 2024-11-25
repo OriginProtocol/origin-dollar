@@ -991,6 +991,7 @@ describe("Token", function () {
       const contractCreditsPerTokenHighres = await ousd.creditsBalanceOfHighres(mockNonRebasing.address);
       await expect(contractCreditsPerTokenHighres[0]).to.equal(_5_1e26);
       await expect(contractCreditsPerTokenHighres[1]).to.equal(_5_1e26);
+      await expect(await ousd.nonRebasingCreditsPerToken(mockNonRebasing.address)).to.equal(_5_1e26);
 
       const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
       await expect(contractCreditsPerToken[0]).to.equal(_5_1e17);
