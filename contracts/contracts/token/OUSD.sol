@@ -159,10 +159,7 @@ contract OUSD is Governable {
         } else if (cpt == 1e18) {
             // This is the current implementation's non rebasing account where cpt
             // equals 1e18 and creditBalaces of the account equal the token balances
-            return (
-                creditBalances[_account],
-                cpt
-            );
+            return (creditBalances[_account], cpt);
         } else {
             return (
                 creditBalances[_account] / RESOLUTION_INCREASE,
@@ -493,10 +490,7 @@ contract OUSD is Governable {
         );
         creditBalances[_account] = newCredits;
         // Globals
-        _adjustGlobals(
-            newCredits.toInt256(),
-            -newBalance.toInt256()
-        );
+        _adjustGlobals(newCredits.toInt256(), -newBalance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }

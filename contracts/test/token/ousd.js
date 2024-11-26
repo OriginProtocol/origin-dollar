@@ -4,6 +4,8 @@ const { utils, BigNumber } = require("ethers");
 
 const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
 
+const zeroAddress = "0x0000000000000000000000000000000000000000";
+
 describe("Token", function () {
   if (isFork) {
     this.timeout(0);
@@ -26,9 +28,7 @@ describe("Token", function () {
 
   it("Should return 0 balance for the zero address", async () => {
     const { ousd } = fixture;
-    expect(
-      await ousd.balanceOf("0x0000000000000000000000000000000000000000")
-    ).to.equal(0);
+    expect(await ousd.balanceOf(zeroAddress)).to.equal(0);
   });
 
   it("Should not allow anyone to mint OUSD directly", async () => {
@@ -94,8 +94,12 @@ describe("Token", function () {
     await vault.rebase();
 
     // Credits per token should be the same for the contract
-    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(mockNonRebasing.address);
-    await expect(contractCreditsPerToken[1]).to.equal(contractCreditsPerTokenAfter[1]);
+    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(
+      mockNonRebasing.address
+    );
+    await expect(contractCreditsPerToken[1]).to.equal(
+      contractCreditsPerTokenAfter[1]
+    );
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
@@ -107,7 +111,9 @@ describe("Token", function () {
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
     );
-    await expect(await ousd.rebasingCreditsPerTokenHighres()).to.approxEqualTolerance(
+    await expect(
+      await ousd.rebasingCreditsPerTokenHighres()
+    ).to.approxEqualTolerance(
       (await ousd.rebasingCreditsPerToken()).mul(BigNumber.from("1000000000")),
       0.01 // maxTolerancePct
     );
@@ -272,8 +278,12 @@ describe("Token", function () {
     await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
     await vault.rebase();
     // Credits per token should be the same for the contract
-    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(mockNonRebasing.address);
-    await expect(contractCreditsPerToken[1]).to.equal(contractCreditsPerTokenAfter[1]);
+    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(
+      mockNonRebasing.address
+    );
+    await expect(contractCreditsPerToken[1]).to.equal(
+      contractCreditsPerTokenAfter[1]
+    );
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
@@ -412,9 +422,7 @@ describe("Token", function () {
   it("Should not allow a governanceRebaseOptIn of a zero address", async () => {
     let { ousd, governor } = fixture;
     await expect(
-      ousd
-        .connect(governor)
-        .governanceRebaseOptIn("0x0000000000000000000000000000000000000000")
+      ousd.connect(governor).governanceRebaseOptIn(zeroAddress)
     ).to.be.revertedWith("Zero address not allowed");
   });
 
@@ -939,6 +947,30 @@ describe("Token", function () {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(anna).has.an.balanceOf("90", ousd);
     });
+
+    it("Should not delegate yield from a zero address", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(zeroAddress, matt.address)
+      ).to.be.revertedWith("Zero from address not allowed");
+    });
+
+    it("Should not delegate yield to a zero address", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(matt.address, zeroAddress)
+      ).to.be.revertedWith("Zero to address not allowed");
+    });
+
+    it("Should not delegate yield to self", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(matt.address, matt.address)
+      ).to.be.revertedWith("Cannot delegate to self");
+    });
   });
 
   describe("Old code migrated contract accounts", function () {
@@ -959,54 +991,94 @@ describe("Token", function () {
     });
 
     it("Non rebasing accounts with cpt set to 1e27 should return value non corrected for resolution increase", async () => {
-      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } = fixture;
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } =
+        fixture;
 
-      await ousd.connect(rebase_eoa_notset_0).transfer(mockNonRebasing.address, ousdUnits("10"));
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(mockNonRebasing.address, ousdUnits("10"));
       // 10 * 1e27
       const _10_1e27 = BigNumber.from("100000000000000000000000000000");
       const _1e27 = BigNumber.from("1000000000000000000000000000");
-      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteCreditBalances(mockNonRebasing.address, _10_1e27)
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteCreditBalances(mockNonRebasing.address, _10_1e27);
       // 1e27
-      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteAlternativeCPT(mockNonRebasing.address, _1e27)
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteAlternativeCPT(mockNonRebasing.address, _1e27);
 
-      const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
       await expect(contractCreditsPerToken[0]).to.equal(_10_1e27);
       await expect(contractCreditsPerToken[1]).to.equal(_1e27);
     });
 
     it("Should report correct creditBalanceOf and creditsBalanceOfHighres", async () => {
-      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } = fixture;
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } =
+        fixture;
 
-      await ousd.connect(rebase_eoa_notset_0).transfer(mockNonRebasing.address, ousdUnits("10"));
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(mockNonRebasing.address, ousdUnits("10"));
       const _5_1e26 = BigNumber.from("500000000000000000000000000");
       const _5_1e17 = BigNumber.from("500000000000000000"); // 5 * 1e26 / RESOLUTION_INCREASE
-      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteCreditBalances(mockNonRebasing.address, _5_1e26)
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteCreditBalances(mockNonRebasing.address, _5_1e26);
       // 1e27
-      await ousdUnlocked.connect(rebase_eoa_notset_0).overwriteAlternativeCPT(mockNonRebasing.address, _5_1e26)
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteAlternativeCPT(mockNonRebasing.address, _5_1e26);
 
-      const contractCreditsPerTokenHighres = await ousd.creditsBalanceOfHighres(mockNonRebasing.address);
+      const contractCreditsPerTokenHighres = await ousd.creditsBalanceOfHighres(
+        mockNonRebasing.address
+      );
       await expect(contractCreditsPerTokenHighres[0]).to.equal(_5_1e26);
       await expect(contractCreditsPerTokenHighres[1]).to.equal(_5_1e26);
-      await expect(await ousd.nonRebasingCreditsPerToken(mockNonRebasing.address)).to.equal(_5_1e26);
+      await expect(
+        await ousd.nonRebasingCreditsPerToken(mockNonRebasing.address)
+      ).to.equal(_5_1e26);
 
-      const contractCreditsPerToken = await ousd.creditsBalanceOf(mockNonRebasing.address);
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
       await expect(contractCreditsPerToken[0]).to.equal(_5_1e17);
       await expect(contractCreditsPerToken[1]).to.equal(_5_1e17);
     });
 
     it("Contract should auto migrate to StdNonRebasing", async () => {
-      let { ousd, nonrebase_cotract_notSet_0, rebase_eoa_notset_0} = fixture;
+      let { ousd, nonrebase_cotract_notSet_0, rebase_eoa_notset_0 } = fixture;
 
-      await expect(await ousd.rebaseState(nonrebase_cotract_notSet_0.address)).to.equal(0); // NotSet
-      await ousd.connect(rebase_eoa_notset_0).transfer(nonrebase_cotract_notSet_0.address, ousdUnits("10"));
-      await expect(await ousd.rebaseState(nonrebase_cotract_notSet_0.address)).to.equal(1); // StdNonRebasing
+      await expect(
+        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+      ).to.equal(0); // NotSet
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(nonrebase_cotract_notSet_0.address, ousdUnits("10"));
+      await expect(
+        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+      ).to.equal(1); // StdNonRebasing
     });
 
     it("Yield delegating account should not rebase opt out", async () => {
       let { ousd, rebase_delegate_target_0 } = fixture;
-      await expect(ousd.connect(rebase_delegate_target_0).rebaseOptOut()).to.be.revertedWith(
-        "Only standard rebasing accounts can opt out"
-      );
+      await expect(
+        ousd.connect(rebase_delegate_target_0).rebaseOptOut()
+      ).to.be.revertedWith("Only standard rebasing accounts can opt out");
+    });
+
+    it("Should not un-delegate yield from a zero address or address not part of yield delegation", async () => {
+      let { ousd, rebase_eoa_notset_0, governor } = fixture;
+
+      await expect(
+        ousd.connect(governor).undelegateYield(zeroAddress)
+      ).to.be.revertedWith("Zero address not allowed");
+
+      await expect(
+        ousd.connect(governor).undelegateYield(rebase_eoa_notset_0.address)
+      ).to.be.revertedWith("Zero address not allowed");
     });
   });
 });
