@@ -8,8 +8,6 @@ const sql = postgres(process.env.SQUID_DB_URL);
 const OETH_ADDRESS = "0x856c4efb76c1d1ae02e20ceb03a2a6a08b0b8dc3";
 const OUSD_ADDRESS = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86";
 
-const TOKEN_ABI = require("../../contracts/deployments/abis/OUSD.json")
-
 async function getAddresses(oTokenAddress) {
   const batchSize = 5000;
   let offset = 0;
