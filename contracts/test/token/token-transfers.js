@@ -215,7 +215,7 @@ describe("Account type variations", function () {
       balancePartOfRebasingCredits: true,
       inYieldDelegation: true,
     },
-    { 
+    {
       name: "rebase_delegate_target_1",
       balancePartOfRebasingCredits: true,
       inYieldDelegation: true,
@@ -235,44 +235,47 @@ describe("Account type variations", function () {
       const { name: toName, balancePartOfRebasingCredits: toAffectsRC } =
         toAccounts[j];
 
-      (skipTransferTest ? it.skip : it)(`Should transfer from ${fromName} to ${toName}`, async () => {
-        const fromAccount = fixture[fromName];
-        const toAccount = fixture[toName];
-        const { ousd } = fixture;
+      (skipTransferTest ? it.skip : it)(
+        `Should transfer from ${fromName} to ${toName}`,
+        async () => {
+          const fromAccount = fixture[fromName];
+          const toAccount = fixture[toName];
+          const { ousd } = fixture;
 
-        const fromBalance = await ousd.balanceOf(fromAccount.address);
-        const toBalance = await ousd.balanceOf(toAccount.address);
-        // Random transfer between 2-8
-        const amount = ousdUnits(`${2 + Math.random() * 6}`);
+          const fromBalance = await ousd.balanceOf(fromAccount.address);
+          const toBalance = await ousd.balanceOf(toAccount.address);
+          // Random transfer between 2-8
+          const amount = ousdUnits(`${2 + Math.random() * 6}`);
 
-        if (isContract) {
-          await fromAccount.transfer(toAccount.address, amount);
-        } else {
-          await ousd.connect(fromAccount).transfer(toAccount.address, amount);
+          if (isContract) {
+            await fromAccount.transfer(toAccount.address, amount);
+          } else {
+            await ousd.connect(fromAccount).transfer(toAccount.address, amount);
+          }
+
+          // check balances
+          await expect(await ousd.balanceOf(fromAccount.address)).to.equal(
+            fromBalance.sub(amount)
+          );
+          await expect(await ousd.balanceOf(toAccount.address)).to.equal(
+            toBalance.add(amount)
+          );
+
+          let expectedNonRebasingSupply = nonRebasingSupply;
+          if (!fromAffectsRC) {
+            expectedNonRebasingSupply = expectedNonRebasingSupply.sub(amount);
+          }
+          if (!toAffectsRC) {
+            expectedNonRebasingSupply = expectedNonRebasingSupply.add(amount);
+          }
+
+          // check global contract (in)variants
+          await expect(await ousd.totalSupply()).to.equal(totalSupply);
+          await expect(await ousd.nonRebasingSupply()).to.equal(
+            expectedNonRebasingSupply
+          );
         }
-
-        // check balances
-        await expect(await ousd.balanceOf(fromAccount.address)).to.equal(
-          fromBalance.sub(amount)
-        );
-        await expect(await ousd.balanceOf(toAccount.address)).to.equal(
-          toBalance.add(amount)
-        );
-
-        let expectedNonRebasingSupply = nonRebasingSupply;
-        if (!fromAffectsRC) {
-          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(amount);
-        }
-        if (!toAffectsRC) {
-          expectedNonRebasingSupply = expectedNonRebasingSupply.add(amount);
-        }
-
-        // check global contract (in)variants
-        await expect(await ousd.totalSupply()).to.equal(totalSupply);
-        await expect(await ousd.nonRebasingSupply()).to.equal(
-          expectedNonRebasingSupply
-        );
-      });
+      );
     }
   }
 
@@ -286,45 +289,50 @@ describe("Account type variations", function () {
       const {
         name: toName,
         balancePartOfRebasingCredits: toBalancePartOfRC,
-        inYieldDelegation: inYieldDelegationTarget
+        inYieldDelegation: inYieldDelegationTarget,
       } = toAccounts[j];
 
-      (inYieldDelegationSource || inYieldDelegationTarget ? it.skip : it)(`Non rebasing supply should be correct when ${fromName} delegates to ${toName}`, async () => {
-        const fromAccount = fixture[fromName];
-        const toAccount = fixture[toName];
-        const { ousd, governor } = fixture;
+      (inYieldDelegationSource || inYieldDelegationTarget ? it.skip : it)(
+        `Non rebasing supply should be correct when ${fromName} delegates to ${toName}`,
+        async () => {
+          const fromAccount = fixture[fromName];
+          const toAccount = fixture[toName];
+          const { ousd, governor } = fixture;
 
-        const fromBalance = await ousd.balanceOf(fromAccount.address);
-        const toBalance = await ousd.balanceOf(toAccount.address);
-        let expectedNonRebasingSupply = nonRebasingSupply;
+          const fromBalance = await ousd.balanceOf(fromAccount.address);
+          const toBalance = await ousd.balanceOf(toAccount.address);
+          let expectedNonRebasingSupply = nonRebasingSupply;
 
-        await ousd
-          .connect(governor)
-          .delegateYield(fromAccount.address, toAccount.address);
+          await ousd
+            .connect(governor)
+            .delegateYield(fromAccount.address, toAccount.address);
 
-        // check balances haven't changed
-        await expect(await ousd.balanceOf(fromAccount.address)).to.equal(
-          fromBalance
-        );
-        await expect(await ousd.balanceOf(toAccount.address)).to.equal(
-          toBalance
-        );
+          // check balances haven't changed
+          await expect(await ousd.balanceOf(fromAccount.address)).to.equal(
+            fromBalance
+          );
+          await expect(await ousd.balanceOf(toAccount.address)).to.equal(
+            toBalance
+          );
 
-        // account was non rebasing and became rebasing
-        if (!fromBalancePartOfRC) {
-          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(fromBalance);
+          // account was non rebasing and became rebasing
+          if (!fromBalancePartOfRC) {
+            expectedNonRebasingSupply =
+              expectedNonRebasingSupply.sub(fromBalance);
+          }
+          // account was non rebasing and became rebasing
+          if (!toBalancePartOfRC) {
+            expectedNonRebasingSupply =
+              expectedNonRebasingSupply.sub(toBalance);
+          }
+
+          // check global contract (in)variants
+          await expect(await ousd.totalSupply()).to.equal(totalSupply);
+          await expect(await ousd.nonRebasingSupply()).to.equal(
+            expectedNonRebasingSupply
+          );
         }
-        // account was non rebasing and became rebasing
-        if (!toBalancePartOfRC) {
-          expectedNonRebasingSupply = expectedNonRebasingSupply.sub(toBalance);
-        }
-
-        // check global contract (in)variants
-        await expect(await ousd.totalSupply()).to.equal(totalSupply);
-        await expect(await ousd.nonRebasingSupply()).to.equal(
-          expectedNonRebasingSupply
-        );
-      });
+      );
     }
   }
 });
