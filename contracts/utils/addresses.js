@@ -20,7 +20,7 @@ addresses.mainnet.BinanceAll =
 addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
-  "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  "0xa5cA4da1a315751A7B6890F8E0b78c1C38085ad2";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
