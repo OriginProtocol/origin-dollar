@@ -6,10 +6,10 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "111_morpho_wrap_and_transfer",
     forceDeploy: false,
     // forceSkip: true,
-    skipSimulation: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "52303668283507532886105041405617076369748861896782994594114630508874108983718",
   },
   async () => {
     const { strategistAddr } = await getNamedAccounts();
