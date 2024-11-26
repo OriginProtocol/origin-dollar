@@ -151,13 +151,10 @@ contract OUSD is Governable {
         returns (uint256, uint256)
     {
         uint256 cpt = _creditsPerToken(_account);
-        if (cpt == 1e27 || cpt == 1e18) {
-            // There are 2 reasons why we return the non downscaled amounts: 
-            // - 1e27 For a period before the resolution upgrade, we created all new
-            //   contract accounts at high resolution. Since they are not changing
-            //   as a result of this upgrade, we will return their true values
-            // - 1e18 This is the current implementation's non rebasing account where cpt
-            //   equals 1e18 and creditBalaces of the account equal the token balances
+        if (cpt == 1e27) {
+            // For a period before the resolution upgrade, we created all new
+            // contract accounts at high resolution. Since they are not changing
+            // as a result of this upgrade, we will return their true values
             return (creditBalances[_account], cpt);
         } else {
             return (
