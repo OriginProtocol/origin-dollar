@@ -577,7 +577,7 @@ const submitProposalGnosisSafe = async (
   description,
   opts = {}
 ) => {
-  if (!isMainnet) {
+  if (!isMainnet && !isFork) {
     throw new Error("submitProposalGnosisSafe only works on Mainnet");
   }
 
