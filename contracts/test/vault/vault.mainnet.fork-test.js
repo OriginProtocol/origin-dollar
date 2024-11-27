@@ -349,6 +349,7 @@ describe("ForkTest: Vault", function () {
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
+        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
       ];
 
       for (const s of strategies) {
