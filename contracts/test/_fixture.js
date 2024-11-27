@@ -306,14 +306,14 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingFeeAccumulatorProxy.address
   );
 
-  const OUSDMetaMorphoStrategyProxy = !isFork
+  const morphoSteakhouseUSDCStrategyProxy = !isFork
     ? undefined
     : await ethers.getContract("MetaMorphoStrategyProxy");
   const morphoSteakhouseUSDCStrategy = !isFork
     ? undefined
     : await ethers.getContractAt(
         "Generalized4626Strategy",
-        OUSDMetaMorphoStrategyProxy.address
+        morphoSteakhouseUSDCStrategyProxy.address
       );
 
   const morphoGauntletPrimeUSDCStrategyProxy = !isFork
@@ -324,6 +324,16 @@ const defaultFixture = deployments.createFixture(async () => {
     : await ethers.getContractAt(
         "Generalized4626Strategy",
         morphoGauntletPrimeUSDCStrategyProxy.address
+      );
+
+  const morphoGauntletPrimeUSDTStrategyProxy = !isFork
+    ? undefined
+    : await ethers.getContract("MorphoGauntletPrimeUSDTStrategyProxy");
+  const morphoGauntletPrimeUSDTStrategy = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "Generalized4626Strategy",
+        morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
   let usdt,
@@ -352,6 +362,7 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCVault,
+    morphoGauntletPrimeUSDTVault,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD,
@@ -439,6 +450,10 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDCVault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoGauntletPrimeUSDCVault
+    );
+    morphoGauntletPrimeUSDTVault = await ethers.getContractAt(
+      metamorphoAbi,
+      addresses.mainnet.MorphoGauntletPrimeUSDTVault
     );
     fdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.fDAI);
     fusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDC);
@@ -788,6 +803,8 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCStrategy,
     morphoGauntletPrimeUSDCVault,
+    morphoGauntletPrimeUSDTStrategy,
+    morphoGauntletPrimeUSDTVault,
 
     // Flux strategy
     fluxStrategy,
@@ -1455,7 +1472,6 @@ async function makerDsrFixture(
 /**
  * Configure a Vault with default USDC strategy to the Morpho Steakhouse USDC Vault.
  */
-
 async function morphoSteakhouseUSDCFixture(
   config = {
     usdcMintAmount: 0,
@@ -1484,9 +1500,9 @@ async function morphoSteakhouseUSDCFixture(
       // This will sit in the vault, not the strategy
       await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
 
-      // Add USDC to the MetaMorpho Strategy
+      // Add USDC to the strategy
       if (config?.depositToStrategy) {
-        // The strategist deposits the USDC to the MetaMorpho strategy
+        // The strategist deposits the USDC to the strategy
         await vault
           .connect(strategist)
           .depositToStrategy(
@@ -1498,7 +1514,7 @@ async function morphoSteakhouseUSDCFixture(
     }
   } else {
     throw new Error(
-      "MetaMorpho USDC strategy only supported in forked test environment"
+      "Morpho Steakhouse USDC strategy only supported in forked test environment"
     );
   }
 
@@ -1506,9 +1522,8 @@ async function morphoSteakhouseUSDCFixture(
 }
 
 /**
- * Configure a Vault with default USDC strategy to the MetaMorpho strategy.
+ * Configure a Vault with default USDC strategy to the Morpho Gauntlet Prime USDC Vault.
  */
-
 async function morphoGauntletPrimeUSDCFixture(
   config = {
     usdcMintAmount: 0,
@@ -1537,9 +1552,9 @@ async function morphoGauntletPrimeUSDCFixture(
       // This will sit in the vault, not the strategy
       await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
 
-      // Add USDC to the Strategy
+      // Add USDC to the strategy
       if (config?.depositToStrategy) {
-        // The strategist deposits the USDC to the MetaMorpho strategy
+        // The strategist deposits the USDC to the strategy
         await vault
           .connect(strategist)
           .depositToStrategy(
@@ -1551,7 +1566,60 @@ async function morphoGauntletPrimeUSDCFixture(
     }
   } else {
     throw new Error(
-      "MetaMorpho USDC strategy only supported in forked test environment"
+      "Morpho Gauntlet Prime USDC strategy only supported in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with default USDT strategy to the Morpho Gauntlet Prime USDT Vault.
+ */
+async function morphoGauntletPrimeUSDTFixture(
+  config = {
+    usdtMintAmount: 0,
+    depositToStrategy: false,
+  }
+) {
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { usdt, josh, morphoGauntletPrimeUSDTStrategy, strategist, vault } =
+      fixture;
+
+    // Impersonate the OUSD Vault
+    fixture.vaultSigner = await impersonateAndFund(vault.address);
+
+    // mint some OUSD using USDT if configured
+    if (config?.usdtMintAmount > 0) {
+      const usdtMintAmount = parseUnits(config.usdtMintAmount.toString(), 6);
+      await vault.connect(josh).rebase();
+      await vault.connect(josh).allocate();
+
+      // Approve the Vault to transfer USDT
+      await usdt.connect(josh).approve(vault.address, 0);
+      await usdt.connect(josh).approve(vault.address, usdtMintAmount);
+
+      // Mint OUSD with USDT
+      // This will sit in the vault, not the strategy
+      await vault.connect(josh).mint(usdt.address, usdtMintAmount, 0);
+
+      // Add USDT to the strategy
+      if (config?.depositToStrategy) {
+        // The strategist deposits the USDT to the strategy
+        await vault
+          .connect(strategist)
+          .depositToStrategy(
+            morphoGauntletPrimeUSDTStrategy.address,
+            [usdt.address],
+            [usdtMintAmount]
+          );
+      }
+    }
+  } else {
+    throw new Error(
+      "Morpho Gauntlet Prime USDT strategy only supported in forked test environment"
     );
   }
 
@@ -2625,6 +2693,7 @@ module.exports = {
   makerDsrFixture,
   morphoSteakhouseUSDCFixture,
   morphoGauntletPrimeUSDCFixture,
+  morphoGauntletPrimeUSDTFixture,
   morphoCompoundFixture,
   aaveFixture,
   morphoAaveFixture,
