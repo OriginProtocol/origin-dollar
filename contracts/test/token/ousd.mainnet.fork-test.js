@@ -1,5 +1,3 @@
-const { expect } = require("chai");
-
 const { loadDefaultFixture } = require("./../_fixture");
 const { isCI, addActualBalancesToSquidData, compareUpgradedContractBalances } = require("./../helpers");
 
@@ -17,7 +15,7 @@ const { isCI, addActualBalancesToSquidData, compareUpgradedContractBalances } = 
  * Still open to discussion.
  */
 
-describe("ForkTest: OETH", function () {
+describe("ForkTest: OUSD", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -29,29 +27,20 @@ describe("ForkTest: OETH", function () {
   });
 
   describe("verify state", () => {
-    // These tests use a transaction to call a view function so the gas usage can be reported.
-    it("Should get total value", async () => {
-      const { oeth } = fixture;
-      const eigenLayerStrategyContract =
-        "0xa4c637e0f704745d182e4d38cab7e7485321d059";
-      // 2 equals OptIn
-      expect(await oeth.rebaseState(eigenLayerStrategyContract)).to.be.equal(2);
-    });
-
     // run this test by skipping the token contract upgrade so the resulted populated file
     // has the actual balances on chain before the contract upgrade
     it("Fetch the actual on chain data", async () => {
-      const { oeth } = fixture;
+      const { ousd } = fixture;
       this.timeout(1000000000);
-      await addActualBalancesToSquidData('./oethBalances.csv', './oethBalancesCombined.csv', oeth);
+      await addActualBalancesToSquidData('./ousdBalances.csv', './ousdBalancesCombined.csv', ousd);
     });
 
     // run this test with the token contract upgrade so the balances from the previous
     // test can be compared to the balances after the upgrade
-    it.only("Compare the data before and after the upgrade", async () => {
-      const { oeth } = fixture;
+    it("Compare the data before and after the upgrade", async () => {
+      const { ousd } = fixture;
       this.timeout(1000000000);
-      await compareUpgradedContractBalances('./oethBalancesCombined.csv', oeth);
+      await compareUpgradedContractBalances('./ousdBalancesCombined.csv', ousd);
     });
   });
 });

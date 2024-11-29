@@ -6,6 +6,7 @@ const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const { decimalsFor, units } = require("../utils/units");
+const fs = require('fs');
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -752,6 +753,46 @@ async function differenceInStrategyBalance(
   return returnVals;
 }
 
+async function addActualBalancesToSquidData(squidDataCsvFile, outputFileName, tokenContract) {
+  // CSV file in format account, balance, blockNumber (balance from squid)
+  const data = fs.readFileSync(squidDataCsvFile, "utf8").split('\n');
+  const combinedData = [];
+  //const blockNumber = await tokenContract.provider.getBlockNumber();
+  for (let i = 0; i < data.length; i++) {
+    const [account, balance,] = data[i].split(',');
+    const expectedBalance = BigNumber.from(balance);
+    const actualBalance = await tokenContract.balanceOf(account)
+
+    combinedData.push([account, balance, actualBalance.toString(10)].join(','));
+    if (i % 50 == 0) {
+      console.log(`Inspected ${i + 1} accounts`);
+    }
+    if (!actualBalance.eq(expectedBalance)) {
+      //console.log(`Balance miss match ${account} actual: ${actualBalance.toString(10)} expected: ${expectedBalance.toString(10)}`)
+    }
+  }
+  const csvContent = combinedData.join('\n');
+  fs.writeFileSync(outputFileName, csvContent);
+}
+
+async function compareUpgradedContractBalances(balancesFile, upgradedTokenContract) {
+  // CSV file in format account, squidBalance, onChainBalance
+  const data = fs.readFileSync(balancesFile, "utf8").split('\n');
+
+  for (let i = 0; i < data.length; i++) {
+    const [account,,balanceBefore] = data[i].split(',');
+    const expectedBalance = BigNumber.from(balanceBefore);
+    const actualBalance = await upgradedTokenContract.balanceOf(account)
+
+    if (i % 50 == 0) {
+      console.log(`Compared balances of ${i + 1} accounts`);
+    }
+    if (!actualBalance.eq(expectedBalance)) {
+      console.log(`Balance miss match ${account} balance before upgrade: ${expectedBalance.toString(10)} balance before upgrade: ${actualBalance.toString(10)}`)
+    }
+  }
+}
+
 async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
@@ -853,4 +894,6 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
+  addActualBalancesToSquidData,
+  compareUpgradedContractBalances,
 };

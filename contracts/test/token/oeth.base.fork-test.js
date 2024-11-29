@@ -2,6 +2,7 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
+const { addActualBalancesToSquidData, compareUpgradedContractBalances } = require("./../helpers");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -33,5 +34,21 @@ describe("ForkTest: OETHb", function () {
   it("Should have the right Vault address", async () => {
     const { oethb, oethbVault } = fixture;
     expect(await oethb.vaultAddress()).to.eq(oethbVault.address);
+  });
+
+  // run this test by skipping the token contract upgrade so the resulted populated file
+  // has the actual balances on chain before the contract upgrade
+  it("Fetch the actual on chain data", async () => {
+    const { oethb } = fixture;
+    this.timeout(1000000000);
+    await addActualBalancesToSquidData('./soethBalances.csv', './soethBalancesCombined.csv', oethb);
+  });
+
+  // run this test with the token contract upgrade so the balances from the previous
+    // test can be compared to the balances after the upgrade
+  it("Compare the data before and after the upgrade", async () => {
+    const { oethb } = fixture;
+    this.timeout(1000000000);
+    await compareUpgradedContractBalances('./soethBalancesCombined.csv', oethb);
   });
 });
