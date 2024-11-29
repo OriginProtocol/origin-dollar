@@ -543,9 +543,11 @@ contract OUSD is Governable {
             ? MAX_SUPPLY
             : _newTotalSupply;
 
+        uint256 rebasingSupply = totalSupply - nonRebasingSupply;
+        // round up in the favour of the protocol
         rebasingCreditsPerToken_ =
-            (rebasingCredits_ * 1e18) /
-            (totalSupply - nonRebasingSupply);
+            (rebasingCredits_ * 1e18 + rebasingSupply - 1) /
+            rebasingSupply;
 
         require(rebasingCreditsPerToken_ > 0, "Invalid change in supply");
 
