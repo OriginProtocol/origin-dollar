@@ -463,9 +463,12 @@ describe("Token", function () {
       .div(utils.parseUnits("1", 18))
       .add(1);
 
-    await expect(rebasingCredits).to.equal(
-      initialRebasingCredits.add(creditsAdded)
+    const resultingCredits = initialRebasingCredits.add(creditsAdded);
+    // when calling changeSupply(rebase) OUSD contract can round down by 1 WEI.
+    await expect(rebasingCredits).to.gte(
+      resultingCredits.sub(BigNumber.from("1"))
     );
+    await expect(rebasingCredits).to.lte(resultingCredits);
 
     expect(await ousd.totalSupply()).to.approxEqual(
       initialTotalSupply.add(utils.parseUnits("200", 18))
@@ -695,9 +698,23 @@ describe("Token", function () {
 
     // Contract originally contained $200, now has $202.
     // Matt should have (99/200) * 202 OUSD
-    await expect(matt).has.a.balanceOf("99.99", ousd);
+    // because rebase rounds down in protocol's favour resulting user balances can be off by 1 WEI
+    const mattExpectedBalance = ousdUnits("99.99");
+    await expect(await ousd.balanceOf(matt.address)).to.be.gte(
+      mattExpectedBalance.sub(BigNumber.from("1"))
+    );
+    await expect(await ousd.balanceOf(matt.address)).to.be.lte(
+      mattExpectedBalance
+    );
+
+    const annaExpectedBalance = ousdUnits("1.01");
     // Anna should have (1/200) * 202 OUSD
-    await expect(anna).has.a.balanceOf("1.01", ousd);
+    await expect(await ousd.balanceOf(anna.address)).to.be.gte(
+      annaExpectedBalance.sub(BigNumber.from("1"))
+    );
+    await expect(await ousd.balanceOf(anna.address)).to.be.lte(
+      annaExpectedBalance
+    );
   });
 
   it("Should mint correct amounts on non-rebasing account without previously set creditsPerToken", async () => {

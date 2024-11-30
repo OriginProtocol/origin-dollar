@@ -31,7 +31,7 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHProxy,
           signature: "upgradeTo(address)",
           args: [dOETHImpl.address],
-        }
+        },
       ],
     };
   }
