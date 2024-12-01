@@ -778,7 +778,7 @@ async function addActualBalancesToSquidData(squidDataCsvFile, outputFileName, to
 async function compareUpgradedContractBalances(balancesFile, upgradedTokenContract) {
   // CSV file in format account, squidBalance, onChainBalance
   const data = fs.readFileSync(balancesFile, "utf8").split('\n');
-
+  let balanceMissmatches = 0;
   for (let i = 0; i < data.length; i++) {
     const [account,,balanceBefore] = data[i].split(',');
     const expectedBalance = BigNumber.from(balanceBefore);
@@ -788,9 +788,11 @@ async function compareUpgradedContractBalances(balancesFile, upgradedTokenContra
       console.log(`Compared balances of ${i + 1} accounts`);
     }
     if (!actualBalance.eq(expectedBalance)) {
+      balanceMissmatches += 1;
       console.log(`Balance miss match ${account} balance before upgrade: ${expectedBalance.toString(10)} balance before upgrade: ${actualBalance.toString(10)}`)
     }
   }
+  console.log(`Accounts with difference balances: ${balanceMissmatches}`)
 }
 
 async function governorArgs({ contract, signature, args = [] }) {

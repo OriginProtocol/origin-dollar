@@ -48,7 +48,7 @@ describe("ForkTest: OETH", function () {
 
     // run this test with the token contract upgrade so the balances from the previous
     // test can be compared to the balances after the upgrade
-    it.only("Compare the data before and after the upgrade", async () => {
+    it("Compare the data before and after the upgrade", async () => {
       const { oeth } = fixture;
       this.timeout(1000000000);
       await compareUpgradedContractBalances('./oethBalancesCombined.csv', oeth);
