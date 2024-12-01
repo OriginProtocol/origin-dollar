@@ -432,13 +432,8 @@ contract OUSD is Governable {
         returns (uint256 rebasingCredits, uint256 actualBalance)
     {
         uint256 rebasingCreditsPerTokenMem = rebasingCreditsPerToken_;
-        // Rounds up, because we need to ensure that accounts always have
-        // at least the balance that they should have.
-        // Note this should always be used on an absolute account value,
-        // not on a possibly negative diff, because then the rounding would be wrong.
-        rebasingCredits =
-            ((_balance) * rebasingCreditsPerTokenMem + 1e18 - 1) /
-            1e18;
+        // Round down in favour of the protocol
+        rebasingCredits = ((_balance) * rebasingCreditsPerTokenMem) / 1e18;
         actualBalance = (rebasingCredits * 1e18) / rebasingCreditsPerTokenMem;
     }
 
