@@ -173,14 +173,14 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     }
 
     function _approveBase() internal virtual {
-        // Approval the asset to be trasferred to the ERC-4626 Tokenized Vualt.
+        // Approval the asset to be transferred to the ERC-4626 Tokenized Vault.
         // Used by the ERC-4626 deposit() and mint() functions
         // slither-disable-next-line unused-return
-        assetToken.approve(platformAddress, type(uint256).max);
+        assetToken.safeApprove(platformAddress, type(uint256).max);
     }
 
     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)

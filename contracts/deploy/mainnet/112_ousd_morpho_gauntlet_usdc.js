@@ -3,13 +3,12 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "106_ousd_metamorpho_usdc",
+    deployName: "112_ousd_morpho_gauntlet_usdc",
     forceDeploy: false,
     // forceSkip: true,
     // reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId:
-      "18625164866922300754601338202643973145672922743793130890170553774294234651247",
+    // proposalId: "",
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation }) => {
     // Current OUSD Vault contracts
@@ -29,31 +28,29 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // 1. Deploy new MetaMorpho Strategy proxy
-    const dMetaMorphoProxy = await deployWithConfirmation(
-      "MetaMorphoStrategyProxy"
+    // 1. Deploy new Morpho Gauntlet Prime USDC Strategy proxy
+    const dMorphoGauntletPrimeUSDCProxy = await deployWithConfirmation(
+      "MorphoGauntletPrimeUSDCStrategyProxy"
     );
-    const cMetaMorphoProxy = await ethers.getContract(
-      "MetaMorphoStrategyProxy"
+    const cMorphoGauntletPrimeUSDCProxy = await ethers.getContract(
+      "MorphoGauntletPrimeUSDCStrategyProxy"
     );
 
-    // 2. Deploy new Generalized4626Strategy contract as there has been a number of gas optimizations since it was first deployed
-    const dMetaMorphoStrategyImpl = await deployWithConfirmation(
+    // 2. Deploy new Generalized4626Strategy contract as it has an immutable to the Morpho Vault contract
+    const dGeneralized4626Strategy = await deployWithConfirmation(
       "Generalized4626Strategy",
       [
-        [addresses.mainnet.MorphoSteakhouseUSDCVault, cVaultProxy.address],
+        [addresses.mainnet.MorphoGauntletPrimeUSDCVault, cVaultProxy.address],
         addresses.mainnet.USDC,
-      ],
-      undefined,
-      true // storage slots have changed since FRAX strategy deployment so force a new deployment
+      ]
     );
-    const cMetaMorpho = await ethers.getContractAt(
+    const cMorphoGauntletPrimeUSDC = await ethers.getContractAt(
       "Generalized4626Strategy",
-      dMetaMorphoProxy.address
+      dMorphoGauntletPrimeUSDCProxy.address
     );
 
     // 3. Construct initialize call data to initialize and configure the new strategy
-    const initData = cMetaMorpho.interface.encodeFunctionData(
+    const initData = cMorphoGauntletPrimeUSDC.interface.encodeFunctionData(
       "initialize()",
       []
     );
@@ -61,8 +58,8 @@ module.exports = deploymentWithGovernanceProposal(
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
     const initFunction = "initialize(address,address,bytes)";
     await withConfirmation(
-      cMetaMorphoProxy.connect(sDeployer)[initFunction](
-        dMetaMorphoStrategyImpl.address,
+      cMorphoGauntletPrimeUSDCProxy.connect(sDeployer)[initFunction](
+        dGeneralized4626Strategy.address,
         addresses.mainnet.Timelock, // governor
         initData, // data for delegate call to the initialize function on the strategy
         await getTxOpts()
@@ -72,23 +69,23 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Add MetaMorpho Strategy to the OUSD Vault",
+      name: "Add Morpho Gauntlet Prime USDC Strategy to the OUSD Vault",
       actions: [
         {
           // Add the new strategy to the vault
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cMetaMorpho.address],
+          args: [cMorphoGauntletPrimeUSDC.address],
         },
         {
           // Add the new strategy to the Harvester
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cMetaMorpho.address, true],
+          args: [cMorphoGauntletPrimeUSDC.address, true],
         },
         {
           // Set the Harvester in the new strategy
-          contract: cMetaMorpho,
+          contract: cMorphoGauntletPrimeUSDC,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
