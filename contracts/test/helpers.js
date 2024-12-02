@@ -753,23 +753,36 @@ async function differenceInStrategyBalance(
   return returnVals;
 }
 
+function* chunks(arr, n) {
+  for (let i = 0; i < arr.length; i += n) {
+    yield arr.slice(i, i + n);
+  }
+}
+
 async function addActualBalancesToSquidData(squidDataCsvFile, outputFileName, tokenContract) {
   // CSV file in format account, balance, blockNumber (balance from squid)
   const data = fs.readFileSync(squidDataCsvFile, "utf8").split('\n');
   const combinedData = [];
-  //const blockNumber = await tokenContract.provider.getBlockNumber();
-  for (let i = 0; i < data.length; i++) {
-    const [account, balance,] = data[i].split(',');
-    const expectedBalance = BigNumber.from(balance);
-    const actualBalance = await tokenContract.balanceOf(account)
+  const batchSize = 50;
+  const chunkedData = [...chunks(data, batchSize)];
 
-    combinedData.push([account, balance, actualBalance.toString(10)].join(','));
-    if (i % 50 == 0) {
-      console.log(`Inspected ${i + 1} accounts`);
+  for (let i = 0; i < chunkedData.length; i++) {
+    const data = chunkedData[i];
+    const balanceOfPromises = [];
+
+    for (let j = 0; j < data.length; j++) {
+      const [account,,] = data[j].split(',');
+      balanceOfPromises.push(await tokenContract.balanceOf(account));
     }
-    if (!actualBalance.eq(expectedBalance)) {
-      //console.log(`Balance miss match ${account} actual: ${actualBalance.toString(10)} expected: ${expectedBalance.toString(10)}`)
-    }
+
+    await Promise.all(balanceOfPromises).then(values => {
+      for(let j = 0; j < values.length; j++) {
+        const [account, balance,] = data[j].split(',')
+        const onChainBalance = values[j].toString(10)
+        combinedData.push([account, balance, onChainBalance].join(','))
+      }
+    });
+    console.log(`Inspected ${(i+1) * batchSize} accounts`);
   }
   const csvContent = combinedData.join('\n');
   fs.writeFileSync(outputFileName, csvContent);
