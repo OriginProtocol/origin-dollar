@@ -772,7 +772,7 @@ async function addActualBalancesToSquidData(squidDataCsvFile, outputFileName, to
 
     for (let j = 0; j < data.length; j++) {
       const [account,,] = data[j].split(',');
-      balanceOfPromises.push(await tokenContract.balanceOf(account));
+      balanceOfPromises.push(tokenContract.balanceOf(account));
     }
 
     await Promise.all(balanceOfPromises).then(values => {
