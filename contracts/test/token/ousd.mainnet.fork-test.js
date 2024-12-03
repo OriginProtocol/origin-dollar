@@ -1,5 +1,10 @@
 const { loadDefaultFixture } = require("./../_fixture");
-const { isCI, addActualBalancesToSquidData, compareUpgradedContractBalances } = require("./../helpers");
+const {
+  isCI,
+  addActualBalancesToSquidData,
+  compareUpgradedContractBalances,
+  testTransfersOnTokenContract
+} = require("./../helpers");
 
 /**
  * Regarding hardcoded addresses:
@@ -31,7 +36,6 @@ describe("ForkTest: OUSD", function () {
     // has the actual balances on chain before the contract upgrade
     it("Fetch the actual on chain data", async () => {
       const { ousd } = fixture;
-      this.timeout(1000000000);
       await addActualBalancesToSquidData('./ousdBalances.csv', './ousdBalancesCombined.csv', ousd);
     });
 
@@ -39,8 +43,13 @@ describe("ForkTest: OUSD", function () {
     // test can be compared to the balances after the upgrade
     it("Compare the data before and after the upgrade", async () => {
       const { ousd } = fixture;
-      this.timeout(1000000000);
       await compareUpgradedContractBalances('./ousdBalancesCombined.csv', ousd);
+    });
+
+    // execute transfer and compare balances
+    it("Execute transfer and inspect balances", async () => {
+      const { ousd } = fixture;
+      await testTransfersOnTokenContract('./ousdBalancesCombined.csv', ousd);
     });
   });
 });

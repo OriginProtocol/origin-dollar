@@ -5,6 +5,7 @@ const { parseUnits, formatUnits, keccak256, toUtf8Bytes } =
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
+const { impersonateAndFund } = require("../utils/signers");
 const { decimalsFor, units } = require("../utils/units");
 const fs = require('fs');
 
@@ -788,6 +789,49 @@ async function addActualBalancesToSquidData(squidDataCsvFile, outputFileName, to
   fs.writeFileSync(outputFileName, csvContent);
 }
 
+async function testTransfersOnTokenContract(balancesFile, upgradedTokenContract) {
+  // CSV file in format account, squidBalance, onChainBalance
+  const data = fs.readFileSync(balancesFile, "utf8").split('\n');
+  let transferBalanceMissmatches = 0;
+  for (let i = 1; i < data.length; i++) {
+    const [accountPrevious,,] = data[i-1].split(',');
+    const [account,,] = data[i].split(',');
+
+    const balanceSender = await upgradedTokenContract.balanceOf(account);
+    const balanceReceiver = await upgradedTokenContract.balanceOf(accountPrevious);
+
+    if (i % 50 == 0) {
+      console.log(`Validated transfers of ${i + 1} accounts`);
+    }
+    
+    if (balanceSender.lte(BigNumber.from(2))) {
+      // skip small balances
+      continue;
+    }
+
+    const accountSigner = await impersonateAndFund(account);
+    // 1/2 balance 
+    const balanceToTransfer = balanceSender.div(BigNumber.from("2"));
+    await upgradedTokenContract
+      .connect(accountSigner)
+      .transfer(accountPrevious, balanceToTransfer);
+
+
+    const balanceSenderAfter = await upgradedTokenContract.balanceOf(account);
+    const balanceReceiverAfter = await upgradedTokenContract.balanceOf(accountPrevious);
+
+    if (!balanceSender.sub(balanceToTransfer).eq(balanceSenderAfter)) {
+      transferBalanceMissmatches += 1;
+      console.log(`Balance miss match ${account} expected to have ${balanceSender.sub(balanceToTransfer).toString(10)} actually has ${balanceSenderAfter.toString(10)}`)
+    }
+    if (!balanceReceiver.add(balanceToTransfer).eq(balanceReceiverAfter)) {
+      transferBalanceMissmatches += 1;
+      console.log(`Balance miss match ${accountPrevious} expected to have ${balanceReceiver.add(balanceToTransfer).toString(10)} actually has ${balanceReceiverAfter.toString(10)}`)
+    }
+  }
+  console.log(`Accounts with unexpected balances: ${transferBalanceMissmatches}`)
+}
+
 async function compareUpgradedContractBalances(balancesFile, upgradedTokenContract) {
   // CSV file in format account, squidBalance, onChainBalance
   const data = fs.readFileSync(balancesFile, "utf8").split('\n');
@@ -911,4 +955,5 @@ module.exports = {
   differenceInStrategyBalance,
   addActualBalancesToSquidData,
   compareUpgradedContractBalances,
+  testTransfersOnTokenContract,
 };
