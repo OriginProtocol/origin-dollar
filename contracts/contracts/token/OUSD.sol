@@ -640,8 +640,10 @@ contract OUSD is Governable {
         rebaseState[to] = RebaseOptions.StdRebasing;
 
         // Local
-        // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
-        creditBalances[_from] = fromBalance;
+        // from account doesn't require any changes as
+        // - alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
+        // - creditBalances already equal `fromBalance` returned by the balanceOf(_from)
+
         // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
         (creditBalances[to], ) = _balanceToRebasingCredits(toBalance);
         // Global
