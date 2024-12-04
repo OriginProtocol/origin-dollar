@@ -14,20 +14,47 @@ contract OUSD is Governable {
     using SafeCast for int256;
     using SafeCast for uint256;
 
+    /// @dev Event triggered when the supply changes
+    /// @param totalSupply Updated token total supply
+    /// @param rebasingCredits Updated token rebasing credits
+    /// @param rebasingCreditsPerToken Updated token rebasing credits per token
     event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
         uint256 rebasingCredits,
         uint256 rebasingCreditsPerToken
     );
+    /// @dev Event triggered when an account opts in for rebasing
+    /// @param account Address of the account
     event AccountRebasingEnabled(address account);
+    /// @dev Event triggered when an account opts out of rebasing
+    /// @param account Address of the account
     event AccountRebasingDisabled(address account);
+    /// @dev Emitted when `value` tokens are moved from one account `from` to
+    ///      another `to`.
+    /// @param from Address of the account tokens are moved from
+    /// @param to Address of the account tokens are moved to
+    /// @param value Amount of tokens transferred
     event Transfer(address indexed from, address indexed to, uint256 value);
+    /// @dev Emitted when the allowance of a `spender` for an `owner` is set by
+    ///      a call to {approve}. `value` is the new allowance.
+    /// @param owner Address of the owner approving allowance
+    /// @param spender Address of the spender allowance is granted to
+    /// @param value Amount of tokens spender can transfer
     event Approval(
         address indexed owner,
         address indexed spender,
         uint256 value
     );
+    /// @dev Yield resulting from {changeSupply} that a `source` account would
+    ///      receive is directed to `target` account.
+    /// @param source Address of the source forwarding the yield
+    /// @param target Address of the target receiving the yield
     event YieldDelegated(address source, address target);
+    /// @dev Yield delegation from `source` account to the `target` account is
+    ///      suspended.
+    /// @param source Address of the source suspending yield forwarding
+    /// @param target Address of the target no longer receiving yield from `source`
+    ///        account
     event YieldUndelegated(address source, address target);
 
     enum RebaseOptions {
@@ -40,23 +67,41 @@ contract OUSD is Governable {
 
     uint256[154] private _gap; // Slots to align with deployed contract
     uint256 private constant MAX_SUPPLY = type(uint128).max;
+    /// @dev The value of tokens in existence
     uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private allowances;
+    /// @dev Address of the vault with privileges to execute {mint},
+    ///     {burn} and {changeSupply}
     address public vaultAddress;
     mapping(address => uint256) internal creditBalances;
     // the 2 storage variables below need trailing underscores to not name collide with public functions
     uint256 private rebasingCredits_; // Sum of all rebasing credits (creditBalances for rebasing accounts)
     uint256 private rebasingCreditsPerToken_;
-    uint256 public nonRebasingSupply; // All nonrebasing balances
+    /// @dev The amount of tokens that are not rebasing - receiving yield
+    uint256 public nonRebasingSupply;
     mapping(address => uint256) internal alternativeCreditsPerToken;
+    /// @dev A map of all addresses and their respective RebaseOptions
     mapping(address => RebaseOptions) public rebaseState;
     mapping(address => uint256) private __deprecated_isUpgraded;
+    /// @dev A map of addresses that have yields forwarded to. This is an
+    ///      inverse mapping of {yieldFrom}
+    /// Key Account forwarding yield
+    /// Value Account receiving yield
     mapping(address => address) public yieldTo;
+    /// @dev A map of addresses that are receiving the yield. This is an
+    ///      inverse mapping of {yieldTo}
+    /// Key Account receiving yield
+    /// Value Account forwarding yield
     mapping(address => address) public yieldFrom;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
     uint256[34] private __gap; // including below gap totals up to 200
 
+    /// @dev Initializes the contract and sets necessary variables.
+    /// @param _vaultAddress Address of the vault contract
+    /// @param _initialCreditsPerToken The starting rebasing credits per token.
+    ///        the value of this variable can only decrease by calling
+    ///        {changeSupply}
     function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
         external
         onlyGovernor
@@ -68,14 +113,18 @@ contract OUSD is Governable {
         vaultAddress = _vaultAddress;
     }
 
+    /// @dev Returns the symbol of the token, a shorter version
+    ///      of the name.
     function symbol() external pure virtual returns (string memory) {
         return "OUSD";
     }
 
+    /// @dev Returns the name of the token.
     function name() external pure virtual returns (string memory) {
         return "Origin Dollar";
     }
 
+    /// @dev Returns the number of decimals used to get its user representation.
     function decimals() external pure virtual returns (uint8) {
         return 18;
     }
