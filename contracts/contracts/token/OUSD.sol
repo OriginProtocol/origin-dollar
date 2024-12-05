@@ -392,8 +392,9 @@ contract OUSD is Governable {
         view
         returns (uint256)
     {
-        if (alternativeCreditsPerToken[_account] != 0) {
-            return alternativeCreditsPerToken[_account];
+        uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[_account];
+        if (alternativeCreditsPerTokenMem != 0) {
+            return alternativeCreditsPerTokenMem;
         } else {
             return rebasingCreditsPerToken_;
         }
