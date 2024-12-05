@@ -215,6 +215,7 @@ contract OUSD is Governable {
      * @param _from The address you want to send tokens from.
      * @param _to The address you want to transfer to.
      * @param _value The amount of tokens to be transferred.
+     * @return true on success.
      */
     function transferFrom(
         address _from,
@@ -333,6 +334,7 @@ contract OUSD is Governable {
      *      tokens on behalf of msg.sender.
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
+     * @return true on success.
      */
     function approve(address _spender, uint256 _value) external returns (bool) {
         allowances[msg.sender][_spender] = _value;
