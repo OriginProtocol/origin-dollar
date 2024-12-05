@@ -67,11 +67,11 @@ contract OUSD is Governable {
 
     uint256[154] private _gap; // Slots to align with deployed contract
     uint256 private constant MAX_SUPPLY = type(uint128).max;
-    /// @dev The value of tokens in existence
+    /// @dev The amount of tokens in existence
     uint256 public totalSupply;
     mapping(address => mapping(address => uint256)) private allowances;
-    /// @dev Address of the vault with privileges to execute {mint},
-    ///     {burn} and {changeSupply}
+    /// @dev The vault with privileges to execute {mint}, {burn}
+    ///     and {changeSupply}
     address public vaultAddress;
     mapping(address => uint256) internal creditBalances;
     // the 2 storage variables below need trailing underscores to not name collide with public functions
@@ -100,8 +100,6 @@ contract OUSD is Governable {
     /// @dev Initializes the contract and sets necessary variables.
     /// @param _vaultAddress Address of the vault contract
     /// @param _initialCreditsPerToken The starting rebasing credits per token.
-    ///        the value of this variable can only decrease by calling
-    ///        {changeSupply}
     function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)
         external
         onlyGovernor
