@@ -408,7 +408,7 @@ contract OUSD is Governable {
         bool isContract = _account.code.length > 0;
         // In previous code versions, contracts would not have had their
         // rebaseState[_account] set to RebaseOptions.NonRebasing when migrated
-        // therefor we check the actual accounting used on the account instead.
+        // therefore we check the actual accounting used on the account instead.
         if (
             isContract &&
             rebaseState[_account] == RebaseOptions.NotSet &&
@@ -424,7 +424,7 @@ contract OUSD is Governable {
      *      when adjusting the contract's global nonRebasingSupply to circumvent any
      *      possible rounding errors.
      *
-     * @param _balance Address of the account.
+     * @param _balance Balance of the account.
      */
     function _balanceToRebasingCredits(uint256 _balance)
         internal
@@ -560,7 +560,7 @@ contract OUSD is Governable {
 
     /*
      * @notice Send the yield from one account to another account.
-     *     Each account keeps their own balances.
+     *         Each account keeps its own balances.
      */
     function delegateYield(address _from, address _to) external onlyGovernor {
         require(_from != address(0), "Zero from address not allowed");
