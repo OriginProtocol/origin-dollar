@@ -83,7 +83,7 @@ main()
             params+="test/**/*.fork-test.js"
         fi
     else
-        # Run specifc files when a param is given
+        # Run specific files when a param is given
         params+="$@"
     fi
 

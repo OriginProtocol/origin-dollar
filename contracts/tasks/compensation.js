@@ -2,7 +2,7 @@
  *
  * Output analysis 1.15.2021 by sparrowDom reimbursements hash: 0x7be111312b7921a476d7428f6f43555684ac06739acfc01341649dfbc5f4bac3
  * OUSD required by contract: 1696579.792469218771921386 OUSD
- * OUSD transfered to contract: 1696590
+ * OUSD transferred to contract: 1696590
  * OUSD remaining in the contract after all claims: 84.554630679871612032
  *
  * Accounts failing to claim because they were non payable:
