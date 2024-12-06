@@ -333,9 +333,14 @@ contract OUSD is Governable {
             creditBalances[_account] = newCredits;
         } else {
             _autoMigrate(_account);
-            if (alternativeCreditsPerToken[_account] > 0) {
+            uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[
+                _account
+            ];
+            if (alternativeCreditsPerTokenMem > 0) {
                 nonRebasingSupplyDiff = _balanceChange;
-                alternativeCreditsPerToken[_account] = 1e18;
+                if (alternativeCreditsPerTokenMem != 1e18) {
+                    alternativeCreditsPerToken[_account] = 1e18;
+                }
                 creditBalances[_account] = newBalance;
             } else {
                 (uint256 newCredits, ) = _balanceToRebasingCredits(newBalance);
@@ -441,7 +446,9 @@ contract OUSD is Governable {
         view
         returns (uint256)
     {
-        uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[_account];
+        uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[
+            _account
+        ];
         if (alternativeCreditsPerTokenMem != 0) {
             return alternativeCreditsPerTokenMem;
         } else {
