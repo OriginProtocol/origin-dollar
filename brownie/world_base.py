@@ -1,6 +1,6 @@
 from world_abstract import *
 
-weth = load_contract('ERC20', WETH_BASE)
+weth = load_contract('weth', WETH_BASE)
 aero = load_contract('ERC20', AERO_BASE)
 oethb = load_contract('ousd', OETHB)
 woeth = load_contract('ERC20', BRIDGED_WOETH_BASE)
@@ -32,6 +32,7 @@ harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
+    OETHB: 18,
     'human': 0,
 }
 
