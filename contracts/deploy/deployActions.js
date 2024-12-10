@@ -6,6 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1172,9 +1173,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH
-      .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1192,7 +1191,12 @@ const deployOUSDCore = async () => {
   await deployWithConfirmation("VaultProxy");
 
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
+  let dOUSD;
+  if (isTest) {
+    dOUSD = await deployWithConfirmation("TestUpgradedOUSD");
+  } else {
+    dOUSD = await deployWithConfirmation("OUSD");
+  }
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -1260,9 +1264,7 @@ const deployOUSDCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOUSD
-      .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
+    cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
 };
