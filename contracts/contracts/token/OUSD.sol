@@ -314,7 +314,7 @@ contract OUSD is Governable {
         if (state == RebaseOptions.YieldDelegationSource) {
             address target = yieldTo[_account];
             uint256 targetOldBalance = balanceOf(target);
-            (uint256 targetNewCredits, ) = _balanceToRebasingCredits(
+            uint256 targetNewCredits = _balanceToRebasingCredits(
                 targetOldBalance + newBalance
             );
             rebasingCreditsDiff =
@@ -324,7 +324,7 @@ contract OUSD is Governable {
             creditBalances[_account] = newBalance;
             creditBalances[target] = targetNewCredits;
         } else if (state == RebaseOptions.YieldDelegationTarget) {
-            (uint256 newCredits, ) = _balanceToRebasingCredits(
+            uint256 newCredits = _balanceToRebasingCredits(
                 newBalance + creditBalances[yieldFrom[_account]]
             );
             rebasingCreditsDiff =
@@ -338,7 +338,7 @@ contract OUSD is Governable {
                 alternativeCreditsPerToken[_account] = 1e18;
                 creditBalances[_account] = newBalance;
             } else {
-                (uint256 newCredits, ) = _balanceToRebasingCredits(newBalance);
+                uint256 newCredits = _balanceToRebasingCredits(newBalance);
                 rebasingCreditsDiff =
                     newCredits.toInt256() -
                     creditBalances[_account].toInt256();
@@ -479,17 +479,13 @@ contract OUSD is Governable {
     function _balanceToRebasingCredits(uint256 _balance)
         internal
         view
-        returns (uint256 rebasingCredits, uint256 actualBalance)
+        returns (uint256 rebasingCredits)
     {
-        uint256 rebasingCreditsPerTokenMem = rebasingCreditsPerToken_;
         // Rounds up, because we need to ensure that accounts always have
         // at least the balance that they should have.
         // Note this should always be used on an absolute account value,
         // not on a possibly negative diff, because then the rounding would be wrong.
-        rebasingCredits =
-            ((_balance) * rebasingCreditsPerTokenMem + 1e18 - 1) /
-            1e18;
-        actualBalance = (rebasingCredits * 1e18) / rebasingCreditsPerTokenMem;
+        return  ((_balance) * rebasingCreditsPerToken_ + 1e18 - 1) / 1e18;
     }
 
     /**
@@ -528,15 +524,14 @@ contract OUSD is Governable {
             "Only standard non-rebasing accounts can opt in"
         );
 
+        uint256 newCredits = _balanceToRebasingCredits(balance);
+
         // Account
         rebaseState[_account] = RebaseOptions.StdRebasing;
         alternativeCreditsPerToken[_account] = 0;
-        (uint256 newCredits, uint256 newBalance) = _balanceToRebasingCredits(
-            balance
-        );
         creditBalances[_account] = newCredits;
         // Globals
-        _adjustGlobals(newCredits.toInt256(), -newBalance.toInt256());
+        _adjustGlobals(newCredits.toInt256(), -balance.toInt256());
 
         emit AccountRebasingEnabled(_account);
     }
@@ -650,25 +645,23 @@ contract OUSD is Governable {
 
         uint256 fromBalance = balanceOf(_from);
         uint256 toBalance = balanceOf(_to);
+        uint256 oldToCredits = creditBalances[_to];
+        uint256 newToCredits = _balanceToRebasingCredits(fromBalance + toBalance);
 
         // Set up the bidirectional links
         yieldTo[_from] = _to;
         yieldFrom[_to] = _from;
-        rebaseState[_from] = RebaseOptions.YieldDelegationSource;
-        rebaseState[_to] = RebaseOptions.YieldDelegationTarget;
-
+        
         // Local
-        creditBalances[_from] = fromBalance;
+        rebaseState[_from] = RebaseOptions.YieldDelegationSource;
         alternativeCreditsPerToken[_from] = 1e18;
-        (creditBalances[_to], ) = _balanceToRebasingCredits(
-            fromBalance + toBalance
-        );
+        creditBalances[_from] = fromBalance;
+        rebaseState[_to] = RebaseOptions.YieldDelegationTarget;
+        creditBalances[_to] = newToCredits;
+
         // Global
-        (
-            uint256 fromCredits,
-            uint256 fromBalanceAccurate
-        ) = _balanceToRebasingCredits(fromBalance);
-        _adjustGlobals(fromCredits.toInt256(), -fromBalanceAccurate.toInt256());
+        int256 creditsChange = newToCredits.toInt256() - oldToCredits.toInt256();
+        _adjustGlobals(creditsChange, -(fromBalance).toInt256());
         emit YieldDelegated(_from, _to);
     }
 
@@ -682,27 +675,24 @@ contract OUSD is Governable {
         address to = yieldTo[_from];
         uint256 fromBalance = balanceOf(_from);
         uint256 toBalance = balanceOf(to);
+        uint256 oldToCredits = creditBalances[to]; 
+        uint256 newToCredits = _balanceToRebasingCredits(toBalance);
 
         // Remove the bidirectional links
         yieldFrom[to] = address(0);
         yieldTo[_from] = address(0);
-        rebaseState[_from] = RebaseOptions.StdNonRebasing;
-        rebaseState[to] = RebaseOptions.StdRebasing;
-
+        
         // Local
+        rebaseState[_from] = RebaseOptions.StdNonRebasing;
         // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`
         creditBalances[_from] = fromBalance;
+        rebaseState[to] = RebaseOptions.StdRebasing;
         // alternativeCreditsPerToken[to] already 0 from `delegateYield()`
-        (creditBalances[to], ) = _balanceToRebasingCredits(toBalance);
+        creditBalances[to] = newToCredits;
+
         // Global
-        (
-            uint256 fromCredits,
-            uint256 fromBalanceAccurate
-        ) = _balanceToRebasingCredits(fromBalance);
-        _adjustGlobals(
-            -(fromCredits.toInt256()),
-            fromBalanceAccurate.toInt256()
-        );
+        int256 creditsChange = newToCredits.toInt256() - oldToCredits.toInt256();
+        _adjustGlobals(creditsChange, fromBalance.toInt256());
         emit YieldUndelegated(_from, to);
     }
 }
