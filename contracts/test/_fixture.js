@@ -2268,7 +2268,7 @@ async function compoundFixture() {
 }
 
 /**
- * Configure a threepool fixture with the governer as vault for testing
+ * Configure a threepool fixture with the governor as vault for testing
  */
 async function threepoolFixture() {
   const fixture = await defaultFixture();
