@@ -351,7 +351,7 @@ contract MorphoGauntletPrimeUSDCStrategyProxy is
 }
 
 /**
- * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626USDTStrategy implementation
  */
 contract MorphoGauntletPrimeUSDTStrategyProxy is
     InitializeGovernedUpgradeabilityProxy

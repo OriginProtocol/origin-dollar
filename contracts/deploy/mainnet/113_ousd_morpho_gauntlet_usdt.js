@@ -36,16 +36,16 @@ module.exports = deploymentWithGovernanceProposal(
       "MorphoGauntletPrimeUSDTStrategyProxy"
     );
 
-    // 2. Deploy new Generalized4626Strategy contract as it has an immutable to the Morpho Vault contract
-    const dGeneralized4626Strategy = await deployWithConfirmation(
-      "Generalized4626Strategy",
+    // 2. Deploy new Generalized4626USDTStrategy contract as it has an immutable to the Morpho Vault contract
+    const dGeneralized4626USDTStrategy = await deployWithConfirmation(
+      "Generalized4626USDTStrategy",
       [
         [addresses.mainnet.MorphoGauntletPrimeUSDTVault, cVaultProxy.address],
         addresses.mainnet.USDT,
       ]
     );
     const cMorphoGauntletPrimeUSDT = await ethers.getContractAt(
-      "Generalized4626Strategy",
+      "Generalized4626USDTStrategy",
       dMorphoGauntletPrimeUSDTProxy.address
     );
 
@@ -59,7 +59,7 @@ module.exports = deploymentWithGovernanceProposal(
     const initFunction = "initialize(address,address,bytes)";
     await withConfirmation(
       cMorphoGauntletPrimeUSDTProxy.connect(sDeployer)[initFunction](
-        dGeneralized4626Strategy.address,
+        dGeneralized4626USDTStrategy.address,
         addresses.mainnet.Timelock, // governor
         initData, // data for delegate call to the initialize function on the strategy
         await getTxOpts()
