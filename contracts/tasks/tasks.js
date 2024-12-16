@@ -818,7 +818,7 @@ subtask(
   )
   .addParam(
     "amount",
-    "Amount of Metapool LP tokens to burn for removed OTokens",
+    "Amount of Curve LP tokens to burn for removed OTokens",
     0,
     types.float
   )
