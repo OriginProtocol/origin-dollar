@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits, keccak256, toUtf8Bytes } =
+  require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
@@ -150,6 +151,36 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
+
+chai.Assertion.addMethod(
+  "revertedWithCustomError",
+  async function (errorSignature) {
+    let txSucceeded = false;
+    try {
+      await this._obj;
+      txSucceeded = true;
+    } catch (e) {
+      const errorHash = keccak256(toUtf8Bytes(errorSignature)).substr(0, 10);
+      const errorName = errorSignature.substring(
+        0,
+        errorSignature.indexOf("(")
+      );
+
+      const containsError =
+        e.message.includes(errorHash) || e.message.includes(errorName);
+
+      if (!containsError) {
+        chai.expect.fail(
+          `Expected error message with signature ${errorSignature} but another was thrown: ${e.message}`
+        );
+      }
+    }
+
+    if (txSucceeded) {
+      chai.expect.fail(`Expected ${errorSignature} error but none was thrown`);
+    }
+  }
+);
 
 function ognUnits(amount) {
   return parseUnits(amount, 18);

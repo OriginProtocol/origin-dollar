@@ -61,6 +61,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.s
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b BridgedWOETHStrategy -o BridgedWOETHStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BridgedWOETHStrategy -o BridgedWOETHStrategySquashed.svg
+sol2uml storage .. -c BridgedWOETHStrategy -o BridgedWOETHStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved

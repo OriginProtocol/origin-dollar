@@ -347,8 +347,8 @@ describe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
-        "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
+        "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
       ];
 
       for (const s of strategies) {
@@ -385,6 +385,7 @@ describe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 

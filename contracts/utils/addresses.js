@@ -20,7 +20,7 @@ addresses.mainnet.BinanceAll =
 addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
-  "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  "0xa5cA4da1a315751A7B6890F8E0b78c1C38085ad2";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
@@ -171,6 +171,8 @@ addresses.mainnet.MorphoStrategyProxy =
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
+addresses.mainnet.MetaMorphoUSDCSteakHouseVault =
+  "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -265,6 +267,10 @@ addresses.mainnet.beaconChainDepositContract =
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =
   "0x34eDb2ee25751eE67F68A45813B22811687C0238";
+addresses.mainnet.NativeStakingSSVStrategy2Proxy =
+  "0x4685dB8bF2Df743c861d71E6cFb5347222992076";
+addresses.mainnet.NativeStakingSSVStrategy3Proxy =
+  "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
@@ -280,6 +286,7 @@ addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 
 // Base
 addresses.base = {};
+addresses.base.HarvesterProxy = "0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29";
 addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 addresses.base.aeroRouterAddress = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
@@ -288,6 +295,8 @@ addresses.base.aeroFactoryAddress =
   "0x420DD381b31aEf6683db6B902084cB0FFECe40Da";
 addresses.base.aeroGaugeGovernorAddress =
   "0xE6A41fE61E7a1996B59d508661e3f524d6A32075";
+addresses.base.aeroQuoterV2Address =
+  "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
 
 addresses.base.ethUsdPriceFeed = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70";
 
@@ -296,13 +305,31 @@ addresses.base.WETH = "0x4200000000000000000000000000000000000006";
 addresses.base.wethAeroPoolAddress =
   "0x80aBe24A3ef1fc593aC5Da960F232ca23B2069d0";
 addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// 2/8 Multisig
+addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
   "0xe96EB1EDa83d18cbac224233319FA5071464e1b9";
 
-// 2/8 Multisig
-addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+// Base Aerodrome
+addresses.base.nonFungiblePositionManager =
+  "0x827922686190790b37229fd06084350E74485b72";
+addresses.base.slipstreamPoolFactory =
+  "0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A";
+addresses.base.aerodromeOETHbWETHClPool =
+  "0x6446021F4E396dA3df4235C62537431372195D38";
+addresses.base.aerodromeOETHbWETHClGauge =
+  "0xdD234DBe2efF53BED9E8fC0e427ebcd74ed4F429";
+addresses.base.swapRouter = "0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5";
+addresses.base.sugarHelper = "0x0AD09A66af0154a84e86F761313d02d0abB6edd5";
+addresses.base.quoterV2 = "0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0";
+
+addresses.base.oethbBribesContract =
+  "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
+
+addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

@@ -1,0 +1,834 @@
+{
+  "address": "0x296cd04A97cBd7fc297C9c27D9FEE705077F1F83",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_ogn",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_cvx",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_cvxLocker",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "bps",
+          "type": "uint256"
+        }
+      ],
+      "name": "CVXShareBpsUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "GovernorshipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oToken",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "swappedFor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "swapAmountIn",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "name": "OTokenBuyback",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "PendingGovernorshipTransfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "RewardsSourceUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "StrategistUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "SwapRouterUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "TreasuryManagerUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "balanceForCVX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "balanceForOGN",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cvx",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cvxLocker",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cvxShareBps",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_swapRouter",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_strategistAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_treasuryManagerAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_rewardsSource",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_cvxShareBps",
+          "type": "uint256"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isGovernor",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lockAllCVX",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ogn",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardsSource",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "safeApproveAllTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_bps",
+          "type": "uint256"
+        }
+      ],
+      "name": "setCVXShareBps",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "setRewardsSource",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "setStrategistAddr",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_router",
+          "type": "address"
+        }
+      ],
+      "name": "setSwapRouter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "setTreasuryManager",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "strategistAddr",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "oTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minCVX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "swapData",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapForCVX",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "oTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minOGN",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "swapData",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapForOGN",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "swapRouter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "transferGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "treasuryManager",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updateBuybackSplits",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x20691541afdc56cd09367b9e69f7e583d775d50184a9b3719b18fc60005b556d",
+  "receipt": {
+    "to": null,
+    "from": "0x074105fdD39e982B2ffE749A193c942db1046AB9",
+    "contractAddress": "0x296cd04A97cBd7fc297C9c27D9FEE705077F1F83",
+    "transactionIndex": 0,
+    "gasUsed": "1736326",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000800000000000000000000000000000000000004000000000000000000000000000000000000000000080000000000000000000000000080000000000000000000020000000000010000000000000000000000000000000000000010000000000000000000000000400000000000000020000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xa5d0ef5a65b56069b545b5006edd8f4818102473175eba1685c91313c1747ebb",
+    "transactionHash": "0x20691541afdc56cd09367b9e69f7e583d775d50184a9b3719b18fc60005b556d",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 20797927,
+        "transactionHash": "0x20691541afdc56cd09367b9e69f7e583d775d50184a9b3719b18fc60005b556d",
+        "address": "0x296cd04A97cBd7fc297C9c27D9FEE705077F1F83",
+        "topics": [
+          "0xc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x000000000000000000000000074105fdd39e982b2ffe749a193c942db1046ab9"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0xa5d0ef5a65b56069b545b5006edd8f4818102473175eba1685c91313c1747ebb"
+      }
+    ],
+    "blockNumber": 20797927,
+    "cumulativeGasUsed": "1736326",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26",
+    "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+    "0x72a19342e8F1838460eBFCCEf09F6585e32db86E"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "c9d6f73d5e465a83a71991ff81055896",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_oToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ogn\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_cvx\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_cvxLocker\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"bps\",\"type\":\"uint256\"}],\"name\":\"CVXShareBpsUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"GovernorshipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"oToken\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"swappedFor\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"swapAmountIn\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"}],\"name\":\"OTokenBuyback\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"PendingGovernorshipTransfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"RewardsSourceUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"StrategistUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"SwapRouterUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"TreasuryManagerUpdated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"balanceForCVX\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"balanceForOGN\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"claimGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"cvx\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"cvxLocker\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"cvxShareBps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"governor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_swapRouter\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_strategistAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_treasuryManagerAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_rewardsSource\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_cvxShareBps\",\"type\":\"uint256\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isGovernor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lockAllCVX\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ogn\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardsSource\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"safeApproveAllTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_bps\",\"type\":\"uint256\"}],\"name\":\"setCVXShareBps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"setRewardsSource\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"setStrategistAddr\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_router\",\"type\":\"address\"}],\"name\":\"setSwapRouter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"setTreasuryManager\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"strategistAddr\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"oTokenAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minCVX\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"swapData\",\"type\":\"bytes\"}],\"name\":\"swapForCVX\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"oTokenAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minOGN\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"swapData\",\"type\":\"bytes\"}],\"name\":\"swapForOGN\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"swapRouter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newGovernor\",\"type\":\"address\"}],\"name\":\"transferGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"treasuryManager\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"updateBuybackSplits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"initialize(address,address,address,address,uint256)\":{\"params\":{\"_cvxShareBps\":\"Percentage of balance to use for CVX\",\"_rewardsSource\":\"Address of RewardsSource contract\",\"_strategistAddr\":\"Address of Strategist multi-sig wallet\",\"_swapRouter\":\"Address of Uniswap V3 Router\",\"_treasuryManagerAddr\":\"Address that receives the treasury's share of OUSD\"}},\"lockAllCVX()\":{\"details\":\"Locks all CVX held by the contract on behalf of the Treasury Manager\"},\"safeApproveAllTokens()\":{\"details\":\"Approve CVX Locker to move CVX held by this contract\"},\"setCVXShareBps(uint256)\":{\"details\":\"Sets the percentage of oToken to use for Flywheel tokens\",\"params\":{\"_bps\":\"BPS, 10000 to 100%\"}},\"setRewardsSource(address)\":{\"details\":\"Sets the address that receives the OGN buyback rewards\",\"params\":{\"_address\":\"Address\"}},\"setStrategistAddr(address)\":{\"details\":\"Set address of Strategist\",\"params\":{\"_address\":\"Address of Strategist\"}},\"setSwapRouter(address)\":{\"details\":\"Set address of Uniswap Universal Router for performing liquidation of platform fee tokens. Setting to 0x0 will pause swaps.\",\"params\":{\"_router\":\"Address of the Uniswap Universal router\"}},\"setTreasuryManager(address)\":{\"details\":\"Sets the address that can receive and manage the funds for Treasury\",\"params\":{\"_address\":\"Address\"}},\"swapForCVX(uint256,uint256,bytes)\":{\"details\":\"Swaps `oTokenAmount` to CVX\",\"params\":{\"minCVX\":\"Minimum CVX to receive for oTokenAmount\",\"oTokenAmount\":\"Amount of OUSD/OETH to swap\",\"swapData\":\"1inch Swap Data\"}},\"swapForOGN(uint256,uint256,bytes)\":{\"details\":\"Swaps `oTokenAmount` to OGN\",\"params\":{\"minOGN\":\"Minimum OGN to receive for oTokenAmount\",\"oTokenAmount\":\"Amount of OUSD/OETH to swap\",\"swapData\":\"1inch Swap Data\"}},\"transferGovernance(address)\":{\"params\":{\"_newGovernor\":\"Address of the new Governor\"}},\"transferToken(address,uint256)\":{\"params\":{\"amount\":\"amount of the token to be transferred\",\"token\":\"token to be transferered\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"claimGovernance()\":{\"notice\":\"Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor.\"},\"governor()\":{\"notice\":\"Returns the address of the current Governor.\"},\"isGovernor()\":{\"notice\":\"Returns true if the caller is the current Governor.\"},\"transferGovernance(address)\":{\"notice\":\"Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete\"},\"transferToken(address,uint256)\":{\"notice\":\"Owner function to withdraw a specific amount of a token\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/buyback/ARMBuyback.sol\":\"ARMBuyback\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address recipient, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n}\\n\",\"keccak256\":\"0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/utils/SafeERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../IERC20.sol\\\";\\nimport \\\"../../../utils/Address.sol\\\";\\n\\n/**\\n * @title SafeERC20\\n * @dev Wrappers around ERC20 operations that throw on failure (when the token\\n * contract returns false). Tokens that return no value (and instead revert or\\n * throw on failure) are also supported, non-reverting calls are assumed to be\\n * successful.\\n * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,\\n * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.\\n */\\nlibrary SafeERC20 {\\n    using Address for address;\\n\\n    function safeTransfer(\\n        IERC20 token,\\n        address to,\\n        uint256 value\\n    ) internal {\\n        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));\\n    }\\n\\n    function safeTransferFrom(\\n        IERC20 token,\\n        address from,\\n        address to,\\n        uint256 value\\n    ) internal {\\n        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));\\n    }\\n\\n    /**\\n     * @dev Deprecated. This function has issues similar to the ones found in\\n     * {IERC20-approve}, and its usage is discouraged.\\n     *\\n     * Whenever possible, use {safeIncreaseAllowance} and\\n     * {safeDecreaseAllowance} instead.\\n     */\\n    function safeApprove(\\n        IERC20 token,\\n        address spender,\\n        uint256 value\\n    ) internal {\\n        // safeApprove should only be called when setting an initial allowance,\\n        // or when resetting it to zero. To increase and decrease it, use\\n        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'\\n        require(\\n            (value == 0) || (token.allowance(address(this), spender) == 0),\\n            \\\"SafeERC20: approve from non-zero to non-zero allowance\\\"\\n        );\\n        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));\\n    }\\n\\n    function safeIncreaseAllowance(\\n        IERC20 token,\\n        address spender,\\n        uint256 value\\n    ) internal {\\n        uint256 newAllowance = token.allowance(address(this), spender) + value;\\n        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));\\n    }\\n\\n    function safeDecreaseAllowance(\\n        IERC20 token,\\n        address spender,\\n        uint256 value\\n    ) internal {\\n        unchecked {\\n            uint256 oldAllowance = token.allowance(address(this), spender);\\n            require(oldAllowance >= value, \\\"SafeERC20: decreased allowance below zero\\\");\\n            uint256 newAllowance = oldAllowance - value;\\n            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));\\n        }\\n    }\\n\\n    /**\\n     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement\\n     * on the return value: the return value is optional (but if data is returned, it must not be false).\\n     * @param token The token targeted by the call.\\n     * @param data The call data (encoded using abi.encode or one of its variants).\\n     */\\n    function _callOptionalReturn(IERC20 token, bytes memory data) private {\\n        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since\\n        // we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that\\n        // the target address contains contract code and also asserts for success in the low-level call.\\n\\n        bytes memory returndata = address(token).functionCall(data, \\\"SafeERC20: low-level call failed\\\");\\n        if (returndata.length > 0) {\\n            // Return data is optional\\n            require(abi.decode(returndata, (bool)), \\\"SafeERC20: ERC20 operation did not succeed\\\");\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xc3d946432c0ddbb1f846a0d3985be71299df331b91d06732152117f62f0be2b5\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Address.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/Address.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary Address {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize, which returns 0 for contracts in\\n        // construction, since the code is only stored at the end of the\\n        // constructor execution.\\n\\n        uint256 size;\\n        assembly {\\n            size := extcodesize(account)\\n        }\\n        return size > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a delegate call.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionDelegateCall(target, data, \\\"Address: low-level delegate call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a delegate call.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function functionDelegateCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(isContract(target), \\\"Address: delegate call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.delegatecall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x51b758a8815ecc9596c66c37d56b1d33883a444631a3f916b9fe65cb863ef7c4\",\"license\":\"MIT\"},\"contracts/buyback/ARMBuyback.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { AbstractBuyback } from \\\"./AbstractBuyback.sol\\\";\\n\\ncontract ARMBuyback is AbstractBuyback {\\n    constructor(\\n        address _oToken,\\n        address _ogn,\\n        address _cvx,\\n        address _cvxLocker\\n    ) AbstractBuyback(_oToken, _ogn, _cvx, _cvxLocker) {}\\n}\\n\",\"keccak256\":\"0xc29d53cf379fee9e2b377adc83ecd2973a4f801cf93eacb30dd2e7c1a9589502\",\"license\":\"MIT\"},\"contracts/buyback/AbstractBuyback.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { Strategizable } from \\\"../governance/Strategizable.sol\\\";\\nimport \\\"../interfaces/chainlink/AggregatorV3Interface.sol\\\";\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport { SafeERC20 } from \\\"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\\\";\\nimport { ICVXLocker } from \\\"../interfaces/ICVXLocker.sol\\\";\\nimport { ISwapper } from \\\"../interfaces/ISwapper.sol\\\";\\n\\nimport { Initializable } from \\\"../utils/Initializable.sol\\\";\\n\\nabstract contract AbstractBuyback is Initializable, Strategizable {\\n    using SafeERC20 for IERC20;\\n\\n    event SwapRouterUpdated(address indexed _address);\\n\\n    event RewardsSourceUpdated(address indexed _address);\\n    event TreasuryManagerUpdated(address indexed _address);\\n    event CVXShareBpsUpdated(uint256 bps);\\n\\n    // Emitted whenever OUSD/OETH is swapped for OGN/CVX or any other token\\n    event OTokenBuyback(\\n        address indexed oToken,\\n        address indexed swappedFor,\\n        uint256 swapAmountIn,\\n        uint256 amountOut\\n    );\\n\\n    // Address of 1-inch Swap Router\\n    address public swapRouter;\\n\\n    // slither-disable-next-line constable-states\\n    address private __deprecated_ousd;\\n    // slither-disable-next-line constable-states\\n    address private __deprecated_ogv;\\n    // slither-disable-next-line constable-states\\n    address private __deprecated_usdt;\\n    // slither-disable-next-line constable-states\\n    address private __deprecated_weth9;\\n\\n    // Address that receives OGN after swaps\\n    address public rewardsSource;\\n\\n    // Address that receives all other tokens after swaps\\n    address public treasuryManager;\\n\\n    // slither-disable-next-line constable-states\\n    uint256 private __deprecated_treasuryBps;\\n\\n    address public immutable oToken;\\n    address public immutable ogn;\\n    address public immutable cvx;\\n    address public immutable cvxLocker;\\n\\n    // Amount of `oToken` balance to use for OGN buyback\\n    uint256 public balanceForOGN;\\n\\n    // Amount of `oToken` balance to use for CVX buyback\\n    uint256 public balanceForCVX;\\n\\n    // Percentage of `oToken` balance to be used for CVX\\n    uint256 public cvxShareBps; // 10000 = 100%\\n\\n    constructor(\\n        address _oToken,\\n        address _ogn,\\n        address _cvx,\\n        address _cvxLocker\\n    ) {\\n        // Make sure nobody owns the implementation contract\\n        _setGovernor(address(0));\\n\\n        oToken = _oToken;\\n        ogn = _ogn;\\n        cvx = _cvx;\\n        cvxLocker = _cvxLocker;\\n    }\\n\\n    /**\\n     * @param _swapRouter Address of Uniswap V3 Router\\n     * @param _strategistAddr Address of Strategist multi-sig wallet\\n     * @param _treasuryManagerAddr Address that receives the treasury's share of OUSD\\n     * @param _rewardsSource Address of RewardsSource contract\\n     * @param _cvxShareBps Percentage of balance to use for CVX\\n     */\\n    function initialize(\\n        address _swapRouter,\\n        address _strategistAddr,\\n        address _treasuryManagerAddr,\\n        address _rewardsSource,\\n        uint256 _cvxShareBps\\n    ) external onlyGovernor initializer {\\n        _setStrategistAddr(_strategistAddr);\\n\\n        _setSwapRouter(_swapRouter);\\n        _setRewardsSource(_rewardsSource);\\n\\n        _setTreasuryManager(_treasuryManagerAddr);\\n\\n        _setCVXShareBps(_cvxShareBps);\\n    }\\n\\n    /**\\n     * @dev Set address of Uniswap Universal Router for performing liquidation\\n     * of platform fee tokens. Setting to 0x0 will pause swaps.\\n     *\\n     * @param _router Address of the Uniswap Universal router\\n     */\\n    function setSwapRouter(address _router) external onlyGovernor {\\n        _setSwapRouter(_router);\\n    }\\n\\n    function _setSwapRouter(address _router) internal {\\n        address oldRouter = swapRouter;\\n        swapRouter = _router;\\n\\n        if (oldRouter != address(0)) {\\n            // Remove allowance of old router, if any\\n\\n            if (IERC20(ogn).allowance(address(this), oldRouter) != 0) {\\n                // slither-disable-next-line unused-return\\n                IERC20(ogn).safeApprove(oldRouter, 0);\\n            }\\n\\n            if (IERC20(cvx).allowance(address(this), oldRouter) != 0) {\\n                // slither-disable-next-line unused-return\\n                IERC20(cvx).safeApprove(oldRouter, 0);\\n            }\\n        }\\n\\n        emit SwapRouterUpdated(_router);\\n    }\\n\\n    /**\\n     * @dev Sets the address that receives the OGN buyback rewards\\n     * @param _address Address\\n     */\\n    function setRewardsSource(address _address) external onlyGovernor {\\n        _setRewardsSource(_address);\\n    }\\n\\n    function _setRewardsSource(address _address) internal {\\n        require(_address != address(0), \\\"Address not set\\\");\\n        rewardsSource = _address;\\n        emit RewardsSourceUpdated(_address);\\n    }\\n\\n    /**\\n     * @dev Sets the address that can receive and manage the funds for Treasury\\n     * @param _address Address\\n     */\\n    function setTreasuryManager(address _address) external onlyGovernor {\\n        _setTreasuryManager(_address);\\n    }\\n\\n    function _setTreasuryManager(address _address) internal {\\n        require(_address != address(0), \\\"Address not set\\\");\\n        treasuryManager = _address;\\n        emit TreasuryManagerUpdated(_address);\\n    }\\n\\n    /**\\n     * @dev Sets the percentage of oToken to use for Flywheel tokens\\n     * @param _bps BPS, 10000 to 100%\\n     */\\n    function setCVXShareBps(uint256 _bps) external onlyGovernor {\\n        _setCVXShareBps(_bps);\\n    }\\n\\n    function _setCVXShareBps(uint256 _bps) internal {\\n        require(_bps <= 10000, \\\"Invalid bps value\\\");\\n        cvxShareBps = _bps;\\n        emit CVXShareBpsUpdated(_bps);\\n    }\\n\\n    /**\\n     * @dev Computes the split of oToken balance that can be\\n     *      used for OGN and CVX buybacks.\\n     */\\n    function _updateBuybackSplits()\\n        internal\\n        returns (uint256 _balanceForOGN, uint256 _balanceForCVX)\\n    {\\n        _balanceForOGN = balanceForOGN;\\n        _balanceForCVX = balanceForCVX;\\n\\n        uint256 totalBalance = IERC20(oToken).balanceOf(address(this));\\n        uint256 unsplitBalance = totalBalance - _balanceForOGN - _balanceForCVX;\\n\\n        // Check if all balance is accounted for\\n        if (unsplitBalance != 0) {\\n            // If not, split unaccounted balance based on `cvxShareBps`\\n            uint256 addToCVX = (unsplitBalance * cvxShareBps) / 10000;\\n            _balanceForCVX = _balanceForCVX + addToCVX;\\n            _balanceForOGN = _balanceForOGN + unsplitBalance - addToCVX;\\n\\n            // Update storage\\n            balanceForOGN = _balanceForOGN;\\n            balanceForCVX = _balanceForCVX;\\n        }\\n    }\\n\\n    function updateBuybackSplits() external onlyGovernor {\\n        // slither-disable-next-line unused-return\\n        _updateBuybackSplits();\\n    }\\n\\n    function _swapToken(\\n        address tokenOut,\\n        uint256 oTokenAmount,\\n        uint256 minAmountOut,\\n        bytes calldata swapData\\n    ) internal returns (uint256 amountOut) {\\n        require(oTokenAmount > 0, \\\"Invalid Swap Amount\\\");\\n        require(swapRouter != address(0), \\\"Swap Router not set\\\");\\n        require(minAmountOut > 0, \\\"Invalid minAmount\\\");\\n\\n        // Transfer OToken to Swapper for swapping\\n        // slither-disable-next-line unchecked-transfer unused-return\\n        IERC20(oToken).transfer(swapRouter, oTokenAmount);\\n\\n        // Swap\\n        amountOut = ISwapper(swapRouter).swap(\\n            oToken,\\n            tokenOut,\\n            oTokenAmount,\\n            minAmountOut,\\n            swapData\\n        );\\n\\n        require(amountOut >= minAmountOut, \\\"Higher Slippage\\\");\\n\\n        emit OTokenBuyback(oToken, tokenOut, oTokenAmount, amountOut);\\n    }\\n\\n    /**\\n     * @dev Swaps `oTokenAmount` to OGN\\n     * @param oTokenAmount Amount of OUSD/OETH to swap\\n     * @param minOGN Minimum OGN to receive for oTokenAmount\\n     * @param swapData 1inch Swap Data\\n     */\\n    function swapForOGN(\\n        uint256 oTokenAmount,\\n        uint256 minOGN,\\n        bytes calldata swapData\\n    ) external onlyGovernorOrStrategist nonReentrant {\\n        (uint256 _amountForOGN, ) = _updateBuybackSplits();\\n        require(_amountForOGN >= oTokenAmount, \\\"Balance underflow\\\");\\n        require(rewardsSource != address(0), \\\"RewardsSource contract not set\\\");\\n\\n        unchecked {\\n            // Subtract the amount to swap from net balance\\n            balanceForOGN = _amountForOGN - oTokenAmount;\\n        }\\n\\n        uint256 ognReceived = _swapToken(ogn, oTokenAmount, minOGN, swapData);\\n\\n        // Transfer OGN received to RewardsSource contract\\n        // slither-disable-next-line unchecked-transfer unused-return\\n        IERC20(ogn).transfer(rewardsSource, ognReceived);\\n    }\\n\\n    /**\\n     * @dev Swaps `oTokenAmount` to CVX\\n     * @param oTokenAmount Amount of OUSD/OETH to swap\\n     * @param minCVX Minimum CVX to receive for oTokenAmount\\n     * @param swapData 1inch Swap Data\\n     */\\n    function swapForCVX(\\n        uint256 oTokenAmount,\\n        uint256 minCVX,\\n        bytes calldata swapData\\n    ) external onlyGovernorOrStrategist nonReentrant {\\n        (, uint256 _amountForCVX) = _updateBuybackSplits();\\n        require(_amountForCVX >= oTokenAmount, \\\"Balance underflow\\\");\\n\\n        unchecked {\\n            // Subtract the amount to swap from net balance\\n            balanceForCVX = _amountForCVX - oTokenAmount;\\n        }\\n\\n        uint256 cvxReceived = _swapToken(cvx, oTokenAmount, minCVX, swapData);\\n\\n        // Lock all CVX\\n        _lockAllCVX(cvxReceived);\\n    }\\n\\n    /**\\n     * @dev Locks all CVX held by the contract on behalf of the Treasury Manager\\n     */\\n    function lockAllCVX() external onlyGovernorOrStrategist {\\n        _lockAllCVX(IERC20(cvx).balanceOf(address(this)));\\n    }\\n\\n    function _lockAllCVX(uint256 cvxAmount) internal {\\n        require(\\n            treasuryManager != address(0),\\n            \\\"Treasury manager address not set\\\"\\n        );\\n\\n        // Lock all available CVX on behalf of `treasuryManager`\\n        ICVXLocker(cvxLocker).lock(treasuryManager, cvxAmount, 0);\\n    }\\n\\n    /**\\n     * @dev Approve CVX Locker to move CVX held by this contract\\n     */\\n    function safeApproveAllTokens() external onlyGovernorOrStrategist {\\n        IERC20(cvx).safeApprove(cvxLocker, type(uint256).max);\\n    }\\n\\n    /**\\n     * @notice Owner function to withdraw a specific amount of a token\\n     * @param token token to be transferered\\n     * @param amount amount of the token to be transferred\\n     */\\n    function transferToken(address token, uint256 amount)\\n        external\\n        onlyGovernor\\n        nonReentrant\\n    {\\n        IERC20(token).safeTransfer(_governor(), amount);\\n    }\\n}\\n\",\"keccak256\":\"0xae900740efe677492e6de63b0eb9a1de55185b775bff46c1cda5d6b8f0b54e31\",\"license\":\"MIT\"},\"contracts/governance/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Base for contracts that are managed by the Origin Protocol's Governor.\\n * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change\\n *      from owner to governor and renounce methods removed. Does not use\\n *      Context.sol like Ownable.sol does for simplification.\\n * @author Origin Protocol Inc\\n */\\ncontract Governable {\\n    // Storage position of the owner and pendingOwner of the contract\\n    // keccak256(\\\"OUSD.governor\\\");\\n    bytes32 private constant governorPosition =\\n        0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;\\n\\n    // keccak256(\\\"OUSD.pending.governor\\\");\\n    bytes32 private constant pendingGovernorPosition =\\n        0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;\\n\\n    // keccak256(\\\"OUSD.reentry.status\\\");\\n    bytes32 private constant reentryStatusPosition =\\n        0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;\\n\\n    // See OpenZeppelin ReentrancyGuard implementation\\n    uint256 constant _NOT_ENTERED = 1;\\n    uint256 constant _ENTERED = 2;\\n\\n    event PendingGovernorshipTransfer(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    event GovernorshipTransferred(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial Governor.\\n     */\\n    constructor() {\\n        _setGovernor(msg.sender);\\n        emit GovernorshipTransferred(address(0), _governor());\\n    }\\n\\n    /**\\n     * @notice Returns the address of the current Governor.\\n     */\\n    function governor() public view returns (address) {\\n        return _governor();\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current Governor.\\n     */\\n    function _governor() internal view returns (address governorOut) {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            governorOut := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address of the pending Governor.\\n     */\\n    function _pendingGovernor()\\n        internal\\n        view\\n        returns (address pendingGovernor)\\n    {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            pendingGovernor := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the Governor.\\n     */\\n    modifier onlyGovernor() {\\n        require(isGovernor(), \\\"Caller is not the Governor\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @notice Returns true if the caller is the current Governor.\\n     */\\n    function isGovernor() public view returns (bool) {\\n        return msg.sender == _governor();\\n    }\\n\\n    function _setGovernor(address newGovernor) internal {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\n     * function is not supported. It is possible to prevent this from happening\\n     * by making the `nonReentrant` function external, and make it call a\\n     * `private` function that does the actual work.\\n     */\\n    modifier nonReentrant() {\\n        bytes32 position = reentryStatusPosition;\\n        uint256 _reentry_status;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _reentry_status := sload(position)\\n        }\\n\\n        // On the first call to nonReentrant, _notEntered will be true\\n        require(_reentry_status != _ENTERED, \\\"Reentrant call\\\");\\n\\n        // Any calls to nonReentrant after this point will fail\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _ENTERED)\\n        }\\n\\n        _;\\n\\n        // By storing the original value once again, a refund is triggered (see\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _NOT_ENTERED)\\n        }\\n    }\\n\\n    function _setPendingGovernor(address newGovernor) internal {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @notice Transfers Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the current Governor. Must be claimed for this to complete\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function transferGovernance(address _newGovernor) external onlyGovernor {\\n        _setPendingGovernor(_newGovernor);\\n        emit PendingGovernorshipTransfer(_governor(), _newGovernor);\\n    }\\n\\n    /**\\n     * @notice Claim Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the new Governor.\\n     */\\n    function claimGovernance() external {\\n        require(\\n            msg.sender == _pendingGovernor(),\\n            \\\"Only the pending Governor can complete the claim\\\"\\n        );\\n        _changeGovernor(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Change Governance of the contract to a new account (`newGovernor`).\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function _changeGovernor(address _newGovernor) internal {\\n        require(_newGovernor != address(0), \\\"New Governor is address(0)\\\");\\n        emit GovernorshipTransferred(_governor(), _newGovernor);\\n        _setGovernor(_newGovernor);\\n    }\\n}\\n\",\"keccak256\":\"0xb7133d6ce7a9e673ff79fcedb3fd41ae6e58e251f94915bb65731abe524270b4\",\"license\":\"MIT\"},\"contracts/governance/Strategizable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { Governable } from \\\"./Governable.sol\\\";\\n\\ncontract Strategizable is Governable {\\n    event StrategistUpdated(address _address);\\n\\n    // Address of strategist\\n    address public strategistAddr;\\n\\n    // For future use\\n    uint256[50] private __gap;\\n\\n    /**\\n     * @dev Verifies that the caller is either Governor or Strategist.\\n     */\\n    modifier onlyGovernorOrStrategist() {\\n        require(\\n            msg.sender == strategistAddr || isGovernor(),\\n            \\\"Caller is not the Strategist or Governor\\\"\\n        );\\n        _;\\n    }\\n\\n    /**\\n     * @dev Set address of Strategist\\n     * @param _address Address of Strategist\\n     */\\n    function setStrategistAddr(address _address) external onlyGovernor {\\n        _setStrategistAddr(_address);\\n    }\\n\\n    /**\\n     * @dev Set address of Strategist\\n     * @param _address Address of Strategist\\n     */\\n    function _setStrategistAddr(address _address) internal {\\n        strategistAddr = _address;\\n        emit StrategistUpdated(_address);\\n    }\\n}\\n\",\"keccak256\":\"0x7fd5473fd8d117575500c6b8fc1bb94e39a68082143d99da9946aed020a41619\",\"license\":\"MIT\"},\"contracts/interfaces/ICVXLocker.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface ICVXLocker {\\n    function lock(\\n        address _account,\\n        uint256 _amount,\\n        uint256 _spendRatio\\n    ) external;\\n\\n    function lockedBalanceOf(address _account) external view returns (uint256);\\n}\\n\",\"keccak256\":\"0x11c79e36d0858d06a3cc0dffd728582b25fa0918554b31667e28a3be49716298\",\"license\":\"MIT\"},\"contracts/interfaces/ISwapper.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface ISwapper {\\n    /**\\n     * @param fromAsset The token address of the asset being sold.\\n     * @param toAsset The token address of the asset being purchased.\\n     * @param fromAssetAmount The amount of assets being sold.\\n     * @param minToAssetAmmount The minimum amount of assets to be purchased.\\n     * @param data tx.data returned from 1Inch's /v5.0/1/swap API\\n     */\\n    function swap(\\n        address fromAsset,\\n        address toAsset,\\n        uint256 fromAssetAmount,\\n        uint256 minToAssetAmmount,\\n        bytes calldata data\\n    ) external returns (uint256 toAssetAmount);\\n}\\n\",\"keccak256\":\"0x56a463cf0d5f2bb4bd629e23522b0c353df4c3d4fb95424828d25fb074faf365\",\"license\":\"MIT\"},\"contracts/interfaces/chainlink/AggregatorV3Interface.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface AggregatorV3Interface {\\n    function decimals() external view returns (uint8);\\n\\n    function description() external view returns (string memory);\\n\\n    function version() external view returns (uint256);\\n\\n    // getRoundData and latestRoundData should both raise \\\"No data present\\\"\\n    // if they do not have data to report, instead of returning unset values\\n    // which could be misinterpreted as actual reported values.\\n    function getRoundData(uint80 _roundId)\\n        external\\n        view\\n        returns (\\n            uint80 roundId,\\n            int256 answer,\\n            uint256 startedAt,\\n            uint256 updatedAt,\\n            uint80 answeredInRound\\n        );\\n\\n    function latestRoundData()\\n        external\\n        view\\n        returns (\\n            uint80 roundId,\\n            int256 answer,\\n            uint256 startedAt,\\n            uint256 updatedAt,\\n            uint80 answeredInRound\\n        );\\n}\\n\",\"keccak256\":\"0x18fb68de95136c49f3874fe7795a7bda730339198b2816690ddbdf1eacd4e273\",\"license\":\"MIT\"},\"contracts/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Base contract any contracts that need to initialize state after deployment.\\n * @author Origin Protocol Inc\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     */\\n    bool private initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private initializing;\\n\\n    /**\\n     * @dev Modifier to protect an initializer function from being invoked twice.\\n     */\\n    modifier initializer() {\\n        require(\\n            initializing || !initialized,\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n\\n        bool isTopLevelCall = !initializing;\\n        if (isTopLevelCall) {\\n            initializing = true;\\n            initialized = true;\\n        }\\n\\n        _;\\n\\n        if (isTopLevelCall) {\\n            initializing = false;\\n        }\\n    }\\n\\n    uint256[50] private ______gap;\\n}\\n\",\"keccak256\":\"0xaadbcc138114afed4af4f353c2ced2916e6ee14be91434789187f192caf0d786\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6101006040523480156200001257600080fd5b506040516200207c3803806200207c833981016040819052620000359162000104565b8383838362000051336000805160206200205c83398151915255565b6000805160206200205c833981519152546040516001600160a01b03909116906000907fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a908290a3620000b260006000805160206200205c83398151915255565b6001600160601b0319606094851b811660805292841b831660a05290831b821660c05290911b1660e052506200016192505050565b80516001600160a01b0381168114620000ff57600080fd5b919050565b600080600080608085870312156200011b57600080fd5b6200012685620000e7565b93506200013660208601620000e7565b92506200014660408601620000e7565b91506200015660608601620000e7565b905092959194509250565b60805160601c60a05160601c60c05160601c60e05160601c611e4c62000210600039600081816102db015281816107400152610dc3015260008181610302015281816104f20152818161071e01528181610b5c01528181610f470152610fd301526000818161027d0152818161089d015281816108f101528181610e6e0152610efa01526000818161020c01528181611112015281816114ff015281816115a6015261167a0152611e4c6000f3fe608060405234801561001057600080fd5b50600436106101a95760003560e01c8063773540b3116100f9578063c7af335211610097578063dd0a651411610071578063dd0a651414610390578063f7013ef6146103a3578063f7240d2f146103b6578063fe47a9f2146103c957600080fd5b8063c7af335214610352578063d1c766381461036a578063d38bfff41461037d57600080fd5b8063923c1d61116100d3578063923c1d61146102fd578063ad1728cb14610324578063be50c8391461032c578063c31c9c071461033f57600080fd5b8063773540b3146102b057806387f8b719146102c35780638d68f9ff146102d657600080fd5b80633cea70d9116101665780635d36b190116101405780635d36b19014610270578063602bc098146102785780636f2ff9e01461029f57806375d7a6b4146102a857600080fd5b80633cea70d914610237578063412736571461024a578063570d8e1d1461025d57600080fd5b80630c340a24146101ae5780631072cbea146101d3578063113f2ec7146101e857806317cf0122146101f05780631a32aad6146102075780633551fb781461022e575b600080fd5b6101b66103dc565b6040516001600160a01b0390911681526020015b60405180910390f35b6101e66101e1366004611af0565b6103f9565b005b6101e66104a1565b6101f960705481565b6040519081526020016101ca565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101f9606e5481565b606c546101b6906001600160a01b031681565b6101e6610258366004611a79565b61057b565b6033546101b6906001600160a01b031681565b6101e66105ab565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101f9606f5481565b6101e661064f565b6101e66102be366004611a79565b61067f565b6101e66102d1366004611b3c565b6106ac565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101e66106d9565b6101e661033a366004611b6e565b610767565b6066546101b6906001600160a01b031681565b61035a61097c565b60405190151581526020016101ca565b6101e6610378366004611a79565b6109ad565b6101e661038b366004611a79565b6109da565b6101e661039e366004611b6e565b610a7e565b6101e66103b1366004611a94565b610b9d565b606b546101b6906001600160a01b031681565b6101e66103d7366004611a79565b610ca6565b60006103f4600080516020611df78339815191525490565b905090565b61040161097c565b6104265760405162461bcd60e51b815260040161041d90611c99565b60405180910390fd5b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac45358054600281141561046a5760405162461bcd60e51b815260040161041d90611d18565b60028255610498610487600080516020611df78339815191525490565b6001600160a01b0386169085610cd3565b50600190555050565b6033546001600160a01b03163314806104bd57506104bd61097c565b6104d95760405162461bcd60e51b815260040161041d90611cd0565b6040516370a0823160e01b8152306004820152610579907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a082319060240160206040518083038186803b15801561053c57600080fd5b505afa158015610550573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105749190611b55565b610d3b565b565b61058361097c565b61059f5760405162461bcd60e51b815260040161041d90611c99565b6105a881610e24565b50565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b0316146106465760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b606482015260840161041d565b61057933611033565b61065761097c565b6106735760405162461bcd60e51b815260040161041d90611c99565b61067b6110f4565b5050565b61068761097c565b6106a35760405162461bcd60e51b815260040161041d90611c99565b6105a881611209565b6106b461097c565b6106d05760405162461bcd60e51b815260040161041d90611c99565b6105a88161125e565b6033546001600160a01b03163314806106f557506106f561097c565b6107115760405162461bcd60e51b815260040161041d90611cd0565b6105796001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f00000000000000000000000000000000000000000000000000000000000000006000196112d9565b6033546001600160a01b0316331480610783575061078361097c565b61079f5760405162461bcd60e51b815260040161041d90611cd0565b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535805460028114156107e35760405162461bcd60e51b815260040161041d90611d18565b6002825560006107f16110f4565b509050868110156108385760405162461bcd60e51b815260206004820152601160248201527042616c616e636520756e646572666c6f7760781b604482015260640161041d565b606b546001600160a01b03166108905760405162461bcd60e51b815260206004820152601e60248201527f52657761726473536f7572636520636f6e7472616374206e6f74207365740000604482015260640161041d565b868103606e5560006108c57f0000000000000000000000000000000000000000000000000000000000000000898989896113fd565b606b5460405163a9059cbb60e01b81526001600160a01b039182166004820152602481018390529192507f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb90604401602060405180830381600087803b15801561093557600080fd5b505af1158015610949573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061096d9190611b1a565b50505060018255505050505050565b6000610994600080516020611df78339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6109b561097c565b6109d15760405162461bcd60e51b815260040161041d90611c99565b6105a8816116ed565b6109e261097c565b6109fe5760405162461bcd60e51b815260040161041d90611c99565b610a26817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b0316610a46600080516020611df78339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b6033546001600160a01b0316331480610a9a5750610a9a61097c565b610ab65760405162461bcd60e51b815260040161041d90611cd0565b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac453580546002811415610afa5760405162461bcd60e51b815260040161041d90611d18565b600282556000610b086110f4565b91505086811015610b4f5760405162461bcd60e51b815260206004820152601160248201527042616c616e636520756e646572666c6f7760781b604482015260640161041d565b868103606f556000610b847f0000000000000000000000000000000000000000000000000000000000000000898989896113fd565b9050610b8f81610d3b565b505060018255505050505050565b610ba561097c565b610bc15760405162461bcd60e51b815260040161041d90611c99565b600054610100900460ff1680610bda575060005460ff16155b610c3d5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b606482015260840161041d565b600054610100900460ff16158015610c5f576000805461ffff19166101011790555b610c6885611209565b610c7186610e24565b610c7a836116ed565b610c838461177f565b610c8c8261125e565b8015610c9e576000805461ff00191690555b505050505050565b610cae61097c565b610cca5760405162461bcd60e51b815260040161041d90611c99565b6105a88161177f565b6040516001600160a01b038316602482015260448101829052610d3690849063a9059cbb60e01b906064015b60408051601f198184030181529190526020810180516001600160e01b03166001600160e01b031990931692909217909152611811565b505050565b606c546001600160a01b0316610d935760405162461bcd60e51b815260206004820181905260248201527f5472656173757279206d616e616765722061646472657373206e6f7420736574604482015260640161041d565b606c5460405163e2ab691d60e01b81526001600160a01b03918216600482015260248101839052600060448201527f00000000000000000000000000000000000000000000000000000000000000009091169063e2ab691d90606401600060405180830381600087803b158015610e0957600080fd5b505af1158015610e1d573d6000803e3d6000fd5b5050505050565b606680546001600160a01b038381166001600160a01b0319831617909255168015610ffb57604051636eb1769f60e11b81523060048201526001600160a01b0382811660248301527f0000000000000000000000000000000000000000000000000000000000000000169063dd62ed3e9060440160206040518083038186803b158015610eb057600080fd5b505afa158015610ec4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610ee89190611b55565b15610f2257610f226001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000168260006112d9565b604051636eb1769f60e11b81523060048201526001600160a01b0382811660248301527f0000000000000000000000000000000000000000000000000000000000000000169063dd62ed3e9060440160206040518083038186803b158015610f8957600080fd5b505afa158015610f9d573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610fc19190611b55565b15610ffb57610ffb6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000168260006112d9565b6040516001600160a01b038316907f36db479a3b4d3672bd6f5fca4484283f60b5ac70647b1ceec13ecbb1d030a2df90600090a25050565b6001600160a01b0381166110895760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f722069732061646472657373283029000000000000604482015260640161041d565b806001600160a01b03166110a9600080516020611df78339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36105a881600080516020611df783398151915255565b606e54606f546040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a082319060240160206040518083038186803b15801561115c57600080fd5b505afa158015611170573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906111949190611b55565b90506000826111a38584611d99565b6111ad9190611d99565b90508015611203576000612710607054836111c89190611d7a565b6111d29190611d58565b90506111de8185611d40565b9350806111eb8387611d40565b6111f59190611d99565b606e819055606f8590559450505b50509091565b603380546001600160a01b0319166001600160a01b0383169081179091556040519081527f869e0abd13cc3a975de7b93be3df1cb2255c802b1cead85963cc79d99f131bee906020015b60405180910390a150565b6127108111156112a45760405162461bcd60e51b8152602060048201526011602482015270496e76616c6964206270732076616c756560781b604482015260640161041d565b60708190556040518181527f620398066c59c2d8a15b84b15d6d280cd013e1e8da21405351a32970e959c78790602001611253565b8015806113625750604051636eb1769f60e11b81523060048201526001600160a01b03838116602483015284169063dd62ed3e9060440160206040518083038186803b15801561132857600080fd5b505afa15801561133c573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906113609190611b55565b155b6113cd5760405162461bcd60e51b815260206004820152603660248201527f5361666545524332303a20617070726f76652066726f6d206e6f6e2d7a65726f60448201527520746f206e6f6e2d7a65726f20616c6c6f77616e636560501b606482015260840161041d565b6040516001600160a01b038316602482015260448101829052610d3690849063095ea7b360e01b90606401610cff565b60008085116114445760405162461bcd60e51b8152602060048201526013602482015272125b9d985b1a590814ddd85c08105b5bdd5b9d606a1b604482015260640161041d565b6066546001600160a01b03166114925760405162461bcd60e51b815260206004820152601360248201527214ddd85c08149bdd5d195c881b9bdd081cd95d606a1b604482015260640161041d565b600084116114d65760405162461bcd60e51b8152602060048201526011602482015270125b9d985b1a59081b5a5b905b5bdd5b9d607a1b604482015260640161041d565b60665460405163a9059cbb60e01b81526001600160a01b039182166004820152602481018790527f00000000000000000000000000000000000000000000000000000000000000009091169063a9059cbb90604401602060405180830381600087803b15801561154557600080fd5b505af1158015611559573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061157d9190611b1a565b506066546040516304a0d80360e31b81526001600160a01b0390911690632506c018906115d8907f0000000000000000000000000000000000000000000000000000000000000000908a908a908a908a908a90600401611c0a565b602060405180830381600087803b1580156115f257600080fd5b505af1158015611606573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061162a9190611b55565b90508381101561166e5760405162461bcd60e51b815260206004820152600f60248201526e48696768657220536c69707061676560881b604482015260640161041d565b856001600160a01b03167f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03167f298e4dbf1f6f43b0e8cd13394bba43125c8c376005b44b664a9fd2eaaeb4474387846040516116dc929190918252602082015260400190565b60405180910390a395945050505050565b6001600160a01b0381166117355760405162461bcd60e51b815260206004820152600f60248201526e1059191c995cdcc81b9bdd081cd95d608a1b604482015260640161041d565b606b80546001600160a01b0319166001600160a01b0383169081179091556040517f95561238de8d7836da6d15311c07a2546a1a712b477f44391ddd1e6e0556c6cd90600090a250565b6001600160a01b0381166117c75760405162461bcd60e51b815260206004820152600f60248201526e1059191c995cdcc81b9bdd081cd95d608a1b604482015260640161041d565b606c80546001600160a01b0319166001600160a01b0383169081179091556040517fd16d2cf254200e4dc6dc82512e9d11673e06a798c40b90cef7583729b4f7a8d490600090a250565b6000611866826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b03166118e39092919063ffffffff16565b805190915015610d3657808060200190518101906118849190611b1a565b610d365760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b606482015260840161041d565b60606118f284846000856118fc565b90505b9392505050565b60608247101561195d5760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b606482015260840161041d565b843b6119ab5760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e7472616374000000604482015260640161041d565b600080866001600160a01b031685876040516119c79190611bee565b60006040518083038185875af1925050503d8060008114611a04576040519150601f19603f3d011682016040523d82523d6000602084013e611a09565b606091505b5091509150611a19828286611a24565b979650505050505050565b60608315611a335750816118f5565b825115611a435782518084602001fd5b8160405162461bcd60e51b815260040161041d9190611c66565b80356001600160a01b0381168114611a7457600080fd5b919050565b600060208284031215611a8b57600080fd5b6118f582611a5d565b600080600080600060a08688031215611aac57600080fd5b611ab586611a5d565b9450611ac360208701611a5d565b9350611ad160408701611a5d565b9250611adf60608701611a5d565b949793965091946080013592915050565b60008060408385031215611b0357600080fd5b611b0c83611a5d565b946020939093013593505050565b600060208284031215611b2c57600080fd5b815180151581146118f557600080fd5b600060208284031215611b4e57600080fd5b5035919050565b600060208284031215611b6757600080fd5b5051919050565b60008060008060608587031215611b8457600080fd5b8435935060208501359250604085013567ffffffffffffffff80821115611baa57600080fd5b818701915087601f830112611bbe57600080fd5b813581811115611bcd57600080fd5b886020828501011115611bdf57600080fd5b95989497505060200194505050565b60008251611c00818460208701611db0565b9190910192915050565b6001600160a01b03878116825286166020820152604081018590526060810184905260a06080820181905281018290526000828460c0840137600060c0848401015260c0601f19601f8501168301019050979650505050505050565b6020815260008251806020840152611c85816040850160208701611db0565b601f01601f19169190910160400192915050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b60208082526028908201527f43616c6c6572206973206e6f74207468652053747261746567697374206f722060408201526723b7bb32b93737b960c11b606082015260800190565b6020808252600e908201526d1499595b9d1c985b9d0818d85b1b60921b604082015260600190565b60008219821115611d5357611d53611de0565b500190565b600082611d7557634e487b7160e01b600052601260045260246000fd5b500490565b6000816000190483118215151615611d9457611d94611de0565b500290565b600082821015611dab57611dab611de0565b500390565b60005b83811015611dcb578181015183820152602001611db3565b83811115611dda576000848401525b50505050565b634e487b7160e01b600052601160045260246000fdfe7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa2646970667358221220d1a4e19367fd88cf8d33278093090b30f4f3929efef00704f536fbeb35846e3f64736f6c634300080700337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101a95760003560e01c8063773540b3116100f9578063c7af335211610097578063dd0a651411610071578063dd0a651414610390578063f7013ef6146103a3578063f7240d2f146103b6578063fe47a9f2146103c957600080fd5b8063c7af335214610352578063d1c766381461036a578063d38bfff41461037d57600080fd5b8063923c1d61116100d3578063923c1d61146102fd578063ad1728cb14610324578063be50c8391461032c578063c31c9c071461033f57600080fd5b8063773540b3146102b057806387f8b719146102c35780638d68f9ff146102d657600080fd5b80633cea70d9116101665780635d36b190116101405780635d36b19014610270578063602bc098146102785780636f2ff9e01461029f57806375d7a6b4146102a857600080fd5b80633cea70d914610237578063412736571461024a578063570d8e1d1461025d57600080fd5b80630c340a24146101ae5780631072cbea146101d3578063113f2ec7146101e857806317cf0122146101f05780631a32aad6146102075780633551fb781461022e575b600080fd5b6101b66103dc565b6040516001600160a01b0390911681526020015b60405180910390f35b6101e66101e1366004611af0565b6103f9565b005b6101e66104a1565b6101f960705481565b6040519081526020016101ca565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101f9606e5481565b606c546101b6906001600160a01b031681565b6101e6610258366004611a79565b61057b565b6033546101b6906001600160a01b031681565b6101e66105ab565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101f9606f5481565b6101e661064f565b6101e66102be366004611a79565b61067f565b6101e66102d1366004611b3c565b6106ac565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101b67f000000000000000000000000000000000000000000000000000000000000000081565b6101e66106d9565b6101e661033a366004611b6e565b610767565b6066546101b6906001600160a01b031681565b61035a61097c565b60405190151581526020016101ca565b6101e6610378366004611a79565b6109ad565b6101e661038b366004611a79565b6109da565b6101e661039e366004611b6e565b610a7e565b6101e66103b1366004611a94565b610b9d565b606b546101b6906001600160a01b031681565b6101e66103d7366004611a79565b610ca6565b60006103f4600080516020611df78339815191525490565b905090565b61040161097c565b6104265760405162461bcd60e51b815260040161041d90611c99565b60405180910390fd5b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac45358054600281141561046a5760405162461bcd60e51b815260040161041d90611d18565b60028255610498610487600080516020611df78339815191525490565b6001600160a01b0386169085610cd3565b50600190555050565b6033546001600160a01b03163314806104bd57506104bd61097c565b6104d95760405162461bcd60e51b815260040161041d90611cd0565b6040516370a0823160e01b8152306004820152610579907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a082319060240160206040518083038186803b15801561053c57600080fd5b505afa158015610550573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105749190611b55565b610d3b565b565b61058361097c565b61059f5760405162461bcd60e51b815260040161041d90611c99565b6105a881610e24565b50565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b0316146106465760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b606482015260840161041d565b61057933611033565b61065761097c565b6106735760405162461bcd60e51b815260040161041d90611c99565b61067b6110f4565b5050565b61068761097c565b6106a35760405162461bcd60e51b815260040161041d90611c99565b6105a881611209565b6106b461097c565b6106d05760405162461bcd60e51b815260040161041d90611c99565b6105a88161125e565b6033546001600160a01b03163314806106f557506106f561097c565b6107115760405162461bcd60e51b815260040161041d90611cd0565b6105796001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f00000000000000000000000000000000000000000000000000000000000000006000196112d9565b6033546001600160a01b0316331480610783575061078361097c565b61079f5760405162461bcd60e51b815260040161041d90611cd0565b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535805460028114156107e35760405162461bcd60e51b815260040161041d90611d18565b6002825560006107f16110f4565b509050868110156108385760405162461bcd60e51b815260206004820152601160248201527042616c616e636520756e646572666c6f7760781b604482015260640161041d565b606b546001600160a01b03166108905760405162461bcd60e51b815260206004820152601e60248201527f52657761726473536f7572636520636f6e7472616374206e6f74207365740000604482015260640161041d565b868103606e5560006108c57f0000000000000000000000000000000000000000000000000000000000000000898989896113fd565b606b5460405163a9059cbb60e01b81526001600160a01b039182166004820152602481018390529192507f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb90604401602060405180830381600087803b15801561093557600080fd5b505af1158015610949573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061096d9190611b1a565b50505060018255505050505050565b6000610994600080516020611df78339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6109b561097c565b6109d15760405162461bcd60e51b815260040161041d90611c99565b6105a8816116ed565b6109e261097c565b6109fe5760405162461bcd60e51b815260040161041d90611c99565b610a26817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b0316610a46600080516020611df78339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b6033546001600160a01b0316331480610a9a5750610a9a61097c565b610ab65760405162461bcd60e51b815260040161041d90611cd0565b7f53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac453580546002811415610afa5760405162461bcd60e51b815260040161041d90611d18565b600282556000610b086110f4565b91505086811015610b4f5760405162461bcd60e51b815260206004820152601160248201527042616c616e636520756e646572666c6f7760781b604482015260640161041d565b868103606f556000610b847f0000000000000000000000000000000000000000000000000000000000000000898989896113fd565b9050610b8f81610d3b565b505060018255505050505050565b610ba561097c565b610bc15760405162461bcd60e51b815260040161041d90611c99565b600054610100900460ff1680610bda575060005460ff16155b610c3d5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b606482015260840161041d565b600054610100900460ff16158015610c5f576000805461ffff19166101011790555b610c6885611209565b610c7186610e24565b610c7a836116ed565b610c838461177f565b610c8c8261125e565b8015610c9e576000805461ff00191690555b505050505050565b610cae61097c565b610cca5760405162461bcd60e51b815260040161041d90611c99565b6105a88161177f565b6040516001600160a01b038316602482015260448101829052610d3690849063a9059cbb60e01b906064015b60408051601f198184030181529190526020810180516001600160e01b03166001600160e01b031990931692909217909152611811565b505050565b606c546001600160a01b0316610d935760405162461bcd60e51b815260206004820181905260248201527f5472656173757279206d616e616765722061646472657373206e6f7420736574604482015260640161041d565b606c5460405163e2ab691d60e01b81526001600160a01b03918216600482015260248101839052600060448201527f00000000000000000000000000000000000000000000000000000000000000009091169063e2ab691d90606401600060405180830381600087803b158015610e0957600080fd5b505af1158015610e1d573d6000803e3d6000fd5b5050505050565b606680546001600160a01b038381166001600160a01b0319831617909255168015610ffb57604051636eb1769f60e11b81523060048201526001600160a01b0382811660248301527f0000000000000000000000000000000000000000000000000000000000000000169063dd62ed3e9060440160206040518083038186803b158015610eb057600080fd5b505afa158015610ec4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610ee89190611b55565b15610f2257610f226001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000168260006112d9565b604051636eb1769f60e11b81523060048201526001600160a01b0382811660248301527f0000000000000000000000000000000000000000000000000000000000000000169063dd62ed3e9060440160206040518083038186803b158015610f8957600080fd5b505afa158015610f9d573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610fc19190611b55565b15610ffb57610ffb6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000168260006112d9565b6040516001600160a01b038316907f36db479a3b4d3672bd6f5fca4484283f60b5ac70647b1ceec13ecbb1d030a2df90600090a25050565b6001600160a01b0381166110895760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f722069732061646472657373283029000000000000604482015260640161041d565b806001600160a01b03166110a9600080516020611df78339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36105a881600080516020611df783398151915255565b606e54606f546040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a082319060240160206040518083038186803b15801561115c57600080fd5b505afa158015611170573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906111949190611b55565b90506000826111a38584611d99565b6111ad9190611d99565b90508015611203576000612710607054836111c89190611d7a565b6111d29190611d58565b90506111de8185611d40565b9350806111eb8387611d40565b6111f59190611d99565b606e819055606f8590559450505b50509091565b603380546001600160a01b0319166001600160a01b0383169081179091556040519081527f869e0abd13cc3a975de7b93be3df1cb2255c802b1cead85963cc79d99f131bee906020015b60405180910390a150565b6127108111156112a45760405162461bcd60e51b8152602060048201526011602482015270496e76616c6964206270732076616c756560781b604482015260640161041d565b60708190556040518181527f620398066c59c2d8a15b84b15d6d280cd013e1e8da21405351a32970e959c78790602001611253565b8015806113625750604051636eb1769f60e11b81523060048201526001600160a01b03838116602483015284169063dd62ed3e9060440160206040518083038186803b15801561132857600080fd5b505afa15801561133c573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906113609190611b55565b155b6113cd5760405162461bcd60e51b815260206004820152603660248201527f5361666545524332303a20617070726f76652066726f6d206e6f6e2d7a65726f60448201527520746f206e6f6e2d7a65726f20616c6c6f77616e636560501b606482015260840161041d565b6040516001600160a01b038316602482015260448101829052610d3690849063095ea7b360e01b90606401610cff565b60008085116114445760405162461bcd60e51b8152602060048201526013602482015272125b9d985b1a590814ddd85c08105b5bdd5b9d606a1b604482015260640161041d565b6066546001600160a01b03166114925760405162461bcd60e51b815260206004820152601360248201527214ddd85c08149bdd5d195c881b9bdd081cd95d606a1b604482015260640161041d565b600084116114d65760405162461bcd60e51b8152602060048201526011602482015270125b9d985b1a59081b5a5b905b5bdd5b9d607a1b604482015260640161041d565b60665460405163a9059cbb60e01b81526001600160a01b039182166004820152602481018790527f00000000000000000000000000000000000000000000000000000000000000009091169063a9059cbb90604401602060405180830381600087803b15801561154557600080fd5b505af1158015611559573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061157d9190611b1a565b506066546040516304a0d80360e31b81526001600160a01b0390911690632506c018906115d8907f0000000000000000000000000000000000000000000000000000000000000000908a908a908a908a908a90600401611c0a565b602060405180830381600087803b1580156115f257600080fd5b505af1158015611606573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061162a9190611b55565b90508381101561166e5760405162461bcd60e51b815260206004820152600f60248201526e48696768657220536c69707061676560881b604482015260640161041d565b856001600160a01b03167f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03167f298e4dbf1f6f43b0e8cd13394bba43125c8c376005b44b664a9fd2eaaeb4474387846040516116dc929190918252602082015260400190565b60405180910390a395945050505050565b6001600160a01b0381166117355760405162461bcd60e51b815260206004820152600f60248201526e1059191c995cdcc81b9bdd081cd95d608a1b604482015260640161041d565b606b80546001600160a01b0319166001600160a01b0383169081179091556040517f95561238de8d7836da6d15311c07a2546a1a712b477f44391ddd1e6e0556c6cd90600090a250565b6001600160a01b0381166117c75760405162461bcd60e51b815260206004820152600f60248201526e1059191c995cdcc81b9bdd081cd95d608a1b604482015260640161041d565b606c80546001600160a01b0319166001600160a01b0383169081179091556040517fd16d2cf254200e4dc6dc82512e9d11673e06a798c40b90cef7583729b4f7a8d490600090a250565b6000611866826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b03166118e39092919063ffffffff16565b805190915015610d3657808060200190518101906118849190611b1a565b610d365760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b606482015260840161041d565b60606118f284846000856118fc565b90505b9392505050565b60608247101561195d5760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b606482015260840161041d565b843b6119ab5760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e7472616374000000604482015260640161041d565b600080866001600160a01b031685876040516119c79190611bee565b60006040518083038185875af1925050503d8060008114611a04576040519150601f19603f3d011682016040523d82523d6000602084013e611a09565b606091505b5091509150611a19828286611a24565b979650505050505050565b60608315611a335750816118f5565b825115611a435782518084602001fd5b8160405162461bcd60e51b815260040161041d9190611c66565b80356001600160a01b0381168114611a7457600080fd5b919050565b600060208284031215611a8b57600080fd5b6118f582611a5d565b600080600080600060a08688031215611aac57600080fd5b611ab586611a5d565b9450611ac360208701611a5d565b9350611ad160408701611a5d565b9250611adf60608701611a5d565b949793965091946080013592915050565b60008060408385031215611b0357600080fd5b611b0c83611a5d565b946020939093013593505050565b600060208284031215611b2c57600080fd5b815180151581146118f557600080fd5b600060208284031215611b4e57600080fd5b5035919050565b600060208284031215611b6757600080fd5b5051919050565b60008060008060608587031215611b8457600080fd5b8435935060208501359250604085013567ffffffffffffffff80821115611baa57600080fd5b818701915087601f830112611bbe57600080fd5b813581811115611bcd57600080fd5b886020828501011115611bdf57600080fd5b95989497505060200194505050565b60008251611c00818460208701611db0565b9190910192915050565b6001600160a01b03878116825286166020820152604081018590526060810184905260a06080820181905281018290526000828460c0840137600060c0848401015260c0601f19601f8501168301019050979650505050505050565b6020815260008251806020840152611c85816040850160208701611db0565b601f01601f19169190910160400192915050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b60208082526028908201527f43616c6c6572206973206e6f74207468652053747261746567697374206f722060408201526723b7bb32b93737b960c11b606082015260800190565b6020808252600e908201526d1499595b9d1c985b9d0818d85b1b60921b604082015260600190565b60008219821115611d5357611d53611de0565b500190565b600082611d7557634e487b7160e01b600052601260045260246000fd5b500490565b6000816000190483118215151615611d9457611d94611de0565b500290565b600082821015611dab57611dab611de0565b500390565b60005b83811015611dcb578181015183820152602001611db3565b83811115611dda576000848401525b50505050565b634e487b7160e01b600052601160045260246000fdfe7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa2646970667358221220d1a4e19367fd88cf8d33278093090b30f4f3929efef00704f536fbeb35846e3f64736f6c63430008070033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "initialize(address,address,address,address,uint256)": {
+        "params": {
+          "_cvxShareBps": "Percentage of balance to use for CVX",
+          "_rewardsSource": "Address of RewardsSource contract",
+          "_strategistAddr": "Address of Strategist multi-sig wallet",
+          "_swapRouter": "Address of Uniswap V3 Router",
+          "_treasuryManagerAddr": "Address that receives the treasury's share of OUSD"
+        }
+      },
+      "lockAllCVX()": {
+        "details": "Locks all CVX held by the contract on behalf of the Treasury Manager"
+      },
+      "safeApproveAllTokens()": {
+        "details": "Approve CVX Locker to move CVX held by this contract"
+      },
+      "setCVXShareBps(uint256)": {
+        "details": "Sets the percentage of oToken to use for Flywheel tokens",
+        "params": {
+          "_bps": "BPS, 10000 to 100%"
+        }
+      },
+      "setRewardsSource(address)": {
+        "details": "Sets the address that receives the OGN buyback rewards",
+        "params": {
+          "_address": "Address"
+        }
+      },
+      "setStrategistAddr(address)": {
+        "details": "Set address of Strategist",
+        "params": {
+          "_address": "Address of Strategist"
+        }
+      },
+      "setSwapRouter(address)": {
+        "details": "Set address of Uniswap Universal Router for performing liquidation of platform fee tokens. Setting to 0x0 will pause swaps.",
+        "params": {
+          "_router": "Address of the Uniswap Universal router"
+        }
+      },
+      "setTreasuryManager(address)": {
+        "details": "Sets the address that can receive and manage the funds for Treasury",
+        "params": {
+          "_address": "Address"
+        }
+      },
+      "swapForCVX(uint256,uint256,bytes)": {
+        "details": "Swaps `oTokenAmount` to CVX",
+        "params": {
+          "minCVX": "Minimum CVX to receive for oTokenAmount",
+          "oTokenAmount": "Amount of OUSD/OETH to swap",
+          "swapData": "1inch Swap Data"
+        }
+      },
+      "swapForOGN(uint256,uint256,bytes)": {
+        "details": "Swaps `oTokenAmount` to OGN",
+        "params": {
+          "minOGN": "Minimum OGN to receive for oTokenAmount",
+          "oTokenAmount": "Amount of OUSD/OETH to swap",
+          "swapData": "1inch Swap Data"
+        }
+      },
+      "transferGovernance(address)": {
+        "params": {
+          "_newGovernor": "Address of the new Governor"
+        }
+      },
+      "transferToken(address,uint256)": {
+        "params": {
+          "amount": "amount of the token to be transferred",
+          "token": "token to be transferered"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "claimGovernance()": {
+        "notice": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+      },
+      "governor()": {
+        "notice": "Returns the address of the current Governor."
+      },
+      "isGovernor()": {
+        "notice": "Returns true if the caller is the current Governor."
+      },
+      "transferGovernance(address)": {
+        "notice": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete"
+      },
+      "transferToken(address,uint256)": {
+        "notice": "Owner function to withdraw a specific amount of a token"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 46534,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 46537,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 46577,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "______gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 9181,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "strategistAddr",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 9185,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 3647,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "swapRouter",
+        "offset": 0,
+        "slot": "102",
+        "type": "t_address"
+      },
+      {
+        "astId": 3649,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__deprecated_ousd",
+        "offset": 0,
+        "slot": "103",
+        "type": "t_address"
+      },
+      {
+        "astId": 3651,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__deprecated_ogv",
+        "offset": 0,
+        "slot": "104",
+        "type": "t_address"
+      },
+      {
+        "astId": 3653,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__deprecated_usdt",
+        "offset": 0,
+        "slot": "105",
+        "type": "t_address"
+      },
+      {
+        "astId": 3655,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__deprecated_weth9",
+        "offset": 0,
+        "slot": "106",
+        "type": "t_address"
+      },
+      {
+        "astId": 3657,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "rewardsSource",
+        "offset": 0,
+        "slot": "107",
+        "type": "t_address"
+      },
+      {
+        "astId": 3659,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "treasuryManager",
+        "offset": 0,
+        "slot": "108",
+        "type": "t_address"
+      },
+      {
+        "astId": 3661,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "__deprecated_treasuryBps",
+        "offset": 0,
+        "slot": "109",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 3671,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "balanceForOGN",
+        "offset": 0,
+        "slot": "110",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 3673,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "balanceForCVX",
+        "offset": 0,
+        "slot": "111",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 3675,
+        "contract": "contracts/buyback/ARMBuyback.sol:ARMBuyback",
+        "label": "cvxShareBps",
+        "offset": 0,
+        "slot": "112",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)50_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

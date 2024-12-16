@@ -216,6 +216,8 @@ interface IVault {
 
     function setDripper(address _dripper) external;
 
+    function dripper() external view returns (address);
+
     function weth() external view returns (address);
 
     function cacheWETHAssetIndex() external;
@@ -227,15 +229,6 @@ interface IVault {
     function setAdminImpl(address) external;
 
     function removeAsset(address _asset) external;
-
-    function addStrategyToMintWhitelist(address strategyAddr) external;
-
-    function removeStrategyFromMintWhitelist(address strategyAddr) external;
-
-    function isMintWhitelistedStrategy(address strategyAddr)
-        external
-        view
-        returns (bool);
 
     // These are OETH specific functions
     function addWithdrawalQueueLiquidity() external;
@@ -261,4 +254,18 @@ interface IVault {
         external
         view
         returns (VaultStorage.WithdrawalRequest memory);
+
+    // OETHb specific functions
+    function addStrategyToMintWhitelist(address strategyAddr) external;
+
+    function removeStrategyFromMintWhitelist(address strategyAddr) external;
+
+    function isMintWhitelistedStrategy(address strategyAddr)
+        external
+        view
+        returns (bool);
+
+    function withdrawalClaimDelay() external view returns (uint256);
+
+    function setWithdrawalClaimDelay(uint256 newDelay) external;
 }

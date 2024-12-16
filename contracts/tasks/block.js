@@ -1,3 +1,5 @@
+const { mine } = require("@nomicfoundation/hardhat-network-helpers");
+
 const log = require("../utils/logger")("task:block");
 
 async function getBlock(block) {
@@ -26,7 +28,13 @@ async function getDiffBlocks(taskArguments) {
   };
 }
 
+async function advanceBlocks(blocks) {
+  log(`Advancing ${blocks} blocks`);
+  await mine(blocks);
+}
+
 module.exports = {
+  advanceBlocks,
   getBlock,
   getDiffBlocks,
 };

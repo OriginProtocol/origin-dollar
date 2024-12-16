@@ -160,9 +160,17 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
 
-      // Add WETH to the strategy via a Vualt deposit
-      await weth.connect(domen).transfer(oethVault.address, amount);
+      // Add enough WETH to the Vault so it can be deposited to the strategy
+      // This needs to take into account any withdrawal queue shortfall
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const transferAmount = amount.sub(available);
+      if (transferAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, transferAmount);
+      }
 
+      // Deposit to the strategy
       return await oethVault
         .connect(strategist)
         .depositToStrategy(
@@ -529,13 +537,21 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     let consensusRewardsBefore;
     let activeDepositedValidatorsBefore = 30000;
     beforeEach(async () => {
-      const { nativeStakingSSVStrategy, validatorRegistrator, weth } =
-        await context();
+      const {
+        nativeStakingSSVStrategy,
+        oethHarvester,
+        validatorRegistrator,
+        weth,
+      } = await context();
 
       // clear any ETH sitting in the strategy
       await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .doAccounting();
+      // Clear out any consensus rewards
+      // prettier-ignore
+      await oethHarvester
+      .connect(validatorRegistrator)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
 
       // Set the number validators to a high number
       await setStorageAt(
@@ -604,6 +620,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const tx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .doAccounting();
+
+      expect(
+        await nativeStakingSSVStrategy.provider.getBalance(
+          nativeStakingSSVStrategy.address
+        ),
+        rewards,
+        "ETH balance after"
+      );
 
       await expect(tx)
         .to.emit(nativeStakingSSVStrategy, "AccountingFullyWithdrawnValidator")

@@ -9,12 +9,12 @@ const {
   isBase,
   isBaseFork,
   isBaseForkTest,
+  isBaseUnitTest,
   baseProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-  isBaseUnitTest,
 } = require("./utils/hardhat-helpers.js");
 
 require("@nomiclabs/hardhat-etherscan");
@@ -32,7 +32,6 @@ require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
 
 const addresses = require("./utils/addresses.js");
-
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
   "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
@@ -104,6 +103,8 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      blockGasLimit: 1000000000,
+      allowUnlimitedContractSize: true,
       chainId,
       ...(isArbitrumFork
         ? { tags: ["arbitrumOne"] }
@@ -266,15 +267,21 @@ module.exports = {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
-        process.env.FORK === "true"
+        process.env.FORK_NETWORK_NAME == "base"
+          ? addresses.base.timelock
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       hardhat:
-        process.env.FORK === "true"
+        process.env.FORK_NETWORK_NAME == "base"
+          ? addresses.base.timelock
+          : process.env.FORK_NETWORK_NAME == "mainnet" ||
+            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
-      // Base has no timelock
+      base: addresses.base.timelock,
     },
     guardianAddr: {
       default: 1,
@@ -295,12 +302,16 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_STRATEGIST
             : MAINNET_STRATEGIST
           : 0,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_STRATEGIST
             : MAINNET_STRATEGIST
           : 0,
       mainnet: MAINNET_STRATEGIST,
@@ -330,7 +341,7 @@ module.exports = {
       },
       {
         network: "base",
-        chainId: 8543,
+        chainId: 8453,
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",

@@ -12,13 +12,14 @@ const {
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
 } = require("./crypto");
+const { advanceBlocks } = require("./block");
 const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
-
+const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -92,15 +93,19 @@ const {
   validatorOperationsConfig,
   exitValidator,
   doAccounting,
+  manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
+  snapValidators,
 } = require("./validator");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
+const { deployForceEtherSender, forceSend } = require("./simulation");
+const { sleep } = require("../utils/time");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -813,7 +818,7 @@ subtask(
   )
   .addParam(
     "amount",
-    "Amount of Metapool LP tokens to burn for removed OTokens",
+    "Amount of Curve LP tokens to burn for removed OTokens",
     0,
     types.float
   )
@@ -1245,6 +1250,42 @@ task("exitValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("exitValidators", "Starts the exit process from a list of validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await exitValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("exitValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "removeValidator",
   "Removes a validator from the SSV cluster after it has exited the beacon chain"
@@ -1276,6 +1317,45 @@ task("removeValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "removeValidators",
+  "Removes validators from the SSV cluster after they have exited the beacon chain"
+)
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await removeValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("removeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "doAccounting",
   "Account for consensus rewards and validator exits in the Native Staking Strategy"
 )
@@ -1298,6 +1378,53 @@ subtask(
     });
   });
 task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manuallyFixAccounting",
+  "Fix an accounting failure in a Native Staking Strategy"
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The delta of validators. Can be positive or negative.",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The delta of consensus rewards. Can be positive or negative.",
+    "0",
+    types.string
+  )
+  .addOptionalParam(
+    "vault",
+    "The amount of Ether to convert to WETH and send to the Vault.",
+    "0",
+    types.string
+  )
+  .setAction(async ({ index, rewards, validators, vault }) => {
+    const signer = await getSigner();
+
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
+
+    await manuallyFixAccounting({
+      signer,
+      nativeStakingStrategy,
+      validatorsDelta: validators,
+      consensusRewardsDelta: rewards,
+      ethToVaultAmount: vault,
+    });
+  });
+task("manuallyFixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1423,6 +1550,18 @@ task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("snapAero", "Takes a snapshot of the Aerodrome Strategy at a block")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapAero);
+task("snapAero").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask("snapVault", "Takes a snapshot of a OETH Vault")
   .addOptionalParam(
     "block",
@@ -1432,6 +1571,24 @@ subtask("snapVault", "Takes a snapshot of a OETH Vault")
   )
   .setAction(snapVault);
 task("snapVault").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapValidators", "Takes a snapshot of a validator")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .setAction(snapValidators);
+task("snapValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1565,5 +1722,41 @@ subtask(
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Simulations
+subtask(
+  "deployForceEtherSender",
+  "Deploy a ForceEtherSender contract for simulating hacks"
+).setAction(deployForceEtherSender);
+task("deployForceEtherSender").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("forceSend", "Force send ETH to a recipient using self destruct")
+  .addParam(
+    "sender",
+    "Address of the deployed ForceEtherSender contract",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "recipient",
+    "Address of the contract to receive the Ether",
+    undefined,
+    types.string
+  )
+  .setAction(forceSend);
+task("forceSend").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("mine", "Mines a number of blocks")
+  .addOptionalParam("blocks", "The number of blocks to mine", 1, types.int)
+  .setAction(async ({ blocks }) => {
+    await advanceBlocks(blocks);
+  });
+task("mine").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

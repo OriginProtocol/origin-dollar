@@ -1,9 +1,11 @@
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
-const { isFork, oethUnits } = require("../../test/helpers");
+const { isFork, oethUnits, isBase } = require("../../test/helpers");
+const addresses = require("../../utils/addresses");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWETH", []);
+  await deployWithConfirmation("MockAero", []);
 };
 
 const deployWOETH = async () => {
@@ -151,17 +153,70 @@ const deployCore = async () => {
   await cOETHbVault.connect(sGovernor).unpauseCapital();
 };
 
+const deployBridgedWOETHStrategy = async () => {
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cWETH = await ethers.getContract("MockWETH");
+  const cWOETHProxy = await ethers.getContract("BridgedBaseWOETHProxy");
+
+  const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+  const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
+  const cOETHbVault = await ethers.getContractAt(
+    "IVault",
+    cOETHbVaultProxy.address
+  );
+
+  await deployWithConfirmation("BridgedWOETHStrategyProxy");
+  const cStrategyProxy = await ethers.getContract("BridgedWOETHStrategyProxy");
+
+  const dStrategyImpl = await deployWithConfirmation("BridgedWOETHStrategy", [
+    [addresses.zero, cOETHbVaultProxy.address],
+    cWETH.address,
+    cWOETHProxy.address,
+    cOETHbProxy.address,
+  ]);
+  const cStrategy = await ethers.getContractAt(
+    "BridgedWOETHStrategy",
+    cStrategyProxy.address
+  );
+
+  // Init Strategy
+  const initData = cStrategy.interface.encodeFunctionData(
+    "initialize(uint128)",
+    [
+      100, // 1% maxPriceDiffBps
+    ]
+  );
+  // prettier-ignore
+  await cStrategyProxy
+    .connect(sDeployer)["initialize(address,address,bytes)"](
+      dStrategyImpl.address,
+      governorAddr,
+      initData
+    )
+
+  await cOETHbVault.connect(sGovernor).approveStrategy(cStrategyProxy.address);
+  await cOETHbVault
+    .connect(sGovernor)
+    .addStrategyToMintWhitelist(cStrategyProxy.address);
+
+  await cStrategy.connect(sGovernor).updateWOETHOraclePrice();
+};
+
 const main = async () => {
   await deployMocks();
   await deployWOETH();
   await deployOracleRouter();
   await deployCore();
+  await deployBridgedWOETHStrategy();
 };
 
 main.id = "000_mock";
 main.tags = ["base_unit_tests"];
 
 // Only run for unit tests
-main.skip = () => isFork;
+main.skip = () => isFork || isBase;
 
 module.exports = main;
