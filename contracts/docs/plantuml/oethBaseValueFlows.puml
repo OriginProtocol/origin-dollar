@@ -1,6 +1,6 @@
 @startuml
 
-title "OETH Flow of Value"
+title "SuperOETH Flow of Value"
 
 actor "User" as user
 
