@@ -273,7 +273,6 @@ contract OUSD is Governable {
         uint256 userAllowance = allowances[_from][msg.sender];
         require(_value <= userAllowance, "Allowance exceeded");
 
-
         unchecked {
             allowances[_from][msg.sender] = userAllowance - _value;
         }
