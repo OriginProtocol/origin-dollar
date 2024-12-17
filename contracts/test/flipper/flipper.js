@@ -103,7 +103,7 @@ describe("Flipper", function () {
 
   describe("Withdraw tokens", () => {
     describe("Success cases", () => {
-      withEachCoinIt("can be withdrawn partialy", async (fixture) => {
+      withEachCoinIt("can be withdrawn partially", async (fixture) => {
         const { governor, flipper, stablecoin } = fixture;
         await expect(governor).balanceOf("1000", stablecoin);
         await expect(flipper).balanceOf("50000", stablecoin);
@@ -113,7 +113,7 @@ describe("Flipper", function () {
         await expect(flipper).balanceOf("37655", stablecoin);
       });
 
-      it("OUSD can be withdrawn partialy", async () => {
+      it("OUSD can be withdrawn partially", async () => {
         const { governor, ousd, flipper } = await loadFixture();
         await expect(governor).balanceOf("0", ousd);
         await expect(flipper).balanceOf("50000", ousd);
@@ -168,12 +168,12 @@ describe("Flipper", function () {
     });
 
     describe("Failure cases", async () => {
-      it("Only governer can withdraw", async () => {
+      it("Only governor can withdraw", async () => {
         const { matt, usdc, flipper } = await loadFixture();
         const call = flipper.connect(matt).withdraw(usdc.address, 1);
         expect(call).to.be.revertedWith("Caller is not the Governor");
       });
-      it("Only governer can withdrawAll", async () => {
+      it("Only governor can withdrawAll", async () => {
         const { matt, flipper } = await loadFixture();
         const call = flipper.connect(matt).withdrawAll();
         expect(call).to.be.revertedWith("Caller is not the Governor");

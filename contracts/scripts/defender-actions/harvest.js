@@ -43,6 +43,13 @@ const handler = async (event) => {
     `Resolved second Native Staking Strategy address to ${secondNativeStakingProxyAddress}`
   );
   await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
+
+  const thirdNativeStakingProxyAddress =
+    addresses[networkName].NativeStakingSSVStrategy3Proxy;
+  log(
+    `Resolved third Native Staking Strategy address to ${thirdNativeStakingProxyAddress}`
+  );
+  await harvest(harvester, thirdNativeStakingProxyAddress, signer, "third");
 };
 
 const harvest = async (

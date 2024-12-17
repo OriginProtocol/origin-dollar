@@ -537,13 +537,21 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     let consensusRewardsBefore;
     let activeDepositedValidatorsBefore = 30000;
     beforeEach(async () => {
-      const { nativeStakingSSVStrategy, validatorRegistrator, weth } =
-        await context();
+      const {
+        nativeStakingSSVStrategy,
+        oethHarvester,
+        validatorRegistrator,
+        weth,
+      } = await context();
 
       // clear any ETH sitting in the strategy
       await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .doAccounting();
+      // Clear out any consensus rewards
+      // prettier-ignore
+      await oethHarvester
+      .connect(validatorRegistrator)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
 
       // Set the number validators to a high number
       await setStorageAt(
@@ -612,6 +620,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const tx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .doAccounting();
+
+      expect(
+        await nativeStakingSSVStrategy.provider.getBalance(
+          nativeStakingSSVStrategy.address
+        ),
+        rewards,
+        "ETH balance after"
+      );
 
       await expect(tx)
         .to.emit(nativeStakingSSVStrategy, "AccountingFullyWithdrawnValidator")

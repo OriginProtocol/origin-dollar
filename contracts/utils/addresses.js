@@ -20,7 +20,7 @@ addresses.mainnet.BinanceAll =
 addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
-  "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  "0xa5cA4da1a315751A7B6890F8E0b78c1C38085ad2";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
@@ -171,8 +171,12 @@ addresses.mainnet.MorphoStrategyProxy =
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
-addresses.mainnet.MetaMorphoUSDCSteakHouseVault =
+addresses.mainnet.MorphoSteakhouseUSDCVault =
   "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB";
+addresses.mainnet.MorphoGauntletPrimeUSDCVault =
+  "0xdd0f28e19C1780eb6396170735D45153D261490d";
+addresses.mainnet.MorphoGauntletPrimeUSDTVault =
+  "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -269,6 +273,8 @@ addresses.mainnet.NativeStakingSSVStrategyProxy =
   "0x34eDb2ee25751eE67F68A45813B22811687C0238";
 addresses.mainnet.NativeStakingSSVStrategy2Proxy =
   "0x4685dB8bF2Df743c861d71E6cFb5347222992076";
+addresses.mainnet.NativeStakingSSVStrategy3Proxy =
+  "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
