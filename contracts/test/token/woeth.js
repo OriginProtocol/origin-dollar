@@ -31,16 +31,17 @@ describe("WOETH", function () {
     await oeth.connect(josh).approve(woeth.address, oethUnits("1000"));
     await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
 
-    // START: below steps raise the worth of 1 WOETH from 1 to 2 OETH units
-    const oethSupply = await oeth.totalSupply();
-    await weth.connect(josh).deposit({ value: oethSupply });
-    // send 50% of the WETH to inc
-    await weth.connect(josh).transfer(oethVault.address, oethSupply);
-    await oethVault.connect(josh).rebase();
-    // END OF raising worth of WOETH
+    // rebase OETH balances in wallets by 2x
+    await increaseOETHSupplyAndRebase(await oeth.totalSupply());
 
     // josh account starts each test with 100 OETH
   });
+
+  const increaseOETHSupplyAndRebase = async (wethAmount) => {
+    await weth.connect(josh).deposit({ value: wethAmount });
+    await weth.connect(josh).transfer(oethVault.address, wethAmount);
+    await oethVault.connect(josh).rebase();
+  };
 
   describe("General functionality", async () => {
     it("Initialize2 should not be called twice", async () => {
@@ -99,9 +100,9 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(woeth).to.have.approxBalanceOf("100", oeth);
       await hardhatSetBalance(josh.address, "250");
-      await weth.connect(josh).deposit({ value: oethUnits("200") });
-      await weth.connect(josh).transfer(oethVault.address, oethUnits("200"));
-      await oethVault.rebase();
+
+      await increaseOETHSupplyAndRebase(oethUnits("200"));
+
       await expect(woeth).to.have.approxBalanceOf("150", oeth);
       await expect(woeth).to.have.a.totalSupply("50");
     });
@@ -131,7 +132,7 @@ describe("WOETH", function () {
     it("should have correct ERC20 properties", async () => {
       expect(await woeth.decimals()).to.eq(18);
       expect(await woeth.name()).to.eq("Wrapped OETH");
-      expect(await woeth.symbol()).to.eq("WOETH");
+      expect(await woeth.symbol()).to.eq("wOETH");
     });
   });
 
