@@ -83,6 +83,7 @@ describe("WOETH", function () {
       await expect(josh).to.have.a.balanceOf("50", oeth);
       await expect(woeth).to.have.a.totalSupply("75");
     });
+
     it("should redeem at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(josh).to.have.a.balanceOf("50", woeth);
@@ -92,6 +93,35 @@ describe("WOETH", function () {
       await expect(josh).to.have.a.balanceOf("0", woeth);
       await expect(josh).to.have.a.balanceOf("200", oeth);
       await expect(woeth).to.have.a.totalSupply("0");
+    });
+
+    it("should be able to redeem all WOETH", async () => {
+      await expect(woeth).to.have.a.totalSupply("50");
+      await expect(josh).to.have.a.balanceOf("50", woeth);
+      await expect(matt).to.have.a.balanceOf("0", woeth);
+
+      await oeth.connect(matt).approve(woeth.address, oethUnits("100"));
+      await woeth
+        .connect(matt)
+        .mint(oethUnits("50"), matt.address);
+
+      await expect(woeth).to.have.a.totalSupply("100");
+      await expect(await woeth.totalAssets()).to.equal(oethUnits("200"));
+    
+      // redeem all WOETH held by Josh and Matt
+      await woeth
+        .connect(josh)
+        .redeem(oethUnits("50"), josh.address, josh.address);
+      await woeth
+        .connect(matt)
+        .redeem(oethUnits("50"), matt.address, matt.address);
+
+      await expect(josh).to.have.a.balanceOf("0", woeth);
+      await expect(matt).to.have.a.balanceOf("0", woeth);
+      await expect(josh).to.have.a.balanceOf("200", oeth);
+      await expect(matt).to.have.a.balanceOf("200", oeth);
+      await expect(woeth).to.have.a.totalSupply("0");
+      await expect(await woeth.totalAssets()).to.equal(oethUnits("0"));
     });
   });
 
