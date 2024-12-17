@@ -125,30 +125,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         virtual
         override
-        returns (uint256)
+        returns (uint256 shares)
     {
-        require(
-            assets <= maxDeposit(receiver),
-            "ERC4626: deposit more then max"
-        );
-
-        address caller = _msgSender();
-        uint256 shares = previewDeposit(assets);
-
-        // if _asset is ERC777, transferFrom can call reenter BEFORE the transfer happens through
-        // the tokensToSend hook, so we need to transfer before we mint to keep the invariants.
-        SafeERC20.safeTransferFrom(
-            IERC20(asset()),
-            caller,
-            address(this),
-            assets
-        );
-        _mint(receiver, shares);
+        shares = super.deposit(assets, receiver);
         oethCreditsHighres += _creditsPerAsset(assets);
-
-        emit Deposit(caller, receiver, assets, shares);
-
-        return shares;
     }
 
     /** @dev See {IERC4262-mint} */
@@ -156,27 +136,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         virtual
         override
-        returns (uint256)
+        returns (uint256 assets)
     {
-        require(shares <= maxMint(receiver), "ERC4626: mint more then max");
-
-        address caller = _msgSender();
-        uint256 assets = previewMint(shares);
-
-        // if _asset is ERC777, transferFrom can call reenter BEFORE the transfer happens through
-        // the tokensToSend hook, so we need to transfer before we mint to keep the invariants.
-        SafeERC20.safeTransferFrom(
-            IERC20(asset()),
-            caller,
-            address(this),
-            assets
-        );
-        _mint(receiver, shares);
+        assets = super.mint(shares, receiver);
         oethCreditsHighres += _creditsPerAsset(assets);
-
-        emit Deposit(caller, receiver, assets, shares);
-
-        return assets;
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -184,29 +147,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 assets,
         address receiver,
         address owner
-    ) public virtual override returns (uint256) {
-        require(
-            assets <= maxWithdraw(owner),
-            "ERC4626: withdraw more then max"
-        );
-
-        address caller = _msgSender();
-        uint256 shares = previewWithdraw(assets);
-
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
-
-        // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
-        // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
-        _burn(owner, shares);
+    ) public virtual override returns (uint256 shares) {
+        shares = super.withdraw(assets, receiver, owner);
         oethCreditsHighres -= _creditsPerAsset(assets);
-
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-
-        emit Withdraw(caller, receiver, owner, assets, shares);
-
-        return shares;
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -214,25 +157,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 shares,
         address receiver,
         address owner
-    ) public virtual override returns (uint256) {
-        require(shares <= maxRedeem(owner), "ERC4626: redeem more then max");
-
-        address caller = _msgSender();
-        uint256 assets = previewRedeem(shares);
-
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
-
-        // if _asset is ERC777, transfer can call reenter AFTER the transfer happens through
-        // the tokensReceived hook, so we need to transfer after we burn to keep the invariants.
-        _burn(owner, shares);
+    ) public virtual override returns (uint256 assets) {
+        assets = super.redeem(shares, receiver, owner);
         oethCreditsHighres -= _creditsPerAsset(assets);
-
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-
-        emit Withdraw(caller, receiver, owner, assets, shares);
-
-        return assets;
     }
 }
