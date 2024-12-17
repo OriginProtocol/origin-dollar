@@ -316,6 +316,14 @@ const defaultFixture = deployments.createFixture(async () => {
         OUSDMetaMorphoStrategyProxy.address
       );
 
+  const curvePoolBoosterProxy = isFork
+    ? await ethers.getContract("CurvePoolBoosterProxy")
+    : undefined;
+
+  const curvePoolBooster = isFork
+    ? await ethers.getContractAt("CurvePoolBooster", curvePoolBoosterProxy.address)
+    : undefined;
+
   let usdt,
     dai,
     tusd,
@@ -771,6 +779,7 @@ const defaultFixture = deployments.createFixture(async () => {
     wousd,
     OUSDMetaMorphoStrategy,
     usdcMetaMorphoSteakHouseVault,
+    curvePoolBooster,
 
     // Flux strategy
     fluxStrategy,

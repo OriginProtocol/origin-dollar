@@ -165,6 +165,9 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
+// Votemarket - StakeDAO
+addresses.mainnet.CampaignRemoteManager = "0xd1f0101Df22Cb7447F486Da5784237AB7a55eB4e";
+
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
