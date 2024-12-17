@@ -29,6 +29,13 @@ describe("ForkTest: wOETH", function () {
     fixture = await loadFixture();
   });
 
+  it("Should have correct name and symbol", async () => {
+    const { woeth } = fixture;
+
+    expect(await woeth.name()).to.equal("Wrapped OETH");
+    expect(await woeth.symbol()).to.equal("wOETH");
+  });
+
   it("Should prevent total asset manipulation by donations", async () => {
     const { oeth, woeth, domen } = fixture;
     const totalAssetsBefore = await woeth.totalAssets();

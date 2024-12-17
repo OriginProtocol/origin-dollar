@@ -30,11 +30,10 @@ contract WOETH is ERC4626, Governable, Initializable {
     uint256 public oethCreditsHighres;
     bool private _oethCreditsInitialized;
 
+    // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(
-        ERC20 underlying_,
-        string memory name_,
-        string memory symbol_
-    ) ERC20(name_, symbol_) ERC4626(underlying_) Governable() {}
+        ERC20 underlying_
+    ) ERC20("", "") ERC4626(underlying_) Governable() {}
 
     /**
      * @notice Enable OETH rebasing for this contract
