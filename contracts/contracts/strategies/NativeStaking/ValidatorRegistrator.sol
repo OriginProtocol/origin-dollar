@@ -307,9 +307,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     ) external onlyRegistrator whenNotPaused {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.EXITING,
-            "Validator not exiting"
+            currentState == VALIDATOR_STATE.EXITING ||
+                currentState == VALIDATOR_STATE.REGISTERED,
+            "Validator not regd or exiting"
         );
 
         ISSVNetwork(SSV_NETWORK).removeValidator(

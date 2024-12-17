@@ -93,6 +93,38 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
+  contracts-base-test:
+    name: "Contracts Unit Tests (Base)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      # this will run the unit tests and report the gas usage
+      - name: Run Unit Tests
+        env:
+          REPORT_GAS: true
+          UNIT_TESTS_NETWORK: base
+        run: yarn run test:coverage:base
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-unit-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
   contracts-forktest:
     name: "Contracts Fork Tests ${{ matrix.chunk_id }}"
     runs-on: ubuntu-latest
@@ -103,7 +135,6 @@ jobs:
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
-      ONEINCH_API: ${{ secrets.ONEINCH_API }}
       ONEINCH_API_KEY: ${{ secrets.ONEINCH_API_KEY }}
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"
@@ -219,6 +250,46 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
+  contracts-base-forktest:
+    name: "Base Fork Tests"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      HARDHAT_CACHE_DIR: ./cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - uses: actions/cache@v3
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - run: yarn run test:coverage:base-fork
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fork-test-base-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+ 
   coverage-uploader:
     name: "Upload Coverage Reports"
     runs-on: ubuntu-latest
@@ -227,6 +298,7 @@ jobs:
       - contracts-forktest
       - contracts-arb-forktest
       - contracts-hol-forktest
+      - contracts-base-test
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:

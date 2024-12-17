@@ -495,6 +495,11 @@ const configureOETHVault = async (isSimpleOETH) => {
       .connect(sGovernor)
       .setAutoAllocateThreshold(ethers.utils.parseUnits("5", 18))
   );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
+  );
 };
 
 const deployOUSDHarvester = async (ousdDripper) => {
@@ -710,6 +715,7 @@ const deployOUSDDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("Dripper", [
@@ -726,8 +732,21 @@ const deployOUSDDripper = async () => {
       []
     )
   );
+  const cDripper = await ethers.getContractAt(
+    "OETHDripper",
+    cDripperProxy.address
+  );
 
-  return cDripperProxy;
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // duration of 14 days
+  await withConfirmation(
+    cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
+  );
+  await withConfirmation(
+    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
+  );
+
+  return cDripper;
 };
 
 const deployOETHDripper = async () => {
@@ -735,6 +754,7 @@ const deployOETHDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("OETHDripper", [
@@ -752,8 +772,23 @@ const deployOETHDripper = async () => {
       []
     )
   );
+  const cDripper = await ethers.getContractAt(
+    "OETHDripper",
+    cDripperProxy.address
+  );
 
-  return cDripperProxy;
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // duration of 14 days
+  await withConfirmation(
+    cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
+  );
+
+  await withConfirmation(
+    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
+  );
+
+  return cDripper;
 };
 
 const deployDrippers = async () => {
@@ -1066,7 +1101,9 @@ const deployOETHCore = async () => {
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
     assetAddresses.WETH,
   ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+    assetAddresses.WETH,
+  ]);
 
   // Get contract instances
   const cOETHProxy = await ethers.getContract("OETHProxy");
@@ -1562,6 +1599,29 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
+const deployBaseAerodromeAMOStrategyImplementation = async () => {
+  const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
+  const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+
+  await deployWithConfirmation("AerodromeAMOStrategy", [
+    /* Check all these values match 006_base_amo_strategy deploy file
+     */
+    [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
+    addresses.base.WETH, // weth address
+    cOETHbProxy.address, // OETHb address
+    addresses.base.swapRouter, // swapRouter
+    addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
+    addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
+    addresses.base.aerodromeOETHbWETHClGauge, // gauge address
+    addresses.base.sugarHelper, // sugarHelper
+    -1, // lowerBoundingTick
+    0, // upperBoundingTick
+    0, // tickClosestToParity
+  ]);
+
+  return await ethers.getContract("AerodromeAMOStrategy");
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1597,4 +1657,5 @@ module.exports = {
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
+  deployBaseAerodromeAMOStrategyImplementation,
 };

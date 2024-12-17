@@ -220,9 +220,45 @@ contract NativeStakingSSVStrategyProxy is
 }
 
 /**
- * @notice NativeStakingFeeAccumulatorProxy delegates calls to NativeStakingFeeCollector implementation
+ * @notice NativeStakingFeeAccumulatorProxy delegates calls to FeeAccumulator implementation
  */
 contract NativeStakingFeeAccumulatorProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingSSVStrategy2Proxy delegates calls to NativeStakingSSVStrategy implementation
+ */
+contract NativeStakingSSVStrategy2Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulator2Proxy delegates calls to FeeAccumulator implementation
+ */
+contract NativeStakingFeeAccumulator2Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingSSVStrategy3Proxy delegates calls to NativeStakingSSVStrategy implementation
+ */
+contract NativeStakingSSVStrategy3Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulator3Proxy delegates calls to FeeAccumulator implementation
+ */
+contract NativeStakingFeeAccumulator3Proxy is
     InitializeGovernedUpgradeabilityProxy
 {
 
@@ -232,5 +268,75 @@ contract NativeStakingFeeAccumulatorProxy is
  * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
  */
 contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BridgedBaseWOETHProxy delegates calls to BridgedWOETH implementation
+ */
+contract BridgedBaseWOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHBaseVaultProxy delegates calls to OETHBaseVault implementation
+ */
+contract OETHBaseVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHBaseProxy delegates calls to OETH implementation
+ */
+contract OETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice WOETHBaseProxy delegates calls to WOETH implementation
+ */
+contract WOETHBaseProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHBaseDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHBaseDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice AerodromeAMOStrategyProxy delegates calls to AerodromeAMOStrategy implementation
+ */
+contract AerodromeAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BridgedWOETHStrategyProxy delegates calls to BridgedWOETHStrategy implementation
+ */
+contract BridgedWOETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHBaseHarvesterProxy delegates calls to a OETHBaseHarvester implementation
+ */
+contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice ARMBuybackProxy delegates calls to Buyback implementation
+ */
+contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

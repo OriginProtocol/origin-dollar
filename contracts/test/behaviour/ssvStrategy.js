@@ -92,6 +92,25 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
       expect(await nativeStakingSSVStrategy.MAX_VALIDATORS()).to.equal(500);
     });
+    it("Anyone should be able to set the MEV fee recipient", async () => {
+      const { nativeStakingSSVStrategy, nativeStakingFeeAccumulator, matt } =
+        await context();
+
+      const tx = await nativeStakingSSVStrategy.connect(matt).setFeeRecipient();
+
+      const ssvNetworkAddress = await nativeStakingSSVStrategy.SSV_NETWORK();
+      const ssvNetwork = await ethers.getContractAt(
+        "ISSVNetwork",
+        ssvNetworkAddress
+      );
+
+      await expect(tx)
+        .to.emit(ssvNetwork, "FeeRecipientAddressUpdated")
+        .withArgs(
+          nativeStakingSSVStrategy.address,
+          nativeStakingFeeAccumulator.address
+        );
+    });
   });
 
   describe("Deposit/Allocation", function () {
@@ -141,9 +160,17 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
         await context();
 
-      // Add WETH to the strategy via a Vualt deposit
-      await weth.connect(domen).transfer(oethVault.address, amount);
+      // Add enough WETH to the Vault so it can be deposited to the strategy
+      // This needs to take into account any withdrawal queue shortfall
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const transferAmount = amount.sub(available);
+      if (transferAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, transferAmount);
+      }
 
+      // Deposit to the strategy
       return await oethVault
         .connect(strategist)
         .depositToStrategy(
@@ -244,6 +271,23 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         )
       );
     };
+
+    beforeEach(async function () {
+      const { addresses, nativeStakingSSVStrategy } = await context();
+
+      // Skip these tests if the Native Staking Strategy is full
+      const activeValidators =
+        await nativeStakingSSVStrategy.activeDepositedValidators();
+      if (activeValidators.gte(500)) {
+        this.skip();
+        return;
+      }
+
+      const stakingMonitorSigner = await impersonateAndFund(addresses.Guardian);
+      await nativeStakingSSVStrategy
+        .connect(stakingMonitorSigner)
+        .resetStakeETHTally();
+    });
 
     it("Should register and stake 32 ETH by validator registrator", async () => {
       await depositToStrategy(oethUnits("32"));
@@ -424,6 +468,68 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           testValidator.operatorIds
         );
     });
+
+    it("Should remove registered validator by validator registrator", async () => {
+      const {
+        ssv,
+        nativeStakingSSVStrategy,
+        ssvNetwork,
+        validatorRegistrator,
+        addresses,
+        testValidator,
+      } = await context();
+      await depositToStrategy(oethUnits("32"));
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingSSVStrategy.address,
+        operatorids: testValidator.operatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
+
+      // Register a new validator with the SSV network
+      const ssvAmount = oethUnits("4");
+      const regTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidators(
+          [testValidator.publicKey],
+          testValidator.operatorIds,
+          [testValidator.sharesData],
+          ssvAmount,
+          cluster
+        );
+      const regReceipt = await regTx.wait();
+      const ValidatorAddedRawEvent = regReceipt.events.find(
+        (e) => e.address.toLowerCase() == ssvNetwork.address.toLowerCase()
+      );
+      const ValidatorAddedEvent = ssvNetwork.interface.parseLog(
+        ValidatorAddedRawEvent
+      );
+      const { cluster: newCluster } = ValidatorAddedEvent.args;
+
+      const removeTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          newCluster
+        );
+
+      await expect(removeTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
+    });
   });
 
   describe("Accounting for ETH", function () {
@@ -431,13 +537,21 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     let consensusRewardsBefore;
     let activeDepositedValidatorsBefore = 30000;
     beforeEach(async () => {
-      const { nativeStakingSSVStrategy, validatorRegistrator, weth } =
-        await context();
+      const {
+        nativeStakingSSVStrategy,
+        oethHarvester,
+        validatorRegistrator,
+        weth,
+      } = await context();
 
       // clear any ETH sitting in the strategy
       await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .doAccounting();
+      // Clear out any consensus rewards
+      // prettier-ignore
+      await oethHarvester
+      .connect(validatorRegistrator)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
 
       // Set the number validators to a high number
       await setStorageAt(
@@ -507,6 +621,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .connect(validatorRegistrator)
         .doAccounting();
 
+      expect(
+        await nativeStakingSSVStrategy.provider.getBalance(
+          nativeStakingSSVStrategy.address
+        ),
+        rewards,
+        "ETH balance after"
+      );
+
       await expect(tx)
         .to.emit(nativeStakingSSVStrategy, "AccountingFullyWithdrawnValidator")
         .withArgs(2, activeDepositedValidatorsBefore - 2, withdrawals);
@@ -550,17 +672,20 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         validatorRegistrator,
       } = await context();
       const dripperWethBefore = await weth.balanceOf(oethDripper.address);
-
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
+      const feeAccumulatorBefore =
+        await nativeStakingFeeAccumulator.provider.getBalance(
+          nativeStakingFeeAccumulator.address
+        );
 
       // add some ETH to the FeeAccumulator to simulate execution rewards
       const executionRewards = parseEther("7");
       //await setBalance(nativeStakingFeeAccumulator.address, executionRewards);
       await josh.sendTransaction({
         to: nativeStakingFeeAccumulator.address,
-        value: executionRewards,
+        value: executionRewards.sub(feeAccumulatorBefore),
       });
 
       // simulate consensus rewards

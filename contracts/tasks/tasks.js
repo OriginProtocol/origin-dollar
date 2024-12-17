@@ -7,18 +7,19 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { networkMap } = require("../utils/hardhat-helpers");
-const { resolveContract } = require("../utils/resolvers");
 const {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
 } = require("./crypto");
+const { advanceBlocks } = require("./block");
 const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
+const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
-
+const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -42,6 +43,7 @@ const {
 } = require("./tokens");
 const { depositWETH, withdrawWETH } = require("./weth");
 const {
+  addWithdrawalQueueLiquidity,
   allocate,
   capital,
   depositToStrategy,
@@ -49,6 +51,9 @@ const {
   rebase,
   redeem,
   redeemAll,
+  requestWithdrawal,
+  claimWithdrawal,
+  snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
@@ -86,17 +91,21 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  registerValidators,
-  stakeValidators,
   exitValidator,
   doAccounting,
+  manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
   snapStaking,
+  resolveNativeStakingStrategyProxy,
+  snapValidators,
 } = require("./validator");
+const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
+const { deployForceEtherSender, forceSend } = require("./simulation");
+const { sleep } = require("../utils/time");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -270,6 +279,15 @@ task("withdrawWETH").setAction(async (_, __, runSuper) => {
 });
 
 // Vault tasks.
+
+task(
+  "queueLiquidity",
+  "Call addWithdrawalQueueLiquidity() on the Vault to add WETH to the withdrawal queue"
+).setAction(addWithdrawalQueueLiquidity);
+task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
     "symbol",
@@ -475,6 +493,77 @@ subtask(
   )
   .setAction(withdrawAllFromStrategies);
 task("withdrawAllFromStrategies").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("requestWithdrawal", "Request a withdrawal from a vault")
+  .addParam(
+    "amount",
+    "The amount of oTokens to withdraw",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(requestWithdrawal);
+task("requestWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "claimWithdrawal",
+  "Claim a previously requested withdrawal from a vault"
+)
+  .addParam(
+    "requestId",
+    "The id from the previous withdrawal request",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(claimWithdrawal);
+task("claimWithdrawal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Dripper
+
+subtask("collect", "Collect harvested rewards from the Dripper to the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(collect);
+task("collect").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setDripDuration", "Set the Dripper duration")
+  .addParam(
+    "duration",
+    "The number of seconds to drip harvested rewards",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(setDripDuration);
+task("setDripDuration").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -729,7 +818,7 @@ subtask(
   )
   .addParam(
     "amount",
-    "Amount of Metapool LP tokens to burn for removed OTokens",
+    "Amount of Curve LP tokens to burn for removed OTokens",
     0,
     types.float
   )
@@ -941,7 +1030,7 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
   )
   .addParam(
     "owner",
-    "Address of the cluster owner. Default to NodeDelegator",
+    "Address of the cluster owner which is the native staking strategy",
     undefined,
     types.string
   )
@@ -969,6 +1058,12 @@ subtask(
   "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
 )
   .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .addParam(
     "operatorids",
     "Comma separated operator ids. E.g. 342,343,344,345",
@@ -981,24 +1076,35 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * The native staking proxy needs to be deployed via the defender relayer because the SSV networkd
+ * The native staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
  * the recipient
  */
 subtask(
   "deployNativeStakingProxy",
   "Deploy the native staking proxy via the Defender Relayer"
-).setAction(async () => {
-  const signer = await getSigner();
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ index }) => {
+    const signer = await getSigner();
 
-  log("Deploy NativeStakingSSVStrategyProxy");
-  const nativeStakingProxyFactory = await ethers.getContractFactory(
-    "NativeStakingSSVStrategyProxy"
-  );
-  const contract = await nativeStakingProxyFactory.connect(signer).deploy();
-  await contract.deployed();
-  log(`Address of deployed contract is: ${contract.address}`);
-});
+    if (!index) {
+      throw new Error("Index is required and must be a positive integer");
+    }
+
+    log(`Deploy NativeStakingSSVStrategy${index}Proxy`);
+    const nativeStakingProxyFactory = await ethers.getContractFactory(
+      `NativeStakingSSVStrategy${index}Proxy`
+    );
+    const contract = await nativeStakingProxyFactory.connect(signer).deploy();
+    await contract.deployed();
+    log(`Address of deployed contract is: ${contract.address}`);
+  });
 task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1009,7 +1115,7 @@ task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
  */
 subtask(
   "transferGovernanceNativeStakingProxy",
-  "Transfer governance of the proxy from the the Defender Relayer"
+  "Transfer governance of the proxy from the Defender Relayer"
 )
   .addParam(
     "deployer",
@@ -1017,21 +1123,27 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(async ({ deployer }) => {
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ deployer, index }) => {
     const signer = await getSigner();
 
     const nativeStakingProxy = await ethers.getContract(
-      "NativeStakingSSVStrategyProxy"
+      `NativeStakingSSVStrategy${index}Proxy`
     );
     const oldGovernor = await nativeStakingProxy.governor();
     log(
-      `About to transfer governance of NativeStakingSSVStrategyProxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
+      `About to transfer governance of NativeStakingSSVStrategy${index}Proxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
     );
     await withConfirmation(
       nativeStakingProxy.connect(signer).transferGovernance(deployer)
     );
     log(
-      `Transferred governance of NativeStakingSSVStrategyProxy from ${oldGovernor} to ${deployer}`
+      `Transferred governance of NativeStakingSSVStrategy${index}Proxy from ${oldGovernor} to ${deployer}`
     );
   });
 task("transferGovernanceNativeStakingProxy").setAction(
@@ -1065,9 +1177,22 @@ subtask(
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "uuid",
+    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await registerValidators(config);
+    const signer = await getSigner();
+    await registerValidators({ ...config, signer });
   });
 task("registerValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1083,9 +1208,16 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const config = await validatorOperationsConfig(taskArgs);
-    await stakeValidators(config);
+    const signer = await getSigner();
+    await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1104,8 +1236,53 @@ subtask("exitValidator", "Starts the exit process from a validator")
     undefined,
     types.string
   )
-  .setAction(exitValidator);
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await exitValidator({ ...taskArgs, signer });
+  });
 task("exitValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("exitValidators", "Starts the exit process from a list of validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await exitValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("exitValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1113,6 +1290,12 @@ subtask(
   "removeValidator",
   "Removes a validator from the SSV cluster after it has exited the beacon chain"
 )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .addParam(
     "pubkey",
     "Public key of the validator to exit",
@@ -1125,35 +1308,142 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(removeValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidator({ ...taskArgs, signer });
+  });
 task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidators",
+  "Removes validators from the SSV cluster after they have exited the beacon chain"
+)
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      await removeValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for 20 seconds so the SSV API can be updated
+      await sleep(20000);
+    }
+  });
+task("removeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
 subtask(
   "doAccounting",
   "Account for consensus rewards and validator exits in the Native Staking Strategy"
-).setAction(async () => {
-  const signer = await getSigner();
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async ({ index }) => {
+    const signer = await getSigner();
 
-  const nativeStakingStrategy = await resolveContract(
-    "NativeStakingSSVStrategyProxy",
-    "NativeStakingSSVStrategy"
-  );
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
 
-  await doAccounting({
-    signer,
-    nativeStakingStrategy,
+    await doAccounting({
+      signer,
+      nativeStakingStrategy,
+    });
   });
-});
 task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manuallyFixAccounting",
+  "Fix an accounting failure in a Native Staking Strategy"
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The delta of validators. Can be positive or negative.",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The delta of consensus rewards. Can be positive or negative.",
+    "0",
+    types.string
+  )
+  .addOptionalParam(
+    "vault",
+    "The amount of Ether to convert to WETH and send to the Vault.",
+    "0",
+    types.string
+  )
+  .setAction(async ({ index, rewards, validators, vault }) => {
+    const signer = await getSigner();
+
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
+
+    await manuallyFixAccounting({
+      signer,
+      nativeStakingStrategy,
+      validatorsDelta: validators,
+      consensusRewardsDelta: rewards,
+      ethToVaultAmount: vault,
+    });
+  });
+task("manuallyFixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
 subtask(
   "resetStakeETHTally",
   "Resets the amount of Ether staked back to zero"
-).setAction(resetStakeETHTally);
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
+subtask(
+  "resetStakeETHTally",
+  "Resets the amount of Ether staked back to zero"
+).setAction(async () => {
+  const signer = await getSigner();
+  await resetStakeETHTally({ signer });
+});
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1163,7 +1453,16 @@ subtask(
   "Sets the amount of Ether than can be staked before needing a reset"
 )
   .addParam("amount", "Amount in ether", undefined, types.int)
-  .setAction(setStakeETHThreshold);
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakeETHThreshold({ ...taskArgs, signer });
+  });
 task("setStakeETHThreshold").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1187,7 +1486,16 @@ subtask("fixAccounting", "Fix the accounting of the Native Staking Strategy.")
     0,
     types.float
   )
-  .setAction(fixAccounting);
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await fixAccounting({ ...taskArgs, signer });
+  });
 task("fixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1195,7 +1503,19 @@ task("fixAccounting").setAction(async (_, __, runSuper) => {
 subtask(
   "pauseStaking",
   "Pause the staking of the Native Staking Strategy"
-).setAction(pauseStaking);
+).addOptionalParam(
+  "index",
+  "The number of the Native Staking Contract deployed.",
+  undefined,
+  types.int
+);
+subtask(
+  "pauseStaking",
+  "Pause the staking of the Native Staking Strategy"
+).setAction(async () => {
+  const signer = await getSigner();
+  await pauseStaking({ signer });
+});
 task("pauseStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1216,8 +1536,59 @@ subtask(
     true,
     types.boolean
   )
-  .setAction(snapStaking);
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await snapStaking({ ...taskArgs, signer });
+  });
 task("snapStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapAero", "Takes a snapshot of the Aerodrome Strategy at a block")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapAero);
+task("snapAero").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapVault", "Takes a snapshot of a OETH Vault")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapVault);
+task("snapVault").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapValidators", "Takes a snapshot of a validator")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .setAction(snapValidators);
+task("snapValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1236,6 +1607,12 @@ subtask(
     "The validator's signature in hex format",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
   )
   .setAction(calcDepositRoot);
 task("depositRoot").setAction(async (_, __, runSuper) => {
@@ -1298,9 +1675,15 @@ subtask(
     undefined,
     types.string
   )
-  .addParam(
-    "message",
-    "Encrypted validator private key returned form P2P API",
+  .addOptionalParam(
+    "encryptedKey",
+    "Used if pubkey is not provided. The encrypted validator private key returned from P2P API in base64 format.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Public key of the validator whose private key is to be fetched in hex format. If not provided, the encryptedKey option must be used.",
     undefined,
     types.string
   )
@@ -1339,5 +1722,41 @@ subtask(
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Simulations
+subtask(
+  "deployForceEtherSender",
+  "Deploy a ForceEtherSender contract for simulating hacks"
+).setAction(deployForceEtherSender);
+task("deployForceEtherSender").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("forceSend", "Force send ETH to a recipient using self destruct")
+  .addParam(
+    "sender",
+    "Address of the deployed ForceEtherSender contract",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "recipient",
+    "Address of the contract to receive the Ether",
+    undefined,
+    types.string
+  )
+  .setAction(forceSend);
+task("forceSend").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("mine", "Mines a number of blocks")
+  .addOptionalParam("blocks", "The number of blocks to mine", 1, types.int)
+  .setAction(async ({ blocks }) => {
+    await advanceBlocks(blocks);
+  });
+task("mine").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

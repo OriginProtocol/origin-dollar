@@ -13,12 +13,12 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { ICurvePool } from "./ICurvePool.sol";
-import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
-import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "./AbstractCurveStrategy.sol";
+import { AbstractConvexMetaStrategy } from "./AbstractConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
-contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
+contract ConvexOUSDMetaStrategy is AbstractConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 

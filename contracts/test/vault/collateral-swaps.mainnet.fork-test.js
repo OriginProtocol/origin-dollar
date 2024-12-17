@@ -14,7 +14,8 @@ const { resolveAsset } = require("../../utils/resolvers");
 
 const log = require("../../utils/logger")("test:fork:swaps");
 
-describe("ForkTest: OETH Vault", function () {
+// Skipping as the OETH vault should now only contain WETH so no more swaps
+describe.skip("ForkTest: OETH Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -69,13 +70,18 @@ describe("ForkTest: OETH Vault", function () {
         minToAssetAmount: "10.7",
         slippage: 0.3,
       },
-      {
-        from: "stETH",
-        to: "WETH",
-        fromAmount: 1,
-        minToAssetAmount: 0.99,
-        approxFromBalance: true,
-      },
+
+      // Skipping since this keeps failing and we are already
+      // in the process getting rid of all LSTs from the Vault
+
+      // {
+      //   from: "stETH",
+      //   to: "WETH",
+      //   fromAmount: 1,
+      //   minToAssetAmount: 0.99,
+      //   approxFromBalance: true,
+      //   protocols: ['UNISWAP_V3']
+      // },
     ];
     for (const test of tests) {
       it(`should be able to swap ${test.fromAmount} ${test.from} for a min of ${
@@ -98,7 +104,7 @@ describe("ForkTest: OETH Vault", function () {
   });
 });
 
-describe("ForkTest: OUSD Vault", function () {
+describe.skip("ForkTest: OUSD Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

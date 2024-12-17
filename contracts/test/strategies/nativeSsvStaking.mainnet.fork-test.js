@@ -6,18 +6,31 @@ const {
 const addresses = require("../../utils/addresses");
 const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 const { shouldBehaveLikeAnSsvStrategy } = require("../behaviour/ssvStrategy");
+const { resolveContract } = require("../../utils/resolvers");
 
-describe("ForkTest: Native SSV Staking Strategy", function () {
+describe("ForkTest: First Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;
+  let nativeStakingSSVStrategy;
+  let nativeStakingFeeAccumulator;
   beforeEach(async () => {
     fixture = await loadFixture();
+    nativeStakingSSVStrategy = await resolveContract(
+      "NativeStakingSSVStrategyProxy",
+      "NativeStakingSSVStrategy"
+    );
+    nativeStakingFeeAccumulator = await resolveContract(
+      "NativeStakingFeeAccumulatorProxy",
+      "FeeAccumulator"
+    );
   });
 
   shouldBehaveLikeAnSsvStrategy(async () => {
     return {
       ...fixture,
+      nativeStakingSSVStrategy,
+      nativeStakingFeeAccumulator,
       addresses: addresses.mainnet,
       testValidator: {
         publicKey:
@@ -29,6 +42,88 @@ describe("ForkTest: Native SSV Staking Strategy", function () {
           "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0",
         depositDataRoot:
           "0xf7d704e25a2b5bea06fafa2dfe5c6fa906816e5c1622400339b2088a11d5f446",
+      },
+    };
+  });
+});
+
+describe("ForkTest: Second Native SSV Staking Strategy", function () {
+  this.timeout(0);
+
+  let fixture;
+  let nativeStakingSSVStrategy;
+  let nativeStakingFeeAccumulator;
+  beforeEach(async () => {
+    fixture = await loadFixture();
+    nativeStakingSSVStrategy = await resolveContract(
+      "NativeStakingSSVStrategy2Proxy",
+      "NativeStakingSSVStrategy"
+    );
+    nativeStakingFeeAccumulator = await resolveContract(
+      "NativeStakingFeeAccumulator2Proxy",
+      "FeeAccumulator"
+    );
+  });
+
+  shouldBehaveLikeAnSsvStrategy(async () => {
+    return {
+      ...fixture,
+      nativeStakingSSVStrategy,
+      nativeStakingFeeAccumulator,
+      addresses: addresses.mainnet,
+      testValidator: {
+        publicKey:
+          "0xae24289bd670bfbdd3bc904596b475d080dde3415506f1abe1fb76ff292ff6bd743d710061b9e2b16fd8541a76fe53ee",
+        operatorIds: [348, 352, 361, 377],
+        sharesData:
+          "0xb2cff426a8898f801feed0e3efb1d036def14590809426995df98ad243c0927987c0f207a3c2d9b48d47a0ceec80eb2d0b1839d84ab1a2d75fd48aaf4a859ab8d2ae776b55f64e2c40733a44697c924882a5a8688790ec4203b8847a61e84803a8252f2a2812ec9854b381fc12a222ea8764e07084c8a7873426f62a43ca1b88dfa258713a5ff7749290add650843533a5b2a8430c1cf5e476d5498736b384464db057b05f8a120c4a08b84dfb8a9c2c6adfdcb5660386cd582c610eb06422628dfc08496bf0edfffc6e1e05964c710a104ed6c2d700c823243fce8a3c76575ca1618113e036498f839830c5d24d604ab13769367f9467b8f3771082a29a8ce96194da370a0550ce5d09975590ba5e1fa154382ba0bc2d7ebd7fd2192978998d53d845103bbfa2f8f3680245b005bc802109ea6a8449fce0fffcfa712cc8bbf6672eda7bbfd209644190a1c383faac861aad1534f50acd7c58104c4ad27e0b6d4b44c80e52ede1b0f066cae285e193f356f193872d40586020c75a68c011d2ca172126139d1728985c9ca9b76db5639ec0d265b9bf239ad3ed94a55709442031b18db6fd430b25138b1d7a17484cde1433e8d5837c3c806630135187d27261991e94f84d3ceb1fc2eaa44042cc09f10cea84b0ef6a00cb07aebdd7df6a4e14fd6efce5954d19219efd3419c338a6fa9644db5fdeb5b226cc008c0599f0c02bf3c99c74ff80e5ea2c2d0e47304ee21dfdf870599288dedd0977711af5cc467179765df58b0a489c906d85f5855c1d7359cab73e22229f354d9f9e0a1e623d9264988df14da8b710dfe42a895cbdc10ac25bd0d3412e9c90a632c8f1890b3d412bf6756367893f800b8895f000645fb56bf1b956cca68ee19238e64047b4b75be13c0316c5a220af0e28f0d9948fd74b7e261cddb0e79f80349686a0089a9d50baa79bdccd4ac9392ec857530456a9f7302ca091a640feb4a6f1c31c1c6fd1847e20986d2e87f84a01522d3004ddf002c56d5e9549eca04ce3738b8bc5a7e239c967906305d820f6a3b8f1f6a61af7fcdfabd935d068f8cd0cc58c84dc120ef20df1ea492c70937282a9e5a0857511ab7c6d6300947da3f0f7fa4d022453163c1d82e78b15182d9a2878fb96ba0f08a71288772249f52a34dff4b7ae106bb76055e05309c4701abdf685d68163d0a705b162e91c409c7d8c386dc24f2d7c01c150017b365c6d72304f082d4030057917fb55a927ed5a6150e9e70a8b12cfadca1bfba0e85f694c946ef781fb8344285c28adc2e358513ed9ec2a1fb80935de88ec2cdac6e0d538e25043716ec8b29c157fb41a3d887c2025ffc71b414b977f9b81c497ee8bd9db042d4121dc4a8c5220a0f438dbdcde55580fb8c8b3aec3a53ffe958056653fd9bf58aa3b060a99c38c94035a27a6bfd66767965090526f1f403f7332914d2726d2f2bdd979895031a1afad4e112d4471193080e13a301e7a6ad24a217d94a5c964a6118dbcc9b2dfd3a0180189c0ca4dee3e8d24a18b904e826e324256d478deb66b9b47cdb65de2a2b951787dad3536a839b230313d6fd202364a8a3a0ce033fb8bf6a32d4b7c94af54f5ca7d861497d50a593606437f7420485ccda17977eb495967f700ef4bcc9f8d2c2ed4933b26418768b31ae02a0ca2fbaa7b63f349619278bac3f3ef5796c669c3ecb9ed19f2ffa453b4801f4ac78938a11c8e7a778a7ae8e5813dd93414b1b9912e4466519216ac58a6b538d03128feee6235adef2ecc57d9b2d9fec719fb8c8aac0bd7f491860658e8f32ee6285c264c843c6142d578abfc9bab330355bed41a12862669f0b88f894cce277bcdbd94",
+        // This sig isn't correct but will do for testing
+        signature:
+          "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0",
+        // Calculated from npx hardhat depositRoot
+        depositDataRoot:
+          "0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c",
+      },
+    };
+  });
+});
+
+describe("ForkTest: Third Native SSV Staking Strategy", function () {
+  this.timeout(0);
+
+  let fixture;
+  let nativeStakingSSVStrategy;
+  let nativeStakingFeeAccumulator;
+  beforeEach(async () => {
+    fixture = await loadFixture();
+    nativeStakingSSVStrategy = await resolveContract(
+      "NativeStakingSSVStrategy3Proxy",
+      "NativeStakingSSVStrategy"
+    );
+    nativeStakingFeeAccumulator = await resolveContract(
+      "NativeStakingFeeAccumulator3Proxy",
+      "FeeAccumulator"
+    );
+  });
+
+  shouldBehaveLikeAnSsvStrategy(async () => {
+    return {
+      ...fixture,
+      nativeStakingSSVStrategy,
+      nativeStakingFeeAccumulator,
+      addresses: addresses.mainnet,
+      testValidator: {
+        publicKey:
+          "0x8a51c38c9c582a7fafc156cb2619c696e6fa835bb1d8692f5234d7284f571905f9763e428bf743d3a0cf3b9d0b3f41cc",
+        operatorIds: [338, 339, 340, 341],
+        sharesData:
+          "0x9209b998aa11eba67ac62d887efcba0e647ebf52a9353916b73155c47fecea3b0ac83978dc07eefc63df9b99a7ce4537178ae9da7c88fdb886af2ab4e66f0ed8c3aed924ebb4a3b15f99f23a9326d20c2e608a184c6de4dcaf14e0bb1fa9ad8599531b8cfcbe9eeda78b011124604c04dfacaab31da0796c18f4840114b7b48237e52b0c028f4c8f891173bfc0dbd1acb70244b0364a7e5e962109b73071860039a9c007256f1b2c3a3206abf54affe0f9b8b2469675c08ffd596d8c10446d1fb86fd875c7f329e40e5712a9749cd2c20c18f084f3f684817d8646b165da46b5393925be1b191ed674024296a0da0cb5922c5c6266a0facdf0b0e68d96a1a1a012a0260ae1f32f208ca5fbf34da5154e358d6a7e01d100599e1f36ce82a8ef7d594912b6717333db2ce68c7e7d26409709aa678b6b463cb697bbfbfca50fb19bdba6183ce616d91ebd83450530c3bd4a7dc424b43f991b86aa5cba262a0b7697b719f9b6bd9f7bdb5ae6387f65f41d47e30aab1afae33b54255a9b2fa1a26312ac26474ad43e6d16ccddceb6704fadf466e8b71530234d0475425c913f5d8ee00e2af74ca1dd4c727a732319c3e62f9ce8a093529eec4b826bf5767c326901ef6ed03ae31499f5d05231eb85e3086e1a34e23ffeacbb52755b8a63296c88db1f8f05e72dacd0711c72b3782012db8823295c1d6be511774d5c5f1ab5e4d4bb8ce7464b74d62a82968ef3d3136f1558fb5abc88dbd3be0c7334cb6d5dd5fcb5a2d7a5219e508ae016fa1c2d8f79c51c46a81b3322294805947b327adbeb7c2d62cf9a26e01e555300310ccb8f401fb250772548966192b5022c5589ca57d5848537d6d4da2a6090900fb8cdf848b26330f73156f6ba246891f6268cfe851ece05a0c5b4628f1743b1e894a625dc31b4387da0df0dfa78770bd953cedc4743ec1f1ff35e363dd6dc7deb8b4379ebb3dfea17d304a8df9af1c55382ba6fa28c834f5d702a273ab1563b598ee4a326a1a9e6ccc6179c66cd9263b501aae71332d3a27a282640d5edd6e04ee13b30374b56f193628b9cc661b803229a4996335ac6742aa2aea40d829303728e1cd6d9bc7f9a66bfd54da452a4cccf1472566df2b5876e03c96d4ce9f6f27d2bf567f412ad54a7265d65be31100640d2d577f2195f2c1e9cbe7822630a99d2906785df6d087f1eadc2122dae0808a81b6d199bbb2b2bb4fda37846bff597f084bd710736ef80f0decb9b82a08042bc1811fe184653d6a241dd12a078f105b1a47759a25b9e6ce727a492f7948a277146af6df687f2ea8a718157e429c701e1d4934462c054847237ed79998b36f6296c46fafdc47c400ee09cb6bdd1bba19541113ae022c5112cc088517cd611e895c8d7075feb0153353330bc958f639592990e246d8ddcfa85687b34f79482d11a37ee84cf938c7ffabe18418b5b5583681b32c1518261b96d73382f1dcdd1504c0c3bb7ad10173d5c24f87571415cec8fc52dd02ad1b5dfe7cffdc11458a54c0f8d7f1993f9843cd76aaf7740c88b9af964d497200a16ae89811491e2f3b1030908475dd9d6dc0879c53a7eab682de3f426377f419ee21c7288b0a0f2ec09b1655933bb30186e24f80f46eeef4f31fdbf6f8dfbf20ba45aca84a15ecada13c9150489eb33cc3f6398d9519ee01d94047fb9c45e1af226631d379c1bd729dca16ebbfc7958b2d7212de1fcc7959069286bd59d606415eb854bb933c94ab186544aef96c3d2ed74428f0e54dc5f2c45080e2340f18bdbbb3ff246b40dc27e834e8eebd7b437c3e0d76a02565e46039c0eae88805e5a6242e64851c79063bcbad35dab7a2d7d3c043f",
+        // This sig isn't correct but will do for testing
+        signature:
+          "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0",
+        // Calculated from npx hardhat depositRoot
+        depositDataRoot:
+          "0x3b8409ac7e028e595ac84735da6c19cdbc50931e5d6f910338614ea9660b5c86",
       },
     };
   });

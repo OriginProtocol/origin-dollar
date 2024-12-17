@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
-const { isCI, oethUnits } = require("../helpers");
+const { isCI, oethUnits, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { logTxDetails } = require("../../utils/txLogger");
 const {
@@ -66,6 +66,7 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("user operations", () => {
     let oethWhaleSigner;
+    const delayPeriod = 10 * 60; // 10 minutes
     beforeEach(async () => {
       oethWhaleSigner = await impersonateAndFund(oethWhaleAddress);
     });
@@ -91,6 +92,33 @@ describe("ForkTest: OETH Vault", function () {
 
     it("should mint with 11 WETH then auto allocate", async () => {
       const { oethVault, weth, josh } = fixture;
+
+      const amount = parseUnits("11", 18);
+      const minOeth = parseUnits("8", 18);
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      const tx = await oethVault
+        .connect(josh)
+        .mint(weth.address, amount, minOeth);
+
+      await logTxDetails(tx, "mint");
+
+      await expect(tx)
+        .to.emit(oethVault, "Mint")
+        .withArgs(josh.address, amount);
+    });
+
+    it("should mint with WETH and allocate to strategy", async () => {
+      const { oethVault, nativeStakingSSVStrategy, weth, josh, strategist } =
+        fixture;
+
+      oethVault
+        .connect(strategist)
+        .setAssetDefaultStrategy(
+          weth.address,
+          nativeStakingSSVStrategy.address
+        );
 
       const amount = parseUnits("11", 18);
       const minOeth = parseUnits("8", 18);
@@ -144,16 +172,26 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should partially redeem 10 OETH", async () => {
-      const { oeth, oethVault } = fixture;
+      const { domen, oeth, oethVault, weth } = fixture;
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
-      const amount = parseUnits("10", 18);
+      const redeemAmount = parseUnits("10", 18);
       const minEth = parseUnits("9.94", 18);
+
+      // Calculate how much to mint based on the WETH in the vault,
+      // the withdrawal queue, and the WETH to be redeemed
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const mintAmount = redeemAmount.sub(available);
+      if (mintAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, mintAmount);
+      }
 
       const tx = await oethVault
         .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
+        .redeem(redeemAmount, minEth);
 
       await logTxDetails(tx, "redeem");
 
@@ -161,16 +199,78 @@ describe("ForkTest: OETH Vault", function () {
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
+
     it("should not do full redeem by OETH whale", async () => {
+      const { oeth, oethVault } = fixture;
+
+      const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+      expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+        parseUnits("1000", 18)
+      );
+
+      const tx = oethVault.connect(oethWhaleSigner).redeem(oethWhaleBalance, 0);
+      await expect(tx).to.revertedWith("Liquidity error");
+    });
+    it("should request a withdraw by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
         parseUnits("100", 18)
       );
+      const { nextWithdrawalIndex: requestId } =
+        await oethVault.withdrawalQueueMetadata();
 
-      const tx = oethVault.connect(oethWhaleSigner).redeem(oethWhaleBalance, 0);
-      await expect(tx).to.revertedWith("Liquidity error");
+      const tx = await oethVault
+        .connect(oethWhaleSigner)
+        .requestWithdrawal(oethWhaleBalance);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalRequested")
+        .withNamedArgs({
+          _withdrawer: await oethWhaleSigner.getAddress(),
+          _amount: oethWhaleBalance,
+          _requestId: requestId,
+        });
+    });
+    it("should claim withdraw by a OETH whale", async () => {
+      const { domen, oeth, oethVault, weth } = fixture;
+
+      let oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+
+      // Calculate how much to mint based on the WETH in the vault,
+      // the withdrawal queue, and the WETH to be withdrawn
+      const wethBalance = await weth.balanceOf(oethVault.address);
+      const queue = await oethVault.withdrawalQueueMetadata();
+      const available = wethBalance.add(queue.claimed).sub(queue.queued);
+      const mintAmount = oethWhaleBalance.sub(available);
+      if (mintAmount.gt(0)) {
+        await weth.connect(domen).transfer(oethVault.address, mintAmount);
+      }
+
+      expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+        parseUnits("100", 18)
+      );
+
+      oethWhaleBalance = oethUnits("50");
+      const { nextWithdrawalIndex: requestId } =
+        await oethVault.withdrawalQueueMetadata();
+
+      // First Request withdrawal
+      await oethVault
+        .connect(oethWhaleSigner)
+        .requestWithdrawal(oethWhaleBalance);
+
+      await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
+
+      // Then Claim withdrawal
+      const tx = await oethVault
+        .connect(oethWhaleSigner)
+        .claimWithdrawal(requestId);
+
+      await expect(tx)
+        .to.emit(oethVault, "WithdrawalClaimed")
+        .withArgs(oethWhaleAddress, requestId, oethWhaleBalance);
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
       const { oeth, oethVault, timelock } = fixture;
@@ -186,22 +286,6 @@ describe("ForkTest: OETH Vault", function () {
       const tx = await oethVault
         .connect(oethWhaleSigner)
         .redeem(oethWhaleBalance, 0);
-      await expect(tx)
-        .to.emit(oethVault, "Redeem")
-        .withNamedArgs({ _addr: oethWhaleAddress });
-    });
-    it("OETH whale redeem 100 OETH", async () => {
-      const { oethVault } = fixture;
-
-      const amount = parseUnits("100", 18);
-      const minEth = parseUnits("99.4", 18);
-
-      const tx = await oethVault
-        .connect(oethWhaleSigner)
-        .redeem(amount, minEth);
-
-      await logTxDetails(tx, "redeem");
-
       await expect(tx)
         .to.emit(oethVault, "Redeem")
         .withNamedArgs({ _addr: oethWhaleAddress });

@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
+const { parseUnits, formatUnits, keccak256, toUtf8Bytes } =
+  require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
@@ -160,6 +161,36 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   }
 });
 
+chai.Assertion.addMethod(
+  "revertedWithCustomError",
+  async function (errorSignature) {
+    let txSucceeded = false;
+    try {
+      await this._obj;
+      txSucceeded = true;
+    } catch (e) {
+      const errorHash = keccak256(toUtf8Bytes(errorSignature)).substr(0, 10);
+      const errorName = errorSignature.substring(
+        0,
+        errorSignature.indexOf("(")
+      );
+
+      const containsError =
+        e.message.includes(errorHash) || e.message.includes(errorName);
+
+      if (!containsError) {
+        chai.expect.fail(
+          `Expected error message with signature ${errorSignature} but another was thrown: ${e.message}`
+        );
+      }
+    }
+
+    if (txSucceeded) {
+      chai.expect.fail(`Expected ${errorSignature} error but none was thrown`);
+    }
+  }
+);
+
 function ognUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -282,6 +313,7 @@ const isCI = process.env.GITHUB_ACTIONS;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isBaseOrFork = isBase || isBaseFork;
+const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -297,9 +329,14 @@ const getBlockTimestamp = async () => {
 
 /// Advances the blockchain forward by the specified number of blocks
 const advanceBlocks = async (numBlocks) => {
-  for (let i = 0; i < numBlocks; i++) {
-    await hre.ethers.provider.send("evm_mine");
-  }
+  let blocksHex = BigNumber.from(numBlocks).toHexString();
+
+  // Note: Hardhat's `QUANTITY` type doesn't support leading zeros
+  // Not sure why but it seems to be a bug. So we gotta remove
+  // any leading zeros from hex values
+  blocksHex = blocksHex.replace(/^0x0+/, "0x");
+
+  await hre.network.provider.send("hardhat_mine", [blocksHex]);
 };
 
 const getOracleAddress = async (deployments) => {
@@ -540,13 +577,6 @@ const getAssetAddresses = async (deployments) => {
     return addressMap;
   }
 };
-
-async function fundAccount(address, balance = "1000") {
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    parseEther(balance).toHexString(),
-  ]);
-}
 
 /**
  * Calculates the change in balance after a function has been executed on a contract
@@ -816,6 +846,7 @@ module.exports = {
   isBase,
   isBaseFork,
   isBaseOrFork,
+  isBaseUnitTest,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,
@@ -831,5 +862,4 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
-  fundAccount,
 };

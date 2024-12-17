@@ -19,6 +19,14 @@ object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
 
+' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
+' }
+
+object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, OETH
+}
+
+
 object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
@@ -71,6 +79,15 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
+object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
+}
+
+object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
 ' ' Oracle
 ' object "OETHOracleRouter" as oracle <<Origin>> #$originColor {
 ' pairs:
@@ -99,9 +116,14 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
 ' }
 ' object "BaseRewardPool" as cvxPool <<Convex>> {
 ' }
-' object "DepositToken" as cvxPoolLp <<Convex>> {
-'     symbol: cvxOUSD3CRV-f
-'     name: Origin Dollar Convex Deposit
+' ' object "DepositToken" as cvxPoolLp <<Convex>> {
+' '     symbol: cvxOUSD3CRV-f
+' '     name: Origin Dollar Convex Deposit
+' ' }
+
+' ' SSV
+' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' assets: ETH, SSV
 ' }
 
 ' ' SSV
@@ -135,11 +157,14 @@ zap ..> oeth
 zap ..> oethv
 ' zap .....> weth
 
-' drip .....> weth
-oethv <. drip
+' router ..> arm
+arm ..> oethv
 
-checker ..> oeth
-checker ..> oethv
+' drip .....> weth
+oethv <.> drip
+
+' checker ..> oeth
+' checker ..> oethv
 
 oethv <.. harv 
 drip <.. harv 
@@ -166,6 +191,13 @@ nativeStrat <..> feeAcc
 harv <..> nativeStrat2
 oethv <...> nativeStrat2
 nativeStrat2 <..> feeAcc2
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
+
+
+harv <..> nativeStrat3
+oethv <...> nativeStrat3
+nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> bDep
 

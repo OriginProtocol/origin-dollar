@@ -6,9 +6,10 @@ hide footbox
 title "Origin ETH processes"
 
 actor "Anyone" as sender
+actor "Block\nBuilder\n(MEV)" as mev
 actor "Registrator\n(Relayer)" as reg <<Origin>>
 actor "Admin\n(5/8 Safe)" as admin <<Origin>>
-actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
+actor "Strategist\n(2/8 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
@@ -16,6 +17,8 @@ actor "Operators" as ssvOp <<SSV>>
 
 box "Execution Chain"
 participant "Harvester" as harv <<Origin>>
+participant "Dripper" as drip <<Origin>>
+participant "Vault" as vault <<Origin>>
 participant "Native\nStaking SSV\nStrategy" as nativeStrat <<Origin>>
 participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
@@ -36,10 +39,10 @@ nativeStrat -> ssv : approve(\nSSV Network,\namount)
 activate ssv
 note right : Native Staking Strategy approves\nSSV Network to spend\nSSV tokens
 return
-' nativeStrat -> ssvNet : setFeeRecipientAddress(\nrecipient)
-' activate ssvNet
-' note right : NodeDelegator set as the fee recipient
-' return
+nativeStrat -> ssvNet : setFeeRecipientAddress(\nFeeAccumulator)
+activate ssvNet
+note right : set FeeAccumulator\nto receive MEV rewards
+return
 return
 
 gov -> ssv : transfer(\nfrom\nto\namount)
@@ -49,11 +52,26 @@ return
 
 end group
 
-group Governor sets staked ETH threshold
+group Governor setup of the Native Staking Strategy
 
-gov -> nativeStrat : setStakeETHThreshold()
+gov -> nativeStrat : setHarvesterAddress(\nharvester)
 activate nativeStrat
-note right: set ETH that can be staked\nbefore the staking monitor has to reset
+return
+
+gov -> nativeStrat : setFuseInterval(\nstart, end)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setRegistrator(\nregistrator)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setStakingMonitor(\ngovernor)
+activate nativeStrat
+return
+
+gov -> nativeStrat : setStakeETHThreshold(\nmax)
+activate nativeStrat
 return
 
 end group
@@ -157,7 +175,7 @@ end group
 
 group Registrator deposits more SSV to SSV cluster
 
-treasury -> ssv : transfer(\nto\namount)
+strategist -> ssv : transfer(\nto\namount)
 activate ssv
 note right : transfer SSV tokens\nfrom Treasury\nto Native Staking Strategy
 return
@@ -179,7 +197,7 @@ cluster data:
 end note
 end group
 
-reg -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
+strategist -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
 activate nativeStrat
 nativeStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
 activate ssvNet
@@ -200,7 +218,6 @@ group Consensus Rewards
 
 note over val
 attesting to blocks
-proposing blocks
 participating in sync committees
 end note
 val -> val : ETH
@@ -248,6 +265,18 @@ note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
 
 end group
 
+group Execution Rewards
+
+mev -> feeAccum : ETH
+note right : MEV rewards
+
+sender -> nativeStrat : ETH
+note right : tx priority fees
+
+note over nativeStrat : Native Staking Strategy's WETH balance\ndoes not change from either
+
+end group
+
 group Registrator does accounting of consensus rewards and validator withdrawals
 
 reg -> nativeStrat : doAccounting()
@@ -274,15 +303,6 @@ ETH from consensus rewards stays in the Native Staking Strategy.
 end note
 
 return accounting valid flag
-
-end group
-
-group Execution Rewards
-
-sender -> feeAccum : ETH
-note right : tx fees and MEV rewards
-
-note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
 
 end group
 
@@ -318,6 +338,24 @@ return
 
 end group
 
+group Collect and rebase
+
+sender -> drip : collectAndRebase()
+activate drip
+
+drip -> weth : transfer(\nvault,\nstreamed ETH)
+note left : Stream ETH from last collect to now
+activate weth
+note over drip : Recalculate 7 day drip rate\nbased on WETH balance
+return
+
+drip -> vault : rebase()
+activate vault
+return
+
+return
+
+end group
 
 group Strategist pauses Native Staking Strategy
 

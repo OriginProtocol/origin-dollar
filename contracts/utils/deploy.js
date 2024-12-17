@@ -21,7 +21,10 @@ const {
   isForkTest,
   getBlockTimestamp,
   isArbitrumOne,
+  isBase,
+  isBaseFork,
   isCI,
+  isTest,
 } = require("../test/helpers.js");
 
 const {
@@ -36,7 +39,7 @@ const {
   proposeGovernanceArgs,
   accountCanCreateProposal,
 } = require("../utils/governor");
-const governorFiveAbi = require("../abi/governor_five.json");
+const governorSixAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
@@ -78,7 +81,7 @@ const deployWithConfirmation = async (
   useFeeData
 ) => {
   // check that upgrade doesn't corrupt the storage slots
-  if (!skipUpgradeSafety) {
+  if (!isTest && !skipUpgradeSafety) {
     await assertUpgradeIsSafe(
       hre,
       typeof contract == "string" ? contract : contractName
@@ -107,7 +110,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne) {
+  if (isMainnet || isArbitrumOne || isBase) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -120,6 +123,15 @@ const withConfirmation = async (
   logContractAbi = false
 ) => {
   const result = await deployOrTransactionPromise;
+
+  if (
+    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
+    (isTest && !isForkTest)
+  ) {
+    // Skip on Tenderly and for unit tests
+    return result;
+  }
+
   const receipt = await hre.ethers.provider.waitForTransaction(
     result.receipt ? result.receipt.transactionHash : result.hash,
     NUM_CONFIRMATIONS
@@ -143,6 +155,11 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
+  if (isBaseFork) {
+    // Skip proxy check on base for now
+    return;
+  }
+
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
@@ -317,7 +334,7 @@ const executeProposalOnFork = async ({
 /**
  * Successfully execute the proposal whether it is in
  * "Pending", "Active" or "Queued" state.
- * Given a proposal Id, enqueues and executes it on OGV Governance.
+ * Given a proposal Id, enqueues and executes it on xOGN Governance.
  * @param {Number} proposalId
  * @returns {Promise<void>}
  */
@@ -326,6 +343,7 @@ const executeGovernanceProposalOnFork = async ({
   proposalState,
   reduceQueueTime,
   executeGasLimit = null,
+  existingProposal = false,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -334,7 +352,7 @@ const executeGovernanceProposalOnFork = async ({
   const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
   await impersonateGuardian(multisig5of8);
 
-  const governorFive = await getGovernorFive();
+  const governorSix = await getGovernorSix();
   const timelock = await getTimelock();
 
   await configureGovernanceContractDurations(reduceQueueTime);
@@ -343,7 +361,14 @@ const executeGovernanceProposalOnFork = async ({
    * contract is set to 1 block
    */
   if (proposalState === "Pending") {
-    const votingDelay = Number((await governorFive.votingDelay()).toString());
+    // NOTE: If proposal already existing on mainnet,
+    // You still gotta wait for a day until it's ready for voting.
+    // Changing `votingDelay` for existing proposals won't work.
+
+    const votingDelay = existingProposal
+      ? 7200
+      : (await governorSix.votingDelay()).toNumber();
+
     log(
       `Advancing ${
         votingDelay + 1
@@ -362,7 +387,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Active") {
     try {
       // vote positively on the proposal
-      await governorFive.connect(sMultisig5of8).castVote(proposalIdBn, 1);
+      await governorSix.connect(sMultisig5of8).castVote(proposalIdBn, 1);
     } catch (e) {
       // vote already cast is the only acceptable error
       if (!e.message.includes(`vote already cast`)) {
@@ -387,7 +412,7 @@ const executeGovernanceProposalOnFork = async ({
     slotKey = BigNumber.from(slotKey).add(1);
 
     const deadline = BigNumber.from(
-      await getStorageAt(governorFive.address, slotKey)
+      await getStorageAt(governorSix.address, slotKey)
     ).toNumber();
     const currentBlock = await hre.ethers.provider.getBlockNumber();
     let blocksToMine = deadline - currentBlock;
@@ -396,13 +421,13 @@ const executeGovernanceProposalOnFork = async ({
       if (reduceQueueTime) {
         blocksToMine = 10;
         await setStorageAt(
-          governorFive.address,
+          governorSix.address,
           slotKey,
           // Make it queueable in 10 blocks
           currentBlock + blocksToMine
         );
         await setStorageAt(
-          governorFive.address,
+          governorSix.address,
           extendedDeadlineSlotKey,
           // Make it queueable in 10 blocks
           currentBlock + blocksToMine
@@ -426,7 +451,7 @@ const executeGovernanceProposalOnFork = async ({
   }
 
   if (proposalState === "Succeeded") {
-    await governorFive.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
+    await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
     newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
@@ -444,7 +469,7 @@ const executeGovernanceProposalOnFork = async ({
    */
   if (proposalState === "Queued") {
     const timelockId = await getStorageAt(
-      governorFive.address,
+      governorSix.address,
       keccak256(
         defaultAbiCoder.encode(
           ["uint256", "uint256"],
@@ -485,7 +510,7 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
-  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
+  await governorSix.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
     gasLimit: executeGasLimit,
   });
 
@@ -552,16 +577,16 @@ const submitProposalGnosisSafe = async (
   description,
   opts = {}
 ) => {
-  if (!isMainnet) {
+  if (!isMainnet && !isFork) {
     throw new Error("submitProposalGnosisSafe only works on Mainnet");
   }
 
-  const governorFive = await getGovernorFive();
+  const governorSix = await getGovernorSix();
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
-  const result = await governorFive.populateTransaction[
+  const result = await governorSix.populateTransaction[
     "propose(address[],uint256[],string[],bytes[],string)"
   ](...proposalArgs, description, await getTxOpts());
 
@@ -578,7 +603,7 @@ const submitProposalGnosisSafe = async (
 };
 
 const configureGovernanceContractDurations = async (reduceQueueTime) => {
-  const governorFive = await getGovernorFive();
+  const governorSix = await getGovernorSix();
   const timelock = await getTimelock();
 
   if (reduceQueueTime) {
@@ -589,19 +614,19 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
 
     // slot[4] uint256 votingDelay
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0x4",
       "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
     );
     // slot[5] uint256 votingPeriod
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0x5",
       "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 blocks
     );
     // slot[11]uint256 lateQuoruVoteExtension
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0xB", // 11
       "0x0000000000000000000000000000000000000000000000000000000000000000" // 0 blocks
     );
@@ -620,19 +645,19 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
 
     // slot[4] uint256 votingDelay
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0x4",
-      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+      "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
     // slot[5] uint256 votingPeriod
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0x5",
       "0x0000000000000000000000000000000000000000000000000000000000003840" // 14400 blocks
     );
     // slot[11]uint256 lateQuoruVoteExtension
     await setStorageAt(
-      governorFive.address,
+      governorSix.address,
       "0xB", // 11
       "0x0000000000000000000000000000000000000000000000000000000000001C20" // 7200 blocks
     );
@@ -646,7 +671,7 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
 };
 
 /**
- * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * In forked environment simulated that 5/8 multisig has submitted an xOGN
  * governance proposal
  *
  * @param {Array<Object>} proposalArgs
@@ -666,7 +691,7 @@ const submitProposalToOgvGovernance = async (
     );
   }
 
-  const governorFive = await getGovernorFive();
+  const governorSix = await getGovernorSix();
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -687,18 +712,18 @@ const submitProposalToOgvGovernance = async (
     await impersonateGuardian(multisig5of8);
   }
   const result = await withConfirmation(
-    governorFive
+    governorSix
       .connect(signer)
       ["propose(address[],uint256[],string[],bytes[],string)"](
         ...proposalArgs,
         description,
         await getTxOpts()
       ),
-    governorFiveAbi
+    governorSixAbi
   );
   const proposalId = result.receipt.parsedLogs[0].args[0].toString();
 
-  log(`Submitted governance proposal to OGV governance ${proposalId}`);
+  log(`Submitted governance proposal to xOGN governance ${proposalId}`);
   if (!isMainnet) {
     await advanceBlocks(1);
   }
@@ -719,11 +744,11 @@ const sanityCheckOgvGovernance = async ({
   deployerIsProposer = false,
 } = {}) => {
   if (isMainnet) {
-    // only applicable when OGV governance is the governor
+    // only applicable when xOGN governance is the governor
     if (deployerIsProposer) {
-      const governorFive = await getGovernorFive();
+      const governorSix = await getGovernorSix();
       const { deployerAddr } = await getNamedAccounts();
-      if (!(await accountCanCreateProposal(governorFive, deployerAddr))) {
+      if (!(await accountCanCreateProposal(governorSix, deployerAddr))) {
         throw new Error(
           `Deployer ${deployerAddr} doesn't have enough voting power to create a proposal.`
         );
@@ -760,7 +785,7 @@ const sanityCheckOgvGovernance = async ({
 const handlePossiblyActiveGovernanceProposal = async (
   proposalId,
   deployName,
-  governorFive,
+  governorSix,
   reduceQueueTime,
   executeGasLimit
 ) => {
@@ -800,6 +825,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         proposalState,
         reduceQueueTime,
         executeGasLimit,
+        existingProposal: true,
       });
 
       // proposal executed skip deployment
@@ -874,18 +900,18 @@ const handlePossiblyActiveProposal = async (
   return false;
 };
 
-async function getGovernorFive() {
-  const { governorFiveAddr } = await getNamedAccounts();
+async function getGovernorSix() {
+  const { governorSixAddr } = await getNamedAccounts();
 
   return new ethers.Contract(
-    governorFiveAddr,
-    governorFiveAbi,
+    governorSixAddr,
+    governorSixAbi,
     hre.ethers.provider
   );
 }
 
 async function getProposalState(proposalIdBn) {
-  const governorFive = await getGovernorFive();
+  const governorSix = await getGovernorSix();
   let state = -1;
   /* Sometimes a bug happens where fetching the state will cause an exception. It doesn't happen
    * if deploy is ran with "--trace" option. A workaround that doesn't fix the unknown underlying
@@ -895,7 +921,7 @@ async function getProposalState(proposalIdBn) {
   while (tries > 0) {
     tries--;
     try {
-      state = await governorFive.state(proposalIdBn);
+      state = await governorSix.state(proposalIdBn);
       tries = 0;
     } catch (e) {}
   }
@@ -1023,7 +1049,9 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const guardian = !isFork
     ? undefined
-    : await impersonateAndFund(addresses.mainnet.Guardian);
+    : await impersonateAndFund(
+        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+      );
 
   if (!isScheduled) {
     // Needs to be scheduled
@@ -1121,7 +1149,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 }
 
 /**
- * Shortcut to create a deployment on decentralized Governance (OGV) for hardhat to use
+ * Shortcut to create a deployment on decentralized Governance (xOGN) for hardhat to use
  * @param {Object} options for deployment
  * @param {Promise<Object>} fn to deploy contracts and return needed proposals
  * @returns {Object} main object used by hardhat
@@ -1134,9 +1162,10 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
-    deployerIsProposer = false, // The deployer issues the propose to OGV Governor
+    deployerIsProposer = false, // The deployer issues the propose to xOGN Governor
     reduceQueueTime = false, // reduce governance queue times
     executeGasLimit = null,
+    skipSimulation = false, // Skips simulating execution of proposal on fork
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -1150,7 +1179,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       withConfirmation,
     };
 
-    const governorFive = await getGovernorFive();
+    const governorSix = await getGovernorSix();
 
     /* Proposal has either:
      *  - already been executed before running this function or
@@ -1161,7 +1190,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       await handlePossiblyActiveGovernanceProposal(
         proposalId,
         deployName,
-        governorFive,
+        governorSix,
         reduceQueueTime,
         executeGasLimit
       )
@@ -1182,15 +1211,15 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    if (await useTransitionGovernance()) {
-      // Handle proposal
-      await handleTransitionGovernance(propDescription, propArgs);
-      return;
-    }
+    // if (await useTransitionGovernance()) {
+    //   // Handle proposal
+    //   await handleTransitionGovernance(propDescription, propArgs);
+    //   return;
+    // }
 
     if (isMainnet) {
-      // On Mainnet, only build the propose transaction for OGV governance
-      log("Building OGV governance proposal...");
+      // On Mainnet, only build the propose transaction for xOGN governance
+      log("Building xOGN governance proposal...");
       if (deployerIsProposer) {
         await submitProposalToOgvGovernance(
           propArgs,
@@ -1202,22 +1231,28 @@ function deploymentWithGovernanceProposal(opts, fn) {
       }
       log("Proposal sent.");
     } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending the governance proposal to OGV governance");
-      propOpts.reduceQueueTime = reduceQueueTime;
-      const { proposalState, proposalId, proposalIdBn } =
-        await submitProposalToOgvGovernance(
-          propArgs,
-          propDescription,
-          propOpts
-        );
-      log("Executing the proposal");
-      await executeGovernanceProposalOnFork({
-        proposalIdBn,
-        proposalState,
-        reduceQueueTime,
-        executeGasLimit,
-      });
+      if (skipSimulation) {
+        log("Building xOGN governance proposal...");
+        await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      } else {
+        // On Fork we can send the proposal then impersonate the guardian to execute it.
+        log("Sending the governance proposal to xOGN governance");
+        propOpts.reduceQueueTime = reduceQueueTime;
+        const { proposalState, proposalId, proposalIdBn } =
+          await submitProposalToOgvGovernance(
+            propArgs,
+            propDescription,
+            propOpts
+          );
+        log("Executing the proposal");
+        await executeGovernanceProposalOnFork({
+          proposalIdBn,
+          proposalState,
+          reduceQueueTime,
+          executeGasLimit,
+          existingProposal: false,
+        });
+      }
       log("Proposal executed.");
     } else {
       throw new Error(
@@ -1248,7 +1283,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     main.skip = () => false;
   } else {
     const networkName = isForkTest ? "hardhat" : "localhost";
-    const migrations = isForkTest
+    const migrations = isFork
       ? require(`./../deployments/${networkName}/.migrations.json`)
       : {};
 
@@ -1402,6 +1437,15 @@ function deploymentWithProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isFork
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
+    // Skip if proposal is older than 14 days
+    const olderProposal =
+      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
     /** Just for context of fork env change the id of the deployment script. This is required
      * in circumstances when:
      * - the deployment script has already been run on the mainnet
@@ -1421,11 +1465,15 @@ function deploymentWithProposal(opts, fn) {
      * And we can not package this inside of `skip` function since without this workaround it
      * doesn't even get evaluated.
      */
-    if (isFork && proposalId) {
+    if (isFork && proposalId && !olderProposal) {
       main.id = `${deployName}_force`;
     }
 
     main.skip = async () => {
+      if (olderProposal) {
+        return true;
+      }
+
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
@@ -1550,4 +1598,6 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+
+  handleTransitionGovernance,
 };

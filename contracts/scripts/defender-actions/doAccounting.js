@@ -24,11 +24,15 @@ const handler = async (event) => {
   const networkName = network.chainId === 1 ? "mainnet" : "holesky";
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
-  const nativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategyProxy;
-  log(
-    `Resolved Native Staking Strategy address to ${nativeStakingProxyAddress}`
-  );
+  await doAccounting("NativeStakingSSVStrategyProxy", networkName, signer);
+  await doAccounting("NativeStakingSSVStrategy2Proxy", networkName, signer);
+  await doAccounting("NativeStakingSSVStrategy3Proxy", networkName, signer);
+};
+
+const doAccounting = async (proxyName, networkName, signer) => {
+  const nativeStakingProxyAddress = addresses[networkName][proxyName];
+  log(`Resolved ${proxyName} address to ${nativeStakingProxyAddress}`);
+
   const nativeStakingStrategy = new ethers.Contract(
     nativeStakingProxyAddress,
     nativeStakingStrategyAbi,
@@ -36,7 +40,7 @@ const handler = async (event) => {
   );
 
   const tx = await nativeStakingStrategy.connect(signer).doAccounting();
-  await logTxDetails(tx, "doAccounting");
+  await logTxDetails(tx, `doAccounting for ${proxyName}`);
 };
 
 module.exports = { handler };

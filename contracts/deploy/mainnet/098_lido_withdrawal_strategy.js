@@ -5,10 +5,12 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "098_lido_withdrawal_strategy",
     forceDeploy: false,
-    //forceSkip: true,
+    // Scheduled and Executed through transition governance
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId:
+    proposalId:
+      "72348788472639134460868886015864856000028908615792027540418387501511877625568",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();

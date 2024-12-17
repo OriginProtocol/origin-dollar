@@ -61,6 +61,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.s
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b BridgedWOETHStrategy -o BridgedWOETHStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BridgedWOETHStrategy -o BridgedWOETHStrategySquashed.svg
+sol2uml storage .. -c BridgedWOETHStrategy -o BridgedWOETHStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
+
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
@@ -128,16 +132,24 @@ sol2uml .. -v -hv -hf -he -hs -hl -b WOETH -o WOETHHierarchy.svg
 sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -b OETHBase -o OETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
+sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand _____gap,______gap
+
+sol2uml .. -v -hv -hf -he -hs -hl -b WOETHBase -o WOETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
+sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand _____gap,______gap
+
 # contracts/vault
-sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
 sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
-sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
+sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore,OETHVaultAdmin -o OETHVaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHVaultCore,OETHVaultAdmin -o OETHVaultHierarchy.svg
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
-sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
+sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg

@@ -28,16 +28,24 @@ const commonConfig = {
     "ethers",
     "web3",
     "mocha",
-    "hardhat",
   ],
 };
 
 module.exports = [
   {
     ...commonConfig,
-    input: "registerValidators.js",
+    input: "doAccounting.js",
     output: {
-      file: "dist/registerValidators/index.js",
+      file: "dist/doAccounting/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "harvest.js",
+    output: {
+      file: "dist/harvest/index.js",
       inlineDynamicImports: true,
       format: "cjs",
     },
@@ -53,9 +61,9 @@ module.exports = [
   },
   {
     ...commonConfig,
-    input: "doAccounting.js",
+    input: "registerValidators.js",
     output: {
-      file: "dist/doAccounting/index.js",
+      file: "dist/registerValidators/index.js",
       inlineDynamicImports: true,
       format: "cjs",
     },

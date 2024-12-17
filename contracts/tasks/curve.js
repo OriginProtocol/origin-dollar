@@ -13,14 +13,13 @@ const log = require("../utils/logger")("task:curve");
 /**
  * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
  */
-async function curvePoolTask(taskArguments, hre) {
+async function curvePoolTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;
 
   const output = taskArguments.output ? console.log : log;
 
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
-    taskArguments,
-    hre
+    taskArguments
   );
 
   await curvePool({
@@ -138,8 +137,19 @@ async function curvePool({
 
   // Total Metapool assets
   const totalBalances = poolBalances[0].add(poolBalances[1]);
+  const excessAssetsBefore =
+    diffBlocks &&
+    (poolBalancesBefore[1].gt(poolBalancesBefore[0])
+      ? poolBalancesBefore[1].sub(poolBalancesBefore[0])
+      : poolBalancesBefore[0].sub(poolBalancesBefore[1]));
+  const excessAssets = poolBalances[1].gt(poolBalances[0])
+    ? poolBalances[1].sub(poolBalances[0])
+    : poolBalances[0].sub(poolBalances[1]);
+  const excessAssetsSymbol = poolBalances[1].gt(poolBalances[0])
+    ? oTokenSymbol
+    : assetSymbol;
   output(
-    `total assets in pool     : ${displayPortion(
+    `Total assets in pool     : ${displayPortion(
       poolBalances[0],
       totalBalances,
       assetSymbol,
@@ -148,13 +158,22 @@ async function curvePool({
     )} ${displayDiff(diffBlocks, poolBalances[0], poolBalancesBefore[0])}`
   );
   output(
-    `total OTokens in pool    : ${displayPortion(
+    `Total OTokens in pool    : ${displayPortion(
       poolBalances[1],
       totalBalances,
       oTokenSymbol,
       "pool",
       4
     )} ${displayDiff(diffBlocks, poolBalances[1], poolBalancesBefore[1])}`
+  );
+  output(
+    displayProperty(
+      `Excess assets`,
+      `${excessAssetsSymbol}`,
+      excessAssets,
+      excessAssetsBefore,
+      4
+    )
   );
 
   return {
@@ -281,17 +300,22 @@ async function curveSwapTask(taskArguments) {
 
   const signer = await getSigner();
 
-  const fromAmount = parseUnits(from.toString());
+  const fromAmount = parseUnits(amount.toString());
   const minAmount = parseUnits(min.toString());
-  log(`Swapping ${formatUnits(fromAmount)} ${from}`);
 
   const fromIndex = from === "ETH" || from === "3CRV" ? 0 : 1;
   const toIndex = from === "ETH" || from === "3CRV" ? 1 : 0;
 
   const override = from === "ETH" ? { value: amount } : {};
+
+  log(
+    `Swapping ${formatUnits(
+      fromAmount
+    )} ${from} from index ${fromIndex} to index ${toIndex}`
+  );
   // prettier-ignore
   await pool
-    .connect(signer).exchange(
+    .connect(signer)["exchange(int128,int128,uint256,uint256)"](
           fromIndex,
           toIndex,
           fromAmount,
@@ -311,6 +335,7 @@ async function curveContracts(oTokenSymbol) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CurveOETHMetaPool
       : addresses.mainnet.CurveOUSDMetaPool;
+  log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
