@@ -44,9 +44,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     function initialize2() external onlyGovernor {
-        if (_oethCreditsInitialized) {
-            require(false, "Initialize2 already called");
-        }
+        require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;
         /*
