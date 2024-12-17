@@ -13,24 +13,24 @@ contract CurvePoolBooster is Initializable, Governable {
     uint256 public immutable targetChainId;
 
     address public operator;
-    uint256 public campagnId;
+    uint256 public campaignId;
 
     modifier onlyOperator() {
         require(msg.sender == operator || isGovernor(), "Only Operator or Governor");
         _;
     }
 
-    constructor(
-        uint256 _targetChainId,
-        address _campaignRemoteManager,
-        address _rewardToken,
-        address _gauge,
-        address _operator
-    ) {
+    constructor(uint256 _targetChainId, address _campaignRemoteManager, address _rewardToken, address _gauge) {
         targetChainId = _targetChainId;
         campaignRemoteManager = _campaignRemoteManager;
         rewardToken = _rewardToken;
         gauge = _gauge;
+
+        // Prevent implementation contract to be governed
+        _setGovernor(address(0));
+    }
+
+    function initialize(address _operator) external initializer {
         operator = _operator;
     }
 
@@ -40,7 +40,7 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 bridgeFee,
         uint256 additionalGasLimit
     ) external onlyOperator {
-        require(campagnId == 0, "Campaign already created");
+        require(campaignId == 0, "Campaign already created");
 
         // Cache current rewardToken balance
         uint256 totalRewardAmount = IERC20(rewardToken).balanceOf(address(this));
@@ -68,7 +68,7 @@ contract CurvePoolBooster is Initializable, Governable {
     }
 
     function manageTotalRewardAmount(uint256 bridgeFee, uint256 additionalGasLimit) external onlyOperator {
-        require(campagnId != 0, "Campaign not created");
+        require(campaignId != 0, "Campaign not created");
 
         // Cache current rewardToken balance
         uint256 extraTotalRewardAmount = IERC20(rewardToken).balanceOf(address(this));
@@ -82,7 +82,7 @@ contract CurvePoolBooster is Initializable, Governable {
         // Manage the campaign
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
             ICampaingRemoteManager.CampaignManagementParams({
-                campaignId: campagnId,
+                campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
                 totalRewardAmount: extraTotalRewardAmount,
@@ -97,11 +97,11 @@ contract CurvePoolBooster is Initializable, Governable {
         external
         onlyOperator
     {
-        require(campagnId != 0, "Campaign not created");
+        require(campaignId != 0, "Campaign not created");
 
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
             ICampaingRemoteManager.CampaignManagementParams({
-                campaignId: campagnId,
+                campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: extraNumberOfPeriods,
                 totalRewardAmount: 0,
@@ -116,11 +116,11 @@ contract CurvePoolBooster is Initializable, Governable {
         external
         onlyOperator
     {
-        require(campagnId != 0, "Campaign not created");
+        require(campaignId != 0, "Campaign not created");
 
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
             ICampaingRemoteManager.CampaignManagementParams({
-                campaignId: campagnId,
+                campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
                 totalRewardAmount: 0,
@@ -132,7 +132,7 @@ contract CurvePoolBooster is Initializable, Governable {
     }
 
     function setCampaignId(uint256 _campaignId) external onlyOperator {
-        campagnId = _campaignId;
+        campaignId = _campaignId;
     }
 
     function setOperator(address _newOperator) external onlyGovernor {

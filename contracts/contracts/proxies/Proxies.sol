@@ -340,3 +340,7 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
