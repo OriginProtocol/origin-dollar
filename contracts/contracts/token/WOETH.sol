@@ -92,10 +92,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @param oethAmount Amount of OETH to be converted to OETH credits
      * @return amount of OETH credits the OETH amount corresponds to
      */
-    function _oethToCredits(uint256 oethAmount)
-        internal
-        returns (uint256)
-    {
+    function _oethToCredits(uint256 oethAmount) internal returns (uint256) {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
 

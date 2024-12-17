@@ -101,13 +101,11 @@ describe("WOETH", function () {
       await expect(matt).to.have.a.balanceOf("0", woeth);
 
       await oeth.connect(matt).approve(woeth.address, oethUnits("100"));
-      await woeth
-        .connect(matt)
-        .mint(oethUnits("50"), matt.address);
+      await woeth.connect(matt).mint(oethUnits("50"), matt.address);
 
       await expect(woeth).to.have.a.totalSupply("100");
       await expect(await woeth.totalAssets()).to.equal(oethUnits("200"));
-    
+
       // redeem all WOETH held by Josh and Matt
       await woeth
         .connect(josh)
