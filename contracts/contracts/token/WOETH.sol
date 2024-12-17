@@ -92,7 +92,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @param oethAmount Amount of OETH to be converted to OETH credits
      * @return amount of OETH credits the OETH amount corresponds to
      */
-    function _creditsPerAsset(uint256 oethAmount)
+    function _oethToCredits(uint256 oethAmount)
         internal
         returns (uint256)
     {
@@ -121,44 +121,44 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     /** @dev See {IERC4262-deposit} */
-    function deposit(uint256 assets, address receiver)
+    function deposit(uint256 oethAmount, address receiver)
         public
         virtual
         override
-        returns (uint256 shares)
+        returns (uint256 woethAmount)
     {
-        shares = super.deposit(assets, receiver);
-        oethCreditsHighres += _creditsPerAsset(assets);
+        woethAmount = super.deposit(oethAmount, receiver);
+        oethCreditsHighres += _oethToCredits(oethAmount);
     }
 
     /** @dev See {IERC4262-mint} */
-    function mint(uint256 shares, address receiver)
+    function mint(uint256 woethAmount, address receiver)
         public
         virtual
         override
-        returns (uint256 assets)
+        returns (uint256 oethAmount)
     {
-        assets = super.mint(shares, receiver);
-        oethCreditsHighres += _creditsPerAsset(assets);
+        oethAmount = super.mint(woethAmount, receiver);
+        oethCreditsHighres += _oethToCredits(oethAmount);
     }
 
     /** @dev See {IERC4262-withdraw} */
     function withdraw(
-        uint256 assets,
+        uint256 oethAmount,
         address receiver,
         address owner
-    ) public virtual override returns (uint256 shares) {
-        shares = super.withdraw(assets, receiver, owner);
-        oethCreditsHighres -= _creditsPerAsset(assets);
+    ) public virtual override returns (uint256 woethAmount) {
+        woethAmount = super.withdraw(oethAmount, receiver, owner);
+        oethCreditsHighres -= _oethToCredits(oethAmount);
     }
 
     /** @dev See {IERC4262-redeem} */
     function redeem(
-        uint256 shares,
+        uint256 woethAmount,
         address receiver,
         address owner
-    ) public virtual override returns (uint256 assets) {
-        assets = super.redeem(shares, receiver, owner);
-        oethCreditsHighres -= _creditsPerAsset(assets);
+    ) public virtual override returns (uint256 oethAmount) {
+        oethAmount = super.redeem(woethAmount, receiver, owner);
+        oethCreditsHighres -= _oethToCredits(oethAmount);
     }
 }
