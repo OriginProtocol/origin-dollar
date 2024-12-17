@@ -4,7 +4,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "109_ousd_upgrade",
     forceDeploy: false,
-    //forceSkip: true,
+    forceSkip: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId: "",
