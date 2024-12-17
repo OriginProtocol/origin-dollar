@@ -340,3 +340,21 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MorphoGauntletPrimeUSDCStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MorphoGauntletPrimeUSDCStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626USDTStrategy implementation
+ */
+contract MorphoGauntletPrimeUSDTStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
