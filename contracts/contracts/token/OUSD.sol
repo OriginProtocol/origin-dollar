@@ -512,7 +512,7 @@ contract OUSD is Governable {
             alternativeCreditsPerToken[_account] > 0 ||
                 // Accounts may explicitly `rebaseOptIn` regardless of
                 // accounting if they have a 0 balance.
-                balance == 0
+                creditBalances[_account] == 0
             ,
             "Account must be non-rebasing"
         );
