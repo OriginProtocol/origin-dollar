@@ -17,93 +17,94 @@ const deployCore = async () => {
   await deployWithConfirmation("WOSonicProxy");
   await deployWithConfirmation("OSonicVaultProxy");
 
-  const cOETHbProxy = await ethers.getContract("OSonicProxy");
-  const cwOETHbProxy = await ethers.getContract("WSonicProxy");
-  const cOETHbVaultProxy = await ethers.getContract("OSonicVaultProxy");
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cWOSonicProxy = await ethers.getContract("WSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
   // Core contracts
-  const dOETHb = await deployWithConfirmation("OSonic");
-  const dwOETHb = await deployWithConfirmation("WOSonic", [
-    cOETHbProxy.address, // Base token
+  const dOSonic = await deployWithConfirmation("OSonic");
+  const dWOSonic = await deployWithConfirmation("WOSonic", [
+    cOSonicProxy.address, // Base token
   ]);
-  const dOETHbVault = await deployWithConfirmation("OSonicVault");
-  const dOETHbVaultCore = await deployWithConfirmation("OSonicVaultCore", [
+  const dOSonicVault = await deployWithConfirmation("OSonicVault");
+  const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
     cWS.address,
   ]);
-  const dOETHbVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin");
+  const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin");
 
   // Get contract instances
-  const cOETHb = await ethers.getContractAt("OSonic", cOETHbProxy.address);
-  const cwOETHb = await ethers.getContractAt("WOSonic", cwOETHbProxy.address);
-  const cOETHbVault = await ethers.getContractAt(
+  const cOSonic = await ethers.getContractAt("OSonic", cOSonicProxy.address);
+  const cWOSonic = await ethers.getContractAt("WOSonic", cWOSonicProxy.address);
+  const cOSonicVault = await ethers.getContractAt(
     "IVault",
-    cOETHbVaultProxy.address
+    cOSonicVaultProxy.address
   );
   const cOracleRouter = await ethers.getContract("MockOracleRouter");
 
-  // Init OETHb
+  // Init OSonic
   const resolution = ethers.utils.parseUnits("1", 27);
-  const initDataOETHb = cOETHb.interface.encodeFunctionData(
+  const initDataOSonic = cOSonic.interface.encodeFunctionData(
     "initialize(string,string,address,uint256)",
     [
       "Origin S", // Token Name
       "OS", // Token Symbol
-      cOETHbVaultProxy.address, // OETHb Vault
+      cOSonicVaultProxy.address, // OETHb Vault
       resolution, // HighRes
     ]
   );
   // prettier-ignore
-  await cOETHbProxy
+  await cOSonicProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHb.address,
+      dOSonic.address,
       governorAddr,
-      initDataOETHb
+      initDataOSonic
     );
 
-  // Init OETHbVault
-  const initDataOETHbVault = cOETHbVault.interface.encodeFunctionData(
+  // Init OSonicVault
+  const initDataOSonicVault = cOSonicVault.interface.encodeFunctionData(
     "initialize(address,address)",
     [
       cOracleRouter.address, // OracleRouter
-      cOETHbProxy.address, // OETHb
+      cOSonicProxy.address, // OETHb
     ]
   );
   // prettier-ignore
-  await cOETHbVaultProxy
+  await cOSonicVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHbVault.address,
+      dOSonicVault.address,
       governorAddr,
-      initDataOETHbVault
+      initDataOSonicVault
     );
 
-  // Init wOETHb
-  const initDatawOETHb = cwOETHb.interface.encodeFunctionData(
+  // Init WOSonic
+  const initDataWOSonic = cWOSonic.interface.encodeFunctionData(
     "initialize()",
     []
   );
   // prettier-ignore
-  await cwOETHbProxy
+  await cWOSonicProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dwOETHb.address,
+      dWOSonic.address,
       governorAddr,
-      initDatawOETHb
+      initDataWOSonic
     )
 
-  await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultCore.address);
-  await cOETHbVault.connect(sGovernor).setAdminImpl(dOETHbVaultAdmin.address);
+  await cOSonicVaultProxy
+    .connect(sGovernor)
+    .upgradeTo(dOSonicVaultCore.address);
+  await cOSonicVault.connect(sGovernor).setAdminImpl(dOSonicVaultAdmin.address);
 
-  await cOETHbVault.connect(sGovernor).supportAsset(cWS.address, 0);
-  await cOETHbVault.connect(sGovernor).unpauseCapital();
+  await cOSonicVault.connect(sGovernor).supportAsset(cWS.address, 0);
+  await cOSonicVault.connect(sGovernor).unpauseCapital();
 };
 
 const main = async () => {
   await deployMocks();
-  // await deployOracleRouter();
   await deployCore();
 };
 
 main.id = "000_mock";
-main.tags = ["base_unit_tests"];
+main.tags = ["sonic_unit_tests"];
 
 // Only run for unit tests
 main.skip = () => isFork || isSonic;
