@@ -10,7 +10,6 @@ import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract Generalized4626Strategy is InitializableAbstractStrategy {
-
     /// @dev Replaced with an immutable variable
     // slither-disable-next-line constable-states
     address private _deprecate_shareToken;
