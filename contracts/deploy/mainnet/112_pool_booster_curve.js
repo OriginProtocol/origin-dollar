@@ -46,5 +46,4 @@ module.exports = deploymentWithGovernanceProposal(
 
     return {};
   }
-
 );

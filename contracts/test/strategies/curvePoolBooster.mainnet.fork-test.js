@@ -127,4 +127,35 @@ describe("ForkTest: CurvePoolBooster", function () {
 
         await curvePoolBooster.connect(sDeployer).manageRewardPerVote(100, parseUnits("0.1"), 0);
     });
+
+    it("Should revert if not called by operator", async () => {
+        const { curvePoolBooster } = fixture;
+        const { deployerAddr } = await getNamedAccounts();
+
+        await expect(curvePoolBooster.createCampaign(4, 10, parseUnits("0.1"), 0)).to.be.revertedWith("Only Operator or Governor");
+        await expect(curvePoolBooster.manageTotalRewardAmount(parseUnits("0.1"), 0)).to.be.revertedWith("Only Operator or Governor");
+        await expect(curvePoolBooster.manageNumberOfPeriods(2, parseUnits("0.1"), 0)).to.be.revertedWith("Only Operator or Governor");
+        await expect(curvePoolBooster.manageRewardPerVote(100, parseUnits("0.1"), 0)).to.be.revertedWith("Only Operator or Governor");
+        await expect(curvePoolBooster.setCampaignId(12)).to.be.revertedWith("Only Operator or Governor");
+        await expect(curvePoolBooster.setOperator(deployerAddr)).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Should revert if campaign is already created", async () => {
+        const { curvePoolBooster } = fixture;
+        const { deployerAddr } = await getNamedAccounts();
+        const sDeployer = await ethers.provider.getSigner(deployerAddr);
+        await curvePoolBooster.connect(sDeployer).setCampaignId(12);
+
+        await expect(curvePoolBooster.connect(sDeployer).createCampaign(4, 10, parseUnits("0.1"), 0)).to.be.revertedWith("Campaign already created");
+    });
+
+    it("Should revert if campaign is not created", async () => {
+        const { curvePoolBooster } = fixture;
+        const { deployerAddr } = await getNamedAccounts();
+        const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+        await expect(curvePoolBooster.connect(sDeployer).manageTotalRewardAmount(parseUnits("0.1"), 0)).to.be.revertedWith("Campaign not created");
+        await expect(curvePoolBooster.connect(sDeployer).manageNumberOfPeriods(2, parseUnits("0.1"), 0)).to.be.revertedWith("Campaign not created");
+        await expect(curvePoolBooster.connect(sDeployer).manageRewardPerVote(100, parseUnits("0.1"), 0)).to.be.revertedWith("Campaign not created");
+    });
 });
