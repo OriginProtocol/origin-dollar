@@ -148,6 +148,8 @@ module.exports = {
         ? { tags: ["arbitrumOne"] }
         : isBaseFork
         ? { tags: ["base"] }
+        : isSonicFork
+        ? { tags: ["sonic"] }
         : {}),
     },
     mainnet: {

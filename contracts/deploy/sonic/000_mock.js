@@ -1,8 +1,23 @@
 const { deployWithConfirmation } = require("../../utils/deploy");
-const { isFork, isSonic } = require("../../test/helpers");
+const { isFork, isSonic, oethUnits } = require("../../test/helpers");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWS", []);
+};
+
+const deployOracleRouter = async () => {
+  const cWS = await ethers.getContract("MockWS");
+
+  await deployWithConfirmation("MockOracleRouter");
+  const cOracleRouter = await ethers.getContract("MockOracleRouter");
+
+  const wsFeed = await deployWithConfirmation(
+    "MockPriceFeedWS",
+    [oethUnits("1"), 18],
+    "MockChainlinkOracleFeed"
+  );
+
+  await cOracleRouter.setFeed(cWS.address, wsFeed.address, 24 * 60 * 60);
 };
 
 const deployCore = async () => {
@@ -18,19 +33,23 @@ const deployCore = async () => {
   await deployWithConfirmation("OSonicVaultProxy");
 
   const cOSonicProxy = await ethers.getContract("OSonicProxy");
-  const cWOSonicProxy = await ethers.getContract("WSonicProxy");
+  const cWOSonicProxy = await ethers.getContract("WOSonicProxy");
   const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
   // Core contracts
   const dOSonic = await deployWithConfirmation("OSonic");
   const dWOSonic = await deployWithConfirmation("WOSonic", [
     cOSonicProxy.address, // Base token
+    "Wrapped Origin S", // Token Name
+    "wOS", // Token Symbol
   ]);
-  const dOSonicVault = await deployWithConfirmation("OSonicVault");
   const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
     cWS.address,
   ]);
-  const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin");
+
+  const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
+    cWS.address,
+  ]);
 
   // Get contract instances
   const cOSonic = await ethers.getContractAt("OSonic", cOSonicProxy.address);
@@ -71,7 +90,7 @@ const deployCore = async () => {
   // prettier-ignore
   await cOSonicVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonicVault.address,
+      dOSonicVaultCore.address,
       governorAddr,
       initDataOSonicVault
     );
@@ -100,6 +119,7 @@ const deployCore = async () => {
 
 const main = async () => {
   await deployMocks();
+  await deployOracleRouter();
   await deployCore();
 };
 

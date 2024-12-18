@@ -7,7 +7,7 @@ const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
-const log = require("../utils/logger")("test:fixtures-arb");
+const log = require("../utils/logger")("test:fixtures-sonic");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -43,7 +43,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     fallbackToGlobal: true,
   });
 
-  // OETHb
+  // Origin S token
   const oSonicProxy = await ethers.getContract("OSonicProxy");
   const oSonic = await ethers.getContractAt("OSonic", oSonicProxy.address);
 
@@ -75,19 +75,17 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     );
   }
 
-  // WETH
+  // Sonic's wrapped S token
   let wS;
 
   if (isFork) {
-    wS = await ethers.getContractAt("IERC20", addresses.base.WETH);
+    wS = await ethers.getContractAt("IERC20", addresses.sonic.WS);
   } else {
     wS = await ethers.getContract("MockWS");
   }
 
   // Zapper
-  const zapper = !isFork
-    ? undefined
-    : await ethers.getContract("OETHBaseZapper");
+  const zapper = !isFork ? undefined : await ethers.getContract("OSonicZapper");
 
   const signers = await hre.ethers.getSigners();
 
