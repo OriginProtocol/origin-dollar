@@ -341,6 +341,26 @@ contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {
+/**
+ * @notice MorphoGauntletPrimeUSDCStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MorphoGauntletPrimeUSDCStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }
+
+/**
+ * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626USDTStrategy implementation
+ */
+contract MorphoGauntletPrimeUSDTStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+
+
+}
+/**
+ * @notice CurvePoolBoosterProxy delegates calls to a CurvePoolBooster implementation
+ */
+contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {}
