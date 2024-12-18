@@ -176,7 +176,7 @@ filtered{f -> !f.isView && !whoChangesMultipleBalances(f) && !delegateMethods(f)
 rule pairingPreservesSumOfBalances(address accountA, address accountB, method f)
 filtered{f -> !f.isView}
 {
-    require OUSD.rebasingCreditsPerToken_ == e18();
+    require OUSD.rebasingCreditsPerToken_ >= e18();
     allAccountValidState();
     initTotalSupply();
 

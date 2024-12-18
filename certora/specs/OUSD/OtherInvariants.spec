@@ -1,5 +1,9 @@
 import "./common.spec";
 import "./AccountInvariants.spec";
+import "./BalanceInvariants.spec";
+
+use invariant sumAllNonRebasingBalancesEqNonRebasingSupply;
+use invariant sumAllRebasingCreditsEqRebasingCredits;
 
 /// @title Verify account balance integrity based on rebase state
 // Ensures balances are correctly calculated for Yield Delegation Targets, Standard Rebasing, 
@@ -143,6 +147,8 @@ rule changeSupplyIntegrity(uint256 newTotalSupply) {
 	env e;
 	initTotalSupply();
 	allAccountValidState();
+	requireInvariant sumAllNonRebasingBalancesEqNonRebasingSupply();
+	requireInvariant sumAllRebasingCreditsEqRebasingCredits();
 	require OUSD.rebasingCreditsPerToken_ >= e18();
 	require newTotalSupply >= OUSD.totalSupply();
 
