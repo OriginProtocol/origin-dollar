@@ -115,6 +115,15 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await oSonicVault.connect(governor).setVaultBuffer(oethUnits("1"));
   }
 
+  for (const user of [rafael, nick, clement]) {
+    // Mint some Sonic Wrapped S
+    await hhHelpers.setBalance(user.address, oethUnits("100000000"));
+    await wS.connect(user).deposit({ value: oethUnits("10000000") });
+
+    // Set allowance on the vault
+    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
+  }
+
   if (isFork) {
     // Governor opts in for rebasing
     await oSonic.connect(governor).rebaseOptIn();

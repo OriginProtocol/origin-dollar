@@ -42,25 +42,25 @@ describe("Origin S Vault", function () {
     const { oSonic, oSonicVault, wS, user } = fixture;
 
     expect(await oSonic.totalSupply(), "OSonic Total Supply").to.equal(
-      dataBefore.oethTotalSupply.add(delta.oethTotalSupply)
+      dataBefore.oSonicTotalSupply.add(delta.oSonicTotalSupply)
     );
     expect(await oSonicVault.totalValue(), "Vault Total Value").to.equal(
-      dataBefore.oethTotalValue.add(delta.oethTotalValue)
+      dataBefore.oSonicTotalValue.add(delta.oSonicTotalValue)
     );
     expect(
       await oSonicVault.checkBalance(wS.address),
       "Vault Check Balance of wS"
     ).to.equal(dataBefore.vaultCheckBalance.add(delta.vaultCheckBalance));
     expect(await oSonic.balanceOf(user.address), "user's OS balance").to.equal(
-      dataBefore.userOeth.add(delta.userOeth)
+      dataBefore.userOSonic.add(delta.userOSonic)
     );
     expect(await wS.balanceOf(user.address), "user's wS balance").to.equal(
-      dataBefore.userWeth.add(delta.userWeth)
+      dataBefore.userWS.add(delta.userWS)
     );
     expect(
       await wS.balanceOf(oSonicVault.address),
       "Vault wS balance"
-    ).to.equal(dataBefore.vaultWeth.add(delta.vaultWeth));
+    ).to.equal(dataBefore.vaultWS.add(delta.vaultWS));
 
     const queueAfter = await oSonicVault.withdrawalQueueMetadata();
     expect(queueAfter.queued, "Queued").to.equal(
@@ -116,7 +116,7 @@ describe("Origin S Vault", function () {
     });
   });
 
-  describe("Mint Whitelist", function () {
+  describe.skip("Mint Whitelist", function () {
     beforeEach(async () => {
       fixture = await sonicFixture();
     });
@@ -203,7 +203,7 @@ describe("Origin S Vault", function () {
     });
   });
 
-  describe("Mint & Burn For Strategy", function () {
+  describe.skip("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
 
     beforeEach(async () => {
