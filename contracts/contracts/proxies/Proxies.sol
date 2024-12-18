@@ -357,10 +357,11 @@ contract MorphoGauntletPrimeUSDTStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
 
-
-
 }
+
 /**
  * @notice CurvePoolBoosterProxy delegates calls to a CurvePoolBooster implementation
  */
-contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {}
+contract CurvePoolBoosterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

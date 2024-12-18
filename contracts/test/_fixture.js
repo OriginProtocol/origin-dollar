@@ -341,7 +341,10 @@ const defaultFixture = deployments.createFixture(async () => {
     : undefined;
 
   const curvePoolBooster = isFork
-    ? await ethers.getContractAt("CurvePoolBooster", curvePoolBoosterProxy.address)
+    ? await ethers.getContractAt(
+        "CurvePoolBooster",
+        curvePoolBoosterProxy.address
+      )
     : undefined;
 
   let usdt,

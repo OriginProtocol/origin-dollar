@@ -6,7 +6,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "113_ousd_morpho_gauntlet_usdt",
     forceDeploy: false,
     // forceSkip: true,
-    // reduceQueueTime: true,
+    reduceQueueTime: true,
     deployerIsProposer: false,
     // proposalId: "",
   },

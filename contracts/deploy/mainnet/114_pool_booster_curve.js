@@ -3,36 +3,46 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "112_pool_booster_curve",
+    deployName: "114_pool_booster_curve",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId:
-      "",
+    proposalId: "",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     console.log(`Using deployer account: ${deployerAddr}`);
     // 1. Deploy proxy
-    const dCurvePoolBoosterProxy = await deployWithConfirmation("CurvePoolBoosterProxy");
-    const cCurvePoolBoosterProxy = await ethers.getContract("CurvePoolBoosterProxy");
+    const dCurvePoolBoosterProxy = await deployWithConfirmation(
+      "CurvePoolBoosterProxy"
+    );
+    const cCurvePoolBoosterProxy = await ethers.getContract(
+      "CurvePoolBoosterProxy"
+    );
 
     // 2. Deploy implementation
-    const dCurvePoolBoosterImpl = await deployWithConfirmation("CurvePoolBooster",
+    const dCurvePoolBoosterImpl = await deployWithConfirmation(
+      "CurvePoolBooster",
       [
         42161, // Arbitrum chain id
         addresses.mainnet.CampaignRemoteManager, // Campaign Remote Manager (VotemarketV2 entry point)
         addresses.mainnet.OETHProxy, // To be modified with desired bribe token
-        addresses.mainnet.CurveOETHGauge // To be modified with desired gauge
+        addresses.mainnet.CurveOETHGauge, // To be modified with desired gauge
       ]
     );
     console.log("dCurvePoolBoosterImpl: ", dCurvePoolBoosterImpl.address);
-    const cCurvePoolBooster = await ethers.getContractAt("CurvePoolBooster", dCurvePoolBoosterProxy.address);
+    const cCurvePoolBooster = await ethers.getContractAt(
+      "CurvePoolBooster",
+      dCurvePoolBoosterProxy.address
+    );
 
     // 3. Initialize
-    const initData = cCurvePoolBooster.interface.encodeFunctionData("initialize(address)", [deployerAddr]);
+    const initData = cCurvePoolBooster.interface.encodeFunctionData(
+      "initialize(address)",
+      [deployerAddr]
+    );
 
     // 4. Initialize proxy
     const initFunction = "initialize(address,address,bytes)";
@@ -42,7 +52,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.mainnet.Timelock, // governor
         initData // data for delegate call to the initialize function on the strategy
       )
-    )
+    );
 
     return {};
   }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Governable} from "../governance/Governable.sol";
-import {Initializable} from "../utils/Initializable.sol";
-import {ICampaingRemoteManager} from "../interfaces/ICampaignRemoteManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 contract CurvePoolBooster is Initializable, Governable {
     address public immutable gauge;
@@ -16,11 +16,19 @@ contract CurvePoolBooster is Initializable, Governable {
     uint256 public campaignId;
 
     modifier onlyOperator() {
-        require(msg.sender == operator || isGovernor(), "Only Operator or Governor");
+        require(
+            msg.sender == operator || isGovernor(),
+            "Only Operator or Governor"
+        );
         _;
     }
 
-    constructor(uint256 _targetChainId, address _campaignRemoteManager, address _rewardToken, address _gauge) {
+    constructor(
+        uint256 _targetChainId,
+        address _campaignRemoteManager,
+        address _rewardToken,
+        address _gauge
+    ) {
         targetChainId = _targetChainId;
         campaignRemoteManager = _campaignRemoteManager;
         rewardToken = _rewardToken;
@@ -43,13 +51,17 @@ contract CurvePoolBooster is Initializable, Governable {
         require(campaignId == 0, "Campaign already created");
 
         // Cache current rewardToken balance
-        uint256 totalRewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        uint256 totalRewardAmount = IERC20(rewardToken).balanceOf(
+            address(this)
+        );
 
         // Approve the total reward amount to the campaign manager
         IERC20(rewardToken).approve(campaignRemoteManager, totalRewardAmount);
 
         // Create a new campaign
-        ICampaingRemoteManager(campaignRemoteManager).createCampaign{value: bridgeFee}(
+        ICampaingRemoteManager(campaignRemoteManager).createCampaign{
+            value: bridgeFee
+        }(
             ICampaingRemoteManager.CampaignCreationParams({
                 chainId: targetChainId,
                 gauge: gauge,
@@ -67,20 +79,30 @@ contract CurvePoolBooster is Initializable, Governable {
         );
     }
 
-    function manageTotalRewardAmount(uint256 bridgeFee, uint256 additionalGasLimit) external onlyOperator {
+    function manageTotalRewardAmount(
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external onlyOperator {
         require(campaignId != 0, "Campaign not created");
 
         // Cache current rewardToken balance
-        uint256 extraTotalRewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        uint256 extraTotalRewardAmount = IERC20(rewardToken).balanceOf(
+            address(this)
+        );
 
         // Approve the total reward amount to the campaign manager
         require(extraTotalRewardAmount > 0, "No reward to manage");
 
         // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).approve(campaignRemoteManager, extraTotalRewardAmount);
+        IERC20(rewardToken).approve(
+            campaignRemoteManager,
+            extraTotalRewardAmount
+        );
 
         // Manage the campaign
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
+        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+            value: bridgeFee
+        }(
             ICampaingRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
@@ -93,13 +115,16 @@ contract CurvePoolBooster is Initializable, Governable {
         );
     }
 
-    function manageNumberOfPeriods(uint8 extraNumberOfPeriods, uint256 bridgeFee, uint256 additionalGasLimit)
-        external
-        onlyOperator
-    {
+    function manageNumberOfPeriods(
+        uint8 extraNumberOfPeriods,
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external onlyOperator {
         require(campaignId != 0, "Campaign not created");
 
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
+        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+            value: bridgeFee
+        }(
             ICampaingRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
@@ -112,13 +137,16 @@ contract CurvePoolBooster is Initializable, Governable {
         );
     }
 
-    function manageRewardPerVote(uint256 newMaxRewardPerVote, uint256 bridgeFee, uint256 additionalGasLimit)
-        external
-        onlyOperator
-    {
+    function manageRewardPerVote(
+        uint256 newMaxRewardPerVote,
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external onlyOperator {
         require(campaignId != 0, "Campaign not created");
 
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{value: bridgeFee}(
+        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+            value: bridgeFee
+        }(
             ICampaingRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
