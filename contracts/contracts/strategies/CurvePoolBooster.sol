@@ -167,5 +167,9 @@ contract CurvePoolBooster is Initializable, Governable {
         operator = _newOperator;
     }
 
+    function sendETH(address receiver) external onlyOperator {
+        payable(receiver).transfer(address(this).balance);
+    }
+
     receive() external payable {}
 }
