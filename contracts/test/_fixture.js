@@ -83,6 +83,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
+  const cWOETHProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
+
   const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const oethHarvester = await ethers.getContractAt(
     "OETHHarvester",
@@ -183,6 +186,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     // OETH
     oethVault,
     oeth,
+    woeth,
     nativeStakingSSVStrategy,
     oethDripper,
     oethHarvester,
@@ -227,12 +231,8 @@ const defaultFixture = deployments.createFixture(async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  let woeth, woethProxy;
-
-  if (isFork) {
-    woethProxy = await ethers.getContract("WOETHProxy");
-    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
-  }
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
 
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const harvester = await ethers.getContractAt(
@@ -706,10 +706,15 @@ const defaultFixture = deployments.createFixture(async () => {
   if (!isFork) {
     await fundAccounts();
 
-    // Matt and Josh each have $100 OUSD
+    // Matt and Josh each have $100 OUSD & 100 OETH
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
       await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
+
+      // Fund WETH contract
+      await hardhatSetBalance(user.address, "500");
+      await weth.connect(user).deposit({ value: oethUnits("100") });
+      await weth.connect(user).approve(oethVault.address, oethUnits("100"));
     }
   }
   return {
