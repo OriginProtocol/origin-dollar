@@ -23,6 +23,8 @@ const {
   isArbitrumOne,
   isBase,
   isBaseFork,
+  isSonic,
+  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -110,7 +112,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -155,8 +157,8 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork) {
-    // Skip proxy check on base for now
+  if (isBaseFork || isSonicFork) {
+    // Skip proxy check on base and sonic for now
     return;
   }
 
@@ -1050,7 +1052,11 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   const guardian = !isFork
     ? undefined
     : await impersonateAndFund(
-        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+        isBaseFork
+          ? addresses.base.governor
+          : isSonicFork
+          ? addresses.sonic.governor
+          : addresses.mainnet.Guardian
       );
 
   if (!isScheduled) {
