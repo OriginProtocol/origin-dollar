@@ -26,7 +26,7 @@ contract CurvePoolBooster is Initializable, Governable {
     event TotalRewardAmountManaged(uint256 extraTotalRewardAmount);
     event NumberOfPeriodsManaged(uint8 extraNumberOfPeriods);
     event RewardPerVoteManaged(uint256 newMaxRewardPerVote);
-    event RescueTokens(address token, uint256 amount);
+    event RescueTokens(address token, uint256 amount, address receiver);
 
     modifier onlyOperator() {
         require(
@@ -196,8 +196,18 @@ contract CurvePoolBooster is Initializable, Governable {
     }
 
     function sendETH(address receiver) external onlyOperator {
-        emit RescueTokens(address(0), address(this).balance);
+        emit RescueTokens(address(0), address(this).balance, receiver);
         payable(receiver).transfer(address(this).balance);
+    }
+
+    function rescueToken(
+        address token,
+        uint256 amount,
+        address receiver
+    ) external onlyGovernor {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        emit RescueTokens(token, amount, receiver);
+        IERC20(token).transfer(receiver, balance);
     }
 
     receive() external payable {}
