@@ -118,7 +118,7 @@ sol2uml storage .. -c Timelock -o TimelockStorage.svg
 # contracts/token
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSD -o OUSDHierarchy.svg
 sol2uml .. -s -d 0 -b OUSD -o OUSDSquashed.svg
-sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -b WrappedOusd -o WOUSDHierarchy.svg
 sol2uml .. -s -d 0 -b WrappedOusd -o WOUSDSquashed.svg
