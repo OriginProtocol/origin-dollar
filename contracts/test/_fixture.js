@@ -332,7 +332,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const morphoGauntletPrimeUSDTStrategy = !isFork
     ? undefined
     : await ethers.getContractAt(
-        "Generalized4626Strategy",
+        "Generalized4626USDTStrategy",
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 

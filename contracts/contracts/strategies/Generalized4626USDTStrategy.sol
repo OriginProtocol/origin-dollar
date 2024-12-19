@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 interface IUSDT {
     // Tether's approve does not return a bool like standard IERC20 contracts
     // slither-disable-next-line erc20-interface
-    function approve(address _spender, uint _value) external;
+    function approve(address _spender, uint256 _value) external;
 }
 
 /**
@@ -20,10 +20,9 @@ contract Generalized4626USDTStrategy is Generalized4626Strategy {
      * and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
      * @param _assetToken Address of the ERC-4626 asset token. eg frxETH or DAI
      */
-    constructor(
-        BaseStrategyConfig memory _baseConfig,
-        address _assetToken
-    ) Generalized4626Strategy(_baseConfig, _assetToken) {}
+    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
+        Generalized4626Strategy(_baseConfig, _assetToken)
+    {}
 
     /// @dev Override for Tether as USDT does not return a bool on approve.
     /// Using assetToken.approve will fail as it expects a bool return value

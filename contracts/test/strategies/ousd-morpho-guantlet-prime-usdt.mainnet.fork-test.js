@@ -52,6 +52,9 @@ describe("ForkTest: Morpho Gauntlet Prime USDT Strategy", function () {
       expect(await morphoGauntletPrimeUSDTStrategy.governor()).to.equal(
         addresses.mainnet.Timelock
       );
+      expect(await vault.getAllStrategies()).to.include(
+        morphoGauntletPrimeUSDTStrategy.address
+      );
     });
     it("Should be able to check balance", async () => {
       const { usdt, josh, morphoGauntletPrimeUSDTStrategy } = fixture;
@@ -201,7 +204,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDT Strategy", function () {
     });
   });
 
-  describe("with the strategy having some USDT in MetaMorpho Strategy", () => {
+  describe("with the strategy having some USDT", () => {
     const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDTFixture, {
       usdtMintAmount: 12000,
       depositToStrategy: true,
