@@ -57,7 +57,13 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster
       .connect(sDeployer)
-      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0);
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
 
     expect(await oeth.balanceOf(curvePoolBooster.address)).to.equal(
       parseUnits("0")
@@ -94,7 +100,13 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster
       .connect(sDeployer)
-      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0);
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
 
     // Deal new OETH to pool booster
     await oeth
@@ -137,7 +149,13 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster
       .connect(sDeployer)
-      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0);
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
 
     // Deal new OETH to pool booster
     await oeth
@@ -177,7 +195,13 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster
       .connect(sDeployer)
-      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0);
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
 
     // Deal new OETH to pool booster
     await oeth
@@ -202,7 +226,13 @@ describe("ForkTest: CurvePoolBooster", function () {
     const { deployerAddr } = await getNamedAccounts();
 
     await expect(
-      curvePoolBooster.createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0)
+      curvePoolBooster.createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      )
     ).to.be.revertedWith("Only Operator or Governor");
     await expect(
       curvePoolBooster.manageTotalRewardAmount(parseUnits("0.1"), 0)
@@ -230,7 +260,13 @@ describe("ForkTest: CurvePoolBooster", function () {
     await expect(
       curvePoolBooster
         .connect(sDeployer)
-        .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], parseUnits("0.1"), 0)
+        .createCampaign(
+          4,
+          10,
+          [addresses.mainnet.ConvexVoter],
+          parseUnits("0.1"),
+          0
+        )
     ).to.be.revertedWith("Campaign already created");
   });
 
