@@ -67,7 +67,7 @@ const deployCore = async () => {
     [
       "Origin S", // Token Name
       "OS", // Token Symbol
-      cOSonicVaultProxy.address, // OETHb Vault
+      cOSonicVaultProxy.address, // Origin Sonic Vault
       resolution, // HighRes
     ]
   );
@@ -84,7 +84,7 @@ const deployCore = async () => {
     "initialize(address,address)",
     [
       cOracleRouter.address, // OracleRouter
-      cOSonicProxy.address, // OETHb
+      cOSonicProxy.address, // OSonic
     ]
   );
   // prettier-ignore
