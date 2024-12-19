@@ -173,8 +173,8 @@ const registerValidators = async ({
         break;
       }
 
-      log(`Waiting for 3 seconds...`);
-      await sleep(3000);
+      log(`Waiting for 5 seconds...`);
+      await sleep(5000);
     }
   };
 
@@ -545,8 +545,8 @@ const createValidatorRequest = async (
 
   await updateState(uuid, nextState, store);
 
-  log(`About to wait for 60 seconds for the P2P API to process the request...`);
-  await sleep(60000);
+  log(`About to wait for 90 seconds for the P2P API to process the request...`);
+  await sleep(90000);
 };
 
 const waitForTransactionAndUpdateStateOnSuccess = async (
