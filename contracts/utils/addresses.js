@@ -155,6 +155,7 @@ addresses.mainnet.CurveLUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
