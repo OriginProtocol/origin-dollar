@@ -15,6 +15,19 @@ contract CurvePoolBooster is Initializable, Governable {
     address public operator;
     uint256 public campaignId;
 
+    event CampaignIdSet(uint256 _newId);
+    event OperatorSet(address _newOperator);
+    event BribeCreated(
+        address gauge,
+        address rewardToken,
+        uint256 maxRewardPerVote,
+        uint256 totalRewardAmount
+    );
+    event TotalRewardAmountManaged(uint256 extraTotalRewardAmount);
+    event NumberOfPeriodsManaged(uint8 extraNumberOfPeriods);
+    event RewardPerVoteManaged(uint256 newMaxRewardPerVote);
+    event RescueTokens(address token, uint256 amount);
+
     modifier onlyOperator() {
         require(
             msg.sender == operator || isGovernor(),
@@ -70,12 +83,19 @@ contract CurvePoolBooster is Initializable, Governable {
                 numberOfPeriods: numberOfPeriods,
                 maxRewardPerVote: maxRewardPerVote,
                 totalRewardAmount: totalRewardAmount,
-                addresses: new address[](0),
+                addresses: new address[](0), // Is it blacklist?
                 hook: address(0),
                 isWhitelist: false
             }),
             targetChainId,
             additionalGasLimit
+        );
+
+        emit BribeCreated(
+            gauge,
+            rewardToken,
+            maxRewardPerVote,
+            totalRewardAmount
         );
     }
 
@@ -113,6 +133,8 @@ contract CurvePoolBooster is Initializable, Governable {
             targetChainId,
             additionalGasLimit
         );
+
+        emit TotalRewardAmountManaged(extraTotalRewardAmount);
     }
 
     function manageNumberOfPeriods(
@@ -135,6 +157,8 @@ contract CurvePoolBooster is Initializable, Governable {
             targetChainId,
             additionalGasLimit
         );
+
+        emit NumberOfPeriodsManaged(extraNumberOfPeriods);
     }
 
     function manageRewardPerVote(
@@ -157,17 +181,22 @@ contract CurvePoolBooster is Initializable, Governable {
             targetChainId,
             additionalGasLimit
         );
+
+        emit RewardPerVoteManaged(newMaxRewardPerVote);
     }
 
     function setCampaignId(uint256 _campaignId) external onlyOperator {
         campaignId = _campaignId;
+        emit CampaignIdSet(_campaignId);
     }
 
     function setOperator(address _newOperator) external onlyGovernor {
         operator = _newOperator;
+        emit OperatorSet(_newOperator);
     }
 
     function sendETH(address receiver) external onlyOperator {
+        emit RescueTokens(address(0), address(this).balance);
         payable(receiver).transfer(address(this).balance);
     }
 
