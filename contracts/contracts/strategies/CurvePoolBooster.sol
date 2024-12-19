@@ -58,6 +58,7 @@ contract CurvePoolBooster is Initializable, Governable {
     function createCampaign(
         uint8 numberOfPeriods,
         uint256 maxRewardPerVote,
+        address[] calldata blacklist,
         uint256 bridgeFee,
         uint256 additionalGasLimit
     ) external onlyOperator {
@@ -83,7 +84,7 @@ contract CurvePoolBooster is Initializable, Governable {
                 numberOfPeriods: numberOfPeriods,
                 maxRewardPerVote: maxRewardPerVote,
                 totalRewardAmount: totalRewardAmount,
-                addresses: new address[](0), // Is it blacklist?
+                addresses: blacklist,
                 hook: address(0),
                 isWhitelist: false
             }),
