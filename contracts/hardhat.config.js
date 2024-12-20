@@ -10,7 +10,12 @@ const {
   isBaseFork,
   isBaseForkTest,
   isBaseUnitTest,
+  isSonic,
+  isSonicFork,
+  isSonicForkTest,
+  isSonicUnitTest,
   baseProviderUrl,
+  sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
@@ -20,6 +25,7 @@ const {
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
+
 require("hardhat-deploy");
 require("hardhat-tracer");
 require("hardhat-contract-sizer");
@@ -74,6 +80,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/holesky";
 } else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
+} else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
+  paths.deploy = "deploy/sonic";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -179,6 +187,13 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    sonic: {
+      url: sonicProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+    }
   },
   mocha: {
     bail: process.env.BAIL === "true",

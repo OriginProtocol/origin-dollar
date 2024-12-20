@@ -7,12 +7,16 @@ const isHoleskyFork = process.env.FORK_NETWORK_NAME === "holesky";
 const isHolesky = process.env.NETWORK_NAME === "holesky";
 const isBase = process.env.NETWORK_NAME === "base";
 const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
+const isSonic = process.env.NETWORK_NAME === "sonic";
+const isSonicFork = process.env.FORK_NETWORK_NAME === "sonic";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
 const isHoleskyForkTest = isForkTest && isHoleskyFork;
 const isBaseForkTest = isForkTest && isBaseFork;
 const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
+const isSonicForkTest = isForkTest && isSonicFork;
+const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
 
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
@@ -20,6 +24,7 @@ const providerUrl = `${
 const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
+const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
@@ -43,6 +48,10 @@ const adjustTheForkBlockNumber = () => {
     } else if (isBaseForkTest) {
       forkBlockNumber = process.env.BASE_BLOCK_NUMBER
         ? process.env.BASE_BLOCK_NUMBER
+        : undefined;
+    } else if (isSonicForkTest) {
+      forkBlockNumber = process.env.SONIC_BLOCK_NUMBER
+        ? process.env.SONIC_BLOCK_NUMBER
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
@@ -108,6 +117,8 @@ const getHardhatNetworkProperties = () => {
     chainId = 17000;
   } else if (isBaseFork && isFork) {
     chainId = 8453;
+  } else if (isSonicFork && isFork) {
+    chainId = 146;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -119,6 +130,8 @@ const getHardhatNetworkProperties = () => {
       provider = arbitrumProviderUrl;
     } else if (isHoleskyForkTest) {
       provider = holeskyProviderUrl;
+    } else if (isSonicForkTest) {
+      provider = sonicProviderUrl;
     } else if (isBaseForkTest) {
       provider = baseProviderUrl;
     }
@@ -133,6 +146,7 @@ const networkMap = {
   42161: "arbitrumOne",
   1337: "hardhat",
   8453: "base",
+  146: "sonic",
 };
 
 module.exports = {
@@ -144,6 +158,10 @@ module.exports = {
   isBaseUnitTest,
   isHoleskyFork,
   isHolesky,
+  isSonic,
+  isSonicFork,
+  isSonicForkTest,
+  isSonicUnitTest,
   isForkTest,
   isArbForkTest,
   isHoleskyForkTest,
@@ -154,4 +172,5 @@ module.exports = {
   getHardhatNetworkProperties,
   networkMap,
   baseProviderUrl,
+  sonicProviderUrl,
 };
