@@ -7,14 +7,28 @@ import { Initializable } from "../utils/Initializable.sol";
 import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 contract CurvePoolBooster is Initializable, Governable {
+    ////////////////////////////////////////////////////
+    /// --- CONSTANTS && IMMUTABLES
+    ////////////////////////////////////////////////////
+    uint16 public constant BASE_FEE = 10_000; // 100%
     address public immutable gauge;
     address public immutable rewardToken;
     address public immutable campaignRemoteManager;
     uint256 public immutable targetChainId;
 
+    ////////////////////////////////////////////////////
+    /// --- STORAGE
+    ////////////////////////////////////////////////////
+    uint16 public fee;
     address public operator;
+    address public feeCollector;
     uint256 public campaignId;
 
+    ////////////////////////////////////////////////////
+    /// --- EVENTS
+    ////////////////////////////////////////////////////
+    event FeeSet(uint16 _newFee);
+    event FeeCollectorSet(address _newFeeCollector);
     event CampaignIdSet(uint256 _newId);
     event OperatorSet(address _newOperator);
     event BribeCreated(
@@ -28,6 +42,9 @@ contract CurvePoolBooster is Initializable, Governable {
     event RewardPerVoteManaged(uint256 newMaxRewardPerVote);
     event RescueTokens(address token, uint256 amount, address receiver);
 
+    ////////////////////////////////////////////////////
+    /// --- MODIFIERS
+    ////////////////////////////////////////////////////
     modifier onlyOperator() {
         require(
             msg.sender == operator || isGovernor(),
@@ -36,6 +53,9 @@ contract CurvePoolBooster is Initializable, Governable {
         _;
     }
 
+    ////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR && INITIALIZATION
+    ////////////////////////////////////////////////////
     constructor(
         uint256 _targetChainId,
         address _campaignRemoteManager,
@@ -51,10 +71,19 @@ contract CurvePoolBooster is Initializable, Governable {
         _setGovernor(address(0));
     }
 
-    function initialize(address _operator) external initializer {
+    function initialize(
+        address _operator,
+        uint16 _fee,
+        address _feeCollector
+    ) external initializer {
         operator = _operator;
+        fee = _fee;
+        feeCollector = _feeCollector;
     }
 
+    ////////////////////////////////////////////////////
+    /// --- MUTATIVE FUNCTIONS
+    ////////////////////////////////////////////////////
     function createCampaign(
         uint8 numberOfPeriods,
         uint256 maxRewardPerVote,
@@ -65,12 +94,18 @@ contract CurvePoolBooster is Initializable, Governable {
         require(campaignId == 0, "Campaign already created");
 
         // Cache current rewardToken balance
-        uint256 totalRewardAmount = IERC20(rewardToken).balanceOf(
-            address(this)
-        );
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
+        require(balance > 0, "No reward to bribe");
 
-        // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).approve(campaignRemoteManager, totalRewardAmount);
+        // Handle fee (if any)
+        uint256 feeAmount = (balance * fee) / BASE_FEE;
+        if (feeAmount > 0) {
+            balance -= feeAmount;
+            IERC20(rewardToken).transfer(feeCollector, feeAmount);
+        }
+
+        // Approve the balance to the campaign manager
+        IERC20(rewardToken).approve(campaignRemoteManager, balance);
 
         // Create a new campaign
         ICampaingRemoteManager(campaignRemoteManager).createCampaign{
@@ -83,7 +118,7 @@ contract CurvePoolBooster is Initializable, Governable {
                 rewardToken: rewardToken,
                 numberOfPeriods: numberOfPeriods,
                 maxRewardPerVote: maxRewardPerVote,
-                totalRewardAmount: totalRewardAmount,
+                totalRewardAmount: balance,
                 addresses: blacklist,
                 hook: address(0),
                 isWhitelist: false
@@ -92,12 +127,7 @@ contract CurvePoolBooster is Initializable, Governable {
             additionalGasLimit
         );
 
-        emit BribeCreated(
-            gauge,
-            rewardToken,
-            maxRewardPerVote,
-            totalRewardAmount
-        );
+        emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balance);
     }
 
     function manageTotalRewardAmount(
@@ -107,18 +137,18 @@ contract CurvePoolBooster is Initializable, Governable {
         require(campaignId != 0, "Campaign not created");
 
         // Cache current rewardToken balance
-        uint256 extraTotalRewardAmount = IERC20(rewardToken).balanceOf(
-            address(this)
-        );
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
+        require(balance > 0, "No reward to manage");
+
+        // Handle fee (if any)
+        uint256 feeAmount = (balance * fee) / BASE_FEE;
+        if (feeAmount > 0) {
+            balance -= feeAmount;
+            IERC20(rewardToken).transfer(feeCollector, feeAmount);
+        }
 
         // Approve the total reward amount to the campaign manager
-        require(extraTotalRewardAmount > 0, "No reward to manage");
-
-        // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).approve(
-            campaignRemoteManager,
-            extraTotalRewardAmount
-        );
+        IERC20(rewardToken).approve(campaignRemoteManager, balance);
 
         // Manage the campaign
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
@@ -128,14 +158,14 @@ contract CurvePoolBooster is Initializable, Governable {
                 campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
-                totalRewardAmount: extraTotalRewardAmount,
+                totalRewardAmount: balance,
                 maxRewardPerVote: 0
             }),
             targetChainId,
             additionalGasLimit
         );
 
-        emit TotalRewardAmountManaged(extraTotalRewardAmount);
+        emit TotalRewardAmountManaged(balance);
     }
 
     function manageNumberOfPeriods(
@@ -144,7 +174,9 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 additionalGasLimit
     ) external onlyOperator {
         require(campaignId != 0, "Campaign not created");
+        require(extraNumberOfPeriods > 0, "Invalid number of periods");
 
+        // Manage the campaign
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
@@ -168,7 +200,9 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 additionalGasLimit
     ) external onlyOperator {
         require(campaignId != 0, "Campaign not created");
+        require(newMaxRewardPerVote > 0, "Invalid reward per vote");
 
+        // Manage the campaign
         ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
@@ -186,14 +220,12 @@ contract CurvePoolBooster is Initializable, Governable {
         emit RewardPerVoteManaged(newMaxRewardPerVote);
     }
 
+    ////////////////////////////////////////////////////
+    /// --- GOVERNANCE && OPERATION
+    ////////////////////////////////////////////////////
     function setCampaignId(uint256 _campaignId) external onlyOperator {
         campaignId = _campaignId;
         emit CampaignIdSet(_campaignId);
-    }
-
-    function setOperator(address _newOperator) external onlyGovernor {
-        operator = _newOperator;
-        emit OperatorSet(_newOperator);
     }
 
     function sendETH(address receiver) external onlyOperator {
@@ -209,6 +241,21 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 balance = IERC20(token).balanceOf(address(this));
         emit RescueTokens(token, amount, receiver);
         IERC20(token).transfer(receiver, balance);
+    }
+
+    function setOperator(address _newOperator) external onlyGovernor {
+        operator = _newOperator;
+        emit OperatorSet(_newOperator);
+    }
+
+    function setFee(uint16 _fee) external onlyGovernor {
+        require(_fee <= BASE_FEE / 2, "Fee too high");
+        fee = _fee;
+    }
+
+    function setFeeCollector(address _feeCollector) external onlyGovernor {
+        feeCollector = _feeCollector;
+        emit FeeCollectorSet(_feeCollector);
     }
 
     receive() external payable {}

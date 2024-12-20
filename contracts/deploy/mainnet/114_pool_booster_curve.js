@@ -40,8 +40,8 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 3. Initialize
     const initData = cCurvePoolBooster.interface.encodeFunctionData(
-      "initialize(address)",
-      [deployerAddr]
+      "initialize(address,uint16,address)",
+      [deployerAddr, 0, deployerAddr]
     );
 
     // 4. Initialize proxy

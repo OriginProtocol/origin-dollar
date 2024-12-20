@@ -70,6 +70,46 @@ describe("ForkTest: CurvePoolBooster", function () {
     );
   });
 
+  it("Should Create a campaign with fee", async () => {
+    const { curvePoolBooster, oeth, woeth, josh } = fixture;
+    const { deployerAddr } = await getNamedAccounts();
+    const woethSigner = await impersonateAndFund(woeth.address);
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+    const gov = await curvePoolBooster.governor();
+    const sGov = await ethers.provider.getSigner(gov);
+
+    // Deal OETH and ETH to pool booster
+    await oeth
+      .connect(woethSigner)
+      .transfer(curvePoolBooster.address, parseUnits("10"));
+    expect(await oeth.balanceOf(curvePoolBooster.address)).to.equal(
+      parseUnits("10")
+    );
+    await sDeployer.sendTransaction({
+      to: curvePoolBooster.address,
+      value: parseUnits("1"),
+    });
+
+    // Set fee and fee collector
+    await curvePoolBooster.connect(sGov).setFee(1000); // 10%
+    await curvePoolBooster.connect(sGov).setFeeCollector(josh.address);
+    expect(await oeth.balanceOf(josh.address)).to.equal(0);
+
+    // Create campaign
+    await curvePoolBooster
+      .connect(sDeployer)
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        100
+      );
+
+    // Ensure fee is collected
+    expect(await oeth.balanceOf(josh.address)).to.equal(parseUnits("1"));
+  });
+
   it("Should set campaign id", async () => {
     const { curvePoolBooster } = fixture;
     const { deployerAddr } = await getNamedAccounts();
@@ -78,6 +118,30 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster.connect(sDeployer).setCampaignId(12);
     expect(await curvePoolBooster.campaignId()).to.equal(12);
+  });
+
+  it("Should set fee and fee collector", async () => {
+    const { curvePoolBooster, josh } = fixture;
+    const gov = await curvePoolBooster.governor();
+    const sGov = await ethers.provider.getSigner(gov);
+    expect(await curvePoolBooster.fee()).to.equal(0);
+
+    await curvePoolBooster.connect(sGov).setFee(100);
+    expect(await curvePoolBooster.fee()).to.equal(100);
+
+    expect(await curvePoolBooster.feeCollector()).not.to.equal(josh.address);
+    await curvePoolBooster.connect(sGov).setFeeCollector(josh.address);
+    expect(await curvePoolBooster.feeCollector()).to.equal(josh.address);
+  });
+
+  it("Should set operator", async () => {
+    const { curvePoolBooster, josh } = fixture;
+    const gov = await curvePoolBooster.governor();
+    const sGov = await ethers.provider.getSigner(gov);
+
+    expect(await curvePoolBooster.operator()).not.to.equal(josh.address);
+    await curvePoolBooster.connect(sGov).setOperator(josh.address);
+    expect(await curvePoolBooster.operator()).to.equal(josh.address);
   });
 
   it("Should manage total rewards", async () => {
