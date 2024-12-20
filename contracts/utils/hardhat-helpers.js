@@ -117,7 +117,7 @@ const getHardhatNetworkProperties = () => {
     chainId = 17000;
   } else if (isBaseFork && isFork) {
     chainId = 8453;
-  } else if (isSonicFork && isSonic) {
+  } else if (isSonicFork && isFork) {
     chainId = 146;
   } else if (isFork) {
     // is mainnet fork
