@@ -480,6 +480,11 @@ const getAssetAddresses = async (deployments) => {
       SSVNetwork: addresses.mainnet.SSVNetwork,
       beaconChainDepositContract: addresses.mainnet.beaconChainDepositContract,
     };
+  } else if (isSonicOrFork) {
+    return {
+      WETH: addresses.sonic.WETH,
+      WS: addresses.sonic.WS
+    }
   } else if (isHoleskyOrFork) {
     return {
       WETH: addresses.holesky.WETH,

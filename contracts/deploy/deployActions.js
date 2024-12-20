@@ -6,6 +6,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isSonicOrFork
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1027,8 +1028,7 @@ const deployOracles = async () => {
   await deployWithConfirmation(contractName, args, oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
   log("Deployed OracleRouter");
-
-  if (isHolesky) {
+  if (isHolesky || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -1084,7 +1084,9 @@ const deployOracles = async () => {
 };
 
 const deployOETHCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
+  const sDeloyer = await ethers.provider.getSigner(deployerAddr);
+
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
@@ -1095,14 +1097,16 @@ const deployOETHCore = async () => {
   await deployWithConfirmation("OETHProxy");
   await deployWithConfirmation("OETHVaultProxy");
 
+  const wrappedChainToken = isSonicOrFork ? assetAddresses.WS : assetAddresses.WETH;
+
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
   const dOETHVault = await deployWithConfirmation("OETHVault");
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    assetAddresses.WETH,
+    wrappedChainToken,
   ]);
   const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
-    assetAddresses.WETH,
+    wrappedChainToken,
   ]);
 
   // Get contract instances
@@ -1119,8 +1123,9 @@ const deployOETHCore = async () => {
     cOETHVaultProxy.address
   );
 
+  await cOETHProxy.connect(sDeloyer);
   await withConfirmation(
-    cOETHProxy["initialize(address,address,bytes)"](
+    cOETHProxy.connect(sDeloyer)["initialize(address,address,bytes)"](
       dOETH.address,
       governorAddr,
       []
@@ -1129,7 +1134,7 @@ const deployOETHCore = async () => {
   log("Initialized OETHProxy");
 
   await withConfirmation(
-    cOETHVaultProxy["initialize(address,address,bytes)"](
+    cOETHVaultProxy.connect(sDeloyer)["initialize(address,address,bytes)"](
       dOETHVault.address,
       governorAddr,
       []
