@@ -34,8 +34,8 @@ contract MockNonRebasing {
         oUSD.transferFrom(_from, _to, _value);
     }
 
-    function increaseAllowance(address _spender, uint256 _addedValue) public {
-        oUSD.increaseAllowance(_spender, _addedValue);
+    function approve(address _spender, uint256 _addedValue) public {
+        oUSD.approve(_spender, _addedValue);
     }
 
     function mintOusd(
