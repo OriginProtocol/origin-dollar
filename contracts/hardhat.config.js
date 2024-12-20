@@ -219,6 +219,7 @@ module.exports = {
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
       base: MAINNET_DEPLOYER,
+      sonic: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -242,6 +243,7 @@ module.exports = {
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
+      sonic: MAINNET_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -360,6 +362,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "sonic",
+        chainId: 146,
+        urls: {
+          apiURL: "https://api.sonicscan.org/api",
+          browserURL: "https://sonicscan.org",
         },
       },
     ],
