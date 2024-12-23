@@ -10,16 +10,16 @@ contract OETHHarvesterSimple is Governable {
     /// --- STORAGE
     ////////////////////////////////////////////////////
     address public operator;
-    address public strategy;
     address public strategist;
+    mapping(address => bool) public isAuthorized;
 
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
     event Harvested(address token, uint256 amount);
     event OperatorSet(address operator);
-    event StrategySet(address strategy);
     event StrategistSet(address strategist);
+    event StrategyStatusSet(address strategy, bool status);
 
     ////////////////////////////////////////////////////
     /// --- MODIFIERS
@@ -38,11 +38,10 @@ contract OETHHarvesterSimple is Governable {
     constructor(
         address _governor,
         address _operator,
-        address _strategist,
-        address _strategy
+        address _strategist
     ) {
+        require(_strategist != address(0), "Invalid strategist");
         operator = _operator;
-        strategy = _strategy;
         strategist = _strategist;
         _setGovernor(_governor);
     }
@@ -50,17 +49,34 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
-    function harvestAndTransfer() external onlyOperator {
-        require(strategy != address(0), "Strategy not set");
-        require(strategist != address(0), "Strategist not set");
+    function harvestAndTransfer(address _strategy) external onlyOperator {
+        _harvestAndTransfer(_strategy);
+    }
 
-        IStrategy(strategy).collectRewardTokens();
+    function harvestAndTransfer(address[] calldata _strategies)
+        external
+        onlyOperator
+    {
+        for (uint256 i = 0; i < _strategies.length; i++) {
+            _harvestAndTransfer(_strategies[i]);
+        }
+    }
 
-        address[] memory rewardTokens = IStrategy(strategy)
+    function _harvestAndTransfer(address _strategy) internal {
+        // Ensure strategy is authorized
+        require(isAuthorized[_strategy], "Not authorized");
+
+        // Harvest rewards
+        IStrategy(_strategy).collectRewardTokens();
+
+        // Cache reward tokens
+        address[] memory rewardTokens = IStrategy(_strategy)
             .getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
+            // Cache balance
             uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
             if (balance > 0) {
+                // Transfer to strategist
                 IERC20(rewardTokens[i]).transfer(strategist, balance);
                 emit Harvested(rewardTokens[i], balance);
             }
@@ -75,12 +91,16 @@ contract OETHHarvesterSimple is Governable {
         emit OperatorSet(_operator);
     }
 
-    function setStrategy(address _strategy) external onlyGovernor {
-        strategy = _strategy;
-        emit StrategySet(_strategy);
+    function setStrategyStatus(address _strategy, bool _status)
+        external
+        onlyGovernor
+    {
+        isAuthorized[_strategy] = _status;
+        emit StrategyStatusSet(_strategy, _status);
     }
 
     function setStrategist(address _strategist) external onlyGovernor {
+        require(_strategist != address(0), "Invalid strategist");
         strategist = _strategist;
         emit StrategistSet(_strategist);
     }
