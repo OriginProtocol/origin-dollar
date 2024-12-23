@@ -64,7 +64,7 @@ contract OETHHarvesterSimple is Governable {
 
     function _harvestAndTransfer(address _strategy) internal {
         // Ensure strategy is authorized
-        require(isAuthorized[_strategy], "Not authorized");
+        require(isAuthorized[_strategy], "Strategy not authorized");
 
         // Harvest rewards
         IStrategy(_strategy).collectRewardTokens();
