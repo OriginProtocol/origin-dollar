@@ -78,9 +78,6 @@ describe("ForkTest: CurvePoolBooster", function () {
     const strategist = await simpleOETHHarvester.strategist();
 
     const balanceBeforeCRV = await crv.balanceOf(strategist);
-    await convexEthMetaStrategy
-      .connect(timelock)
-      .setHarvesterAddress(simpleOETHHarvester.address);
     await simpleOETHHarvester
       .connect(timelock)
       .setStrategyStatus(convexEthMetaStrategy.address, true);

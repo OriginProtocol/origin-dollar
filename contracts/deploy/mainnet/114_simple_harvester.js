@@ -18,10 +18,10 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHHarvesterSimple",
       [addresses.mainnet.Timelock, deployerAddr, deployerAddr]
     );
-    const cOETHHarvesterSimple = await ethers.getContract("OETHHarvesterSimple", dOETHHarvesterSimple.address);
+    const cOETHHarvesterSimple = await ethers.getContractAt("OETHHarvesterSimple", dOETHHarvesterSimple.address);
 
     // Get AMO contract
-    const cAMO = await ethers.getContract("ConvexEthMetaStrategy", addresses.mainnet.ConvexOETHAMOStrategy);
+    const cAMO = await ethers.getContractAt("ConvexEthMetaStrategy", addresses.mainnet.ConvexOETHAMOStrategy);
 
     // Governance Actions
     // ----------------
