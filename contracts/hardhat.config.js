@@ -195,6 +195,8 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
+      live: true,
+      saveDeployments: true,
     }
   },
   mocha: {
@@ -253,7 +255,7 @@ module.exports = {
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
-      sonic: MAINNET_DEPLOYER,
+      sonic: SONIC_DEPLOYER,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
