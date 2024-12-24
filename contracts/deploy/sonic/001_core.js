@@ -12,7 +12,7 @@ const { isSonicFork } = require("../../test/helpers.js");
 
 const mainExport = async () => {
   console.log("Running 001_core deployment on Sonic...");
-  const { governorAddr } = await getNamedAccounts();
+  //const { governorAddr } = await getNamedAccounts();
   //const sGovernor = await ethers.provider.getSigner(governorAddr);
 
 
