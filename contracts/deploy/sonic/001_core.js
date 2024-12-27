@@ -1,9 +1,9 @@
 const {
   deployOracles,
   deployOETHCore,
-  // deployOETHDripper,
-  // deployOETHHarvester,
-  // configureOETHVault,
+  deployOETHDripper,
+  deployOETHHarvester,
+  configureOETHVault,
 } = require("../deployActions");
 
 //const { withConfirmation } = require("../../utils/deploy");
@@ -21,14 +21,12 @@ const mainExport = async () => {
       await hardhatSetBalance(deployerAddr, "10000000000");
   }
 
-  console.log("Deploying Oracles");
   await deployOracles();
-  console.log("Deploying Core");
   await deployOETHCore();
 
-  //const cOETHDripper = await deployOETHDripper();
-  // const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
-  // await configureOETHVault(true);
+  const cOETHDripper = await deployOETHDripper({ skipUpgradeSafety: true });
+  const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
+  await configureOETHVault("sonicOETH");
 
   // const cVault = await ethers.getContractAt(
   //   "IVault",

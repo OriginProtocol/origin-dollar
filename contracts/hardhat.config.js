@@ -195,6 +195,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
+      chainId: 146,
       live: true,
       saveDeployments: true,
     }

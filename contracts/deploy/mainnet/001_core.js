@@ -47,7 +47,7 @@ const main = async () => {
     oethDripper
   );
   await configureVault();
-  await configureOETHVault(false);
+  await configureOETHVault("OETH");
   await configureStrategies(harvesterProxy, oethHarvesterProxy);
   await deployFlipper();
   await deployBuyback();
