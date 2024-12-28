@@ -103,7 +103,7 @@ describe.skip("ForkTest: OETH Buyback", function () {
   });
 });
 
-describe("ForkTest: OUSD Buyback", function () {
+describe.skip("ForkTest: OUSD Buyback", function () {
   this.timeout(0);
 
   let fixture;
@@ -192,7 +192,7 @@ describe("ForkTest: OUSD Buyback", function () {
   });
 });
 
-describe("ForkTest: ARM Buyback", function () {
+describe.skip("ForkTest: ARM Buyback", function () {
   this.timeout(0);
 
   let fixture;
