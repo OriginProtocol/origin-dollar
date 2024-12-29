@@ -1,4 +1,5 @@
 const { deployOnSonic } = require("../../utils/deploy-l2");
+const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
@@ -13,11 +14,11 @@ module.exports = deployOnSonic(
     const cWS = await ethers.getContractAt("IWrappedSonic", addresses.sonic.wS);
 
     // Proxies
-    await deployOnSonic("OSonicProxy");
+    await deployWithConfirmation("OSonicProxy");
     console.log("Deployed Origin S proxy");
-    await deployOnSonic("WOSonicProxy");
+    await deployWithConfirmation("WOSonicProxy");
     console.log("Deployed Wrapped Origin S proxy");
-    await deployOnSonic("OSonicVaultProxy");
+    await deployWithConfirmation("OSonicVaultProxy");
     console.log("Deployed Vault proxy");
 
     const cOSonicProxy = await ethers.getContract("OSonicProxy");

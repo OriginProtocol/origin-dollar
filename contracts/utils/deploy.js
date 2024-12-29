@@ -94,7 +94,10 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
-  const feeData = await hre.ethers.provider.getFeeData();
+  let feeData;
+  if (useFeeData) {
+    feeData = await hre.ethers.provider.getFeeData();
+  }
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
