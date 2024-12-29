@@ -23,7 +23,7 @@ const mainExport = async () => {
 
   const cOETHDripper = await deployOETHDripper();
   const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
-  await configureOETHVault(true);
+  await configureOETHVault("simpleOETH");
 
   const cVault = await ethers.getContractAt(
     "IVault",

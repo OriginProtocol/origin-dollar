@@ -6,6 +6,8 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isSonicOrFork,
+  isSonic,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -447,8 +449,9 @@ const configureVault = async () => {
 
 /**
  * Configure OETH Vault by adding supported assets and Strategies.
+ * @param oethDeployType: OETH, simpleOETH, sonicOETH
  */
-const configureOETHVault = async (isSimpleOETH) => {
+const configureOETHVault = async (oethDeployType) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
@@ -461,8 +464,18 @@ const configureOETHVault = async (isSimpleOETH) => {
     ).address
   );
   // Set up supported assets for Vault
-  const { WETH, RETH, stETH, frxETH } = assetAddresses;
-  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
+  const { WETH, RETH, stETH, frxETH, WS } = assetAddresses;
+  let assets;
+  if (oethDeployType == "OETH") {
+    assets = [WETH, RETH, stETH, frxETH];
+  } else if (oethDeployType == "simpleOETH") {
+    assets = [WETH];
+  } else if (oethDeployType == "sonicOETH") {
+    assets = [WS];
+  } else {
+    throw new Error(`Unrecognised deploy type: ${oethDeployType}`);
+  }
+
   for (const asset of assets) {
     await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
@@ -565,7 +578,8 @@ const upgradeOETHHarvester = async () => {
 
 const deployOETHHarvester = async (oethDripper) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
@@ -588,7 +602,7 @@ const deployOETHHarvester = async (oethDripper) => {
 
   await withConfirmation(
     // prettier-ignore
-    cOETHHarvesterProxy["initialize(address,address,bytes)"](
+    cOETHHarvesterProxy.connect(sDeployer)["initialize(address,address,bytes)"](
         dOETHHarvester.address,
         governorAddr,
         []
@@ -749,8 +763,9 @@ const deployOUSDDripper = async () => {
   return cDripper;
 };
 
-const deployOETHDripper = async () => {
-  const { governorAddr } = await getNamedAccounts();
+const deployOETHDripper = async ({ skipUpgradeSafety = false } = {}) => {
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -760,13 +775,13 @@ const deployOETHDripper = async () => {
   const dDripper = await deployWithConfirmation("OETHDripper", [
     cVaultProxy.address,
     assetAddresses.WETH,
-  ]);
+  ], false, skipUpgradeSafety);
 
   await deployWithConfirmation("OETHDripperProxy");
   // Deploy Dripper Proxy
   const cDripperProxy = await ethers.getContract("OETHDripperProxy");
   await withConfirmation(
-    cDripperProxy["initialize(address,address,bytes)"](
+    cDripperProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dDripper.address,
       governorAddr,
       []
@@ -1018,7 +1033,7 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHolesky) {
+  } else if (isHolesky || isSonic) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
     args = [addresses.zero];
@@ -1027,8 +1042,7 @@ const deployOracles = async () => {
   await deployWithConfirmation(contractName, args, oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
   log("Deployed OracleRouter");
-
-  if (isHolesky) {
+  if (isHolesky || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -1084,7 +1098,9 @@ const deployOracles = async () => {
 };
 
 const deployOETHCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
@@ -1095,14 +1111,16 @@ const deployOETHCore = async () => {
   await deployWithConfirmation("OETHProxy");
   await deployWithConfirmation("OETHVaultProxy");
 
+  const wrappedChainToken = isSonicOrFork ? assetAddresses.WS : assetAddresses.WETH;
+
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
   const dOETHVault = await deployWithConfirmation("OETHVault");
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    assetAddresses.WETH,
+    wrappedChainToken,
   ]);
   const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
-    assetAddresses.WETH,
+    wrappedChainToken,
   ]);
 
   // Get contract instances
@@ -1119,8 +1137,9 @@ const deployOETHCore = async () => {
     cOETHVaultProxy.address
   );
 
+  await cOETHProxy.connect(sDeployer);
   await withConfirmation(
-    cOETHProxy["initialize(address,address,bytes)"](
+    cOETHProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETH.address,
       governorAddr,
       []
@@ -1129,7 +1148,7 @@ const deployOETHCore = async () => {
   log("Initialized OETHProxy");
 
   await withConfirmation(
-    cOETHVaultProxy["initialize(address,address,bytes)"](
+    cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETHVault.address,
       governorAddr,
       []

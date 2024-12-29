@@ -23,6 +23,8 @@ const {
   isArbitrumOne,
   isBase,
   isBaseFork,
+  isSonic,
+  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -80,6 +82,7 @@ const deployWithConfirmation = async (
   gasLimit,
   useFeeData
 ) => {
+  let feeData;
   // check that upgrade doesn't corrupt the storage slots
   if (!isTest && !skipUpgradeSafety) {
     await assertUpgradeIsSafe(
@@ -88,11 +91,18 @@ const deployWithConfirmation = async (
     );
   }
 
+  if (isSonic) {
+    useFeeData = false;
+  }
+
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
-  const feeData = await hre.ethers.provider.getFeeData();
+  if (useFeeData) {
+    feeData = await hre.ethers.provider.getFeeData();
+  }
+
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -110,7 +120,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -123,7 +133,6 @@ const withConfirmation = async (
   logContractAbi = false
 ) => {
   const result = await deployOrTransactionPromise;
-
   if (
     process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
     (isTest && !isForkTest)
@@ -155,7 +164,7 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork) {
+  if (isBaseFork || isSonicFork) {
     // Skip proxy check on base for now
     return;
   }
