@@ -55,7 +55,7 @@ const BASE_DEPLOYER = MAINNET_DEPLOYER;
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 const SONIC_DEPLOYER = MAINNET_DEPLOYER;
-const SONIC_GOVERNOR = "";
+const SONIC_GOVERNOR = MAINNET_DEPLOYER;
 const SONIC_STRATEGIST = "";
 
 const mnemonic =
@@ -228,8 +228,8 @@ module.exports = {
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
-      base: MAINNET_DEPLOYER,
-      sonic: MAINNET_DEPLOYER,
+      base: BASE_DEPLOYER,
+      sonic: SONIC_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -255,7 +255,7 @@ module.exports = {
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
-      sonic: BASE_GOVERNOR,
+      sonic: SONIC_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance

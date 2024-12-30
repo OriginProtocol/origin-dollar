@@ -8,6 +8,8 @@ module.exports = deployOnSonic(
   },
   async ({ ethers }) => {
     const { governorAddr, deployerAddr } = await getNamedAccounts();
+    console.log(`Governor: ${governorAddr}`);
+    console.log(`Deployer: ${deployerAddr}`);
     const sGovernor = await ethers.provider.getSigner(governorAddr);
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -26,19 +28,19 @@ module.exports = deployOnSonic(
     const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
     // Core contracts
-    const dOSonic = await deployOnSonic("OSonic");
-    console.log("Deployed Origin S");
-    const dWOSonic = await deployOnSonic("WOSonic", [
+    const dOSonic = await deployWithConfirmation("OSonic");
+    console.log(`Deployed Origin S to ${dOSonic.address}`);
+    const dWOSonic = await deployWithConfirmation("WOSonic", [
       cOSonicProxy.address, // Base token
       "Wrapped Origin S", // Token Name
       "wOS", // Token Symbol
     ]);
-    console.log("Deployed Wrapped Origin S");
-    const dOSonicVaultCore = await deployOnSonic("OSonicVaultCore", [
+    console.log(`Deployed Wrapped Origin S to ${dWOSonic.address}`);
+    const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
       cWS.address,
     ]);
     console.log("Deployed Vault Core");
-    const dOSonicVaultAdmin = await deployOnSonic("OSonicVaultAdmin", [
+    const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
       cWS.address,
     ]);
     console.log("Deployed Vault Admin");
@@ -65,6 +67,9 @@ module.exports = deployOnSonic(
         resolution, // HighRes
       ]
     );
+    console.log(`cOSonicVaultProxy ${cOSonicVaultProxy.address}`);
+    console.log(`dOSonic ${dOSonic.address}`);
+    console.log(`governorAddr ${governorAddr}`);
     // prettier-ignore
     await cOSonicProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
@@ -72,6 +77,7 @@ module.exports = deployOnSonic(
       governorAddr,
       initDataOSonic
     );
+    console.log("Initialized Origin S");
 
     // Init OSonicVault
     const initDataOSonicVault = cOSonicVault.interface.encodeFunctionData(
@@ -88,6 +94,7 @@ module.exports = deployOnSonic(
       governorAddr,
       initDataOSonicVault
     );
+    console.log("Initialized Origin S Vault");
 
     // Init WOSonic
     const initDataWOSonic = cWOSonic.interface.encodeFunctionData(
@@ -101,15 +108,20 @@ module.exports = deployOnSonic(
       governorAddr,
       initDataWOSonic
     )
+    console.log("Initialized Wrapper Origin S");
 
     await cOSonicVaultProxy
       .connect(sGovernor)
       .upgradeTo(dOSonicVaultCore.address);
+    console.log("Upgrade Vault proxy to VaultCore");
     await cOSonicVault
       .connect(sGovernor)
       .setAdminImpl(dOSonicVaultAdmin.address);
+    console.log("Set VaultAdmin on Vault");
 
     await cOSonicVault.connect(sGovernor).supportAsset(cWS.address, 0);
+    console.log("Added vault support of Wrapped S");
     await cOSonicVault.connect(sGovernor).unpauseCapital();
+    console.log("Unpaused capital");
   }
 );
