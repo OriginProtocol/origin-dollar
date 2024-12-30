@@ -23,40 +23,28 @@ describe("ForkTest: CurvePoolBooster", function () {
     expect(await simpleOETHHarvester.governor()).to.be.equal(
       addresses.mainnet.Timelock
     );
-    expect(await simpleOETHHarvester.operator()).to.be.equal(deployerAddr);
     expect(await simpleOETHHarvester.strategist()).to.be.equal(deployerAddr);
   });
 
-  it("Should Set Strategy status", async () => {
+  it("Should support Strategy", async () => {
     const { simpleOETHHarvester } = fixture;
     const timelock = await ethers.provider.getSigner(
       addresses.mainnet.Timelock
     );
 
     expect(
-      await simpleOETHHarvester.isAuthorized(
+      await simpleOETHHarvester.supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
       )
     ).to.be.equal(false);
     await simpleOETHHarvester
       .connect(timelock)
-      .setStrategyStatus(addresses.mainnet.ConvexOETHAMOStrategy, true);
+      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, true);
     expect(
-      await simpleOETHHarvester.isAuthorized(
+      await simpleOETHHarvester.supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
       )
     ).to.be.equal(true);
-  });
-
-  it("Should Set operator", async () => {
-    const { simpleOETHHarvester, josh } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
-
-    expect(await simpleOETHHarvester.operator()).not.to.equal(josh.address);
-    await simpleOETHHarvester.connect(timelock).setOperator(josh.address);
-    expect(await simpleOETHHarvester.operator()).to.equal(josh.address);
   });
 
   it("Should Set strategist", async () => {
@@ -80,10 +68,10 @@ describe("ForkTest: CurvePoolBooster", function () {
     const balanceBeforeCRV = await crv.balanceOf(strategist);
     await simpleOETHHarvester
       .connect(timelock)
-      .setStrategyStatus(convexEthMetaStrategy.address, true);
+      .setSupportedStrategy(convexEthMetaStrategy.address, true);
     // prettier-ignore
     await simpleOETHHarvester
-    .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
+      .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
 
     const balanceAfterCRV = await crv.balanceOf(strategist);
     expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
@@ -99,22 +87,19 @@ describe("ForkTest: CurvePoolBooster", function () {
       // prettier-ignore
       simpleOETHHarvester
         .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
-    ).to.be.revertedWith("Strategy not authorized");
+    ).to.be.revertedWith("Strategy not supported");
   });
 
-  it("Should revert if caller is not operator", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy, josh } = fixture;
+  it("Should revert if strategy is address 0", async () => {
+    const { simpleOETHHarvester } = fixture;
     const timelock = await ethers.provider.getSigner(
       addresses.mainnet.Timelock
     );
 
-    await simpleOETHHarvester
-      .connect(timelock)
-      .setStrategyStatus(convexEthMetaStrategy.address, true);
     await expect(
       // prettier-ignore
       simpleOETHHarvester
-        .connect(josh)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
-    ).to.be.revertedWith("Only Operator or Governor");
+        .connect(timelock).setSupportedStrategy(addresses.zero, true)
+    ).to.be.revertedWith("Invalid strategy");
   });
 });
