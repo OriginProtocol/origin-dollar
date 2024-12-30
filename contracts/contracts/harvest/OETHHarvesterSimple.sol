@@ -16,7 +16,7 @@ contract OETHHarvesterSimple is Governable {
     /// --- EVENTS
     ////////////////////////////////////////////////////
     event Harvested(address token, uint256 amount);
-    event StrategistSet(address strategist);
+    event StrategistChanged(address strategist);
     event SupportedStrategyUpdate(address strategy, bool status);
 
     ////////////////////////////////////////////////////
@@ -86,6 +86,6 @@ contract OETHHarvesterSimple is Governable {
     function setStrategist(address _strategist) external onlyGovernor {
         require(_strategist != address(0), "Invalid strategist");
         strategist = _strategist;
-        emit StrategistSet(_strategist);
+        emit StrategistChanged(_strategist);
     }
 }
