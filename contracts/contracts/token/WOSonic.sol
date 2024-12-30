@@ -45,10 +45,10 @@ contract WOSonic is ERC4626, Governable, Initializable {
      * @param asset_ Address for the asset
      * @param amount_ Amount of the asset to transfer
      */
-    function transferToken(
-        address asset_,
-        uint256 amount_
-    ) external onlyGovernor {
+    function transferToken(address asset_, uint256 amount_)
+        external
+        onlyGovernor
+    {
         require(asset_ != address(asset()), "Cannot collect Origin S");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }

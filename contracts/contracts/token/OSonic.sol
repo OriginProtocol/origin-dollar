@@ -7,4 +7,6 @@ import { OUSD } from "./OUSD.sol";
  * @title Origin S (OS) Token Contract on Sonic
  * @author Origin Protocol Inc
  */
-contract OSonic is OUSD {}
+contract OSonic is OUSD {
+
+}

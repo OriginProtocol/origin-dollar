@@ -6,29 +6,41 @@ import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgra
 /**
  * @notice OSonicVaultProxy delegates calls to OSonicVault implementation
  */
-contract OSonicVaultProxy is InitializeGovernedUpgradeabilityProxy {}
+contract OSonicVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice OSonicProxy delegates calls to OSonic implementation
  */
-contract OSonicProxy is InitializeGovernedUpgradeabilityProxy {}
+contract OSonicProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice WOSonicProxy delegates calls to WOSonic implementation
  */
-contract WOSonicProxy is InitializeGovernedUpgradeabilityProxy {}
+contract WOSonicProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice OSonicDripperProxy delegates calls to a OSonicDripper implementation
  */
-contract OSonicDripperProxy is InitializeGovernedUpgradeabilityProxy {}
+contract OSonicDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice SonicStakingStrategyProxy delegates calls to SonicStakingStrategy implementation
  */
-contract SonicStakingStrategyProxy is InitializeGovernedUpgradeabilityProxy {}
+contract SonicStakingStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice OSonicHarvesterProxy delegates calls to a OSonicHarvester implementation
  */
-contract OSonicHarvesterProxy is InitializeGovernedUpgradeabilityProxy {}
+contract OSonicHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
