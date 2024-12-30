@@ -339,6 +339,7 @@ addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
+addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
