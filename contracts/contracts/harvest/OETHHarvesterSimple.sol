@@ -78,7 +78,6 @@ contract OETHHarvesterSimple is Governable {
         onlyStrategist
     {
         require(_strategy != address(0), "Invalid strategy");
-
         supportedStrategies[_strategy] = _isSupported;
         emit SupportedStrategyUpdate(_strategy, _isSupported);
     }

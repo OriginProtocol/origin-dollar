@@ -16,7 +16,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 1. Deploy contract
     const dOETHHarvesterSimple = await deployWithConfirmation(
       "OETHHarvesterSimple",
-      [addresses.mainnet.Timelock, deployerAddr, deployerAddr] // Need to adjust governor, strategist and operator
+      [addresses.mainnet.Timelock, deployerAddr] // Need to adjust governor and strategist
     );
     const cOETHHarvesterSimple = await ethers.getContractAt(
       "OETHHarvesterSimple",
