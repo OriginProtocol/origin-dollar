@@ -20,6 +20,14 @@ contract OETHHarvesterSimple is Governable {
     event StrategyStatusSet(address strategy, bool status);
 
     ////////////////////////////////////////////////////
+    /// --- MODIFIERS
+    ////////////////////////////////////////////////////
+    modifier onlyStrategist() {
+        require(msg.sender == strategist || isGovernor(), "Not strategist");
+        _;
+    }
+
+    ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
     constructor(address _governor, address _strategist) {
@@ -67,7 +75,7 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     function setStrategyStatus(address _strategy, bool _status)
         external
-        onlyGovernor
+        onlyStrategist
     {
         isAuthorized[_strategy] = _status;
         emit StrategyStatusSet(_strategy, _status);
