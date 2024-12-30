@@ -34,7 +34,7 @@ contract OETHVaultCore is VaultCore {
      */
     function cacheWETHAssetIndex() external onlyGovernor {
         uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i; i < assetCount; ++i) {
             if (allAssets[i] == weth) {
                 wethAssetIndex = i;
                 break;
@@ -157,12 +157,12 @@ contract OETHVaultCore is VaultCore {
      * The OETH is burned on request and the WETH is transferred to the withdrawer on claim.
      * This request can be claimed once the withdrawal queue's `claimable` amount
      * is greater than or equal this request's `queued` amount.
-     * There is no minimum time or block number before a request can be claimed. It just needs
+     * There is a minimum of 10 minutes before a request can be claimed. After that, the request just needs
      * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
      * OETH is converted to WETH at 1:1.
      * @param _amount Amount of OETH to burn.
-     * @param requestId Unique ID for the withdrawal request
-     * @param queued Cumulative total of all WETH queued including already claimed requests.
+     * @return requestId Unique ID for the withdrawal request
+     * @return queued Cumulative total of all WETH queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
         external
@@ -255,7 +255,7 @@ contract OETHVaultCore is VaultCore {
      * @return amounts Amount of WETH received for each request
      * @return totalAmount Total amount of WETH transferred to the withdrawer
      */
-    function claimWithdrawals(uint256[] memory _requestIds)
+    function claimWithdrawals(uint256[] calldata _requestIds)
         external
         virtual
         whenNotCapitalPaused
@@ -272,7 +272,7 @@ contract OETHVaultCore is VaultCore {
         _addWithdrawalQueueLiquidity();
 
         amounts = new uint256[](_requestIds.length);
-        for (uint256 i = 0; i < _requestIds.length; ++i) {
+        for (uint256 i; i < _requestIds.length; ++i) {
             amounts[i] = _claimWithdrawal(_requestIds[i]);
             totalAmount += amounts[i];
         }
@@ -391,7 +391,7 @@ contract OETHVaultCore is VaultCore {
 
     /// @dev Get the balance of an asset held in Vault and all strategies
     /// less any WETH that is reserved for the withdrawal queue.
-    /// This will only return a non-zero balance for WETH.
+    /// WETH is the only asset that can return a non-zero balance.
     /// All other assets will return 0 even if there is some dust amounts left in the Vault.
     /// For example, there is 1 wei left of stETH in the OETH Vault but will return 0 in this function.
     ///

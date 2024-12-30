@@ -29,101 +29,101 @@
 <path fill="none" stroke="black" d="M454.66,-277.92C483.14,-288.31 518.62,-301.25 550.45,-312.86"/>
 <polygon fill="none" stroke="black" points="547.13,-322.83 578.91,-323.25 554.32,-303.1 547.13,-322.83"/>
 </g>
-<!-- 224 -->
+<!-- 225 -->
 <g id="node3" class="node">
-<title>224</title>
+<title>225</title>
 <polygon fill="#f2f2f2" stroke="black" points="302.32,-314.9 302.32,-373.3 498.33,-373.3 498.33,-314.9 302.32,-314.9"/>
 <text text-anchor="middle" x="400.33" y="-356.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="400.33" y="-339.9" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="400.33" y="-323.1" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 215&#45;&gt;224 -->
+<!-- 215&#45;&gt;225 -->
 <g id="edge1" class="edge">
-<title>215&#45;&gt;224</title>
+<title>215&#45;&gt;225</title>
 <path fill="none" stroke="black" d="M400.33,-278.24C400.33,-280.29 400.33,-282.43 400.33,-284.63"/>
 <polygon fill="none" stroke="black" points="389.83,-284.74 400.33,-314.74 410.83,-284.74 389.83,-284.74"/>
 </g>
-<!-- 227 -->
+<!-- 228 -->
 <g id="node4" class="node">
-<title>227</title>
+<title>228</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-314.9 0,-373.3 284.66,-373.3 284.66,-314.9 0,-314.9"/>
 <text text-anchor="middle" x="142.33" y="-356.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="142.33" y="-339.9" font-family="Times,serif" font-size="14.00">InitializableERC20Detailed</text>
 <text text-anchor="middle" x="142.33" y="-323.1" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableERC20Detailed.sol</text>
 </g>
-<!-- 215&#45;&gt;227 -->
+<!-- 215&#45;&gt;228 -->
 <g id="edge2" class="edge">
-<title>215&#45;&gt;227</title>
+<title>215&#45;&gt;228</title>
 <path fill="none" stroke="black" d="M340.17,-277.92C315.28,-286.12 285.56,-295.91 256.82,-305.38"/>
 <polygon fill="none" stroke="black" points="253.25,-295.5 228.04,-314.86 259.82,-315.45 253.25,-295.5"/>
 </g>
-<!-- 236 -->
+<!-- 237 -->
 <g id="node5" class="node">
-<title>236</title>
+<title>237</title>
 <polygon fill="#f2f2f2" stroke="black" points="519.82,-79.1 519.82,-120.7 722.84,-120.7 722.84,-79.1 519.82,-79.1"/>
 <text text-anchor="middle" x="621.33" y="-104.1" font-family="Times,serif" font-size="14.00">VaultAdmin</text>
 <text text-anchor="middle" x="621.33" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/vault/VaultAdmin.sol</text>
 </g>
-<!-- 239 -->
+<!-- 240 -->
 <g id="node8" class="node">
-<title>239</title>
+<title>240</title>
 <polygon fill="#f2f2f2" stroke="black" points="419.88,-157.7 419.88,-199.3 626.78,-199.3 626.78,-157.7 419.88,-157.7"/>
 <text text-anchor="middle" x="523.33" y="-182.7" font-family="Times,serif" font-size="14.00">VaultStorage</text>
 <text text-anchor="middle" x="523.33" y="-165.9" font-family="Times,serif" font-size="14.00">../contracts/vault/VaultStorage.sol</text>
 </g>
-<!-- 236&#45;&gt;239 -->
+<!-- 237&#45;&gt;240 -->
 <g id="edge4" class="edge">
-<title>236&#45;&gt;239</title>
+<title>237&#45;&gt;240</title>
 <path fill="none" stroke="black" d="M595.84,-120.83C588.69,-126.41 580.67,-132.68 572.64,-138.96"/>
 <polygon fill="none" stroke="black" points="565.86,-130.93 548.69,-157.67 578.8,-147.47 565.86,-130.93"/>
 </g>
-<!-- 237 -->
+<!-- 238 -->
 <g id="node6" class="node">
-<title>237</title>
+<title>238</title>
 <polygon fill="#f2f2f2" stroke="black" points="296.66,-0.5 296.66,-42.1 488,-42.1 488,-0.5 296.66,-0.5"/>
 <text text-anchor="middle" x="392.33" y="-25.5" font-family="Times,serif" font-size="14.00">VaultCore</text>
 <text text-anchor="middle" x="392.33" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/vault/VaultCore.sol</text>
 </g>
-<!-- 238 -->
+<!-- 239 -->
 <g id="node7" class="node">
-<title>238</title>
+<title>239</title>
 <polygon fill="#f2f2f2" stroke="black" points="283.06,-79.1 283.06,-120.7 501.6,-120.7 501.6,-79.1 283.06,-79.1"/>
 <text text-anchor="middle" x="392.33" y="-104.1" font-family="Times,serif" font-size="14.00">VaultInitializer</text>
 <text text-anchor="middle" x="392.33" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/vault/VaultInitializer.sol</text>
 </g>
-<!-- 237&#45;&gt;238 -->
+<!-- 238&#45;&gt;239 -->
 <g id="edge5" class="edge">
-<title>237&#45;&gt;238</title>
+<title>238&#45;&gt;239</title>
 <path fill="none" stroke="black" d="M392.33,-42.43C392.33,-44.45 392.33,-46.56 392.33,-48.73"/>
 <polygon fill="none" stroke="black" points="381.83,-48.91 392.33,-78.91 402.83,-48.91 381.83,-48.91"/>
 </g>
-<!-- 238&#45;&gt;215 -->
+<!-- 239&#45;&gt;215 -->
 <g id="edge7" class="edge">
-<title>238&#45;&gt;215</title>
+<title>239&#45;&gt;215</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M393.36,-120.87C394.73,-147.53 397.18,-194.97 398.78,-225.98"/>
 <polygon fill="black" stroke="black" points="395.29,-226.4 399.3,-236.2 402.28,-226.04 395.29,-226.4"/>
 </g>
-<!-- 238&#45;&gt;239 -->
+<!-- 239&#45;&gt;240 -->
 <g id="edge6" class="edge">
-<title>238&#45;&gt;239</title>
+<title>239&#45;&gt;240</title>
 <path fill="none" stroke="black" d="M426.41,-120.83C437.7,-127.43 450.63,-134.99 463.29,-142.39"/>
 <polygon fill="none" stroke="black" points="458.23,-151.59 489.42,-157.67 468.83,-133.47 458.23,-151.59"/>
 </g>
-<!-- 239&#45;&gt;20 -->
+<!-- 240&#45;&gt;20 -->
 <g id="edge9" class="edge">
-<title>239&#45;&gt;20</title>
+<title>240&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M536.82,-199.56C553.19,-223.91 581.3,-265.72 602.97,-297.95"/>
 <polygon fill="none" stroke="black" points="594.45,-304.09 619.9,-323.13 611.88,-292.38 594.45,-304.09"/>
 </g>
-<!-- 239&#45;&gt;215 -->
+<!-- 240&#45;&gt;215 -->
 <g id="edge10" class="edge">
-<title>239&#45;&gt;215</title>
+<title>240&#45;&gt;215</title>
 <path fill="none" stroke="black" d="M491.33,-199.43C475.96,-209 457.36,-220.58 440.99,-230.78"/>
 <polygon fill="black" stroke="black" points="438.8,-228.02 432.17,-236.27 442.5,-233.96 438.8,-228.02"/>
 </g>
-<!-- 239&#45;&gt;224 -->
+<!-- 240&#45;&gt;225 -->
 <g id="edge8" class="edge">
-<title>239&#45;&gt;224</title>
+<title>240&#45;&gt;225</title>
 <path fill="none" stroke="black" d="M521.97,-199.45C519.64,-220.76 513.34,-254.68 496.33,-278.4 491.71,-284.84 486.24,-290.83 480.29,-296.35"/>
 <polygon fill="none" stroke="black" points="473.78,-288.12 456.53,-314.81 486.66,-304.7 473.78,-288.12"/>
 </g>

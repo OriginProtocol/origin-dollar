@@ -17,8 +17,10 @@ const isFork = process.env.FORK === "true";
 const getStorageFileLocation = (hre, contractName) => {
   const isMainnet = hre.network.name === "mainnet";
   const isArbitrum = hre.network.name === "arbitrumOne";
+  const isSonic = hre.network.name === "sonic";
   const forkNetworkName = process.env.FORK_NETWORK_NAME;
   const isArbitrumFork = isFork && forkNetworkName == "arbitrumOne";
+  const isSonicFork = isFork && forkNetworkName == "sonic";
   const isMainnetFork = isFork && forkNetworkName == "mainnet";
 
   let folder = "localhost";
@@ -26,6 +28,8 @@ const getStorageFileLocation = (hre, contractName) => {
     folder = "mainnet";
   } else if (isArbitrumFork || isArbitrum) {
     folder = "arbitrumOne";
+  } else if (isSonicFork || isSonic) {
+    folder = "sonic";
   }
 
   const layoutFolder = `./storageLayout/${folder}/`;

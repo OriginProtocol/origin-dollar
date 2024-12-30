@@ -9,7 +9,7 @@ const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
-const log = require("../utils/logger")("test:fixtures-arb");
+const log = require("../utils/logger")("test:fixtures-base");
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
