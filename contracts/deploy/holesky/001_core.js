@@ -1,5 +1,5 @@
 const {
-  deployOracles,
+  deployFixedRateOracle,
   deployOETHCore,
   deployNativeStakingSSVStrategy,
   deployOETHDripper,
@@ -15,7 +15,7 @@ const mainExport = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   console.log("Deploying Oracles");
-  await deployOracles();
+  await deployFixedRateOracle();
   console.log("Deploying Core");
   await deployOETHCore();
   console.log("Deploying Native Staking");

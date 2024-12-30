@@ -93,7 +93,7 @@ if (process.env.HARDHAT_CACHE_DIR) {
 }
 const { provider, chainId } = getHardhatNetworkProperties();
 
-module.exports = {
+const options = {
   solidity: {
     version: "0.8.7",
     settings: {
@@ -106,6 +106,7 @@ module.exports = {
     nameTags: {
       "0xba12222222228d8ba445958a75a0704d566bf2c8": "Balancer Vault",
       "0xef1c6e67703c7bd7107eed8303fbe6ec2554bf6b": "Uniswap Universal Router",
+      tasks: ["node"],
     },
   },
   networks: {
@@ -392,3 +393,4 @@ module.exports = {
   },
   paths,
 };
+module.exports = options;

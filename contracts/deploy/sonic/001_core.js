@@ -1,5 +1,5 @@
 const {
-  deployOracles,
+  deployFixedRateOracle,
   deployOETHCore,
   deployOETHDripper,
   deployOETHHarvester,
@@ -21,7 +21,7 @@ const mainExport = async () => {
       await hardhatSetBalance(deployerAddr, "10000000000");
   }
 
-  await deployOracles();
+  await deployFixedRateOracle();
   await deployOETHCore();
 
   const cOETHDripper = await deployOETHDripper({ skipUpgradeSafety: true });

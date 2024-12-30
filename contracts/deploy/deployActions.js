@@ -7,7 +7,7 @@ const {
   isMainnet,
   isHolesky,
   isSonicOrFork,
-  isSonic,
+  isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1021,6 +1021,16 @@ const deployNativeStakingSSVStrategy = async () => {
 };
 
 /**
+ * Deploy Fixed rate Oracle.
+ */
+const deployFixedRateOracle = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  await deployWithConfirmation("OETHOracleRouter", [addresses.zero], "OETHFixedOracle");
+  await ethers.getContract("OETHOracleRouter");
+  log("Deployed OETHOracleRouter");
+}
+
+/**
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
@@ -1033,21 +1043,11 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHolesky || isSonic) {
-    oracleContract = "OETHFixedOracle";
-    contractName = "OETHOracleRouter";
-    args = [addresses.zero];
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  const oracleRouter = await ethers.getContract("OracleRouter");
+  const oracleRouter = await ethers.getContract(contractName);
   log("Deployed OracleRouter");
-  if (isHolesky || isSonicOrFork) {
-    // no need to configure any feeds since they are hardcoded to a fixed feed
-    // TODO: further deployments will require more intelligent separation of different
-    // chains / environment oracle deployments
-    return;
-  }
 
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [
@@ -1096,7 +1096,7 @@ const deployOracles = async () => {
   }
   log("Initialized AuraWETHPriceFeed");
 };
-
+  
 const deployOETHCore = async () => {
   const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1127,11 +1127,8 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
 
-  const cOETHOracleRouter = isMainnet
-    ? await ethers.getContract("OETHOracleRouter")
-    : cOracleRouter;
+  let cOETHOracleRouter = await ethers.getContract(isTest ? "OracleRouter" : "OETHOracleRouter");
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
@@ -1615,6 +1612,7 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
 
 module.exports = {
   deployOracles,
+  deployFixedRateOracle,
   deployCore,
   deployOETHCore,
   deployOUSDCore,
