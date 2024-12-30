@@ -9,7 +9,6 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
-    address public operator;
     address public strategist;
     mapping(address => bool) public isAuthorized;
 
@@ -17,31 +16,14 @@ contract OETHHarvesterSimple is Governable {
     /// --- EVENTS
     ////////////////////////////////////////////////////
     event Harvested(address token, uint256 amount);
-    event OperatorSet(address operator);
     event StrategistSet(address strategist);
     event StrategyStatusSet(address strategy, bool status);
 
     ////////////////////////////////////////////////////
-    /// --- MODIFIERS
-    ////////////////////////////////////////////////////
-    modifier onlyOperator() {
-        require(
-            msg.sender == operator || isGovernor(),
-            "Only Operator or Governor"
-        );
-        _;
-    }
-
-    ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
-    constructor(
-        address _governor,
-        address _operator,
-        address _strategist
-    ) {
+    constructor(address _governor, address _strategist) {
         require(_strategist != address(0), "Invalid strategist");
-        operator = _operator;
         strategist = _strategist;
         _setGovernor(_governor);
     }
@@ -49,14 +31,11 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
-    function harvestAndTransfer(address _strategy) external onlyOperator {
+    function harvestAndTransfer(address _strategy) external {
         _harvestAndTransfer(_strategy);
     }
 
-    function harvestAndTransfer(address[] calldata _strategies)
-        external
-        onlyOperator
-    {
+    function harvestAndTransfer(address[] calldata _strategies) external {
         for (uint256 i = 0; i < _strategies.length; i++) {
             _harvestAndTransfer(_strategies[i]);
         }
@@ -86,11 +65,6 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE
     ////////////////////////////////////////////////////
-    function setOperator(address _operator) external onlyGovernor {
-        operator = _operator;
-        emit OperatorSet(_operator);
-    }
-
     function setStrategyStatus(address _strategy, bool _status)
         external
         onlyGovernor
