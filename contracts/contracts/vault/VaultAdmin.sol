@@ -361,6 +361,7 @@ contract VaultAdmin is VaultStorage {
      */
     function supportAsset(address _asset, uint8 _unitConversion)
         external
+        virtual
         onlyGovernor
     {
         require(!assets[_asset].isSupported, "Asset already supported");
