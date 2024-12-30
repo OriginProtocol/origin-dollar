@@ -217,12 +217,20 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_DEPLOYER
+            : isSonicFork
+            ? SONIC_DEPLOYER
             : MAINNET_DEPLOYER
           : 0,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_DEPLOYER
+            : isSonicFork
+            ? SONIC_DEPLOYER
             : MAINNET_DEPLOYER
           : 0,
       mainnet: MAINNET_DEPLOYER,
@@ -250,6 +258,8 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isBaseFork
             ? BASE_GOVERNOR
+            : isSonicFork
+            ? SONIC_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,

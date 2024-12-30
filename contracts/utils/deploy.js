@@ -95,7 +95,7 @@ const deployWithConfirmation = async (
   if (!args) args = null;
   if (!contract) contract = contractName;
   let feeData;
-  if (useFeeData) {
+  if (!useFeeData && !isSonic) {
     feeData = await hre.ethers.provider.getFeeData();
   }
   const result = await withConfirmation(
