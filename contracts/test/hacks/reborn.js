@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { createFixtureLoader, rebornFixture } = require("../_fixture");
 const { isFork, daiUnits, ousdUnits } = require("../helpers");
 
-describe.skip("Reborn Attack Protection", function () {
+describe("Reborn Attack Protection", function () {
   if (isFork) {
     this.timeout(0);
   }
