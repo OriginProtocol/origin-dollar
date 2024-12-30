@@ -10,14 +10,14 @@ contract OETHHarvesterSimple is Governable {
     /// --- STORAGE
     ////////////////////////////////////////////////////
     address public strategist;
-    mapping(address => bool) public isAuthorized;
+    mapping(address => bool) public supportedStrategies;
 
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
     event Harvested(address token, uint256 amount);
     event StrategistSet(address strategist);
-    event StrategyStatusSet(address strategy, bool status);
+    event SupportedStrategyUpdate(address strategy, bool status);
 
     ////////////////////////////////////////////////////
     /// --- MODIFIERS
@@ -50,8 +50,8 @@ contract OETHHarvesterSimple is Governable {
     }
 
     function _harvestAndTransfer(address _strategy) internal {
-        // Ensure strategy is authorized
-        require(isAuthorized[_strategy], "Strategy not authorized");
+        // Ensure strategy is supported
+        require(supportedStrategies[_strategy], "Strategy not supported");
 
         // Harvest rewards
         IStrategy(_strategy).collectRewardTokens();
@@ -73,12 +73,12 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE
     ////////////////////////////////////////////////////
-    function setStrategyStatus(address _strategy, bool _status)
+    function setSupportedStrategy(address _strategy, bool _isSupported)
         external
         onlyStrategist
     {
-        isAuthorized[_strategy] = _status;
-        emit StrategyStatusSet(_strategy, _status);
+        supportedStrategies[_strategy] = _isSupported;
+        emit SupportedStrategyUpdate(_strategy, _isSupported);
     }
 
     function setStrategist(address _strategist) external onlyGovernor {
