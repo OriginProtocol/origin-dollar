@@ -81,8 +81,9 @@ describe("ForkTest: CurvePoolBooster", function () {
     await simpleOETHHarvester
       .connect(timelock)
       .setStrategyStatus(convexEthMetaStrategy.address, true);
+    // prettier-ignore
     await simpleOETHHarvester
-      .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
+    .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
 
     const balanceAfterCRV = await crv.balanceOf(strategist);
     expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
@@ -95,6 +96,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     );
 
     await expect(
+      // prettier-ignore
       simpleOETHHarvester
         .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
     ).to.be.revertedWith("Strategy not authorized");
@@ -110,6 +112,7 @@ describe("ForkTest: CurvePoolBooster", function () {
       .connect(timelock)
       .setStrategyStatus(convexEthMetaStrategy.address, true);
     await expect(
+      // prettier-ignore
       simpleOETHHarvester
         .connect(josh)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
     ).to.be.revertedWith("Only Operator or Governor");
