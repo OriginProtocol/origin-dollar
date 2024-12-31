@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 interface IWrappedSonic {
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
 
     function approve(address spender, uint256 value) external returns (bool);
 
@@ -13,9 +13,9 @@ interface IWrappedSonic {
 
     function decimals() external view returns (uint8);
 
-    function deposit() external;
+    function deposit() external payable;
 
-    function depositFor(address account) external returns (bool);
+    function depositFor(address account) external payable returns (bool);
 
     function totalSupply() external view returns (uint256);
 
