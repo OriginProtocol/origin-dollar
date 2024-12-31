@@ -52,6 +52,15 @@ def main():
     txs.append(vault_value_checker.takeSnapshot(std))
 
     txs.append(
+      vault_admin.withdrawFromStrategy(
+        AAVE_STRAT,
+        [usdt],
+        [8000 * 10**6],
+        std
+      )
+    )
+
+    txs.append(
       vault_admin.depositToStrategy(
         MORPHO_GAUNTLET_PRIME_USDT_STRAT,
         [usdt],
@@ -89,5 +98,3 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
-
-    print(to_gnosis_json(txs, STRATEGIST, "1"))
