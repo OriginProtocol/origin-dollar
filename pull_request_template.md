@@ -24,5 +24,6 @@ Two reviewers complete the following checklist:
 - [ ] The transactions that interacted with the newly deployed contract match the deploy script.
 - [ ] Governance proposal matches the deploy script
 - [ ] Smoke tests pass after fork test execution of the governance proposal
+- [ ] Deploy script calls `initialize()` and `safeApproveAllTokens()` wherever necessary
 ```
 
