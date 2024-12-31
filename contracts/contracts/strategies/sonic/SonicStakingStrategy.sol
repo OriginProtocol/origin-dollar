@@ -47,10 +47,12 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     /// To deposit wS into validators `delegate` must be used.
     /// @param _asset Address of asset to deposit. Has to be Wrapped Sonic (wS).
     /// @param _amount Amount of assets that were transferred to the strategy by the vault.
-    function deposit(
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         require(_asset == wrappedSonic, "Unsupported asset");
         depositedWSAccountedFor += _amount;
         _deposit(_asset, _amount);
@@ -133,9 +135,13 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     /// still pending a withdrawal.
     /// @param _asset      Address of Wrapped Sonic (wS) token
     /// @return balance    Total value managed by the strategy
-    function checkBalance(
-        address _asset
-    ) external view virtual override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256 balance)
+    {
         require(_asset == wrappedSonic, "Unsupported asset");
 
         balance =
@@ -149,9 +155,13 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(
-        address _asset
-    ) public view virtual override returns (bool) {
+    function supportsAsset(address _asset)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _asset == wrappedSonic;
     }
 
@@ -159,10 +169,12 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
      * @notice is not supported for this strategy as the
      * Wrapped Sonic (wS) token is set at deploy time.
      */
-    function setPTokenAddress(
-        address,
-        address
-    ) external view override onlyGovernor {
+    function setPTokenAddress(address, address)
+        external
+        view
+        override
+        onlyGovernor
+    {
         revert("unsupported function");
     }
 

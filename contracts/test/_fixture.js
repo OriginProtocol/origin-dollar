@@ -2440,7 +2440,7 @@ async function rebornFixture() {
   const deployAndCall = async ({
     shouldAttack = true,
     targetMethod = null,
-    shouldDestruct = false
+    shouldDestruct = false,
   }) => {
     await sanctum.setShouldAttack(shouldAttack);
     await sanctum.setShouldDesctruct(shouldDestruct);

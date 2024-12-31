@@ -23,10 +23,10 @@ interface ISFC {
 
     function withdraw(uint256 toValidatorID, uint256 wrID) external;
 
-    function pendingRewards(
-        address delegator,
-        uint256 toValidatorID
-    ) external view returns (uint256);
+    function pendingRewards(address delegator, uint256 toValidatorID)
+        external
+        view
+        returns (uint256);
 
     function claimRewards(uint256 toValidatorID) external;
 
@@ -34,7 +34,8 @@ interface ISFC {
 
     function isSlashed(uint256 validatorID) external view returns (bool);
 
-    function slashingRefundRatio(
-        uint256 validatorID
-    ) external view returns (uint256);
+    function slashingRefundRatio(uint256 validatorID)
+        external
+        view
+        returns (uint256);
 }

@@ -84,10 +84,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
      * @param validatorId the ID of the validator to delegate to
      * @param amount the amount of Sonic (S) to delegate.
      */
-    function delegate(
-        uint256 validatorId,
-        uint256 amount
-    ) external onlyRegistrator nonReentrant {
+    function delegate(uint256 validatorId, uint256 amount)
+        external
+        onlyRegistrator
+        nonReentrant
+    {
         require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
@@ -100,10 +101,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit Delegated(validatorId, amount);
     }
 
-    function undelegate(
-        uint256 validatorId,
-        uint256 undelegateAmount
-    ) external onlyRegistrator returns (uint256 withdrawId) {
+    function undelegate(uint256 validatorId, uint256 undelegateAmount)
+        external
+        onlyRegistrator
+        returns (uint256 withdrawId)
+    {
         require(undelegateAmount > 0, "Must undelegate something");
 
         uint256 amountDelegated = ISFC(sfc).getStake(
@@ -126,9 +128,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit Undelegated(withdrawId, validatorId, undelegateAmount);
     }
 
-    function withdraw(
-        uint256 withdrawId
-    ) external onlyRegistrator returns (uint256 withdrawnAmount) {
+    function withdraw(uint256 withdrawId)
+        external
+        onlyRegistrator
+        returns (uint256 withdrawnAmount)
+    {
         // Load the withdrawal from storage into memory
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];
 
