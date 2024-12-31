@@ -4,6 +4,7 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 module.exports = deployOnBaseWithGuardian(
   {
     deployName: "021_upgrade_oeth",
+    forceSkip: false
   },
   async ({ ethers }) => {
     const dOETHb = await deployWithConfirmation("OETHBase");

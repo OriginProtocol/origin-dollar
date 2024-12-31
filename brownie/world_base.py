@@ -32,6 +32,7 @@ harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
+    OETHB: 18,
     'human': 0,
 }
 
