@@ -98,3 +98,42 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+
+# -------------------------------------
+# Dec 31, 2024 - Deposit incentives and lock Aero
+# -------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # amount = aero.balanceOf(OETHB_STRATEGIST)
+    amount = 150_000 * 10**18
+
+    # Approve the bribes contract to move it
+    txs.append(
+        aero.approve(OETHB_WETH_BRIBE_CONTRACT, amount, from_strategist)
+    )
+
+    # Bribe
+    txs.append(
+      oethb_weth_bribe.notifyRewardAmount(
+        AERO_BASE,
+        amount,
+        from_strategist
+      )
+    )
+
+    # Approve the veaero contract to move it
+    txs.append(
+      aero.approve(VEAERO_BASE, amount, from_strategist)
+    )
+
+    # Create a lock
+    txs.append(
+      veaero.createLock(
+        amount,
+        365.25 * 4 * 24 * 60 * 60, # 4 years
+        from_strategist
+      )
+    )
