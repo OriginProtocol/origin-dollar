@@ -129,11 +129,14 @@ def main():
       aero.approve(VEAERO_BASE, amount, from_strategist)
     )
 
-    # Create a lock
-    txs.append(
-      veaero.createLock(
-        amount,
-        365.25 * 4 * 24 * 60 * 60, # 4 years
-        from_strategist
+    lock_amount = 5000 * 10**18
+    num_locks = 30
+    for i in range(0, num_locks):
+      # Create a lock of 5k AERO for 4 years
+      txs.append(
+        veaero.createLock(
+          lock_amount,
+          365.25 * 4 * 24 * 60 * 60, # 4 years
+          from_strategist
+        )
       )
-    )
