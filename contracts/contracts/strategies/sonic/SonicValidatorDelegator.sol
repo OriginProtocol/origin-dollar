@@ -22,7 +22,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /**
      * @notice a unique ID for each withdrawal request
      */
-    uint256 public nextWithdrawId = 1;
+    uint256 public nextWithdrawId;
+
+    /// @notice Mapping of supported validatorIds
+    mapping(uint256 => bool) public supportedValidators;
 
     struct WithdrawRequest {
         uint256 validatorId;
@@ -35,7 +38,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     address public validatorRegistrator;
 
     // For future use
-    uint256[43] private __gap;
+    uint256[44] private __gap;
 
     event Delegated(uint256 indexed validatorId, uint256 delegatedAmount);
     event Undelegated(
@@ -50,6 +53,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         uint256 withdrawnAmount
     );
     event RegistratorChanged(address indexed newAddress);
+    event SupportedValidator(uint256 indexed validatorId);
+    event UnsupportedValidator(uint256 indexed validatorId);
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -78,6 +83,21 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         sfc = _sfc;
     }
 
+    function initialize() external virtual onlyGovernor initializer {
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](1);
+        address[] memory pTokens = new address[](1);
+
+        assets[0] = address(wrappedSonic);
+        pTokens[0] = address(platformAddress);
+
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
+    }
+
     /**
      * @notice Delegate from this strategy to a specific Sonic validator.
      * Only the registrator can call this function.
@@ -89,6 +109,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         onlyRegistrator
         nonReentrant
     {
+        require(supportedValidators[validatorId], "Validator not supported");
         require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
@@ -106,6 +127,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         onlyRegistrator
         returns (uint256 withdrawId)
     {
+        // Can still undelegate even if the validator is no longer supported
         require(undelegateAmount > 0, "Must undelegate something");
 
         uint256 amountDelegated = ISFC(sfc).getStake(
@@ -133,6 +155,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         onlyRegistrator
         returns (uint256 withdrawnAmount)
     {
+        // Can still withdraw even if the validator is no longer supported
         // Load the withdrawal from storage into memory
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];
 
@@ -161,15 +184,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
-    /// @notice Set the address of the registrator which can delegate, undelegate and withdraw
-    function setRegistrator(address _address) external onlyGovernor {
-        validatorRegistrator = _address;
-        emit RegistratorChanged(_address);
-    }
-
     /// @dev Convert accumulated ETH to WETH and send to the Harvester.
     /// Will revert if the strategy is paused for accounting.
     function collectRewards(uint256[] calldata validatorIds) external {
+        // Can still collect rewards even if the validator is no longer supported
         uint256 balanceBefore = address(this).balance;
 
         for (uint256 i = 0; i < validatorIds.length; ++i) {
@@ -212,5 +230,39 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             msg.sender == sfc || msg.sender == wrappedSonic,
             "S not from allowed contracts"
         );
+    }
+
+    /***************************************
+                Admin functions
+    ****************************************/
+
+    /// @notice Set the address of the Registrator which can delegate, undelegate and withdraw
+    function setRegistrator(address _address) external onlyGovernor {
+        validatorRegistrator = _address;
+        emit RegistratorChanged(_address);
+    }
+
+    /// @notice Allows a validator to be delegated to by the Registrator
+    function supportValidator(uint256 validatorId) external onlyGovernor {
+        require(
+            supportedValidators[validatorId] == false,
+            "Validator already supported"
+        );
+        supportedValidators[validatorId] = true;
+
+        emit SupportedValidator(validatorId);
+    }
+
+    /// @notice Removes a validator from the supported list.
+    /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
+    function unsupportValidator(uint256 validatorId) external onlyGovernor {
+        require(
+            supportedValidators[validatorId] == true,
+            "Validator not supported"
+        );
+
+        supportedValidators[validatorId] = false;
+
+        emit UnsupportedValidator(validatorId);
     }
 }

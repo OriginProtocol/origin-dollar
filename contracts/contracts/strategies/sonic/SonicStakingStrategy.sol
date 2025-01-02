@@ -27,21 +27,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         address _sfc
     ) SonicValidatorDelegator(_baseConfig, _wrappedSonic, _sfc) {}
 
-    function initialize() external virtual onlyGovernor initializer {
-        address[] memory rewardTokens = new address[](0);
-        address[] memory assets = new address[](1);
-        address[] memory pTokens = new address[](1);
-
-        assets[0] = address(wrappedSonic);
-        pTokens[0] = address(platformAddress);
-
-        InitializableAbstractStrategy._initialize(
-            rewardTokens,
-            assets,
-            pTokens
-        );
-    }
-
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just checks the asset is Wrapped Sonic (wS) and emits the Deposit event.
     /// To deposit wS into validators `delegate` must be used.
