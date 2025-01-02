@@ -31,8 +31,7 @@ contract OETHHarvesterSimple is Governable {
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
     constructor(address _governor, address _strategist) {
-        require(_strategist != address(0), "Invalid strategist");
-        strategist = _strategist;
+        _setStrategist(_strategist);
         _setGovernor(_governor);
     }
 
@@ -82,9 +81,13 @@ contract OETHHarvesterSimple is Governable {
         emit SupportedStrategyUpdated(_strategy, _isSupported);
     }
 
-    function setStrategist(address _strategist) external onlyGovernor {
+    function _setStrategist(address _strategist) internal {
         require(_strategist != address(0), "Invalid strategist");
         strategist = _strategist;
         emit StrategistUpdated(_strategist);
+    }
+
+    function setStrategist(address _strategist) external onlyGovernor {
+        _setStrategist(_strategist);
     }
 }
