@@ -1,5 +1,8 @@
 const { deployOnSonic } = require("../../utils/deploy-l2");
-const { deployWithConfirmation } = require("../../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
@@ -123,5 +126,44 @@ module.exports = deployOnSonic(
     console.log("Added vault support of Wrapped S");
     await cOSonicVault.connect(sGovernor).unpauseCapital();
     console.log("Unpaused capital");
+
+    // Staking Strategy
+    await deployWithConfirmation("SonicStakingStrategyProxy");
+    console.log("Deployed Sonic Staking Strategy proxy");
+
+    const cSonicStakingStrategyProxy = await ethers.getContract(
+      "SonicStakingStrategyProxy"
+    );
+    const dSonicStakingStrategy = await deployWithConfirmation(
+      "SonicStakingStrategy",
+      [
+        [addresses.sonic.SFC, cOSonicVault.address], // platformAddress, VaultAddress
+        addresses.sonic.wS,
+        addresses.sonic.SFC,
+      ]
+    );
+    console.log(
+      `Deployed Sonic Staking Strategy to ${dSonicStakingStrategy.address}`
+    );
+    const cSonicStakingStrategy = await ethers.getContractAt(
+      "SonicStakingStrategy",
+      cSonicStakingStrategyProxy.address
+    );
+
+    // Init the Sonic Staking Strategy
+    const initSonicStakingStrategy =
+      cSonicStakingStrategy.interface.encodeFunctionData("initialize()", []);
+    // prettier-ignore
+    await withConfirmation(
+      cSonicStakingStrategyProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dSonicStakingStrategy.address,
+          deployerAddr,
+          initSonicStakingStrategy
+        )
+    );
+    console.log("Initialized SonicStakingStrategy proxy and implementation");
+
+    // TODO transfer governor to ?
   }
 );
