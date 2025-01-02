@@ -32,7 +32,7 @@ contract OETHHarvesterSimple is Governable {
     ////////////////////////////////////////////////////
     constructor(address _governor, address _strategist) {
         _setStrategist(_strategist);
-        _setGovernor(_governor);
+        _changeGovernor(_governor);
     }
 
     ////////////////////////////////////////////////////
