@@ -155,6 +155,7 @@ addresses.mainnet.CurveLUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
@@ -164,6 +165,10 @@ addresses.mainnet.CurveOETHMetaPool =
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+
+// Votemarket - StakeDAO
+addresses.mainnet.CampaignRemoteManager =
+  "0xd1f0101Df22Cb7447F486Da5784237AB7a55eB4e";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

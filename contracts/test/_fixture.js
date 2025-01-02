@@ -336,6 +336,17 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
+  const curvePoolBoosterProxy = isFork
+    ? await ethers.getContract("CurvePoolBoosterProxy")
+    : undefined;
+
+  const curvePoolBooster = isFork
+    ? await ethers.getContractAt(
+        "CurvePoolBooster",
+        curvePoolBoosterProxy.address
+      )
+    : undefined;
+
   let usdt,
     dai,
     tusd,
@@ -805,6 +816,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
+    curvePoolBooster,
 
     // Flux strategy
     fluxStrategy,
