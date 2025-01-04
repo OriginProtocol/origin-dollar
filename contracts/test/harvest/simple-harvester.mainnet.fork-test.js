@@ -23,7 +23,9 @@ describe("ForkTest: CurvePoolBooster", function () {
     expect(await simpleOETHHarvester.governor()).to.be.equal(
       addresses.mainnet.Timelock
     );
-    expect(await simpleOETHHarvester.strategist()).to.be.equal(deployerAddr);
+    expect(await simpleOETHHarvester.strategistAddr()).to.be.equal(
+      deployerAddr
+    );
   });
 
   it("Should support Strategy", async () => {
@@ -53,9 +55,11 @@ describe("ForkTest: CurvePoolBooster", function () {
       addresses.mainnet.Timelock
     );
 
-    expect(await simpleOETHHarvester.strategist()).not.to.equal(josh.address);
-    await simpleOETHHarvester.connect(timelock).setStrategist(josh.address);
-    expect(await simpleOETHHarvester.strategist()).to.equal(josh.address);
+    expect(await simpleOETHHarvester.strategistAddr()).not.to.equal(
+      josh.address
+    );
+    await simpleOETHHarvester.connect(timelock).setStrategistAddr(josh.address);
+    expect(await simpleOETHHarvester.strategistAddr()).to.equal(josh.address);
   });
 
   it("Should Harvest and transfer rewards", async () => {
@@ -63,7 +67,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     const timelock = await ethers.provider.getSigner(
       addresses.mainnet.Timelock
     );
-    const strategist = await simpleOETHHarvester.strategist();
+    const strategist = await simpleOETHHarvester.strategistAddr();
 
     const balanceBeforeCRV = await crv.balanceOf(strategist);
     await simpleOETHHarvester
