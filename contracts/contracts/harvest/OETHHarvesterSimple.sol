@@ -4,8 +4,11 @@ pragma solidity ^0.8.0;
 import { Strategizable } from "../governance/Strategizable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract OETHHarvesterSimple is Strategizable {
+    using SafeERC20 for IERC20;
+
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
@@ -53,7 +56,7 @@ contract OETHHarvesterSimple is Strategizable {
             uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
             if (balance > 0) {
                 // Transfer to strategist
-                IERC20(rewardTokens[i]).transfer(strategistAddr, balance);
+                IERC20(rewardTokens[i]).safeTransfer(strategistAddr, balance);
                 emit Harvested(rewardTokens[i], balance);
             }
         }
@@ -69,5 +72,12 @@ contract OETHHarvesterSimple is Strategizable {
         require(_strategy != address(0), "Invalid strategy");
         supportedStrategies[_strategy] = _isSupported;
         emit SupportedStrategyUpdated(_strategy, _isSupported);
+    }
+
+    function transferToken(address _asset, uint256 _amount)
+        external
+        onlyGovernorOrStrategist
+    {
+        IERC20(_asset).safeTransfer(strategistAddr, _amount);
     }
 }
