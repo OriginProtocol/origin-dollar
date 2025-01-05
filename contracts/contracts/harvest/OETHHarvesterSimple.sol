@@ -17,7 +17,7 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event Harvested(address token, uint256 amount);
+    event Harvested(address strategy, address token, uint256 amount);
     event SupportedStrategyUpdated(address strategy, bool status);
 
     ////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ contract OETHHarvesterSimple is Strategizable {
             if (balance > 0) {
                 // Transfer to strategist
                 IERC20(rewardTokens[i]).safeTransfer(strategistAddr, balance);
-                emit Harvested(rewardTokens[i], balance);
+                emit Harvested(_strategy, rewardTokens[i], balance);
             }
         }
     }
