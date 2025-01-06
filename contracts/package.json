@@ -18,6 +18,9 @@
     "node:hol": "FORK_NETWORK_NAME=holesky yarn run node:fork",
     "node:base": "FORK_NETWORK_NAME=base yarn run node:fork",
     "node:sonic": "FORK_NETWORK_NAME=sonic yarn run node:fork",
+    "node:anvil": "anvil --fork-url $PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
+    "node:anvil:base": "anvil --fork-url $BASE_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
+    "node:anvil:sonic": "anvil --fork-url $SONIC_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
@@ -111,6 +114,7 @@
     }
   },
   "dependencies": {
-    "@chainlink/contracts-ccip": "^1.2.1"
+    "@chainlink/contracts-ccip": "^1.2.1",
+    "ganache": "^7.9.2"
   }
 }
