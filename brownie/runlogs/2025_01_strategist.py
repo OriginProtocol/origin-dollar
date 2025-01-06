@@ -9,22 +9,22 @@ def main():
     txs.append(vault_core.rebase(std))
     txs.append(vault_value_checker.takeSnapshot(std))
 
-    # Remove 1 USDC from Morpho Gauntlet Strategy
+    # Remove 1k USDC from Morpho Gauntlet Strategy
     txs.append(
       vault_admin.withdrawFromStrategy(
         MORPHO_GAUNTLET_PRIME_USDC_STRAT, 
         [usdc], 
-        [10**6],
+        [1000 * 10**6],
         {'from': STRATEGIST}
       )
     )
 
-    # Remove 1 USDT from Morpho Gauntlet Strategy
+    # Remove 1k USDT from Morpho Gauntlet Strategy
     txs.append(
       vault_admin.withdrawFromStrategy(
         MORPHO_GAUNTLET_PRIME_USDT_STRAT, 
         [usdt], 
-        [10**6],
+        [1000 * 10**6],
         {'from': STRATEGIST}
       )
     )
