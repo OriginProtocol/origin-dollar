@@ -134,6 +134,10 @@ function deployOnBaseWithGuardian(opts, fn) {
 
     const proposal = await fn(tools);
 
+    if (!proposal?.actions?.length) {
+      return;
+    }
+
     if (useTimelock != false) {
       // Using `!= false` because we want to treat `== undefined` as true by default as well
       const propDescription = proposal.name || deployName;
