@@ -11,13 +11,15 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { strategistAddr } = await getNamedAccounts();
 
     // 1. Deploy contract
     const dOETHHarvesterSimple = await deployWithConfirmation(
       "OETHHarvesterSimple",
-      [addresses.mainnet.Timelock, deployerAddr] // Need to adjust governor and strategist
+      [addresses.mainnet.Timelock, strategistAddr]
     );
+
+    console.log("strategistAddr: ", strategistAddr);
     const cOETHHarvesterSimple = await ethers.getContractAt(
       "OETHHarvesterSimple",
       dOETHHarvesterSimple.address

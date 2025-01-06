@@ -19,13 +19,15 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   it("Should have correct parameters", async () => {
     const { simpleOETHHarvester } = fixture;
-    const { deployerAddr } = await getNamedAccounts();
+    const { strategistAddr } = await getNamedAccounts();
 
     expect(await simpleOETHHarvester.governor()).to.be.equal(
       addresses.mainnet.Timelock
     );
+
+    console.log("strategistAddr: ", strategistAddr);
     expect(await simpleOETHHarvester.strategistAddr()).to.be.equal(
-      deployerAddr
+      strategistAddr
     );
   });
 
