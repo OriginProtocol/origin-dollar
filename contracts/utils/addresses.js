@@ -312,6 +312,8 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // 2/8 Multisig
 addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";
+addresses.base.multichainStrategist =
+  "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =

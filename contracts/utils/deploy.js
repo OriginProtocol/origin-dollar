@@ -1038,6 +1038,8 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const opHash = await timelock.hashOperationBatch(...args);
 
+  console.log("Proposal Hash", opHash);
+
   if (await timelock.isOperationDone(opHash)) {
     // Already executed
     return;
