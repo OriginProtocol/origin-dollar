@@ -25,7 +25,6 @@ describe("ForkTest: CurvePoolBooster", function () {
       addresses.mainnet.Timelock
     );
 
-    console.log("strategistAddr: ", strategistAddr);
     expect(await simpleOETHHarvester.strategistAddr()).to.be.equal(
       strategistAddr
     );
