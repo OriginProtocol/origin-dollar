@@ -8,7 +8,7 @@ module.exports = deployOnBaseWithGuardian(
   async ({ ethers }) => {
     const cTimeLock = await ethers.getContractAt(
       "ITimelockController",
-      addresses.base.timeock
+      addresses.base.timelock
     );
 
     console.log("Min Delay", await cTimeLock.getMinDelay());
