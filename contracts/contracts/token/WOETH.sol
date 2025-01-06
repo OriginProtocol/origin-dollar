@@ -30,6 +30,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     using StableMath for uint256;
     uint256 public oethCreditsHighres;
     bool private _oethCreditsInitialized;
+    uint256[48] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(
@@ -90,7 +91,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        //@dev TODO: we could implement a feature where if anyone sends OETH direclty to
+        //@dev TODO: we could implement a feature where if anyone sends OETH directly to
         // the contract, that we can let the governor transfer the excess of the token.
         require(asset_ != address(asset()), "Cannot collect OETH");
         IERC20(asset_).safeTransfer(governor(), amount_);
