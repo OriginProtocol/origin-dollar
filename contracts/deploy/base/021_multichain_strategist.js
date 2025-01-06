@@ -7,28 +7,13 @@ const EXECUTOR_ROLE =
 module.exports = deployOnBaseWithGuardian(
   {
     deployName: "021_multichain_strategist",
+    // useTimelock: false,
   },
   async ({ ethers }) => {
     const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
     const cOETHbVault = await ethers.getContractAt(
       "IVault",
       cOETHbVaultProxy.address
-    );
-
-    const cAMOStrategyProxy = await ethers.getContract(
-      "AerodromeAMOStrategyProxy"
-    );
-    const cAMOStrategy = await ethers.getContractAt(
-      "AerodromeAMOStrategy",
-      cAMOStrategyProxy.address
-    );
-
-    const cBridgedWOETHStrategyProxy = await ethers.getContract(
-      "BridgedWOETHStrategyProxy"
-    );
-    const cBridgedWOETHStrategy = await ethers.getContractAt(
-      "BridgedWOETHStrategy",
-      cBridgedWOETHStrategyProxy.address
     );
 
     const cTimelock = await ethers.getContractAt(
@@ -47,16 +32,6 @@ module.exports = deployOnBaseWithGuardian(
         {
           contract: cOETHbVault,
           signature: "setTrusteeAddress(address)",
-          args: [addresses.base.multichainStrategist],
-        },
-        {
-          contract: cAMOStrategy,
-          signature: "setHarvesterAddress(address)",
-          args: [addresses.base.multichainStrategist],
-        },
-        {
-          contract: cBridgedWOETHStrategy,
-          signature: "setHarvesterAddress(address)",
           args: [addresses.base.multichainStrategist],
         },
         {
