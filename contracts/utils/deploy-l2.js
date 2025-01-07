@@ -208,7 +208,7 @@ function deployOnBaseWithGuardian(opts, fn) {
 }
 
 function deployOnSonic(opts, fn) {
-  const { deployName, dependencies } = opts;
+  const { deployName, dependencies, forceSkip } = opts;
 
   const runDeployment = async (hre) => {
     const tools = {
@@ -242,12 +242,12 @@ function deployOnSonic(opts, fn) {
   main.tags = ["sonic"];
 
   main.skip = () =>
+    forceSkip ||
     !(
       isSonicFork ||
       hre.network.name == "sonic" ||
       hre.network.config.chainId == 146
     );
-
   return main;
 }
 

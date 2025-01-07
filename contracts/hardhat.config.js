@@ -55,8 +55,9 @@ const BASE_DEPLOYER = MAINNET_DEPLOYER;
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 const SONIC_DEPLOYER = MAINNET_DEPLOYER;
+// TODO: update Sonic Governor and strategist
 const SONIC_GOVERNOR = MAINNET_DEPLOYER;
-const SONIC_STRATEGIST = "";
+const SONIC_STRATEGIST = MAINNET_DEPLOYER;
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";

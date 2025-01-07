@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
 const { isFork, isSonicFork, oethUnits } = require("./helpers");
-const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
+const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
@@ -25,9 +25,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     return;
   }
 
+  let deployerAddr;
   if (isFork) {
     // Fund deployer account
-    const { deployerAddr } = await getNamedAccounts();
+    const namedAccounts = await getNamedAccounts();
+    deployerAddr = namedAccounts.deployerAddr;
     await impersonateAndFund(deployerAddr);
   }
 
@@ -58,41 +60,43 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     oSonicVaultProxy.address
   );
 
-  let dripper, harvester;
-  if (isFork) {
-    // Harvester
-    const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
-    harvester = await ethers.getContractAt(
-      "OSonicHarvester",
-      harvesterProxy.address
-    );
+  // Sonic staking strategy
+  const sonicStakingStrategyProxy = await ethers.getContract("SonicStakingStrategyProxy");
+  const sonicStakingStrategy = await ethers.getContractAt("SonicStakingStrategy", sonicStakingStrategyProxy.address);
 
-    // Dripper
-    const dripperProxy = await ethers.getContract("OSonicDripperProxy");
-    dripper = await ethers.getContractAt(
-      "FixedRateDripper",
-      dripperProxy.address
-    );
-  }
+  // let dripper, harvester;
+  // if (isFork) {
+  //   // Harvester
+  //   const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
+  //   harvester = await ethers.getContractAt(
+  //     "OSonicHarvester",
+  //     harvesterProxy.address
+  //   );
+
+  //   // Dripper
+  //   const dripperProxy = await ethers.getContract("OSonicDripperProxy");
+  //   dripper = await ethers.getContractAt(
+  //     "FixedRateDripper",
+  //     dripperProxy.address
+  //   );
+  // }
 
   // Sonic's wrapped S token
   let wS;
 
   if (isFork) {
-    wS = await ethers.getContractAt("IERC20", addresses.sonic.WS);
+    wS = await ethers.getContractAt("IWrappedSonic", addresses.sonic.wS);
   } else {
     wS = await ethers.getContract("MockWS");
   }
-
-  // Zapper
-  const zapper = !isFork ? undefined : await ethers.getContract("OSonicZapper");
 
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const { governorAddr, strategistAddr, timelockAddr } =
     await getNamedAccounts();
-  const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
+  // TODO: change the deployerAddr to the appropriate governor address
+  const governor = await ethers.getSigner(isFork ? deployerAddr : governorAddr);
   await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
 
   const guardian = await ethers.getSigner(governorAddr);
@@ -100,13 +104,16 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     "ITimelockController",
     timelockAddr
   );
-  const oSonicVaultSigner = await impersonateAccount(oSonicVault.address);
+  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
-  let strategist;
+  let strategist, validatorRegistrator;
   if (isFork) {
     // Impersonate strategist on Fork
     strategist = await impersonateAndFund(strategistAddr);
     strategist.address = strategistAddr;
+
+    validatorRegistrator = await impersonateAndFund(addresses.sonic.validatorRegistrator);
+    validatorRegistrator.address = addresses.sonic.validatorRegistrator;
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);
@@ -124,19 +131,14 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
   }
 
-  if (isFork) {
-    // Governor opts in for rebasing
-    await oSonic.connect(governor).rebaseOptIn();
-  }
-
   return {
     // Origin S
     oSonic,
     oSonicVault,
     wOSonic,
-    zapper,
-    harvester,
-    dripper,
+    // harvester,
+    // dripper,
+    sonicStakingStrategy,
 
     // Wrapped S
     wS,
@@ -149,6 +151,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     minter,
     burner,
     oSonicVaultSigner,
+    validatorRegistrator,
 
     rafael,
     nick,

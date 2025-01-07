@@ -6,6 +6,8 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { ISFC } from "../../interfaces/sonic/ISFC.sol";
 import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Manages delegation to Sonic validators
  * @notice This contract implements all the required functionality to delegate to, undelegate from and withdraw from validators.
@@ -117,10 +119,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             pendingWithdrawals;
 
         // For each supported validator, get the staked amount and pending rewards
-        for (uint256 i = 1; i <= supportedValidators.length; i++) {
+        for (uint256 i = 0; i < supportedValidators.length; i++) {
             // Get the staked amount and any pending rewards
             balance +=
-                ISFC(sfc).getStake(address(this), supportedValidators[i]) +
+                ISFC(sfc).getStake(address(this), supportedValidators[i]);
                 ISFC(sfc).pendingRewards(address(this), supportedValidators[i]);
         }
     }
@@ -136,7 +138,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         onlyRegistrator
         nonReentrant
     {
-        require(_isSupportedValidator(validatorId), "Validator not supported");
+        require(isSupportedValidator(validatorId), "Validator not supported");
         require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
@@ -251,7 +253,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Allows a validator to be delegated to by the Registrator
     function supportValidator(uint256 validatorId) external onlyGovernor {
         require(
-            !_isSupportedValidator(validatorId),
+            !isSupportedValidator(validatorId),
             "Validator already supported"
         );
 
@@ -263,7 +265,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Removes a validator from the supported list.
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
     function unsupportValidator(uint256 validatorId) external onlyGovernor {
-        require(_isSupportedValidator(validatorId), "Validator not supported");
+        require(isSupportedValidator(validatorId), "Validator not supported");
         require(
             ISFC(sfc).getStake(address(this), validatorId) == 0,
             "Validator still has stake"
@@ -282,8 +284,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit UnsupportedValidator(validatorId);
     }
 
-    function _isSupportedValidator(uint256 validatorId)
-        internal
+    /// @notice Returns the length of the supportedValidators array
+    function supportedValidatorsLength() external view returns(uint256) {
+        return supportedValidators.length;
+    }
+
+    function isSupportedValidator(uint256 validatorId)
+        public
         view
         returns (bool)
     {

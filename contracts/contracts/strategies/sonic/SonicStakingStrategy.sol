@@ -142,6 +142,10 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         revert("unsupported function");
     }
 
+    function collectRewardTokens() external override nonReentrant {
+        revert("unsupported function");
+    }
+
     /**
      * @notice is not supported for this strategy as the
      * Wrapped Sonic (wS) token is set at deploy time.

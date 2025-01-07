@@ -162,6 +162,20 @@ module.exports = deployOnSonic(
           initSonicStakingStrategy
         )
     );
+
+    // verify validators here: https://explorer.soniclabs.com/staking
+    // TODO: change to actual validators we want to use on the sonic mainnet
+    for (const validatorId of [14, 16]) {
+      await cSonicStakingStrategy
+        .connect(sDeployer)
+        .supportValidator(validatorId)
+    }
+
+    // TODO: change to Defender Sonic Relayer
+    await cSonicStakingStrategy
+      .connect(sDeployer)
+      .setRegistrator("0xFacEfACE000000000000000000000000facefaCe");
+
     console.log("Initialized SonicStakingStrategy proxy and implementation");
 
     // TODO transfer governor to ?
