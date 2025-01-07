@@ -164,8 +164,7 @@ module.exports = deployOnSonic(
     );
 
     // verify validators here: https://explorer.soniclabs.com/staking
-    // TODO: change to actual validators we want to use on the sonic mainnet
-    for (const validatorId of [14, 16]) {
+    for (const validatorId of [15, 16, 17, 18]) {
       await cSonicStakingStrategy
         .connect(sDeployer)
         .supportValidator(validatorId)

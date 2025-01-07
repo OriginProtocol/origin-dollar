@@ -19,7 +19,7 @@ describe("Sonic ForkTest: Sonic Staking Strategy", function () {
         addresses.sonic.SFC
       ),
       // see validators here: https://explorer.soniclabs.com/staking
-      testValidatorIds: [14, 16],
+      testValidatorIds: [15, 16, 17, 18],
     };
   });
 });

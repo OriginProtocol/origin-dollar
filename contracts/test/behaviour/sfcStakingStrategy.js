@@ -35,9 +35,8 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         "Incorrect SFC address set"
       );
 
-      // TODO: change once the official supported validators change
       expect(await sonicStakingStrategy.supportedValidatorsLength()).to.equal(
-        2,
+        4,
         "Incorrect Supported validators length"
       );
 
