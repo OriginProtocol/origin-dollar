@@ -151,10 +151,13 @@ rule changeSupplyIntegrity(uint256 newTotalSupply) {
 	requireInvariant sumAllRebasingCreditsEqRebasingCredits();
 	require OUSD.rebasingCreditsPerToken_ >= e18();
 	require newTotalSupply >= OUSD.totalSupply();
+	/// If garbage in, then garbage out
+	require (nonRebasingSupply() + (rebasingCreditsHighres() / OUSD.rebasingCreditsPerToken_)) <= OUSD.totalSupply();
+	require OUSD.totalSupply() < MAX_TOTAL_SUPPLY();
 
 	OUSD.changeSupply(e, newTotalSupply);
 
-	assert OUSD.totalSupply() == newTotalSupply;
+	assert newTotalSupply < MAX_TOTAL_SUPPLY() ? OUSD.totalSupply() == newTotalSupply : OUSD.totalSupply == MAX_TOTAL_SUPPLY();
 	assert (nonRebasingSupply() + (rebasingCreditsHighres() / OUSD.rebasingCreditsPerToken_)) <= OUSD.totalSupply();
 }
 

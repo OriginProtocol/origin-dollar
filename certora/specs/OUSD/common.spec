@@ -31,6 +31,7 @@ methods {
 definition e18() returns uint256 = 1000000000000000000; // definition for 1e18 
 
 definition MIN_TOTAL_SUPPLY() returns mathint = 10^16;
+definition MAX_TOTAL_SUPPLY() returns mathint = 2^128 - 1;
 
 // RebaseOptions state definitions
 definition NotSet() returns OUSD.RebaseOptions = OUSD.RebaseOptions.NotSet;
