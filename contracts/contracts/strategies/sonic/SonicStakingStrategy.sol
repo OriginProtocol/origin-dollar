@@ -115,27 +115,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         }
     }
 
-    /// @notice Returns the total value of Sonic (S) that is delegated validators.
-    /// Wrapped Sonic (wS) deposits that are still to be delegated and any undelegated amounts
-    /// still pending a withdrawal.
-    /// @param _asset      Address of Wrapped Sonic (wS) token
-    /// @return balance    Total value managed by the strategy
-    function checkBalance(address _asset)
-        external
-        view
-        virtual
-        override
-        returns (uint256 balance)
-    {
-        require(_asset == wrappedSonic, "Unsupported asset");
-
-        balance =
-            totalDelegated +
-            pendingWithdrawals +
-            // add the Wrapped Sonic (wS) in the strategy from deposits that are still to be delegated
-            IERC20(wrappedSonic).balanceOf(address(this));
-    }
-
     /**
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset

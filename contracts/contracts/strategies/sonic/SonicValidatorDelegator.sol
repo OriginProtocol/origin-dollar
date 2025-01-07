@@ -17,15 +17,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Address of Sonic's Special Fee Contract (SFC)
     address public immutable sfc;
 
-    uint256 public totalDelegated;
-    uint256 public pendingWithdrawals;
-    /**
-     * @notice a unique ID for each withdrawal request
-     */
+    /// @notice a unique ID for each withdrawal request
     uint256 public nextWithdrawId;
+    /// @notice Sonic (S) that is pending withdrawal after undelegating
+    uint256 public pendingWithdrawals;
 
-    /// @notice Mapping of supported validatorIds
-    mapping(uint256 => bool) public supportedValidators;
+    /// @notice List of supported validator IDs that can be delegated to
+    uint256[] public supportedValidators;
 
     struct WithdrawRequest {
         uint256 validatorId;
@@ -38,7 +36,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     address public validatorRegistrator;
 
     // For future use
-    uint256[44] private __gap;
+    uint256[45] private __gap;
 
     event Delegated(uint256 indexed validatorId, uint256 delegatedAmount);
     event Undelegated(
@@ -98,6 +96,35 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
+    /// @notice Returns the total value of Sonic (S) that is delegated validators.
+    /// Wrapped Sonic (wS) deposits that are still to be delegated and any undelegated amounts
+    /// still pending a withdrawal.
+    /// @param _asset      Address of Wrapped Sonic (wS) token
+    /// @return balance    Total value managed by the strategy
+    function checkBalance(address _asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256 balance)
+    {
+        require(_asset == wrappedSonic, "Unsupported asset");
+
+        // add the Wrapped Sonic (wS) in the strategy from deposits that are still to be delegated
+        // and any undelegated amounts still pending a withdrawal
+        balance =
+            IERC20(wrappedSonic).balanceOf(address(this)) +
+            pendingWithdrawals;
+
+        // For each supported validator, get the staked amount and pending rewards
+        for (uint256 i = 1; i <= supportedValidators.length; i++) {
+            // Get the staked amount and any pending rewards
+            balance +=
+                ISFC(sfc).getStake(address(this), supportedValidators[i]) +
+                ISFC(sfc).pendingRewards(address(this), supportedValidators[i]);
+        }
+    }
+
     /**
      * @notice Delegate from this strategy to a specific Sonic validator.
      * Only the registrator can call this function.
@@ -109,13 +136,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         onlyRegistrator
         nonReentrant
     {
-        require(supportedValidators[validatorId], "Validator not supported");
+        require(_isSupportedValidator(validatorId), "Validator not supported");
         require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
         IWrappedSonic(wrappedSonic).withdraw(amount);
-
-        totalDelegated += amount;
 
         ISFC(sfc).delegate{ value: amount }(validatorId);
 
@@ -142,7 +167,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             validatorId,
             undelegateAmount
         );
-        totalDelegated -= undelegateAmount;
         pendingWithdrawals += undelegateAmount;
 
         ISFC(sfc).undelegate(validatorId, withdrawId, undelegateAmount);
@@ -184,12 +208,9 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
-    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    /// Will revert if the strategy is paused for accounting.
-    function collectRewards(uint256[] calldata validatorIds) external {
-        // Can still collect rewards even if the validator is no longer supported
-        uint256 balanceBefore = address(this).balance;
-
+    /// @dev restake any pending validator rewards for all supported validators
+    function restakeRewards(uint256[] calldata validatorIds) external {
+        uint256 totalRewards = 0;
         for (uint256 i = 0; i < validatorIds.length; ++i) {
             uint256 rewards = ISFC(sfc).pendingRewards(
                 address(this),
@@ -197,29 +218,14 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             );
 
             if (rewards > 0) {
-                ISFC(sfc).claimRewards(validatorIds[i]);
+                totalRewards += rewards;
+                ISFC(sfc).restakeRewards(validatorIds[i]);
             }
         }
 
-        uint256 totalRewards = address(this).balance - balanceBefore;
-
-        require(
-            address(this).balance >= totalRewards,
-            "Insufficient S balance"
-        );
-
-        if (totalRewards > 0) {
-            // Convert native S to Wrapped Sonic (wS)
-            IWrappedSonic(wrappedSonic).deposit{ value: totalRewards }();
-
-            IERC20(wrappedSonic).transfer(harvesterAddress, totalRewards);
-
-            emit RewardTokenCollected(
-                harvesterAddress,
-                wrappedSonic,
-                totalRewards
-            );
-        }
+        // TODO use Deposit event or something else?
+        // The SFC contract will emit Delegated and RestakedRewards events
+        emit Deposit(wrappedSonic, address(0), totalRewards);
     }
 
     /**
@@ -245,10 +251,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Allows a validator to be delegated to by the Registrator
     function supportValidator(uint256 validatorId) external onlyGovernor {
         require(
-            supportedValidators[validatorId] == false,
+            !_isSupportedValidator(validatorId),
             "Validator already supported"
         );
-        supportedValidators[validatorId] = true;
+
+        supportedValidators.push(validatorId);
 
         emit SupportedValidator(validatorId);
     }
@@ -256,13 +263,35 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Removes a validator from the supported list.
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
     function unsupportValidator(uint256 validatorId) external onlyGovernor {
+        require(_isSupportedValidator(validatorId), "Validator not supported");
         require(
-            supportedValidators[validatorId] == true,
-            "Validator not supported"
+            ISFC(sfc).getStake(address(this), validatorId) == 0,
+            "Validator still has stake"
         );
 
-        supportedValidators[validatorId] = false;
+        for (uint256 i = 0; i < supportedValidators.length; ++i) {
+            if (supportedValidators[i] == validatorId) {
+                supportedValidators[i] = supportedValidators[
+                    supportedValidators.length - 1
+                ];
+                supportedValidators.pop();
+                break;
+            }
+        }
 
         emit UnsupportedValidator(validatorId);
+    }
+
+    function _isSupportedValidator(uint256 validatorId)
+        internal
+        view
+        returns (bool)
+    {
+        for (uint256 i = 0; i < supportedValidators.length; ++i) {
+            if (supportedValidators[i] == validatorId) {
+                return true;
+            }
+        }
+        return false;
     }
 }
