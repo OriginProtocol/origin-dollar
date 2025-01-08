@@ -64,15 +64,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         _;
     }
 
-    /// @dev Throws if called by any account other than the Strategist
-    modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-        _;
-    }
-
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wrappedSonic,
