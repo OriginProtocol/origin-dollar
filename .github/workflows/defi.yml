@@ -66,7 +66,7 @@ jobs:
         working-directory: ./contracts
 
   contracts-unit-coverage:
-    name: "Contracts Unit Coverage"
+    name: "Mainnet Unit Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
           retention-days: 1
 
   contracts-base-test:
-    name: "Contracts Unit Tests (Base)"
+    name: "Base Unit Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -125,7 +125,7 @@ jobs:
           retention-days: 1
 
   contracts-sonic-test:
-    name: "Contracts Unit Tests (Sonic)"
+    name: "Sonic Unit Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -156,7 +156,7 @@ jobs:
           retention-days: 1
 
   contracts-forktest:
-    name: "Contracts Fork Tests ${{ matrix.chunk_id }}"
+    name: "Mainnet Fork Tests ${{ matrix.chunk_id }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -298,7 +298,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -312,7 +312,7 @@ jobs:
       - run: yarn run test:coverage:base-fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-base-coverage-${{ github.sha }}
           path: | 
@@ -338,7 +338,7 @@ jobs:
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: hardhat-cache
         with:
           path: contracts/cache
@@ -352,7 +352,7 @@ jobs:
       - run: yarn run test:coverage:sonic-fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: fork-test-sonic-coverage-${{ github.sha }}
           path: | 
