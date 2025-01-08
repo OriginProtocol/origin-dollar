@@ -5,6 +5,7 @@ aero = load_contract('ERC20', AERO_BASE)
 usdc = load_contract('ERC20', USDC_BASE)
 oethb = load_contract('ousd', OETHB)
 woeth = load_contract('ERC20', BRIDGED_WOETH_BASE)
+veaero = load_contract('veaero', VEAERO_BASE)
 
 base_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
 from_strategist = {'from':OETHB_STRATEGIST}

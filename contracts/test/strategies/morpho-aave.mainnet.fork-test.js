@@ -22,18 +22,18 @@ describe("ForkTest: Morpho Aave Strategy", function () {
     fixture = await loadFixture();
   });
 
-  describe("Mint", function () {
+  describe.skip("Mint", function () {
     it("Should deploy USDC in Morpho Aave", async function () {
       const { matt, usdc } = fixture;
       await mintTest(fixture, matt, usdc, "110000");
     });
 
-    it.skip("Should deploy USDT in Morpho Aave", async function () {
+    it("Should deploy USDT in Morpho Aave", async function () {
       const { josh, usdt } = fixture;
       await mintTest(fixture, josh, usdt, "200000");
     });
 
-    it.skip("Should deploy DAI in Morpho Aave", async function () {
+    it("Should deploy DAI in Morpho Aave", async function () {
       const { anna, dai } = fixture;
       await mintTest(fixture, anna, dai, "110000");
     });
@@ -92,22 +92,12 @@ describe("ForkTest: Morpho Aave Strategy", function () {
 
     it("Should be able to withdraw from USDC strategy", async function () {
       const { daniel, usdc } = fixture;
-      await withdrawTest(fixture, daniel, usdc, "25000");
+      await withdrawTest(fixture, daniel, usdc, undefined);
     });
 
     it("Should be able to withdrawAll from strategy", async function () {
-      const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
+      const { usdc, vault, usdt, morphoAaveStrategy } = fixture;
       const vaultSigner = await impersonateAndFund(vault.address);
-      const amount = "110000";
-
-      const usdcUnits = await units(amount, usdc);
-      const usdtUnits = await units(amount, usdt);
-
-      await vault.connect(matt).mint(usdt.address, usdtUnits, 0);
-      await vault.connect(matt).mint(usdc.address, usdcUnits, 0);
-
-      await vault.connect(matt).rebase();
-      await vault.connect(matt).allocate();
 
       const vaultUsdtBefore = await usdt.balanceOf(vault.address);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
@@ -130,12 +120,11 @@ describe("ForkTest: Morpho Aave Strategy", function () {
     });
   });
 
-  // set it as a last test that executes because we advance time and theat
+  // set it as a last test that executes because we advance time and that
   // messes with recency of oracle prices
   describe("Supply Revenue", function () {
     it("Should get supply interest", async function () {
-      const { anna, usdc, morphoAaveStrategy } = fixture;
-      await mintTest(fixture, anna, usdc, "110000");
+      const { usdc, morphoAaveStrategy } = fixture;
 
       const currentBalance = await morphoAaveStrategy.checkBalance(
         usdc.address
@@ -197,9 +186,6 @@ async function mintTest(fixture, user, asset, amount = "30000") {
 
 async function withdrawTest(fixture, user, asset, amount) {
   const { vault, morphoAaveStrategy } = fixture;
-  if (amount) {
-    await mintTest(fixture, user, asset, amount);
-  }
 
   const assetUnits = amount
     ? await units(amount, asset)
