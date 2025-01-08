@@ -144,5 +144,119 @@ describe("Origin S Vault", function () {
         ).to.be.revertedWith("Caller is not the Governor");
       }
     });
+
+    it("Should allow governor to add supported validator", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      expect(await sonicStakingStrategy.supportedValidatorsLength()).to.eq(
+        0,
+        "Validators length before"
+      );
+      expect(await sonicStakingStrategy.isSupportedValidator(98)).to.eq(false);
+
+      // Add two validators
+      const tx1 = await sonicStakingStrategy
+        .connect(governor)
+        .supportValidator(98);
+      const tx2 = await sonicStakingStrategy
+        .connect(governor)
+        .supportValidator(99);
+
+      await expect(tx1)
+        .to.emit(sonicStakingStrategy, "SupportedValidator")
+        .withArgs(98);
+      await expect(tx2)
+        .to.emit(sonicStakingStrategy, "SupportedValidator")
+        .withArgs(99);
+
+      expect(await sonicStakingStrategy.supportedValidators(0)).to.eq(98);
+      expect(await sonicStakingStrategy.supportedValidators(1)).to.eq(99);
+      expect(await sonicStakingStrategy.supportedValidatorsLength()).to.eq(
+        2,
+        "Validators length after"
+      );
+      expect(await sonicStakingStrategy.isSupportedValidator(98)).to.eq(true);
+    });
+
+    it("Should not allow adding a supported validator twice", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      // Add validators
+      await sonicStakingStrategy.connect(governor).supportValidator(98);
+
+      // Try adding again
+      const tx = sonicStakingStrategy.connect(governor).supportValidator(98);
+
+      await expect(tx).to.revertedWith("Validator already supported");
+    });
+
+    it("Should not allow add supported validator by non-Governor", async () => {
+      const { sonicStakingStrategy, strategist, nick, rafael } = fixture;
+
+      for (const signer of [strategist, nick, rafael]) {
+        await expect(
+          sonicStakingStrategy.connect(signer).supportValidator(99)
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+
+    it("Should allow governor to unsupport validator", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      // Add three validators
+      await sonicStakingStrategy.connect(governor).supportValidator(95);
+      await sonicStakingStrategy.connect(governor).supportValidator(98);
+      await sonicStakingStrategy.connect(governor).supportValidator(99);
+
+      expect(await sonicStakingStrategy.supportedValidatorsLength()).to.eq(
+        3,
+        "Validators length before"
+      );
+      expect(await sonicStakingStrategy.isSupportedValidator(98)).to.eq(true);
+
+      const tx = await sonicStakingStrategy
+        .connect(governor)
+        .unsupportValidator(98);
+
+      await expect(tx)
+        .to.emit(sonicStakingStrategy, "UnsupportedValidator")
+        .withArgs(98);
+
+      expect(await sonicStakingStrategy.supportedValidators(0)).to.eq(95);
+      expect(await sonicStakingStrategy.supportedValidators(1)).to.eq(99);
+      expect(await sonicStakingStrategy.supportedValidatorsLength()).to.eq(
+        2,
+        "Validators length after"
+      );
+      expect(await sonicStakingStrategy.isSupportedValidator(95)).to.eq(true);
+      expect(await sonicStakingStrategy.isSupportedValidator(98)).to.eq(false);
+      expect(await sonicStakingStrategy.isSupportedValidator(99)).to.eq(true);
+    });
+
+    it("Should not allow unsupport validator by non-Governor", async () => {
+      const { governor, sonicStakingStrategy, strategist, nick, rafael } =
+        fixture;
+
+      // Add validator
+      await sonicStakingStrategy.connect(governor).supportValidator(95);
+
+      for (const signer of [strategist, nick, rafael]) {
+        await expect(
+          sonicStakingStrategy.connect(signer).unsupportValidator(95)
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+
+    it("Should not allow unsupport of an unsupported validator", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      expect(await sonicStakingStrategy.isSupportedValidator(90)).to.eq(false);
+
+      const tx = sonicStakingStrategy.connect(governor).unsupportValidator(90);
+
+      await expect(tx).to.revertedWith("Validator not supported");
+
+      expect(await sonicStakingStrategy.isSupportedValidator(90)).to.eq(false);
+    });
   });
 });
