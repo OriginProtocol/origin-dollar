@@ -336,6 +336,10 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
+  const simpleOETHHarvester = isFork
+    ? await ethers.getContract("OETHHarvesterSimple")
+    : undefined;
+
   let usdt,
     dai,
     tusd,
@@ -805,6 +809,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
+    simpleOETHHarvester,
 
     // Flux strategy
     fluxStrategy,
