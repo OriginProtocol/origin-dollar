@@ -8,5 +8,11 @@ import { OUSD } from "./OUSD.sol";
  * @author Origin Protocol Inc
  */
 contract OSonic is OUSD {
+    function symbol() external pure override returns (string memory) {
+        return "OS";
+    }
 
+    function name() external pure override returns (string memory) {
+        return "Origin S";
+    }
 }

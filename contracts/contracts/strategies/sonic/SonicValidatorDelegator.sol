@@ -116,7 +116,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
                 address(this),
                 supportedValidators[i]
             );
-            ISFC(sfc).pendingRewards(address(this), supportedValidators[i]);
+            balance += ISFC(sfc).pendingRewards(
+                address(this),
+                supportedValidators[i]
+            );
         }
     }
 
@@ -171,7 +174,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     // slither-disable-start reentrancy-no-eth
-    function withdraw(uint256 withdrawId)
+    function withdrawFromSFC(uint256 withdrawId)
         external
         onlyRegistrator
         nonReentrant
@@ -182,9 +185,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // Can still withdraw even if the validator is no longer supported
         // Load the withdrawal from storage into memory
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];
-
-        require(withdrawal.validatorId > 0, "Invalid withdrawId");
-        require(withdrawal.undelegatedAmount > 0, "Already withdrawn");
+        require(!isWithdrawnFromSFC(withdrawId), "Already withdrawn");
 
         uint256 sBalanceBefore = address(this).balance;
 
@@ -192,20 +193,17 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
-        require(
-            withdrawnAmount == withdrawal.undelegatedAmount,
-            "Incorrect amount withdrawn"
-        );
         pendingWithdrawals -= withdrawal.undelegatedAmount;
         withdrawals[withdrawId].undelegatedAmount = 0;
 
         // Wrap Sonic (S) to Wrapped Sonic (wS)
-        IWrappedSonic(wrappedSonic).deposit();
+        IWrappedSonic(wrappedSonic).deposit{ value: withdrawnAmount }();
 
         // Transfer the Wrapped Sonic (wS) to the Vault
         // slither-disable-next-line unchecked-transfer unused-return
         IERC20(wrappedSonic).transfer(vaultAddress, withdrawnAmount);
 
+        // withdrawal.undelegatedAmount & withdrawnAmount can differ in case of slashing
         emit Withdrawn(
             withdrawId,
             withdrawal.validatorId,
@@ -215,6 +213,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     // slither-disable-end reentrancy-no-eth
+
+    /// @notice returns a bool whether a withdrawalId has already been withdrawn or not
+    function isWithdrawnFromSFC(uint256 withdrawId) public view returns (bool) {
+        WithdrawRequest memory withdrawal = withdrawals[withdrawId];
+        require(withdrawal.validatorId > 0, "Invalid withdrawId");
+        return withdrawal.undelegatedAmount == 0;
+    }
 
     /// @dev restake any pending validator rewards for all supported validators
     function restakeRewards(uint256[] calldata validatorIds)

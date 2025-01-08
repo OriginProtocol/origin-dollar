@@ -69,6 +69,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sonicStakingStrategyProxy.address
   );
 
+  const nodeDriver = await ethers.getContractAt(
+    "INodeDriver",
+    addresses.sonic.nodeDriver
+  );
+
+  const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
+
   // let dripper, harvester;
   // if (isFork) {
   //   // Harvester
@@ -163,6 +170,9 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     rafael,
     nick,
     clement,
+
+    nodeDriver,
+    sfc,
   };
 });
 
