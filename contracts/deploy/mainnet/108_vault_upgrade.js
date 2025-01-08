@@ -5,7 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "108_vault_upgrade",
     forceDeploy: false,
-    forceSkip: true,
+    //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId: "",
