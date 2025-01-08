@@ -6,11 +6,10 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { ISFC } from "../../interfaces/sonic/ISFC.sol";
 import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Manages delegation to Sonic validators
- * @notice This contract implements all the required functionality to delegate to, undelegate from and withdraw from validators.
+ * @notice This contract implements all the required functionality to delegate to,
+   undelegate from and withdraw from validators.
  * @author Origin Protocol Inc
  */
 abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
@@ -121,9 +120,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // For each supported validator, get the staked amount and pending rewards
         for (uint256 i = 0; i < supportedValidators.length; i++) {
             // Get the staked amount and any pending rewards
-            balance +=
-                ISFC(sfc).getStake(address(this), supportedValidators[i]);
-                ISFC(sfc).pendingRewards(address(this), supportedValidators[i]);
+            balance += ISFC(sfc).getStake(
+                address(this),
+                supportedValidators[i]
+            );
+            ISFC(sfc).pendingRewards(address(this), supportedValidators[i]);
         }
     }
 
@@ -285,7 +286,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice Returns the length of the supportedValidators array
-    function supportedValidatorsLength() external view returns(uint256) {
+    function supportedValidatorsLength() external view returns (uint256) {
         return supportedValidators.length;
     }
 

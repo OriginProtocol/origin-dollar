@@ -1,5 +1,7 @@
 const { defaultSonicFixture } = require("./../_fixture-sonic");
-const { shouldBehaveLikeASFCStakingStrategy } = require("../behaviour/sfcStakingStrategy");
+const {
+  shouldBehaveLikeASFCStakingStrategy,
+} = require("../behaviour/sfcStakingStrategy");
 const addresses = require("../../utils/addresses");
 
 describe("Sonic ForkTest: Sonic Staking Strategy", function () {
@@ -14,10 +16,7 @@ describe("Sonic ForkTest: Sonic Staking Strategy", function () {
     return {
       ...fixture,
       addresses: addresses.sonic,
-      sfcAddress: await ethers.getContractAt(
-        "ISFC",
-        addresses.sonic.SFC
-      ),
+      sfcAddress: await ethers.getContractAt("ISFC", addresses.sonic.SFC),
       // see validators here: https://explorer.soniclabs.com/staking
       testValidatorIds: [15, 16, 17, 18],
     };

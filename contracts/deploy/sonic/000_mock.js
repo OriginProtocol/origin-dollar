@@ -1,8 +1,12 @@
-const { deployWithConfirmation } = require("../../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../../utils/deploy");
 const { isFork, isSonic, oethUnits } = require("../../test/helpers");
 
 const deployMocks = async () => {
   await deployWithConfirmation("MockWS", []);
+  await deployWithConfirmation("MockSFC", []);
 };
 
 const deployOracleRouter = async () => {
@@ -117,10 +121,60 @@ const deployCore = async () => {
   await cOSonicVault.connect(sGovernor).unpauseCapital();
 };
 
+const deployStakingStrategy = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cWS = await ethers.getContract("MockWS");
+  const cSFC = await ethers.getContract("MockSFC");
+
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Get contract instances
+  const cOSonicVault = await ethers.getContractAt(
+    "IVault",
+    cOSonicVaultProxy.address
+  );
+
+  // Staking Strategy
+  await deployWithConfirmation("SonicStakingStrategyProxy");
+
+  const cSonicStakingStrategyProxy = await ethers.getContract(
+    "SonicStakingStrategyProxy"
+  );
+  const dSonicStakingStrategy = await deployWithConfirmation(
+    "SonicStakingStrategy",
+    [
+      [cSFC.address, cOSonicVault.address], // platformAddress, VaultAddress
+      cWS.address,
+      cSFC.address,
+    ]
+  );
+  const cSonicStakingStrategy = await ethers.getContractAt(
+    "SonicStakingStrategy",
+    cSonicStakingStrategyProxy.address
+  );
+
+  // Init the Sonic Staking Strategy
+  const initSonicStakingStrategy =
+    cSonicStakingStrategy.interface.encodeFunctionData("initialize()", []);
+  // prettier-ignore
+  await withConfirmation(
+      cSonicStakingStrategyProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dSonicStakingStrategy.address,
+          governorAddr,
+          initSonicStakingStrategy
+        )
+    );
+  console.log("Initialized SonicStakingStrategy proxy and implementation");
+};
+
 const main = async () => {
   await deployMocks();
   await deployOracleRouter();
   await deployCore();
+  await deployStakingStrategy();
 };
 
 main.id = "000_mock";

@@ -24,12 +24,13 @@ const { oethUnits } = require("../helpers");
 const shouldBehaveLikeASFCStakingStrategy = (context) => {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
-      const { sonicStakingStrategy, addresses, oSonicVault, testValidatorIds } = await context();
+      const { sonicStakingStrategy, addresses, oSonicVault, testValidatorIds } =
+        await context();
       expect(await sonicStakingStrategy.wrappedSonic()).to.equal(
         addresses.wS,
         "Incorrect wrapped sonic address set"
       );
-        
+
       expect(await sonicStakingStrategy.sfc()).to.equal(
         addresses.SFC,
         "Incorrect SFC address set"
@@ -41,10 +42,9 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       );
 
       for (const validatorId of testValidatorIds) {
-        expect(await sonicStakingStrategy.isSupportedValidator(validatorId)).to.equal(
-          true,
-          "Validator expected to be supported"
-        );
+        expect(
+          await sonicStakingStrategy.isSupportedValidator(validatorId)
+        ).to.equal(true, "Validator expected to be supported");
       }
 
       expect(await sonicStakingStrategy.platformAddress()).to.equal(
@@ -62,20 +62,18 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         "Harvester address not empty"
       );
 
-      expect((await sonicStakingStrategy.getRewardTokenAddresses()).length).to.equal(
-        0,
-        "Incorrectly configured Reward Token Addresses"
-      );
+      expect(
+        (await sonicStakingStrategy.getRewardTokenAddresses()).length
+      ).to.equal(0, "Incorrectly configured Reward Token Addresses");
     });
   });
 
   describe("Deposit/Delegation", function () {
     const depositTokenAmount = async (depositAmount) => {
-      const { sonicStakingStrategy, oSonicVaultSigner, wS, clement } = await context();
+      const { sonicStakingStrategy, oSonicVaultSigner, wS, clement } =
+        await context();
 
-      const wsBalanceBefore = await wS.balanceOf(
-        sonicStakingStrategy.address
-      );
+      const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
 
       const strategyBalanceBefore = await sonicStakingStrategy.checkBalance(
         wS.address
@@ -99,9 +97,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         wsBalanceBefore.add(depositAmount),
         "WS not transferred"
       );
-      expect(
-        await sonicStakingStrategy.checkBalance(wS.address)
-      ).to.equal(
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
         strategyBalanceBefore.add(depositAmount),
         "strategy checkBalance not increased"
       );
@@ -117,17 +113,12 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       ).to.be.revertedWith("unsupported function");
 
       await expect(
-        sonicStakingStrategy
-          .connect(governor)
-          .collectRewardTokens()
+        sonicStakingStrategy.connect(governor).collectRewardTokens()
       ).to.be.revertedWith("unsupported function");
 
       await expect(
-        sonicStakingStrategy
-          .connect(governor)
-          .removePToken(wS.address)
+        sonicStakingStrategy.connect(governor).removePToken(wS.address)
       ).to.be.revertedWith("unsupported function");
-
     });
 
     it("Should accept and handle S token allocation", async () => {
@@ -136,7 +127,12 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should accept and handle S token allocation and delegation to SFC", async () => {
-      const { sonicStakingStrategy, validatorRegistrator, testValidatorIds, wS } = await context();
+      const {
+        sonicStakingStrategy,
+        validatorRegistrator,
+        testValidatorIds,
+        wS,
+      } = await context();
       const depositAmount = oethUnits("15000");
 
       await depositTokenAmount(depositAmount);
@@ -150,15 +146,11 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         .withArgs(testValidatorIds[0], depositAmount);
 
       // checkBalance should account for the full amount delegated to the validator
-      expect(
-        await sonicStakingStrategy.checkBalance(wS.address)
-      ).to.equal(
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
         depositAmount,
         "Strategy checkBalance not expected"
       );
     });
-
-
   });
 };
 

@@ -61,8 +61,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   );
 
   // Sonic staking strategy
-  const sonicStakingStrategyProxy = await ethers.getContract("SonicStakingStrategyProxy");
-  const sonicStakingStrategy = await ethers.getContractAt("SonicStakingStrategy", sonicStakingStrategyProxy.address);
+  const sonicStakingStrategyProxy = await ethers.getContract(
+    "SonicStakingStrategyProxy"
+  );
+  const sonicStakingStrategy = await ethers.getContractAt(
+    "SonicStakingStrategy",
+    sonicStakingStrategyProxy.address
+  );
 
   // let dripper, harvester;
   // if (isFork) {
@@ -106,13 +111,15 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   );
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
-  let strategist, validatorRegistrator;
-  if (isFork) {
-    // Impersonate strategist on Fork
-    strategist = await impersonateAndFund(strategistAddr);
-    strategist.address = strategistAddr;
+  // Impersonate strategist
+  const strategist = await impersonateAndFund(strategistAddr);
+  strategist.address = strategistAddr;
 
-    validatorRegistrator = await impersonateAndFund(addresses.sonic.validatorRegistrator);
+  let validatorRegistrator;
+  if (isFork) {
+    validatorRegistrator = await impersonateAndFund(
+      addresses.sonic.validatorRegistrator
+    );
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
 
     await impersonateAndFund(governor.address);
