@@ -110,9 +110,22 @@ describe("Origin S Vault", function () {
         fixtureWithUser
       );
     });
+
+    it("Should not support redeem", async () => {
+      const { oSonicVault, wS, nick } = fixture;
+
+      const tx = oSonicVault.connect(nick).redeem(wS.address, 1);
+      await expect(tx).to.be.revertedWith("unsupported function");
+    });
   });
 
   describe("Administer Sonic Staking Strategy", function () {
+    it("Should support Wrapped S asset", async () => {
+      const { sonicStakingStrategy, wS } = fixture;
+
+      expect(await sonicStakingStrategy.supportsAsset(wS.address)).to.eq(true);
+    });
+
     it("Should allow governor to set validator registrator", async () => {
       const { sonicStakingStrategy, governor } = fixture;
 
