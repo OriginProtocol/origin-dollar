@@ -67,10 +67,8 @@ const deployCore = async () => {
   // Init OSonic
   const resolution = ethers.utils.parseUnits("1", 27);
   const initDataOSonic = cOSonic.interface.encodeFunctionData(
-    "initialize(string,string,address,uint256)",
+    "initialize(address,uint256)",
     [
-      "Origin S", // Token Name
-      "OS", // Token Symbol
       cOSonicVaultProxy.address, // Origin Sonic Vault
       resolution, // HighRes
     ]
