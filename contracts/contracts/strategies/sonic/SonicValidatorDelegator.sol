@@ -177,6 +177,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
         returns (uint256 withdrawnAmount)
     {
+        require(withdrawId < nextWithdrawId, "Invalid withdrawId");
+
         // Can still withdraw even if the validator is no longer supported
         // Load the withdrawal from storage into memory
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];
@@ -190,6 +192,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
+        require(
+            withdrawnAmount == withdrawal.undelegatedAmount,
+            "Incorrect amount withdrawn"
+        );
         pendingWithdrawals -= withdrawal.undelegatedAmount;
         withdrawals[withdrawId].undelegatedAmount = 0;
 

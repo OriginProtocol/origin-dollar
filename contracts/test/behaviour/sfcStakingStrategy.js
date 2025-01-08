@@ -95,7 +95,17 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     it("Should accept and handle S token allocation and delegation to SFC", async () => {
       const delegateAmount = oethUnits("15000");
       await depositTokenAmount(delegateAmount);
-      await delegateTokenAmount(delegateAmount);
+      await delegateTokenAmount(delegateAmount, 0, true);
+    });
+
+    it("Should accept and handle S token allocation and delegation to all delegators", async () => {
+      const depositAmount = oethUnits("20000");
+      const delegateAmount = oethUnits("5000");
+      await depositTokenAmount(depositAmount);
+      await delegateTokenAmount(delegateAmount, 0);
+      await delegateTokenAmount(delegateAmount, 1);
+      await delegateTokenAmount(delegateAmount, 2);
+      await delegateTokenAmount(delegateAmount, 3);
     });
   });
 
@@ -136,29 +146,39 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   };
 
   // delegate the delegateAmount into the Sonic Special Fee Contract
-  const delegateTokenAmount = async (delegateAmount) => {
-    const {
-      sonicStakingStrategy,
-      validatorRegistrator,
-      testValidatorIds,
-      wS,
-    } = await context();
+  const delegateTokenAmount = async (
+    delegateAmount,
+    validatorIndex,
+    checkBalanceMatchesDelegatedAmount = false
+  ) => {
+    const { sonicStakingStrategy, validatorRegistrator, testValidatorIds, wS } =
+      await context();
 
     const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
+    const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
+      wS.address
+    );
 
     const tx = await sonicStakingStrategy
       .connect(validatorRegistrator)
-      .delegate(testValidatorIds[0], delegateAmount);
+      .delegate(testValidatorIds[validatorIndex], delegateAmount);
 
     expect(tx)
       .to.emit(sonicStakingStrategy, "Delegated")
-      .withArgs(testValidatorIds[0], delegateAmount);
+      .withArgs(testValidatorIds[validatorIndex], delegateAmount);
 
-    // checkBalance should account for the full amount delegated to the validator
+    // checkBalance should not change when delegating
     expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
-      delegateAmount,
-      "Strategy checkBalance not expected"
+      contractBalanceBefore,
+      "Strategy checkBalance not as expected"
     );
+
+    if (checkBalanceMatchesDelegatedAmount) {
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
+        delegateAmount,
+        "Strategy checkBalance doesn't match delegated amount"
+      );
+    }
 
     expect(await wS.balanceOf(sonicStakingStrategy.address)).to.equal(
       wsBalanceBefore.sub(delegateAmount),
