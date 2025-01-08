@@ -282,12 +282,8 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
   // Withdraw the matured undelegated funds from the Sonic Special Fee Contract
   const withdrawFromSFC = async (withdrawalId, expectedAmountToWithdraw) => {
-    const {
-      sonicStakingStrategy,
-      validatorRegistrator,
-      wS,
-      oSonicVault,
-    } = await context();
+    const { sonicStakingStrategy, validatorRegistrator, wS, oSonicVault } =
+      await context();
 
     console.log("00");
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
