@@ -113,10 +113,6 @@ describe("Origin S Vault", function () {
   });
 
   describe("Administer Sonic Staking Strategy", function () {
-    beforeEach(async () => {
-      fixture = await sonicFixture();
-    });
-
     it("Should allow governor to set validator registrator", async () => {
       const { sonicStakingStrategy, governor } = fixture;
 
@@ -257,6 +253,34 @@ describe("Origin S Vault", function () {
       await expect(tx).to.revertedWith("Validator not supported");
 
       expect(await sonicStakingStrategy.isSupportedValidator(90)).to.eq(false);
+    });
+  });
+
+  describe("Unsupported strategy functions", function () {
+    it("Should not support collectRewardTokens", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      const tx = sonicStakingStrategy.connect(governor).collectRewardTokens();
+
+      await expect(tx).to.be.revertedWith("unsupported function");
+    });
+
+    it("Should not support setPTokenAddress", async () => {
+      const { sonicStakingStrategy, governor, wS, nick } = fixture;
+
+      const tx = sonicStakingStrategy
+        .connect(governor)
+        .setPTokenAddress(wS.address, nick.address);
+
+      await expect(tx).to.be.revertedWith("unsupported function");
+    });
+
+    it("Should not support removePToken", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+
+      const tx = sonicStakingStrategy.connect(governor).removePToken(1);
+
+      await expect(tx).to.be.revertedWith("unsupported function");
     });
   });
 });
