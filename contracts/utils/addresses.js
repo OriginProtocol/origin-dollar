@@ -340,8 +340,8 @@ addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
 addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
-// TODO: change to Defender Sonic Relayer
-addresses.sonic.validatorRegistrator = "0xFacEfACE000000000000000000000000facefaCe";
+addresses.sonic.validatorRegistrator =
+  "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
