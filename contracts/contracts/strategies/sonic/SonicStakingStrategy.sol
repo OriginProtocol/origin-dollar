@@ -101,7 +101,9 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
 
         emit Withdrawal(wrappedSonic, address(0), _amount);
 
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(_asset).transfer(_recipient, _amount);
+
         emit Withdrawal(_asset, address(0), _amount);
     }
 

@@ -118,7 +118,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             pendingWithdrawals;
 
         // For each supported validator, get the staked amount and pending rewards
-        for (uint256 i = 0; i < supportedValidators.length; i++) {
+        uint256 validatorLen = supportedValidators.length;
+        for (uint256 i = 0; i < validatorLen; i++) {
             // Get the staked amount and any pending rewards
             balance += ISFC(sfc).getStake(
                 address(this),
@@ -153,6 +154,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     function undelegate(uint256 validatorId, uint256 undelegateAmount)
         external
         onlyRegistrator
+        nonReentrant
         returns (uint256 withdrawId)
     {
         // Can still undelegate even if the validator is no longer supported
@@ -177,9 +179,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit Undelegated(withdrawId, validatorId, undelegateAmount);
     }
 
+    // slither-disable-start reentrancy-no-eth
     function withdraw(uint256 withdrawId)
         external
         onlyRegistrator
+        nonReentrant
         returns (uint256 withdrawnAmount)
     {
         // Can still withdraw even if the validator is no longer supported
@@ -193,6 +197,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         ISFC(sfc).withdraw(withdrawal.validatorId, withdrawId);
 
+        // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
         pendingWithdrawals -= withdrawal.undelegatedAmount;
         withdrawals[withdrawId].undelegatedAmount = 0;
@@ -201,6 +206,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         IWrappedSonic(wrappedSonic).deposit();
 
         // Transfer the Wrapped Sonic (wS) to the Vault
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(wrappedSonic).transfer(vaultAddress, withdrawnAmount);
 
         emit Withdrawn(
@@ -211,8 +217,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
+    // slither-disable-end reentrancy-no-eth
+
     /// @dev restake any pending validator rewards for all supported validators
-    function restakeRewards(uint256[] calldata validatorIds) external {
+    function restakeRewards(uint256[] calldata validatorIds)
+        external
+        nonReentrant
+    {
         uint256 totalRewards = 0;
         for (uint256 i = 0; i < validatorIds.length; ++i) {
             uint256 rewards = ISFC(sfc).pendingRewards(
@@ -272,11 +283,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             "Validator still has stake"
         );
 
-        for (uint256 i = 0; i < supportedValidators.length; ++i) {
+        uint256 validatorLen = supportedValidators.length;
+        for (uint256 i = 0; i < validatorLen; ++i) {
             if (supportedValidators[i] == validatorId) {
-                supportedValidators[i] = supportedValidators[
-                    supportedValidators.length - 1
-                ];
+                supportedValidators[i] = supportedValidators[validatorLen - 1];
                 supportedValidators.pop();
                 break;
             }
@@ -295,7 +305,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         view
         returns (bool)
     {
-        for (uint256 i = 0; i < supportedValidators.length; ++i) {
+        uint256 validatorLen = supportedValidators.length;
+        for (uint256 i = 0; i < validatorLen; ++i) {
             if (supportedValidators[i] == validatorId) {
                 return true;
             }
