@@ -357,12 +357,8 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         expectedRevert = false
       } = {}
     ) => {
-    const {
-      sonicStakingStrategy,
-      validatorRegistrator,
-      wS,
-      oSonicVault,
-    } = await context();
+    const { sonicStakingStrategy, validatorRegistrator, wS, oSonicVault } =
+      await context();
 
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address

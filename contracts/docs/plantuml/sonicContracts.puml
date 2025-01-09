@@ -1,0 +1,66 @@
+@startuml
+
+!$originColor = DeepSkyBlue
+' !$originColor = WhiteSmoke
+!$newColor = LightGreen
+!$changedColor = Orange
+!$thirdPartyColor = WhiteSmoke
+
+' legend
+' blue - Origin
+' ' green - new
+' ' orange - changed
+' white - 3rd Party
+' end legend
+
+title "Sonic Contract Dependencies"
+
+object "OSonicZapper" as zap <<Origin>> #$originColor {
+    assets: S, wS
+}
+
+object "WOSonic" as wos <<Origin>><<Proxy>> #$originColor {
+    asset: OS
+    symbol: wOS
+    name: Wrapped Origin Sonic
+}
+
+object "OSonicDripper" as drip <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+object "OSonicVaultValueChecker" as checker <<Origin>> #$originColor {
+}
+
+object "OSonic" as os <<Origin>><<Proxy>> #$originColor {
+    symbol: OS
+    name: Origin Sonic
+}
+
+object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+object "SonicStakingStrategy" as stakeStrat <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+' object "AMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
+'     asset: wS
+'     reward: ?
+' }
+
+wos <. zap
+zap ..> os
+zap ..> vault
+
+checker ..> vault
+
+wos ..> os
+os <.> vault
+vault <.> drip
+vault <...> stakeStrat
+' vault <...> amoStrat
+
+
+@enduml
