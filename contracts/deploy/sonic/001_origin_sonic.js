@@ -202,6 +202,14 @@ module.exports = deployOnSonic(
       cOSonicVault.connect(sGovernor).setDripper(cOSonicDripperProxy.address)
     );
 
+    // Deploy the Zapper
+    await deployWithConfirmation("OSonicZapper", [
+      cOSonic.address,
+      cWOSonic.address,
+      cOSonicVault.address,
+    ]);
+    console.log("Deployed Origin Sonic Zapper");
+
     // TODO transfer governor to ?
   }
 );
