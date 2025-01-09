@@ -15,7 +15,7 @@ module.exports = deploymentWithGovernanceProposal(
     const cOETHProxy = await ethers.getContract("OETHProxy");
 
     // Deploy new version of OETH contract
-    const dOETHImpl = await deployWithConfirmation("OETH", []);
+    const dOETHImpl = await deployWithConfirmation("OETH", [], undefined, true);
 
     // Governance Actions
     // ----------------
