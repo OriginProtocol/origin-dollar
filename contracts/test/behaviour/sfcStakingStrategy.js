@@ -100,6 +100,39 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await delegateTokenAmount(amount, 0, true);
     });
 
+    it("Should earn rewards as epochs pass", async () => {
+      const { sonicStakingStrategy, wS } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+
+      const balanceBefore = await sonicStakingStrategy.checkBalance(wS.address);
+      await advanceSfcEpoch(1);
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.be.gt(
+        balanceBefore
+      );
+    });
+
+    it("Should be able to restake the earned rewards", async () => {
+      const { sonicStakingStrategy, wS, testValidatorIds } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      await advanceSfcEpoch(1);
+
+      const tx = await sonicStakingStrategy.restakeRewards([testValidatorIds[0]]);
+
+      await expect(tx).to.emittedEvent("Deposit", [
+        wS.address,
+        AddressZero,
+        (totalRewards) => {
+          expect(totalRewards).to.be.gt(oethUnits("0"))
+        }
+      ]);
+    });
+
     it("Should accept and handle S token allocation and delegation to all delegators", async () => {
       const depositAmount = oethUnits("20000");
       const delegateAmount = oethUnits("5000");
@@ -108,6 +141,33 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await delegateTokenAmount(delegateAmount, 1);
       await delegateTokenAmount(delegateAmount, 2);
       await delegateTokenAmount(delegateAmount, 3);
+    });
+
+    it("Should not allow delegation to unsupported validator", async () => {
+      const amount = oethUnits("5000");
+      await depositTokenAmount(amount);
+
+      const { sonicStakingStrategy, validatorRegistrator } = await context();
+
+      const tx = sonicStakingStrategy
+        .connect(validatorRegistrator)
+        .delegate(1, amount);
+
+      await expect(tx).to.be.revertedWith("Validator not supported");
+    });
+
+    it("Should not allow delegation of 0 amount", async () => {
+      const amount = oethUnits("5000");
+      await depositTokenAmount(amount);
+
+      const { sonicStakingStrategy, validatorRegistrator, testValidatorIds } =
+        await context();
+
+      const tx = sonicStakingStrategy
+        .connect(validatorRegistrator)
+        .delegate(testValidatorIds[0], oethUnits("0"));
+
+      await expect(tx).to.be.revertedWith("Must delegate something");
     });
   });
 
@@ -166,12 +226,9 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       const withdrawalId = await undelegateTokenAmount(amount, 0);
       await advanceWeek();
 
-      await withdrawFromSFC(
-        withdrawalId,
-        amount,
-        { expectedError: "NotEnoughTimePassed()" }
-      );
-
+      await withdrawFromSFC(withdrawalId, amount, {
+        expectedError: "NotEnoughTimePassed()",
+      });
     });
 
     it("Can not withdraw with too little epochs passing", async () => {
@@ -182,12 +239,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await advanceWeek();
       await advanceWeek();
 
-      await withdrawFromSFC(
-        withdrawalId,
-        amount,
-        { advanceSufficientEpochs: false, expectedError: "NotEnoughEpochsPassed()" }
-      );
-
+      await withdrawFromSFC(withdrawalId, amount, {
+        advanceSufficientEpochs: false,
+        expectedError: "NotEnoughEpochsPassed()",
+      });
     });
 
     it("Can withdraw multiple times", async () => {
@@ -202,9 +257,13 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await advanceWeek();
       await withdrawFromSFC(withdrawalId1, smallAmount);
       // skip epoch advancement
-      await withdrawFromSFC(withdrawalId2, smallAmount, { skipEpochAdvancement: true });
+      await withdrawFromSFC(withdrawalId2, smallAmount, {
+        skipEpochAdvancement: true,
+      });
       // skip epoch advancement
-      await withdrawFromSFC(withdrawalId3, smallAmount, { skipEpochAdvancement: true });
+      await withdrawFromSFC(withdrawalId3, smallAmount, {
+        skipEpochAdvancement: true,
+      });
     });
 
     it("Incorrect withdrawal ID should revert", async () => {
@@ -214,7 +273,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       const withdrawalId = await undelegateTokenAmount(amount, 0);
       await withdrawFromSFC(withdrawalId + 10, amount, {
         skipEpochAdvancement: true,
-        expectedRevert: "Invalid withdrawId"
+        expectedRevert: "Invalid withdrawId",
       });
     });
 
@@ -228,10 +287,9 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await withdrawFromSFC(withdrawalId, amount);
       await withdrawFromSFC(withdrawalId, amount, {
         skipEpochAdvancement: true,
-        expectedRevert: "Already withdrawn"
+        expectedRevert: "Already withdrawn",
       });
     });
-
   });
 
   // deposit the amount into the Sonic Staking Strategy
@@ -350,13 +408,13 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   const withdrawFromSFC = async (
     withdrawalId,
     expectedAmountToWithdraw,
-      {
-        advanceSufficientEpochs = true,
-        skipEpochAdvancement = false,
-        expectedError = false,
-        expectedRevert = false
-      } = {}
-    ) => {
+    {
+      advanceSufficientEpochs = true,
+      skipEpochAdvancement = false,
+      expectedError = false,
+      expectedRevert = false,
+    } = {}
+  ) => {
     const { sonicStakingStrategy, validatorRegistrator, wS, oSonicVault } =
       await context();
 
@@ -382,15 +440,17 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     }
 
     if (expectedError) {
-      await expect(sonicStakingStrategy
-        .connect(validatorRegistrator)
-        .withdrawFromSFC(withdrawalId)
+      await expect(
+        sonicStakingStrategy
+          .connect(validatorRegistrator)
+          .withdrawFromSFC(withdrawalId)
       ).to.be.revertedWithCustomError(expectedError);
       return;
     } else if (expectedRevert) {
-      await expect(sonicStakingStrategy
-        .connect(validatorRegistrator)
-        .withdrawFromSFC(withdrawalId)
+      await expect(
+        sonicStakingStrategy
+          .connect(validatorRegistrator)
+          .withdrawFromSFC(withdrawalId)
       ).to.be.revertedWith(expectedRevert);
       return;
     }
@@ -445,7 +505,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     const { sfc, addresses } = await context();
     const currentSealedEpoch = await sfc.currentSealedEpoch();
     const epochValidators = await sfc.getEpochValidatorIDs(currentSealedEpoch);
-    const validatorsLength = (epochValidators).length;
+    const validatorsLength = epochValidators.length;
 
     const nodeDriverAuthSigner = await impersonateAndFund(
       addresses.nodeDriveAuth

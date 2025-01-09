@@ -422,4 +422,13 @@ describe("Origin S Vault", function () {
       await expect(tx).to.be.revertedWith("unsupported function");
     });
   });
+
+  describe("Other function checks", function () {
+    it("Should not allow checkBalance with incorrect asset", async () => {
+      const { sonicStakingStrategy, nick } = fixture;
+
+      const tx = sonicStakingStrategy.checkBalance(nick.address);
+      await expect(tx).to.be.revertedWith("Unsupported asset");
+    });
+  });
 });
