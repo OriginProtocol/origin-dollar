@@ -156,6 +156,10 @@ addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
 addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
+addresses.mainnet.CurveOUSDUSDTPool =
+  "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
+addresses.mainnet.CurveOUSDUSDTGauge =
+  "0x74231E4d96498A30FCEaf9aACCAbBD79339Ecd7f";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
