@@ -5,8 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
+import { Strategizable } from "../governance/Strategizable.sol";
 
-contract CurvePoolBooster is Initializable, Governable {
+contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
@@ -20,7 +21,6 @@ contract CurvePoolBooster is Initializable, Governable {
     /// --- STORAGE
     ////////////////////////////////////////////////////
     uint16 public fee;
-    address public operator;
     address public feeCollector;
     uint256 public campaignId;
 
@@ -30,7 +30,6 @@ contract CurvePoolBooster is Initializable, Governable {
     event FeeSet(uint16 _newFee);
     event FeeCollectorSet(address _newFeeCollector);
     event CampaignIdSet(uint256 _newId);
-    event OperatorSet(address _newOperator);
     event BribeCreated(
         address gauge,
         address rewardToken,
@@ -41,17 +40,6 @@ contract CurvePoolBooster is Initializable, Governable {
     event NumberOfPeriodsManaged(uint8 extraNumberOfPeriods);
     event RewardPerVoteManaged(uint256 newMaxRewardPerVote);
     event RescueTokens(address token, uint256 amount, address receiver);
-
-    ////////////////////////////////////////////////////
-    /// --- MODIFIERS
-    ////////////////////////////////////////////////////
-    modifier onlyOperator() {
-        require(
-            msg.sender == operator || isGovernor(),
-            "Only Operator or Governor"
-        );
-        _;
-    }
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
@@ -72,11 +60,11 @@ contract CurvePoolBooster is Initializable, Governable {
     }
 
     function initialize(
-        address _operator,
+        address _strategist,
         uint16 _fee,
         address _feeCollector
     ) external initializer {
-        operator = _operator;
+        _setStrategistAddr(_strategist);
         fee = _fee;
         feeCollector = _feeCollector;
     }
@@ -90,12 +78,12 @@ contract CurvePoolBooster is Initializable, Governable {
         address[] calldata blacklist,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyOperator {
+    ) external onlyGovernorOrStrategist {
         require(campaignId == 0, "Campaign already created");
 
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(balance > 0, "No reward to bribe");
+        require(balance > 0, "No reward to manage");
 
         // Handle fee (if any)
         uint256 feeAmount = (balance * fee) / BASE_FEE;
@@ -133,7 +121,7 @@ contract CurvePoolBooster is Initializable, Governable {
     function manageTotalRewardAmount(
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyOperator {
+    ) external onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
         // Cache current rewardToken balance
@@ -172,7 +160,7 @@ contract CurvePoolBooster is Initializable, Governable {
         uint8 extraNumberOfPeriods,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyOperator {
+    ) external onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(extraNumberOfPeriods > 0, "Invalid number of periods");
 
@@ -198,7 +186,7 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 newMaxRewardPerVote,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyOperator {
+    ) external onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(newMaxRewardPerVote > 0, "Invalid reward per vote");
 
@@ -223,12 +211,15 @@ contract CurvePoolBooster is Initializable, Governable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE && OPERATION
     ////////////////////////////////////////////////////
-    function setCampaignId(uint256 _campaignId) external onlyOperator {
+    function setCampaignId(uint256 _campaignId)
+        external
+        onlyGovernorOrStrategist
+    {
         campaignId = _campaignId;
         emit CampaignIdSet(_campaignId);
     }
 
-    function sendETH(address receiver) external onlyOperator {
+    function sendETH(address receiver) external onlyGovernorOrStrategist {
         emit RescueTokens(address(0), address(this).balance, receiver);
         payable(receiver).transfer(address(this).balance);
     }
@@ -241,11 +232,6 @@ contract CurvePoolBooster is Initializable, Governable {
         uint256 balance = IERC20(token).balanceOf(address(this));
         emit RescueTokens(token, amount, receiver);
         IERC20(token).transfer(receiver, balance);
-    }
-
-    function setOperator(address _newOperator) external onlyGovernor {
-        operator = _newOperator;
-        emit OperatorSet(_newOperator);
     }
 
     function setFee(uint16 _fee) external onlyGovernor {
