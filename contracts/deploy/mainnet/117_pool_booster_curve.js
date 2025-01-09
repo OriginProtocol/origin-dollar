@@ -3,15 +3,15 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "114_pool_booster_curve",
+    deployName: "117_pool_booster_curve",
     forceDeploy: false,
-    // forceSkip: true,
+    //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId: "",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     console.log(`Using deployer account: ${deployerAddr}`);
     // 1. Deploy proxy
@@ -28,8 +28,8 @@ module.exports = deploymentWithGovernanceProposal(
       [
         42161, // Arbitrum chain id
         addresses.mainnet.CampaignRemoteManager, // Campaign Remote Manager (VotemarketV2 entry point)
-        addresses.mainnet.OETHProxy, // To be modified with desired bribe token
-        addresses.mainnet.CurveOETHGauge, // To be modified with desired gauge
+        addresses.mainnet.OUSDProxy, // Bribe token
+        addresses.mainnet.CurveOUSDUSDTGauge, // Gauge
       ]
     );
     console.log("dCurvePoolBoosterImpl: ", dCurvePoolBoosterImpl.address);
@@ -41,7 +41,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 3. Initialize
     const initData = cCurvePoolBooster.interface.encodeFunctionData(
       "initialize(address,uint16,address)",
-      [deployerAddr, 0, deployerAddr]
+      [strategistAddr, 0, strategistAddr]
     );
 
     // 4. Initialize proxy
