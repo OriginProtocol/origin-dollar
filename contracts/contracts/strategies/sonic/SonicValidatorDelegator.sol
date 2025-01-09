@@ -29,6 +29,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     struct WithdrawRequest {
         uint256 validatorId;
         uint256 undelegatedAmount;
+        uint256 timestamp;
     }
     /// @notice Mapping of withdrawIds to validatorIds and undelegatedAmounts
     mapping(uint256 => WithdrawRequest) public withdrawals;
@@ -164,7 +165,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         withdrawals[withdrawId] = WithdrawRequest(
             validatorId,
-            undelegateAmount
+            undelegateAmount,
+            block.timestamp
         );
         pendingWithdrawals += undelegateAmount;
 
