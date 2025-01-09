@@ -67,7 +67,8 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         .populateTransaction.checkBalance(weth.address);
       await josh.sendTransaction(tx);
     });
-    it("Should be able to harvest the rewards", async function () {
+    // Skipping this since we switched to simple harvester
+    it.skip("Should be able to harvest the rewards", async function () {
       const {
         josh,
         weth,
