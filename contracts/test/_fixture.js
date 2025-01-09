@@ -622,9 +622,9 @@ const defaultFixture = deployments.createFixture(async () => {
   const morphoSteakhouseUSDCStrategy = !isFork
     ? undefined
     : await ethers.getContractAt(
-      "Generalized4626Strategy",
-      morphoSteakhouseUSDCStrategyProxy.address
-    );
+        "Generalized4626Strategy",
+        morphoSteakhouseUSDCStrategyProxy.address
+      );
 
   const morphoGauntletPrimeUSDCStrategyProxy = !isFork
     ? undefined
@@ -632,9 +632,9 @@ const defaultFixture = deployments.createFixture(async () => {
   const morphoGauntletPrimeUSDCStrategy = !isFork
     ? undefined
     : await ethers.getContractAt(
-      "Generalized4626Strategy",
-      morphoGauntletPrimeUSDCStrategyProxy.address
-    );
+        "Generalized4626Strategy",
+        morphoGauntletPrimeUSDCStrategyProxy.address
+      );
 
   const morphoGauntletPrimeUSDTStrategyProxy = !isFork
     ? undefined
@@ -642,9 +642,9 @@ const defaultFixture = deployments.createFixture(async () => {
   const morphoGauntletPrimeUSDTStrategy = !isFork
     ? undefined
     : await ethers.getContractAt(
-      "Generalized4626USDTStrategy",
-      morphoGauntletPrimeUSDTStrategyProxy.address
-    );
+        "Generalized4626USDTStrategy",
+        morphoGauntletPrimeUSDTStrategyProxy.address
+      );
 
   const curvePoolBoosterProxy = isFork
     ? await ethers.getContract("CurvePoolBoosterProxy")
@@ -652,9 +652,9 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const curvePoolBooster = isFork
     ? await ethers.getContractAt(
-      "CurvePoolBooster",
-      curvePoolBoosterProxy.address
-    )
+        "CurvePoolBooster",
+        curvePoolBoosterProxy.address
+      )
     : undefined;
 
   const simpleOETHHarvester = isFork
