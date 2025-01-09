@@ -10,6 +10,7 @@ contract OUSDEchidna is OUSD {
         public
         returns (bool)
     {
-        return _isNonRebasingAccount(_account);
+        _autoMigrate(_account);
+        return alternativeCreditsPerToken[_account] > 0;
     }
 }

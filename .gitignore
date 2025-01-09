@@ -84,3 +84,6 @@ fork-coverage
 unit-coverage
 
 .VSCodeCounter
+
+# Certora #
+.certora_internal
