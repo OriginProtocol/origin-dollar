@@ -159,13 +159,79 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await withdrawFromSFC(withdrawalId, amount);
     });
 
-    it("Can not withdraw too soon", async () => {});
+    it("Can not withdraw too soon", async () => {
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      await advanceWeek();
 
-    it("Can withdraw multiple times", async () => {});
+      await withdrawFromSFC(
+        withdrawalId,
+        amount,
+        { expectedError: "NotEnoughTimePassed()" }
+      );
 
-    it("Incorrect withdrawal ID should revert", async () => {});
+    });
 
-    it("Can not withdraw with the same ID twice", async () => {});
+    it("Can not withdraw with too little epochs passing", async () => {
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      await advanceWeek();
+      await advanceWeek();
+
+      await withdrawFromSFC(
+        withdrawalId,
+        amount,
+        { advanceSufficientEpochs: false, expectedError: "NotEnoughEpochsPassed()" }
+      );
+
+    });
+
+    it("Can withdraw multiple times", async () => {
+      const amount = oethUnits("15000");
+      const smallAmount = oethUnits("5000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      const withdrawalId1 = await undelegateTokenAmount(smallAmount, 0);
+      const withdrawalId2 = await undelegateTokenAmount(smallAmount, 0);
+      const withdrawalId3 = await undelegateTokenAmount(smallAmount, 0);
+      await advanceWeek();
+      await advanceWeek();
+      await withdrawFromSFC(withdrawalId1, smallAmount);
+      // skip epoch advancement
+      await withdrawFromSFC(withdrawalId2, smallAmount, { skipEpochAdvancement: true });
+      // skip epoch advancement
+      await withdrawFromSFC(withdrawalId3, smallAmount, { skipEpochAdvancement: true });
+    });
+
+    it("Incorrect withdrawal ID should revert", async () => {
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      await withdrawFromSFC(withdrawalId + 10, amount, {
+        skipEpochAdvancement: true,
+        expectedRevert: "Invalid withdrawId"
+      });
+    });
+
+    it("Can not withdraw with the same ID twice", async () => {
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await delegateTokenAmount(amount, 0, true);
+      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      await advanceWeek();
+      await advanceWeek();
+      await withdrawFromSFC(withdrawalId, amount);
+      await withdrawFromSFC(withdrawalId, amount, {
+        skipEpochAdvancement: true,
+        expectedRevert: "Already withdrawn"
+      });
+    });
+
   });
 
   // deposit the amount into the Sonic Staking Strategy
@@ -281,7 +347,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   };
 
   // Withdraw the matured undelegated funds from the Sonic Special Fee Contract
-  const withdrawFromSFC = async (withdrawalId, expectedAmountToWithdraw) => {
+  const withdrawFromSFC = async (
+    withdrawalId,
+    expectedAmountToWithdraw,
+      {
+        advanceSufficientEpochs = true,
+        skipEpochAdvancement = false,
+        expectedError = false,
+        expectedRevert = false
+      } = {}
+    ) => {
     const {
       sonicStakingStrategy,
       validatorRegistrator,
@@ -289,7 +364,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       oSonicVault,
     } = await context();
 
-    console.log("00");
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address
     );
@@ -299,12 +373,32 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     const amountToWithdraw = withdrawal.undelegatedAmount;
     const pendingWithdrawalsBefore =
       await sonicStakingStrategy.pendingWithdrawals();
-    expect(expectedAmountToWithdraw).to.equal(amountToWithdraw);
+    if (!expectedError && !expectedRevert) {
+      expect(expectedAmountToWithdraw).to.equal(amountToWithdraw);
+    }
 
-    console.log("ADVANCE EPOCH");
-    await advanceSfcEpoch(MIN_WITHDRAWAL_EPOCH_ADVANCE);
+    if (!skipEpochAdvancement) {
+      if (!advanceSufficientEpochs) {
+        await advanceSfcEpoch(1);
+      } else {
+        await advanceSfcEpoch(MIN_WITHDRAWAL_EPOCH_ADVANCE);
+      }
+    }
 
-    console.log("ADVANCE EPOCH DONE");
+    if (expectedError) {
+      await expect(sonicStakingStrategy
+        .connect(validatorRegistrator)
+        .withdrawFromSFC(withdrawalId)
+      ).to.be.revertedWithCustomError(expectedError);
+      return;
+    } else if (expectedRevert) {
+      await expect(sonicStakingStrategy
+        .connect(validatorRegistrator)
+        .withdrawFromSFC(withdrawalId)
+      ).to.be.revertedWith(expectedRevert);
+      return;
+    }
+
     // checkBalance should be smaller by withdrawn amount
     const tx = await sonicStakingStrategy
       .connect(validatorRegistrator)
@@ -354,13 +448,14 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   const advanceSfcEpoch = async (epochsToAdvance) => {
     const { sfc, addresses } = await context();
     const currentSealedEpoch = await sfc.currentSealedEpoch();
-    const validatorsLength = (
-      await sfc.getEpochValidatorIDs(currentSealedEpoch)
-    ).length;
+    const epochValidators = await sfc.getEpochValidatorIDs(currentSealedEpoch);
+    const validatorsLength = (epochValidators).length;
 
     const nodeDriverAuthSigner = await impersonateAndFund(
       addresses.nodeDriveAuth
     );
+
+    console.log(`Preparing to seal ${epochsToAdvance} epoch(s) on Sonic`);
     for (let i = 0; i < epochsToAdvance; i++) {
       // create array filled with 0s
       const offlineTimes = Array.from(Array(validatorsLength).keys()).fill(
@@ -374,15 +469,12 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         BigNumber.from("2955644249909388016706")
       );
       await advance10min();
-      console.log("Call seal epoch");
-      // await wS
-      //   .connect(clement)
-      //   .withdrawTo(sfc.address, oethUnits("15")); // TransfersNotAllowed
       await sfc
         .connect(nodeDriverAuthSigner)
         .sealEpoch(offlineTimes, offlineBlocks, uptimes, originatedTxsFee);
-
-      console.log("Seal epoch called");
+      await sfc
+        .connect(nodeDriverAuthSigner)
+        .sealEpochValidators(epochValidators);
     }
   };
 };
