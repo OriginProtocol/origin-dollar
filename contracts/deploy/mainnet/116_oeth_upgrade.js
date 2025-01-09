@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "110_oeth_upgrade",
+    deployName: "116_oeth_upgrade",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -15,7 +15,7 @@ module.exports = deploymentWithGovernanceProposal(
     const cOETHProxy = await ethers.getContract("OETHProxy");
 
     // Deploy new version of OETH contract
-    const dOETHImpl = await deployWithConfirmation("OETH", []);
+    const dOETHImpl = await deployWithConfirmation("OETH", [], undefined, true);
 
     // Governance Actions
     // ----------------
