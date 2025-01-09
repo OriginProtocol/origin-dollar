@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "109_ousd_upgrade",
+    deployName: "115_ousd_upgrade",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
