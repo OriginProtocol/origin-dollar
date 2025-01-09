@@ -117,6 +117,8 @@ const deployCore = async () => {
 
   await cOSonicVault.connect(sGovernor).supportAsset(cWS.address, 0);
   await cOSonicVault.connect(sGovernor).unpauseCapital();
+  // Set withdrawal claim delay to 1 day
+  await cOSonicVault.connect(sGovernor).setWithdrawalClaimDelay(86400);
 };
 
 const deployStakingStrategy = async () => {
@@ -165,7 +167,42 @@ const deployStakingStrategy = async () => {
           initSonicStakingStrategy
         )
     );
-  console.log("Initialized SonicStakingStrategy proxy and implementation");
+};
+
+const deployDripper = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cWS = await ethers.getContract("MockWS");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+  const cOSonicVault = await ethers.getContractAt(
+    "IVault",
+    cOSonicVaultProxy.address
+  );
+
+  await deployWithConfirmation("OSonicDripperProxy");
+
+  const cOSonicDripperProxy = await ethers.getContract("OSonicDripperProxy");
+  const dFixedRateDripper = await deployWithConfirmation("FixedRateDripper", [
+    cOSonicVaultProxy.address, // VaultAddress
+    cWS.address,
+  ]);
+
+  // Init the Dripper proxy
+  // prettier-ignore
+  await withConfirmation(
+    cOSonicDripperProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dFixedRateDripper.address,
+          governorAddr,
+          "0x"
+        )
+    );
+
+  await withConfirmation(
+    cOSonicVault.connect(sGovernor).setDripper(cOSonicDripperProxy.address)
+  );
 };
 
 const main = async () => {
@@ -173,6 +210,7 @@ const main = async () => {
   await deployOracleRouter();
   await deployCore();
   await deployStakingStrategy();
+  await deployDripper();
 };
 
 main.id = "000_mock";

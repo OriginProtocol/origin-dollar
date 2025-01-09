@@ -3,6 +3,7 @@ const { parseUnits } = require("ethers/lib/utils");
 
 const { createFixtureLoader } = require("../_fixture");
 const { defaultSonicFixture } = require("../_fixture-sonic");
+const { advanceTime } = require("../helpers");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
@@ -73,38 +74,163 @@ describe("Origin S Vault", function () {
     );
   };
 
-  describe("Mint", () => {
+  describe("Vault operations", () => {
     it("Should mint with wS", async () => {
       const { oSonicVault, wS, nick } = fixture;
 
       const fixtureWithUser = { ...fixture, user: nick };
       const dataBefore = await snapData(fixtureWithUser);
 
-      const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
+      const mintAmount = parseUnits("1", 18);
+      const minOS = parseUnits("0.8", 18);
 
-      await wS.connect(nick).approve(oSonicVault.address, amount);
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
 
       const tx = await oSonicVault
         .connect(nick)
-        .mint(wS.address, amount, minOeth);
+        .mint(wS.address, mintAmount, minOS);
 
       await expect(tx)
         .to.emit(oSonicVault, "Mint")
-        .withArgs(nick.address, amount);
+        .withArgs(nick.address, mintAmount);
 
       await assertChangedData(
         dataBefore,
         {
-          oSonicTotalSupply: amount,
-          oSonicTotalValue: amount,
-          vaultCheckBalance: amount,
-          userOSonic: amount,
-          userWS: amount.mul(-1),
-          vaultWS: amount,
+          oSonicTotalSupply: mintAmount,
+          oSonicTotalValue: mintAmount,
+          vaultCheckBalance: mintAmount,
+          userOSonic: mintAmount,
+          userWS: mintAmount.mul(-1),
+          vaultWS: mintAmount,
           queued: 0,
           claimable: 0,
           claimed: 0,
+          nextWithdrawalIndex: 0,
+        },
+        fixtureWithUser
+      );
+    });
+
+    it("Should request withdraw from Vault", async () => {
+      const { oSonicVault, wS, nick } = fixture;
+
+      // Mint some OSonic
+      const mintAmount = parseUnits("100", 18);
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+
+      const fixtureWithUser = { ...fixture, user: nick };
+      const dataBefore = await snapData(fixtureWithUser);
+
+      const withdrawAmount = parseUnits("90", 18);
+      const tx = await oSonicVault
+        .connect(nick)
+        .requestWithdrawal(withdrawAmount);
+
+      await expect(tx)
+        .to.emit(oSonicVault, "WithdrawalRequested")
+        .withArgs(nick.address, 0, withdrawAmount, withdrawAmount);
+
+      const deltaAmount = withdrawAmount.mul(-1);
+      await assertChangedData(
+        dataBefore,
+        {
+          oSonicTotalSupply: deltaAmount,
+          oSonicTotalValue: deltaAmount,
+          vaultCheckBalance: deltaAmount,
+          userOSonic: deltaAmount,
+          userWS: 0,
+          vaultWS: 0,
+          queued: withdrawAmount,
+          claimable: 0,
+          claimed: 0,
+          nextWithdrawalIndex: 1,
+        },
+        fixtureWithUser
+      );
+    });
+
+    it("Should claim withdraw from Vault", async () => {
+      const { oSonicVault, wS, nick } = fixture;
+
+      // Mint some OSonic
+      const mintAmount = parseUnits("100", 18);
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      const withdrawAmount = parseUnits("90", 18);
+      await oSonicVault.connect(nick).requestWithdrawal(withdrawAmount);
+
+      const fixtureWithUser = { ...fixture, user: nick };
+      const dataBefore = await snapData(fixtureWithUser);
+
+      await advanceTime(86400); // 1 day
+
+      const withdrawalId = 0;
+      const tx = await oSonicVault.connect(nick).claimWithdrawal(withdrawalId);
+
+      await expect(tx)
+        .to.emit(oSonicVault, "WithdrawalClaimed")
+        .withArgs(nick.address, withdrawalId, withdrawAmount);
+
+      await assertChangedData(
+        dataBefore,
+        {
+          oSonicTotalSupply: 0,
+          oSonicTotalValue: 0,
+          vaultCheckBalance: 0,
+          userOSonic: 0,
+          userWS: withdrawAmount,
+          vaultWS: withdrawAmount.mul(-1),
+          queued: 0,
+          claimable: withdrawAmount,
+          claimed: withdrawAmount,
+          nextWithdrawalIndex: 0,
+        },
+        fixtureWithUser
+      );
+    });
+
+    it("Should claim multiple withdrawal from Vault", async () => {
+      const { oSonicVault, wS, nick } = fixture;
+
+      // Mint some OSonic
+      const mintAmount = parseUnits("100", 18);
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      const withdrawAmount1 = parseUnits("10", 18);
+      const withdrawAmount2 = parseUnits("20", 18);
+      const withdrawAmount = withdrawAmount1.add(withdrawAmount2);
+      await oSonicVault.connect(nick).requestWithdrawal(withdrawAmount1);
+      await oSonicVault.connect(nick).requestWithdrawal(withdrawAmount2);
+
+      const fixtureWithUser = { ...fixture, user: nick };
+      const dataBefore = await snapData(fixtureWithUser);
+
+      await advanceTime(86400); // 1 day
+
+      // Claim both withdrawals
+      const tx = await oSonicVault.connect(nick).claimWithdrawals([0, 1]);
+
+      await expect(tx)
+        .to.emit(oSonicVault, "WithdrawalClaimed")
+        .withArgs(nick.address, 0, withdrawAmount1);
+      await expect(tx)
+        .to.emit(oSonicVault, "WithdrawalClaimed")
+        .withArgs(nick.address, 1, withdrawAmount2);
+
+      await assertChangedData(
+        dataBefore,
+        {
+          oSonicTotalSupply: 0,
+          oSonicTotalValue: 0,
+          vaultCheckBalance: 0,
+          userOSonic: 0,
+          userWS: withdrawAmount,
+          vaultWS: withdrawAmount.mul(-1),
+          queued: 0,
+          claimable: withdrawAmount,
+          claimed: withdrawAmount,
           nextWithdrawalIndex: 0,
         },
         fixtureWithUser

@@ -124,6 +124,8 @@ module.exports = deployOnSonic(
     console.log("Added vault support of Wrapped S");
     await cOSonicVault.connect(sGovernor).unpauseCapital();
     console.log("Unpaused capital");
+    await cOSonicVault.connect(sGovernor).setWithdrawalClaimDelay(86400);
+    console.log("withdrawal claim delay set to 1 day");
 
     // Staking Strategy
     await deployWithConfirmation("SonicStakingStrategyProxy");
@@ -175,6 +177,30 @@ module.exports = deployOnSonic(
       .connect(sDeployer)
       .setRegistrator(addresses.sonic.validatorRegistrator);
     console.log("Set registrator");
+
+    // Deploy the Dripper
+    await deployWithConfirmation("OSonicDripperProxy");
+
+    const cOSonicDripperProxy = await ethers.getContract("OSonicDripperProxy");
+    const dFixedRateDripper = await deployWithConfirmation("FixedRateDripper", [
+      cOSonicVaultProxy.address, // VaultAddress
+      cWS.address,
+    ]);
+
+    // Init the Dripper proxy
+    // prettier-ignore
+    await withConfirmation(
+    cOSonicDripperProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dFixedRateDripper.address,
+          governorAddr,
+          "0x"
+        )
+    );
+
+    await withConfirmation(
+      cOSonicVault.connect(sGovernor).setDripper(cOSonicDripperProxy.address)
+    );
 
     // TODO transfer governor to ?
   }

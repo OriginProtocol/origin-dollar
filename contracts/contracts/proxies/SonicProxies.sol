@@ -25,7 +25,7 @@ contract WOSonicProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OSonicDripperProxy delegates calls to a OSonicDripper implementation
+ * @notice OSonicDripperProxy delegates calls to a FixedRateDripper implementation
  */
 contract OSonicDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
