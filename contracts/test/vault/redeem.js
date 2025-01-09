@@ -154,7 +154,7 @@ describe("Vault Redeem", function () {
     // Try to withdraw more than balance
     await expect(
       vault.connect(anna).redeem(ousdUnits("100.0"), 0)
-    ).to.be.revertedWith("Remove exceeds balance");
+    ).to.be.revertedWith("Transfer amount exceeds balance");
   });
 
   it("Should only allow Governor to set a redeem fee", async () => {
