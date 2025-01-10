@@ -260,6 +260,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
     /**
      * @notice To receive native S from SFC and Wrapped Sonic (wS)
+     *
+     * @dev This does not prevent donating S tokens to the contract
+     * as wrappedSonic has a `withdrawTo` function where a third party
+     * owner of wrappedSonic can withdraw to this contract.
      */
     receive() external payable {
         require(

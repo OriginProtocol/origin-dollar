@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
+import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
 
 /**
  * @title Staking Strategy for Sonic's native S currency
@@ -94,6 +95,10 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     /// This does not withdraw from delegated validators. That has to be done separately with `undelegate`.
     /// Any native S in this strategy will not be withdrawn.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            IWrappedSonic(wrappedSonic).deposit{ value: balance }();
+        }
         uint256 wSBalance = IERC20(wrappedSonic).balanceOf(address(this));
         if (wSBalance > 0) {
             _withdraw(vaultAddress, wrappedSonic, wSBalance);
