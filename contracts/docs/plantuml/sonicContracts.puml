@@ -29,7 +29,7 @@ object "OSonicDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: wS
 }
 
-object "OSonicVaultValueChecker" as checker <<Origin>> #$originColor {
+object "VaultValueChecker" as checker <<Origin>> #$originColor {
 }
 
 object "OSonic" as os <<Origin>><<Proxy>> #$originColor {
@@ -43,6 +43,10 @@ object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
 
 object "SonicStakingStrategy" as stakeStrat <<Origin>><<Proxy>> #$originColor {
     asset: wS
+}
+
+object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
+    asset: S
 }
 
 ' object "AMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
@@ -59,7 +63,8 @@ checker ..> vault
 wos ..> os
 os <.> vault
 vault <.> drip
-vault <...> stakeStrat
+vault <..> stakeStrat
+stakeStrat ..> sfc
 ' vault <...> amoStrat
 
 

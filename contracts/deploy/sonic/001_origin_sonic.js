@@ -210,6 +210,14 @@ module.exports = deployOnSonic(
     ]);
     console.log("Deployed Origin Sonic Zapper");
 
+    // Deploy the VaultValueChecker
+    await deployWithConfirmation("VaultValueChecker", [
+      cOSonicVault.address, // Origin Sonic Vault
+      cOSonic.address, // Origin Sonic token
+    ]);
+    const vaultValueChecker = await ethers.getContract("VaultValueChecker");
+    console.log("Deployed Vault Value Checker", vaultValueChecker.address);
+
     // TODO transfer governor to ?
   }
 );
