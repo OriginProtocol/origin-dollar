@@ -10,17 +10,8 @@ import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
  * @author Origin Protocol Inc
  */
 contract SonicStakingStrategy is SonicValidatorDelegator {
-    /// @dev This contract receives Wrapped S (wS) as the deposit asset, but unlike other strategies doesn't immediately
-    /// deposit it to an underlying platform. Rather a special privilege account delegates it to the validators.
-    /// For that reason calling wrappedSonic.balanceOf(this) in a deposit function can contain wS that has just been
-    /// deposited and also wS that has previously been deposited. To keep a correct count we need to keep track
-    /// of wS that has already been accounted for.
-    /// This value represents the amount of wS balance of this contract that has already been accounted for by the
-    /// deposit events.
-    uint256 public depositedWSAccountedFor;
-
     // For future use
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
@@ -40,7 +31,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         nonReentrant
     {
         require(_asset == wrappedSonic, "Unsupported asset");
-        depositedWSAccountedFor += _amount;
         _deposit(_asset, _amount);
     }
 
@@ -58,19 +48,12 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     /**
      * @notice Deposit the entire balance of wrapped S in this strategy contract
      */
-
-    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
-    /// It just emits the Deposit event.
-    /// To deposit native S into Sonic validators, `delegate` must be used.
-    /// Will NOT revert if the strategy is paused from an accounting failure.
+    /// @notice Deposits the WS asset into the underlying platform
     function depositAll() external virtual override onlyVault nonReentrant {
         uint256 wSBalance = IERC20(wrappedSonic).balanceOf(address(this));
-        uint256 newWS = wSBalance - depositedWSAccountedFor;
 
-        if (newWS > 0) {
-            depositedWSAccountedFor = wSBalance;
-
-            _deposit(wrappedSonic, newWS);
+        if (wSBalance > 0) {
+            _deposit(wrappedSonic, wSBalance);
         }
     }
 
@@ -100,8 +83,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        _wSWithdrawn(_amount);
-
         // slither-disable-next-line unchecked-transfer unused-return
         IERC20(_asset).transfer(_recipient, _amount);
 
@@ -116,22 +97,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         if (wSBalance > 0) {
             _withdraw(vaultAddress, wrappedSonic, wSBalance);
         }
-    }
-
-    /// @dev Called when Wrapped S (wS) is withdrawn from the strategy or delegated to a validator so
-    /// the strategy knows how much wS it has on deposit.
-    /// This is so it can emit the correct amount in the Deposit event in depositAll().
-    function _wSWithdrawn(uint256 _amount) internal override {
-        /* In an ideal world we wouldn't need to reduce the deduction amount when the
-         * depositedWSAccountedFor is smaller than the _amount.
-         *
-         * The reason this is required is that a malicious actor could sent Wrapped S directly
-         * to this contract and that would circumvent the increase of depositedWSAccountedFor
-         * property. When the S would be staked the depositedWSAccountedFor amount could
-         * be deducted so much that it would be negative.
-         */
-        uint256 deductAmount = Math.min(_amount, depositedWSAccountedFor);
-        depositedWSAccountedFor -= deductAmount;
     }
 
     /**
