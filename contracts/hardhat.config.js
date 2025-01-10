@@ -59,6 +59,8 @@ const SONIC_DEPLOYER = MAINNET_DEPLOYER;
 const SONIC_GOVERNOR = MAINNET_DEPLOYER;
 const SONIC_STRATEGIST = MAINNET_DEPLOYER;
 
+const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -363,6 +365,9 @@ module.exports = {
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: BASE_STRATEGIST,
       sonic: SONIC_STRATEGIST,
+    },
+    multichainStrategistAddr: {
+      default: MULTICHAIN_STRATEGIST,
     },
   },
   contractSizer: {
