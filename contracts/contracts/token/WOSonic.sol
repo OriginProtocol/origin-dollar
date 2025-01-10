@@ -32,7 +32,7 @@ contract WOSonic is ERC4626, Governable, Initializable {
     }
 
     function name() public view virtual override returns (string memory) {
-        return "Wrapped Origin S";
+        return "Wrapped Origin Sonic";
     }
 
     function symbol() public view virtual override returns (string memory) {

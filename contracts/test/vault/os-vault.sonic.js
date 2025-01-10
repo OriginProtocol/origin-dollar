@@ -74,6 +74,23 @@ describe("Origin S Vault", function () {
     );
   };
 
+  describe("Sonic tokens", () => {
+    it("Should read Origin Sonic metadata", async () => {
+      const { oSonic } = fixture;
+
+      expect(await oSonic.name()).to.equal("Origin Sonic");
+      expect(await oSonic.symbol()).to.equal("OS");
+      expect(await oSonic.decimals()).to.equal(18);
+    });
+    it("Should read Wrapped Origin Sonic metadata", async () => {
+      const { wOSonic } = fixture;
+
+      expect(await wOSonic.name()).to.equal("Wrapped Origin Sonic");
+      expect(await wOSonic.symbol()).to.equal("wOS");
+      expect(await wOSonic.decimals()).to.equal(18);
+    });
+  });
+
   describe("Vault operations", () => {
     it("Should mint with wS", async () => {
       const { oSonicVault, wS, nick } = fixture;

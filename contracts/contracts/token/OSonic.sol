@@ -13,6 +13,6 @@ contract OSonic is OUSD {
     }
 
     function name() external pure override returns (string memory) {
-        return "Origin S";
+        return "Origin Sonic";
     }
 }
