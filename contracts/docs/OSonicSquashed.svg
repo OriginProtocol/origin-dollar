@@ -9,12 +9,12 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1423.4)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-1423.4 804.33,-1423.4 804.33,4 -4,4"/>
-<!-- 242 -->
+<!-- 244 -->
 <g id="node1" class="node">
-<title>242</title>
+<title>244</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-1418.9 800.33,-1418.9 800.33,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="400.16" y="-1402.3" font-family="Times,serif" font-size="14.00">OETH</text>
-<text text-anchor="middle" x="400.16" y="-1385.5" font-family="Times,serif" font-size="14.00">../contracts/token/OETH.sol</text>
+<text text-anchor="middle" x="400.16" y="-1402.3" font-family="Times,serif" font-size="14.00">OSonic</text>
+<text text-anchor="middle" x="400.16" y="-1385.5" font-family="Times,serif" font-size="14.00">../contracts/token/OSonic.sol</text>
 <polyline fill="none" stroke="black" points="0,-1377.3 800.33,-1377.3 "/>
 <text text-anchor="start" x="8" y="-1360.7" font-family="Times,serif" font-size="14.00">Private:</text>
 <text text-anchor="start" x="8" y="-1343.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;governorPosition: bytes32 &lt;&lt;Governable&gt;&gt;</text>
@@ -59,9 +59,9 @@
 <text text-anchor="start" x="8" y="-697.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-680.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-663.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize(_vaultAddress: address, _initialCreditsPerToken: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;OUSD&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-647.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;symbol(): string &lt;&lt;OETH&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;name(): string &lt;&lt;OETH&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;decimals(): uint8 &lt;&lt;OETH&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-647.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;symbol(): string &lt;&lt;OSonic&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;name(): string &lt;&lt;OSonic&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;decimals(): uint8 &lt;&lt;OUSD&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-596.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebasingCreditsPerTokenHighres(): uint256 &lt;&lt;OUSD&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebasingCreditsPerToken(): uint256 &lt;&lt;OUSD&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebasingCreditsHighres(): uint256 &lt;&lt;OUSD&gt;&gt;</text>

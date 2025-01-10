@@ -16,16 +16,16 @@
 <text text-anchor="middle" x="117.43" y="-104.1" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 228 -->
+<!-- 245 -->
 <g id="node2" class="node">
-<title>228</title>
+<title>245</title>
 <polygon fill="#f2f2f2" stroke="black" points="30.3,-0.5 30.3,-42.1 204.56,-42.1 204.56,-0.5 30.3,-0.5"/>
 <text text-anchor="middle" x="117.43" y="-25.5" font-family="Times,serif" font-size="14.00">OUSD</text>
 <text text-anchor="middle" x="117.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/token/OUSD.sol</text>
 </g>
-<!-- 228&#45;&gt;21 -->
+<!-- 245&#45;&gt;21 -->
 <g id="edge1" class="edge">
-<title>228&#45;&gt;21</title>
+<title>245&#45;&gt;21</title>
 <path fill="none" stroke="black" d="M117.43,-42.43C117.43,-44.45 117.43,-46.56 117.43,-48.73"/>
 <polygon fill="none" stroke="black" points="106.93,-48.91 117.43,-78.91 127.93,-48.91 106.93,-48.91"/>
 </g>

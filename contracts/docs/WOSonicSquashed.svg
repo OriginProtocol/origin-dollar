@@ -9,12 +9,12 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1389.8)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-1389.8 714.93,-1389.8 714.93,4 -4,4"/>
-<!-- 252 -->
+<!-- 251 -->
 <g id="node1" class="node">
-<title>252</title>
+<title>251</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-1385.3 710.93,-1385.3 710.93,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="355.46" y="-1368.7" font-family="Times,serif" font-size="14.00">WrappedOusd</text>
-<text text-anchor="middle" x="355.46" y="-1351.9" font-family="Times,serif" font-size="14.00">../contracts/token/WrappedOusd.sol</text>
+<text text-anchor="middle" x="355.46" y="-1368.7" font-family="Times,serif" font-size="14.00">WOSonic</text>
+<text text-anchor="middle" x="355.46" y="-1351.9" font-family="Times,serif" font-size="14.00">../contracts/token/WOSonic.sol</text>
 <polyline fill="none" stroke="black" points="0,-1343.7 710.93,-1343.7 "/>
 <text text-anchor="start" x="8" y="-1327.1" font-family="Times,serif" font-size="14.00">Private:</text>
 <text text-anchor="start" x="8" y="-1310.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;_balances: mapping(address=&gt;uint256) &lt;&lt;ERC20&gt;&gt;</text>
@@ -51,8 +51,8 @@
 <text text-anchor="start" x="8" y="-798.3" font-family="Times,serif" font-size="14.00">External:</text>
 <text text-anchor="start" x="8" y="-781.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-764.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-747.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize() &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;WrappedOusd&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-731.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferToken(asset_: address, amount_: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;WrappedOusd&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-747.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize() &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;WOSonic&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-731.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferToken(asset_: address, amount_: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;WOSonic&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-714.3" font-family="Times,serif" font-size="14.00">Public:</text>
 <text text-anchor="start" x="8" y="-697.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Transfer(from: address, to: address, value: uint256) &lt;&lt;IERC20&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-680.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Approval(owner: address, spender: address, value: uint256) &lt;&lt;IERC20&gt;&gt;</text>
@@ -69,8 +69,8 @@
 <text text-anchor="start" x="8" y="-495.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allowance(owner: address, spender: address): uint256 &lt;&lt;ERC20&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-479.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;approve(spender: address, amount: uint256): bool &lt;&lt;ERC20&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-462.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferFrom(sender: address, recipient: address, amount: uint256): bool &lt;&lt;ERC20&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;name(): string &lt;&lt;WrappedOusd&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;symbol(): string &lt;&lt;WrappedOusd&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;name(): string &lt;&lt;WOSonic&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;symbol(): string &lt;&lt;WOSonic&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;decimals(): uint8 &lt;&lt;ERC20&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(name_: string, symbol_: string) &lt;&lt;ERC20&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;increaseAllowance(spender: address, addedValue: uint256): bool &lt;&lt;ERC20&gt;&gt;</text>
@@ -95,7 +95,7 @@
 <text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-42.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isGovernor(): bool &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(underlying_: ERC20, name_: string, symbol_: string) &lt;&lt;WrappedOusd&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(underlying_: ERC20, name_: string, symbol_: string) &lt;&lt;WOSonic&gt;&gt;</text>
 </g>
 </g>
 </svg>
