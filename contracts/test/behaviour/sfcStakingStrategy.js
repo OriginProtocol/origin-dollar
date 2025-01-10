@@ -122,14 +122,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await delegateTokenAmount(amount, 0, true);
       await advanceSfcEpoch(1);
 
-      const tx = await sonicStakingStrategy.restakeRewards([testValidatorIds[0]]);
+      const tx = await sonicStakingStrategy.restakeRewards([
+        testValidatorIds[0],
+      ]);
 
       await expect(tx).to.emittedEvent("Deposit", [
         wS.address,
         AddressZero,
         (totalRewards) => {
-          expect(totalRewards).to.be.gt(oethUnits("0"))
-        }
+          expect(totalRewards).to.be.gt(oethUnits("0"));
+        },
       ]);
     });
 
