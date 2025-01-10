@@ -1,3 +1,4 @@
+const { parseEther } = require("ethers/lib/utils");
 const { deployOnSonic } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
@@ -200,6 +201,23 @@ module.exports = deployOnSonic(
 
     await withConfirmation(
       cOSonicVault.connect(sGovernor).setDripper(cOSonicDripperProxy.address)
+    );
+
+    // Configure the Vault
+    await withConfirmation(
+      cOSonicVault.connect(sGovernor).setRebaseThreshold(parseEther("10")) // 10 OS
+    );
+    // setAutoAllocateThreshold is not set
+    await withConfirmation(
+      cOSonicVault.connect(sGovernor).setMaxSupplyDiff(parseEther("1")) // 1 OS
+    );
+    await withConfirmation(
+      cOSonicVault
+        .connect(sGovernor)
+        .setTrusteeAddress(addresses.sonic.guardian)
+    );
+    await withConfirmation(
+      cOSonicVault.connect(sGovernor).setTrusteeFeeBps(2000) // 20%
     );
 
     // Deploy the Zapper
