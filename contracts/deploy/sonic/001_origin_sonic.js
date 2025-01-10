@@ -159,23 +159,30 @@ module.exports = deployOnSonic(
       cSonicStakingStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dSonicStakingStrategy.address,
-          deployerAddr,
+          governorAddr,
           initSonicStakingStrategy
         )
     );
     console.log("Initialized SonicStakingStrategy proxy and implementation");
 
+    await withConfirmation(
+      cOSonicVault
+        .connect(sGovernor)
+        .approveStrategy(cSonicStakingStrategy.address)
+    );
+    console.log("Approved Sonic Staking Strategy on Vault");
+
     // verify validators here: https://explorer.soniclabs.com/staking
     for (const validatorId of [15, 16, 17, 18]) {
       await cSonicStakingStrategy
-        .connect(sDeployer)
+        .connect(sGovernor)
         .supportValidator(validatorId);
     }
     console.log("Added supported validators");
 
     // Set Defender Relayer for Sonic validator controls
     await cSonicStakingStrategy
-      .connect(sDeployer)
+      .connect(sGovernor)
       .setRegistrator(addresses.sonic.validatorRegistrator);
     console.log("Set registrator");
 
@@ -214,11 +221,17 @@ module.exports = deployOnSonic(
     await withConfirmation(
       cOSonicVault
         .connect(sGovernor)
+        .setStrategistAddr(addresses.sonic.guardian)
+    );
+    await withConfirmation(
+      cOSonicVault
+        .connect(sGovernor)
         .setTrusteeAddress(addresses.sonic.guardian)
     );
     await withConfirmation(
       cOSonicVault.connect(sGovernor).setTrusteeFeeBps(2000) // 20%
     );
+    console.log("Configured Vault");
 
     // Deploy the Zapper
     await deployWithConfirmation("OSonicZapper", [
@@ -235,7 +248,5 @@ module.exports = deployOnSonic(
     ]);
     const vaultValueChecker = await ethers.getContract("VaultValueChecker");
     console.log("Deployed Vault Value Checker", vaultValueChecker.address);
-
-    // TODO transfer governor to ?
   }
 );

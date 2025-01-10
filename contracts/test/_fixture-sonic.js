@@ -100,22 +100,16 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr, timelockAddr } =
-    await getNamedAccounts();
-  // TODO: change the deployerAddr to the appropriate governor address
-  const governor = await ethers.getSigner(isFork ? deployerAddr : governorAddr);
-  await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
-
-  const guardian = await ethers.getSigner(governorAddr);
-  const timelock = await ethers.getContractAt(
-    "ITimelockController",
-    timelockAddr
-  );
-  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  // Impersonate governor
+  const governor = await impersonateAndFund(governorAddr);
+  governor.address = governorAddr;
 
   // Impersonate strategist
   const strategist = await impersonateAndFund(strategistAddr);
   strategist.address = strategistAddr;
+
+  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
   let validatorRegistrator;
   if (isFork) {
@@ -123,12 +117,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
       addresses.sonic.validatorRegistrator
     );
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
-
-    await impersonateAndFund(governor.address);
-    await impersonateAndFund(timelock.address);
-
-    // configure Vault to not automatically deposit to strategy
-    await oSonicVault.connect(governor).setVaultBuffer(oethUnits("1"));
   }
 
   for (const user of [rafael, nick, clement]) {
@@ -156,8 +144,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     // Signers
     governor,
-    guardian,
-    timelock,
     strategist,
     minter,
     burner,

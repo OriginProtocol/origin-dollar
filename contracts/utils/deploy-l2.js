@@ -219,8 +219,9 @@ function deployOnSonic(opts, fn) {
     };
 
     if (isFork) {
-      const { deployerAddr } = await getNamedAccounts();
+      const { deployerAddr, governorAddr } = await getNamedAccounts();
       await impersonateAndFund(deployerAddr);
+      await impersonateAndFund(governorAddr);
     }
 
     await fn(tools);
