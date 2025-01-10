@@ -141,6 +141,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
         IWrappedSonic(wrappedSonic).withdraw(amount);
 
+        _wSWithdrawn(amount);
+
         ISFC(sfc).delegate{ value: amount }(validatorId);
 
         emit Delegated(validatorId, amount);
@@ -317,4 +319,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         }
         return false;
     }
+
+    /***************************************
+                 Abstract
+    ****************************************/
+
+    /// @dev Called when Wrapped S (wS) is withdrawn from the strategy or delegated to a validator so
+    /// the strategy knows how much wS it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wSWithdrawn(uint256 _amount) internal virtual;
 }

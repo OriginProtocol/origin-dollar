@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
 
@@ -10,7 +11,7 @@ import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
  */
 contract SonicStakingStrategy is SonicValidatorDelegator {
     /// @dev This contract receives Wrapped S (wS) as the deposit asset, but unlike other strategies doesn't immediately
-    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
+    /// deposit it to an underlying platform. Rather a special privilege account delegates it to the validators.
     /// For that reason calling wrappedSonic.balanceOf(this) in a deposit function can contain wS that has just been
     /// deposited and also wS that has previously been deposited. To keep a correct count we need to keep track
     /// of wS that has already been accounted for.
@@ -60,7 +61,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just emits the Deposit event.
-    /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
+    /// To deposit native S into Sonic validators, `delegate` must be used.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function depositAll() external virtual override onlyVault nonReentrant {
         uint256 wSBalance = IERC20(wrappedSonic).balanceOf(address(this));
@@ -99,12 +100,12 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        emit Withdrawal(wrappedSonic, address(0), _amount);
+        _wSWithdrawn(_amount);
 
         // slither-disable-next-line unchecked-transfer unused-return
         IERC20(_asset).transfer(_recipient, _amount);
 
-        emit Withdrawal(_asset, address(0), _amount);
+        emit Withdrawal(wrappedSonic, address(0), _amount);
     }
 
     /// @notice transfer all Wrapped Sonic (wS) deposits back to the vault.
@@ -115,6 +116,22 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         if (wSBalance > 0) {
             _withdraw(vaultAddress, wrappedSonic, wSBalance);
         }
+    }
+
+    /// @dev Called when Wrapped S (wS) is withdrawn from the strategy or delegated to a validator so
+    /// the strategy knows how much wS it has on deposit.
+    /// This is so it can emit the correct amount in the Deposit event in depositAll().
+    function _wSWithdrawn(uint256 _amount) internal override {
+        /* In an ideal world we wouldn't need to reduce the deduction amount when the
+         * depositedWSAccountedFor is smaller than the _amount.
+         *
+         * The reason this is required is that a malicious actor could sent Wrapped S directly
+         * to this contract and that would circumvent the increase of depositedWSAccountedFor
+         * property. When the S would be staked the depositedWSAccountedFor amount could
+         * be deducted so much that it would be negative.
+         */
+        uint256 deductAmount = Math.min(_amount, depositedWSAccountedFor);
+        depositedWSAccountedFor -= deductAmount;
     }
 
     /**
@@ -144,6 +161,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         revert("unsupported function");
     }
 
+    /// @notice is not used by this strategy as all staking rewards are restaked
     function collectRewardTokens() external override nonReentrant {
         revert("unsupported function");
     }
@@ -158,5 +176,6 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
 
     function _abstractSetPToken(address, address) internal virtual override {}
 
+    /// @notice is not used by this strategy
     function safeApproveAllTokens() external override onlyGovernor {}
 }
