@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { OETHVaultAdmin } from "./OETHVaultAdmin.sol";
 
 /**
- * @title Origin S VaultAdmin Contract on Sonic
+ * @title Origin Sonic VaultAdmin contract on Sonic
  * @author Origin Protocol Inc
  */
 contract OSonicVaultAdmin is OETHVaultAdmin {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { OETHVaultCore } from "./OETHVaultCore.sol";
 
 /**
- * @title Origin S VaultCore contract on Sonic
+ * @title Origin Sonic VaultCore contract on Sonic
  * @author Origin Protocol Inc
  */
 contract OSonicVaultCore is OETHVaultCore {

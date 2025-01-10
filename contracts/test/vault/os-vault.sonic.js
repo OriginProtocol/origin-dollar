@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { deployWithConfirmation } = require("../../utils/deploy");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { createFixtureLoader } = require("../_fixture");
@@ -88,6 +89,40 @@ describe("Origin S Vault", function () {
       expect(await wOSonic.name()).to.equal("Wrapped Origin Sonic");
       expect(await wOSonic.symbol()).to.equal("wOS");
       expect(await wOSonic.decimals()).to.equal(18);
+    });
+
+    describe("governor transfers", () => {
+      const amount = parseUnits("1000", 18);
+      let weth;
+      beforeEach(async () => {
+        const { wOSonic } = fixture;
+
+        await deployWithConfirmation("MockWETH", []);
+        weth = await ethers.getContract("MockWETH");
+        await weth.mint(amount);
+        await weth.transfer(wOSonic.address, amount);
+      });
+      it("Should allow transfer of arbitrary token by Governor", async () => {
+        const { wOSonic, governor } = fixture;
+
+        await wOSonic.connect(governor).transferToken(weth.address, amount);
+        await expect(governor).has.a.balanceOf(amount, weth);
+      });
+      it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+        const { wOSonic, nick } = fixture;
+
+        // Naughty Nick
+        await expect(
+          wOSonic.connect(nick).transferToken(weth.address, amount)
+        ).to.be.revertedWith("Caller is not the Governor");
+      });
+      it("Should not allow transfer of Origin Sonic token by governor", async () => {
+        const { oSonic, wOSonic, governor } = fixture;
+
+        await expect(
+          wOSonic.connect(governor).transferToken(oSonic.address, amount)
+        ).to.be.revertedWith("Cannot collect OS");
+      });
     });
   });
 

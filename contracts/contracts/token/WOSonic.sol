@@ -11,10 +11,9 @@ import { Initializable } from "../utils/Initializable.sol";
 import { OSonic } from "./OSonic.sol";
 
 /**
- * @title Wrapped Origin S Token contract on Sonic (wOS)
+ * @title Wrapped Origin Sonic (wOS) token on Sonic
  * @author Origin Protocol Inc
  */
-
 contract WOSonic is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
 
@@ -49,7 +48,7 @@ contract WOSonic is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        require(asset_ != address(asset()), "Cannot collect Origin S");
+        require(asset_ != address(asset()), "Cannot collect OS");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { OUSD } from "./OUSD.sol";
 
 /**
- * @title Origin S (OS) Token Contract on Sonic
+ * @title Origin Sonic (OS) token on Sonic
  * @author Origin Protocol Inc
  */
 contract OSonic is OUSD {
