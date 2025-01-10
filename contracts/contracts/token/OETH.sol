@@ -8,5 +8,15 @@ import { OUSD } from "./OUSD.sol";
  * @author Origin Protocol Inc
  */
 contract OETH is OUSD {
+    function symbol() external pure override returns (string memory) {
+        return "OETH";
+    }
 
+    function name() external pure override returns (string memory) {
+        return "Origin Ether";
+    }
+
+    function decimals() external pure override returns (uint8) {
+        return 18;
+    }
 }

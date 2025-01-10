@@ -1428,7 +1428,7 @@ describe("OETH Vault", function () {
             .connect(josh)
             .requestWithdrawal(dataBefore.userOeth.add(1));
 
-          await expect(tx).to.revertedWith("Remove exceeds balance");
+          await expect(tx).to.revertedWith("Transfer amount exceeds balance");
         });
         it("capital is paused", async () => {
           const { oethVault, governor, josh } = fixture;
