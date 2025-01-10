@@ -89,15 +89,9 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       ).to.be.revertedWith("unsupported function");
     });
 
-    it("Should accept and handle S token allocation", async () => {
-      const depositAmount = oethUnits("15000");
-      await depositTokenAmount(depositAmount);
-    });
-
     it("Should accept and handle S token allocation and delegation to SFC", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
     });
 
     it("Should earn rewards as epochs pass", async () => {
@@ -105,7 +99,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
 
       const balanceBefore = await sonicStakingStrategy.checkBalance(wS.address);
       await advanceSfcEpoch(1);
@@ -119,12 +112,9 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
       await advanceSfcEpoch(1);
 
-      const tx = await sonicStakingStrategy.restakeRewards([
-        testValidatorIds[0],
-      ]);
+      const tx = await sonicStakingStrategy.restakeRewards(testValidatorIds);
 
       await expect(tx).to.emittedEvent("Deposit", [
         wS.address,
@@ -136,86 +126,77 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should accept and handle S token allocation and delegation to all delegators", async () => {
-      const depositAmount = oethUnits("20000");
-      const delegateAmount = oethUnits("5000");
-      await depositTokenAmount(depositAmount);
-      await delegateTokenAmount(delegateAmount, 0);
-      await delegateTokenAmount(delegateAmount, 1);
-      await delegateTokenAmount(delegateAmount, 2);
-      await delegateTokenAmount(delegateAmount, 3);
+      const amount = oethUnits("5000");
+      await changeDefaultDelegator(15);
+      await depositTokenAmount(amount);
+      await changeDefaultDelegator(16);
+      await depositTokenAmount(amount);
+      await changeDefaultDelegator(17);
+      await depositTokenAmount(amount);
+      await changeDefaultDelegator(18);
+      await depositTokenAmount(amount);
     });
 
-    it("Should not allow delegation to unsupported validator", async () => {
-      const amount = oethUnits("5000");
-      await depositTokenAmount(amount);
+    it("Should not allow deposit of 0 amount", async () => {
+      const { sonicStakingStrategy, wS, oSonicVaultSigner } = await context();
 
-      const { sonicStakingStrategy, validatorRegistrator } = await context();
-
-      const tx = sonicStakingStrategy
-        .connect(validatorRegistrator)
-        .delegate(1, amount);
-
-      await expect(tx).to.be.revertedWith("Validator not supported");
-    });
-
-    it("Should not allow delegation of 0 amount", async () => {
-      const amount = oethUnits("5000");
-      await depositTokenAmount(amount);
-
-      const { sonicStakingStrategy, validatorRegistrator, testValidatorIds } =
-        await context();
-
-      const tx = sonicStakingStrategy
-        .connect(validatorRegistrator)
-        .delegate(testValidatorIds[0], oethUnits("0"));
-
-      await expect(tx).to.be.revertedWith("Must delegate something");
+      await expect(
+        sonicStakingStrategy
+          .connect(oSonicVaultSigner)
+          .deposit(wS.address, oethUnits("0"))
+      ).to.be.revertedWith("Must deposit something");
     });
   });
 
   describe("Undelegation/Withdrawal", function () {
+    let defaultValidatorId;
+    beforeEach(async () => {
+      const { sonicStakingStrategy } = await context();
+      const defaultValidatorIdBn =
+        await sonicStakingStrategy.defaultValidatorId();
+      defaultValidatorId = parseInt(defaultValidatorIdBn.toString());
+    });
+
     it("Should undelegate and withdraw", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      await undelegateTokenAmount(amount, 0);
+      console.log("defaultValidatorId", defaultValidatorId);
+      await undelegateTokenAmount(amount, defaultValidatorId);
     });
 
     it("Should not undelegate with 0 amount", async () => {
+      const { sonicStakingStrategy, validatorRegistrator } =
+        await context();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-
-      const { sonicStakingStrategy, validatorRegistrator, testValidatorIds } =
-        await context();
 
       await expect(
         sonicStakingStrategy
           .connect(validatorRegistrator)
-          .undelegate(testValidatorIds[0], oethUnits("0"))
+          .undelegate(defaultValidatorId, oethUnits("0"))
       ).to.be.revertedWith("Must undelegate something");
     });
 
     it("Should not undelegate more than has been delegated", async () => {
+      const { sonicStakingStrategy, validatorRegistrator } =
+        await context();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-
-      const { sonicStakingStrategy, validatorRegistrator, testValidatorIds } =
-        await context();
 
       await expect(
         sonicStakingStrategy
           .connect(validatorRegistrator)
-          .undelegate(testValidatorIds[0], oethUnits("1500000000"))
+          .undelegate(defaultValidatorId, oethUnits("1500000000"))
       ).to.be.revertedWith("Insufficient delegation");
     });
 
     it("Withdraw what has been delegated", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      const withdrawalId = await undelegateTokenAmount(
+        amount,
+        defaultValidatorId
+      );
       await advanceWeek();
       await advanceWeek();
       await withdrawFromSFC(withdrawalId, amount);
@@ -224,8 +205,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     it("Can not withdraw too soon", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      const withdrawalId = await undelegateTokenAmount(
+        amount,
+        defaultValidatorId
+      );
       await advanceWeek();
 
       await withdrawFromSFC(withdrawalId, amount, {
@@ -236,8 +219,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     it("Can not withdraw with too little epochs passing", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      const withdrawalId = await undelegateTokenAmount(
+        amount,
+        defaultValidatorId
+      );
       await advanceWeek();
       await advanceWeek();
 
@@ -251,10 +236,18 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       const amount = oethUnits("15000");
       const smallAmount = oethUnits("5000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId1 = await undelegateTokenAmount(smallAmount, 0);
-      const withdrawalId2 = await undelegateTokenAmount(smallAmount, 0);
-      const withdrawalId3 = await undelegateTokenAmount(smallAmount, 0);
+      const withdrawalId1 = await undelegateTokenAmount(
+        smallAmount,
+        defaultValidatorId
+      );
+      const withdrawalId2 = await undelegateTokenAmount(
+        smallAmount,
+        defaultValidatorId
+      );
+      const withdrawalId3 = await undelegateTokenAmount(
+        smallAmount,
+        defaultValidatorId
+      );
       await advanceWeek();
       await advanceWeek();
       await withdrawFromSFC(withdrawalId1, smallAmount);
@@ -269,10 +262,15 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Incorrect withdrawal ID should revert", async () => {
+      const { sonicStakingStrategy } = await context();
+      const defaultValidatorId =
+        await sonicStakingStrategy.defaultValidatorId();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      const withdrawalId = await undelegateTokenAmount(
+        amount,
+        defaultValidatorId
+      );
       await withdrawFromSFC(withdrawalId + 10, amount, {
         skipEpochAdvancement: true,
         expectedRevert: "Invalid withdrawId",
@@ -280,10 +278,15 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Can not withdraw with the same ID twice", async () => {
+      const { sonicStakingStrategy } = await context();
+      const defaultValidatorId =
+        await sonicStakingStrategy.defaultValidatorId();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      await delegateTokenAmount(amount, 0, true);
-      const withdrawalId = await undelegateTokenAmount(amount, 0);
+      const withdrawalId = await undelegateTokenAmount(
+        amount,
+        defaultValidatorId
+      );
       await advanceWeek();
       await advanceWeek();
       await withdrawFromSFC(withdrawalId, amount);
@@ -294,15 +297,24 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
   });
 
+  const changeDefaultDelegator = async (validatorId) => {
+    const { sonicStakingStrategy, strategist } = await context();
+
+    await sonicStakingStrategy
+      .connect(strategist)
+      .setDefaultValidatorId(validatorId);
+  };
+
   // deposit the amount into the Sonic Staking Strategy
   const depositTokenAmount = async (amount) => {
     const { sonicStakingStrategy, oSonicVaultSigner, wS, clement } =
       await context();
 
-    const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
+    const defaultValidatorId = await sonicStakingStrategy.defaultValidatorId();
     const strategyBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address
     );
+    const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
 
     // Transfer some WS to strategy
     await wS.connect(clement).transfer(sonicStakingStrategy.address, amount);
@@ -315,62 +327,23 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     expect(tx)
       .to.emit(sonicStakingStrategy, "Deposit")
       .withArgs(wS.address, AddressZero, amount);
-
-    expect(await wS.balanceOf(sonicStakingStrategy.address)).to.equal(
-      wsBalanceBefore.add(amount),
-      "WS not transferred"
-    );
+    expect(tx)
+      .to.emit(sonicStakingStrategy, "Delegated")
+      .withArgs(defaultValidatorId, amount);
 
     expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
       strategyBalanceBefore.add(amount),
       "strategy checkBalance not increased"
     );
-  };
-
-  // delegate the amount into the Sonic Special Fee Contract
-  const delegateTokenAmount = async (
-    amount,
-    validatorIndex,
-    checkBalanceMatchesDelegatedAmount = false
-  ) => {
-    const { sonicStakingStrategy, validatorRegistrator, testValidatorIds, wS } =
-      await context();
-
-    const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
-    const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
-      wS.address
-    );
-
-    const tx = await sonicStakingStrategy
-      .connect(validatorRegistrator)
-      .delegate(testValidatorIds[validatorIndex], amount);
-
-    expect(tx)
-      .to.emit(sonicStakingStrategy, "Delegated")
-      .withArgs(testValidatorIds[validatorIndex], amount);
-
-    // checkBalance should not change when delegating
-    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
-      contractBalanceBefore,
-      "Strategy checkBalance not as expected"
-    );
-
-    if (checkBalanceMatchesDelegatedAmount) {
-      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
-        amount,
-        "Strategy checkBalance doesn't match delegated amount"
-      );
-    }
-
     expect(await wS.balanceOf(sonicStakingStrategy.address)).to.equal(
-      wsBalanceBefore.sub(amount),
-      "not the expected WS amount"
+      wsBalanceBefore,
+      "Unexpected WS amount"
     );
   };
 
   // undelegate the amount into the Sonic Special Fee Contract
-  const undelegateTokenAmount = async (amount, validatorIndex) => {
-    const { sonicStakingStrategy, validatorRegistrator, testValidatorIds, wS } =
+  const undelegateTokenAmount = async (amount, validatorId) => {
+    const { sonicStakingStrategy, validatorRegistrator, wS } =
       await context();
 
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
@@ -382,16 +355,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
     const tx = await sonicStakingStrategy
       .connect(validatorRegistrator)
-      .undelegate(testValidatorIds[validatorIndex], amount);
+      .undelegate(validatorId, amount);
 
     expect(tx)
       .to.emit(sonicStakingStrategy, "Undelegated")
-      .withArgs(expectedWithdrawId, testValidatorIds[validatorIndex], amount);
+      .withArgs(expectedWithdrawId, validatorId, amount);
     const withdrawal = await sonicStakingStrategy.withdrawals(
       expectedWithdrawId
     );
 
-    expect(withdrawal.validatorId).to.equal(testValidatorIds[validatorIndex]);
+    expect(withdrawal.validatorId).to.equal(validatorId);
     expect(withdrawal.undelegatedAmount).to.equal(amount);
 
     await expect(await sonicStakingStrategy.pendingWithdrawals()).to.equal(

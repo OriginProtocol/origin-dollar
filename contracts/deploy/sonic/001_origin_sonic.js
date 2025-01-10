@@ -4,6 +4,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
+const { impersonateAndFund } = require("../../utils/signers");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
@@ -13,8 +14,11 @@ module.exports = deployOnSonic(
   async ({ ethers }) => {
     const { governorAddr, deployerAddr } = await getNamedAccounts();
     console.log(`Governor: ${governorAddr}`);
+    console.log(`Governor: ${addresses.sonic.guardian}`);
     console.log(`Deployer: ${deployerAddr}`);
     const sGovernor = await ethers.provider.getSigner(governorAddr);
+    // TODO this needs to change in the actual deploy file
+    const sStrategist = await impersonateAndFund(addresses.sonic.guardian);
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cWS = await ethers.getContractAt("IWrappedSonic", addresses.sonic.wS);
@@ -172,20 +176,6 @@ module.exports = deployOnSonic(
     );
     console.log("Approved Sonic Staking Strategy on Vault");
 
-    // verify validators here: https://explorer.soniclabs.com/staking
-    for (const validatorId of [15, 16, 17, 18]) {
-      await cSonicStakingStrategy
-        .connect(sGovernor)
-        .supportValidator(validatorId);
-    }
-    console.log("Added supported validators");
-
-    // Set Defender Relayer for Sonic validator controls
-    await cSonicStakingStrategy
-      .connect(sGovernor)
-      .setRegistrator(addresses.sonic.validatorRegistrator);
-    console.log("Set registrator");
-
     // Deploy the Dripper
     await deployWithConfirmation("OSonicDripperProxy");
 
@@ -232,6 +222,24 @@ module.exports = deployOnSonic(
       cOSonicVault.connect(sGovernor).setTrusteeFeeBps(2000) // 20%
     );
     console.log("Configured Vault");
+
+    // verify validators here: https://explorer.soniclabs.com/staking
+    for (const validatorId of [15, 16, 17, 18]) {
+      await cSonicStakingStrategy
+        .connect(sGovernor)
+        .supportValidator(validatorId);
+    }
+
+    console.log("Added supported validators");
+
+    // Set Defender Relayer for Sonic validator controls
+    await cSonicStakingStrategy
+      .connect(sGovernor)
+      .setRegistrator(addresses.sonic.validatorRegistrator);
+    console.log("Set registrator");
+
+    await cSonicStakingStrategy.connect(sStrategist).setDefaultValidatorId(18);
+    console.log("Set the default validator id");
 
     // Deploy the Zapper
     await deployWithConfirmation("OSonicZapper", [

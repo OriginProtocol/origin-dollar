@@ -26,6 +26,9 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice List of supported validator IDs that can be delegated to
     uint256[] public supportedValidators;
 
+    /// @notice Default validator id to deposit to
+    uint256 public defaultValidatorId;
+
     struct WithdrawRequest {
         uint256 validatorId;
         uint256 undelegatedAmount;
@@ -55,12 +58,23 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     event RegistratorChanged(address indexed newAddress);
     event SupportedValidator(uint256 indexed validatorId);
     event UnsupportedValidator(uint256 indexed validatorId);
+    event DefaultValidatorIdChanged(uint256 indexed validatorId);
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         require(
             msg.sender == validatorRegistrator,
             "Caller is not the Registrator"
+        );
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Registrator or Strategist
+    modifier onlyRegistratorOrStrategist() {
+        require(
+            msg.sender == validatorRegistrator ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Registrator or Strategist"
         );
         _;
     }
@@ -125,30 +139,28 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Delegate from this strategy to a specific Sonic validator.
-     * Only the registrator can call this function.
-     * @param validatorId the ID of the validator to delegate to
+     * @notice Delegate from this strategy to a specific Sonic validator. Called
+     * automatically on asset deposit
      * @param amount the amount of Sonic (S) to delegate.
      */
-    function delegate(uint256 validatorId, uint256 amount)
-        external
-        onlyRegistrator
-        nonReentrant
-    {
-        require(isSupportedValidator(validatorId), "Validator not supported");
+    function _delegate(uint256 amount) internal {
+        require(
+            isSupportedValidator(defaultValidatorId),
+            "Validator not supported"
+        );
         require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
         IWrappedSonic(wrappedSonic).withdraw(amount);
 
-        ISFC(sfc).delegate{ value: amount }(validatorId);
+        ISFC(sfc).delegate{ value: amount }(defaultValidatorId);
 
-        emit Delegated(validatorId, amount);
+        emit Delegated(defaultValidatorId, amount);
     }
 
     function undelegate(uint256 validatorId, uint256 undelegateAmount)
         external
-        onlyRegistrator
+        onlyRegistratorOrStrategist
         nonReentrant
         returns (uint256 withdrawId)
     {
@@ -264,6 +276,16 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     function setRegistrator(address _address) external onlyGovernor {
         validatorRegistrator = _address;
         emit RegistratorChanged(_address);
+    }
+
+    /// @notice Set the default validatorId to delegate to on deposit
+    function setDefaultValidatorId(uint256 validatorId)
+        external
+        onlyRegistratorOrStrategist
+    {
+        require(isSupportedValidator(validatorId), "Validator not supported");
+        defaultValidatorId = validatorId;
+        emit DefaultValidatorIdChanged(validatorId);
     }
 
     /// @notice Allows a validator to be delegated to by the Registrator

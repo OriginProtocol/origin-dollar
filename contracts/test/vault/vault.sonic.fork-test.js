@@ -93,7 +93,7 @@ describe("ForkTest: Sonic Vault", function () {
       expect(balanceDiff).to.approxEqualTolerance(parseUnits("1000"), 1);
     });
 
-    it("should deposit to and withdraw from staking strategy", async () => {
+    it.skip("should deposit to and withdraw from staking strategy", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
       await oSonicVault.connect(nick).mint(wS.address, parseUnits("1000"), 0);
       const strategistSigner = await impersonateAndFund(

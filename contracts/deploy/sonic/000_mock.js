@@ -25,7 +25,8 @@ const deployOracleRouter = async () => {
 };
 
 const deployCore = async () => {
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { governorAddr, deployerAddr, strategistAddr } =
+    await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -119,6 +120,10 @@ const deployCore = async () => {
   await cOSonicVault.connect(sGovernor).unpauseCapital();
   // Set withdrawal claim delay to 1 day
   await cOSonicVault.connect(sGovernor).setWithdrawalClaimDelay(86400);
+
+  await withConfirmation(
+    cOSonicVault.connect(sGovernor).setStrategistAddr(strategistAddr)
+  );
 };
 
 const deployStakingStrategy = async () => {

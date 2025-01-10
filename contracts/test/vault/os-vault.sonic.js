@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { deployWithConfirmation } = require("../../utils/deploy");
+const { impersonateAndFund } = require("../../utils/signers");
 const { parseUnits } = require("ethers/lib/utils");
 
 const { createFixtureLoader } = require("../_fixture");
@@ -444,6 +445,59 @@ describe("Origin S Vault", function () {
       await expect(tx).to.revertedWith("Validator not supported");
 
       expect(await sonicStakingStrategy.isSupportedValidator(90)).to.eq(false);
+    });
+
+    describe("Setting default validator registrator", function () {
+      let newRegistrator, newRegistratorSigner;
+      beforeEach(async () => {
+        const { sonicStakingStrategy, governor } = fixture;
+
+        newRegistrator = ethers.Wallet.createRandom();
+        newRegistratorSigner = await impersonateAndFund(newRegistrator.address);
+        await sonicStakingStrategy
+          .connect(governor)
+          .setRegistrator(newRegistrator.address);
+      });
+
+      it("Should allow setting a default validator", async () => {
+        const { sonicStakingStrategy, governor, strategist } = fixture;
+        await sonicStakingStrategy.connect(governor).supportValidator(95);
+        await sonicStakingStrategy.connect(governor).supportValidator(96);
+
+        const tx = await sonicStakingStrategy
+          .connect(newRegistratorSigner)
+          .setDefaultValidatorId(95);
+
+        expect(tx)
+          .to.emit(sonicStakingStrategy, "DefaultValidatorIdChanged")
+          .withArgs(95);
+
+        expect(await sonicStakingStrategy.defaultValidatorId()).to.equal(95);
+
+        await sonicStakingStrategy
+          .connect(strategist)
+          .setDefaultValidatorId(96);
+        expect(await sonicStakingStrategy.defaultValidatorId()).to.equal(96);
+      });
+
+      it("Should not allow setting a default validator when one is not supported", async () => {
+        const { sonicStakingStrategy } = fixture;
+
+        await expect(
+          sonicStakingStrategy
+            .connect(newRegistratorSigner)
+            .setDefaultValidatorId(95)
+        ).to.be.revertedWith("Validator not supported");
+      });
+
+      it("Should not allow setting a default validator by non registrator/strategist account", async () => {
+        const { sonicStakingStrategy, governor, nick } = fixture;
+        await sonicStakingStrategy.connect(governor).supportValidator(95);
+
+        await expect(
+          sonicStakingStrategy.connect(nick).setDefaultValidatorId(95)
+        ).to.be.revertedWith("Caller is not the Registrator or Strategist");
+      });
     });
   });
 

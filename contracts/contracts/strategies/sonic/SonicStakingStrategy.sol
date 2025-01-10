@@ -42,6 +42,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     function _deposit(address _asset, uint256 _amount) internal virtual {
         require(_amount > 0, "Must deposit something");
 
+        _delegate(_amount);
         emit Deposit(_asset, address(0), _amount);
     }
 
