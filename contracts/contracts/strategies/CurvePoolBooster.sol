@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
-import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
+import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
@@ -27,18 +26,18 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event FeeSet(uint16 _newFee);
-    event FeeCollectorSet(address _newFeeCollector);
-    event CampaignIdSet(uint256 _newId);
+    event FeeUpdated(uint16 _newFee);
+    event FeeCollectorUpdated(address _newFeeCollector);
+    event CampaignIdUpdated(uint256 _newId);
     event BribeCreated(
         address gauge,
         address rewardToken,
         uint256 maxRewardPerVote,
         uint256 totalRewardAmount
     );
-    event TotalRewardAmountManaged(uint256 extraTotalRewardAmount);
-    event NumberOfPeriodsManaged(uint8 extraNumberOfPeriods);
-    event RewardPerVoteManaged(uint256 newMaxRewardPerVote);
+    event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
+    event NumberOfPeriodsUpdated(uint8 extraNumberOfPeriods);
+    event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
     event RescueTokens(address token, uint256 amount, address receiver);
 
     ////////////////////////////////////////////////////
@@ -86,11 +85,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(balance > 0, "No reward to manage");
 
         // Handle fee (if any)
-        uint256 feeAmount = (balance * fee) / BASE_FEE;
-        if (feeAmount > 0) {
-            balance -= feeAmount;
-            IERC20(rewardToken).transfer(feeCollector, feeAmount);
-        }
+        balance = _handleFee(balance);
 
         // Approve the balance to the campaign manager
         IERC20(rewardToken).approve(campaignRemoteManager, balance);
@@ -129,11 +124,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(balance > 0, "No reward to manage");
 
         // Handle fee (if any)
-        uint256 feeAmount = (balance * fee) / BASE_FEE;
-        if (feeAmount > 0) {
-            balance -= feeAmount;
-            IERC20(rewardToken).transfer(feeCollector, feeAmount);
-        }
+        balance = _handleFee(balance);
 
         // Approve the total reward amount to the campaign manager
         IERC20(rewardToken).approve(campaignRemoteManager, balance);
@@ -153,7 +144,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit
         );
 
-        emit TotalRewardAmountManaged(balance);
+        emit TotalRewardAmountUpdated(balance);
     }
 
     function manageNumberOfPeriods(
@@ -179,7 +170,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit
         );
 
-        emit NumberOfPeriodsManaged(extraNumberOfPeriods);
+        emit NumberOfPeriodsUpdated(extraNumberOfPeriods);
     }
 
     function manageRewardPerVote(
@@ -205,7 +196,16 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit
         );
 
-        emit RewardPerVoteManaged(newMaxRewardPerVote);
+        emit RewardPerVoteUpdated(newMaxRewardPerVote);
+    }
+
+    function _handleFee(uint256 amount) internal returns (uint256) {
+        uint256 feeAmount = (amount * fee) / BASE_FEE;
+        if (feeAmount > 0) {
+            IERC20(rewardToken).transfer(feeCollector, feeAmount);
+            return amount - feeAmount;
+        }
+        return amount;
     }
 
     ////////////////////////////////////////////////////
@@ -216,7 +216,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         onlyGovernorOrStrategist
     {
         campaignId = _campaignId;
-        emit CampaignIdSet(_campaignId);
+        emit CampaignIdUpdated(_campaignId);
     }
 
     function sendETH(address receiver) external onlyGovernorOrStrategist {
@@ -237,11 +237,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
     function setFee(uint16 _fee) external onlyGovernor {
         require(_fee <= BASE_FEE / 2, "Fee too high");
         fee = _fee;
+        emit FeeUpdated(_fee);
     }
 
     function setFeeCollector(address _feeCollector) external onlyGovernor {
         feeCollector = _feeCollector;
-        emit FeeCollectorSet(_feeCollector);
+        emit FeeCollectorUpdated(_feeCollector);
     }
 
     receive() external payable {}
