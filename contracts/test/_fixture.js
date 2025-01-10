@@ -2740,19 +2740,25 @@ async function rebornFixture() {
   const initCode = (await ethers.getContractFactory("Reborner")).bytecode;
   const deployCode = `${initCode}${encodedCallbackAddress}`;
 
-  await sanctum.deploy(12345, deployCode);
   const rebornAddress = await sanctum.computeAddress(12345, deployCode);
   const reborner = await ethers.getContractAt("Reborner", rebornAddress);
 
-  const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
+  // deploy the reborn contract and call a method
+  const deployAndCall = async ({
+    shouldAttack = true,
+    targetMethod = null,
+    shouldDestruct = false,
+  }) => {
     await sanctum.setShouldAttack(shouldAttack);
+    await sanctum.setShouldDesctruct(shouldDestruct);
     if (targetMethod) await sanctum.setTargetMethod(targetMethod);
     await sanctum.setOUSDAddress(fixture.ousd.address);
     await sanctum.deploy(12345, deployCode);
   };
 
+  fixture.rebornAddress = rebornAddress;
   fixture.reborner = reborner;
-  fixture.rebornAttack = rebornAttack;
+  fixture.deployAndCall = deployAndCall;
 
   return fixture;
 }

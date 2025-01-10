@@ -1,4 +1,9 @@
-const { isFork, isArbFork, isBaseFork } = require("../test/helpers");
+const {
+  isFork,
+  isArbFork,
+  isBaseFork,
+  isSonicFork,
+} = require("../test/helpers");
 const addresses = require("./addresses");
 const {
   deployWithConfirmation,
@@ -202,8 +207,53 @@ function deployOnBaseWithGuardian(opts, fn) {
   return main;
 }
 
+function deployOnSonic(opts, fn) {
+  const { deployName, dependencies, forceSkip } = opts;
+
+  const runDeployment = async (hre) => {
+    const tools = {
+      deployWithConfirmation,
+      ethers: hre.ethers,
+      getTxOpts: getTxOpts,
+      withConfirmation,
+    };
+
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await impersonateAndFund(deployerAddr);
+    }
+
+    await fn(tools);
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies || [];
+
+  main.tags = ["sonic"];
+
+  main.skip = () =>
+    forceSkip ||
+    !(
+      isSonicFork ||
+      hre.network.name == "sonic" ||
+      hre.network.config.chainId == 146
+    );
+  return main;
+}
+
 module.exports = {
   deployOnArb,
   deployOnBase,
   deployOnBaseWithGuardian,
+  deployOnSonic,
 };
