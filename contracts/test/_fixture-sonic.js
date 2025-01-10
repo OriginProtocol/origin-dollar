@@ -76,22 +76,17 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  // let dripper, harvester;
-  // if (isFork) {
-  //   // Harvester
-  //   const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
-  //   harvester = await ethers.getContractAt(
-  //     "OSonicHarvester",
-  //     harvesterProxy.address
-  //   );
+  let dripper, zapper;
+  if (isFork) {
+    // Dripper
+    const dripperProxy = await ethers.getContract("OSonicDripperProxy");
+    dripper = await ethers.getContractAt(
+      "FixedRateDripper",
+      dripperProxy.address
+    );
 
-  //   // Dripper
-  //   const dripperProxy = await ethers.getContract("OSonicDripperProxy");
-  //   dripper = await ethers.getContractAt(
-  //     "FixedRateDripper",
-  //     dripperProxy.address
-  //   );
-  // }
+    zapper = await ethers.getContract("OSonicZapper");
+  }
 
   // Sonic's wrapped S token
   let wS;
@@ -153,6 +148,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     // harvester,
     // dripper,
     sonicStakingStrategy,
+    dripper,
+    zapper,
 
     // Wrapped S
     wS,
