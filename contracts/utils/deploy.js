@@ -160,8 +160,9 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork || isSonicFork) {
-    // Skip proxy check on base and sonic for now
+  if (isSonicFork) {
+    // Skip proxy check on sonic for now
+    console.log("Skipping proxy check on Sonic for now");
     return;
   }
 
@@ -172,6 +173,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     ![
       addresses.mainnet.Timelock.toLowerCase(),
       addresses.mainnet.OldTimelock.toLowerCase(),
+      addresses.base.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
