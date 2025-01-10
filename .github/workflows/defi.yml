@@ -130,6 +130,36 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
+  contracts-bnb-test:
+    name: "BNB Unit Coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: Run BNB Unit Coverage
+        env:
+          UNIT_TESTS_NETWORK: bnb
+        run: yarn run test:coverage:bnb
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bnb-unit-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
   contracts-forktest:
     name: "Mainnet Fork Tests ${{ matrix.chunk_id }}"
     runs-on: ubuntu-latest
@@ -334,6 +364,46 @@ jobs:
             ./contracts/coverage.json
             ./contracts/coverage/**/*
           retention-days: 1
+  
+  contracts-bnb-forktest:
+    name: "BNB Fork Tests"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      HARDHAT_CACHE_DIR: ./cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      BNB_PROVIDER_URL: ${{ secrets.BNB_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - uses: actions/cache@v4
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - run: yarn run test:coverage:bnb-fork
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fork-test-bnb-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
 
   coverage-uploader:
     name: "Upload Coverage Reports"
@@ -342,11 +412,13 @@ jobs:
       - contracts-unit-coverage
       - contracts-base-test
       - contracts-sonic-test
+      - contracts-bnb-test
       - contracts-forktest
       - contracts-arb-forktest
       - contracts-hol-forktest
       - contracts-base-forktest
       - contracts-sonic-forktest
+      - contracts-bnb-forktest
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:

@@ -41,6 +41,10 @@ main()
           PROVIDER_URL=$SONIC_PROVIDER_URL;
           BLOCK_NUMBER=$SONIC_BLOCK_NUMBER;
           params+=" --tags sonic";
+        elif [[ $FORK_NETWORK_NAME == "bnb" ]]; then
+          PROVIDER_URL=$BNB_PROVIDER_URL;
+          BLOCK_NUMBER=$BNB_BLOCK_NUMBER;
+          params+=" --tags bnb";
         fi
         
         echo "Fork Network: $FORK_NETWORK_NAME"

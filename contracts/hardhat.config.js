@@ -14,10 +14,15 @@ const {
   isSonicFork,
   isSonicForkTest,
   isSonicUnitTest,
+  isBNB,
+  isBNBFork,
+  isBNBForkTest,
+  isBNBUnitTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
+  bnbProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -51,14 +56,21 @@ const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
+
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
+const BASE_TIMELOCK = addresses.base.timelock;
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+
 const SONIC_DEPLOYER = MAINNET_DEPLOYER;
 // TODO: update Sonic Governor and strategist
 const SONIC_GOVERNOR = MAINNET_DEPLOYER;
 const SONIC_STRATEGIST = MAINNET_DEPLOYER;
 
+// TODO: Update after deployment
+const BNB_GOVERNOR = MAINNET_DEPLOYER;
+const BNB_STRATEGIST = MAINNET_DEPLOYER;
+const BNB_DEPLOYER = MAINNET_DEPLOYER;
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -85,6 +97,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/base";
 } else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
   paths.deploy = "deploy/sonic";
+} else if (isBNB || isBNBFork || isBNBForkTest || isBNBUnitTest) {
+  paths.deploy = "deploy/bnb";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -93,6 +107,98 @@ if (process.env.HARDHAT_CACHE_DIR) {
   paths.cache = process.env.HARDHAT_CACHE_DIR;
 }
 const { provider, chainId } = getHardhatNetworkProperties();
+
+const getDeployerAddressOrIndex = (fallbackAccountIndex = 0) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+
+  if (isArbitrumFork) {
+    return MAINNET_DEPLOYER;
+  } else if (isBaseFork) {
+    return BASE_DEPLOYER;
+  } else if (isSonicFork) {
+    return SONIC_DEPLOYER;
+  } else if (isBNBFork) {
+    return BNB_DEPLOYER;
+  } else if (isHoleskyFork) {
+    return HOLESKY_DEPLOYER;
+  }
+
+  return MAINNET_DEPLOYER;
+}
+
+const getGovernorAddressOrIndex = (fallbackAccountIndex = 1) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+
+  if (isArbitrumFork) {
+    return MAINNET_GOVERNOR;
+  } else if (isBaseFork) {
+    return BASE_GOVERNOR;
+  } else if (isSonicFork) {
+    return SONIC_GOVERNOR;
+  } else if (isBNBFork) {
+    return BNB_GOVERNOR;
+  } else if (isHoleskyFork) {
+    return HOLESKY_DEPLOYER;
+  } else if (isMainnetFork) {
+    return MAINNET_GOVERNOR;
+  }
+
+  return fallbackAccountIndex;
+}
+
+const getStrategistAddressOrIndex = (fallbackAccountIndex = 2) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+
+  if (isHoleskyFork) {
+    return HOLESKY_DEPLOYER;
+  } else if (isBaseFork) {
+    return BASE_STRATEGIST;
+  } else if (isSonicFork) {
+    return SONIC_STRATEGIST;
+  } else if (isBNBFork) {
+    return BNB_STRATEGIST;
+  }
+
+  return MAINNET_STRATEGIST;
+}
+
+const getTimelockAddress = () => {
+  if (process.env.FORK !== "true") {
+    return ethers.constants.AddressZero;
+  }
+
+  if (process.env.FORK_NETWORK_NAME == "base") {
+    return BASE_TIMELOCK;
+  } else if (process.env.FORK_NETWORK_NAME == "mainnet" || (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")) {
+    return MAINNET_TIMELOCK;
+  }
+
+  return ethers.constants.AddressZero;
+}
+
+const getDeployTags = () => {
+  if (isArbitrumFork) {
+    return { tags: ["arbitrumOne"] };
+  } else if (isBaseFork) {
+    return { tags: ["base"] };
+  } else if (isSonicFork) {
+    return { tags: ["sonic"] };
+  } else if (isBNBFork) {
+    return { tags: ["bnb"] };
+  }
+  return {};
+}
+
+const defaultAccountConfig = [
+  process.env.DEPLOYER_PK || privateKeys[0],
+  process.env.GOVERNOR_PK || privateKeys[0],
+];
 
 module.exports = {
   solidity: {
@@ -117,13 +223,7 @@ module.exports = {
       blockGasLimit: 1000000000,
       allowUnlimitedContractSize: true,
       chainId,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : isSonicFork
-        ? { tags: ["sonic"] }
-        : {}),
+      ...getDeployTags(),
       ...(isForkTest
         ? {
             timeout: 0,
@@ -145,36 +245,21 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : isSonicFork
-        ? { tags: ["sonic"] }
-        : {}),
+      ...getDeployTags(),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccountConfig,
     },
     holesky: {
       url: holeskyProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccountConfig,
       chainId: 17000,
       live: true,
     },
     arbitrumOne: {
       url: arbitrumProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccountConfig,
       chainId: 42161,
       tags: ["arbitrumOne"],
       live: true,
@@ -185,10 +270,7 @@ module.exports = {
     },
     base: {
       url: baseProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccountConfig,
       chainId: 8453,
       tags: ["base"],
       live: true,
@@ -196,12 +278,17 @@ module.exports = {
     },
     sonic: {
       url: sonicProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccountConfig,
       chainId: 146,
       tags: ["sonic"],
+      live: true,
+      saveDeployments: true,
+    },
+    bnb: {
+      url: bnbProviderUrl,
+      accounts: defaultAccountConfig,
+      chainId: 56,
+      tags: ["bnb"],
       live: true,
       saveDeployments: true,
     },
@@ -214,26 +301,8 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_DEPLOYER
-            : isSonicFork
-            ? SONIC_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_DEPLOYER
-            : isSonicFork
-            ? SONIC_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
+      localhost: getDeployerAddressOrIndex(),
+      hardhat: getDeployerAddressOrIndex(),
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
@@ -244,25 +313,9 @@ module.exports = {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : isSonicFork
-            ? SONIC_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
+        getGovernorAddressOrIndex(),
       hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : isSonicFork
-            ? SONIC_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
+        getGovernorAddressOrIndex(),
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
@@ -307,21 +360,11 @@ module.exports = {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost:
-        process.env.FORK_NETWORK_NAME == "base"
-          ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet" ||
-            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+        getTimelockAddress(),
       hardhat:
-        process.env.FORK_NETWORK_NAME == "base"
-          ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet" ||
-            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+        getTimelockAddress(),
       mainnet: MAINNET_TIMELOCK,
-      base: addresses.base.timelock,
+      base: BASE_TIMELOCK,
       sonic: addresses.sonic.timelock,
     },
     guardianAddr: {
@@ -339,30 +382,13 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_STRATEGIST
-            : isSonicFork
-            ? SONIC_STRATEGIST
-            : MAINNET_STRATEGIST
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_STRATEGIST
-            : isSonicFork
-            ? SONIC_STRATEGIST
-            : MAINNET_STRATEGIST
-          : 0,
+      localhost: getStrategistAddressOrIndex(),
+      hardhat: getStrategistAddressOrIndex(),
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: BASE_STRATEGIST,
       sonic: SONIC_STRATEGIST,
+      bnb: BNB_STRATEGIST,
     },
   },
   contractSizer: {
@@ -376,6 +402,7 @@ module.exports = {
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
       sonic: process.env.SONICSCAN_API_KEY,
+      bnb: process.env.BNBSCAN_API_KEY,
     },
     customChains: [
       {
@@ -400,6 +427,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.sonicscan.org/api",
           browserURL: "https://sonicscan.org",
+        },
+      },
+      {
+        network: "bnb",
+        chainId: 56,
+        urls: {
+          apiURL: "https://api.bscscan.com/api",
+          browserURL: "https://bscscan.com",
         },
       },
     ],

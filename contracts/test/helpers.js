@@ -309,6 +309,10 @@ const isSonic = hre.network.name == "sonic";
 const isSonicFork = isFork && process.env.FORK_NETWORK_NAME == "sonic";
 const isSonicOrFork = isSonic || isSonicFork;
 const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
+const isBNB = hre.network.name == "bnb";
+const isBNBFork = isFork && process.env.FORK_NETWORK_NAME == "bnb";
+const isBNBOrFork = isBNB || isBNBFork;
+const isBNBUnitTest = process.env.UNIT_TESTS_NETWORK === "bnb";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -846,6 +850,10 @@ module.exports = {
   isSonicFork,
   isSonicOrFork,
   isSonicUnitTest,
+  isBNB,
+  isBNBFork,
+  isBNBOrFork,
+  isBNBUnitTest,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

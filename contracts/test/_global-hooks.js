@@ -8,6 +8,8 @@ const {
   isBaseUnitTest,
   isSonicFork,
   isSonicUnitTest,
+  isBNBFork,
+  isBNBUnitTest,
 } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
@@ -50,7 +52,9 @@ mocha.before(function () {
     const isBaseUnitTestFile = s.file.endsWith(".base.js");
     const isSonicTestFile = s.file.endsWith(".sonic.fork-test.js");
     const isSonicUnitTestFile = s.file.endsWith(".sonic.js");
-    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile;
+    const isBNBTestFile = s.file.endsWith(".bnb.fork-test.js");
+    const isBNBUnitTestFile = s.file.endsWith(".bnb.js");
+    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile && !isSonicUnitTestFile && !isBNBUnitTestFile;
 
     if (isArbFork) {
       return isArbTestFile;
@@ -60,12 +64,16 @@ mocha.before(function () {
       return isBaseTestFile;
     } else if (isSonicFork) {
       return isSonicTestFile;
+    } else if (isBNBFork) {
+      return isBNBTestFile;
     } else if (isHoleskyFork) {
       return isHoleskyTestFile;
     } else if (isBaseUnitTest) {
       return isBaseUnitTestFile;
     } else if (isSonicUnitTest) {
       return isSonicUnitTestFile;
+    } else if (isBNBUnitTest) {
+      return isBNBUnitTestFile;
     } else {
       // else is unit test
       return unitTest;

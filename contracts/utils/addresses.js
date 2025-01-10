@@ -367,4 +367,8 @@ addresses.holesky.validatorRegistrator =
 // Address of the Holesky defender relayer
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
+// BNB
+addresses.bnb = {};
+// addresses.bnb.BNB = "";
+
 module.exports = addresses;

@@ -48,6 +48,9 @@ main()
     elif [[ $FORK_NETWORK_NAME == "sonic" ]]; then
       PROVIDER_URL=$SONIC_PROVIDER_URL;
       BLOCK_NUMBER=$SONIC_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "bnb" ]]; then
+      PROVIDER_URL=$BNB_PROVIDER_URL;
+      BLOCK_NUMBER=$BNB_BLOCK_NUMBER;
     fi
 
     if $is_local; then
