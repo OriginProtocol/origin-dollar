@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
 import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
 

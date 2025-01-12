@@ -41,7 +41,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     address public validatorRegistrator;
 
     // For future use
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 
     event Delegated(uint256 indexed validatorId, uint256 delegatedAmount);
     event Undelegated(
