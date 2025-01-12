@@ -165,8 +165,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should not undelegate with 0 amount", async () => {
-      const { sonicStakingStrategy, validatorRegistrator } =
-        await context();
+      const { sonicStakingStrategy, validatorRegistrator } = await context();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
 
@@ -178,8 +177,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should not undelegate more than has been delegated", async () => {
-      const { sonicStakingStrategy, validatorRegistrator } =
-        await context();
+      const { sonicStakingStrategy, validatorRegistrator } = await context();
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
 
@@ -343,8 +341,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
   // undelegate the amount into the Sonic Special Fee Contract
   const undelegateTokenAmount = async (amount, validatorId) => {
-    const { sonicStakingStrategy, validatorRegistrator, wS } =
-      await context();
+    const { sonicStakingStrategy, validatorRegistrator, wS } = await context();
 
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address
