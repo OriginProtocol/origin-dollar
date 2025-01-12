@@ -153,6 +153,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
         IWrappedSonic(wrappedSonic).withdraw(amount);
 
+        //slither-disable-next-line arbitrary-send-eth
         ISFC(sfc).delegate{ value: amount }(defaultValidatorId);
 
         emit Delegated(defaultValidatorId, amount);
