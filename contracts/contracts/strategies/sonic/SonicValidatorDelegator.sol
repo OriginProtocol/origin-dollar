@@ -270,9 +270,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             }
         }
 
-        // TODO use Deposit event or something else?
-        // The SFC contract will emit Delegated and RestakedRewards events
-        emit Deposit(wrappedSonic, address(0), totalRewards);
+        // The SFC contract will emit Delegated and RestakedRewards events.
+        // The checkBalance function should not change as the pending rewards will moved to the staked amount.
     }
 
     /**
