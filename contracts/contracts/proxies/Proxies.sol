@@ -358,3 +358,10 @@ contract MorphoGauntletPrimeUSDTStrategyProxy is
 {
 
 }
+
+/**
+ * @notice OETHFixedRateDripperProxy delegates calls to a OETHFixedRateDripper implementation
+ */
+contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
