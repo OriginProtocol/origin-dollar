@@ -63,9 +63,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint16 _fee,
         address _feeCollector
     ) external initializer {
+        // Set the fee collector
         require(_feeCollector != address(0), "Invalid fee collector");
         feeCollector = _feeCollector;
 
+        // Set the fee
         require(_fee <= BASE_FEE / 2, "Fee too high");
         fee = _fee;
 
@@ -90,6 +92,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 additionalGasLimit
     ) external onlyGovernorOrStrategist {
         require(campaignId == 0, "Campaign already created");
+        require(numberOfPeriods > 1, "Invalid number of periods");
+        require(maxRewardPerVote > 0, "Invalid reward per vote");
 
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
@@ -230,10 +234,15 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @return Amount after fee
     function _handleFee(uint256 amount) internal returns (uint256) {
         uint256 feeAmount = (amount * fee) / BASE_FEE;
+
+        // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
             IERC20(rewardToken).transfer(feeCollector, feeAmount);
+            // Return the amount after fee
             return amount - feeAmount;
         }
+
+        // If there is no fee, return the original amount
         return amount;
     }
 
@@ -254,21 +263,23 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Rescue ETH from the contract
     /// @dev Only callable by the governor or strategist
     /// @param receiver Address to receive the ETH
-    function sendETH(address receiver) external onlyGovernorOrStrategist {
+    function rescueETH(address receiver) external onlyGovernorOrStrategist {
+        //payable(receiver).transfer(amount);
         emit RescueTokens(address(0), address(this).balance, receiver);
-        payable(receiver).transfer(address(this).balance);
+        (bool success, ) = receiver.call{ value: address(this).balance }("");
+        require(success, "Transfer failed");
     }
 
     /// @notice Rescue ERC20 tokens from the contract
     /// @dev Only callable by the governor or strategist
     /// @param token Address of the token to rescue
-    function rescueToken(
-        address token,
-        uint256 amount,
-        address receiver
-    ) external onlyGovernor {
+    function rescueToken(address token, address receiver)
+        external
+        onlyGovernor
+    {
+        require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
-        emit RescueTokens(token, amount, receiver);
+        emit RescueTokens(token, balance, receiver);
         IERC20(token).transfer(receiver, balance);
     }
 

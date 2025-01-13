@@ -275,6 +275,28 @@ describe("ForkTest: CurvePoolBooster", function () {
       .manageRewardPerVote(100, parseUnits("0.1"), 0);
   });
 
+  it("Should rescue ETH", async () => {
+    const { curvePoolBooster } = fixture;
+    const { strategistAddr } = await getNamedAccounts();
+    const sStrategist = await ethers.provider.getSigner(strategistAddr);
+
+    // Deal ETH to pool booster
+    await sStrategist.sendTransaction({
+      to: curvePoolBooster.address,
+      value: parseUnits("1"),
+    });
+
+    const balanceBefore = await ethers.provider.getBalance(
+      curvePoolBooster.address
+    );
+    await curvePoolBooster.connect(sStrategist).rescueETH(strategistAddr);
+    const balanceAfter = await ethers.provider.getBalance(
+      curvePoolBooster.address
+    );
+    expect(balanceBefore).to.be.eq(parseUnits("1"));
+    expect(balanceAfter).to.be.eq(parseUnits("0"));
+  });
+
   it("Should revert if not called by operator", async () => {
     const { curvePoolBooster } = fixture;
     await expect(
