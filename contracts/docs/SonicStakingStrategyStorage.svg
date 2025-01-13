@@ -49,11 +49,11 @@
 <polyline fill="none" stroke="black" points="0,-157.3 74.81,-157.3 "/>
 <text text-anchor="middle" x="37.4" y="-140.7" font-family="Courier New" font-size="14.00">161</text>
 <polyline fill="none" stroke="black" points="0,-132.5 74.81,-132.5 "/>
-<text text-anchor="middle" x="37.4" y="-115.9" font-family="Courier New" font-size="14.00">162&#45;206</text>
+<text text-anchor="middle" x="37.4" y="-115.9" font-family="Courier New" font-size="14.00">162</text>
 <polyline fill="none" stroke="black" points="0,-107.7 74.81,-107.7 "/>
-<text text-anchor="middle" x="37.4" y="-91.1" font-family="Courier New" font-size="14.00">207</text>
+<text text-anchor="middle" x="37.4" y="-91.1" font-family="Courier New" font-size="14.00">163&#45;206</text>
 <polyline fill="none" stroke="black" points="0,-82.9 74.81,-82.9 "/>
-<text text-anchor="middle" x="37.4" y="-66.3" font-family="Courier New" font-size="14.00">208&#45;256</text>
+<text text-anchor="middle" x="37.4" y="-66.3" font-family="Courier New" font-size="14.00">207&#45;256</text>
 <polyline fill="none" stroke="black" points="74.81,-58.1 74.81,-554.1 "/>
 <text text-anchor="middle" x="468.87" y="-537.5" font-family="Courier New" font-size="14.00">type: &lt;inherited contract&gt;.variable (bytes)</text>
 <polyline fill="none" stroke="black" points="74.81,-529.3 862.93,-529.3 "/>
@@ -97,17 +97,17 @@
 <polyline fill="none" stroke="black" points="74.81,-206.9 862.93,-206.9 "/>
 <text text-anchor="middle" x="468.65" y="-190.3" font-family="Courier New" font-size="14.00">uint256[]: SonicValidatorDelegator.supportedValidators (32)</text>
 <polyline fill="none" stroke="black" points="74.81,-182.1 862.93,-182.1 "/>
-<text text-anchor="middle" x="468.86" y="-165.5" font-family="Courier New" font-size="14.00">mapping(uint256=&gt;WithdrawRequest): SonicValidatorDelegator.withdrawals (32)</text>
+<text text-anchor="middle" x="468.55" y="-165.5" font-family="Courier New" font-size="14.00">uint256: SonicValidatorDelegator.defaultValidatorId (32)</text>
 <polyline fill="none" stroke="black" points="74.81,-157.3 862.93,-157.3 "/>
-<text text-anchor="middle" x="183.52" y="-140.7" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="292.23,-132.5 292.23,-157.3 "/>
-<text text-anchor="middle" x="577.37" y="-140.7" font-family="Courier New" font-size="14.00">address: SonicValidatorDelegator.validatorRegistrator (20)</text>
+<text text-anchor="middle" x="468.86" y="-140.7" font-family="Courier New" font-size="14.00">mapping(uint256=&gt;WithdrawRequest): SonicValidatorDelegator.withdrawals (32)</text>
 <polyline fill="none" stroke="black" points="74.81,-132.5 862.93,-132.5 "/>
-<text text-anchor="middle" x="468.64" y="-115.9" font-family="Courier New" font-size="14.00">uint256[45]: SonicValidatorDelegator.__gap (1440)</text>
+<text text-anchor="middle" x="183.52" y="-115.9" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="292.23,-107.7 292.23,-132.5 "/>
+<text text-anchor="middle" x="577.37" y="-115.9" font-family="Courier New" font-size="14.00">address: SonicValidatorDelegator.validatorRegistrator (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-107.7 862.93,-107.7 "/>
-<text text-anchor="middle" x="468.73" y="-91.1" font-family="Courier New" font-size="14.00">uint256: depositedWSAccountedFor (32)</text>
+<text text-anchor="middle" x="468.64" y="-91.1" font-family="Courier New" font-size="14.00">uint256[44]: SonicValidatorDelegator.__gap (1408)</text>
 <polyline fill="none" stroke="black" points="74.81,-82.9 862.93,-82.9 "/>
-<text text-anchor="middle" x="468.83" y="-66.3" font-family="Courier New" font-size="14.00">uint256[49]: __gap (1568)</text>
+<text text-anchor="middle" x="468.83" y="-66.3" font-family="Courier New" font-size="14.00">uint256[50]: __gap (1600)</text>
 </g>
 <!-- 1 -->
 <g id="node2" class="node">
@@ -200,9 +200,9 @@
 </g>
 <!-- 5&#45;&gt;4 -->
 <g id="edge4" class="edge">
-<title>5:22&#45;&gt;4</title>
-<path fill="none" stroke="black" d="M862.93,-169.5C885.25,-169.5 879.45,-145.39 898.93,-134.5 930.72,-116.73 966.93,-103.28 1002.61,-93.1"/>
-<polygon fill="black" stroke="black" points="1003.96,-96.36 1012.66,-90.32 1002.09,-89.62 1003.96,-96.36"/>
+<title>5:23&#45;&gt;4</title>
+<path fill="none" stroke="black" d="M862.93,-144.5C879.54,-144.5 882.88,-138.76 898.93,-134.5 932.44,-125.6 968.23,-116.35 1002.72,-107.55"/>
+<polygon fill="black" stroke="black" points="1003.59,-110.94 1012.42,-105.08 1001.86,-104.16 1003.59,-110.94"/>
 </g>
 </g>
 </svg>
