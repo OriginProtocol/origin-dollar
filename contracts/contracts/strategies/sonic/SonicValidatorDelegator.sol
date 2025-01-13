@@ -197,7 +197,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /**
      * @notice Withdraw native S from a previously undelegated validator.
      * The native S is wrapped wS and transferred to the Vault.
-     * @param validatorId The Sonic validator ID to withdraw from.
+     * @param withdrawId The withdraw ID returned from `undelegate` and emitted in `Undelegated`.
      * @return withdrawnAmount The amount of Sonic (S) withdrawn.
      * This can be less than the undelegated amount in the event of slashing.
      */
