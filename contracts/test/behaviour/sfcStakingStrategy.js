@@ -114,15 +114,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await depositTokenAmount(amount);
       await advanceSfcEpoch(1);
 
-      const tx = await sonicStakingStrategy.restakeRewards(testValidatorIds);
+      const stratBalanceBefore = await sonicStakingStrategy.checkBalance(
+        wS.address
+      );
 
-      await expect(tx).to.emittedEvent("Deposit", [
-        wS.address,
-        AddressZero,
-        (totalRewards) => {
-          expect(totalRewards).to.be.gt(oethUnits("0"));
-        },
-      ]);
+      await sonicStakingStrategy.restakeRewards(testValidatorIds);
+
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.eq(
+        stratBalanceBefore,
+        "Strategy balance changed"
+      );
     });
 
     it("Should accept and handle S token allocation and delegation to all delegators", async () => {

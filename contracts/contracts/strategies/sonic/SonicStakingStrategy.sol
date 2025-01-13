@@ -107,7 +107,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
 
     /**
      * @dev Returns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
+     * @param _asset Address of the asset token
      */
     function supportsAsset(address _asset)
         public
@@ -145,6 +145,8 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         revert("unsupported function");
     }
 
+    /// @dev is not used by this strategy but must be implemented as it's abstract
+    /// in the inherited `InitializableAbstractStrategy` contract.
     function _abstractSetPToken(address, address) internal virtual override {}
 
     /// @notice is not used by this strategy
