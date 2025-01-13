@@ -116,29 +116,29 @@ sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
 sol2uml storage .. -c Timelock -o TimelockStorage.svg
 
 # contracts/token
-sol2uml .. -v -hv -hf -he -hs -hl -b OUSD -o OUSDHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b OUSD -o OUSDHierarchy.svg
 sol2uml .. -s -d 0 -b OUSD -o OUSDSquashed.svg
-sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _gap
+sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WrappedOusd -o WOUSDHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b WrappedOusd -o WOUSDHierarchy.svg
 sol2uml .. -s -d 0 -b WrappedOusd -o WOUSDSquashed.svg
-sol2uml storage .. -c WrappedOusd -o WOUSDStorage.svg
+sol2uml storage .. -c WrappedOusd -o WOUSDStorage.svg --hideExpand ______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETH -o OETHHierarchy.svg
 sol2uml .. -s -d 0 -b OETH -o OETHSquashed.svg
-sol2uml storage .. -c OETH -o OETHStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OETH -o OETHStorage.svg --hideExpand _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WOETH -o WOETHHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b WOETH -o WOETHHierarchy.svg
 sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
-sol2uml storage .. -c WOETH -o WOETHStorage.svg
+sol2uml storage .. -c WOETH -o WOETHStorage.svg --hideExpand ______gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHBase -o OETHBaseHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBase -o OETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
-sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand  _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WOETHBase -o WOETHBaseHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b WOETHBase -o WOETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
-sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand  ______gap
 
 # contracts/vault
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
