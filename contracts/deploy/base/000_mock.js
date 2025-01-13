@@ -101,10 +101,8 @@ const deployCore = async () => {
   // Init OETHb
   const resolution = ethers.utils.parseUnits("1", 27);
   const initDataOETHb = cOETHb.interface.encodeFunctionData(
-    "initialize(string,string,address,uint256)",
+    "initialize(address,uint256)",
     [
-      "Super OETH",
-      "superOETHb", // Token Symbol
       cOETHbVaultProxy.address, // OETHb Vault
       resolution, // HighRes
     ]

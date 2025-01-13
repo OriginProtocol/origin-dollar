@@ -23,6 +23,8 @@ const {
   isArbitrumOne,
   isBase,
   isBaseFork,
+  isSonic,
+  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -92,7 +94,10 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
-  const feeData = await hre.ethers.provider.getFeeData();
+  let feeData;
+  if (!useFeeData && !isSonic) {
+    feeData = await hre.ethers.provider.getFeeData();
+  }
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -110,7 +115,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -155,8 +160,9 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork) {
-    // Skip proxy check on base for now
+  if (isSonicFork) {
+    // Skip proxy check on sonic for now
+    console.log("Skipping proxy check on Sonic for now");
     return;
   }
 
@@ -167,6 +173,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     ![
       addresses.mainnet.Timelock.toLowerCase(),
       addresses.mainnet.OldTimelock.toLowerCase(),
+      addresses.base.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
@@ -1038,6 +1045,8 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const opHash = await timelock.hashOperationBatch(...args);
 
+  console.log("Proposal Hash", opHash);
+
   if (await timelock.isOperationDone(opHash)) {
     // Already executed
     return;
@@ -1050,7 +1059,11 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   const guardian = !isFork
     ? undefined
     : await impersonateAndFund(
-        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+        isBaseFork
+          ? addresses.base.governor
+          : isSonicFork
+          ? addresses.sonic.governor
+          : addresses.mainnet.Guardian
       );
 
   if (!isScheduled) {

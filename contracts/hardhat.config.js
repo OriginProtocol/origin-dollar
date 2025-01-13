@@ -10,7 +10,12 @@ const {
   isBaseFork,
   isBaseForkTest,
   isBaseUnitTest,
+  isSonic,
+  isSonicFork,
+  isSonicForkTest,
+  isSonicUnitTest,
   baseProviderUrl,
+  sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   adjustTheForkBlockNumber,
@@ -49,6 +54,12 @@ const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+const SONIC_DEPLOYER = MAINNET_DEPLOYER;
+// TODO: update Sonic Governor and strategist
+const SONIC_GOVERNOR = MAINNET_DEPLOYER;
+const SONIC_STRATEGIST = MAINNET_DEPLOYER;
+
+const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -74,6 +85,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/holesky";
 } else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
+} else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
+  paths.deploy = "deploy/sonic";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -110,6 +123,8 @@ module.exports = {
         ? { tags: ["arbitrumOne"] }
         : isBaseFork
         ? { tags: ["base"] }
+        : isSonicFork
+        ? { tags: ["sonic"] }
         : {}),
       ...(isForkTest
         ? {
@@ -136,6 +151,8 @@ module.exports = {
         ? { tags: ["arbitrumOne"] }
         : isBaseFork
         ? { tags: ["base"] }
+        : isSonicFork
+        ? { tags: ["sonic"] }
         : {}),
     },
     mainnet: {
@@ -179,6 +196,17 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    sonic: {
+      url: sonicProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 146,
+      tags: ["sonic"],
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -192,18 +220,27 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_DEPLOYER
+            : isSonicFork
+            ? SONIC_DEPLOYER
             : MAINNET_DEPLOYER
           : 0,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
+            : isBaseFork
+            ? BASE_DEPLOYER
+            : isSonicFork
+            ? SONIC_DEPLOYER
             : MAINNET_DEPLOYER
           : 0,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
-      base: MAINNET_DEPLOYER,
+      base: BASE_DEPLOYER,
+      sonic: SONIC_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -214,6 +251,8 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isBaseFork
             ? BASE_GOVERNOR
+            : isSonicFork
+            ? SONIC_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       hardhat:
@@ -222,11 +261,14 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isBaseFork
             ? BASE_GOVERNOR
+            : isSonicFork
+            ? SONIC_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
+      sonic: SONIC_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -282,6 +324,7 @@ module.exports = {
           : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
       base: addresses.base.timelock,
+      sonic: addresses.sonic.timelock,
     },
     guardianAddr: {
       default: 1,
@@ -304,6 +347,8 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isBaseFork
             ? BASE_STRATEGIST
+            : isSonicFork
+            ? SONIC_STRATEGIST
             : MAINNET_STRATEGIST
           : 0,
       hardhat:
@@ -312,11 +357,17 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isBaseFork
             ? BASE_STRATEGIST
+            : isSonicFork
+            ? SONIC_STRATEGIST
             : MAINNET_STRATEGIST
           : 0,
       mainnet: MAINNET_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: BASE_STRATEGIST,
+      sonic: SONIC_STRATEGIST,
+    },
+    multichainStrategistAddr: {
+      default: MULTICHAIN_STRATEGIST,
     },
   },
   contractSizer: {
@@ -329,6 +380,7 @@ module.exports = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
+      sonic: process.env.SONICSCAN_API_KEY,
     },
     customChains: [
       {
@@ -345,6 +397,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "sonic",
+        chainId: 146,
+        urls: {
+          apiURL: "https://api.sonicscan.org/api",
+          browserURL: "https://sonicscan.org",
         },
       },
     ],

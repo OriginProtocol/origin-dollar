@@ -9,7 +9,7 @@ const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
-const log = require("../utils/logger")("test:fixtures-arb");
+const log = require("../utils/logger")("test:fixtures-base");
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
@@ -136,7 +136,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr, timelockAddr } =
+  const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
   const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
   await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
@@ -151,8 +151,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   let strategist;
   if (isFork) {
     // Impersonate strategist on Fork
-    strategist = await impersonateAndFund(strategistAddr);
-    strategist.address = strategistAddr;
+    strategist = await impersonateAndFund(multichainStrategistAddr);
+    strategist.address = multichainStrategistAddr;
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);

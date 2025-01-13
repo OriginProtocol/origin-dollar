@@ -321,6 +321,8 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // 2/8 Multisig
 addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";
+addresses.base.multichainStrategist =
+  "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
@@ -343,6 +345,16 @@ addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+
+// Sonic
+addresses.sonic = {};
+addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
+addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
+addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
+addresses.sonic.nodeDriver = "0xd100a01e00000000000000000000000000000001";
+addresses.sonic.nodeDriveAuth = "0xd100ae0000000000000000000000000000000000";
+addresses.sonic.validatorRegistrator =
+  "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
