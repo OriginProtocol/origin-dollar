@@ -58,6 +58,11 @@ describe("ForkTest: Sonic Vault", function () {
 
       expect(await oSonicVault.isSupportedAsset(addresses.sonic.wS)).to.be.true;
     });
+
+    it("Should call safeApproveAllTokens", async () => {
+      const { sonicStakingStrategy, governor } = fixture;
+      await sonicStakingStrategy.connect(governor).safeApproveAllTokens();
+    });
   });
 
   describe("Rebase", () => {
@@ -93,28 +98,85 @@ describe("ForkTest: Sonic Vault", function () {
       expect(balanceDiff).to.approxEqualTolerance(parseUnits("1000"), 1);
     });
 
-    it.skip("should deposit to and withdraw from staking strategy", async () => {
+    it("should deposit to staking strategy", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
       await oSonicVault.connect(nick).mint(wS.address, parseUnits("1000"), 0);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
 
+      const depositAmount = parseUnits("1000");
+      const tx = await oSonicVault
+        .connect(strategistSigner)
+        .depositToStrategy(
+          sonicStakingStrategy.address,
+          [wS.address],
+          [depositAmount]
+        );
+
+      await expect(tx)
+        .to.emit(sonicStakingStrategy, "Deposit")
+        .withArgs(wS.address, addresses.zero, depositAmount);
+    });
+
+    it("should withdraw from staking strategy", async () => {
+      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const depositAmount = parseUnits("2000");
+      await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
+      const strategistSigner = await impersonateAndFund(
+        await oSonicVault.strategistAddr()
+      );
+
+      // Deposit
       await oSonicVault
         .connect(strategistSigner)
         .depositToStrategy(
           sonicStakingStrategy.address,
           [wS.address],
-          [parseUnits("1000")]
+          [depositAmount]
         );
 
-      await oSonicVault
+      // Simulate undelegate and withdraw from validator by transferring wS to the strategy
+      const withdrawAmount = parseUnits("1500");
+      await wS
+        .connect(nick)
+        .transfer(sonicStakingStrategy.address, withdrawAmount);
+
+      const tx = await oSonicVault
         .connect(strategistSigner)
         .withdrawFromStrategy(
           sonicStakingStrategy.address,
           [wS.address],
-          [parseUnits("1000")]
+          [withdrawAmount]
         );
+
+      await expect(tx)
+        .emit(sonicStakingStrategy, "Withdrawal")
+        .withArgs(wS.address, addresses.zero, withdrawAmount);
+    });
+
+    it("should call withdraw all from staking strategy even if all delegated", async () => {
+      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const depositAmount = parseUnits("2000");
+      await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
+      const strategistSigner = await impersonateAndFund(
+        await oSonicVault.strategistAddr()
+      );
+
+      // Deposit
+      await oSonicVault
+        .connect(strategistSigner)
+        .depositToStrategy(
+          sonicStakingStrategy.address,
+          [wS.address],
+          [depositAmount]
+        );
+
+      const tx = await oSonicVault
+        .connect(strategistSigner)
+        .withdrawAllFromStrategy(sonicStakingStrategy.address);
+
+      await expect(tx).not.emit(sonicStakingStrategy, "Withdrawal");
     });
 
     it("Should have vault buffer disabled", async () => {
