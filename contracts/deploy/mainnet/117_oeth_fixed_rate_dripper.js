@@ -28,6 +28,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // --- 1 ---
     // 1.a. Get the current OETH Dripper Proxy
+    const cOETHDripperProxy = await ethers.getContractAt(
+      "OETHDripperProxy",
+      "0xc0F42F73b8f01849a2DD99753524d4ba14317EB3"
+    );
 
     // 1.b. Deploy the new OETH Dripper implementation
     const dOETHDripper = await deployWithConfirmation(
@@ -37,13 +41,9 @@ module.exports = deploymentWithGovernanceProposal(
       true
     );
 
-    const cOETHDripperProxy = await ethers.getContractAt(
-      "OETHDripperProxy",
-      dOETHDripper.address
-    );
     const cOETHDripper = await ethers.getContractAt(
       "OETHDripper",
-      dOETHDripper.address
+      "0xc0F42F73b8f01849a2DD99753524d4ba14317EB3"
     );
 
     // --- 2 ---
@@ -86,10 +86,10 @@ module.exports = deploymentWithGovernanceProposal(
         // 3. Transfer all funds from the old dripper to the new dripper
         {
           contract: cOETHDripper,
-          signature: "transferAllToken(address)",
-          args: [addresses.mainnet.WETH],
+          signature: "transferAllToken(address,address)",
+          args: [addresses.mainnet.WETH, cOETHFixedRateDripperProxy.address],
         },
-        // Collect on the current OETH dripper
+        // 4. Set new dripper address on the vault
         {
           contract: cOETHVaultProxy,
           signature: "setDripper(address)",
