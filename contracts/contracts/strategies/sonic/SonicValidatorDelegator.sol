@@ -139,7 +139,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Delegate from this strategy to a specific Sonic validator. Called
+     * @dev Delegate from this strategy to a specific Sonic validator. Called
      * automatically on asset deposit
      * @param amount the amount of Sonic (S) to delegate.
      */
@@ -159,6 +159,12 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit Delegated(defaultValidatorId, amount);
     }
 
+    /**
+     * @notice Undelegate from a specific Sonic validator.
+     * This needs to be followed by a `withdrawFromSFC` two weeks later.
+     * @param validatorId The Sonic validator ID to undelegate from.
+     * @param undelegateAmount the amount of Sonic (S) to undelegate.
+     */
     function undelegate(uint256 validatorId, uint256 undelegateAmount)
         external
         onlyRegistratorOrStrategist
@@ -188,6 +194,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         emit Undelegated(withdrawId, validatorId, undelegateAmount);
     }
 
+    /**
+     * @notice Withdraw native S from a previously undelegated validator.
+     * The native S is wrapped wS and transferred to the Vault.
+     * @param validatorId The Sonic validator ID to withdraw from.
+     * @return withdrawnAmount The amount of Sonic (S) withdrawn.
+     * This can be less than the undelegated amount in the event of slashing.
+     */
     // slither-disable-start reentrancy-no-eth
     function withdrawFromSFC(uint256 withdrawId)
         external
@@ -236,7 +249,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         return withdrawal.undelegatedAmount == 0;
     }
 
-    /// @dev restake any pending validator rewards for all supported validators
+    /**
+     * @notice Restake any pending validator rewards for all supported validators
+     * @param validatorIds List of Sonic validator IDs to restake rewards
+     */
     function restakeRewards(uint256[] calldata validatorIds)
         external
         nonReentrant
@@ -331,6 +347,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         return supportedValidators.length;
     }
 
+    /// @notice Returns whether a validator is supported by this strategy
     function isSupportedValidator(uint256 validatorId)
         public
         view
