@@ -2,11 +2,14 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
 import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 contract CurvePoolBooster is Initializable, Strategizable {
+    using SafeERC20 for IERC20;
+
     ////////////////////////////////////////////////////
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
@@ -98,7 +101,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         balance = _handleFee(balance);
 
         // Approve the balance to the campaign manager
-        IERC20(rewardToken).approve(campaignRemoteManager, balance);
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, balance);
 
         // Create a new campaign
         ICampaignRemoteManager(campaignRemoteManager).createCampaign{
@@ -142,7 +145,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         balance = _handleFee(balance);
 
         // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).approve(campaignRemoteManager, balance);
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, balance);
 
         // Manage the campaign
         ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
