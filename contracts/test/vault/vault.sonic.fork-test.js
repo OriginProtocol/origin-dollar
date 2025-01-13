@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const addresses = require("../../utils/addresses");
 const { defaultSonicFixture } = require("./../_fixture-sonic");
@@ -177,6 +178,50 @@ describe("ForkTest: Sonic Vault", function () {
         .withdrawAllFromStrategy(sonicStakingStrategy.address);
 
       await expect(tx).not.emit(sonicStakingStrategy, "Withdrawal");
+    });
+
+    it("should call withdraw all from staking strategy with wrapped S in it", async () => {
+      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const depositAmount = parseUnits("2000");
+      await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
+      const strategistSigner = await impersonateAndFund(
+        await oSonicVault.strategistAddr()
+      );
+
+      // Simulate undelegate and withdraw from validator by transferring wS to the strategy
+      const withdrawAmount = parseUnits("1500");
+      await wS
+        .connect(nick)
+        .transfer(sonicStakingStrategy.address, withdrawAmount);
+
+      const tx = await oSonicVault
+        .connect(strategistSigner)
+        .withdrawAllFromStrategy(sonicStakingStrategy.address);
+
+      await expect(tx)
+        .emit(sonicStakingStrategy, "Withdrawal")
+        .withArgs(wS.address, addresses.zero, withdrawAmount);
+    });
+
+    it("should call withdraw all from staking strategy with native S in it", async () => {
+      const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+      const depositAmount = parseUnits("2000");
+      await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
+      const strategistSigner = await impersonateAndFund(
+        await oSonicVault.strategistAddr()
+      );
+
+      // Add some native S
+      const withdrawAmount = parseUnits("500");
+      await hhHelpers.setBalance(sonicStakingStrategy.address, withdrawAmount);
+
+      const tx = await oSonicVault
+        .connect(strategistSigner)
+        .withdrawAllFromStrategy(sonicStakingStrategy.address);
+
+      await expect(tx)
+        .emit(sonicStakingStrategy, "Withdrawal")
+        .withArgs(wS.address, addresses.zero, withdrawAmount);
     });
 
     it("Should have vault buffer disabled", async () => {
