@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ICampaingRemoteManager {
+interface ICampaignRemoteManager {
     function createCampaign(
         CampaignCreationParams memory params,
         uint256 destinationChainId,

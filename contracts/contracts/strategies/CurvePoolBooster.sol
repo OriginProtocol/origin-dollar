@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
-import { ICampaingRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
+import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
@@ -100,10 +100,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         IERC20(rewardToken).approve(campaignRemoteManager, balance);
 
         // Create a new campaign
-        ICampaingRemoteManager(campaignRemoteManager).createCampaign{
+        ICampaignRemoteManager(campaignRemoteManager).createCampaign{
             value: bridgeFee
         }(
-            ICampaingRemoteManager.CampaignCreationParams({
+            ICampaignRemoteManager.CampaignCreationParams({
                 chainId: targetChainId,
                 gauge: gauge,
                 manager: address(this),
@@ -144,10 +144,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         IERC20(rewardToken).approve(campaignRemoteManager, balance);
 
         // Manage the campaign
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
-            ICampaingRemoteManager.CampaignManagementParams({
+            ICampaignRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
@@ -175,10 +175,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(extraNumberOfPeriods > 0, "Invalid number of periods");
 
         // Manage the campaign
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
-            ICampaingRemoteManager.CampaignManagementParams({
+            ICampaignRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: extraNumberOfPeriods,
@@ -206,10 +206,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(newMaxRewardPerVote > 0, "Invalid reward per vote");
 
         // Manage the campaign
-        ICampaingRemoteManager(campaignRemoteManager).manageCampaign{
+        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
-            ICampaingRemoteManager.CampaignManagementParams({
+            ICampaignRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
