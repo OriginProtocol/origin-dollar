@@ -347,11 +347,9 @@ addresses.sonic.nodeDriveAuth = "0xd100ae0000000000000000000000000000000000";
 addresses.sonic.validatorRegistrator =
   "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
 // 5/8 Multisig - formally known as the Governor but not to be confused with the Governor contract
-// TODO add when the Sonic Admin Safe has been created
-addresses.sonic.admin = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+addresses.sonic.admin = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
 // 2/8 Multisig - formally known as the Strategist
-// TODO add when the Sonic Guardian Safe has been created
-addresses.sonic.guardian = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+addresses.sonic.guardian = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
 // addresses.sonic.timelock = "";
 
 // Holesky
