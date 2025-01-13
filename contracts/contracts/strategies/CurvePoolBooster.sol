@@ -27,6 +27,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// --- EVENTS
     ////////////////////////////////////////////////////
     event FeeUpdated(uint16 _newFee);
+    event FeeCollected(address _feeCollector, uint256 _feeAmount);
     event FeeCollectorUpdated(address _newFeeCollector);
     event CampaignIdUpdated(uint256 _newId);
     event BribeCreated(
@@ -231,7 +232,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
+            // Transfer the fee to the feeCollector
             IERC20(rewardToken).transfer(feeCollector, feeAmount);
+
+            emit FeeCollected(feeCollector, feeAmount);
+
             // Return the amount after fee
             return amount - feeAmount;
         }
