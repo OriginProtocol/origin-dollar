@@ -63,7 +63,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         address _strategist,
         uint16 _fee,
         address _feeCollector
-    ) external initializer {
+    ) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
