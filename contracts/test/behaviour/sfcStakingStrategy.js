@@ -4,6 +4,8 @@ const { oethUnits, advanceTime } = require("../helpers");
 const { BigNumber } = ethers;
 const { impersonateAndFund } = require("../../utils/signers");
 
+const log = require("../../utils/logger")("test:sonic:staking");
+
 /**
  *
  * @param {*} context a function that returns a fixture with the additional properties:
@@ -161,7 +163,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     it("Should undelegate and withdraw", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
-      console.log("defaultValidatorId", defaultValidatorId);
       await undelegateTokenAmount(amount, defaultValidatorId);
     });
 
@@ -484,7 +485,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       addresses.nodeDriveAuth
     );
 
-    console.log(`Preparing to seal ${epochsToAdvance} epoch(s) on Sonic`);
+    log(`Preparing to seal ${epochsToAdvance} epoch(s) on Sonic`);
     for (let i = 0; i < epochsToAdvance; i++) {
       // create array filled with 0s
       const offlineTimes = Array.from(Array(validatorsLength).keys()).fill(
