@@ -71,6 +71,13 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
+    /// @notice Create a new campaign on VotemarketV2
+    /// @dev This will use all token available in this contract
+    /// @param numberOfPeriods Duration of the campaign
+    /// @param maxRewardPerVote Maximum reward per vote
+    /// @param blacklist  List of addresses to exclude from the campaign
+    /// @param bridgeFee Fee to pay for the bridge
+    /// @param additionalGasLimit Additional gas limit for the bridge
     function createCampaign(
         uint8 numberOfPeriods,
         uint256 maxRewardPerVote,
@@ -113,6 +120,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balance);
     }
 
+    /// @notice Manage the total reward amount of the campaign
+    /// @dev This function should be called after the campaign is created
+    /// @dev This will use all the token available in this contract
+    /// @param bridgeFee Fee to pay for the bridge
+    /// @param additionalGasLimit Additional gas limit for the bridge
     function manageTotalRewardAmount(
         uint256 bridgeFee,
         uint256 additionalGasLimit
@@ -147,6 +159,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit TotalRewardAmountUpdated(balance);
     }
 
+    /// @notice Manage the number of periods of the campaign
+    /// @dev This function should be called after the campaign is created
+    /// @param extraNumberOfPeriods Number of additional periods (cannot be 0)
+    /// @param bridgeFee Fee to pay for the bridge
+    /// @param additionalGasLimit Additional gas limit for the bridge
     function manageNumberOfPeriods(
         uint8 extraNumberOfPeriods,
         uint256 bridgeFee,
@@ -173,6 +190,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit NumberOfPeriodsUpdated(extraNumberOfPeriods);
     }
 
+    /// @notice Manage the reward per vote of the campaign
+    /// @dev This function should be called after the campaign is created
+    /// @param newMaxRewardPerVote New maximum reward per vote
+    /// @param bridgeFee Fee to pay for the bridge
+    /// @param additionalGasLimit Additional gas limit for the bridge
     function manageRewardPerVote(
         uint256 newMaxRewardPerVote,
         uint256 bridgeFee,
@@ -199,6 +221,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
     }
 
+    /// @notice calculate the fee amount and transfer it to the feeCollector
+    /// @param amount Amount to calculate the fee
+    /// @return Amount after fee
     function _handleFee(uint256 amount) internal returns (uint256) {
         uint256 feeAmount = (amount * fee) / BASE_FEE;
         if (feeAmount > 0) {
@@ -211,6 +236,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE && OPERATION
     ////////////////////////////////////////////////////
+    /// @notice Set the campaign id
+    /// @dev Only callable by the governor or strategist
+    /// @param _campaignId New campaign id
     function setCampaignId(uint256 _campaignId)
         external
         onlyGovernorOrStrategist
@@ -219,11 +247,17 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit CampaignIdUpdated(_campaignId);
     }
 
+    /// @notice Rescue ETH from the contract
+    /// @dev Only callable by the governor or strategist
+    /// @param receiver Address to receive the ETH
     function sendETH(address receiver) external onlyGovernorOrStrategist {
         emit RescueTokens(address(0), address(this).balance, receiver);
         payable(receiver).transfer(address(this).balance);
     }
 
+    /// @notice Rescue ERC20 tokens from the contract
+    /// @dev Only callable by the governor or strategist
+    /// @param token Address of the token to rescue
     function rescueToken(
         address token,
         uint256 amount,
@@ -234,12 +268,18 @@ contract CurvePoolBooster is Initializable, Strategizable {
         IERC20(token).transfer(receiver, balance);
     }
 
+    /// @notice Set the fee
+    /// @dev Only callable by the governor
+    /// @param _fee New fee
     function setFee(uint16 _fee) external onlyGovernor {
         require(_fee <= BASE_FEE / 2, "Fee too high");
         fee = _fee;
         emit FeeUpdated(_fee);
     }
 
+    /// @notice Set the fee collector
+    /// @dev Only callable by the governor
+    /// @param _feeCollector New fee collector
     function setFeeCollector(address _feeCollector) external onlyGovernor {
         feeCollector = _feeCollector;
         emit FeeCollectorUpdated(_feeCollector);
