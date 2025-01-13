@@ -140,7 +140,10 @@ contract Dripper is Governable {
 
     /// @dev Transfer out all ERC20 held by the contract. Governor only.
     /// @param _asset ERC20 token address
-    function transferAllToken(address _asset, address _receiver) external onlyGovernor {
+    function transferAllToken(address _asset, address _receiver)
+        external
+        onlyGovernor
+    {
         IERC20(_asset).safeTransfer(
             _receiver,
             IERC20(_asset).balanceOf(address(this))
