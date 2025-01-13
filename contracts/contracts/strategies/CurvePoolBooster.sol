@@ -38,7 +38,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
     event NumberOfPeriodsUpdated(uint8 extraNumberOfPeriods);
     event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
-    event RescueTokens(address token, uint256 amount, address receiver);
+    event TokensRescued(address token, uint256 amount, address receiver);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
@@ -259,7 +259,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @param receiver Address to receive the ETH
     function rescueETH(address receiver) external onlyGovernorOrStrategist {
         //payable(receiver).transfer(amount);
-        emit RescueTokens(address(0), address(this).balance, receiver);
+        emit TokensRescued(address(0), address(this).balance, receiver);
         (bool success, ) = receiver.call{ value: address(this).balance }("");
         require(success, "Transfer failed");
     }
@@ -273,7 +273,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
-        emit RescueTokens(token, balance, receiver);
+        emit TokensRescued(token, balance, receiver);
         IERC20(token).transfer(receiver, balance);
     }
 
