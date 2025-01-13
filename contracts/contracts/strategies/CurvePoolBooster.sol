@@ -63,15 +63,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint16 _fee,
         address _feeCollector
     ) external initializer {
-        // Set the fee collector
-        require(_feeCollector != address(0), "Invalid fee collector");
-        feeCollector = _feeCollector;
-
-        // Set the fee
-        require(_fee <= BASE_FEE / 2, "Fee too high");
-        fee = _fee;
-
         _setStrategistAddr(_strategist);
+        _setFee(_fee);
+        _setFeeCollector(_feeCollector);
     }
 
     ////////////////////////////////////////////////////
@@ -287,6 +281,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev Only callable by the governor
     /// @param _fee New fee
     function setFee(uint16 _fee) external onlyGovernor {
+        _setFee(_fee);
+    }
+
+    /// @notice Internal logic to set the fee
+    function _setFee(uint16 _fee) internal {
         require(_fee <= BASE_FEE / 2, "Fee too high");
         fee = _fee;
         emit FeeUpdated(_fee);
@@ -296,6 +295,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev Only callable by the governor
     /// @param _feeCollector New fee collector
     function setFeeCollector(address _feeCollector) external onlyGovernor {
+        _setFeeCollector(_feeCollector);
+    }
+
+    /// @notice Internal logic to set the fee collector
+    function _setFeeCollector(address _feeCollector) internal {
         require(_feeCollector != address(0), "Invalid fee collector");
         feeCollector = _feeCollector;
         emit FeeCollectorUpdated(_feeCollector);
