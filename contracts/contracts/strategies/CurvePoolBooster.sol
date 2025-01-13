@@ -258,10 +258,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev Only callable by the governor or strategist
     /// @param receiver Address to receive the ETH
     function rescueETH(address receiver) external onlyGovernorOrStrategist {
-        //payable(receiver).transfer(amount);
-        emit TokensRescued(address(0), address(this).balance, receiver);
-        (bool success, ) = receiver.call{ value: address(this).balance }("");
+        uint256 balance = address(this).balance;
+        (bool success, ) = receiver.call{ value: balance }("");
         require(success, "Transfer failed");
+        emit TokensRescued(address(0), balance, receiver);
     }
 
     /// @notice Rescue ERC20 tokens from the contract
@@ -273,8 +273,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
     {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
-        emit TokensRescued(token, balance, receiver);
         IERC20(token).transfer(receiver, balance);
+        emit TokensRescued(token, balance, receiver);
     }
 
     /// @notice Set the fee
