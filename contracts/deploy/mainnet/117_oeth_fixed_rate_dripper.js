@@ -28,10 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // --- 1 ---
     // 1.a. Get the current OETH Dripper Proxy
-    const cOETHDripperProxy = await ethers.getContractAt(
-      "OETHDripperProxy",
-      "0xc0F42F73b8f01849a2DD99753524d4ba14317EB3"
-    );
+    const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
 
     // 1.b. Deploy the new OETH Dripper implementation
     const dOETHDripper = await deployWithConfirmation(
@@ -43,7 +40,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cOETHDripper = await ethers.getContractAt(
       "OETHDripper",
-      "0xc0F42F73b8f01849a2DD99753524d4ba14317EB3"
+      cOETHDripperProxy.address
     );
 
     // --- 2 ---
