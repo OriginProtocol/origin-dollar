@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId:
-      "96206284501917735133717725931683186816984486210740792370374078235126770523645",
+      "27194273192096049001033521868815029294031516460891881333743928574609945488001",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
     const cOETHVaultProxy = await ethers.getContractAt(
