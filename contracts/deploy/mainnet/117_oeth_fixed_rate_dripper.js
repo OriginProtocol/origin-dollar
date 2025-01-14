@@ -73,7 +73,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "",
+      name: "Migrate OETH Dripper to Fixed Rate Dripper",
       actions: [
         // 3. Upgrade the Dripper to the new version
         {
