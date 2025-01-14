@@ -24,7 +24,7 @@ contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     /// @dev max signed int
-    uint256 internal constant MAX_INT = type(int256).max;
+    uint256 internal constant MAX_INT = type(uint256).max;
 
     /**
      * @dev Verifies that the rebasing is not paused.

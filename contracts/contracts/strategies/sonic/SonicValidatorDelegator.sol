@@ -15,8 +15,8 @@ import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
 abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// @notice Address of Sonic's wrapped S token
     address public immutable wrappedSonic;
-    /// @notice Address of Sonic's Special Fee Contract (SFC)
-    address public immutable sfc;
+    /// @notice Sonic's Special Fee Contract (SFC)
+    ISFC public immutable sfc;
 
     /// @notice a unique ID for each withdrawal request
     uint256 public nextWithdrawId;
@@ -85,7 +85,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         address _sfc
     ) InitializableAbstractStrategy(_baseConfig) {
         wrappedSonic = _wrappedSonic;
-        sfc = _sfc;
+        sfc = ISFC(_sfc);
     }
 
     function initialize() external virtual onlyGovernor initializer {
@@ -127,11 +127,11 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; i++) {
             // Get the staked amount and any pending rewards
-            balance += ISFC(sfc).getStake(
+            balance += sfc.getStake(
                 address(this),
                 supportedValidators[i]
             );
-            balance += ISFC(sfc).pendingRewards(
+            balance += sfc.pendingRewards(
                 address(this),
                 supportedValidators[i]
             );
@@ -154,7 +154,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         IWrappedSonic(wrappedSonic).withdraw(amount);
 
         //slither-disable-next-line arbitrary-send-eth
-        ISFC(sfc).delegate{ value: amount }(defaultValidatorId);
+        sfc.delegate{ value: amount }(defaultValidatorId);
 
         emit Delegated(defaultValidatorId, amount);
     }
@@ -174,7 +174,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // Can still undelegate even if the validator is no longer supported
         require(undelegateAmount > 0, "Must undelegate something");
 
-        uint256 amountDelegated = ISFC(sfc).getStake(
+        uint256 amountDelegated = sfc.getStake(
             address(this),
             validatorId
         );
@@ -189,7 +189,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
         pendingWithdrawals += undelegateAmount;
 
-        ISFC(sfc).undelegate(validatorId, withdrawId, undelegateAmount);
+        sfc.undelegate(validatorId, withdrawId, undelegateAmount);
 
         emit Undelegated(withdrawId, validatorId, undelegateAmount);
     }
@@ -217,7 +217,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         uint256 sBalanceBefore = address(this).balance;
 
-        ISFC(sfc).withdraw(withdrawal.validatorId, withdrawId);
+        sfc.withdraw(withdrawal.validatorId, withdrawId);
 
         // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
@@ -258,13 +258,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
     {
         for (uint256 i = 0; i < validatorIds.length; ++i) {
-            uint256 rewards = ISFC(sfc).pendingRewards(
+            uint256 rewards = sfc.pendingRewards(
                 address(this),
                 validatorIds[i]
             );
 
             if (rewards > 0) {
-                ISFC(sfc).restakeRewards(validatorIds[i]);
+                sfc.restakeRewards(validatorIds[i]);
             }
         }
 
@@ -281,7 +281,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
      */
     receive() external payable {
         require(
-            msg.sender == sfc || msg.sender == wrappedSonic,
+            msg.sender == address(sfc) || msg.sender == wrappedSonic,
             "S not from allowed contracts"
         );
     }
@@ -323,7 +323,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     function unsupportValidator(uint256 validatorId) external onlyGovernor {
         require(isSupportedValidator(validatorId), "Validator not supported");
         require(
-            ISFC(sfc).getStake(address(this), validatorId) == 0,
+            sfc.getStake(address(this), validatorId) == 0,
             "Validator still has stake"
         );
 
