@@ -22,7 +22,7 @@ const {
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
 
-require("@nomiclabs/hardhat-etherscan");
+require("@nomicfoundation/hardhat-verify");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
@@ -421,6 +421,9 @@ module.exports = {
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
+  },
+  sourcify: {
+    enabled: true
   },
   paths,
 };
