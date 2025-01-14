@@ -148,7 +148,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             isSupportedValidator(defaultValidatorId),
             "Validator not supported"
         );
-        require(amount > 0, "Must delegate something");
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
         IWrappedSonic(wrappedSonic).withdraw(amount);
