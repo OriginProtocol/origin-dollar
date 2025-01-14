@@ -41,7 +41,7 @@ describe("ForkTest: Sonic Vault", function () {
   describe("Admin", () => {
     it("Should have the correct governor address set", async () => {
       const { oSonicVault } = fixture;
-      expect(await oSonicVault.governor()).to.equal(addresses.sonic.admin);
+      expect(await oSonicVault.governor()).to.equal(addresses.sonic.timelock);
     });
 
     it("Should have the correct strategist address set", async () => {
@@ -61,8 +61,8 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it("Should call safeApproveAllTokens", async () => {
-      const { sonicStakingStrategy, governor } = fixture;
-      await sonicStakingStrategy.connect(governor).safeApproveAllTokens();
+      const { sonicStakingStrategy, timelock } = fixture;
+      await sonicStakingStrategy.connect(timelock).safeApproveAllTokens();
     });
   });
 

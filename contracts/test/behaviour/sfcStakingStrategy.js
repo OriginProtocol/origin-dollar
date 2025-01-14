@@ -74,20 +74,20 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
   describe("Deposit/Delegation", function () {
     it("Should fail when unsupported functions are called", async () => {
-      const { sonicStakingStrategy, governor, wS } = await context();
+      const { sonicStakingStrategy, timelock, wS } = await context();
 
       await expect(
         sonicStakingStrategy
-          .connect(governor)
+          .connect(timelock)
           .setPTokenAddress(wS.address, wS.address)
       ).to.be.revertedWith("unsupported function");
 
       await expect(
-        sonicStakingStrategy.connect(governor).collectRewardTokens()
+        sonicStakingStrategy.connect(timelock).collectRewardTokens()
       ).to.be.revertedWith("unsupported function");
 
       await expect(
-        sonicStakingStrategy.connect(governor).removePToken(wS.address)
+        sonicStakingStrategy.connect(timelock).removePToken(wS.address)
       ).to.be.revertedWith("unsupported function");
     });
 
