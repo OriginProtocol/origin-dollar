@@ -1,0 +1,51 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "snapshots",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_address,t_struct(Snapshot)40637_storage)",
+      "contract": "VaultValueChecker",
+      "src": "contracts/strategies/VaultValueChecker.sol:24"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_mapping(t_address,t_struct(Snapshot)40637_storage)": {
+      "label": "mapping(address => struct VaultValueChecker.Snapshot)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(Snapshot)40637_storage": {
+      "label": "struct VaultValueChecker.Snapshot",
+      "members": [
+        {
+          "label": "vaultValue",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "totalSupply",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "time",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "2"
+        }
+      ],
+      "numberOfBytes": "96"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
