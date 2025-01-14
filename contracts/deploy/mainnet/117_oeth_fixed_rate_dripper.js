@@ -21,21 +21,22 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // 1. Upgrade Dripper to the new version (with transferAll token function)
-    // 2. Deploy OETH fixed rate dripper
-    // 3. Transfer all funds from old dripper to new dripper
-    // 4. Set new dripper on the vault
+    // 1. Deploy new implementation of OETH Dripper (with transferAllToken function)
+    // 2. Deploy new OETH fixed rate dripper (proxy + implementation)
+    // 3. Upgrade Dripper to the new version (with transferAll token function)
+    // 4. Transfer all funds from old dripper to new dripper
+    // 5. Set new dripper on the vault
 
     // --- 1 ---
     // 1.a. Get the current OETH Dripper Proxy
     const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
 
-    // 1.b. Deploy the new OETH Dripper implementation
+    // 1.b. Deploy the new OETH Dripper implementation (with transferAllToken function)
     const dOETHDripper = await deployWithConfirmation(
       "OETHDripper",
       [addresses.mainnet.OETHVaultProxy, addresses.mainnet.WETH],
       undefined,
-      true
+      true // due to changing name from `perBlock` to `perSecond`
     );
 
     const cOETHDripper = await ethers.getContractAt(
@@ -68,25 +69,25 @@ module.exports = deploymentWithGovernanceProposal(
         "0x" // no init data
       )
     );
-    // --- 3 & 4 ---
+    // --- 3 & 4 & 5 ---
     // Governance Actions
     // ----------------
     return {
       name: "",
       actions: [
-        // 1. Upgrade the Dripper to the new version
+        // 3. Upgrade the Dripper to the new version
         {
           contract: cOETHDripperProxy,
           signature: "upgradeTo(address)",
           args: [dOETHDripper.address],
         },
-        // 3. Transfer all funds from the old dripper to the new dripper
+        // 4. Transfer all funds from the old dripper to the new dripper
         {
           contract: cOETHDripper,
           signature: "transferAllToken(address,address)",
           args: [addresses.mainnet.WETH, cOETHFixedRateDripperProxy.address],
         },
-        // 4. Set new dripper address on the vault
+        // 5. Set new dripper address on the vault
         {
           contract: cOETHVaultProxy,
           signature: "setDripper(address)",
