@@ -257,7 +257,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         external
         nonReentrant
     {
-        uint256 totalRewards = 0;
         for (uint256 i = 0; i < validatorIds.length; ++i) {
             uint256 rewards = ISFC(sfc).pendingRewards(
                 address(this),
@@ -265,7 +264,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             );
 
             if (rewards > 0) {
-                totalRewards += rewards;
                 ISFC(sfc).restakeRewards(validatorIds[i]);
             }
         }
