@@ -46,16 +46,21 @@ const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 const MAINNET_TIMELOCK = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
-// Multi-sig that controls the Governor. Aka "Guardian".
+// 5/8 multi-sig that controls the Governor. Aka "Admin".
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
+// 5/8 multi-sig that controls the Timelock. Aka "Admin".
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 const SONIC_DEPLOYER = MAINNET_DEPLOYER;
-const SONIC_GOVERNOR = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 5/8 multi-sig that controls the Timelock. Aka "Admin".
+const SONIC_ADMIN = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
 
 const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
@@ -251,7 +256,7 @@ module.exports = {
             : isBaseFork
             ? BASE_GOVERNOR
             : isSonicFork
-            ? SONIC_GOVERNOR
+            ? SONIC_ADMIN
             : MAINNET_GOVERNOR
           : 1,
       hardhat:
@@ -261,13 +266,13 @@ module.exports = {
             : isBaseFork
             ? BASE_GOVERNOR
             : isSonicFork
-            ? SONIC_GOVERNOR
+            ? SONIC_ADMIN
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
-      sonic: SONIC_GOVERNOR,
+      sonic: SONIC_ADMIN,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -335,6 +340,8 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
+      base: MAINNET_MULTISIG,
+      sonic: SONIC_ADMIN,
     },
     adjusterAddr: {
       default: 0,

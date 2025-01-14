@@ -187,7 +187,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
  */
 const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork");
+    throw new Error("impersonate Guardian only works on Fork");
   }
 
   // If an address is passed, use that otherwise default to
@@ -195,9 +195,11 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  await impersonateAndFund(guardianAddr);
+  const signer = await impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
+  signer.address = guardianAddr;
+  return signer;
 };
 
 /**
@@ -1062,7 +1064,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
         isBaseFork
           ? addresses.base.governor
           : isSonicFork
-          ? addresses.sonic.governor
+          ? addresses.sonic.admin
           : addresses.mainnet.Guardian
       );
 

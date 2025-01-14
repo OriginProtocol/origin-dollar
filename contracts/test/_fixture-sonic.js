@@ -122,6 +122,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
       addresses.sonic.validatorRegistrator
     );
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
+
+    await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
   }
 
   for (const user of [rafael, nick, clement]) {
