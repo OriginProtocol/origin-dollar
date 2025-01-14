@@ -31,11 +31,23 @@ contract WOSonic is ERC4626, Governable, Initializable {
         OSonic(address(asset())).rebaseOptIn();
     }
 
-    function name() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
+    function name()
+        public
+        view
+        virtual
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "Wrapped Origin Sonic";
     }
 
-    function symbol() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
+    function symbol()
+        public
+        view
+        virtual
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "wOS";
     }
 

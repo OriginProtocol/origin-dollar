@@ -27,11 +27,21 @@ contract WrappedOusd is ERC4626, Governable, Initializable {
         OUSD(address(asset())).rebaseOptIn();
     }
 
-    function name() public view override(ERC20, IERC20Metadata) returns (string memory) {
+    function name()
+        public
+        view
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "Wrapped OUSD";
     }
 
-    function symbol() public view override(ERC20, IERC20Metadata) returns (string memory) {
+    function symbol()
+        public
+        view
+        override(ERC20, IERC20Metadata)
+        returns (string memory)
+    {
         return "WOUSD";
     }
 
