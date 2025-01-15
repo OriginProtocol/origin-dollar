@@ -60,6 +60,10 @@ object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$phase2 {
     rewards: ?
 }
 
+' Oracle
+object "OSonicOracleRouter" as router <<Origin>> #DeepSkyBlue {
+}
+
 wos <. zap
 zap ..> os
 zap ..> vault
@@ -72,6 +76,7 @@ vault <.> drip
 vault <...> stakeStrat
 stakeStrat ..> sfc
 vault <...> amoStrat
+vault .> router
 
 vault <.. harv 
 drip <.. harv 
