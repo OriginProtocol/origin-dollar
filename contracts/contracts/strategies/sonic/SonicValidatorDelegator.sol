@@ -128,14 +128,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         for (uint256 i = 0; i < validatorLen; i++) {
             uint256 validator = supportedValidators[i];
             // Get the staked amount and any pending rewards
-            balance += sfc.getStake(
-                address(this),
-                validator
-            );
-            balance += sfc.pendingRewards(
-                address(this),
-                validator
-            );
+            balance += sfc.getStake(address(this), validator);
+            balance += sfc.pendingRewards(address(this), validator);
         }
     }
 
@@ -174,10 +168,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         // Can still undelegate even if the validator is no longer supported
         require(undelegateAmount > 0, "Must undelegate something");
 
-        uint256 amountDelegated = sfc.getStake(
-            address(this),
-            validatorId
-        );
+        uint256 amountDelegated = sfc.getStake(address(this), validatorId);
         require(undelegateAmount <= amountDelegated, "Insufficient delegation");
 
         withdrawId = nextWithdrawId++;
