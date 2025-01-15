@@ -6,6 +6,8 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isHoleskyOrFork,
+  isSonicOrFork,
   isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
@@ -1019,22 +1021,26 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHolesky) {
+  } else if (isHoleskyOrFork) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
+    args = [addresses.zero];
+  } else if (isSonicOrFork) {
+    oracleContract = "OETHFixedOracle";
+    contractName = "OSonicOracleRouter";
     args = [addresses.zero];
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  log("Deployed OracleRouter");
-
-  if (isHolesky) {
+  if (isHoleskyOrFork || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
     return;
   }
+
+  const oracleRouter = await ethers.getContract("OracleRouter");
+  log("Deployed OracleRouter");
 
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [

@@ -28,8 +28,13 @@ const MIN_WITHDRAWAL_EPOCH_ADVANCE = 4;
 const shouldBehaveLikeASFCStakingStrategy = (context) => {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
-      const { sonicStakingStrategy, addresses, oSonicVault, testValidatorIds } =
-        await context();
+      const {
+        sonicStakingStrategy,
+        addresses,
+        oSonicVault,
+        testValidatorIds,
+        wS,
+      } = await context();
       expect(await sonicStakingStrategy.wrappedSonic()).to.equal(
         addresses.wS,
         "Incorrect wrapped sonic address set"
@@ -69,6 +74,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       expect(
         (await sonicStakingStrategy.getRewardTokenAddresses()).length
       ).to.equal(0, "Incorrectly configured Reward Token Addresses");
+
+      expect(await oSonicVault.priceProvider()).to.not.equal(
+        AddressZero,
+        "Price provider address not set"
+      );
+
+      expect(await oSonicVault.priceUnitMint(wS.address)).to.equal(
+        oethUnits("1"),
+        "not expected PriceUnitMint"
+      );
     });
   });
 
