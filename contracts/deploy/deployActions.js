@@ -1027,7 +1027,7 @@ const deployOracles = async () => {
     args = [addresses.zero];
   } else if (isSonicOrFork) {
     oracleContract = "OETHFixedOracle";
-    contractName = "SOOracleRouter";
+    contractName = "OSonicOracleRouter";
     args = [addresses.zero];
   }
 

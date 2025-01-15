@@ -14,7 +14,7 @@ module.exports = deployOnSonic(
     );
 
     await deployOracles();
-    const oracleRouter = await ethers.getContract("SOOracleRouter");
+    const oracleRouter = await ethers.getContract("OSonicOracleRouter");
     console.log(`Deployed Oracle Router at: ${oracleRouter.address}`);
 
     return {
