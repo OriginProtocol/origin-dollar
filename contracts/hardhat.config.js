@@ -423,7 +423,7 @@ module.exports = {
     enabled: process.env.REPORT_GAS ? true : false,
   },
   sourcify: {
-    enabled: true
+    enabled: true,
   },
   paths,
 };

@@ -60,7 +60,6 @@ let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
 NUM_CONFIRMATIONS = isSonic ? 4 : NUM_CONFIRMATIONS;
 
-
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
     if (deployResult && deployResult.receipt) {
