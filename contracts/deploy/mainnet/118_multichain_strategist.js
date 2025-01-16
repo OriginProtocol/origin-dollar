@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "29029286887383246507190904901480289164471194993284788972189545670391461770154",
   },
   async () => {
     const { multichainStrategistAddr } = await getNamedAccounts();
