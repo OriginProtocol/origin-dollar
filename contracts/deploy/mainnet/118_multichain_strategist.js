@@ -41,8 +41,6 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHHarvesterSimple"
     );
 
-    // const cAuraWETHPriceFeed = await ethers.getContract("AuraWETHPriceFeed")
-
     // Governance Actions
     // ----------------
     return {
@@ -68,12 +66,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setStrategistAddr(address)",
           args: [multichainStrategistAddr],
         },
-        // Ignoring changing this since we no longer use the OracleRouter or the old Harvester
-        // {
-        //   contract: cAuraWETHPriceFeed,
-        //   signature: "setStrategistAddr(address)",
-        //   args: [multichainStrategistAddr],
-        // },
         {
           contract: cOETHHarvesterSimple,
           signature: "setStrategistAddr(address)",
