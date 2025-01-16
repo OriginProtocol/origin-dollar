@@ -468,7 +468,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Succeeded") {
     await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
-    newState = await getProposalState(proposalIdBn);
+    let newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
         `Proposal state should now be "Queued" but is ${newState}`
@@ -991,16 +991,17 @@ function constructContractMethod(contract, functionSignature) {
   };
 }
 
-function buildAndWriteGnosisJson(
+async function buildAndWriteGnosisJson(
   safeAddress,
   targets,
   contractMethods,
   contractInputsValues,
   name
 ) {
+  const { chainId } = await ethers.provider.getNetwork();
   const json = {
     version: "1.0",
-    chainId: "1",
+    chainId: chainId.toString(),
     createdAt: parseInt(Date.now() / 1000),
     meta: {
       name: "Transaction Batch",
@@ -1092,7 +1093,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
       delay: delay.toString(),
     };
 
-    buildAndWriteGnosisJson(
+    await buildAndWriteGnosisJson(
       addresses.mainnet.Guardian,
       [timelock.address],
       [contractMethod],
@@ -1141,7 +1142,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     salt: args[4],
   };
 
-  buildAndWriteGnosisJson(
+  await buildAndWriteGnosisJson(
     addresses.mainnet.Guardian,
     [timelock.address],
     [executionContractMethod],
