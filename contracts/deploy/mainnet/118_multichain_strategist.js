@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "117_multichain_strategist",
+    deployName: "118_multichain_strategist",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
