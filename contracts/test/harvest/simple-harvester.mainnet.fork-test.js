@@ -31,11 +31,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should support Strategy as governor", async () => {
-    const { simpleOETHHarvester } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
-
+    const { simpleOETHHarvester, timelock } = fixture;
     expect(
       await simpleOETHHarvester.supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
@@ -63,9 +59,9 @@ describe("ForkTest: CurvePoolBooster", function () {
       .connect(strategist)
       .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, true);
     expect(
-      await simpleOETHHarvester.connect(strategist).supportedStrategies(
-        addresses.mainnet.ConvexOETHAMOStrategy
-      )
+      await simpleOETHHarvester
+        .connect(strategist)
+        .supportedStrategies(addresses.mainnet.ConvexOETHAMOStrategy)
     ).to.be.equal(true);
   });
 
@@ -92,10 +88,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should Set strategist", async () => {
-    const { simpleOETHHarvester, josh } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
+    const { simpleOETHHarvester, timelock, josh } = fixture;
 
     expect(await simpleOETHHarvester.strategistAddr()).not.to.equal(
       josh.address
@@ -105,11 +98,10 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should Harvest and transfer rewards as strategist", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy, crv } = fixture;
-    const strategistAddress = await simpleOETHHarvester.strategistAddr();
-    const strategist = await ethers.provider.getSigner(strategistAddress);
+    const { simpleOETHHarvester, convexEthMetaStrategy, crv, strategist } =
+      fixture;
 
-    const balanceBeforeCRV = await crv.balanceOf(strategistAddress);
+    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
     await simpleOETHHarvester
       .connect(strategist)
       .setSupportedStrategy(convexEthMetaStrategy.address, true);
@@ -117,18 +109,21 @@ describe("ForkTest: CurvePoolBooster", function () {
     await simpleOETHHarvester
       .connect(strategist)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
 
-    const balanceAfterCRV = await crv.balanceOf(strategistAddress);
+    const balanceAfterCRV = await crv.balanceOf(strategist.address);
     expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
   });
 
   it("Should Harvest and transfer rewards as governor", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy, crv } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
-    const strategist = await simpleOETHHarvester.strategistAddr();
+    const {
+      simpleOETHHarvester,
+      convexEthMetaStrategy,
+      strategist,
+      timelock,
+      crv,
+    } = fixture;
 
-    const balanceBeforeCRV = await crv.balanceOf(strategist);
+    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
+
     await simpleOETHHarvester
       .connect(timelock)
       .setSupportedStrategy(convexEthMetaStrategy.address, true);
@@ -136,15 +131,12 @@ describe("ForkTest: CurvePoolBooster", function () {
     await simpleOETHHarvester
       .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
 
-    const balanceAfterCRV = await crv.balanceOf(strategist);
+    const balanceAfterCRV = await crv.balanceOf(strategist.address);
     expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
   });
 
   it("Should revert if strategy is not authorized", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
+    const { simpleOETHHarvester, convexEthMetaStrategy, timelock } = fixture;
 
     await expect(
       // prettier-ignore
@@ -154,10 +146,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if strategy is address 0", async () => {
-    const { simpleOETHHarvester } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
+    const { simpleOETHHarvester, timelock } = fixture;
 
     await expect(
       // prettier-ignore
@@ -167,10 +156,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should test to rescue tokens as governor", async () => {
-    const { simpleOETHHarvester, crv } = fixture;
-    const timelock = await ethers.provider.getSigner(
-      addresses.mainnet.Timelock
-    );
+    const { simpleOETHHarvester, timelock, crv } = fixture;
 
     await setERC20TokenBalance(simpleOETHHarvester.address, crv, "1000");
     const balanceBeforeCRV = await crv.balanceOf(simpleOETHHarvester.address);
@@ -182,9 +168,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should test to rescue tokens as strategist", async () => {
-    const { simpleOETHHarvester, crv } = fixture;
-    const strategistAddress = await simpleOETHHarvester.strategistAddr();
-    const strategist = await ethers.provider.getSigner(strategistAddress);
+    const { simpleOETHHarvester, strategist, crv } = fixture;
 
     await setERC20TokenBalance(simpleOETHHarvester.address, crv, "1000");
     const balanceBeforeCRV = await crv.balanceOf(simpleOETHHarvester.address);
