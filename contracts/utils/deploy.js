@@ -130,10 +130,15 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (
-    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
-    (isTest && !isForkTest)
-  ) {
+  const providerUrl = isBase
+    ? process.env.BASE_PROVIDER_URL
+    : isSonic
+    ? process.env.SONIC_PROVIDER_URL
+    : isHolesky
+    ? process.env.HOLESKY_PROVIDER_URL
+    : process.env.PROVIDER_URL;
+  if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
+    console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
   }
