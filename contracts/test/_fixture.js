@@ -144,8 +144,8 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await ethers.provider.getSigner(governorAddr);
-    strategist = await ethers.provider.getSigner(multichainStrategistAddr);
+    governor = await impersonateAndFund(governorAddr);
+    strategist = await impersonateAndFund(multichainStrategistAddr);
 
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
@@ -1003,10 +1003,16 @@ const defaultFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await ethers.provider.getSigner(governorAddr);
-    strategist = await ethers.provider.getSigner(multichainStrategistAddr);
+    governor = await impersonateAndFund(governorAddr);
+    strategist = await impersonateAndFund(multichainStrategistAddr);
     timelock = await impersonateAndFund(timelockAddr);
     oldTimelock = await impersonateAndFund(addresses.mainnet.OldTimelock);
+
+    // Just a hack to get around using `.getAddress()` on the signer
+    governor.address = governorAddr;
+    strategist.address = multichainStrategistAddr;
+    timelock.address = timelockAddr;
+    oldTimelock.address = addresses.mainnet.OldTimelock;
   } else {
     timelock = governor;
   }
