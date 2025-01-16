@@ -23,8 +23,13 @@ const main = async (hre) => {
     await tokenContract.connect(signer).approve(toAddress, allowance);
   }
 
-  const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
-    await getNamedAccounts();
+  const {
+    deployerAddr,
+    timelockAddr,
+    governorAddr,
+    strategistAddr,
+    multichainStrategistAddr,
+  } = await getNamedAccounts();
 
   hardhatSetBalance(deployerAddr, "1000000");
 
@@ -60,6 +65,7 @@ const main = async (hre) => {
   await impersonateAndFund(deployerAddr);
   await impersonateAndFund(governorAddr);
   await impersonateAndFund(strategistAddr);
+  await impersonateAndFund(multichainStrategistAddr);
   await impersonateAndFund(addresses.mainnet.OldTimelock);
   log("Unlocked and funded named accounts with ETH");
 

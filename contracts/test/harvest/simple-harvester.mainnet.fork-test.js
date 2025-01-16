@@ -19,14 +19,14 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   it("Should have correct parameters", async () => {
     const { simpleOETHHarvester } = fixture;
-    const { strategistAddr } = await getNamedAccounts();
+    const { multichainStrategistAddr } = await getNamedAccounts();
 
     expect(await simpleOETHHarvester.governor()).to.be.equal(
       addresses.mainnet.Timelock
     );
 
     expect(await simpleOETHHarvester.strategistAddr()).to.be.equal(
-      strategistAddr
+      multichainStrategistAddr
     );
   });
 
@@ -52,21 +52,18 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should support Strategy as strategist", async () => {
-    const { simpleOETHHarvester } = fixture;
-    const strategist = await ethers.provider.getSigner(
-      await simpleOETHHarvester.strategistAddr()
-    );
+    const { simpleOETHHarvester, strategist } = fixture;
 
     expect(
-      await simpleOETHHarvester.supportedStrategies(
-        addresses.mainnet.ConvexOETHAMOStrategy
-      )
+      await simpleOETHHarvester
+        .connect(strategist)
+        .supportedStrategies(addresses.mainnet.ConvexOETHAMOStrategy)
     ).to.be.equal(false);
     await simpleOETHHarvester
       .connect(strategist)
       .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, true);
     expect(
-      await simpleOETHHarvester.supportedStrategies(
+      await simpleOETHHarvester.connect(strategist).supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
       )
     ).to.be.equal(true);
