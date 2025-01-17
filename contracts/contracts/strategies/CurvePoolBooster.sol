@@ -114,15 +114,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(numberOfPeriods > 1, "Invalid number of periods");
         require(maxRewardPerVote > 0, "Invalid reward per vote");
 
-        // Cache current rewardToken balance
-        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(balance > 0, "No reward to manage");
-
         // Handle fee (if any)
-        balance = _handleFee(balance);
+        uint256 balanceSubFee = _handleFee();
 
-        // Approve the balance to the campaign manager
-        IERC20(rewardToken).safeApprove(campaignRemoteManager, balance);
+        // Approve the balanceSubFee to the campaign manager
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Create a new campaign
         ICampaignRemoteManager(campaignRemoteManager).createCampaign{
@@ -135,7 +131,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 rewardToken: rewardToken,
                 numberOfPeriods: numberOfPeriods,
                 maxRewardPerVote: maxRewardPerVote,
-                totalRewardAmount: balance,
+                totalRewardAmount: balanceSubFee,
                 addresses: blacklist,
                 hook: address(0),
                 isWhitelist: false
@@ -144,7 +140,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit
         );
 
-        emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balance);
+        emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balanceSubFee);
     }
 
     /// @notice Manage the total reward amount of the campaign
@@ -158,15 +154,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ) external onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
-        // Cache current rewardToken balance
-        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(balance > 0, "No reward to manage");
-
         // Handle fee (if any)
-        balance = _handleFee(balance);
+        uint256 balanceSubFee = _handleFee();
 
         // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).safeApprove(campaignRemoteManager, balance);
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Manage the campaign
         ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
@@ -176,14 +168,14 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 campaignId: campaignId,
                 rewardToken: rewardToken,
                 numberOfPeriods: 0,
-                totalRewardAmount: balance,
+                totalRewardAmount: balanceSubFee,
                 maxRewardPerVote: 0
             }),
             targetChainId,
             additionalGasLimit
         );
 
-        emit TotalRewardAmountUpdated(balance);
+        emit TotalRewardAmountUpdated(balanceSubFee);
     }
 
     /// @notice Manage the number of periods of the campaign
@@ -249,10 +241,13 @@ contract CurvePoolBooster is Initializable, Strategizable {
     }
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
-    /// @param amount Amount to calculate the fee
-    /// @return Amount after fee
-    function _handleFee(uint256 amount) internal returns (uint256) {
-        uint256 feeAmount = (amount * fee) / BASE_FEE;
+    /// @return Balance after fee
+    function _handleFee() internal returns (uint256) {
+        // Cache current rewardToken balance
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
+        require(balance > 0, "No reward to manage");
+
+        uint256 feeAmount = (balance * fee) / BASE_FEE;
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
@@ -261,12 +256,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
             emit FeeCollected(feeCollector, feeAmount);
 
-            // Return the amount after fee
-            return amount - feeAmount;
+            // Return the balance after fee
+            return balance - feeAmount;
         }
 
-        // If there is no fee, return the original amount
-        return amount;
+        // If there is no fee, return the original balance
+        return balance;
     }
 
     ////////////////////////////////////////////////////
