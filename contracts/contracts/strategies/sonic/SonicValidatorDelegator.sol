@@ -249,6 +249,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
     {
         for (uint256 i = 0; i < validatorIds.length; ++i) {
+            require(isSupportedValidator(validatorIds[i]), "Validator not supported");
+
             uint256 rewards = sfc.pendingRewards(
                 address(this),
                 validatorIds[i]
