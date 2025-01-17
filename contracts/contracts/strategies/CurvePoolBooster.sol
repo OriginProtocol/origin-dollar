@@ -7,23 +7,40 @@ import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
 import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
+/// @title CurvePoolBooster
+/// @author Origin Protocol
+/// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge.
 contract CurvePoolBooster is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
-    uint16 public constant BASE_FEE = 10_000; // 100%
+    /// @notice Base fee for the contract, 100%
+    uint16 public constant BASE_FEE = 10_000;
+
+    /// @notice Address of the gauge to manage
     address public immutable gauge;
+
+    /// @notice Address of the reward token
     address public immutable rewardToken;
+
+    /// @notice Address of the campaignRemoteManager linked to VotemarketV2
     address public immutable campaignRemoteManager;
+
+    /// @notice Chain id of the target chain
     uint256 public immutable targetChainId;
 
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    /// @notice Fee in BASE_FEE unit payed when managing campaign.
     uint16 public fee;
+
+    /// @notice Address of the fee collector
     address public feeCollector;
+
+    /// @notice Id of the campaign created
     uint256 public campaignId;
 
     ////////////////////////////////////////////////////
@@ -62,6 +79,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         _setGovernor(address(0));
     }
 
+    /// @notice initialize function, to set up initial internal state
+    /// @param _strategist Address of the strategist
+    /// @param _fee Fee in BASE_FEE unit payed when managing campaign
+    /// @param _feeCollector Address of the fee collector
     function initialize(
         address _strategist,
         uint16 _fee,
@@ -77,8 +98,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// @notice Create a new campaign on VotemarketV2
     /// @dev This will use all token available in this contract
-    /// @param numberOfPeriods Duration of the campaign
-    /// @param maxRewardPerVote Maximum reward per vote
+    /// @param numberOfPeriods Duration of the campaign in weeks
+    /// @param maxRewardPerVote Maximum reward per vote to distribute, to avoid overspending
     /// @param blacklist  List of addresses to exclude from the campaign
     /// @param bridgeFee Fee to pay for the bridge
     /// @param additionalGasLimit Additional gas limit for the bridge
