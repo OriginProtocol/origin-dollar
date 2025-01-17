@@ -254,7 +254,8 @@ subtask("depositWETH", "Deposit ETH into WETH")
     const signer = await getSigner();
 
     const { chainId } = await ethers.provider.getNetwork();
-    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const symbol = chainId == 146 ? "wS" : "WETH";
+    const wethAddress = addresses[networkMap[chainId]][symbol];
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await depositWETH({ ...taskArgs, weth, signer });
