@@ -59,10 +59,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
 
     /// @notice Withdraw Wrapped Sonic (wS) from this strategy contract.
     /// Used only if some wS is lingering on the contract.
-    /// That can happen when:
-    ///   - after mints if the strategy is the default
-    ///   - time between depositToStrategy and delegate
-    ///   - someone sent wS directly to this contract
+    /// That can happen only when someone sends wS directly to this contract
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset Address of the Wrapped Sonic (wS) token
     /// @param _amount Amount of Wrapped Sonic (wS) to withdraw
