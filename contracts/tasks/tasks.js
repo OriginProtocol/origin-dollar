@@ -292,8 +292,8 @@ task("queueLiquidity").setAction(async (_, __, runSuper) => {
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(allocate);
@@ -304,14 +304,14 @@ task("allocate").setAction(async (_, __, runSuper) => {
 task("capital", "Set the Vault's pauseCapital flag")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .addParam(
     "pause",
     "Whether to pause or unpause the capital allocation",
-    "true",
+    true,
     types.boolean
   )
   .setAction(capital);
@@ -322,8 +322,8 @@ task("capital").setAction(async (_, __, runSuper) => {
 task("rebase", "Call rebase() on the Vault")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(rebase);
@@ -334,9 +334,9 @@ task("rebase").setAction(async (_, __, runSuper) => {
 task("yield", "Artificially generate yield on the OUSD Vault", yieldTask);
 
 subtask("mint", "Mint OTokens from the Vault using collateral assets")
-  .addParam(
+  .addOptionalParam(
     "asset",
-    "Symbol of the collateral asset to deposit. eg WETH, frxETH, USDT, DAI",
+    "Symbol of the collateral asset to deposit. eg WETH, wS, USDT, DAI or USDC",
     undefined,
     types.string
   )
@@ -348,8 +348,8 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
@@ -506,8 +506,8 @@ subtask("requestWithdrawal", "Request a withdrawal from a vault")
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(requestWithdrawal);
@@ -527,8 +527,8 @@ subtask(
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(claimWithdrawal);
