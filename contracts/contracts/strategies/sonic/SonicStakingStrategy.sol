@@ -20,9 +20,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         address _sfc
     ) SonicValidatorDelegator(_baseConfig, _wrappedSonic, _sfc) {}
 
-    /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
-    /// It just checks the asset is Wrapped Sonic (wS) and emits the Deposit event.
-    /// To deposit wS into validators `delegate` must be used.
+    /// @notice Deposit wrapped S asset into the underlying platform.
     /// @param _asset Address of asset to deposit. Has to be Wrapped Sonic (wS).
     /// @param _amount Amount of assets that were transferred to the strategy by the vault.
     function deposit(address _asset, uint256 _amount)
@@ -48,9 +46,9 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     }
 
     /**
-     * @notice Deposit the entire balance of wrapped S in this strategy contract
+     * @notice Deposit the entire balance of wrapped S in this strategy contract into 
+     * the underlying platform.
      */
-    /// @notice Deposits the WS asset into the underlying platform
     function depositAll() external virtual override onlyVault nonReentrant {
         uint256 wSBalance = IERC20(wrappedSonic).balanceOf(address(this));
 
