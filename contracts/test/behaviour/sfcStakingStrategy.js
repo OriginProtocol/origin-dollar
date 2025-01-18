@@ -20,6 +20,7 @@ const log = require("../../utils/logger")("test:sonic:staking");
       ),
       // see validators here: https://explorer.soniclabs.com/staking
       testValidatorIds: [16, 18],
+      unsupportedValidators: [1,2]
     };
   });
  */
@@ -141,6 +142,75 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         stratBalanceBefore,
         "Strategy balance changed"
       );
+    });
+
+    it("Should be able to claim the earned rewards", async () => {
+      const {
+        sonicStakingStrategy,
+        wS,
+        testValidatorIds,
+        oSonicVault,
+        validatorRegistrator,
+      } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await advanceSfcEpoch(1);
+
+      const stratBalanceBefore = await sonicStakingStrategy.checkBalance(
+        wS.address
+      );
+      const vaultBalanceBefore = await wS.balanceOf(oSonicVault.address);
+
+      await sonicStakingStrategy
+        .connect(validatorRegistrator)
+        .collectRewards(testValidatorIds);
+
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.lt(
+        stratBalanceBefore,
+        "Strategy balance hasn'td decreased"
+      );
+
+      expect(await wS.balanceOf(oSonicVault.address)).to.gt(
+        vaultBalanceBefore,
+        "Ws on the Vault hasn't increased"
+      );
+    });
+
+    it("Can not claim rewards from an unsupported validator", async () => {
+      const {
+        sonicStakingStrategy,
+        unsupportedValidators,
+        validatorRegistrator,
+      } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await advanceSfcEpoch(1);
+
+      await expect(
+        sonicStakingStrategy
+          .connect(validatorRegistrator)
+          .collectRewards(unsupportedValidators)
+      ).to.be.revertedWith("Validator not supported");
+    });
+
+    it("Can not restake rewards of an unsupported validator", async () => {
+      const {
+        sonicStakingStrategy,
+        unsupportedValidators,
+        validatorRegistrator,
+      } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      await advanceSfcEpoch(1);
+
+      await expect(
+        sonicStakingStrategy
+          .connect(validatorRegistrator)
+          .restakeRewards(unsupportedValidators)
+      ).to.be.revertedWith("Validator not supported");
     });
 
     it("Should accept and handle S token allocation and delegation to all delegators", async () => {

@@ -46,7 +46,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     }
 
     /**
-     * @notice Deposit the entire balance of wrapped S in this strategy contract into 
+     * @notice Deposit the entire balance of wrapped S in this strategy contract into
      * the underlying platform.
      */
     function depositAll() external virtual override onlyVault nonReentrant {

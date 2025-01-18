@@ -249,7 +249,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
     {
         for (uint256 i = 0; i < validatorIds.length; ++i) {
-            require(isSupportedValidator(validatorIds[i]), "Validator not supported");
+            require(
+                isSupportedValidator(validatorIds[i]),
+                "Validator not supported"
+            );
 
             uint256 rewards = sfc.pendingRewards(
                 address(this),
@@ -263,6 +266,44 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         // The SFC contract will emit Delegated and RestakedRewards events.
         // The checkBalance function should not change as the pending rewards will moved to the staked amount.
+    }
+
+    /**
+     * @notice Claim any pending validator rewards for all supported validators
+     * @param validatorIds List of Sonic validator IDs to restake rewards
+     */
+    function collectRewards(uint256[] calldata validatorIds)
+        external
+        onlyRegistratorOrStrategist
+        nonReentrant
+    {
+        uint256 sBalanceBefore = address(this).balance;
+
+        for (uint256 i = 0; i < validatorIds.length; ++i) {
+            require(
+                isSupportedValidator(validatorIds[i]),
+                "Validator not supported"
+            );
+
+            uint256 rewards = sfc.pendingRewards(
+                address(this),
+                validatorIds[i]
+            );
+
+            if (rewards > 0) {
+                // The SFC contract will emit ClaimedRewards(delegator (this), validatorId, rewards)
+                sfc.claimRewards(validatorIds[i]);
+            }
+        }
+
+        uint256 rewardsAmount = address(this).balance - sBalanceBefore;
+
+        // Wrap Sonic (S) to Wrapped Sonic (wS)
+        IWrappedSonic(wrappedSonic).deposit{ value: rewardsAmount }();
+
+        // Transfer the Wrapped Sonic (wS) to the Vault
+        // slither-disable-next-line unchecked-transfer unused-return
+        IERC20(wrappedSonic).transfer(vaultAddress, rewardsAmount);
     }
 
     /**
