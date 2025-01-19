@@ -227,7 +227,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
-
     /// @notice returns a bool whether a withdrawalId has already been withdrawn or not
     function isWithdrawnFromSFC(uint256 withdrawId) public view returns (bool) {
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];

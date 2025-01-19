@@ -126,7 +126,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should be able to restake the earned rewards", async () => {
-      const { sonicStakingStrategy, wS, testValidatorIds } = await context();
+      const { sonicStakingStrategy, wS, sfc, testValidatorIds } =
+        await context();
+      const defaultValidatorId =
+        await sonicStakingStrategy.defaultValidatorId();
 
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
@@ -135,9 +138,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       const stratBalanceBefore = await sonicStakingStrategy.checkBalance(
         wS.address
       );
+      const stakeBefore = await sfc.getStake(
+        sonicStakingStrategy.address,
+        defaultValidatorId
+      );
 
       await sonicStakingStrategy.restakeRewards(testValidatorIds);
 
+      expect(
+        await sfc.getStake(sonicStakingStrategy.address, defaultValidatorId)
+      ).to.gt(stakeBefore, "No rewards have been restaked");
       expect(await sonicStakingStrategy.checkBalance(wS.address)).to.eq(
         stratBalanceBefore,
         "Strategy balance changed"
