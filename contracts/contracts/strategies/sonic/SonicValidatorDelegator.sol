@@ -197,14 +197,15 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         WithdrawRequest memory withdrawal = withdrawals[withdrawId];
         require(!isWithdrawnFromSFC(withdrawId), "Already withdrawn");
 
+        withdrawals[withdrawId].undelegatedAmount = 0;
+        pendingWithdrawals -= withdrawal.undelegatedAmount;
+
         uint256 sBalanceBefore = address(this).balance;
 
         sfc.withdraw(withdrawal.validatorId, withdrawId);
 
         // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
-        pendingWithdrawals -= withdrawal.undelegatedAmount;
-        withdrawals[withdrawId].undelegatedAmount = 0;
 
         // Wrap Sonic (S) to Wrapped Sonic (wS)
         IWrappedSonic(wrappedSonic).deposit{ value: withdrawnAmount }();
