@@ -156,6 +156,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
         returns (uint256 withdrawId)
     {
+        return _undelegate(validatorId, undelegateAmount);
+    }
+
+    function _undelegate(uint256 validatorId, uint256 undelegateAmount)
+        internal
+        returns (uint256 withdrawId)
+    {
         // Can still undelegate even if the validator is no longer supported
         require(undelegateAmount > 0, "Must undelegate something");
 
@@ -347,10 +354,12 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
     function unsupportValidator(uint256 validatorId) external onlyGovernor {
         require(isSupportedValidator(validatorId), "Validator not supported");
-        require(
-            sfc.getStake(address(this), validatorId) == 0,
-            "Validator still has stake"
-        );
+        uint256 stake = sfc.getStake(address(this), validatorId);
+
+        // undelegate if validator still has funds staked
+        if (stake > 0) {
+            _undelegate(validatorId, stake);
+        }
 
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; ++i) {

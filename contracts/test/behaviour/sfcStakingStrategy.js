@@ -251,6 +251,22 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await undelegateTokenAmount(amount, defaultValidatorId);
     });
 
+    it("Should undelegate when unsupporting a validator with delegated funds", async () => {
+      const { sonicStakingStrategy, timelock } = await context();
+
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount);
+      const expectedWithdrawId = await sonicStakingStrategy.nextWithdrawId();
+
+      const tx = await sonicStakingStrategy
+        .connect(timelock)
+        .unsupportValidator(defaultValidatorId);
+
+      expect(tx)
+        .to.emit(sonicStakingStrategy, "Undelegated")
+        .withArgs(expectedWithdrawId, defaultValidatorId, amount);
+    });
+
     it("Should not undelegate with 0 amount", async () => {
       const { sonicStakingStrategy, validatorRegistrator } = await context();
       const amount = oethUnits("15000");
