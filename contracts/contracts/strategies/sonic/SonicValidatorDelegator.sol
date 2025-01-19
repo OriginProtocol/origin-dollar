@@ -118,7 +118,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; i++) {
             uint256 validator = supportedValidators[i];
-            // Get the staked amount and any pending rewards
             balance += sfc.getStake(address(this), validator);
             balance += sfc.pendingRewards(address(this), validator);
         }
