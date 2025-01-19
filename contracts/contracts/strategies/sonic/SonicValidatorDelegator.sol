@@ -60,15 +60,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     event UnsupportedValidator(uint256 indexed validatorId);
     event DefaultValidatorIdChanged(uint256 indexed validatorId);
 
-    /// @dev Throws if called by any account other than the Registrator
-    modifier onlyRegistrator() {
-        require(
-            msg.sender == validatorRegistrator,
-            "Caller is not the Registrator"
-        );
-        _;
-    }
-
     /// @dev Throws if called by any account other than the Registrator or Strategist
     modifier onlyRegistratorOrStrategist() {
         require(
@@ -195,7 +186,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     // slither-disable-start reentrancy-no-eth
     function withdrawFromSFC(uint256 withdrawId)
         external
-        onlyRegistrator
+        onlyRegistratorOrStrategist
         nonReentrant
         returns (uint256 withdrawnAmount)
     {
