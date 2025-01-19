@@ -189,7 +189,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
      * @return withdrawnAmount The amount of Sonic (S) withdrawn.
      * This can be less than the undelegated amount in the event of slashing.
      */
-    // slither-disable-start reentrancy-no-eth
     function withdrawFromSFC(uint256 withdrawId)
         external
         onlyRegistratorOrStrategist
@@ -228,7 +227,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         );
     }
 
-    // slither-disable-end reentrancy-no-eth
 
     /// @notice returns a bool whether a withdrawalId has already been withdrawn or not
     function isWithdrawnFromSFC(uint256 withdrawId) public view returns (bool) {
@@ -353,12 +351,6 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
     function unsupportValidator(uint256 validatorId) external onlyGovernor {
         require(isSupportedValidator(validatorId), "Validator not supported");
-        uint256 stake = sfc.getStake(address(this), validatorId);
-
-        // undelegate if validator still has funds staked
-        if (stake > 0) {
-            _undelegate(validatorId, stake);
-        }
 
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; ++i) {
@@ -369,6 +361,12 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
             }
         }
 
+        uint256 stake = sfc.getStake(address(this), validatorId);
+
+        // undelegate if validator still has funds staked
+        if (stake > 0) {
+            _undelegate(validatorId, stake);
+        }
         emit UnsupportedValidator(validatorId);
     }
 
