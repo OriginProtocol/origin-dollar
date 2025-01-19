@@ -524,6 +524,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     );
 
     expect(tx)
+      .to.emit(sonicStakingStrategy, "Withdrawal")
+      .withArgs(wS.address, AddressZero, amountToWithdraw);
+
+    expect(tx)
       .to.emit(sonicStakingStrategy, "Withdrawn")
       .withArgs(
         withdrawalId,

@@ -219,8 +219,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         IWrappedSonic(wrappedSonic).deposit{ value: withdrawnAmount }();
 
         // Transfer the Wrapped Sonic (wS) to the Vault
-        // slither-disable-next-line unchecked-transfer unused-return
-        IERC20(wrappedSonic).transfer(vaultAddress, withdrawnAmount);
+        _withdraw(vaultAddress, wrappedSonic, withdrawnAmount);
 
         // withdrawal.undelegatedAmount & withdrawnAmount can differ in case of slashing
         emit Withdrawn(
@@ -392,4 +391,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         }
         return false;
     }
+
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal virtual;
 }

@@ -76,7 +76,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) internal {
+    ) internal override {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
