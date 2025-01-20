@@ -172,13 +172,21 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       );
       const vaultBalanceBefore = await wS.balanceOf(oSonicVault.address);
 
-      await sonicStakingStrategy
+      const tx = await sonicStakingStrategy
         .connect(validatorRegistrator)
         .collectRewards(testValidatorIds);
 
+      expect(tx).to.emittedEvent("Withdrawal", [
+        wS.address,
+        AddressZero,
+        async (amount) => {
+          expect(amount).to.gt(0, "No rewards have been claimed");
+        },
+      ]);
+
       expect(await sonicStakingStrategy.checkBalance(wS.address)).to.lt(
         stratBalanceBefore,
-        "Strategy balance hasn'td decreased"
+        "Strategy balance hasn't decreased"
       );
 
       expect(await wS.balanceOf(oSonicVault.address)).to.gt(
