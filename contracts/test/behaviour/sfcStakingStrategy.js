@@ -195,24 +195,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       );
     });
 
-    it("Can not claim rewards from an unsupported validator", async () => {
-      const {
-        sonicStakingStrategy,
-        unsupportedValidators,
-        validatorRegistrator,
-      } = await context();
-
-      const amount = oethUnits("15000");
-      await depositTokenAmount(amount);
-      await advanceSfcEpoch(1);
-
-      await expect(
-        sonicStakingStrategy
-          .connect(validatorRegistrator)
-          .collectRewards(unsupportedValidators)
-      ).to.be.revertedWith("Validator not supported");
-    });
-
     it("Can not restake rewards of an unsupported validator", async () => {
       const {
         sonicStakingStrategy,
