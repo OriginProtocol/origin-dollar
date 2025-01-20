@@ -71,6 +71,9 @@ const SONIC_STRATEGIST = MAINNET_DEPLOYER;
 const BNB_GOVERNOR = MAINNET_DEPLOYER;
 const BNB_STRATEGIST = MAINNET_DEPLOYER;
 const BNB_DEPLOYER = MAINNET_DEPLOYER;
+
+const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -389,6 +392,9 @@ module.exports = {
       base: BASE_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       bnb: BNB_STRATEGIST,
+    },
+    multichainStrategistAddr: {
+      default: MULTICHAIN_STRATEGIST,
     },
   },
   contractSizer: {
