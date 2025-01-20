@@ -296,8 +296,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         IWrappedSonic(wrappedSonic).deposit{ value: rewardsAmount }();
 
         // Transfer the Wrapped Sonic (wS) to the Vault
-        // slither-disable-next-line unchecked-transfer unused-return
-        IERC20(wrappedSonic).transfer(vaultAddress, rewardsAmount);
+        _withdraw(vaultAddress, wrappedSonic, rewardsAmount);
     }
 
     /**
