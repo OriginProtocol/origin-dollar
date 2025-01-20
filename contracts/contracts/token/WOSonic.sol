@@ -38,7 +38,7 @@ contract WOSonic is ERC4626, Governable, Initializable {
         override(ERC20, IERC20Metadata)
         returns (string memory)
     {
-        return "Wrapped Origin Sonic";
+        return "Wrapped OS";
     }
 
     function symbol()

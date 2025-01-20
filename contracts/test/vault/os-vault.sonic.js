@@ -87,7 +87,7 @@ describe("Origin S Vault", function () {
     it("Should read Wrapped Origin Sonic metadata", async () => {
       const { wOSonic } = fixture;
 
-      expect(await wOSonic.name()).to.equal("Wrapped Origin Sonic");
+      expect(await wOSonic.name()).to.equal("Wrapped OS");
       expect(await wOSonic.symbol()).to.equal("wOS");
       expect(await wOSonic.decimals()).to.equal(18);
     });

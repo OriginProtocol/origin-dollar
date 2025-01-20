@@ -224,9 +224,9 @@ describe("ForkTest: Sonic Vault", function () {
         .withArgs(wS.address, addresses.zero, withdrawAmount);
     });
 
-    it("Should have vault buffer disabled", async () => {
+    it("Should have vault buffer set to 1%", async () => {
       const { oSonicVault } = fixture;
-      expect(await oSonicVault.vaultBuffer()).to.equal("0");
+      expect(await oSonicVault.vaultBuffer()).to.equal(parseUnits("1", 16));
     });
   });
 });

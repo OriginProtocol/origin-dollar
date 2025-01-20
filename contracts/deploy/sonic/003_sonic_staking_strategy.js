@@ -1,3 +1,4 @@
+const { parseUnits } = require("ethers/lib/utils.js");
 const { deployOnSonic } = require("../../utils/deploy-l2.js");
 const {
   deployWithConfirmation,
@@ -62,6 +63,18 @@ module.exports = deployOnSonic(
     );
     console.log("Initialized SonicStakingStrategy proxy and implementation");
 
+    // Deploy a new Wrapped Origin Sonic contract
+
+    const cOSonicProxy = await ethers.getContract("OSonicProxy");
+    const cWOSonicProxy = await ethers.getContract("WOSonicProxy");
+
+    const dWOSonic = await deployWithConfirmation("WOSonic", [
+      cOSonicProxy.address, // Base token
+      "Wrapped OS", // Token Name
+      "wOS", // Token Symbol
+    ]);
+    console.log(`Deployed Wrapped OS to ${dWOSonic.address}`);
+
     return {
       name: "Config Sonic Staking Strategy",
       actions: [
@@ -97,6 +110,30 @@ module.exports = deployOnSonic(
           contract: cSonicStakingStrategy,
           signature: "setRegistrator(address)",
           args: [addresses.sonic.validatorRegistrator],
+        },
+        // 4. Set 10% performance fee
+        {
+          contract: cOSonicVault,
+          signature: "setTrusteeFeeBps(uint256)",
+          args: [1000],
+        },
+        // 5. Set the Vault buffer to 1%
+        {
+          contract: cOSonicVault,
+          signature: "setVaultBuffer(uint256)",
+          args: [parseUnits("1", 16)],
+        },
+        // 6. Set the auto allocation to 1,000 wS
+        {
+          contract: cOSonicVault,
+          signature: "setAutoAllocateThreshold(uint256)",
+          args: [parseUnits("1000", 18)],
+        },
+        // 7. Upgrade the Wrapped Origin Sonic contract with new name
+        {
+          contract: cWOSonicProxy,
+          signature: "upgradeTo(address)",
+          args: [dWOSonic.address],
         },
       ],
     };
