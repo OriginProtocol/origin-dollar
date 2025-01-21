@@ -73,7 +73,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   });
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  const { governorAddr, multichainStrategistAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const oethProxy = await ethers.getContract("OETHProxy");
@@ -144,8 +144,8 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await ethers.provider.getSigner(governorAddr);
-    strategist = await ethers.provider.getSigner(strategistAddr);
+    governor = await impersonateAndFund(governorAddr);
+    strategist = await impersonateAndFund(multichainStrategistAddr);
 
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
@@ -490,7 +490,7 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
 
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  const { governorAddr, strategistAddr, timelockAddr } =
+  const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
 
   const vaultAndTokenConracts = await getVaultAndTokenConracts();
@@ -510,7 +510,7 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
     ...vaultAndTokenConracts,
     ...accountTypes,
     governorAddr,
-    strategistAddr,
+    strategistAddr: multichainStrategistAddr,
     timelockAddr,
     governor,
     strategist,
@@ -534,7 +534,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  const { governorAddr, strategistAddr, timelockAddr } =
+  const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
 
   const vaultAndTokenConracts = await getVaultAndTokenConracts();
@@ -1014,10 +1014,16 @@ const defaultFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await ethers.provider.getSigner(governorAddr);
-    strategist = await ethers.provider.getSigner(strategistAddr);
+    governor = await impersonateAndFund(governorAddr);
+    strategist = await impersonateAndFund(multichainStrategistAddr);
     timelock = await impersonateAndFund(timelockAddr);
     oldTimelock = await impersonateAndFund(addresses.mainnet.OldTimelock);
+
+    // Just a hack to get around using `.getAddress()` on the signer
+    governor.address = governorAddr;
+    strategist.address = multichainStrategistAddr;
+    timelock.address = timelockAddr;
+    oldTimelock.address = addresses.mainnet.OldTimelock;
   } else {
     timelock = governor;
   }
