@@ -126,88 +126,91 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /**
      * @dev Delegate from this strategy to a specific Sonic validator. Called
      * automatically on asset deposit
-     * @param amount the amount of Sonic (S) to delegate.
+     * @param _amount the amount of Sonic (S) to delegate.
      */
-    function _delegate(uint256 amount) internal {
+    function _delegate(uint256 _amount) internal {
         require(
             isSupportedValidator(defaultValidatorId),
             "Validator not supported"
         );
 
         // unwrap Wrapped Sonic (wS) to native Sonic (S)
-        IWrappedSonic(wrappedSonic).withdraw(amount);
+        IWrappedSonic(wrappedSonic).withdraw(_amount);
 
         //slither-disable-next-line arbitrary-send-eth
-        sfc.delegate{ value: amount }(defaultValidatorId);
+        sfc.delegate{ value: _amount }(defaultValidatorId);
 
-        emit Delegated(defaultValidatorId, amount);
+        emit Delegated(defaultValidatorId, _amount);
     }
 
     /**
      * @notice Undelegate from a specific Sonic validator.
      * This needs to be followed by a `withdrawFromSFC` two weeks later.
-     * @param validatorId The Sonic validator ID to undelegate from.
-     * @param undelegateAmount the amount of Sonic (S) to undelegate.
+     * @param _validatorId The Sonic validator ID to undelegate from.
+     * @param _undelegateAmount the amount of Sonic (S) to undelegate.
      */
-    function undelegate(uint256 validatorId, uint256 undelegateAmount)
+    function undelegate(uint256 _validatorId, uint256 _undelegateAmount)
         external
         onlyRegistratorOrStrategist
         nonReentrant
         returns (uint256 withdrawId)
     {
-        return _undelegate(validatorId, undelegateAmount);
+        return _undelegate(_validatorId, _undelegateAmount);
     }
 
-    function _undelegate(uint256 validatorId, uint256 undelegateAmount)
+    function _undelegate(uint256 _validatorId, uint256 _undelegateAmount)
         internal
         returns (uint256 withdrawId)
     {
         // Can still undelegate even if the validator is no longer supported
-        require(undelegateAmount > 0, "Must undelegate something");
+        require(_undelegateAmount > 0, "Must undelegate something");
 
-        uint256 amountDelegated = sfc.getStake(address(this), validatorId);
-        require(undelegateAmount <= amountDelegated, "Insufficient delegation");
+        uint256 amountDelegated = sfc.getStake(address(this), _validatorId);
+        require(
+            _undelegateAmount <= amountDelegated,
+            "Insufficient delegation"
+        );
 
         withdrawId = nextWithdrawId++;
 
         withdrawals[withdrawId] = WithdrawRequest(
-            validatorId,
-            undelegateAmount,
+            _validatorId,
+            _undelegateAmount,
             block.timestamp
         );
-        pendingWithdrawals += undelegateAmount;
+        pendingWithdrawals += _undelegateAmount;
 
-        sfc.undelegate(validatorId, withdrawId, undelegateAmount);
+        sfc.undelegate(_validatorId, withdrawId, _undelegateAmount);
 
-        emit Undelegated(withdrawId, validatorId, undelegateAmount);
+        emit Undelegated(withdrawId, _validatorId, _undelegateAmount);
     }
 
     /**
      * @notice Withdraw native S from a previously undelegated validator.
      * The native S is wrapped wS and transferred to the Vault.
-     * @param withdrawId The withdraw ID returned from `undelegate` and emitted in `Undelegated`.
+     * @param _withdrawId The withdraw ID returned from `undelegate` and emitted in `Undelegated`.
      * @return withdrawnAmount The amount of Sonic (S) withdrawn.
      * This can be less than the undelegated amount in the event of slashing.
      */
-    function withdrawFromSFC(uint256 withdrawId)
+    function withdrawFromSFC(uint256 _withdrawId)
         external
         onlyRegistratorOrStrategist
         nonReentrant
         returns (uint256 withdrawnAmount)
     {
-        require(withdrawId < nextWithdrawId, "Invalid withdrawId");
+        require(_withdrawId < nextWithdrawId, "Invalid withdrawId");
 
         // Can still withdraw even if the validator is no longer supported
         // Load the withdrawal from storage into memory
-        WithdrawRequest memory withdrawal = withdrawals[withdrawId];
-        require(!isWithdrawnFromSFC(withdrawId), "Already withdrawn");
+        WithdrawRequest memory withdrawal = withdrawals[_withdrawId];
+        require(!isWithdrawnFromSFC(_withdrawId), "Already withdrawn");
 
-        withdrawals[withdrawId].undelegatedAmount = 0;
+        withdrawals[_withdrawId].undelegatedAmount = 0;
         pendingWithdrawals -= withdrawal.undelegatedAmount;
 
         uint256 sBalanceBefore = address(this).balance;
 
-        sfc.withdraw(withdrawal.validatorId, withdrawId);
+        sfc.withdraw(withdrawal.validatorId, _withdrawId);
 
         // Save state to storage
         withdrawnAmount = address(this).balance - sBalanceBefore;
@@ -220,7 +223,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         // withdrawal.undelegatedAmount & withdrawnAmount can differ in case of slashing
         emit Withdrawn(
-            withdrawId,
+            _withdrawId,
             withdrawal.validatorId,
             withdrawal.undelegatedAmount,
             withdrawnAmount
@@ -228,33 +231,37 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice returns a bool whether a withdrawalId has already been withdrawn or not
-    function isWithdrawnFromSFC(uint256 withdrawId) public view returns (bool) {
-        WithdrawRequest memory withdrawal = withdrawals[withdrawId];
+    function isWithdrawnFromSFC(uint256 _withdrawId)
+        public
+        view
+        returns (bool)
+    {
+        WithdrawRequest memory withdrawal = withdrawals[_withdrawId];
         require(withdrawal.validatorId > 0, "Invalid withdrawId");
         return withdrawal.undelegatedAmount == 0;
     }
 
     /**
      * @notice Restake any pending validator rewards for all supported validators
-     * @param validatorIds List of Sonic validator IDs to restake rewards
+     * @param _validatorIds List of Sonic validator IDs to restake rewards
      */
-    function restakeRewards(uint256[] calldata validatorIds)
+    function restakeRewards(uint256[] calldata _validatorIds)
         external
         nonReentrant
     {
-        for (uint256 i = 0; i < validatorIds.length; ++i) {
+        for (uint256 i = 0; i < _validatorIds.length; ++i) {
             require(
-                isSupportedValidator(validatorIds[i]),
+                isSupportedValidator(_validatorIds[i]),
                 "Validator not supported"
             );
 
             uint256 rewards = sfc.pendingRewards(
                 address(this),
-                validatorIds[i]
+                _validatorIds[i]
             );
 
             if (rewards > 0) {
-                sfc.restakeRewards(validatorIds[i]);
+                sfc.restakeRewards(_validatorIds[i]);
             }
         }
 
@@ -264,24 +271,24 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
     /**
      * @notice Claim any pending validator rewards for all supported validators
-     * @param validatorIds List of Sonic validator IDs to restake rewards
+     * @param _validatorIds List of Sonic validator IDs to restake rewards
      */
-    function collectRewards(uint256[] calldata validatorIds)
+    function collectRewards(uint256[] calldata _validatorIds)
         external
         onlyRegistratorOrStrategist
         nonReentrant
     {
         uint256 sBalanceBefore = address(this).balance;
 
-        for (uint256 i = 0; i < validatorIds.length; ++i) {
+        for (uint256 i = 0; i < _validatorIds.length; ++i) {
             uint256 rewards = sfc.pendingRewards(
                 address(this),
-                validatorIds[i]
+                _validatorIds[i]
             );
 
             if (rewards > 0) {
                 // The SFC contract will emit ClaimedRewards(delegator (this), validatorId, rewards)
-                sfc.claimRewards(validatorIds[i]);
+                sfc.claimRewards(_validatorIds[i]);
             }
         }
 
@@ -319,48 +326,48 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice Set the default validatorId to delegate to on deposit
-    function setDefaultValidatorId(uint256 validatorId)
+    function setDefaultValidatorId(uint256 _validatorId)
         external
         onlyRegistratorOrStrategist
     {
-        require(isSupportedValidator(validatorId), "Validator not supported");
-        defaultValidatorId = validatorId;
-        emit DefaultValidatorIdChanged(validatorId);
+        require(isSupportedValidator(_validatorId), "Validator not supported");
+        defaultValidatorId = _validatorId;
+        emit DefaultValidatorIdChanged(_validatorId);
     }
 
     /// @notice Allows a validator to be delegated to by the Registrator
-    function supportValidator(uint256 validatorId) external onlyGovernor {
+    function supportValidator(uint256 _validatorId) external onlyGovernor {
         require(
-            !isSupportedValidator(validatorId),
+            !isSupportedValidator(_validatorId),
             "Validator already supported"
         );
 
-        supportedValidators.push(validatorId);
+        supportedValidators.push(_validatorId);
 
-        emit SupportedValidator(validatorId);
+        emit SupportedValidator(_validatorId);
     }
 
     /// @notice Removes a validator from the supported list.
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
-    function unsupportValidator(uint256 validatorId) external onlyGovernor {
-        require(isSupportedValidator(validatorId), "Validator not supported");
+    function unsupportValidator(uint256 _validatorId) external onlyGovernor {
+        require(isSupportedValidator(_validatorId), "Validator not supported");
 
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; ++i) {
-            if (supportedValidators[i] == validatorId) {
+            if (supportedValidators[i] == _validatorId) {
                 supportedValidators[i] = supportedValidators[validatorLen - 1];
                 supportedValidators.pop();
                 break;
             }
         }
 
-        uint256 stake = sfc.getStake(address(this), validatorId);
+        uint256 stake = sfc.getStake(address(this), _validatorId);
 
         // undelegate if validator still has funds staked
         if (stake > 0) {
-            _undelegate(validatorId, stake);
+            _undelegate(_validatorId, stake);
         }
-        emit UnsupportedValidator(validatorId);
+        emit UnsupportedValidator(_validatorId);
     }
 
     /// @notice Returns the length of the supportedValidators array
@@ -369,14 +376,14 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice Returns whether a validator is supported by this strategy
-    function isSupportedValidator(uint256 validatorId)
+    function isSupportedValidator(uint256 _validatorId)
         public
         view
         returns (bool)
     {
         uint256 validatorLen = supportedValidators.length;
         for (uint256 i = 0; i < validatorLen; ++i) {
-            if (supportedValidators[i] == validatorId) {
+            if (supportedValidators[i] == _validatorId) {
                 return true;
             }
         }
