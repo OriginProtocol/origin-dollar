@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "117_pool_booster_curve",
+    deployName: "119_pool_booster_curve",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
