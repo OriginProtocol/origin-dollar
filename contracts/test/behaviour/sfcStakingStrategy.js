@@ -107,6 +107,11 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       ).to.be.revertedWith("unsupported function");
     });
 
+    it("Should be able to deposit tokens using depositAll", async () => {
+      const amount = oethUnits("15000");
+      await depositTokenAmount(amount, true);
+    });
+
     it("Should accept and handle S token allocation and delegation to SFC", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
@@ -407,7 +412,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   };
 
   // deposit the amount into the Sonic Staking Strategy
-  const depositTokenAmount = async (amount) => {
+  const depositTokenAmount = async (amount, useDepositAll = false) => {
     const { sonicStakingStrategy, oSonicVaultSigner, wS, clement } =
       await context();
 
@@ -421,9 +426,14 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     await wS.connect(clement).transfer(sonicStakingStrategy.address, amount);
 
     // Call deposit by impersonating the Vault
-    const tx = await sonicStakingStrategy
-      .connect(oSonicVaultSigner)
-      .deposit(wS.address, amount);
+    let tx;
+    if (useDepositAll) {
+      tx = await sonicStakingStrategy.connect(oSonicVaultSigner).depositAll();
+    } else {
+      tx = await sonicStakingStrategy
+        .connect(oSonicVaultSigner)
+        .deposit(wS.address, amount);
+    }
 
     expect(tx)
       .to.emit(sonicStakingStrategy, "Deposit")
