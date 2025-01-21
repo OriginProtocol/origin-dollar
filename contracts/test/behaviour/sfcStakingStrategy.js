@@ -107,6 +107,18 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       ).to.be.revertedWith("unsupported function");
     });
 
+    it("Should not be able to deposit unsupported assets", async () => {
+      const { sonicStakingStrategy, oSonicVaultSigner, clement } =
+        await context();
+      const amount = oethUnits("15000");
+
+      await expect(
+        sonicStakingStrategy
+          .connect(oSonicVaultSigner)
+          .deposit(clement.address, amount)
+      ).to.be.revertedWith("Unsupported asset");
+    });
+
     it("Should be able to deposit tokens using depositAll", async () => {
       const amount = oethUnits("15000");
       await depositTokenAmount(amount, true);
@@ -248,6 +260,49 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       const defaultValidatorIdBn =
         await sonicStakingStrategy.defaultValidatorId();
       defaultValidatorId = parseInt(defaultValidatorIdBn.toString());
+    });
+
+    it("Should not be able to withdraw zero amount", async () => {
+      const { sonicStakingStrategy, oSonicVaultSigner, oSonicVault, wS } =
+        await context();
+
+      await expect(
+        sonicStakingStrategy
+          .connect(oSonicVaultSigner)
+          .withdraw(oSonicVault.address, wS.address, oethUnits("0"))
+      ).to.be.revertedWith("Must withdraw something");
+    });
+
+    it("Should not be able to withdraw without specifying a recipient", async () => {
+      const { sonicStakingStrategy, oSonicVaultSigner, wS } = await context();
+
+      await expect(
+        sonicStakingStrategy
+          .connect(oSonicVaultSigner)
+          .withdraw(AddressZero, wS.address, oethUnits("150"))
+      ).to.be.revertedWith("Must specify recipient");
+    });
+
+    it("Should not be able to withdraw unsupported assets", async () => {
+      const { sonicStakingStrategy, oSonicVaultSigner, oSonicVault, clement } =
+        await context();
+      const amount = oethUnits("15000");
+
+      await expect(
+        sonicStakingStrategy
+          .connect(oSonicVaultSigner)
+          .withdraw(oSonicVault.address, clement.address, amount)
+      ).to.be.revertedWith("Unsupported asset");
+    });
+
+    it("Should be able to withdraw undelegated funds", async () => {
+      const amount = oethUnits("15000");
+      await withdrawUndelegatedAmount(amount);
+    });
+
+    it("Should be able to withdrawAll undelegated funds", async () => {
+      const amount = oethUnits("15000");
+      await withdrawUndelegatedAmount(amount, true);
     });
 
     it("Should undelegate and withdraw", async () => {
@@ -403,6 +458,33 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
   });
 
+  describe("Miscellaneous functions", function () {
+    it("Check balance should now be affected if S is sent to the strategy contract", async () => {
+      const { sonicStakingStrategy, wS, clement } = await context();
+
+      const sBalanceBefore = await wS.provider.getBalance(
+        sonicStakingStrategy.address
+      );
+      const strategyBalance = await sonicStakingStrategy.checkBalance(
+        wS.address
+      );
+
+      await wS
+        .connect(clement)
+        .withdrawTo(sonicStakingStrategy.address, oethUnits("100"));
+
+      expect(await wS.provider.getBalance(sonicStakingStrategy.address)).to.gt(
+        sBalanceBefore,
+        "S Balance not increased"
+      );
+
+      expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
+        strategyBalance,
+        "CheckBalance value changed"
+      );
+    });
+  });
+
   const changeDefaultDelegator = async (validatorId) => {
     const { sonicStakingStrategy, strategist } = await context();
 
@@ -445,6 +527,43 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
       strategyBalanceBefore.add(amount),
       "strategy checkBalance not increased"
+    );
+    expect(await wS.balanceOf(sonicStakingStrategy.address)).to.equal(
+      wsBalanceBefore,
+      "Unexpected WS amount"
+    );
+  };
+
+  // test that withdraw and withdrawAll remove WS funds from the strategy
+  const withdrawUndelegatedAmount = async (amount, useWithdrawAll = false) => {
+    const {
+      sonicStakingStrategy,
+      oSonicVaultSigner,
+      wS,
+      clement,
+      oSonicVault,
+    } = await context();
+
+    const strategyBalanceBefore = await sonicStakingStrategy.checkBalance(
+      wS.address
+    );
+    const wsBalanceBefore = await wS.balanceOf(sonicStakingStrategy.address);
+
+    // Transfer some WS to strategy
+    await wS.connect(clement).transfer(sonicStakingStrategy.address, amount);
+
+    // Call deposit by impersonating the Vault
+    if (useWithdrawAll) {
+      await sonicStakingStrategy.connect(oSonicVaultSigner).withdrawAll();
+    } else {
+      await sonicStakingStrategy
+        .connect(oSonicVaultSigner)
+        .withdraw(oSonicVault.address, wS.address, amount);
+    }
+
+    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
+      strategyBalanceBefore,
+      "strategy checkBalance changed"
     );
     expect(await wS.balanceOf(sonicStakingStrategy.address)).to.equal(
       wsBalanceBefore,
@@ -577,10 +696,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       "Strategy checkBalance not reduced by expected amount"
     );
   };
-
-  // const advanceDay = async () => {
-  //   await advanceTime(60 * 60 * 24);
-  // };
 
   const advance10min = async () => {
     await advanceTime(60 * 10);
