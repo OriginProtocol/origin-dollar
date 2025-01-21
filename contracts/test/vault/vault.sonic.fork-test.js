@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { defaultSonicFixture } = require("./../_fixture-sonic");
@@ -63,6 +64,20 @@ describe("ForkTest: Sonic Vault", function () {
     it("Should call safeApproveAllTokens", async () => {
       const { sonicStakingStrategy, timelock } = fixture;
       await sonicStakingStrategy.connect(timelock).safeApproveAllTokens();
+    });
+
+    it("Should have trusteeFeeBps set to 10%", async () => {
+      const { oSonicVault } = fixture;
+      expect(await oSonicVault.trusteeFeeBps()).to.equal(
+        BigNumber.from("1000")
+      );
+    });
+
+    it("Should have strategist set as trustee", async () => {
+      const { oSonicVault } = fixture;
+      expect(await oSonicVault.trusteeAddress()).to.equal(
+        addresses.sonic.guardian
+      );
     });
   });
 

@@ -12,7 +12,7 @@ module.exports = deployOnSonic(
     forceSkip: false,
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     console.log(`Deployer: ${deployerAddr}`);
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -117,19 +117,25 @@ module.exports = deployOnSonic(
           signature: "setTrusteeFeeBps(uint256)",
           args: [1000],
         },
-        // 5. Set the Vault buffer to 1%
+        // 5. set the trustee address
+        {
+          contract: cOSonicVault,
+          signature: "setTrusteeAddress(address)",
+          args: [strategistAddr],
+        },
+        // 6. Set the Vault buffer to 1%
         {
           contract: cOSonicVault,
           signature: "setVaultBuffer(uint256)",
           args: [parseUnits("1", 16)],
         },
-        // 6. Set the auto allocation to 1,000 wS
+        // 7. Set the auto allocation to 1,000 wS
         {
           contract: cOSonicVault,
           signature: "setAutoAllocateThreshold(uint256)",
           args: [parseUnits("1000", 18)],
         },
-        // 7. Upgrade the Wrapped Origin Sonic contract with new name
+        // 8. Upgrade the Wrapped Origin Sonic contract with new name
         {
           contract: cWOSonicProxy,
           signature: "upgradeTo(address)",

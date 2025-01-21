@@ -484,7 +484,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       );
     });
 
-    // WrappedSonic still has the withdrawTo function which anyone can use to 
+    // WrappedSonic still has the withdrawTo function which anyone can use to
     // unwrap their own S and send it to the sonicStakingStrategy
     it("Should not receive S tokens from non allowed accounts", async () => {
       const { sonicStakingStrategy, clement } = await context();

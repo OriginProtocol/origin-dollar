@@ -208,18 +208,6 @@ module.exports = deployOnSonic(
           signature: "setStrategistAddr(address)",
           args: [strategistAddr],
         },
-        // // 9. set the trustee address
-        // {
-        //   contract: cOSonicVault,
-        //   signature: "setTrusteeAddress(address)",
-        //   args: [strategistAddr],
-        // },
-        // // 10. set the trustee fee
-        // {
-        //   contract: cOSonicVault,
-        //   signature: "setTrusteeFeeBps(uint256)",
-        //   args: [2000], // 20%
-        // },
         // 9. Set the Dripper on the Vault
         {
           contract: cOSonicVault,
