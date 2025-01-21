@@ -483,6 +483,17 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         "CheckBalance value changed"
       );
     });
+
+    it("Should not receive S tokens from non allowed accounts", async () => {
+      const { sonicStakingStrategy, clement } = await context();
+
+      await expect(
+        clement.sendTransaction({
+          to: sonicStakingStrategy.address,
+          value: oethUnits("1"),
+        })
+      ).to.be.revertedWith("S not from allowed contracts");
+    });
   });
 
   const changeDefaultDelegator = async (validatorId) => {
