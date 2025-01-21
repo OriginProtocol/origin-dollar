@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
-    const { deployerAddr, strategistAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     console.log(`Using deployer account: ${deployerAddr}`);
     // 1. Deploy proxy
@@ -41,7 +41,11 @@ module.exports = deploymentWithGovernanceProposal(
     // 3. Initialize
     const initData = cCurvePoolBooster.interface.encodeFunctionData(
       "initialize(address,uint16,address)",
-      [strategistAddr, 0, strategistAddr]
+      [
+        addresses.base.multichainStrategist,
+        0,
+        addresses.base.multichainStrategist,
+      ]
     );
 
     // 4. Initialize proxy
