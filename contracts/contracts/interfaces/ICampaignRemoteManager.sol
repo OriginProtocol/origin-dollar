@@ -35,3 +35,7 @@ interface ICampaignRemoteManager {
         uint256 maxRewardPerVote;
     }
 }
+
+interface VotemarketV2 {
+    function closeCampaign(uint256 campaignId) external;
+}

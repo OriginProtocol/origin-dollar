@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
-import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
+import { ICampaignRemoteManager, VotemarketV2 } from "../interfaces/ICampaignRemoteManager.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
@@ -60,6 +60,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     event NumberOfPeriodsUpdated(uint8 extraNumberOfPeriods);
     event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
     event TokensRescued(address token, uint256 amount, address receiver);
+    event BribeClosed(uint256 campaignId);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
@@ -238,6 +239,18 @@ contract CurvePoolBooster is Initializable, Strategizable {
         );
 
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
+    }
+
+    /// @notice Close the campaign.
+    /// @dev This function only work on the L2 chain. Not on mainnet.
+    /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
+    /// @param _campaignId Id of the campaign to close
+    function closeCampaign(uint256 _campaignId)
+        external
+        onlyGovernorOrStrategist
+    {
+        VotemarketV2(campaignRemoteManager).closeCampaign(_campaignId);
+        emit BribeClosed(_campaignId);
     }
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
