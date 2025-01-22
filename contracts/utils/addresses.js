@@ -4,6 +4,7 @@ const addresses = {};
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -172,7 +173,7 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0xd1f0101Df22Cb7447F486Da5784237AB7a55eB4e";
+  "0x000000009dF57105d76B059178989E01356e4b45";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
