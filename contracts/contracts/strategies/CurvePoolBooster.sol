@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
-import { ICampaignRemoteManager, VotemarketV2 } from "../interfaces/ICampaignRemoteManager.sol";
+import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
@@ -25,9 +25,6 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Address of the reward token
     address public immutable rewardToken;
 
-    /// @notice Address of the campaignRemoteManager linked to VotemarketV2
-    address public immutable campaignRemoteManager;
-
     /// @notice Chain id of the target chain
     uint256 public immutable targetChainId;
 
@@ -39,6 +36,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Address of the fee collector
     address public feeCollector;
+
+    /// @notice Address of the campaignRemoteManager linked to VotemarketV2
+    address public campaignRemoteManager;
 
     /// @notice Id of the campaign created
     uint256 public campaignId;
@@ -61,18 +61,17 @@ contract CurvePoolBooster is Initializable, Strategizable {
     event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
     event TokensRescued(address token, uint256 amount, address receiver);
     event BribeClosed(uint256 campaignId);
+    event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
     constructor(
         uint256 _targetChainId,
-        address _campaignRemoteManager,
         address _rewardToken,
         address _gauge
     ) {
         targetChainId = _targetChainId;
-        campaignRemoteManager = _campaignRemoteManager;
         rewardToken = _rewardToken;
         gauge = _gauge;
 
@@ -87,11 +86,13 @@ contract CurvePoolBooster is Initializable, Strategizable {
     function initialize(
         address _strategist,
         uint16 _fee,
-        address _feeCollector
+        address _feeCollector,
+        address _campaignRemoteManager
     ) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
+        _setCampaignRemoteManager(_campaignRemoteManager);
     }
 
     ////////////////////////////////////////////////////
@@ -249,7 +250,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
         external
         onlyGovernorOrStrategist
     {
-        VotemarketV2(campaignRemoteManager).closeCampaign(_campaignId);
+        ICampaignRemoteManager(campaignRemoteManager).closeCampaign(
+            _campaignId
+        );
         emit BribeClosed(_campaignId);
     }
 
@@ -341,6 +344,28 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(_feeCollector != address(0), "Invalid fee collector");
         feeCollector = _feeCollector;
         emit FeeCollectorUpdated(_feeCollector);
+    }
+
+    /// @notice Set the campaignRemoteManager
+    /// @param _campaignRemoteManager New campaignRemoteManager address
+    function setCampaignRemoteManager(address _campaignRemoteManager)
+        external
+        onlyGovernor
+    {
+        _setCampaignRemoteManager(_campaignRemoteManager);
+    }
+
+    /// @notice Internal logic to set the campaignRemoteManager
+    /// @param _campaignRemoteManager New campaignRemoteManager address
+    function _setCampaignRemoteManager(address _campaignRemoteManager)
+        internal
+    {
+        require(
+            _campaignRemoteManager != address(0),
+            "Invalid campaignRemoteManager"
+        );
+        campaignRemoteManager = _campaignRemoteManager;
+        emit CampaignRemoteManagerUpdated(_campaignRemoteManager);
     }
 
     receive() external payable {}

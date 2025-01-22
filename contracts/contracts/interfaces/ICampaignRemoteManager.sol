@@ -14,6 +14,8 @@ interface ICampaignRemoteManager {
         uint256 additionalGasLimit
     ) external payable;
 
+    function closeCampaign(uint256 campaignId) external;
+
     struct CampaignCreationParams {
         uint256 chainId;
         address gauge;
@@ -34,8 +36,4 @@ interface ICampaignRemoteManager {
         uint256 totalRewardAmount;
         uint256 maxRewardPerVote;
     }
-}
-
-interface VotemarketV2 {
-    function closeCampaign(uint256 campaignId) external;
 }

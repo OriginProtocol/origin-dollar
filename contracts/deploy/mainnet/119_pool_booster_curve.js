@@ -27,7 +27,6 @@ module.exports = deploymentWithGovernanceProposal(
       "CurvePoolBooster",
       [
         42161, // Arbitrum chain id
-        addresses.mainnet.CampaignRemoteManager, // Campaign Remote Manager (VotemarketV2 entry point)
         addresses.mainnet.OUSDProxy, // Bribe token
         addresses.mainnet.CurveOUSDUSDTGauge, // Gauge
       ]
@@ -40,11 +39,12 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 3. Initialize
     const initData = cCurvePoolBooster.interface.encodeFunctionData(
-      "initialize(address,uint16,address)",
+      "initialize(address,uint16,address,address)",
       [
-        addresses.base.multichainStrategist,
-        0,
-        addresses.base.multichainStrategist,
+        addresses.base.multichainStrategist, // Strategist
+        0, // Fee
+        addresses.base.multichainStrategist, // Fee collector
+        addresses.mainnet.CampaignRemoteManager // Campaign Remote Manager (VotemarketV2 entry point)
       ]
     );
 
