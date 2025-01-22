@@ -114,22 +114,24 @@ describe("ForkTest: Sonic Vault", function () {
       expect(balanceDiff).to.approxEqualTolerance(parseUnits("1000"), 1);
     });
 
-    it("should deposit to staking strategy", async () => {
+    it("should automatically deposit to staking strategy", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
-      await oSonicVault.connect(nick).mint(wS.address, parseUnits("1000"), 0);
-      const strategistSigner = await impersonateAndFund(
-        await oSonicVault.strategistAddr()
-      );
 
-      const depositAmount = parseUnits("1000");
+      // Clear any wS out of the Vault first
+      await oSonicVault.allocate();
+
+      const mintAmount = parseUnits("1000");
       const tx = await oSonicVault
-        .connect(strategistSigner)
-        .depositToStrategy(
-          sonicStakingStrategy.address,
-          [wS.address],
-          [depositAmount]
-        );
+        .connect(nick)
+        .mint(wS.address, mintAmount, 0);
 
+      // Check mint event
+      await expect(tx)
+        .to.emit(oSonicVault, "Mint")
+        .withArgs(nick.address, mintAmount);
+
+      // check 99% is deposited to staking strategy
+      const depositAmount = mintAmount.mul(99).div(100);
       await expect(tx)
         .to.emit(sonicStakingStrategy, "Deposit")
         .withArgs(wS.address, addresses.zero, depositAmount);
@@ -137,20 +139,12 @@ describe("ForkTest: Sonic Vault", function () {
 
     it("should withdraw from staking strategy", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+
       const depositAmount = parseUnits("2000");
       await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
-
-      // Deposit
-      await oSonicVault
-        .connect(strategistSigner)
-        .depositToStrategy(
-          sonicStakingStrategy.address,
-          [wS.address],
-          [depositAmount]
-        );
 
       // Simulate undelegate and withdraw from validator by transferring wS to the strategy
       const withdrawAmount = parseUnits("1500");
@@ -173,20 +167,12 @@ describe("ForkTest: Sonic Vault", function () {
 
     it("should call withdraw all from staking strategy even if all delegated", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
+
       const depositAmount = parseUnits("2000");
       await oSonicVault.connect(nick).mint(wS.address, depositAmount, 0);
       const strategistSigner = await impersonateAndFund(
         await oSonicVault.strategistAddr()
       );
-
-      // Deposit
-      await oSonicVault
-        .connect(strategistSigner)
-        .depositToStrategy(
-          sonicStakingStrategy.address,
-          [wS.address],
-          [depositAmount]
-        );
 
       const tx = await oSonicVault
         .connect(strategistSigner)
