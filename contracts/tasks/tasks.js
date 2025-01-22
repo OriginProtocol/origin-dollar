@@ -102,6 +102,7 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
+const { setDefaultValidator } = require("../utils/sonic");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
@@ -1759,5 +1760,16 @@ subtask("mine", "Mines a number of blocks")
     await advanceBlocks(blocks);
   });
 task("mine").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Sonic Staking Operations
+subtask(
+  "setDefaultValidator",
+  "Set the default validator for the Sonic Staking Strategy"
+)
+  .addParam("id", "Validator identifier. eg 18", undefined, types.int)
+  .setAction(setDefaultValidator);
+task("setDefaultValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
