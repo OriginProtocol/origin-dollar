@@ -44,7 +44,7 @@ module.exports = deploymentWithGovernanceProposal(
         addresses.base.multichainStrategist, // Strategist
         0, // Fee
         addresses.base.multichainStrategist, // Fee collector
-        addresses.mainnet.CampaignRemoteManager // Campaign Remote Manager (VotemarketV2 entry point)
+        addresses.mainnet.CampaignRemoteManager, // Campaign Remote Manager (VotemarketV2 entry point)
       ]
     );
 

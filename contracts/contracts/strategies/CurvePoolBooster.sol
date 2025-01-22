@@ -46,22 +46,22 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event FeeUpdated(uint16 _newFee);
-    event FeeCollected(address _feeCollector, uint256 _feeAmount);
-    event FeeCollectorUpdated(address _newFeeCollector);
-    event CampaignIdUpdated(uint256 _newId);
-    event BribeCreated(
+    event FeeUpdated(uint16 newFee);
+    event FeeCollected(address feeCollector, uint256 feeAmount);
+    event FeeCollectorUpdated(address newFeeCollector);
+    event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
+    event CampaignCreated(
         address gauge,
         address rewardToken,
         uint256 maxRewardPerVote,
         uint256 totalRewardAmount
     );
+    event CampaignIdUpdated(uint256 newId);
+    event CampaignClosed(uint256 campaignId);
     event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
     event NumberOfPeriodsUpdated(uint8 extraNumberOfPeriods);
     event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
     event TokensRescued(address token, uint256 amount, address receiver);
-    event BribeClosed(uint256 campaignId);
-    event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
@@ -142,7 +142,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit
         );
 
-        emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balanceSubFee);
+        emit CampaignCreated(
+            gauge,
+            rewardToken,
+            maxRewardPerVote,
+            balanceSubFee
+        );
     }
 
     /// @notice Manage the total reward amount of the campaign
@@ -253,7 +258,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         ICampaignRemoteManager(campaignRemoteManager).closeCampaign(
             _campaignId
         );
-        emit BribeClosed(_campaignId);
+        emit CampaignClosed(_campaignId);
     }
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
