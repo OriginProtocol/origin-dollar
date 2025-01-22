@@ -219,7 +219,7 @@ contract VaultAdmin is VaultStorage {
         bytes calldata _data
     ) internal virtual returns (uint256 toAssetAmount) {
         // Check fromAsset and toAsset are valid
-        Asset memory fromAssetConfig = assets[address(_fromAsset)];
+        Asset memory fromAssetConfig = assets[_fromAsset];
         Asset memory toAssetConfig = assets[_toAsset];
         require(fromAssetConfig.isSupported, "From asset is not supported");
         require(toAssetConfig.isSupported, "To asset is not supported");
@@ -361,6 +361,7 @@ contract VaultAdmin is VaultStorage {
      */
     function supportAsset(address _asset, uint8 _unitConversion)
         external
+        virtual
         onlyGovernor
     {
         require(!assets[_asset].isSupported, "Asset already supported");

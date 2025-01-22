@@ -58,6 +58,7 @@ const {
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
+NUM_CONFIRMATIONS = isSonic ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -129,10 +130,15 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (
-    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
-    (isTest && !isForkTest)
-  ) {
+  const providerUrl = isBase
+    ? process.env.BASE_PROVIDER_URL
+    : isSonic
+    ? process.env.SONIC_PROVIDER_URL
+    : isHolesky
+    ? process.env.HOLESKY_PROVIDER_URL
+    : process.env.PROVIDER_URL;
+  if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
+    console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
   }
@@ -187,7 +193,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
  */
 const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork");
+    throw new Error("impersonate Guardian only works on Fork");
   }
 
   // If an address is passed, use that otherwise default to
@@ -195,9 +201,11 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  await impersonateAndFund(guardianAddr);
+  const signer = await impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
+  signer.address = guardianAddr;
+  return signer;
 };
 
 /**
@@ -460,7 +468,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Succeeded") {
     await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
-    newState = await getProposalState(proposalIdBn);
+    let newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
         `Proposal state should now be "Queued" but is ${newState}`
@@ -983,16 +991,17 @@ function constructContractMethod(contract, functionSignature) {
   };
 }
 
-function buildAndWriteGnosisJson(
+async function buildAndWriteGnosisJson(
   safeAddress,
   targets,
   contractMethods,
   contractInputsValues,
   name
 ) {
+  const { chainId } = await ethers.provider.getNetwork();
   const json = {
     version: "1.0",
-    chainId: "1",
+    chainId: chainId.toString(),
     createdAt: parseInt(Date.now() / 1000),
     meta: {
       name: "Transaction Batch",
@@ -1062,7 +1071,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
         isBaseFork
           ? addresses.base.governor
           : isSonicFork
-          ? addresses.sonic.governor
+          ? addresses.sonic.admin
           : addresses.mainnet.Guardian
       );
 
@@ -1084,7 +1093,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
       delay: delay.toString(),
     };
 
-    buildAndWriteGnosisJson(
+    await buildAndWriteGnosisJson(
       addresses.mainnet.Guardian,
       [timelock.address],
       [contractMethod],
@@ -1133,7 +1142,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     salt: args[4],
   };
 
-  buildAndWriteGnosisJson(
+  await buildAndWriteGnosisJson(
     addresses.mainnet.Guardian,
     [timelock.address],
     [executionContractMethod],

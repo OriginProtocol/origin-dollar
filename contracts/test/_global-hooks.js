@@ -50,7 +50,10 @@ mocha.before(function () {
     const isBaseUnitTestFile = s.file.endsWith(".base.js");
     const isSonicTestFile = s.file.endsWith(".sonic.fork-test.js");
     const isSonicUnitTestFile = s.file.endsWith(".sonic.js");
-    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile;
+    const unitTest =
+      !s.file.endsWith(".fork-test.js") &&
+      !isBaseUnitTestFile &&
+      !isSonicUnitTestFile;
 
     if (isArbFork) {
       return isArbTestFile;

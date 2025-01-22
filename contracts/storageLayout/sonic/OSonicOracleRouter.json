@@ -1,0 +1,27 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "decimalsCache",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_address,t_uint8)",
+      "contract": "AbstractOracleRouter",
+      "src": "contracts/oracle/AbstractOracleRouter.sol:21"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_mapping(t_address,t_uint8)": {
+      "label": "mapping(address => uint8)",
+      "numberOfBytes": "32"
+    },
+    "t_uint8": {
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}
