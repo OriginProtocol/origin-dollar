@@ -18,6 +18,10 @@ const {
   isBNBFork,
   isBNBForkTest,
   isBNBUnitTest,
+  isArbitrum,
+  isArbitrumFork,
+  isArbitrumUnitTest,
+  isArbitrumForkTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
@@ -102,6 +106,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/sonic";
 } else if (isBNB || isBNBFork || isBNBForkTest || isBNBUnitTest) {
   paths.deploy = "deploy/bnb";
+} else if (isArbitrum || isArbitrumFork || isArbitrumUnitTest || isArbitrumForkTest) {
+  paths.deploy = "deploy/arbitrumOne";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";

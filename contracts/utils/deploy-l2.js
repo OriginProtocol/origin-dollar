@@ -1,6 +1,6 @@
 const {
   isFork,
-  isArbFork,
+  isArbitrumFork,
   isBaseFork,
   isSonicFork,
 } = require("../test/helpers");
@@ -16,7 +16,7 @@ const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
 
 function log(msg, deployResult = null) {
-  if (isBaseFork || isArbFork || process.env.VERBOSE) {
+  if (isBaseFork || isArbitrumFork || process.env.VERBOSE) {
     if (deployResult && deployResult.receipt) {
       const gasUsed = Number(deployResult.receipt.gasUsed.toString());
       msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
@@ -61,7 +61,7 @@ function deployOnArb(opts, fn) {
 
   main.skip = () =>
     !(
-      isArbFork ||
+      isArbitrumFork ||
       hre.network.name == "arbitrumOne" ||
       hre.network.config.chainId == 42161
     );

@@ -2,7 +2,7 @@ const mocha = require("mocha");
 
 const {
   isMainnetForkTest,
-  isArbFork,
+  isArbitrumFork,
   isHoleskyFork,
   isBaseFork,
   isBaseUnitTest,
@@ -56,7 +56,7 @@ mocha.before(function () {
     const isBNBUnitTestFile = s.file.endsWith(".bnb.js");
     const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile && !isSonicUnitTestFile && !isBNBUnitTestFile;
 
-    if (isArbFork) {
+    if (isArbitrumFork) {
       return isArbTestFile;
     } else if (isMainnetForkTest) {
       return isMainnetForkTestFile;

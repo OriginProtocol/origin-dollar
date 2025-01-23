@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
-const { isFork, isArbFork, oethUnits } = require("./helpers");
+const { isFork, isArbitrumFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 
@@ -18,7 +18,7 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
     snapshotId = await nodeSnapshot();
   }
 
-  if (!isArbFork && isFork) {
+  if (!isArbitrumFork && isFork) {
     // Only works for Arbitrum One fork
     return;
   }
@@ -43,7 +43,7 @@ const defaultArbitrumFixture = deployments.createFixture(async () => {
   const [minter, burner, rafael, nick] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const governor = await ethers.getSigner(await woeth.governor());
 
-  if (isArbFork) {
+  if (isArbitrumFork) {
     await impersonateAndFund(governor.address);
 
     const woethImplAddr = await woethProxy.implementation();

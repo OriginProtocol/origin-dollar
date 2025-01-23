@@ -296,10 +296,10 @@ const isMainnetForkTest = isForkTest && hre.network.config.chainId == 1;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isArbitrumOne = hre.network.name == "arbitrumOne";
 const isTestnetSimplifiedDeploy = isHolesky;
-const isArbFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
+const isArbitrumFork = isFork && process.env.FORK_NETWORK_NAME == "arbitrumOne";
 const isHoleskyFork = isFork && hre.network.config.chainId == 17000;
 const isHoleskyOrFork = isHolesky || isHoleskyFork;
-const isArbitrumOneOrFork = isArbitrumOne || isArbFork;
+const isArbitrumOneOrFork = isArbitrumOne || isArbitrumFork;
 const isCI = process.env.GITHUB_ACTIONS;
 const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
@@ -840,7 +840,7 @@ module.exports = {
   isHoleskyOrFork,
   isTestnetSimplifiedDeploy,
   isArbitrumOneOrFork,
-  isArbFork,
+  isArbitrumFork,
   isCI,
   isBase,
   isBaseFork,

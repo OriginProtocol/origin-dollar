@@ -2,6 +2,7 @@ const fetch = require("sync-fetch");
 require("dotenv").config();
 
 const isFork = process.env.FORK === "true";
+const isArbitrum = process.env.NETWORK_NAME === "arbitrumOne";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
 const isHoleskyFork = process.env.FORK_NETWORK_NAME === "holesky";
 const isHolesky = process.env.NETWORK_NAME === "holesky";
@@ -13,7 +14,8 @@ const isBNB = process.env.NETWORK_NAME === "bnb";
 const isBNBFork = process.env.FORK_NETWORK_NAME === "bnb";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
-const isArbForkTest = isForkTest && isArbitrumFork;
+const isArbitrumForkTest = isForkTest && isArbitrumFork;
+const isArbitrumUnitTest = process.env.UNIT_TESTS_NETWORK === "arbitrumOne";
 const isHoleskyForkTest = isForkTest && isHoleskyFork;
 const isBaseForkTest = isForkTest && isBaseFork;
 const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
@@ -42,7 +44,7 @@ const adjustTheForkBlockNumber = () => {
   let forkBlockNumber = undefined;
 
   if (isForkTest) {
-    if (isArbForkTest) {
+    if (isArbitrumForkTest) {
       forkBlockNumber = process.env.ARBITRUM_BLOCK_NUMBER
         ? Number(process.env.ARBITRUM_BLOCK_NUMBER)
         : undefined;
@@ -137,7 +139,7 @@ const getHardhatNetworkProperties = () => {
 
   let provider = providerUrl;
   if (!providerUrl.includes("localhost")) {
-    if (isArbForkTest) {
+    if (isArbitrumForkTest) {
       provider = arbitrumProviderUrl;
     } else if (isHoleskyForkTest) {
       provider = holeskyProviderUrl;
@@ -165,7 +167,9 @@ const networkMap = {
 
 module.exports = {
   isFork,
+  isArbitrum,
   isArbitrumFork,
+  isArbitrumUnitTest,
   isBase,
   isBaseFork,
   isBaseForkTest,
@@ -181,7 +185,7 @@ module.exports = {
   isHoleskyFork,
   isHolesky,
   isForkTest,
-  isArbForkTest,
+  isArbitrumForkTest,
   isHoleskyForkTest,
   providerUrl,
   arbitrumProviderUrl,
