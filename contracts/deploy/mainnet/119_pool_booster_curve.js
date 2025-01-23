@@ -113,6 +113,9 @@ module.exports = deploymentWithGovernanceProposal(
       `0x${txReceiptProxy.events[1].topics[1].slice(26)}`
     );
     console.log(`Curve Booster Proxy deployed at: ${proxyAddress}`);
+
+    await ethers.getContractAt("CurvePoolBooster", proxyAddress);
+    await ethers.getContractAt("CurvePoolBoosterProxy", proxyAddress);
     return {};
   }
 );
