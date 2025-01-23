@@ -109,7 +109,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         address[] calldata blacklist,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId == 0, "Campaign already created");
         require(numberOfPeriods > 1, "Invalid number of periods");
         require(maxRewardPerVote > 0, "Invalid reward per vote");
@@ -151,7 +151,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     function manageTotalRewardAmount(
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
         // Handle fee (if any)
@@ -181,14 +181,14 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Manage the number of periods of the campaign
     /// @dev This function should be called after the campaign is created
-    /// @param param extraNumberOfPeriods Number of additional periods (cannot be 0) that will be added to already existing amount of periods.
+    /// @param extraNumberOfPeriods Number of additional periods (cannot be 0) that will be added to already existing amount of periods.
     /// @param bridgeFee Fee to pay for the bridge
     /// @param additionalGasLimit Additional gas limit for the bridge
     function manageNumberOfPeriods(
         uint8 extraNumberOfPeriods,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(extraNumberOfPeriods > 0, "Invalid number of periods");
 
@@ -219,7 +219,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 newMaxRewardPerVote,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(newMaxRewardPerVote > 0, "Invalid reward per vote");
 
@@ -282,7 +282,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Rescue ETH from the contract
     /// @dev Only callable by the governor or strategist
     /// @param receiver Address to receive the ETH
-    function rescueETH(address receiver) external onlyGovernorOrStrategist {
+    function rescueETH(address receiver)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = address(this).balance;
         (bool success, ) = receiver.call{ value: balance }("");
@@ -295,6 +299,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @param token Address of the token to rescue
     function rescueToken(address token, address receiver)
         external
+        nonReentrant
         onlyGovernor
     {
         require(receiver != address(0), "Invalid receiver");
