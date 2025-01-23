@@ -1,13 +1,19 @@
 const addresses = require("../../utils/addresses");
-const {
-  deploymentWithGovernanceProposal,
-  encodeSaltForCreateX,
-} = require("../../utils/deploy");
+const { deployOnArb } = require("../../utils/deploy-l2");
+const { encodeSaltForCreateX } = require("../../utils/deploy");
+
 const createxAbi = require("../../abi/createx.json");
 const PoolBoosterBytecode = require("../../artifacts/contracts/strategies/CurvePoolBooster.sol/CurvePoolBooster.json");
 const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/CurvePoolBoosterProxy.json");
 
-module.exports = deploymentWithGovernanceProposal(
+// --------------------------------!!! / WARNING \ !!!-----------------------------------------
+//
+// `encodedSalt`, ProxyBytecode and PoolBoosterBytecode shoudl be EXACTLY the same as the 119 !!!
+// It is using createX to deploy contract at the SAME address as the one deployed in 119.
+//
+// --------------------------------------------------------------------------------------------
+
+module.exports = deployOnArb(
   {
     deployName: "119_pool_booster_curve",
     forceDeploy: false,
@@ -87,7 +93,7 @@ module.exports = deploymentWithGovernanceProposal(
       "initialize(address,address,bytes)",
       [
         implementationAddress, // implementation
-        addresses.mainnet.Timelock, // governor
+        addresses.arbitrumOne.admin, // governor
         initializeImplem, // init data
       ]
     );
@@ -114,9 +120,6 @@ module.exports = deploymentWithGovernanceProposal(
       `0x${txReceiptProxy.events[1].topics[1].slice(26)}`
     );
     console.log(`Curve Booster Proxy deployed at: ${proxyAddress}`);
-
-    await ethers.getContractAt("CurvePoolBooster", proxyAddress);
-    await ethers.getContractAt("CurvePoolBoosterProxy", proxyAddress);
     return {};
   }
 );

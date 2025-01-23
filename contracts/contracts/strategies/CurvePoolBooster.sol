@@ -25,9 +25,6 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Address of the reward token
     address public immutable rewardToken;
 
-    /// @notice Address of the campaignRemoteManager linked to VotemarketV2
-    address public immutable campaignRemoteManager;
-
     /// @notice Chain id of the target chain
     uint256 public immutable targetChainId;
 
@@ -40,22 +37,31 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Address of the fee collector
     address public feeCollector;
 
+    /// @notice Address of the campaignRemoteManager linked to VotemarketV2
+    address public campaignRemoteManager;
+
+    /// @notice Address of votemarket in L2
+    address public votemarket;
+
     /// @notice Id of the campaign created
     uint256 public campaignId;
 
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event FeeUpdated(uint16 _newFee);
-    event FeeCollected(address _feeCollector, uint256 _feeAmount);
-    event FeeCollectorUpdated(address _newFeeCollector);
-    event CampaignIdUpdated(uint256 _newId);
-    event BribeCreated(
+    event FeeUpdated(uint16 newFee);
+    event FeeCollected(address feeCollector, uint256 feeAmount);
+    event FeeCollectorUpdated(address newFeeCollector);
+    event VotemarketUpdated(address newVotemarket);
+    event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
+    event CampaignCreated(
         address gauge,
         address rewardToken,
         uint256 maxRewardPerVote,
         uint256 totalRewardAmount
     );
+    event CampaignIdUpdated(uint256 newId);
+    event CampaignClosed(uint256 campaignId);
     event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
     event NumberOfPeriodsUpdated(uint8 extraNumberOfPeriods);
     event RewardPerVoteUpdated(uint256 newMaxRewardPerVote);
@@ -66,12 +72,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     constructor(
         uint256 _targetChainId,
-        address _campaignRemoteManager,
         address _rewardToken,
         address _gauge
     ) {
         targetChainId = _targetChainId;
-        campaignRemoteManager = _campaignRemoteManager;
         rewardToken = _rewardToken;
         gauge = _gauge;
 
@@ -86,11 +90,15 @@ contract CurvePoolBooster is Initializable, Strategizable {
     function initialize(
         address _strategist,
         uint16 _fee,
-        address _feeCollector
+        address _feeCollector,
+        address _campaignRemoteManager,
+        address _votemarket
     ) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
+        _setCampaignRemoteManager(_campaignRemoteManager);
+        _setVotemarket(_votemarket);
     }
 
     ////////////////////////////////////////////////////
@@ -137,10 +145,16 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 isWhitelist: false
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
-        emit BribeCreated(gauge, rewardToken, maxRewardPerVote, balanceSubFee);
+        emit CampaignCreated(
+            gauge,
+            rewardToken,
+            maxRewardPerVote,
+            balanceSubFee
+        );
     }
 
     /// @notice Manage the total reward amount of the campaign
@@ -173,7 +187,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: 0
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit TotalRewardAmountUpdated(balanceSubFee);
@@ -205,7 +220,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: 0
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit NumberOfPeriodsUpdated(extraNumberOfPeriods);
@@ -236,15 +252,37 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: newMaxRewardPerVote
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
     }
 
-    /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount.
-    ///         Transfer the fee to the feeCollector.
-    /// @return balance remaining balance of reward token
+    /// @notice Close the campaign.
+    /// @dev This function only work on the L2 chain. Not on mainnet.
+    /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
+    /// @param _campaignId Id of the campaign to close
+    function closeCampaign(
+        uint256 _campaignId,
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external onlyGovernorOrStrategist {
+        ICampaignRemoteManager(campaignRemoteManager).closeCampaign{
+            value: bridgeFee
+        }(
+            ICampaignRemoteManager.CampaignClosingParams({
+                campaignId: campaignId
+            }),
+            targetChainId,
+            additionalGasLimit,
+            votemarket
+        );
+        emit CampaignClosed(_campaignId);
+    }
+
+    /// @notice calculate the fee amount and transfer it to the feeCollector
+    /// @return Balance after fee
     function _handleFee() internal returns (uint256) {
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
@@ -332,6 +370,41 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(_feeCollector != address(0), "Invalid fee collector");
         feeCollector = _feeCollector;
         emit FeeCollectorUpdated(_feeCollector);
+    }
+
+    /// @notice Set the campaignRemoteManager
+    /// @param _campaignRemoteManager New campaignRemoteManager address
+    function setCampaignRemoteManager(address _campaignRemoteManager)
+        external
+        onlyGovernor
+    {
+        _setCampaignRemoteManager(_campaignRemoteManager);
+    }
+
+    /// @notice Internal logic to set the campaignRemoteManager
+    /// @param _campaignRemoteManager New campaignRemoteManager address
+    function _setCampaignRemoteManager(address _campaignRemoteManager)
+        internal
+    {
+        require(
+            _campaignRemoteManager != address(0),
+            "Invalid campaignRemoteManager"
+        );
+        campaignRemoteManager = _campaignRemoteManager;
+        emit CampaignRemoteManagerUpdated(_campaignRemoteManager);
+    }
+
+    /// @notice Set the votemarket address 
+    /// @param _votemarket New votemarket address
+    function setVotemarket(address _votemarket) external onlyGovernor {
+        _setVotemarket(_votemarket);
+    }
+
+    /// @notice Internal logic to set the votemarket address
+    function _setVotemarket(address _votemarket) internal onlyGovernor {
+        require(_votemarket != address(0), "Invalid votemarket");
+        votemarket = _votemarket;
+        emit VotemarketUpdated(_votemarket);
     }
 
     receive() external payable {}

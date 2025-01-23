@@ -646,14 +646,10 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
-  const curvePoolBoosterProxy = isFork
-    ? await ethers.getContract("CurvePoolBoosterProxy")
-    : undefined;
-
   const curvePoolBooster = isFork
     ? await ethers.getContractAt(
         "CurvePoolBooster",
-        curvePoolBoosterProxy.address
+        "0xb8221A6271fc9eB8cEdd02955e4CB9557E902af1" // hardcoded as generated with CreateX.
       )
     : undefined;
 
