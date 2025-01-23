@@ -181,7 +181,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Manage the number of periods of the campaign
     /// @dev This function should be called after the campaign is created
-    /// @param extraNumberOfPeriods Number of additional periods (cannot be 0) that will be added to already existing amount of periods.
+    /// @param extraNumberOfPeriods Number of additional periods (cannot be 0)
+    ///         that will be added to already existing amount of periods.
     /// @param bridgeFee Fee to pay for the bridge
     /// @param additionalGasLimit Additional gas limit for the bridge
     function manageNumberOfPeriods(
@@ -241,7 +242,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
     }
 
-    /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount. Transfer the fee to the feeCollector.
+    /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount.
+    ///         Transfer the fee to the feeCollector.
     /// @return balance remaining balance of reward token
     function _handleFee() internal returns (uint256) {
         // Cache current rewardToken balance
@@ -258,7 +260,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         }
 
         // Return remaining balance
-        return IERC20(rewardToken).balanceOf(address(this));;
+        return IERC20(rewardToken).balanceOf(address(this));
     }
 
     ////////////////////////////////////////////////////
