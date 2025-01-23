@@ -5,6 +5,7 @@ addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
+addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 addresses.mainnet = {};
 addresses.holesky = {};

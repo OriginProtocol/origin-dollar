@@ -76,9 +76,9 @@ module.exports = deploymentWithGovernanceProposal(
     const initializeImplem = cCurvePoolBooster.interface.encodeFunctionData(
       "initialize(address,uint16,address,address)",
       [
-        addresses.base.multichainStrategist, // strategist
+        addresses.multichainStrategist, // strategist
         fee, // fee
-        addresses.base.multichainStrategist, // feeCollector
+        addresses.multichainStrategist, // feeCollector
         addresses.mainnet.CampaignRemoteManager, // campaignRemoteManager
       ]
     );
