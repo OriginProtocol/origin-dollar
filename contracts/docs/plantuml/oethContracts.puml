@@ -27,7 +27,7 @@ object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
 }
 
 
-object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
+object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
@@ -50,6 +50,10 @@ asset: WETH
 }
 
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: WETH
+}
+
+object "OETHHarvesterSimple" as harvSimple <<Origin>> #$originColor {
     rewards: CRV, CVX
 }
 
@@ -178,7 +182,7 @@ oeth <.> oethv
 ' oracle ...> chain
 
 ' Convex ETH Metapool Strategy
-harv <..> cvxStrat
+harvSimple <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
 
