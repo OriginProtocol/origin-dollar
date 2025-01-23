@@ -259,7 +259,6 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
     }
 
-<<<<<<< HEAD
     /// @notice Close the campaign.
     /// @dev This function only work on the L2 chain. Not on mainnet.
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
@@ -284,11 +283,6 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
     /// @return Balance after fee
-=======
-    /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount.
-    ///         Transfer the fee to the feeCollector.
-    /// @return balance remaining balance of reward token
->>>>>>> b7baf9d433e7120d6fa4c5aef448940e4cf95d8d
     function _handleFee() internal returns (uint256) {
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
