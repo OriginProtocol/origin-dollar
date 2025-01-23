@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
-    const { strategistAddr } = await getNamedAccounts();
+    const { multichainStrategistAddr } = await getNamedAccounts();
 
     // ---- Menu ---
     // 1. Deploy new simple Harvester
@@ -30,7 +30,7 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHHarvesterSimple",
       [
         addresses.mainnet.Timelock,
-        strategistAddr,
+        multichainStrategistAddr,
         cOETHFixedRateDripperProxy.address,
         addresses.mainnet.WETH,
       ],
