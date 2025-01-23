@@ -22,7 +22,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Switch to multichain guardian",
+      name: "Change RewardProceeds address to FixedRateDripper on OETHHarvester",
       actions: [
         {
           contract: cOETHHarvester,
