@@ -8,10 +8,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 contract OETHHarvesterSimple is Strategizable {
     using SafeERC20 for IERC20;
+    
+    ////////////////////////////////////////////////////
+    /// --- CONSTANTS & IMMUTABLES
+    ////////////////////////////////////////////////////
+    address public immutable WETH;
 
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    address public dripper;
     mapping(address => bool) public supportedStrategies;
 
     ////////////////////////////////////////////////////
@@ -19,13 +25,21 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     event Harvested(address strategy, address token, uint256 amount);
     event SupportedStrategyUpdated(address strategy, bool status);
+    event DripperUpdated(address dripper);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
-    constructor(address _governor, address _strategist) {
+    constructor(
+        address _governor,
+        address _strategist,
+        address _dripper,
+        address _weth
+    ) {
         _setStrategistAddr(_strategist);
         _changeGovernor(_governor);
+        _setDripper(_dripper);
+        WETH = _weth;
     }
 
     ////////////////////////////////////////////////////
@@ -55,8 +69,13 @@ contract OETHHarvesterSimple is Strategizable {
             // Cache balance
             uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
             if (balance > 0) {
+                // Determine receiver
+                address receiver = rewardTokens[i] == WETH
+                    ? dripper
+                    : strategistAddr;
+
                 // Transfer to strategist
-                IERC20(rewardTokens[i]).safeTransfer(strategistAddr, balance);
+                IERC20(rewardTokens[i]).safeTransfer(receiver, balance);
                 emit Harvested(_strategy, rewardTokens[i], balance);
             }
         }
@@ -79,5 +98,15 @@ contract OETHHarvesterSimple is Strategizable {
         onlyGovernorOrStrategist
     {
         IERC20(_asset).safeTransfer(strategistAddr, _amount);
+    }
+
+    function setDripper(address _dripper) external onlyGovernorOrStrategist {
+        _setDripper(_dripper);
+    }
+
+    function _setDripper(address _dripper) internal {
+        require(_dripper != address(0), "Invalid dripper");
+        dripper = _dripper;
+        emit DripperUpdated(_dripper);
     }
 }
