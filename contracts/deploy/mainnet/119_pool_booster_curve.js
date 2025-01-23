@@ -74,12 +74,13 @@ module.exports = deploymentWithGovernanceProposal(
     // --- Deploy and init proxy --- //
     const cachedInitCodeProxy = ProxyBytecode.bytecode; // No constructor arguments
     const initializeImplem = cCurvePoolBooster.interface.encodeFunctionData(
-      "initialize(address,uint16,address,address)",
+      "initialize(address,uint16,address,address,address)",
       [
         addresses.multichainStrategist, // strategist
         fee, // fee
         addresses.multichainStrategist, // feeCollector
         addresses.mainnet.CampaignRemoteManager, // campaignRemoteManager
+        addresses.votemarket, // votemarket
       ]
     );
     const initializeProxy = cCurvePoolBoosterProxy.interface.encodeFunctionData(

@@ -40,6 +40,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Address of the campaignRemoteManager linked to VotemarketV2
     address public campaignRemoteManager;
 
+    /// @notice Address of votemarket in L2
+    address public votemarket;
+
     /// @notice Id of the campaign created
     uint256 public campaignId;
 
@@ -49,6 +52,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     event FeeUpdated(uint16 newFee);
     event FeeCollected(address feeCollector, uint256 feeAmount);
     event FeeCollectorUpdated(address newFeeCollector);
+    event VotemarketUpdated(address newVotemarket);
     event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
     event CampaignCreated(
         address gauge,
@@ -87,12 +91,14 @@ contract CurvePoolBooster is Initializable, Strategizable {
         address _strategist,
         uint16 _fee,
         address _feeCollector,
-        address _campaignRemoteManager
+        address _campaignRemoteManager,
+        address _votemarket
     ) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
         _setCampaignRemoteManager(_campaignRemoteManager);
+        _setVotemarket(_votemarket);
     }
 
     ////////////////////////////////////////////////////
@@ -139,7 +145,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 isWhitelist: false
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit CampaignCreated(
@@ -179,7 +186,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: 0
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit TotalRewardAmountUpdated(balanceSubFee);
@@ -210,7 +218,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: 0
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit NumberOfPeriodsUpdated(extraNumberOfPeriods);
@@ -241,7 +250,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
                 maxRewardPerVote: newMaxRewardPerVote
             }),
             targetChainId,
-            additionalGasLimit
+            additionalGasLimit,
+            votemarket
         );
 
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
@@ -251,12 +261,20 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev This function only work on the L2 chain. Not on mainnet.
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
     /// @param _campaignId Id of the campaign to close
-    function closeCampaign(uint256 _campaignId)
-        external
-        onlyGovernorOrStrategist
-    {
-        ICampaignRemoteManager(campaignRemoteManager).closeCampaign(
-            _campaignId
+    function closeCampaign(
+        uint256 _campaignId,
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external onlyGovernorOrStrategist {
+        ICampaignRemoteManager(campaignRemoteManager).closeCampaign{
+            value: bridgeFee
+        }(
+            ICampaignRemoteManager.CampaignClosingParams({
+                campaignId: campaignId
+            }),
+            targetChainId,
+            additionalGasLimit,
+            votemarket
         );
         emit CampaignClosed(_campaignId);
     }
@@ -371,6 +389,19 @@ contract CurvePoolBooster is Initializable, Strategizable {
         );
         campaignRemoteManager = _campaignRemoteManager;
         emit CampaignRemoteManagerUpdated(_campaignRemoteManager);
+    }
+
+    /// @notice Set the votemarket address 
+    /// @param _votemarket New votemarket address
+    function setVotemarket(address _votemarket) external onlyGovernor {
+        _setVotemarket(_votemarket);
+    }
+
+    /// @notice Internal logic to set the votemarket address
+    function _setVotemarket(address _votemarket) internal onlyGovernor {
+        require(_votemarket != address(0), "Invalid votemarket");
+        votemarket = _votemarket;
+        emit VotemarketUpdated(_votemarket);
     }
 
     receive() external payable {}

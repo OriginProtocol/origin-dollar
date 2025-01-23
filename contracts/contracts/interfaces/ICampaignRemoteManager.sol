@@ -5,16 +5,23 @@ interface ICampaignRemoteManager {
     function createCampaign(
         CampaignCreationParams memory params,
         uint256 destinationChainId,
-        uint256 additionalGasLimit
+        uint256 additionalGasLimit,
+        address votemarket
     ) external payable;
 
     function manageCampaign(
         CampaignManagementParams memory params,
         uint256 destinationChainId,
-        uint256 additionalGasLimit
+        uint256 additionalGasLimit,
+        address votemarket
     ) external payable;
 
-    function closeCampaign(uint256 campaignId) external;
+    function closeCampaign(
+        CampaignClosingParams memory params,
+        uint256 destinationChainId,
+        uint256 additionalGasLimit,
+        address votemarket
+    ) external payable;
 
     struct CampaignCreationParams {
         uint256 chainId;
@@ -35,5 +42,9 @@ interface ICampaignRemoteManager {
         uint8 numberOfPeriods;
         uint256 totalRewardAmount;
         uint256 maxRewardPerVote;
+    }
+
+    struct CampaignClosingParams {
+        uint256 campaignId;
     }
 }
