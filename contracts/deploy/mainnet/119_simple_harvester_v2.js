@@ -19,6 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
     // 3. Support strategies on the harvester
     // 4. Sending all WETH from the OldDripper to FixedRateDripper
     // 5. Update harvester on OETH AMO
+    // 6. Support AMO strategy on new harvester
     // --------------
 
     // 1. Deploy new simple Harvester
@@ -124,6 +125,13 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cAMO,
           signature: "setHarvesterAddress(address)",
           args: [cOETHHarvesterSimple.address],
+        },
+
+        // 6. Support AMO strategy on new harvester
+        {
+          contract: cOETHHarvesterSimple,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cAMO.address, true],
         },
       ],
     };
