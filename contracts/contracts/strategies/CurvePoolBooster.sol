@@ -17,7 +17,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
     /// @notice Base fee for the contract, 100%
-    uint16 public constant BASE_FEE = 10_000;
+    uint16 public constant FEE_BASE = 10_000;
 
     /// @notice Address of the gauge to manage
     address public immutable gauge;
@@ -34,7 +34,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
-    /// @notice Fee in BASE_FEE unit payed when managing campaign.
+    /// @notice Fee in FEE_BASE unit payed when managing campaign.
     uint16 public fee;
 
     /// @notice Address of the fee collector
@@ -81,7 +81,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice initialize function, to set up initial internal state
     /// @param _strategist Address of the strategist
-    /// @param _fee Fee in BASE_FEE unit payed when managing campaign
+    /// @param _fee Fee in FEE_BASE unit payed when managing campaign
     /// @param _feeCollector Address of the fee collector
     function initialize(
         address _strategist,
@@ -248,7 +248,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         require(balance > 0, "No reward to manage");
 
-        uint256 feeAmount = (balance * fee) / BASE_FEE;
+        uint256 feeAmount = (balance * fee) / FEE_BASE;
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
@@ -312,7 +312,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Internal logic to set the fee
     function _setFee(uint16 _fee) internal {
-        require(_fee <= BASE_FEE / 2, "Fee too high");
+        require(_fee <= FEE_BASE / 2, "Fee too high");
         fee = _fee;
         emit FeeUpdated(_fee);
     }
