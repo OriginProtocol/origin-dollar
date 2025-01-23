@@ -359,6 +359,15 @@ addresses.sonic.nodeDriver = "0xd100a01e00000000000000000000000000000001";
 addresses.sonic.nodeDriveAuth = "0xd100ae0000000000000000000000000000000000";
 addresses.sonic.validatorRegistrator =
   "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
+// 5/8 Multisig - formally known as the Governor but not to be confused with the Governor contract
+addresses.sonic.admin = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 2/8 Multisig - formally known as the Strategist
+addresses.sonic.guardian = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
+
+addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
+addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
+addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

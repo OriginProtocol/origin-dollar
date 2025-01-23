@@ -23,11 +23,8 @@ import "./VaultInitializer.sol";
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    // max signed int
-    uint256 internal constant MAX_INT = 2**255 - 1;
-    // max un-signed int
-    uint256 internal constant MAX_UINT =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    /// @dev max signed int
+    uint256 internal constant MAX_INT = uint256(type(int256).max);
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -45,6 +42,9 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
+    /**
+     * @dev Verifies that the caller is the AMO strategy.
+     */
     modifier onlyOusdMetaStrategy() {
         require(
             msg.sender == ousdMetaStrategy,
@@ -67,6 +67,12 @@ contract VaultCore is VaultInitializer {
         _mint(_asset, _amount, _minimumOusdAmount);
     }
 
+    /**
+     * @dev Deposit a supported asset and mint OTokens.
+     * @param _asset Address of the asset being deposited
+     * @param _amount Amount of the asset being deposited
+     * @param _minimumOusdAmount Minimum OTokens to mint
+     */
     function _mint(
         address _asset,
         uint256 _amount,
@@ -153,6 +159,7 @@ contract VaultCore is VaultInitializer {
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
     {
@@ -433,7 +440,7 @@ contract VaultCore is VaultInitializer {
         returns (uint256 value)
     {
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             uint256 balance = IERC20(assetAddr).balanceOf(address(this));
             if (balance > 0) {
@@ -465,7 +472,7 @@ contract VaultCore is VaultInitializer {
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             if (strategy.supportsAsset(assetAddr)) {
                 uint256 balance = strategy.checkBalance(assetAddr);
@@ -733,6 +740,11 @@ contract VaultCore is VaultInitializer {
         }
     }
 
+    /**
+     * @dev Get the number of decimals of a token asset
+     * @param _asset Address of the asset
+     * @return decimals number of decimals
+     */
     function _getDecimals(address _asset)
         internal
         view
@@ -751,6 +763,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Gets the vault configuration of a supported asset.
+     * @param _asset Address of the token asset
      */
     function getAssetConfig(address _asset)
         public

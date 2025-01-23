@@ -1,0 +1,53 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "dripDuration",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_uint256",
+      "contract": "Dripper",
+      "src": "contracts/harvest/Dripper.sol:57"
+    },
+    {
+      "label": "drip",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_struct(Drip)10472_storage",
+      "contract": "Dripper",
+      "src": "contracts/harvest/Dripper.sol:58"
+    }
+  ],
+  "types": {
+    "t_struct(Drip)10472_storage": {
+      "label": "struct Dripper.Drip",
+      "members": [
+        {
+          "label": "lastCollect",
+          "type": "t_uint64",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "perSecond",
+          "type": "t_uint192",
+          "offset": 8,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_uint192": {
+      "label": "uint192",
+      "numberOfBytes": "24"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "label": "uint64",
+      "numberOfBytes": "8"
+    }
+  }
+}

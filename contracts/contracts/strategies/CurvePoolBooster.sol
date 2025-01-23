@@ -17,7 +17,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
     /// @notice Base fee for the contract, 100%
-    uint16 public constant BASE_FEE = 10_000;
+    uint16 public constant FEE_BASE = 10_000;
 
     /// @notice Address of the gauge to manage
     address public immutable gauge;
@@ -31,7 +31,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
-    /// @notice Fee in BASE_FEE unit payed when managing campaign.
+    /// @notice Fee in FEE_BASE unit payed when managing campaign.
     uint16 public fee;
 
     /// @notice Address of the fee collector
@@ -85,7 +85,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice initialize function, to set up initial internal state
     /// @param _strategist Address of the strategist
-    /// @param _fee Fee in BASE_FEE unit payed when managing campaign
+    /// @param _fee Fee in FEE_BASE unit payed when managing campaign
     /// @param _feeCollector Address of the fee collector
     function initialize(
         address _strategist,
@@ -117,7 +117,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         address[] calldata blacklist,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId == 0, "Campaign already created");
         require(numberOfPeriods > 1, "Invalid number of periods");
         require(maxRewardPerVote > 0, "Invalid reward per vote");
@@ -165,7 +165,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     function manageTotalRewardAmount(
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
         // Handle fee (if any)
@@ -175,6 +175,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Manage the campaign
+        // https://github.com/stake-dao/votemarket-v2/blob/main/packages/votemarket/src/Votemarket.sol#L668
         ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
             value: bridgeFee
         }(
@@ -196,13 +197,14 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Manage the number of periods of the campaign
     /// @dev This function should be called after the campaign is created
     /// @param extraNumberOfPeriods Number of additional periods (cannot be 0)
+    ///         that will be added to already existing amount of periods.
     /// @param bridgeFee Fee to pay for the bridge
     /// @param additionalGasLimit Additional gas limit for the bridge
     function manageNumberOfPeriods(
         uint8 extraNumberOfPeriods,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(extraNumberOfPeriods > 0, "Invalid number of periods");
 
@@ -234,7 +236,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 newMaxRewardPerVote,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
         require(newMaxRewardPerVote > 0, "Invalid reward per vote");
 
@@ -257,6 +259,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit RewardPerVoteUpdated(newMaxRewardPerVote);
     }
 
+<<<<<<< HEAD
     /// @notice Close the campaign.
     /// @dev This function only work on the L2 chain. Not on mainnet.
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
@@ -281,26 +284,27 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
     /// @return Balance after fee
+=======
+    /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount.
+    ///         Transfer the fee to the feeCollector.
+    /// @return balance remaining balance of reward token
+>>>>>>> b7baf9d433e7120d6fa4c5aef448940e4cf95d8d
     function _handleFee() internal returns (uint256) {
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         require(balance > 0, "No reward to manage");
 
-        uint256 feeAmount = (balance * fee) / BASE_FEE;
+        uint256 feeAmount = (balance * fee) / FEE_BASE;
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
             // Transfer the fee to the feeCollector
             IERC20(rewardToken).transfer(feeCollector, feeAmount);
-
             emit FeeCollected(feeCollector, feeAmount);
-
-            // Return the balance after fee
-            return balance - feeAmount;
         }
 
-        // If there is no fee, return the original balance
-        return balance;
+        // Return remaining balance
+        return IERC20(rewardToken).balanceOf(address(this));
     }
 
     ////////////////////////////////////////////////////
@@ -320,7 +324,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Rescue ETH from the contract
     /// @dev Only callable by the governor or strategist
     /// @param receiver Address to receive the ETH
-    function rescueETH(address receiver) external onlyGovernorOrStrategist {
+    function rescueETH(address receiver)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = address(this).balance;
         (bool success, ) = receiver.call{ value: balance }("");
@@ -333,6 +341,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @param token Address of the token to rescue
     function rescueToken(address token, address receiver)
         external
+        nonReentrant
         onlyGovernor
     {
         require(receiver != address(0), "Invalid receiver");
@@ -350,7 +359,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Internal logic to set the fee
     function _setFee(uint16 _fee) internal {
-        require(_fee <= BASE_FEE / 2, "Fee too high");
+        require(_fee <= FEE_BASE / 2, "Fee too high");
         fee = _fee;
         emit FeeUpdated(_fee);
     }
