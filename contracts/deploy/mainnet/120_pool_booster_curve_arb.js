@@ -92,7 +92,7 @@ module.exports = deployOnArb(
       "initialize(address,address,bytes)",
       [
         implementationAddress, // implementation
-        addresses.mainnet.Timelock, // governor
+        addresses.arbitrumOne.admin, // governor
         initializeImplem, // init data
       ]
     );
