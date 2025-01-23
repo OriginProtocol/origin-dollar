@@ -1,5 +1,8 @@
 const addresses = require("../../utils/addresses");
-const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+const {
+  deploymentWithGovernanceProposal,
+  encodeSaltForCreateX,
+} = require("../../utils/deploy");
 const createxAbi = require("../../abi/createx.json");
 const PoolBoosterBytecode = require("../../artifacts/contracts/strategies/CurvePoolBooster.sol/CurvePoolBooster.json");
 const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/CurvePoolBoosterProxy.json");
@@ -36,30 +39,15 @@ module.exports = deploymentWithGovernanceProposal(
     // Get CreateX contract
     const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
 
-    // Generate encoded salt (deployer address || crossChainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
-    const addressDeployerBytes20 = ethers.utils.hexlify(
-      ethers.utils.zeroPad(deployerAddr, 20)
-    );
-    const crossChainProtectioFlagBytes1 = ethers.utils.hexlify(
-      ethers.utils.zeroPad(0, 1)
-    );
-    const saltBytes11 =
-      "0x" +
-      ethers.utils
-        .keccak256(
-          ethers.utils.concat([
-            ethers.utils.arrayify(rewardToken),
-            ethers.utils.arrayify(gauge),
-          ])
-        )
-        .slice(2, 24);
-    const encodedSalt = ethers.utils.hexlify(
+    // Generate salt
+    const salt = ethers.utils.keccak256(
       ethers.utils.concat([
-        addressDeployerBytes20,
-        crossChainProtectioFlagBytes1,
-        saltBytes11,
+        ethers.utils.arrayify(rewardToken),
+        ethers.utils.arrayify(gauge),
       ])
     );
+
+    const encodedSalt = encodeSaltForCreateX(deployerAddr, false, salt);
     console.log(`Encoded salt: ${encodedSalt}`);
 
     // --- Deploy implementation --- //

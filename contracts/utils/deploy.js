@@ -1599,6 +1599,34 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
+function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
+  // Generate encoded salt (deployer address || crossChainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
+
+  // convert deployer address to bytes20
+  const addressDeployerBytes20 = ethers.utils.hexlify(
+    ethers.utils.zeroPad(deployer, 20)
+  );
+
+  // convert crossChainProtectionFlag to bytes1
+  const crossChainProtectionFlagBytes1 = crossChainProtectionFlag
+    ? "0x01"
+    : "0x00";
+
+  // convert salt to bytes11
+  const saltBytes11 = "0x" + salt.slice(2, 24);
+
+  // concat all bytes into a bytes32
+  const encodedSalt = ethers.utils.hexlify(
+    ethers.utils.concat([
+      addressDeployerBytes20,
+      crossChainProtectionFlagBytes1,
+      saltBytes11,
+    ])
+  );
+
+  return encodedSalt;
+}
+
 module.exports = {
   log,
   sleep,
@@ -1613,4 +1641,5 @@ module.exports = {
   deploymentWithGuardianGovernor,
 
   handleTransitionGovernance,
+  encodeSaltForCreateX,
 };
