@@ -17,6 +17,7 @@ describe("ForkTest: SimpleHarvester", function () {
     fixture = await loadDefaultFixture();
   });
 
+  // --- Initial Parameters ---
   it("Should have correct parameters", async () => {
     const { simpleOETHHarvester } = fixture;
     const { multichainStrategistAddr } = await getNamedAccounts();
@@ -30,6 +31,93 @@ describe("ForkTest: SimpleHarvester", function () {
     );
   });
 
+  // --- Harvest and Transfer Rewards ---
+  it("Should Harvest and transfer rewards (out of WETH) as strategist", async () => {
+    const { simpleOETHHarvester, convexEthMetaStrategy, crv, strategist } =
+      fixture;
+
+    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
+    // prettier-ignore
+    await simpleOETHHarvester
+      .connect(strategist)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
+
+    const balanceAfterCRV = await crv.balanceOf(strategist.address);
+    expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
+  });
+
+  it("Should Harvest and transfer rewards (only of WETH) as strategist", async () => {
+    const {
+      simpleOETHHarvester,
+      nativeStakingSSVStrategy,
+      weth,
+      strategist,
+      oethFixedRateDripper,
+    } = fixture;
+
+    const balanceBeforeWETH = await weth.balanceOf(
+      oethFixedRateDripper.address
+    );
+    // prettier-ignore
+    await simpleOETHHarvester
+      .connect(strategist)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
+
+    const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
+    expect(balanceAfterWETH).to.be.gt(balanceBeforeWETH);
+  });
+
+  it("Should Harvest and transfer rewards (out of WETH) as governor", async () => {
+    const {
+      simpleOETHHarvester,
+      convexEthMetaStrategy,
+      strategist,
+      timelock,
+      crv,
+    } = fixture;
+
+    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
+    // prettier-ignore
+    await simpleOETHHarvester
+      .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
+
+    const balanceAfterCRV = await crv.balanceOf(strategist.address);
+    expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
+  });
+
+  it("Should Harvest and transfer rewards (only of WETH) as governor", async () => {
+    const {
+      simpleOETHHarvester,
+      nativeStakingSSVStrategy,
+      weth,
+      timelock,
+      oethFixedRateDripper,
+    } = fixture;
+
+    const balanceBeforeWETH = await weth.balanceOf(
+      oethFixedRateDripper.address
+    );
+    // prettier-ignore
+    await simpleOETHHarvester
+      .connect(timelock)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
+
+    const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
+    expect(balanceAfterWETH).to.be.gt(balanceBeforeWETH);
+  });
+
+  it("Should revert if strategy is not authorized", async () => {
+    const { simpleOETHHarvester, convexEthMetaStrategy, timelock } = fixture;
+
+    await simpleOETHHarvester
+      .connect(timelock)
+      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, false);
+
+    await expect(
+      // prettier-ignore
+      simpleOETHHarvester
+        .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
+    ).to.be.revertedWith("Strategy not supported");
+  });
+
+  // --- Support Strategies ---
   it("Should unsupport Strategy as governor", async () => {
     const { simpleOETHHarvester, timelock } = fixture;
     expect(
@@ -76,7 +164,18 @@ describe("ForkTest: SimpleHarvester", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should revert if when setting strategist is not governor", async () => {
+  it("Should revert if strategy is address 0", async () => {
+    const { simpleOETHHarvester, timelock } = fixture;
+
+    await expect(
+      // prettier-ignore
+      simpleOETHHarvester
+        .connect(timelock).setSupportedStrategy(addresses.zero, true)
+    ).to.be.revertedWith("Invalid strategy");
+  });
+
+  // --- Set Strategist ---
+  it("Should revert when setting strategist is not governor", async () => {
     const { simpleOETHHarvester, josh } = fixture;
 
     await expect(
@@ -97,67 +196,7 @@ describe("ForkTest: SimpleHarvester", function () {
     expect(await simpleOETHHarvester.strategistAddr()).to.equal(josh.address);
   });
 
-  it("Should Harvest and transfer rewards as strategist", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy, crv, strategist } =
-      fixture;
-
-    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
-    await simpleOETHHarvester
-      .connect(strategist)
-      .setSupportedStrategy(convexEthMetaStrategy.address, true);
-    // prettier-ignore
-    await simpleOETHHarvester
-      .connect(strategist)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
-
-    const balanceAfterCRV = await crv.balanceOf(strategist.address);
-    expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
-  });
-
-  it("Should Harvest and transfer rewards as governor", async () => {
-    const {
-      simpleOETHHarvester,
-      convexEthMetaStrategy,
-      strategist,
-      timelock,
-      crv,
-    } = fixture;
-
-    const balanceBeforeCRV = await crv.balanceOf(strategist.address);
-
-    await simpleOETHHarvester
-      .connect(timelock)
-      .setSupportedStrategy(convexEthMetaStrategy.address, true);
-    // prettier-ignore
-    await simpleOETHHarvester
-      .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address);
-
-    const balanceAfterCRV = await crv.balanceOf(strategist.address);
-    expect(balanceAfterCRV).to.be.gt(balanceBeforeCRV);
-  });
-
-  it("Should revert if strategy is not authorized", async () => {
-    const { simpleOETHHarvester, convexEthMetaStrategy, timelock } = fixture;
-
-    await simpleOETHHarvester
-      .connect(timelock)
-      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, false);
-
-    await expect(
-      // prettier-ignore
-      simpleOETHHarvester
-        .connect(timelock)["harvestAndTransfer(address)"](convexEthMetaStrategy.address)
-    ).to.be.revertedWith("Strategy not supported");
-  });
-
-  it("Should revert if strategy is address 0", async () => {
-    const { simpleOETHHarvester, timelock } = fixture;
-
-    await expect(
-      // prettier-ignore
-      simpleOETHHarvester
-        .connect(timelock).setSupportedStrategy(addresses.zero, true)
-    ).to.be.revertedWith("Invalid strategy");
-  });
+  // --- Rescue Tokens ---
 
   it("Should test to rescue tokens as governor", async () => {
     const { simpleOETHHarvester, timelock, crv } = fixture;
@@ -181,5 +220,22 @@ describe("ForkTest: SimpleHarvester", function () {
       .transferToken(crv.address, "1000");
     const balanceAfterCRV = await crv.balanceOf(simpleOETHHarvester.address);
     expect(balanceAfterCRV).to.be.lt(balanceBeforeCRV);
+  });
+
+  // --- Set Dripper ---
+  it("Should Set Dripper as governor", async () => {
+    const { simpleOETHHarvester, timelock, josh } = fixture;
+
+    await simpleOETHHarvester.connect(timelock).setDripper(josh.address);
+
+    expect(await simpleOETHHarvester.dripper()).to.equal(josh.address);
+  });
+
+  it("Should revert when setting dripper due to address 0", async () => {
+    const { simpleOETHHarvester, timelock } = fixture;
+
+    await expect(
+      simpleOETHHarvester.connect(timelock).setDripper(addresses.zero)
+    ).to.be.revertedWith("Invalid dripper");
   });
 });
