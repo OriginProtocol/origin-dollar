@@ -100,7 +100,7 @@ contract OETHHarvesterSimple is Strategizable {
         IERC20(_asset).safeTransfer(strategistAddr, _amount);
     }
 
-    function setDripper(address _dripper) external onlyGovernorOrStrategist {
+    function setDripper(address _dripper) external onlyGovernor {
         _setDripper(_dripper);
     }
 
