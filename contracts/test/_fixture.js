@@ -650,6 +650,16 @@ const defaultFixture = deployments.createFixture(async () => {
     ? await ethers.getContract("OETHHarvesterSimple")
     : undefined;
 
+  const oethFixedRateDripperProxy = await ethers.getContract(
+    "OETHFixedRateDripperProxy"
+  );
+  const oethFixedRateDripper = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "OETHFixedRateDripper",
+        oethFixedRateDripperProxy.address
+      );
+
   let usdt,
     dai,
     tusd,
@@ -1121,6 +1131,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
     simpleOETHHarvester,
+    oethFixedRateDripper,
 
     // Flux strategy
     fluxStrategy,
