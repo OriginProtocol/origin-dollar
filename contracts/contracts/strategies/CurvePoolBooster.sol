@@ -394,7 +394,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         emit CampaignRemoteManagerUpdated(_campaignRemoteManager);
     }
 
-    /// @notice Set the votemarket address 
+    /// @notice Set the votemarket address
     /// @param _votemarket New votemarket address
     function setVotemarket(address _votemarket) external onlyGovernor {
         _setVotemarket(_votemarket);
