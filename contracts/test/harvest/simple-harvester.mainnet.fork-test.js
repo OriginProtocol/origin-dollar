@@ -30,39 +30,39 @@ describe("ForkTest: SimpleHarvester", function () {
     );
   });
 
-  it("Should support Strategy as governor", async () => {
+  it("Should unsupport Strategy as governor", async () => {
     const { simpleOETHHarvester, timelock } = fixture;
     expect(
       await simpleOETHHarvester.supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
       )
-    ).to.be.equal(false);
+    ).to.be.equal(true);
     await simpleOETHHarvester
       .connect(timelock)
-      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, true);
+      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, false);
     expect(
       await simpleOETHHarvester.supportedStrategies(
         addresses.mainnet.ConvexOETHAMOStrategy
       )
-    ).to.be.equal(true);
+    ).to.be.equal(false);
   });
 
-  it("Should support Strategy as strategist", async () => {
+  it("Should unsupport Strategy as strategist", async () => {
     const { simpleOETHHarvester, strategist } = fixture;
 
     expect(
       await simpleOETHHarvester
         .connect(strategist)
         .supportedStrategies(addresses.mainnet.ConvexOETHAMOStrategy)
-    ).to.be.equal(false);
+    ).to.be.equal(true);
     await simpleOETHHarvester
       .connect(strategist)
-      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, true);
+      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, false);
     expect(
       await simpleOETHHarvester
         .connect(strategist)
         .supportedStrategies(addresses.mainnet.ConvexOETHAMOStrategy)
-    ).to.be.equal(true);
+    ).to.be.equal(false);
   });
 
   it("Should revert if support strategy is not governor or strategist", async () => {
@@ -137,6 +137,10 @@ describe("ForkTest: SimpleHarvester", function () {
 
   it("Should revert if strategy is not authorized", async () => {
     const { simpleOETHHarvester, convexEthMetaStrategy, timelock } = fixture;
+
+    await simpleOETHHarvester
+      .connect(timelock)
+      .setSupportedStrategy(addresses.mainnet.ConvexOETHAMOStrategy, false);
 
     await expect(
       // prettier-ignore
