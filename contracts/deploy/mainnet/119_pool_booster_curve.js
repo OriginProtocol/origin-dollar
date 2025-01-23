@@ -18,6 +18,15 @@ module.exports = deploymentWithGovernanceProposal(
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     console.log(`Deployer address: ${deployerAddr}`);
 
+    const cCurvePoolBooster = await ethers.getContractAt(
+      "CurvePoolBooster",
+      addresses.zero
+    );
+    const cCurvePoolBoosterProxy = await ethers.getContractAt(
+      "CurvePoolBoosterProxy",
+      addresses.zero
+    );
+
     console.log("\nStarting deployment using CreateX");
     const rewardToken = addresses.mainnet.OUSDProxy;
     const gauge = addresses.mainnet.CurveOUSDUSDTGauge;
@@ -76,28 +85,22 @@ module.exports = deploymentWithGovernanceProposal(
 
     // --- Deploy and init proxy --- //
     const cachedInitCodeProxy = ProxyBytecode.bytecode; // No constructor arguments
-    const initializeImplem = ethers.utils.hexlify(
-      ethers.utils.concat([
-        "0x67abbc82",
-        ethers.utils.defaultAbiCoder.encode(
-          ["address", "uint16", "address", "address"],
-          [
-            addresses.base.multichainStrategist, // strategist
-            fee, // fee
-            addresses.base.multichainStrategist, // feeCollector
-            addresses.mainnet.CampaignRemoteManager, // campaignRemoteManager
-          ]
-        ),
-      ])
+    const initializeImplem = cCurvePoolBooster.interface.encodeFunctionData(
+      "initialize(address,uint16,address,address)",
+      [
+        addresses.base.multichainStrategist, // strategist
+        fee, // fee
+        addresses.base.multichainStrategist, // feeCollector
+        addresses.mainnet.CampaignRemoteManager, // campaignRemoteManager
+      ]
     );
-    const initializeProxy = ethers.utils.hexlify(
-      ethers.utils.concat([
-        "0xcf7a1d77",
-        ethers.utils.defaultAbiCoder.encode(
-          ["address", "address", "bytes"],
-          [implementationAddress, addresses.mainnet.Timelock, initializeImplem] // implementation, governor, init data
-        ),
-      ])
+    const initializeProxy = cCurvePoolBoosterProxy.interface.encodeFunctionData(
+      "initialize(address,address,bytes)",
+      [
+        implementationAddress, // implementation
+        addresses.mainnet.Timelock, // governor
+        initializeImplem, // init data
+      ]
     );
     const txResponseProxy = await withConfirmation(
       cCreateX
