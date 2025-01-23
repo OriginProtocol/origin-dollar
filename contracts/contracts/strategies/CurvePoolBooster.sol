@@ -242,7 +242,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     }
 
     /// @notice Take the balance of rewards tokens owned by this contract and calculate the fee amount. Transfer the fee to the feeCollector.
-    /// @return Balance after fee
+    /// @return balance remaining balance of reward token
     function _handleFee() internal returns (uint256) {
         // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
@@ -254,15 +254,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         if (feeAmount > 0) {
             // Transfer the fee to the feeCollector
             IERC20(rewardToken).transfer(feeCollector, feeAmount);
-
             emit FeeCollected(feeCollector, feeAmount);
-
-            // Return the balance after fee
-            return balance - feeAmount;
         }
 
-        // If there is no fee, return the original balance
-        return balance;
+        // Return remaining balance
+        return IERC20(rewardToken).balanceOf(address(this));;
     }
 
     ////////////////////////////////////////////////////
