@@ -267,7 +267,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 _campaignId,
         uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external onlyGovernorOrStrategist {
+    ) external nonReentrant onlyGovernorOrStrategist {
         ICampaignRemoteManager(campaignRemoteManager).closeCampaign{
             value: bridgeFee
         }(
