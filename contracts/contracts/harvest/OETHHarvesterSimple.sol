@@ -23,7 +23,7 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event Harvested(address strategy, address token, uint256 amount);
+    event Harvested(address indexed strategy, address token, uint256 amount, address indexed receiver);
     event SupportedStrategyUpdated(address strategy, bool status);
     event DripperUpdated(address dripper);
 
@@ -76,7 +76,7 @@ contract OETHHarvesterSimple is Strategizable {
 
                 // Transfer to strategist
                 IERC20(rewardTokens[i]).safeTransfer(receiver, balance);
-                emit Harvested(_strategy, rewardTokens[i], balance);
+                emit Harvested(_strategy, rewardTokens[i], balance, receiver);
             }
         }
     }
