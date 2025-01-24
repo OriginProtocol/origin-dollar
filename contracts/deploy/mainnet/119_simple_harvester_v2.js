@@ -43,19 +43,28 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 2. Change harvester on all SSV strategies
+    const cNativeStakingStrategyProxy_1 = await ethers.getContract(
+      "NativeStakingSSVStrategyProxy"
+    );
     const cNativeStakingStrategy_1 = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      "0x34eDb2ee25751eE67F68A45813B22811687C0238"
+      cNativeStakingStrategyProxy_1.address
     );
 
+    const cNativeStakingStrategyProxy_2 = await ethers.getContract(
+      "NativeStakingSSVStrategy2Proxy"
+    );
     const cNativeStakingStrategy_2 = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      "0x4685dB8bF2Df743c861d71E6cFb5347222992076"
+      cNativeStakingStrategyProxy_2.address
     );
 
+    const cNativeStakingStrategyProxy_3 = await ethers.getContract(
+      "NativeStakingSSVStrategy3Proxy"
+    );
     const cNativeStakingStrategy_3 = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
-      "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63"
+      cNativeStakingStrategyProxy_3.address
     );
 
     // 4. Sending all WETH from the OldDripper to FixedRateDripper
