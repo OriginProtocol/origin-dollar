@@ -126,6 +126,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 balanceSubFee = _handleFee();
 
         // Approve the balanceSubFee to the campaign manager
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, 0);
         IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Create a new campaign
@@ -172,6 +173,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 balanceSubFee = _handleFee();
 
         // Approve the total reward amount to the campaign manager
+        IERC20(rewardToken).safeApprove(campaignRemoteManager, 0);
         IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Manage the campaign
