@@ -79,6 +79,7 @@ contract OETHHarvesterSimple is Strategizable {
             if (balance > 0) {
                 // Determine receiver
                 address receiver = token == WETH ? dripper : strategistAddr;
+                require(receiver != address(0), "Invalid receiver");
 
                 // Transfer to strategist
                 IERC20(token).safeTransfer(receiver, balance);
