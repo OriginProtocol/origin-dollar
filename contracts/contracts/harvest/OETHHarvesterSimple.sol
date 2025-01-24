@@ -23,7 +23,12 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event Harvested(address indexed strategy, address token, uint256 amount, address indexed receiver);
+    event Harvested(
+        address indexed strategy,
+        address token,
+        uint256 amount,
+        address indexed receiver
+    );
     event SupportedStrategyUpdated(address strategy, bool status);
     event DripperUpdated(address dripper);
 
@@ -65,18 +70,19 @@ contract OETHHarvesterSimple is Strategizable {
         // Cache reward tokens
         address[] memory rewardTokens = IStrategy(_strategy)
             .getRewardTokenAddresses();
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
+
+        uint256 len = rewardTokens.length;
+        for (uint256 i = 0; i < len; i++) {
             // Cache balance
-            uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
+            address token = rewardTokens[i];
+            uint256 balance = IERC20(token).balanceOf(address(this));
             if (balance > 0) {
                 // Determine receiver
-                address receiver = rewardTokens[i] == WETH
-                    ? dripper
-                    : strategistAddr;
+                address receiver = token == WETH ? dripper : strategistAddr;
 
                 // Transfer to strategist
-                IERC20(rewardTokens[i]).safeTransfer(receiver, balance);
-                emit Harvested(_strategy, rewardTokens[i], balance, receiver);
+                IERC20(token).safeTransfer(receiver, balance);
+                emit Harvested(_strategy, token, balance, receiver);
             }
         }
     }
