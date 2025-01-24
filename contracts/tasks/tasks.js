@@ -102,7 +102,7 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
-const { snapIchiVault } = require("./ichi");
+const { snapIchiVault, snapIchiVaultTimeline } = require("./ichi");
 const { setDefaultValidator } = require("../utils/sonic");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
@@ -1786,5 +1786,15 @@ subtask("snapIchiVault", "Snap details of an ICHI Vault")
   )
   .setAction(snapIchiVault);
 task("snapIchiVault").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapIchiVaultTimeline", "Snap details of an ICHI Vault across multiple blocks and store results to json")
+  .addParam("id", "Vault id. eg 26 or 27", undefined, types.int)
+  .addParam("blockstart", "Starting block number.", undefined, types.int)
+  .addParam("blockstep", "Size of blocks between two snapshots.", undefined, types.int)
+  .addOptionalParam("blockend", "Ending block number. (default: latest)", undefined, types.int)
+  .setAction(snapIchiVaultTimeline);
+task("snapIchiVaultTimeline").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

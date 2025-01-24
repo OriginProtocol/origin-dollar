@@ -4,71 +4,30 @@ const { formatUnits } = require("ethers/lib/utils");
 const { getBlock } = require("./block");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
+var fs = require('fs');
 
 async function snapIchiVault({ block, id }) {
-  const blockTag = getBlock(block);
-
-  const vault = await resolveContract(
-    addresses.sonic[`ichiVault${id}`],
-    "IICHIVault"
-  );
-
-  const token0 = await ethers.getContractAt(
-    "IERC20Metadata",
-    await vault.token0()
-  );
-  const token1 = await ethers.getContractAt(
-    "IERC20Metadata",
-    await vault.token1()
-  );
-
-  const baseLower = await vault.baseLower({
-    blockTag,
-  });
-  const baseUpper = await vault.baseUpper({
-    blockTag,
-  });
-  const limitLower = await vault.limitLower({
-    blockTag,
-  });
-  const limitUpper = await vault.limitUpper({
-    blockTag,
-  });
-  const basePositionId = await vault.basePositionId({
-    blockTag,
-  });
-  const limitPositionId = await vault.limitPositionId({
-    blockTag,
-  });
-
-  // Get base amounts
+  
   const {
-    // eslint-disable-next-line no-unused-vars
-    baseLiquidity,
-    amount0: baseAmount0,
-    amount1: baseAmount1,
-  } = await vault.getBasePosition({
-    blockTag,
-  });
-  const totalBaseAmount = baseAmount0.add(baseAmount1);
-
-  // Get limit amounts
-  const {
-    // eslint-disable-next-line no-unused-vars
-    limitLiquidity,
-    amount0: limitAmount0,
-    amount1: limitAmount1,
-  } = await vault.getLimitPosition({
-    blockTag,
-  });
-  const totalLimitAmount = limitAmount0.add(limitAmount1);
-
-  // Get total amounts
-  const { amount0: totalAmount0, amount1: totalAmount1 } =
-    await vault.getTotalAmounts({
-      blockTag,
-    });
-  const totalAmounts = totalAmount0.add(totalAmount1);
+    vault,
+    token0,
+    token1,
+    baseLower,
+    baseUpper,
+    limitLower,
+    limitUpper,
+    basePositionId,
+    limitPositionId,
+    baseAmount0,
+    baseAmount1,
+    totalBaseAmount,
+    limitAmount0,
+    limitAmount1,
+    totalLimitAmount,
+    totalAmount0,
+    totalAmount1,
+    totalAmounts
+  } = await getSnapshotData(id, block);
 
   console.log(`Vault   : ${await vault.symbol()}`);
   console.log(
@@ -140,6 +99,127 @@ async function snapIchiVault({ block, id }) {
   );
 }
 
+async function snapIchiVaultTimeline({ id, blockstart, blockend, blockstep }) {
+  const data = [];
+  blockend = blockend ? blockend : await getBlock();
+  const bigNumberFields = [
+    'basePositionId',
+    'limitPositionId',
+    'baseAmount0',
+    'baseAmount1',
+    'totalBaseAmount',
+    'limitAmount0',
+    'limitAmount1',
+    'totalLimitAmount',
+    'totalAmount0',
+    'totalAmount1',
+    'totalAmounts'
+  ];
+  for (let currBlock = blockstart; currBlock < blockend; currBlock+=blockstep) {
+    const snapshotData = await getSnapshotData(id, currBlock);
+    delete snapshotData.vault;
+    delete snapshotData.token0;
+    delete snapshotData.token1;
+    for (const field of bigNumberFields) {
+      snapshotData[field] = formatUnits(snapshotData[field], 0);
+    }
+    data.push(snapshotData);
+  }
+
+  fs.writeFileSync(`ichiVault_${id}SnapshotTimeline.json`, JSON.stringify(data));
+  //console.log(data);
+}
+
+async function getSnapshotData(id, block) {
+  const blockTag = await getBlock(block);
+
+  const vault = await resolveContract(
+    addresses.sonic[`ichiVault${id}`],
+    "IICHIVault"
+  );
+
+  const token0 = await ethers.getContractAt(
+    "IERC20Metadata",
+    await vault.token0()
+  );
+  const token1 = await ethers.getContractAt(
+    "IERC20Metadata",
+    await vault.token1()
+  );
+
+  const baseLower = await vault.baseLower({
+    blockTag,
+  });
+  const baseUpper = await vault.baseUpper({
+    blockTag,
+  });
+  const limitLower = await vault.limitLower({
+    blockTag,
+  });
+  const limitUpper = await vault.limitUpper({
+    blockTag,
+  });
+  const basePositionId = await vault.basePositionId({
+    blockTag,
+  });
+  const limitPositionId = await vault.limitPositionId({
+    blockTag,
+  });
+
+  // Get base amounts
+  const {
+    // eslint-disable-next-line no-unused-vars
+    baseLiquidity,
+    amount0: baseAmount0,
+    amount1: baseAmount1,
+  } = await vault.getBasePosition({
+    blockTag,
+  });
+  const totalBaseAmount = baseAmount0.add(baseAmount1);
+
+  // Get limit amounts
+  const {
+    // eslint-disable-next-line no-unused-vars
+    limitLiquidity,
+    amount0: limitAmount0,
+    amount1: limitAmount1,
+  } = await vault.getLimitPosition({
+    blockTag,
+  });
+  const totalLimitAmount = limitAmount0.add(limitAmount1);
+
+  // Get total amounts
+  const { amount0: totalAmount0, amount1: totalAmount1 } =
+    await vault.getTotalAmounts({
+      blockTag,
+    });
+  const totalAmounts = totalAmount0.add(totalAmount1);
+
+  return {
+    blockTag,
+    vault,
+    token0,
+    token1,
+    baseLower,
+    baseUpper,
+    limitLower,
+    limitUpper,
+    basePositionId,
+    limitPositionId,
+    baseLiquidity,
+    baseAmount0,
+    baseAmount1,
+    totalBaseAmount,
+    limitLiquidity,
+    limitAmount0,
+    limitAmount1,
+    totalLimitAmount,
+    totalAmount0,
+    totalAmount1,
+    totalAmounts
+  }
+}
+
 function displayPercentage(value, total, precision = 2) {
   // Calculate the percentage difference
   const percentage = value
@@ -152,4 +232,5 @@ function displayPercentage(value, total, precision = 2) {
 
 module.exports = {
   snapIchiVault,
+  snapIchiVaultTimeline,
 };
