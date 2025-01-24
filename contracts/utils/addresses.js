@@ -356,6 +356,11 @@ addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
 addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 
+// ICHI IV-SWAPX-26-wS-OS Vault
+addresses.sonic.ichiVault26 = "0x36da3b8156c421118d1cc27956454c49eec5fc1b";
+// ICHI IV-SWAPX-27-OS-wS Vault
+addresses.sonic.ichiVault27 = "0xc4a71981dc8ee8ee704b6217daebad6ece185aeb";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 
