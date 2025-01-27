@@ -212,7 +212,7 @@ function deployOnBaseWithGuardian(opts, fn) {
 }
 
 function deployOnSonic(opts, fn) {
-  const { deployName, dependencies, forceSkip } = opts;
+  const { deployName, dependencies, onlyOnFork, forceSkip, useTimelock } = opts;
 
   const runDeployment = async (hre) => {
     const tools = {
@@ -222,12 +222,65 @@ function deployOnSonic(opts, fn) {
       withConfirmation,
     };
 
+    const adminAddr = addresses.sonic.admin;
+    console.log("Sonic Admin addr", adminAddr);
+
+    if (onlyOnFork && !isFork) {
+      console.log("Skipping fork-only script");
+      return;
+    }
+
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
       await impersonateAndFund(deployerAddr);
+      await impersonateAndFund(adminAddr);
     }
 
-    await fn(tools);
+    const proposal = await fn(tools);
+
+    if (!proposal?.actions?.length) {
+      return;
+    }
+
+    if (useTimelock != false) {
+      // Using `!= false` because we want to treat `== undefined` as true by default as well
+      const propDescription = proposal.name || deployName;
+      const propArgs = await proposeGovernanceArgs(proposal.actions);
+
+      await handleTransitionGovernance(propDescription, propArgs);
+    } else {
+      // Handle Admin governance
+      const sAdmin = !isFork
+        ? undefined
+        : await ethers.provider.getSigner(adminAddr);
+
+      const guardianActions = [];
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        if (isFork) {
+          log(`Sending governance action ${signature} to ${contract.address}`);
+          await withConfirmation(
+            contract.connect(sAdmin)[signature](...args, await getTxOpts())
+          );
+        }
+
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: contract.interface.encodeFunctionData(signature, args),
+          value: "0",
+        });
+
+        console.log(`... ${signature} completed`);
+      }
+
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
+    }
   };
 
   const main = async (hre) => {
