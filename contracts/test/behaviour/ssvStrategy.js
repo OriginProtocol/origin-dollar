@@ -539,7 +539,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     beforeEach(async () => {
       const {
         nativeStakingSSVStrategy,
-        oethHarvester,
+        simpleOETHHarvester,
         validatorRegistrator,
         weth,
       } = await context();
@@ -550,8 +550,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .doAccounting();
       // Clear out any consensus rewards
       // prettier-ignore
-      await oethHarvester
-      .connect(validatorRegistrator)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
+      await simpleOETHHarvester
+        .connect(validatorRegistrator)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
       // Set the number validators to a high number
       await setStorageAt(
@@ -663,15 +663,17 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Harvest", async function () {
     it("Should account for new execution rewards", async () => {
       const {
-        oethHarvester,
+        simpleOETHHarvester,
         josh,
         nativeStakingSSVStrategy,
         nativeStakingFeeAccumulator,
-        oethDripper,
+        oethFixedRateDripper,
         weth,
         validatorRegistrator,
       } = await context();
-      const dripperWethBefore = await weth.balanceOf(oethDripper.address);
+      const dripperWethBefore = await weth.balanceOf(
+        oethFixedRateDripper.address
+      );
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
@@ -698,16 +700,16 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         .doAccounting();
 
       // prettier-ignore
-      const tx = await oethHarvester
-        .connect(josh)["harvestAndSwap(address)"](nativeStakingSSVStrategy.address);
+      const tx = await simpleOETHHarvester
+        .connect(josh)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
       await expect(tx)
-        .to.emit(oethHarvester, "RewardProceedsTransferred")
+        .to.emit(simpleOETHHarvester, "Harvested")
         .withArgs(
+          nativeStakingSSVStrategy.address,
           weth.address,
-          AddressZero,
           executionRewards.add(consensusRewards),
-          0
+          oethFixedRateDripper.address
         );
 
       // check balances after
@@ -715,7 +717,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         await nativeStakingSSVStrategy.checkBalance(weth.address)
       ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
 
-      expect(await weth.balanceOf(oethDripper.address)).to.equal(
+      expect(await weth.balanceOf(oethFixedRateDripper.address)).to.equal(
         dripperWethBefore.add(executionRewards).add(consensusRewards),
         "Dripper WETH balance should increase"
       );
