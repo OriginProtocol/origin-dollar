@@ -13,7 +13,10 @@ module.exports = deploymentWithGovernanceProposal(
   async () => {
     const { timelockAddr } = await getNamedAccounts();
 
-    const cTimelock = await ethers.getContractAt("Timelock", timelockAddr);
+    const cTimelock = await ethers.getContractAt(
+      "ITimelockController",
+      timelockAddr
+    );
 
     const timelockCancellerRole = await cTimelock.CANCELLER_ROLE();
 
