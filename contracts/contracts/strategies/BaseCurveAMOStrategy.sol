@@ -18,6 +18,13 @@ import { ICurveXChainLiquidityGauge } from "../interfaces/ICurveXChainLiquidityG
 contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
 
+    /**
+     * @dev a threshold under which the contract no longer allows for the protocol to manually rebalance.
+     *      Guarding against a strategist / guardian being taken over and with multiple transactions
+     *      draining the protocol funds.
+     */
+    uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
+
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
 
     // New immutable variables that must be set in the constructor
@@ -351,6 +358,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         // Deposit the Curve pool LP tokens to the Curve gauge
         gauge.deposit(lpDeposited);
 
+        // Ensure solvency of the vault
+        _solvencyAssert();
+
         emit Deposit(address(oeth), address(lpToken), _oTokens);
     }
 
@@ -376,6 +386,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
 
         // The vault burns the OTokens from this strategy
         IVault(vaultAddress).burnForStrategy(oethToBurn);
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
 
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
@@ -412,6 +425,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             "Transfer of WETH not successful"
         );
 
+        // Ensure solvency of the vault
+        _solvencyAssert();
+
         emit Withdrawal(address(weth), address(lpToken), ethAmount);
     }
 
@@ -445,6 +461,26 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             minAmount,
             address(this)
         );
+    }
+
+    /**
+     * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
+     * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
+     * funds each time.
+     *
+     * Protocol must be at least SOLVENCY_THRESHOLD (99,8 %) backed in order for the rebalances to
+     * function.
+     */
+    function _solvencyAssert() internal view {
+        uint256 _totalVaultValue = IVault(vaultAddress).totalValue();
+        uint256 _totalOethbSupply = oeth.totalSupply();
+
+        if (
+            _totalVaultValue.divPrecisely(_totalOethbSupply) <
+            SOLVENCY_THRESHOLD
+        ) {
+            revert("Protocol insolvent");
+        }
     }
 
     /***************************************
