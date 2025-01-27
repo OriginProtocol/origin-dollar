@@ -2,6 +2,7 @@ const fetch = require("sync-fetch");
 require("dotenv").config();
 
 const isFork = process.env.FORK === "true";
+const isArbitrum = process.env.NETWORK_NAME === "arbitrumOne";
 const isArbitrumFork = process.env.FORK_NETWORK_NAME === "arbitrumOne";
 const isHoleskyFork = process.env.FORK_NETWORK_NAME === "holesky";
 const isHolesky = process.env.NETWORK_NAME === "holesky";
@@ -151,6 +152,7 @@ const networkMap = {
 
 module.exports = {
   isFork,
+  isArbitrum,
   isArbitrumFork,
   isBase,
   isBaseFork,
