@@ -1,4 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -7,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "47377301530901645877668147419124102540503539821842750844128770769774878595548",
   },
   async () => {
     const cOUSDVaultProxy = await ethers.getContract("VaultProxy");
@@ -29,6 +31,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOUSDVault,
           signature: "removeStrategy(address)",
           args: [cOUSDMetaStrategyProxy.address],
+        },
+        {
+          contract: cOUSDVault,
+          signature: "setOusdMetaStrategy(address)",
+          args: [addresses.zero],
         },
       ],
     };

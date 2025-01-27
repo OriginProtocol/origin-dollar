@@ -8,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "68528526132026080998168122859635399048147530736160306492805070199180314362200",
   },
   async () => {
     const { timelockAddr } = await getNamedAccounts();
