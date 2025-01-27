@@ -20,7 +20,7 @@ module.exports = deployOnBaseWithGuardian(
           // 1. Set WETH share to be 1% to 15%
           contract: cAMOStrategy,
           signature: "setAllowedPoolWethShareInterval(uint256,uint256)",
-          args: [utils.parseUnits("1", 18), utils.parseUnits("15", 18)],
+          args: [utils.parseUnits("0.01", 18), utils.parseUnits("0.15", 18)],
         },
       ],
     };
