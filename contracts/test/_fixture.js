@@ -650,9 +650,9 @@ const defaultFixture = deployments.createFixture(async () => {
     ? await ethers.getContract("OETHHarvesterSimple")
     : undefined;
 
-  const oethFixedRateDripperProxy = await ethers.getContract(
-    "OETHFixedRateDripperProxy"
-  );
+  const oethFixedRateDripperProxy = !isFork
+    ? undefined
+    : await ethers.getContract("OETHFixedRateDripperProxy");
   const oethFixedRateDripper = !isFork
     ? undefined
     : await ethers.getContractAt(
