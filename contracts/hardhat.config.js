@@ -72,6 +72,77 @@ for (let i = 0; i <= 10; i++) {
   privateKeys.push(wallet.privateKey);
 }
 
+const getDeployerAddressOrIndex = (fallbackAccountIndex = 0) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.deployer || MAINNET_DEPLOYER
+  );
+};
+
+const getGovernorAddressOrIndex = (fallbackAccountIndex = 1) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.governor || MAINNET_GOVERNOR
+  );
+};
+
+const getStrategistAddressOrIndex = (fallbackAccountIndex = 2) => {
+  if (process.env.FORK !== "true") {
+    return fallbackAccountIndex;
+  }
+
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.strategist || MAINNET_STRATEGIST
+  );
+};
+
+const getTimelockAddress = () => {
+  if (process.env.FORK !== "true") {
+    return ethers.constants.AddressZero;
+  }
+
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.timelock || ethers.constants.AddressZero
+  );
+};
+
+const getDeployTags = () => {
+  const tags =
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.tags || [];
+
+  return { tags };
+};
+
 // Define network configurations
 const networkConfigs = [
   {
@@ -240,11 +311,14 @@ const networks = networkConfigs.reduce((acc, { name, networkConfig }) => {
   return acc;
 }, {});
 
+const { provider, chainId } = getHardhatNetworkProperties();
+const forkBlockNumber = adjustTheForkBlockNumber();
+
 networks.hardhat = {
   accounts: { mnemonic },
   blockGasLimit: 1000000000,
   allowUnlimitedContractSize: true,
-  chainId: getHardhatNetworkProperties().chainId,
+  chainId,
   ...getDeployTags(),
   ...(isForkTest
     ? {
@@ -252,10 +326,8 @@ networks.hardhat = {
         initialBaseFeePerGas: 0,
         forking: {
           enabled: true,
-          url: getHardhatNetworkProperties().provider,
-          blockNumber: adjustTheForkBlockNumber()
-            ? parseInt(adjustTheForkBlockNumber())
-            : undefined,
+          url: provider,
+          blockNumber: forkBlockNumber ? parseInt(forkBlockNumber) : undefined,
           timeout: 0,
         },
       }
@@ -268,7 +340,6 @@ networks.hardhat = {
 
 networks.localhost = {
   timeout: 0,
-  ...getDeployTags(),
 };
 
 // Account tasks.
@@ -285,79 +356,6 @@ const paths = {
       );
     })?.deployPath || "deploy/mainnet",
   cache: process.env.HARDHAT_CACHE_DIR || undefined,
-};
-
-const { provider, chainId } = getHardhatNetworkProperties();
-
-const getDeployerAddressOrIndex = (fallbackAccountIndex = 0) => {
-  if (process.env.FORK !== "true") {
-    return fallbackAccountIndex;
-  }
-  return (
-    networkConfigs.find(({ name }) => {
-      return (
-        process.env.NETWORK_NAME == name ||
-        process.env.FORK_NETWORK_NAME == name
-      );
-    })?.addresses?.deployer || MAINNET_DEPLOYER
-  );
-};
-
-const getGovernorAddressOrIndex = (fallbackAccountIndex = 1) => {
-  if (process.env.FORK !== "true") {
-    return fallbackAccountIndex;
-  }
-
-  return (
-    networkConfigs.find(({ name }) => {
-      return (
-        process.env.NETWORK_NAME == name ||
-        process.env.FORK_NETWORK_NAME == name
-      );
-    })?.addresses?.governor || MAINNET_GOVERNOR
-  );
-};
-
-const getStrategistAddressOrIndex = (fallbackAccountIndex = 2) => {
-  if (process.env.FORK !== "true") {
-    return fallbackAccountIndex;
-  }
-
-  return (
-    networkConfigs.find(({ name }) => {
-      return (
-        process.env.NETWORK_NAME == name ||
-        process.env.FORK_NETWORK_NAME == name
-      );
-    })?.addresses?.strategist || MAINNET_STRATEGIST
-  );
-};
-
-const getTimelockAddress = () => {
-  if (process.env.FORK !== "true") {
-    return ethers.constants.AddressZero;
-  }
-
-  return (
-    networkConfigs.find(({ name }) => {
-      return (
-        process.env.NETWORK_NAME == name ||
-        process.env.FORK_NETWORK_NAME == name
-      );
-    })?.addresses?.timelock || ethers.constants.AddressZero
-  );
-};
-
-const getDeployTags = () => {
-  const tags =
-    networkConfigs.find(({ name }) => {
-      return (
-        process.env.NETWORK_NAME == name ||
-        process.env.FORK_NETWORK_NAME == name
-      );
-    })?.tags || [];
-
-  return { tags };
 };
 
 module.exports = {
