@@ -118,8 +118,8 @@ async function snapIchiVaultTimeline({ id, blockstart, blockend, blockstep }) {
   const storeData = async (id, currBlock) => {
     const snapshotData = await getSnapshotData(id, currBlock);
     delete snapshotData.vault;
-    delete snapshotData.token0;
-    delete snapshotData.token1;
+    snapshotData.token0 = snapshotData.token0.address;
+    snapshotData.token1 = snapshotData.token1.address;
     for (const field of bigNumberFields) {
       snapshotData[field] = formatUnits(snapshotData[field], 0);
     }
@@ -131,8 +131,9 @@ async function snapIchiVaultTimeline({ id, blockstart, blockend, blockstep }) {
   // also store the latest data
   await storeData(id, 'latest');
 
-  fs.writeFileSync(`ichiVault_${id}SnapshotTimeline.json`, JSON.stringify(data));
-  //console.log(data);
+  const filename = `ichiVault_${id}SnapshotTimeline.json`;
+  fs.writeFileSync(filename, JSON.stringify(data));
+  console.log(`File written to: ${filename}`)
 }
 
 async function getSnapshotData(id, block) {
