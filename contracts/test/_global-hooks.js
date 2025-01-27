@@ -54,7 +54,11 @@ mocha.before(function () {
     const isSonicUnitTestFile = s.file.endsWith(".sonic.js");
     const isBNBTestFile = s.file.endsWith(".bnb.fork-test.js");
     const isBNBUnitTestFile = s.file.endsWith(".bnb.js");
-    const unitTest = !s.file.endsWith(".fork-test.js") && !isBaseUnitTestFile && !isSonicUnitTestFile && !isBNBUnitTestFile;
+    const unitTest =
+      !s.file.endsWith(".fork-test.js") &&
+      !isBaseUnitTestFile &&
+      !isSonicUnitTestFile &&
+      !isBNBUnitTestFile;
 
     if (isArbitrumFork) {
       return isArbTestFile;

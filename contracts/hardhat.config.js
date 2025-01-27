@@ -1,27 +1,7 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
-  isArbitrumFork,
-  isHoleskyFork,
-  isHolesky,
   isForkTest,
-  isHoleskyForkTest,
-  isBase,
-  isBaseFork,
-  isBaseForkTest,
-  isBaseUnitTest,
-  isSonic,
-  isSonicFork,
-  isSonicForkTest,
-  isSonicUnitTest,
-  isBNB,
-  isBNBFork,
-  isBNBForkTest,
-  isBNBUnitTest,
-  isArbitrum,
-  isArbitrumFork,
-  isArbitrumUnitTest,
-  isArbitrumForkTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
@@ -46,16 +26,13 @@ require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
 
 const addresses = require("./utils/addresses.js");
+
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
   "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
-// Mainnet decentralized OGV Governor
 const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
-// Mainnet decentralized OGV Timelock
 const MAINNET_TIMELOCK = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
-// Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
-// Multi-sig that controls the Governor. Aka "Guardian".
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
@@ -67,11 +44,9 @@ const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 
 const SONIC_DEPLOYER = MAINNET_DEPLOYER;
-// TODO: update Sonic Governor and strategist
 const SONIC_GOVERNOR = MAINNET_DEPLOYER;
 const SONIC_STRATEGIST = MAINNET_DEPLOYER;
 
-// TODO: Update after deployment
 const BNB_GOVERNOR = MAINNET_DEPLOYER;
 const BNB_STRATEGIST = MAINNET_DEPLOYER;
 const BNB_DEPLOYER = MAINNET_DEPLOYER;
@@ -82,132 +57,298 @@ const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
 let privateKeys = [];
-
 let derivePath = "m/44'/60'/0'/0/";
 for (let i = 0; i <= 10; i++) {
   const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
   privateKeys.push(wallet.privateKey);
 }
 
+// Define network configurations
+const networkConfigs = [
+  {
+    name: "mainnet",
+    networkConfig: {
+      url: process.env.PROVIDER_URL,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 1,
+      live: true,
+      tags: [],
+    },
+    deployPath: "deploy/mainnet",
+    addresses: {
+      deployer: MAINNET_DEPLOYER,
+      governor: MAINNET_GOVERNOR,
+      timelock: MAINNET_TIMELOCK,
+    },
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY,
+    },
+  },
+  {
+    name: "holesky",
+    networkConfig: {
+      url: holeskyProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 17000,
+      live: true,
+      tags: [],
+    },
+    deployPath: "deploy/holesky",
+    addresses: {
+      deployer: HOLESKY_DEPLOYER,
+    },
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY,
+      customChain: {
+        network: "holesky",
+        chainId: 17000,
+        urls: {
+          apiURL: "https://api-holesky.etherscan.io/api",
+          browserURL: "https://holesky.etherscan.io",
+        },
+      },
+    },
+  },
+  {
+    name: "arbitrumOne",
+    networkConfig: {
+      url: arbitrumProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 42161,
+      live: true,
+      tags: ["arbitrumOne"],
+      gas: 20000000,
+    },
+    deployPath: "deploy/arbitrumOne",
+    etherscan: {
+      apiKey: process.env.ARBISCAN_API_KEY,
+    },
+  },
+  {
+    name: "base",
+    networkConfig: {
+      url: baseProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 8453,
+      live: true,
+      tags: ["base"],
+      gas: 20000000,
+    },
+    deployPath: "deploy/base",
+    addresses: {
+      deployer: BASE_DEPLOYER,
+      governor: BASE_GOVERNOR,
+      timelock: BASE_TIMELOCK,
+    },
+    etherscan: {
+      apiKey: process.env.BASESCAN_API_KEY,
+      customChain: {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org",
+        },
+      },
+    },
+  },
+  {
+    name: "sonic",
+    networkConfig: {
+      url: sonicProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 146,
+      live: true,
+      tags: ["sonic"],
+    },
+    deployPath: "deploy/sonic",
+    addresses: {
+      deployer: SONIC_DEPLOYER,
+      governor: SONIC_GOVERNOR,
+    },
+    etherscan: {
+      apiKey: process.env.SONICSCAN_API_KEY,
+      customChain: {
+        network: "sonic",
+        chainId: 146,
+        urls: {
+          apiURL: "https://api.sonicscan.org/api",
+          browserURL: "https://sonicscan.org",
+        },
+      },
+    },
+  },
+  {
+    name: "bnb",
+    networkConfig: {
+      url: bnbProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 56,
+      live: true,
+      tags: ["bnb"],
+    },
+    deployPath: "deploy/bnb",
+    addresses: {
+      deployer: BNB_DEPLOYER,
+      governor: BNB_GOVERNOR,
+    },
+    etherscan: {
+      apiKey: process.env.BNBSCAN_API_KEY,
+      customChain: {
+        network: "bnb",
+        chainId: 56,
+        urls: {
+          apiURL: "https://api.bscscan.com/api",
+          browserURL: "https://bscscan.com",
+        },
+      },
+    },
+  },
+];
+
+// Build networks configuration
+const networks = networkConfigs.reduce((acc, { name, networkConfig }) => {
+  acc[name] = networkConfig;
+  return acc;
+}, {});
+
+networks.hardhat = {
+  accounts: { mnemonic },
+  blockGasLimit: 1000000000,
+  allowUnlimitedContractSize: true,
+  chainId: getHardhatNetworkProperties().chainId,
+  ...getDeployTags(),
+  ...(isForkTest
+    ? {
+        timeout: 0,
+        initialBaseFeePerGas: 0,
+        forking: {
+          enabled: true,
+          url: getHardhatNetworkProperties().provider,
+          blockNumber: adjustTheForkBlockNumber()
+            ? parseInt(adjustTheForkBlockNumber())
+            : undefined,
+          timeout: 0,
+        },
+      }
+    : {
+        initialBaseFeePerGas: 0,
+        gas: 7000000,
+        gasPrice: 1000,
+      }),
+};
+
+networks.localhost = {
+  timeout: 0,
+  ...getDeployTags(),
+};
+
 // Account tasks.
 task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
 
-let forkBlockNumber = adjustTheForkBlockNumber();
+const paths = {
+  deploy:
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.deployPath || "deploy/mainnet",
+  cache: process.env.HARDHAT_CACHE_DIR || undefined,
+};
 
-const paths = {};
-if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
-  // holesky deployment files are in contracts/deploy/holesky
-  paths.deploy = "deploy/holesky";
-} else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
-  paths.deploy = "deploy/base";
-} else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
-  paths.deploy = "deploy/sonic";
-} else if (isBNB || isBNBFork || isBNBForkTest || isBNBUnitTest) {
-  paths.deploy = "deploy/bnb";
-} else if (isArbitrum || isArbitrumFork || isArbitrumUnitTest || isArbitrumForkTest) {
-  paths.deploy = "deploy/arbitrumOne";
-} else {
-  // holesky deployment files are in contracts/deploy/mainnet
-  paths.deploy = "deploy/mainnet";
-}
-if (process.env.HARDHAT_CACHE_DIR) {
-  paths.cache = process.env.HARDHAT_CACHE_DIR;
-}
 const { provider, chainId } = getHardhatNetworkProperties();
 
 const getDeployerAddressOrIndex = (fallbackAccountIndex = 0) => {
   if (process.env.FORK !== "true") {
     return fallbackAccountIndex;
   }
-
-  if (isArbitrumFork) {
-    return MAINNET_DEPLOYER;
-  } else if (isBaseFork) {
-    return BASE_DEPLOYER;
-  } else if (isSonicFork) {
-    return SONIC_DEPLOYER;
-  } else if (isBNBFork) {
-    return BNB_DEPLOYER;
-  } else if (isHoleskyFork) {
-    return HOLESKY_DEPLOYER;
-  }
-
-  return MAINNET_DEPLOYER;
-}
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.deployer || MAINNET_DEPLOYER
+  );
+};
 
 const getGovernorAddressOrIndex = (fallbackAccountIndex = 1) => {
   if (process.env.FORK !== "true") {
     return fallbackAccountIndex;
   }
 
-  if (isArbitrumFork) {
-    return MAINNET_GOVERNOR;
-  } else if (isBaseFork) {
-    return BASE_GOVERNOR;
-  } else if (isSonicFork) {
-    return SONIC_GOVERNOR;
-  } else if (isBNBFork) {
-    return BNB_GOVERNOR;
-  } else if (isHoleskyFork) {
-    return HOLESKY_DEPLOYER;
-  } else if (isMainnetFork) {
-    return MAINNET_GOVERNOR;
-  }
-
-  return fallbackAccountIndex;
-}
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.governor || MAINNET_GOVERNOR
+  );
+};
 
 const getStrategistAddressOrIndex = (fallbackAccountIndex = 2) => {
   if (process.env.FORK !== "true") {
     return fallbackAccountIndex;
   }
 
-  if (isHoleskyFork) {
-    return HOLESKY_DEPLOYER;
-  } else if (isBaseFork) {
-    return BASE_STRATEGIST;
-  } else if (isSonicFork) {
-    return SONIC_STRATEGIST;
-  } else if (isBNBFork) {
-    return BNB_STRATEGIST;
-  }
-
-  return MAINNET_STRATEGIST;
-}
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.strategist || MAINNET_STRATEGIST
+  );
+};
 
 const getTimelockAddress = () => {
   if (process.env.FORK !== "true") {
     return ethers.constants.AddressZero;
   }
 
-  if (process.env.FORK_NETWORK_NAME == "base") {
-    return BASE_TIMELOCK;
-  } else if (process.env.FORK_NETWORK_NAME == "mainnet" || (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")) {
-    return MAINNET_TIMELOCK;
-  }
-
-  return ethers.constants.AddressZero;
-}
+  return (
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.addresses?.timelock || ethers.constants.AddressZero
+  );
+};
 
 const getDeployTags = () => {
-  if (isArbitrumFork) {
-    return { tags: ["arbitrumOne"] };
-  } else if (isBaseFork) {
-    return { tags: ["base"] };
-  } else if (isSonicFork) {
-    return { tags: ["sonic"] };
-  } else if (isBNBFork) {
-    return { tags: ["bnb"] };
-  }
-  return {};
-}
+  const tags =
+    networkConfigs.find(({ name }) => {
+      return (
+        process.env.NETWORK_NAME == name ||
+        process.env.FORK_NETWORK_NAME == name
+      );
+    })?.tags || [];
 
-const defaultAccountConfig = [
-  process.env.DEPLOYER_PK || privateKeys[0],
-  process.env.GOVERNOR_PK || privateKeys[0],
-];
+  return { tags };
+};
 
 module.exports = {
   solidity: {
@@ -224,84 +365,7 @@ module.exports = {
       "0xef1c6e67703c7bd7107eed8303fbe6ec2554bf6b": "Uniswap Universal Router",
     },
   },
-  networks: {
-    hardhat: {
-      accounts: {
-        mnemonic,
-      },
-      blockGasLimit: 1000000000,
-      allowUnlimitedContractSize: true,
-      chainId,
-      ...getDeployTags(),
-      ...(isForkTest
-        ? {
-            timeout: 0,
-            initialBaseFeePerGas: 0,
-            forking: {
-              enabled: true,
-              url: provider,
-              blockNumber: forkBlockNumber
-                ? parseInt(forkBlockNumber)
-                : undefined,
-              timeout: 0,
-            },
-          }
-        : {
-            initialBaseFeePerGas: 0,
-            gas: 7000000,
-            gasPrice: 1000,
-          }),
-    },
-    localhost: {
-      timeout: 0,
-      ...getDeployTags(),
-    },
-    mainnet: {
-      url: `${process.env.PROVIDER_URL}`,
-      accounts: defaultAccountConfig,
-    },
-    holesky: {
-      url: holeskyProviderUrl,
-      accounts: defaultAccountConfig,
-      chainId: 17000,
-      live: true,
-    },
-    arbitrumOne: {
-      url: arbitrumProviderUrl,
-      accounts: defaultAccountConfig,
-      chainId: 42161,
-      tags: ["arbitrumOne"],
-      live: true,
-      saveDeployments: true,
-      // Fails if gas limit is anything less than 20M on Arbitrum One
-      gas: 20000000,
-      // initialBaseFeePerGas: 0,
-    },
-    base: {
-      url: baseProviderUrl,
-      accounts: defaultAccountConfig,
-      chainId: 8453,
-      tags: ["base"],
-      live: true,
-      saveDeployments: true,
-    },
-    sonic: {
-      url: sonicProviderUrl,
-      accounts: defaultAccountConfig,
-      chainId: 146,
-      tags: ["sonic"],
-      live: true,
-      saveDeployments: true,
-    },
-    bnb: {
-      url: bnbProviderUrl,
-      accounts: defaultAccountConfig,
-      chainId: 56,
-      tags: ["bnb"],
-      live: true,
-      saveDeployments: true,
-    },
-  },
+  networks,
   mocha: {
     bail: process.env.BAIL === "true",
     timeout: parseInt(process.env.MOCHA_TIMEOUT) || 40000,
@@ -320,26 +384,15 @@ module.exports = {
     },
     governorAddr: {
       default: 1,
-      // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        getGovernorAddressOrIndex(),
-      hardhat:
-        getGovernorAddressOrIndex(),
+      localhost: getGovernorAddressOrIndex(),
+      hardhat: getGovernorAddressOrIndex(),
       mainnet: MAINNET_GOVERNOR,
-      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
+      holesky: HOLESKY_DEPLOYER,
       base: BASE_GOVERNOR,
       sonic: SONIC_GOVERNOR,
     },
-    /* Local node environment currently has no access to Decentralized governance
-     * address, since the contract is in another repo. Once we merge the ousd-governance
-     * and this repo, it will be able to fetch the address from the deployed governance contract.
-     *
-     * Even then in local node environment the `governorFiveAddr` named account
-     * is not to be used. Should only be used in forked and mainnet environments.
-     */
     governorFiveAddr: {
       default: ethers.constants.AddressZero,
-      // On Mainnet and fork, the governor is the Governor contract.
       localhost:
         process.env.FORK === "true"
           ? MAINNET_GOVERNOR_FIVE
@@ -350,10 +403,8 @@ module.exports = {
           : ethers.constants.AddressZero,
       mainnet: MAINNET_GOVERNOR_FIVE,
     },
-    // Above governorFiveAddr comment applies to governorSix as well
     governorSixAddr: {
       default: ethers.constants.AddressZero,
-      // On Mainnet and fork, the governor is the Governor contract.
       localhost:
         process.env.FORK === "true"
           ? addresses.mainnet.GovernorSix
@@ -364,21 +415,16 @@ module.exports = {
           : ethers.constants.AddressZero,
       mainnet: addresses.mainnet.GovernorSix,
     },
-    // Above governorFiveAddr comment applies to timelock as well
     timelockAddr: {
       default: ethers.constants.AddressZero,
-      // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        getTimelockAddress(),
-      hardhat:
-        getTimelockAddress(),
+      localhost: getTimelockAddress(),
+      hardhat: getTimelockAddress(),
       mainnet: MAINNET_TIMELOCK,
       base: BASE_TIMELOCK,
       sonic: addresses.sonic.timelock,
     },
     guardianAddr: {
       default: 1,
-      // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
@@ -394,7 +440,7 @@ module.exports = {
       localhost: getStrategistAddressOrIndex(),
       hardhat: getStrategistAddressOrIndex(),
       mainnet: MAINNET_STRATEGIST,
-      holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
+      holesky: HOLESKY_DEPLOYER,
       base: BASE_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       bnb: BNB_STRATEGIST,
@@ -408,48 +454,13 @@ module.exports = {
     runOnCompile: process.env.CONTRACT_SIZE ? true : false,
   },
   etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
-      holesky: process.env.ETHERSCAN_API_KEY,
-      base: process.env.BASESCAN_API_KEY,
-      sonic: process.env.SONICSCAN_API_KEY,
-      bnb: process.env.BNBSCAN_API_KEY,
-    },
-    customChains: [
-      {
-        network: "holesky",
-        chainId: 17000,
-        urls: {
-          apiURL: "https://api-holesky.etherscan.io/api",
-          browserURL: "https://holesky.etherscan.io",
-        },
-      },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "sonic",
-        chainId: 146,
-        urls: {
-          apiURL: "https://api.sonicscan.org/api",
-          browserURL: "https://sonicscan.org",
-        },
-      },
-      {
-        network: "bnb",
-        chainId: 56,
-        urls: {
-          apiURL: "https://api.bscscan.com/api",
-          browserURL: "https://bscscan.com",
-        },
-      },
-    ],
+    apiKey: networkConfigs.reduce((acc, { name, etherscan }) => {
+      acc[name] = etherscan.apiKey;
+      return acc;
+    }, {}),
+    customChains: networkConfigs
+      .filter(({ etherscan }) => etherscan.customChain)
+      .map(({ etherscan }) => etherscan.customChain),
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
