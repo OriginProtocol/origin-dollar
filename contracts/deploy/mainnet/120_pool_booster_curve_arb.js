@@ -15,7 +15,7 @@ const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/Cur
 
 module.exports = deployOnArb(
   {
-    deployName: "119_pool_booster_curve",
+    deployName: "120_pool_booster_curve",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
