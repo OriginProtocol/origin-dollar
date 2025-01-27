@@ -7,13 +7,13 @@ const { resolveContract } = require("../utils/resolvers");
 var fs = require('fs');
 
 async function snapIchiVault({ block, id }) {
-  
   const {
     vault,
     token0,
     token1,
     baseLower,
     baseUpper,
+    currentTick,
     limitLower,
     limitUpper,
     basePositionId,
@@ -36,7 +36,7 @@ async function snapIchiVault({ block, id }) {
   console.log(
     `token 1 : ${await token1.symbol()} ${await vault.allowToken1()}`
   );
-  console.log(`current tick : ${await vault.currentTick()}`);
+  console.log(`current tick : ${currentTick}`);
 
   console.log("\nBase");
   console.log(`upper    : ${baseUpper}`);
@@ -115,7 +115,7 @@ async function snapIchiVaultTimeline({ id, blockstart, blockend, blockstep }) {
     'totalAmount1',
     'totalAmounts'
   ];
-  for (let currBlock = blockstart; currBlock < blockend; currBlock+=blockstep) {
+  const storeData = async (id, currBlock) => {
     const snapshotData = await getSnapshotData(id, currBlock);
     delete snapshotData.vault;
     delete snapshotData.token0;
@@ -125,6 +125,11 @@ async function snapIchiVaultTimeline({ id, blockstart, blockend, blockstep }) {
     }
     data.push(snapshotData);
   }
+  for (let currBlock = blockstart; currBlock < blockend; currBlock+=blockstep) {
+    await storeData(id, currBlock);
+  }
+  // also store the latest data
+  await storeData(id, 'latest');
 
   fs.writeFileSync(`ichiVault_${id}SnapshotTimeline.json`, JSON.stringify(data));
   //console.log(data);
@@ -165,6 +170,9 @@ async function getSnapshotData(id, block) {
   const limitPositionId = await vault.limitPositionId({
     blockTag,
   });
+  const currentTick = await vault.currentTick({
+    blockTag
+  });
 
   // Get base amounts
   const {
@@ -202,6 +210,7 @@ async function getSnapshotData(id, block) {
     token1,
     baseLower,
     baseUpper,
+    currentTick,
     limitLower,
     limitUpper,
     basePositionId,
