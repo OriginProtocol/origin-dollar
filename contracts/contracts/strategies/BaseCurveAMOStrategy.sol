@@ -195,6 +195,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
 
         // Deposit the Curve pool's LP tokens into the Curve gauge
         gauge.deposit(lpDeposited);
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
     }
 
     /**
@@ -251,6 +254,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             weth.transfer(_recipient, _amount),
             "Transfer of WETH not successful"
         );
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
