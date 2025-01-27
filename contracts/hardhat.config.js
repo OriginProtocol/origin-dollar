@@ -148,7 +148,7 @@ const networkConfigs = [
   {
     name: "mainnet",
     networkConfig: {
-      url: process.env.PROVIDER_URL,
+      url: `${process.env.PROVIDER_URL}`,
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
