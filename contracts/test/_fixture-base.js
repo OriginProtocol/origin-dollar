@@ -14,6 +14,7 @@ const log = require("../utils/logger")("test:fixtures-base");
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -201,12 +202,20 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     addresses.base.nonFungiblePositionManager
   );
 
+  const curveGaugeOETHbWETH = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.base.OETHb_WETH.gauge
+  );
+
   return {
     // Aerodrome
     aeroSwapRouter,
     aeroNftManager,
     aeroClGauge,
     aero,
+
+    // Curve
+    curveGaugeOETHbWETH,
 
     // OETHb
     oethb,

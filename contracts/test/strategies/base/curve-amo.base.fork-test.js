@@ -17,7 +17,8 @@ describe("Curve AMO strategy", function () {
     weth,
     rafael,
     governor,
-    defaultDepositor;
+    defaultDepositor,
+    curveGauge;
 
   const defaultDeposit = oethUnits("5");
 
@@ -30,6 +31,7 @@ describe("Curve AMO strategy", function () {
     rafael = fixture.rafael;
     governor = fixture.governor;
     defaultDepositor = rafael;
+    curveGauge = fixture.curveGaugeOETHbWETH;
 
     // Set vaultBuffer to 100%
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
@@ -68,6 +70,9 @@ describe("Curve AMO strategy", function () {
 
       // Balance should be at least 1WETH + min 1 OETH
       expect(await curveAMOStrategy.checkBalance(weth.address)).to.be.gt(
+        defaultDeposit
+      );
+      expect(await curveGauge.balanceOf(curveAMOStrategy.address)).to.be.gt(
         defaultDeposit
       );
       expect(await oethb.balanceOf(defaultDepositor.address)).to.equal(
