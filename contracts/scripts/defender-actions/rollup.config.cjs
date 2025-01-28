@@ -68,4 +68,13 @@ module.exports = [
       format: "cjs",
     },
   },
+  {
+    ...commonConfig,
+    input: "oeth/dripRateProposer.js",
+    output: {
+      file: "dist/oeth/dripRateProposer/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];

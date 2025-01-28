@@ -5,6 +5,8 @@ addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
+addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+
 addresses.mainnet = {};
 addresses.holesky = {};
 
@@ -215,7 +217,8 @@ addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
 addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
 addresses.mainnet.wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0";
 addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
-
+addresses.mainnet.OETHFixedRateDripper =
+  "0xe3B3b4Fc77505EcfAACf6dD21619a8Cc12fcc501";
 // 1Inch
 addresses.mainnet.oneInchRouterV5 =
   "0x1111111254EEB25477B68fb85Ed929f73A960582";
