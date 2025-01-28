@@ -19,6 +19,9 @@ def load_contract(name, address):
 # unlock an address to issue transactions as that address
 def unlock(address):
     brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
+# unlock an address to issue transactions as that address
+def anvil_unlock(address):
+    brownie.network.web3.provider.make_request('anvil_impersonateAccount', [address])
 
 def fund_eth(address, balance):
     brownie.network.web3.provider.make_request('hardhat_setBalance', [address, balance])
@@ -123,7 +126,7 @@ def to_gnosis_json(txs, from_safe_address=STRATEGIST, chain="1"):
         main["transactions"].append(
             {
                 "to": tx.receiver,
-                "value": "0",
+                "value": str(tx.value),
                 "data": tx.input,
                 "contractMethod": None,
                 "contractInputsValues": None,

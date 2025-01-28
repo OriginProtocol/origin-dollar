@@ -1,4 +1,9 @@
-const { isFork, isArbFork, isBaseFork } = require("../test/helpers");
+const {
+  isFork,
+  isArbFork,
+  isBaseFork,
+  isSonicFork,
+} = require("../test/helpers");
 const addresses = require("./addresses");
 const {
   deployWithConfirmation,
@@ -134,6 +139,10 @@ function deployOnBaseWithGuardian(opts, fn) {
 
     const proposal = await fn(tools);
 
+    if (!proposal?.actions?.length) {
+      return;
+    }
+
     if (useTimelock != false) {
       // Using `!= false` because we want to treat `== undefined` as true by default as well
       const propDescription = proposal.name || deployName;
@@ -202,8 +211,106 @@ function deployOnBaseWithGuardian(opts, fn) {
   return main;
 }
 
+function deployOnSonic(opts, fn) {
+  const { deployName, dependencies, onlyOnFork, forceSkip, useTimelock } = opts;
+
+  const runDeployment = async (hre) => {
+    const tools = {
+      deployWithConfirmation,
+      ethers: hre.ethers,
+      getTxOpts: getTxOpts,
+      withConfirmation,
+    };
+
+    const adminAddr = addresses.sonic.admin;
+    console.log("Sonic Admin addr", adminAddr);
+
+    if (onlyOnFork && !isFork) {
+      console.log("Skipping fork-only script");
+      return;
+    }
+
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await impersonateAndFund(deployerAddr);
+      await impersonateAndFund(adminAddr);
+    }
+
+    const proposal = await fn(tools);
+
+    if (!proposal?.actions?.length) {
+      return;
+    }
+
+    if (useTimelock != false) {
+      // Using `!= false` because we want to treat `== undefined` as true by default as well
+      const propDescription = proposal.name || deployName;
+      const propArgs = await proposeGovernanceArgs(proposal.actions);
+
+      await handleTransitionGovernance(propDescription, propArgs);
+    } else {
+      // Handle Admin governance
+      const sAdmin = !isFork
+        ? undefined
+        : await ethers.provider.getSigner(adminAddr);
+
+      const guardianActions = [];
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        if (isFork) {
+          log(`Sending governance action ${signature} to ${contract.address}`);
+          await withConfirmation(
+            contract.connect(sAdmin)[signature](...args, await getTxOpts())
+          );
+        }
+
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: contract.interface.encodeFunctionData(signature, args),
+          value: "0",
+        });
+
+        console.log(`... ${signature} completed`);
+      }
+
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies || [];
+
+  main.tags = ["sonic"];
+
+  main.skip = () =>
+    forceSkip ||
+    !(
+      isSonicFork ||
+      hre.network.name == "sonic" ||
+      hre.network.config.chainId == 146
+    );
+  return main;
+}
+
 module.exports = {
   deployOnArb,
   deployOnBase,
   deployOnBaseWithGuardian,
+  deployOnSonic,
 };

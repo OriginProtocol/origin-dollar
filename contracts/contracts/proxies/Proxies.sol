@@ -247,6 +247,24 @@ contract NativeStakingFeeAccumulator2Proxy is
 }
 
 /**
+ * @notice NativeStakingSSVStrategy3Proxy delegates calls to NativeStakingSSVStrategy implementation
+ */
+contract NativeStakingSSVStrategy3Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice NativeStakingFeeAccumulator3Proxy delegates calls to FeeAccumulator implementation
+ */
+contract NativeStakingFeeAccumulator3Proxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
  * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
  */
 contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -320,5 +338,30 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice ARMBuybackProxy delegates calls to Buyback implementation
  */
 contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice MorphoGauntletPrimeUSDCStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MorphoGauntletPrimeUSDCStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626USDTStrategy implementation
+ */
+contract MorphoGauntletPrimeUSDTStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice OETHFixedRateDripperProxy delegates calls to a OETHFixedRateDripper implementation
+ */
+contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

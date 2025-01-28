@@ -67,7 +67,7 @@ contract FraxETHStrategy is Generalized4626Strategy {
     }
 
     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) public view override returns (bool) {

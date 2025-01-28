@@ -20,7 +20,7 @@ addresses.mainnet.BinanceAll =
 addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
-  "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  "0xa5cA4da1a315751A7B6890F8E0b78c1C38085ad2";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
@@ -171,8 +171,12 @@ addresses.mainnet.MorphoStrategyProxy =
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
-addresses.mainnet.MetaMorphoUSDCSteakHouseVault =
+addresses.mainnet.MorphoSteakhouseUSDCVault =
   "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB";
+addresses.mainnet.MorphoGauntletPrimeUSDCVault =
+  "0xdd0f28e19C1780eb6396170735D45153D261490d";
+addresses.mainnet.MorphoGauntletPrimeUSDTVault =
+  "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -269,6 +273,8 @@ addresses.mainnet.NativeStakingSSVStrategyProxy =
   "0x34eDb2ee25751eE67F68A45813B22811687C0238";
 addresses.mainnet.NativeStakingSSVStrategy2Proxy =
   "0x4685dB8bF2Df743c861d71E6cFb5347222992076";
+addresses.mainnet.NativeStakingSSVStrategy3Proxy =
+  "0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63";
 
 // Defender relayer
 addresses.mainnet.validatorRegistrator =
@@ -306,6 +312,8 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // 2/8 Multisig
 addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";
+addresses.base.multichainStrategist =
+  "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
@@ -328,6 +336,25 @@ addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+
+// Sonic
+addresses.sonic = {};
+addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
+addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
+addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
+addresses.sonic.nodeDriver = "0xd100a01e00000000000000000000000000000001";
+addresses.sonic.nodeDriveAuth = "0xd100ae0000000000000000000000000000000000";
+addresses.sonic.validatorRegistrator =
+  "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
+// 5/8 Multisig - formally known as the Governor but not to be confused with the Governor contract
+addresses.sonic.admin = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 2/8 Multisig - formally known as the Strategist
+addresses.sonic.guardian = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
+
+addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
+addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
+addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

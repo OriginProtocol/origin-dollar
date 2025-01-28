@@ -10,43 +10,57 @@ const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:vault");
 
-async function getContract(hre, symbol) {
+async function getContracts(hre, symbol, assetSymbol) {
+  const { chainId } = await hre.ethers.provider.getNetwork();
+
+  // If no symbol is provided, set to OSonic if Sonic network, else default to OETH
+  symbol = symbol
+    ? symbol
+    : networkMap[chainId] === "sonic"
+    ? "OSonic"
+    : "OETH";
+  // Convert OS to OSonic
+  symbol = symbol === "OS" ? "OSonic" : symbol;
   const contractPrefix = symbol === "OUSD" ? "" : symbol;
 
-  const { chainId } = await hre.ethers.provider.getNetwork();
-  const networkPrefix = networkMap[chainId] === "base" ? "Base" : "";
+  const network = networkMap[chainId];
+  const networkPrefix = network === "base" ? "Base" : "";
 
+  // Resolve the vault
   const vaultProxy = await hre.ethers.getContract(
     `${contractPrefix}${networkPrefix}VaultProxy`
   );
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
-  log(`Resolved ${networkPrefix} ${symbol} Vault to address ${vault.address}`);
+  log(`Resolved ${network} ${symbol} Vault to address ${vault.address}`);
 
+  // Resolve the OToken. eg OUSD, OETH or OSonic
   const oTokenProxy = await ethers.getContract(
     `${symbol}${networkPrefix}Proxy`
   );
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
+  log(`Resolved ${network} ${symbol} OToken to address ${oToken.address}`);
+
+  // Resolve the Asset. eg WETH or wS
+  // This won't work for OUSD if the assetSymbol has not been set as it has three assets
+  assetSymbol = assetSymbol || network === "sonic" ? "wS" : "WETH";
+  const asset = await resolveAsset(assetSymbol);
   log(
-    `Resolved ${networkPrefix} ${symbol} OToken to address ${oToken.address}`
+    `Resolved ${network} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`
   );
 
   return {
     vault,
     oToken,
+    asset,
   };
 }
 
 async function snapVault({ block }, hre) {
   const blockTag = getBlock(block);
 
-  const { vault, oToken } = await getContract(hre, "OETH");
+  const { vault, oToken, asset } = await getContracts(hre);
 
-  const { chainId } = await hre.ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  const wethAddress = addresses[network].WETH;
-  const weth = await ethers.getContractAt("IERC20", wethAddress);
-
-  const wethBalance = await weth.balanceOf(vault.address, {
+  const assetBalance = await asset.balanceOf(vault.address, {
     blockTag,
   });
 
@@ -59,7 +73,7 @@ async function snapVault({ block }, hre) {
   });
   const shortfall = queue.queued.sub(queue.claimable);
   const unclaimed = queue.queued.sub(queue.claimed);
-  const available = wethBalance.add(queue.claimed).sub(queue.queued);
+  const available = assetBalance.add(queue.claimed).sub(queue.queued);
   const availablePercentage = available.mul(10000).div(totalSupply);
 
   const totalAssets = await vault.totalValue({
@@ -74,7 +88,7 @@ async function snapVault({ block }, hre) {
     .div(parseUnits("1"));
 
   console.log(
-    `Vault WETH      : ${formatUnits(wethBalance)}, ${wethBalance} wei`
+    `Vault assets    : ${formatUnits(assetBalance)}, ${assetBalance} wei`
   );
 
   console.log(
@@ -115,7 +129,7 @@ async function snapVault({ block }, hre) {
 async function addWithdrawalQueueLiquidity(_, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, "OETH");
+  const { vault } = await getContracts(hre);
 
   log(
     `About to call addWithdrawalQueueLiquidity() on the vault with address ${vault.address}`
@@ -127,7 +141,7 @@ async function addWithdrawalQueueLiquidity(_, hre) {
 async function allocate({ symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   log(
     `About to send a transaction to call allocate() on the ${symbol} vault with address ${vault.address}`
@@ -139,13 +153,13 @@ async function allocate({ symbol }, hre) {
 async function rebase({ symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   log(
     `About to send a transaction to call rebase() on the ${symbol} vault with address ${vault.address}`
   );
   const tx = await vault.connect(signer).rebase();
-  await logTxDetails(tx, "harvest");
+  await logTxDetails(tx, "rebase");
 }
 
 /**
@@ -178,7 +192,7 @@ async function yieldTask(_, hre) {
     usdt = await hre.ethers.getContract("MockUSDT");
   }
 
-  const { vault, oToken } = await getContract(hre, "OUSD");
+  const { vault, oToken } = await getContracts(hre, "OUSD");
 
   log("Sending yield to vault");
   let usdtBalance = await usdt.balanceOf(vault.address);
@@ -210,7 +224,7 @@ async function capital({ symbol, pause }, hre) {
 
   const sGovernor = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   if (isMainnet) {
     const signature = pause ? "pauseCapital()" : "unpauseCapital()";
@@ -234,20 +248,28 @@ async function capital({ symbol, pause }, hre) {
 async function mint({ amount, asset, symbol, min, approve }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const {
+    vault,
+    oToken,
+    asset: cAsset,
+  } = await getContracts(hre, symbol, asset);
 
-  const cAsset = await resolveAsset(asset);
   const assetUnits = parseUnits(amount.toString(), await cAsset.decimals());
   const minUnits = parseUnits(min.toString());
 
   if (approve) {
+    log(
+      `About to approve the ${await oToken.symbol()} Vault to spend ${amount} ${await cAsset.symbol()}`
+    );
     const approveTx = await cAsset
       .connect(signer)
       .approve(vault.address, assetUnits);
     await logTxDetails(approveTx, "approve");
   }
 
-  log(`About to mint ${symbol} using ${amount} ${asset}`);
+  log(
+    `About to mint ${await oToken.symbol()} using ${amount} ${await cAsset.symbol()}`
+  );
   const tx = await vault
     .connect(signer)
     .mint(cAsset.address, assetUnits, minUnits);
@@ -257,7 +279,7 @@ async function mint({ amount, asset, symbol, min, approve }, hre) {
 async function redeem({ amount, min, symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   const oTokenUnits = parseUnits(amount.toString());
   const minUnits = parseUnits(min.toString());
@@ -270,7 +292,7 @@ async function redeem({ amount, min, symbol }, hre) {
 async function redeemAll({ min, symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   const minUnits = parseUnits(min.toString());
 
@@ -330,7 +352,7 @@ async function resolveAmounts(amounts, assetContracts) {
 async function depositToStrategy({ amounts, assets, symbol, strategy }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   const strategyAddr = await resolveStrategyAddress(strategy, hre);
 
@@ -353,7 +375,7 @@ async function withdrawFromStrategy(
 ) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   const strategyAddr = await resolveStrategyAddress(strategy, hre);
 
@@ -373,7 +395,7 @@ async function withdrawFromStrategy(
 async function withdrawAllFromStrategy({ symbol, strategy }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   const strategyAddr = await resolveStrategyAddress(strategy, hre);
 
@@ -385,7 +407,7 @@ async function withdrawAllFromStrategy({ symbol, strategy }, hre) {
 async function withdrawAllFromStrategies({ symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   log(`About to withdraw all from all strategies`);
   const tx = await vault.connect(signer).withdrawAllFromStrategies();
@@ -397,7 +419,7 @@ async function requestWithdrawal({ amount, symbol }, hre) {
 
   const oTokenUnits = parseUnits(amount.toString());
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   // Get the withdrawal request ID by statically calling requestWithdrawal
   const { requestId } = await vault
@@ -414,7 +436,7 @@ async function requestWithdrawal({ amount, symbol }, hre) {
 async function claimWithdrawal({ requestId, symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContract(hre, symbol);
+  const { vault } = await getContracts(hre, symbol);
 
   log(
     `About to claim withdrawal from the ${symbol} vault for request ${requestId}`

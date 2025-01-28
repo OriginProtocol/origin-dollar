@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const { ethers } = require("ethers");
 const { defaultAbiCoder, formatUnits, hexDataSlice, parseEther, keccak256 } =
   require("ethers").utils;
 const { v4: uuidv4 } = require("uuid");
@@ -6,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const { storePrivateKeyToS3 } = require("./amazon");
 const { sleep } = require("./time");
 const { p2pApiEncodedKey } = require("./constants");
+const { mainnet } = require("./addresses");
 
 const log = require("./logger")("task:p2p");
 
@@ -171,8 +173,8 @@ const registerValidators = async ({
         break;
       }
 
-      log(`Waiting for 3 seconds...`);
-      await sleep(3000);
+      log(`Waiting for 5 seconds...`);
+      await sleep(5000);
     }
   };
 
@@ -543,8 +545,8 @@ const createValidatorRequest = async (
 
   await updateState(uuid, nextState, store);
 
-  log(`About to wait for 60 seconds for the P2P API to process the request...`);
-  await sleep(60000);
+  log(`About to wait for 90 seconds for the P2P API to process the request...`);
+  await sleep(90000);
 };
 
 const waitForTransactionAndUpdateStateOnSuccess = async (
@@ -579,9 +581,11 @@ const depositEth = async (
   pubkeys,
   depositData
 ) => {
-  // const { signature, depositDataRoot } = depositData;
   try {
     log(`About to stake ETH with:`);
+
+    // Check none of the validators are already registered
+    await depositFrontRunCheck(pubkeys, nativeStakingStrategy.provider);
 
     const validatorsStakeData = depositData.map((d) => ({
       pubkey: d.pubkey,
@@ -602,6 +606,44 @@ const depositEth = async (
     log(`Submitting transaction failed with: `, e);
     //await clearState(uuid, store, `Transaction to deposit to validator fails`)
     throw e;
+  }
+};
+
+const depositFrontRunCheck = async (pubkeys, provider) => {
+  const latestBlock = await provider.getBlockNumber();
+
+  // Create a contract instance
+  const depositContract = new ethers.Contract(
+    // Address
+    mainnet.beaconChainDepositContract,
+    // ABI
+    [
+      "event DepositEvent(bytes pubkey, bytes withdrawal_credentials, bytes amount, bytes signature, bytes index)",
+    ],
+    provider
+  );
+
+  // Check the events from the last 1000 blocks
+  const recentBlocks = 1000;
+  const filter = {
+    address: depositContract.address,
+    topics: [
+      "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5",
+    ],
+    fromBlock: latestBlock - recentBlocks,
+    toBlock: "latest",
+  };
+  const logs = await provider.getLogs(filter);
+  log(`Checking ${logs.length} logs for duplicate deposits of public keys:`);
+  log(pubkeys);
+
+  for (const eventLog of logs) {
+    const parsedLog = depositContract.interface.parseLog(eventLog);
+    const eventPubkey = parsedLog.args.pubkey;
+
+    if (pubkeys.includes(eventPubkey.toLowerCase())) {
+      throw Error(`Validator with pubkey ${eventPubkey} has already deposited`);
+    }
   }
 };
 

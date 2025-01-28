@@ -26,6 +26,7 @@ const handler = async (event) => {
 
   await doAccounting("NativeStakingSSVStrategyProxy", networkName, signer);
   await doAccounting("NativeStakingSSVStrategy2Proxy", networkName, signer);
+  await doAccounting("NativeStakingSSVStrategy3Proxy", networkName, signer);
 };
 
 const doAccounting = async (proxyName, networkName, signer) => {

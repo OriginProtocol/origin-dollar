@@ -23,6 +23,8 @@ const {
   isArbitrumOne,
   isBase,
   isBaseFork,
+  isSonic,
+  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -56,6 +58,7 @@ const {
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
+NUM_CONFIRMATIONS = isSonic ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -92,7 +95,10 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
-  const feeData = await hre.ethers.provider.getFeeData();
+  let feeData;
+  if (!useFeeData && !isSonic) {
+    feeData = await hre.ethers.provider.getFeeData();
+  }
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -110,7 +116,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -124,10 +130,15 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (
-    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
-    (isTest && !isForkTest)
-  ) {
+  const providerUrl = isBase
+    ? process.env.BASE_PROVIDER_URL
+    : isSonic
+    ? process.env.SONIC_PROVIDER_URL
+    : isHolesky
+    ? process.env.HOLESKY_PROVIDER_URL
+    : process.env.PROVIDER_URL;
+  if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
+    console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
   }
@@ -155,8 +166,9 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork) {
-    // Skip proxy check on base for now
+  if (isSonicFork) {
+    // Skip proxy check on sonic for now
+    console.log("Skipping proxy check on Sonic for now");
     return;
   }
 
@@ -167,6 +179,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     ![
       addresses.mainnet.Timelock.toLowerCase(),
       addresses.mainnet.OldTimelock.toLowerCase(),
+      addresses.base.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
@@ -180,7 +193,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
  */
 const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork");
+    throw new Error("impersonate Guardian only works on Fork");
   }
 
   // If an address is passed, use that otherwise default to
@@ -188,9 +201,11 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  await impersonateAndFund(guardianAddr);
+  const signer = await impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
+  signer.address = guardianAddr;
+  return signer;
 };
 
 /**
@@ -334,7 +349,7 @@ const executeProposalOnFork = async ({
 /**
  * Successfully execute the proposal whether it is in
  * "Pending", "Active" or "Queued" state.
- * Given a proposal Id, enqueues and executes it on OGV Governance.
+ * Given a proposal Id, enqueues and executes it on xOGN Governance.
  * @param {Number} proposalId
  * @returns {Promise<void>}
  */
@@ -453,7 +468,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Succeeded") {
     await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
-    newState = await getProposalState(proposalIdBn);
+    let newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
         `Proposal state should now be "Queued" but is ${newState}`
@@ -577,7 +592,7 @@ const submitProposalGnosisSafe = async (
   description,
   opts = {}
 ) => {
-  if (!isMainnet) {
+  if (!isMainnet && !isFork) {
     throw new Error("submitProposalGnosisSafe only works on Mainnet");
   }
 
@@ -671,7 +686,7 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
 };
 
 /**
- * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * In forked environment simulated that 5/8 multisig has submitted an xOGN
  * governance proposal
  *
  * @param {Array<Object>} proposalArgs
@@ -723,7 +738,7 @@ const submitProposalToOgvGovernance = async (
   );
   const proposalId = result.receipt.parsedLogs[0].args[0].toString();
 
-  log(`Submitted governance proposal to OGV governance ${proposalId}`);
+  log(`Submitted governance proposal to xOGN governance ${proposalId}`);
   if (!isMainnet) {
     await advanceBlocks(1);
   }
@@ -744,7 +759,7 @@ const sanityCheckOgvGovernance = async ({
   deployerIsProposer = false,
 } = {}) => {
   if (isMainnet) {
-    // only applicable when OGV governance is the governor
+    // only applicable when xOGN governance is the governor
     if (deployerIsProposer) {
       const governorSix = await getGovernorSix();
       const { deployerAddr } = await getNamedAccounts();
@@ -976,16 +991,17 @@ function constructContractMethod(contract, functionSignature) {
   };
 }
 
-function buildAndWriteGnosisJson(
+async function buildAndWriteGnosisJson(
   safeAddress,
   targets,
   contractMethods,
   contractInputsValues,
   name
 ) {
+  const { chainId } = await ethers.provider.getNetwork();
   const json = {
     version: "1.0",
-    chainId: "1",
+    chainId: chainId.toString(),
     createdAt: parseInt(Date.now() / 1000),
     meta: {
       name: "Transaction Batch",
@@ -1038,6 +1054,8 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const opHash = await timelock.hashOperationBatch(...args);
 
+  console.log("Proposal Hash", opHash);
+
   if (await timelock.isOperationDone(opHash)) {
     // Already executed
     return;
@@ -1050,7 +1068,11 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   const guardian = !isFork
     ? undefined
     : await impersonateAndFund(
-        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+        isBaseFork
+          ? addresses.base.governor
+          : isSonicFork
+          ? addresses.sonic.admin
+          : addresses.mainnet.Guardian
       );
 
   if (!isScheduled) {
@@ -1071,7 +1093,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
       delay: delay.toString(),
     };
 
-    buildAndWriteGnosisJson(
+    await buildAndWriteGnosisJson(
       addresses.mainnet.Guardian,
       [timelock.address],
       [contractMethod],
@@ -1120,7 +1142,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     salt: args[4],
   };
 
-  buildAndWriteGnosisJson(
+  await buildAndWriteGnosisJson(
     addresses.mainnet.Guardian,
     [timelock.address],
     [executionContractMethod],
@@ -1162,9 +1184,10 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
-    deployerIsProposer = false, // The deployer issues the propose to OGV Governor
+    deployerIsProposer = false, // The deployer issues the propose to xOGN Governor
     reduceQueueTime = false, // reduce governance queue times
     executeGasLimit = null,
+    skipSimulation = false, // Skips simulating execution of proposal on fork
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -1217,8 +1240,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
     // }
 
     if (isMainnet) {
-      // On Mainnet, only build the propose transaction for OGV governance
-      log("Building OGV governance proposal...");
+      // On Mainnet, only build the propose transaction for xOGN governance
+      log("Building xOGN governance proposal...");
       if (deployerIsProposer) {
         await submitProposalToOgvGovernance(
           propArgs,
@@ -1230,23 +1253,28 @@ function deploymentWithGovernanceProposal(opts, fn) {
       }
       log("Proposal sent.");
     } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending the governance proposal to OGV governance");
-      propOpts.reduceQueueTime = reduceQueueTime;
-      const { proposalState, proposalId, proposalIdBn } =
-        await submitProposalToOgvGovernance(
-          propArgs,
-          propDescription,
-          propOpts
-        );
-      log("Executing the proposal");
-      await executeGovernanceProposalOnFork({
-        proposalIdBn,
-        proposalState,
-        reduceQueueTime,
-        executeGasLimit,
-        existingProposal: false,
-      });
+      if (skipSimulation) {
+        log("Building xOGN governance proposal...");
+        await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      } else {
+        // On Fork we can send the proposal then impersonate the guardian to execute it.
+        log("Sending the governance proposal to xOGN governance");
+        propOpts.reduceQueueTime = reduceQueueTime;
+        const { proposalState, proposalId, proposalIdBn } =
+          await submitProposalToOgvGovernance(
+            propArgs,
+            propDescription,
+            propOpts
+          );
+        log("Executing the proposal");
+        await executeGovernanceProposalOnFork({
+          proposalIdBn,
+          proposalState,
+          reduceQueueTime,
+          executeGasLimit,
+          existingProposal: false,
+        });
+      }
       log("Proposal executed.");
     } else {
       throw new Error(
@@ -1431,6 +1459,15 @@ function deploymentWithProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
+    const networkName = isForkTest ? "hardhat" : "localhost";
+    const migrations = isFork
+      ? require(`./../deployments/${networkName}/.migrations.json`)
+      : {};
+
+    // Skip if proposal is older than 14 days
+    const olderProposal =
+      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
+
     /** Just for context of fork env change the id of the deployment script. This is required
      * in circumstances when:
      * - the deployment script has already been run on the mainnet
@@ -1450,11 +1487,15 @@ function deploymentWithProposal(opts, fn) {
      * And we can not package this inside of `skip` function since without this workaround it
      * doesn't even get evaluated.
      */
-    if (isFork && proposalId) {
+    if (isFork && proposalId && !olderProposal) {
       main.id = `${deployName}_force`;
     }
 
     main.skip = async () => {
+      if (olderProposal) {
+        return true;
+      }
+
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
