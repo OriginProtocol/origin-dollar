@@ -3,26 +3,36 @@ const { defaultBaseFixture } = require("../../_fixture-base");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
+const { impersonateAndFund } = require("../../../utils/signers");
+const { setERC20TokenBalance } = require("../../_fund");
+const hre = require("hardhat");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
 describe("Curve AMO strategy", function () {
-  let fixture;
+  let fixture,
+    oethbVault,
+    curveAMOStrategy,
+    oethb,
+    weth,
+    rafael,
+    governor,
+    defaultDepositor;
+
+  const defaultDeposit = oethUnits("5");
+
   beforeEach(async () => {
     fixture = await baseFixture();
-    const { oethbVault, governor, weth, curveAMOStrategy, nick } = fixture;
+    oethbVault = fixture.oethbVault;
+    curveAMOStrategy = fixture.curveAMOStrategy;
+    oethb = fixture.oethb;
+    weth = fixture.weth;
+    rafael = fixture.rafael;
+    governor = fixture.governor;
+    defaultDepositor = rafael;
 
-    // Set vaultBuffer to 0%
-    await oethbVault.connect(governor).setVaultBuffer(oethUnits("0"));
-    // Set Curve AMO as default strategy on the vault
-    await oethbVault
-      .connect(governor)
-      .setAssetDefaultStrategy(weth.address, curveAMOStrategy.address);
-
-    // Nick approve max to vault
-    await weth
-      .connect(nick)
-      .approve(oethbVault.address, oethUnits("100000000"));
+    // Set vaultBuffer to 100%
+    await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
   });
 
   describe("Initial paramaters", () => {
@@ -53,22 +63,46 @@ describe("Curve AMO strategy", function () {
       );
     });
 
-    it("Should user deposit", async () => {
-      const { oethbVault, curveAMOStrategy, oethb, weth, nick } = fixture;
+    it("Should let user deposit", async () => {
+      await mintAndDepositToStrategy();
 
-      const balanceBefore = await curveAMOStrategy.checkBalance(weth.address);
-      await oethbVault
-        .connect(nick)
-        .mint(weth.address, oethUnits("1"), oethUnits("0"));
-      const balanceAfter = await curveAMOStrategy.checkBalance(weth.address);
-      console.log(balanceBefore.toString());
-      console.log(balanceAfter.toString());
-
-      expect(await oethb.balanceOf(nick.address)).to.equal(oethUnits("1"));
+      // Balance should be at least 1WETH + min 1 OETH
+      expect(await curveAMOStrategy.checkBalance(weth.address)).to.be.gt(
+        defaultDeposit
+      );
+      expect(await oethb.balanceOf(defaultDepositor.address)).to.equal(
+        defaultDeposit
+      );
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
       );
-      expect(balanceAfter.sub(balanceBefore)).to.equal(oethUnits("1"));
     });
   });
+
+  const mintAndDepositToStrategy = async ({
+    userOverride,
+    amount,
+    returnTransaction,
+  } = {}) => {
+    const user = userOverride || defaultDepositor;
+    amount = amount || defaultDeposit;
+
+    const balance = weth.balanceOf(user.address);
+    if (balance < amount) {
+      await setERC20TokenBalance(user.address, weth, amount + balance, hre);
+    }
+    await weth.connect(user).approve(oethbVault.address, amount);
+    await oethbVault.connect(user).mint(weth.address, amount, amount);
+
+    const gov = await oethbVault.governor();
+    const tx = await oethbVault
+      .connect(await impersonateAndFund(gov))
+      .depositToStrategy(curveAMOStrategy.address, [weth.address], [amount]);
+
+    if (returnTransaction) {
+      return tx;
+    }
+
+    await expect(tx).to.emit(curveAMOStrategy, "Deposit");
+  };
 });
