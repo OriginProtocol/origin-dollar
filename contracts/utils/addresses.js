@@ -337,6 +337,12 @@ addresses.base.oethbBribesContract =
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 
+// Base Curve
+addresses.base.CRV = "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415";
+addresses.base.OETHb_WETH = {};
+addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
+addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
+
 // Sonic
 addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
