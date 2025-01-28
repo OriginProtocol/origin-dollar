@@ -157,7 +157,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   describe("Validator operations", function () {
     const stakeAmount = oethUnits("32");
     const depositToStrategy = async (amount) => {
-      const { weth, domen, nativeStakingSSVStrategy, oethVault, strategist } =
+      const { weth, domen, nativeStakingSSVStrategy, oethVault } =
         await context();
 
       // Add enough WETH to the Vault so it can be deposited to the strategy
@@ -170,9 +170,13 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         await weth.connect(domen).transfer(oethVault.address, transferAmount);
       }
 
+      const sStrategist = await ethers.provider.getSigner(
+        await oethVault.strategistAddr()
+      );
+
       // Deposit to the strategy
       return await oethVault
-        .connect(strategist)
+        .connect(sStrategist)
         .depositToStrategy(
           nativeStakingSSVStrategy.address,
           [weth.address],

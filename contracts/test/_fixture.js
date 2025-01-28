@@ -94,7 +94,12 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
-  let weth, ssv, nativeStakingSSVStrategy, oethDripper;
+  let weth,
+    ssv,
+    nativeStakingSSVStrategy,
+    oethDripper,
+    oethFixedRateDripper,
+    simpleOETHHarvester;
 
   if (isFork) {
     let addressContext = addresses.mainnet;
@@ -110,6 +115,16 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       "OETHDripper",
       oethDripperProxy.address
     );
+
+    const oethFixedRateDripperProxy = await ethers.getContract(
+      "OETHFixedRateDripperProxy"
+    );
+    oethFixedRateDripper = await ethers.getContractAt(
+      "OETHFixedRateDripper",
+      oethFixedRateDripperProxy.address
+    );
+
+    simpleOETHHarvester = await ethers.getContract("OETHHarvesterSimple");
 
     const nativeStakingStrategyProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
@@ -186,7 +201,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oeth,
     nativeStakingSSVStrategy,
     oethDripper,
+    oethFixedRateDripper,
     oethHarvester,
+    simpleOETHHarvester,
   };
 });
 
