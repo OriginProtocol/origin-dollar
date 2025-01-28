@@ -365,3 +365,5 @@ contract MorphoGauntletPrimeUSDTStrategyProxy is
 contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {}
