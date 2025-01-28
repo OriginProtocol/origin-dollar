@@ -8,7 +8,7 @@ const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/Cur
 
 // --------------------------------!!! / WARNING \ !!!-----------------------------------------
 //
-// `encodedSalt`, ProxyBytecode and PoolBoosterBytecode shoudl be EXACTLY the same as the 119 !!!
+// `encodedSalt`, ProxyBytecode and PoolBoosterBytecode should be EXACTLY the same as the 119 !!!
 // It is using createX to deploy contract at the SAME address as the one deployed in 119.
 //
 // --------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ module.exports = deployOnArb(
       ethers.utils.concat([
         ethers.utils.arrayify(rewardToken),
         ethers.utils.arrayify(gauge),
-        ethers.utils.arrayify(1)
+        ethers.utils.arrayify(1),
       ])
     );
 

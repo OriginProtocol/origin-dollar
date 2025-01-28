@@ -44,7 +44,7 @@ module.exports = deploymentWithGovernanceProposal(
       ethers.utils.concat([
         ethers.utils.arrayify(rewardToken),
         ethers.utils.arrayify(gauge),
-        ethers.utils.arrayify(1)
+        ethers.utils.arrayify(1),
       ])
     );
 
