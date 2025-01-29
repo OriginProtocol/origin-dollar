@@ -1,7 +1,9 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
+  isArbitrum,
   isArbitrumFork,
+  isArbForkTest,
   isHoleskyFork,
   isHolesky,
   isForkTest,
@@ -91,6 +93,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/base";
 } else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
   paths.deploy = "deploy/sonic";
+} else if (isArbitrum || isArbitrumFork || isArbForkTest) {
+  paths.deploy = "deploy/arbitrumOne";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
