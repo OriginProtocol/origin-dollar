@@ -704,9 +704,14 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       "Pending withdrawals not reduced by expected amount"
     );
 
-    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.equal(
+    // the strategy will keep yielding so the balance can be higher
+    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.gte(
       contractBalanceBefore.sub(amountToWithdraw),
-      "Strategy checkBalance not reduced by expected amount"
+      "Strategy checkBalance reduced by too much"
+    );
+    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.lt(
+      contractBalanceBefore,
+      "Strategy checkBalance not reduced"
     );
   };
 
