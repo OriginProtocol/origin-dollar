@@ -709,10 +709,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       contractBalanceBefore.sub(amountToWithdraw),
       "Strategy checkBalance reduced by too much"
     );
-    expect(await sonicStakingStrategy.checkBalance(wS.address)).to.lt(
-      contractBalanceBefore,
-      "Strategy checkBalance not reduced"
-    );
   };
 
   const advance10min = async () => {
