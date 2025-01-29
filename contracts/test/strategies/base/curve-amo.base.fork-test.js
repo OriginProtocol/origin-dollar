@@ -15,12 +15,15 @@ describe("Curve AMO strategy", function () {
     curveAMOStrategy,
     oethb,
     weth,
+    nick,
     rafael,
     governor,
     defaultDepositor,
+    curvePool,
     curveGauge;
 
   const defaultDeposit = oethUnits("5");
+  const defaultErrorTolerance = oethUnits("0.9999").div(oethUnits("1"));
 
   beforeEach(async () => {
     fixture = await baseFixture();
@@ -28,10 +31,15 @@ describe("Curve AMO strategy", function () {
     curveAMOStrategy = fixture.curveAMOStrategy;
     oethb = fixture.oethb;
     weth = fixture.weth;
+    nick = fixture.nick;
     rafael = fixture.rafael;
     governor = fixture.governor;
     defaultDepositor = rafael;
+    curvePool = fixture.curvePoolOEthbWeth;
     curveGauge = fixture.curveGaugeOETHbWETH;
+
+    // Start with a balanced pool
+    await balancingPool();
 
     // Set vaultBuffer to 100%
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
@@ -68,12 +76,17 @@ describe("Curve AMO strategy", function () {
     it("Should let user deposit", async () => {
       await mintAndDepositToStrategy();
 
-      // Balance should be at least 1WETH + min 1 OETH
+      // Balance should be for 1 deposited OETH:
+      // - minimum 1 WETH + 1 OETH
+      // - maximum 1 WETH + 2 OETH
       expect(await curveAMOStrategy.checkBalance(weth.address)).to.be.gt(
-        defaultDeposit
+        defaultDeposit.mul(2).mul(defaultErrorTolerance)
+      );
+      expect(await curveAMOStrategy.checkBalance(weth.address)).to.be.lt(
+        defaultDeposit.mul(3)
       );
       expect(await curveGauge.balanceOf(curveAMOStrategy.address)).to.be.gt(
-        defaultDeposit
+        defaultDeposit.mul(2).mul(defaultErrorTolerance)
       );
       expect(await oethb.balanceOf(defaultDepositor.address)).to.equal(
         defaultDeposit
@@ -109,5 +122,35 @@ describe("Curve AMO strategy", function () {
     }
 
     await expect(tx).to.emit(curveAMOStrategy, "Deposit");
+  };
+
+  const balancingPool = async () => {
+    const balances = await curvePool.get_balances();
+    const balanceWETH = balances[0];
+    const balanceOETH = balances[1];
+
+    if (balanceWETH > balanceOETH) {
+      const amount = balanceWETH.sub(balanceOETH);
+      const balance = weth.balanceOf(nick.address);
+      if (balance < amount) {
+        await setERC20TokenBalance(nick.address, weth, amount + balance, hre);
+      }
+      await weth.connect(nick).approve(oethbVault.address, amount);
+      await oethbVault.connect(nick).mint(weth.address, amount, amount);
+      await oethb.connect(nick).approve(curvePool.address, amount);
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["add_liquidity(uint256[],uint256)"]([0, amount], 0);
+    } else if (balanceWETH < balanceOETH) {
+      const amount = balanceOETH.sub(balanceWETH);
+      const balance = weth.balanceOf(nick.address);
+      if (balance < amount) {
+        await setERC20TokenBalance(nick.address, weth, amount + balance, hre);
+      }
+      await weth.connect(nick).approve(curvePool.address, amount);
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["add_liquidity(uint256[],uint256)"]([amount, 0], 0);
+    }
   };
 });
