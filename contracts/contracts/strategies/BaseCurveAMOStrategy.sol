@@ -14,6 +14,7 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
 import { ICurveXChainLiquidityGauge } from "../interfaces/ICurveXChainLiquidityGauge.sol";
+import { IChildLiquidityGaugeFactory } from "../interfaces/IChildLiquidityGaugeFactory.sol";
 
 contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -28,6 +29,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
 
     // New immutable variables that must be set in the constructor
+    IChildLiquidityGaugeFactory public immutable gaugeFactory;
     ICurveXChainLiquidityGauge public immutable gauge;
     ICurveStableSwapNG public immutable curvePool;
     IERC20 public immutable lpToken;
@@ -90,7 +92,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         BaseStrategyConfig memory _baseConfig,
         address _oeth,
         address _weth,
-        address _gauge
+        address _gauge,
+        address _gaugeFactory
     ) InitializableAbstractStrategy(_baseConfig) {
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
@@ -98,6 +101,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         oeth = IERC20(_oeth);
         weth = IWETH9(_weth);
         gauge = ICurveXChainLiquidityGauge(_gauge);
+        gaugeFactory = IChildLiquidityGaugeFactory(_gaugeFactory);
     }
 
     /**
@@ -494,7 +498,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
+     * @notice Collect accumulated CRV (and other) rewards and send to the Harvester.
      */
     function collectRewardTokens()
         external
@@ -502,8 +506,22 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         onlyHarvester
         nonReentrant
     {
-        // Collect gauge reward token (CRV)
+        // CRV rewards flow.
+        //---
+        // CRV inflation:
+        // Gauge receive CRV rewards from inflation.
+        // Each checkpoint on the gauge send this CRV inflation to gauge factory.
+        // This strategy should call mint on the gauge factory to collect the CRV rewards.
+        // ---
+        // Extra rewards:
+        // Calling claim_rewards on the gauge will only claim extra rewards (outside of CRV).
+        // ---
+
+        // Mint CRV on Child Liquidity gauge factory
+        gaugeFactory.mint(address(gauge));
+        // Collect extra gauge rewards (outside of CRV)
         gauge.claim_rewards();
+
         _collectRewardTokens();
     }
 

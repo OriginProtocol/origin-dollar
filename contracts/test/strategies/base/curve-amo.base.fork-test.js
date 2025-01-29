@@ -24,7 +24,12 @@ describe("Curve AMO strategy", function () {
     curveGauge,
     impersonatedVaultSigner,
     impersonatedStrategist,
-    impersonatedHarvester;
+    impersonatedHarvester,
+    impersonatedCurveGaugeFactory,
+    impersonatedAMOGovernor,
+    curveChildLiquidityGaugeFactory,
+    crv,
+    harvester;
 
   const defaultDeposit = oethUnits("5");
 
@@ -40,17 +45,28 @@ describe("Curve AMO strategy", function () {
     defaultDepositor = rafael;
     curvePool = fixture.curvePoolOEthbWeth;
     curveGauge = fixture.curveGaugeOETHbWETH;
+    curveChildLiquidityGaugeFactory = fixture.curveChildLiquidityGaugeFactory;
+    crv = fixture.crv;
+    harvester = fixture.harvester;
 
     impersonatedVaultSigner = await impersonateAndFund(oethbVault.address);
     impersonatedStrategist = await impersonateAndFund(
       await oethbVault.strategistAddr()
     );
-    impersonatedHarvester = await impersonateAndFund(
-      await curveAMOStrategy.harvesterAddress()
+    impersonatedHarvester = await impersonateAndFund(harvester.address);
+    impersonatedCurveGaugeFactory = await impersonateAndFund(
+      curveChildLiquidityGaugeFactory.address
+    );
+    impersonatedAMOGovernor = await impersonateAndFund(
+      await curveAMOStrategy.governor()
     );
 
     // Set vaultBuffer to 100%
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
+
+    await curveAMOStrategy
+      .connect(impersonatedAMOGovernor)
+      .setHarvesterAddress(harvester.address);
   });
 
   describe("Initial paramaters", () => {
@@ -220,17 +236,20 @@ describe("Curve AMO strategy", function () {
 
     it("Should collectRewardTokens", async () => {
       await mintAndDepositToStrategy();
-      await advanceTime(1000);
-      console.log(await curveGauge.reward_count());
-      console.log(
-        await curveGauge.claimable_reward(
-          curveAMOStrategy.address,
-          addresses.base.CRV
-        )
-      );
+      await simulateCRVInflation({
+        amount: oethUnits("1000000"),
+        timejump: 60,
+        checkpoint: true,
+      });
+
+      const balanceCRVHarvesterBefore = await crv.balanceOf(harvester.address);
       await curveAMOStrategy
         .connect(impersonatedHarvester)
         .collectRewardTokens();
+      const balanceCRVHarvesterAfter = await crv.balanceOf(harvester.address);
+
+      expect(balanceCRVHarvesterAfter).to.be.gt(balanceCRVHarvesterBefore);
+      expect(await crv.balanceOf(curveGauge.address)).to.equal(0);
     });
   });
 
@@ -335,6 +354,20 @@ describe("Curve AMO strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, oethbAmount], 0);
+    }
+  };
+
+  const simulateCRVInflation = async ({
+    amount,
+    timejump,
+    checkpoint,
+  } = {}) => {
+    await setERC20TokenBalance(curveGauge.address, crv, amount, hre);
+    await advanceTime(timejump);
+    if (checkpoint) {
+      curveGauge
+        .connect(impersonatedCurveGaugeFactory)
+        .user_checkpoint(curveAMOStrategy.address);
     }
   };
 });

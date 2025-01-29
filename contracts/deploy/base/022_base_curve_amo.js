@@ -38,6 +38,7 @@ module.exports = deployOnBaseWithGuardian(
         cOETHbProxy.address,
         addresses.base.WETH,
         addresses.base.OETHb_WETH.gauge,
+        addresses.base.childLiquidityGaugeFactory,
       ]
     );
     const cOETHBaseCurveAMO = await ethers.getContractAt(
