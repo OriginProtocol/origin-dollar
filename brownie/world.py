@@ -1,6 +1,6 @@
 from world_abstract import *
 
-std = {'from': STRATEGIST}
+std = {'from': MULTICHAIN_STRATEGIST}
 
 # ousd = Contract.from_explorer(OUSD, as_proxy_for=OUSD_IMPL)
 # usdt = Contract.from_explorer(USDT)
