@@ -18,8 +18,6 @@ module.exports = deploymentWithGovernanceProposal(
     // 2. Change harvester on all SSV strategies
     // 3. Support strategies on the harvester
     // 4. Sending all WETH from the OldDripper to FixedRateDripper
-    // 5. Update harvester on OETH AMO
-    // 6. Support AMO strategy on new harvester
     // --------------
 
     // 1. Deploy new simple Harvester
@@ -77,12 +75,6 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHDripperProxy.address
     );
 
-    // 5. Update harvester on OETH AMO
-    const cAMO = await ethers.getContractAt(
-      "ConvexEthMetaStrategy",
-      addresses.mainnet.ConvexOETHAMOStrategy
-    );
-
     // Governance Actions
     // ----------------
     return {
@@ -127,20 +119,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHDripper,
           signature: "transferAllToken(address,address)",
           args: [addresses.mainnet.WETH, cOETHFixedRateDripperProxy.address],
-        },
-
-        // 5. Update harvester on OETH AMO
-        {
-          contract: cAMO,
-          signature: "setHarvesterAddress(address)",
-          args: [cOETHHarvesterSimple.address],
-        },
-
-        // 6. Support AMO strategy on new harvester
-        {
-          contract: cOETHHarvesterSimple,
-          signature: "setSupportedStrategy(address,bool)",
-          args: [cAMO.address, true],
         },
       ],
     };
