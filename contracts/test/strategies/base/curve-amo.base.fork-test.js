@@ -32,6 +32,7 @@ describe("Curve AMO strategy", function () {
     impersonatedHarvester,
     impersonatedCurveGaugeFactory,
     impersonatedAMOGovernor,
+    impersonatedCurveStrategy,
     curveChildLiquidityGaugeFactory,
     impersonatedTimelock,
     crv,
@@ -72,6 +73,9 @@ describe("Curve AMO strategy", function () {
       await curveAMOStrategy.governor()
     );
     impersonatedTimelock = await impersonateAndFund(timelock.address);
+    impersonatedCurveStrategy = await impersonateAndFund(
+      curveAMOStrategy.address
+    );
 
     // Set vaultBuffer to 100%
     await oethbVault
@@ -264,6 +268,193 @@ describe("Curve AMO strategy", function () {
 
       expect(balanceCRVHarvesterAfter).to.be.gt(balanceCRVHarvesterBefore);
       expect(await crv.balanceOf(curveGauge.address)).to.equal(0);
+    });
+  });
+
+  describe("Should revert when", () => {
+    it("Deposit: Must deposit something", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .deposit(weth.address, 0)
+      ).to.be.revertedWith("Must deposit something");
+    });
+    it("Deposit: Can only deposit WETH", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .deposit(oethb.address, defaultDeposit)
+      ).to.be.revertedWith("Can only deposit WETH");
+    });
+    it("Deposit: Caller is not the Vault", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .deposit(weth.address, defaultDeposit)
+      ).to.be.revertedWith("Caller is not the Vault");
+    });
+    it("Deposit: Protocol is insolvent", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      // Make protocol insolvent by minting a lot of OETH
+      // This is a cheat.
+      // prettier-ignore
+      await oethbVault
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+
+      await expect(
+        mintAndDepositToStrategy({ returnTransaction: true })
+      ).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Withdraw: Must withdraw something", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .withdraw(oethbVault.address, weth.address, 0)
+      ).to.be.revertedWith("Must withdraw something");
+    });
+    it("Withdraw: Can only withdraw WETH", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .withdraw(oethbVault.address, oethb.address, defaultDeposit)
+      ).to.be.revertedWith("Can only withdraw WETH");
+    });
+    it("Withdraw: Caller is not the vault", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .withdraw(oethbVault.address, weth.address, defaultDeposit)
+      ).to.be.revertedWith("Caller is not the Vault");
+    });
+    it("Withdraw: Amount is greater than balance", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .withdraw(oethbVault.address, weth.address, oethUnits("1000000"))
+      ).to.be.revertedWith("");
+    });
+    it("Withdraw: Protocol is insolvent", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+
+      // Make protocol insolvent by minting a lot of OETH and send them
+      // Otherwise they will be burned and the protocol will not be insolvent.
+      // This is a cheat.
+      // prettier-ignore
+      await oethbVault
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+      await oethb
+        .connect(impersonatedCurveStrategy)
+        .transfer(oethbVault.address, oethUnits("1000000"));
+
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedVaultSigner)
+          .withdraw(oethbVault.address, weth.address, defaultDeposit)
+      ).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Mint OToken: Asset overshot peg", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      await unbalancePool({ wethbAmount: defaultDeposit }); // +5 WETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .mintAndAddOTokens(defaultDeposit.mul(2))
+      ).to.be.revertedWith("Assets overshot peg");
+    });
+    it("Mint OToken: OTokens balance worse", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      await unbalancePool({ oethbAmount: defaultDeposit.mul(2) }); // +10 OETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .mintAndAddOTokens(defaultDeposit)
+      ).to.be.revertedWith("OTokens balance worse");
+    });
+    it("Mint OToken: Protocol insolvent", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      // prettier-ignore
+      await oethbVault
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .mintAndAddOTokens(defaultDeposit)
+      ).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Burn OToken: Asset balance worse", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      await unbalancePool({ wethbAmount: defaultDeposit.mul(2) }); // +10 WETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeAndBurnOTokens(defaultDeposit)
+      ).to.be.revertedWith("Assets balance worse");
+    });
+    it("Burn OToken: OTokens overshot peg", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      await unbalancePool({ oethbAmount: defaultDeposit }); // +5 OETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeAndBurnOTokens(defaultDeposit)
+      ).to.be.revertedWith("OTokens overshot peg");
+    });
+    it("Burn OToken: Protocol insolvent", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+      // prettier-ignore
+      await oethbVault
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeAndBurnOTokens(defaultDeposit)
+      ).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Remove only assets: Asset overshot peg", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      await unbalancePool({ wethbAmount: defaultDeposit.mul(2) }); // +10 WETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeOnlyAssets(defaultDeposit.mul(3))
+      ).to.be.revertedWith("Assets overshot peg");
+    });
+    it("Remove only assets: OTokens balance worse", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      await unbalancePool({ oethbAmount: defaultDeposit.mul(2) }); // +10 OETH in the pool
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeOnlyAssets(defaultDeposit)
+      ).to.be.revertedWith("OTokens balance worse");
+    });
+    it("Remove only assets: Protocol insolvent", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      // prettier-ignore
+      await oethbVault
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedStrategist)
+          .removeOnlyAssets(defaultDeposit)
+      ).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Check balance: Unsupported asset", async () => {
+      await expect(
+        curveAMOStrategy.checkBalance(oethb.address)
+      ).to.be.revertedWith("Unsupported asset");
     });
   });
 
