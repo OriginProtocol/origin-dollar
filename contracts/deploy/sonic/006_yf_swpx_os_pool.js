@@ -3,7 +3,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
   {
-    deployName: "005_yf_swpx_os_pool",
+    deployName: "006_yf_swpx_os_pool",
   },
   async ({ ethers }) => {
     const cOSonicProxy = await ethers.getContract("OSonicProxy");
