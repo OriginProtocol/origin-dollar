@@ -288,7 +288,7 @@ describe("Curve AMO strategy", function () {
     ...fixture,
     strategy: curveAMOStrategy,
     vault: oethbVault,
-    assets: [fixture.weth],
+    assets: [weth],
     usdt: crv,
     usdc: crv,
     dai: crv,

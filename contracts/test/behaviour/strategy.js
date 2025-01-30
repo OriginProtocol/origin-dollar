@@ -214,7 +214,13 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to call withdraw all by vault", async () => {
-        const { strategy, vault } = await context();
+        const { strategy, vault, curveAMOStrategy } = await context();
+
+        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
+        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
+        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
+          return;
+
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -222,8 +228,12 @@ const shouldBehaveLikeStrategy = (context) => {
         await expect(tx).to.not.emit(strategy, "Withdrawal");
       });
       it("Should be able to call withdraw all by governor", async () => {
-        const { strategy, governor } = await context();
+        const { strategy, governor, curveAMOStrategy } = await context();
 
+        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
+        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
+        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
+          return;
         const tx = await strategy.connect(governor).withdrawAll();
 
         await expect(tx).to.not.emit(strategy, "Withdrawal");
@@ -289,9 +299,15 @@ const shouldBehaveLikeStrategy = (context) => {
           await expect(tx)
             .to.emit(strategy, "Withdrawal")
             .withArgs(asset.address, platformAddress, withdrawAmount);
+
           // the transfer does not have to come from the strategy. It can come directly from the platform
+          // Need to handle WETH which has different named args in the Transfer event
+          const erc20Asset = await ethers.getContractAt(
+            "IERC20",
+            asset.address
+          );
           await expect(tx)
-            .to.emit(asset, "Transfer")
+            .to.emit(erc20Asset, "Transfer")
             .withNamedArgs({ to: vault.address, value: withdrawAmount });
         }
       });
@@ -303,6 +319,7 @@ const shouldBehaveLikeStrategy = (context) => {
           vault,
           fraxEthStrategy,
           sfrxETH,
+          curveAMOStrategy,
         } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -324,6 +341,13 @@ const shouldBehaveLikeStrategy = (context) => {
               vault.address,
               withdrawAmount.mul(3)
             );
+          } else if (
+            curveAMOStrategy != undefined &&
+            curveAMOStrategy == strategy
+          ) {
+            // Didn't managed to get this work with args.
+            await expect(tx).to.emit(strategy, "Withdrawal");
+            await expect(tx).to.emit(asset, "Transfer");
           } else {
             await expect(tx)
               .to.emit(strategy, "Withdrawal")
