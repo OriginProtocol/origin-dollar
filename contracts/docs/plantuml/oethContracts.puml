@@ -49,7 +49,7 @@ object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
 asset: WETH
 }
 
-object "OETHHarvesterSimple" as harv <<Origin>> #$originColor {
+object "OETHHarvesterSimple" as harv <<Origin>><<Proxy>> #$originColor {
     rewards: WETH, CRV, CVX
 }
 
