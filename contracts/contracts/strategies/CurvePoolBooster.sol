@@ -295,7 +295,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
             // Transfer the fee to the feeCollector
-            IERC20(rewardToken).transfer(feeCollector, feeAmount);
+            IERC20(rewardToken).safeTransfer(feeCollector, feeAmount);
             emit FeeCollected(feeCollector, feeAmount);
 
             return IERC20(rewardToken).balanceOf(address(this));
@@ -344,7 +344,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
-        IERC20(token).transfer(receiver, balance);
+        IERC20(token).safeTransfer(receiver, balance);
         emit TokensRescued(token, balance, receiver);
     }
 
