@@ -33,6 +33,8 @@ dripper = load_contract('oethb_dripper', OETHB_DRIPPER)
 
 harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
+ccip_router = load_contract('ccip_router', BASE_CCIP_ROUTER)
+
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
