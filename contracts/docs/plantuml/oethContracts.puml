@@ -49,12 +49,8 @@ object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
 asset: WETH
 }
 
-object "OETHHarvester" as harv <<Origin>><<Proxy>> #$originColor {
-    rewards: WETH
-}
-
-object "OETHHarvesterSimple" as harvSimple <<Origin>> #$originColor {
-    rewards: CRV, CVX
+object "OETHHarvesterSimple" as harv <<Origin>> #$originColor {
+    rewards: WETH, CRV, CVX
 }
 
 ' Strategies
@@ -182,7 +178,7 @@ oeth <.> oethv
 ' oracle ...> chain
 
 ' Convex ETH Metapool Strategy
-harvSimple <..> cvxStrat
+harv <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
 
