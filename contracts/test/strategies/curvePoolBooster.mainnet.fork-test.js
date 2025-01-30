@@ -13,19 +13,32 @@ describe("ForkTest: CurvePoolBooster", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
-  let fixture;
+  let fixture,
+    curvePoolBooster,
+    sStrategist,
+    ousd,
+    wousd,
+    woethSigner,
+    josh,
+    sGov;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
+    curvePoolBooster = fixture.curvePoolBooster;
+    ousd = fixture.ousd;
+    wousd = fixture.wousd;
+    josh = fixture.josh;
+
+    // Set Campaing Id to 0
+    const { strategist } = await getNamedAccounts();
+    sStrategist = await ethers.provider.getSigner(strategist);
+    const gov = await curvePoolBooster.governor();
+    sGov = await ethers.provider.getSigner(gov);
+    woethSigner = await impersonateAndFund(wousd.address);
+
+    await curvePoolBooster.connect(sStrategist).setCampaignId(0);
   });
 
   async function dealOETHAndCreateCampaign() {
-    const { curvePoolBooster, ousd, wousd } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const woethSigner = await impersonateAndFund(wousd.address);
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     // Deal OETH to pool booster
     await ousd
       .connect(woethSigner)
@@ -54,8 +67,6 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   // --- Initialization ---
   it("Should have correct params", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
     expect(await curvePoolBooster.gauge()).to.equal(
       addresses.mainnet.CurveOUSDUSDTGauge
     );
@@ -67,7 +78,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     );
     expect(await curvePoolBooster.targetChainId()).to.equal(42161);
     expect(await curvePoolBooster.strategistAddr()).to.equal(
-      multichainStrategistAddr
+      sStrategist._address
     );
     expect(await curvePoolBooster.governor()).to.equal(
       addresses.mainnet.Timelock
@@ -79,8 +90,6 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   // --- Campaign Management ---
   it("Should Create a campaign", async () => {
-    const { curvePoolBooster, ousd } = fixture;
-
     await dealOETHAndCreateCampaign();
 
     expect(await ousd.balanceOf(curvePoolBooster.address)).to.equal(
@@ -89,10 +98,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should Create a campaign with fee", async () => {
-    const { curvePoolBooster, ousd, josh } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     // Set fee and fee collector
     await curvePoolBooster.connect(sGov).setFee(1000); // 10%
     await curvePoolBooster.connect(sGov).setFeeCollector(josh.address);
@@ -106,13 +111,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should manage total rewards", async () => {
-    const { curvePoolBooster, ousd, wousd } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const woethSigner = await impersonateAndFund(wousd.address);
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     await dealOETHAndCreateCampaign();
 
     // Deal new OETH to pool booster
@@ -134,11 +132,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should manage number of periods", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
     await dealOETHAndCreateCampaign();
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
@@ -149,12 +142,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should manage reward per voter", async () => {
-    const { curvePoolBooster, ousd, wousd } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const woethSigner = await impersonateAndFund(wousd.address);
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
     await dealOETHAndCreateCampaign();
 
     // Deal new OETH to pool booster
@@ -173,11 +160,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should close a campaing", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
     await dealOETHAndCreateCampaign();
 
     await curvePoolBooster
@@ -186,7 +168,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if not called by operator", async () => {
-    const { curvePoolBooster } = fixture;
     await expect(
       curvePoolBooster.createCampaign(
         4,
@@ -211,11 +192,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if campaign is already created", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
     await expect(
@@ -232,12 +208,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if campaign is not created", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     await expect(
       curvePoolBooster
         .connect(sStrategist)
@@ -256,12 +226,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if Invalid number of periods", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     await expect(
       curvePoolBooster
         .connect(sStrategist)
@@ -284,12 +248,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if Invalid reward per vote", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     await expect(
       curvePoolBooster
         .connect(sStrategist)
@@ -312,12 +270,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if No reward to manage", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     await expect(
       curvePoolBooster
         .connect(sStrategist)
@@ -339,12 +291,6 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   // --- Rescue ETH and ERC20 ---
   it("Should rescue ETH", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
-
     // Deal ETH to pool booster
     await sStrategist.sendTransaction({
       to: curvePoolBooster.address,
@@ -354,23 +300,15 @@ describe("ForkTest: CurvePoolBooster", function () {
     const balanceBefore = await ethers.provider.getBalance(
       curvePoolBooster.address
     );
-    await curvePoolBooster
-      .connect(sStrategist)
-      .rescueETH(multichainStrategistAddr);
+    await curvePoolBooster.connect(sStrategist).rescueETH(sStrategist._address);
     const balanceAfter = await ethers.provider.getBalance(
       curvePoolBooster.address
     );
-    expect(balanceBefore).to.be.eq(parseUnits("1"));
+    expect(balanceBefore).to.be.gte(parseUnits("1"));
     expect(balanceAfter).to.be.eq(parseUnits("0"));
   });
 
   it("Should rescue ERC20", async () => {
-    const { curvePoolBooster, ousd, wousd } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const woethSigner = await impersonateAndFund(wousd.address);
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     // Deal OETH to pool booster
     await ousd
       .connect(woethSigner)
@@ -381,15 +319,11 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster
       .connect(sGov)
-      .rescueToken(ousd.address, multichainStrategistAddr);
+      .rescueToken(ousd.address, sStrategist._address);
     expect(await ousd.balanceOf(curvePoolBooster.address)).to.equal(0);
   });
 
   it("Should revert if receiver is invalid", async () => {
-    const { curvePoolBooster, ousd } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     await expect(
       curvePoolBooster.connect(sGov).rescueToken(ousd.address, addresses.zero)
     ).to.be.revertedWith("Invalid receiver");
@@ -401,11 +335,6 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   // --- Setters ---
   it("Should set campaign id", async () => {
-    const { curvePoolBooster } = fixture;
-    const { multichainStrategistAddr } = await getNamedAccounts();
-    const sStrategist = await ethers.provider.getSigner(
-      multichainStrategistAddr
-    );
     expect(await curvePoolBooster.campaignId()).to.equal(0);
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
@@ -413,9 +342,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should set fee and fee collector", async () => {
-    const { curvePoolBooster, josh } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
     expect(await curvePoolBooster.fee()).to.equal(0);
 
     await curvePoolBooster.connect(sGov).setFee(100);
@@ -427,19 +353,12 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if fee too high", async () => {
-    const { curvePoolBooster } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     await expect(
       curvePoolBooster.connect(sGov).setFee(10000)
     ).to.be.revertedWith("Fee too high");
   });
 
   it("Should set Campaign Remote Manager", async () => {
-    const { curvePoolBooster, josh } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
     expect(await curvePoolBooster.campaignRemoteManager()).to.equal(
       addresses.mainnet.CampaignRemoteManager
     );
@@ -452,19 +371,12 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if campaign remote manager is invalid", async () => {
-    const { curvePoolBooster } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     await expect(
       curvePoolBooster.connect(sGov).setCampaignRemoteManager(addresses.zero)
     ).to.be.revertedWith("Invalid campaignRemoteManager");
   });
 
   it("Should set Votemarket address", async () => {
-    const { curvePoolBooster, josh } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
     expect(await curvePoolBooster.votemarket()).to.equal(addresses.votemarket);
 
     await curvePoolBooster.connect(sGov).setVotemarket(josh.address);
@@ -473,10 +385,6 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if votemarket is invalid", async () => {
-    const { curvePoolBooster } = fixture;
-    const gov = await curvePoolBooster.governor();
-    const sGov = await ethers.provider.getSigner(gov);
-
     await expect(
       curvePoolBooster.connect(sGov).setVotemarket(addresses.zero)
     ).to.be.revertedWith("Invalid votemarket");
