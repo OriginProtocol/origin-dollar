@@ -18,16 +18,11 @@ async function getAddressesAndBalances(oTokenAddress, maxBlockNumber, csvFileNam
   while (true) {
     console.log(`Running query batchSize: ${batchSize}, offset: ${offset}`);
     const batch = await sql`
-      SELECT b.account, b.balance, b.block_number FROM (
-        SELECT DISTINCT ON (account) account, balance, block_number
-        FROM erc20_balance
+      SELECT b.account, b.balance FROM (
+        SELECT DISTINCT ON (account) account, balance
+        FROM erc20_holder
         WHERE address = ${oTokenAddress}
-        ${
-          maxBlockNumber > 0 ?
-            blockSmallerOrEq(maxBlockNumber) :
-            sql``
-        }
-        ORDER BY account, block_number DESC
+        ORDER BY account
         LIMIT ${batchSize} 
         OFFSET ${offset}
       ) b WHERE balance > 0
@@ -36,7 +31,7 @@ async function getAddressesAndBalances(oTokenAddress, maxBlockNumber, csvFileNam
     if (batch.length === 0) break;
 
     batch.forEach((row) => {
-      allAddresses.push([row.account, row.balance, row.block_number].join(','))
+      allAddresses.push([row.account, row.balance].join(','))
       //console.log(`account: ${row.account} balance: ${row.balance} block_number: ${row.block_number}`)
     });
     offset += batchSize;
