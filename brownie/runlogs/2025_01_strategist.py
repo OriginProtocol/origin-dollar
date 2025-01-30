@@ -148,3 +148,34 @@ def main():
     )
 
     print(to_gnosis_json(txs, MULTICHAIN_STRATEGIST, "1"))
+
+# -------------------------------------
+# Jan 29, 2025 - Bridge wOETH to Ethereum
+# -------------------------------------
+from world_base import *
+import eth_abi
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+
+    eth_chain_selector = 5009297550715157269
+    amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    # bridge wOETH to Ethereum using CCIP
+    txs.append(
+      woeth.approve(BASE_CCIP_ROUTER, amount, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    txs.append(
+      ccip_router.ccipSend(
+        eth_chain_selector,
+        [
+          eth_abi.encode(['address'], [MULTICHAIN_STRATEGIST]),
+          '0x',
+          [(BRIDGED_WOETH_BASE, amount)],
+          ADDR_ZERO,
+          '0x97a657c9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        ],
+        {'from': MULTICHAIN_STRATEGIST, 'value': 0.003 * 10**18}
+      )
+    )

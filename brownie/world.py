@@ -95,6 +95,8 @@ cvx = load_contract('ERC20', CVX)
 
 uniswap_v3_quoter = load_contract('uniswap_v3_quoter', UNISWAP_V3_QUOTER)
 
+oeth_arm = load_contract('oeth_arm', OETH_ARM)
+
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
 CONTRACT_ADDRESSES[HARVESTER.lower()] = {'name': 'Harvester'}

@@ -76,15 +76,8 @@ main()
     fi
 
     if [ -z "$1" ]; then
-        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
-            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.holesky.fork-test.js"
-        else
-            # Run all files with `.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.fork-test.js"
-        fi
+        # Run all files and let global-hooks decide which ones to run
+        params+=""
     else
         # Run specific files when a param is given
         params+="$@"
