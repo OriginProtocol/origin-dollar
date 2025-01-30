@@ -286,9 +286,15 @@ describe("Curve AMO strategy", function () {
 
   shouldBehaveLikeStrategy(() => ({
     ...fixture,
+    // Contracts
     strategy: curveAMOStrategy,
     vault: oethbVault,
     assets: [weth],
+    timelock: timelock,
+    governor: governor,
+    strategist: rafael,
+    harvester: harvester,
+    // As we don't have this on base fixture, we use CRV
     usdt: crv,
     usdc: crv,
     dai: crv,
@@ -297,20 +303,11 @@ describe("Curve AMO strategy", function () {
     stETH: crv,
     frxETH: crv,
     cvx: crv,
-    timelock: timelock,
-    governor: governor,
-    strategist: rafael,
-    harvester: harvester,
-    rewardToken: crv,
-    rewardTokenAddress: crv.address,
-    platformAddress: curvePool.address,
-    rewardTokenAmount: oethUnits("1000000"),
-    rewardTokenTimejump: 60,
-    rewardTokenCheckpoint: true,
-    anna: rafael,
-    matt: clement,
     comp: crv,
     bal: crv,
+    // Users
+    anna: rafael,
+    matt: clement,
     josh: nick,
   }));
 
