@@ -75,14 +75,12 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ]; then
-        # Run all files and let global-hooks decide which ones to run
-        params+=""
-    else
-        # Run specific files when a param is given
+    # Run specific files when a param is given
+    if [[ ! -z "$1" ]]; then
         params+="$@"
     fi
 
+    # Add trace flag if enabled
     if [[ $is_trace == "true" ]]; then
         params+=" --trace"
     fi
