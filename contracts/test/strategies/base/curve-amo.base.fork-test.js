@@ -7,6 +7,9 @@ const { impersonateAndFund } = require("../../../utils/signers");
 const { setERC20TokenBalance } = require("../../_fund");
 const hre = require("hardhat");
 const { advanceTime } = require("../../helpers");
+const { shouldBehaveLikeGovernable } = require("../../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../../behaviour/harvestable");
+const { shouldBehaveLikeStrategy } = require("../../behaviour/strategy");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -17,10 +20,12 @@ describe("Curve AMO strategy", function () {
     oethb,
     weth,
     nick,
+    clement,
     rafael,
     governor,
-    defaultDepositor,
-    curvePool,
+    timelock;
+
+  let curvePool,
     curveGauge,
     impersonatedVaultSigner,
     impersonatedStrategist,
@@ -28,8 +33,11 @@ describe("Curve AMO strategy", function () {
     impersonatedCurveGaugeFactory,
     impersonatedAMOGovernor,
     curveChildLiquidityGaugeFactory,
+    impersonatedTimelock,
     crv,
     harvester;
+
+  let defaultDepositor;
 
   const defaultDeposit = oethUnits("5");
 
@@ -41,13 +49,16 @@ describe("Curve AMO strategy", function () {
     weth = fixture.weth;
     nick = fixture.nick;
     rafael = fixture.rafael;
+    clement = fixture.clement;
     governor = fixture.governor;
-    defaultDepositor = rafael;
+    timelock = fixture.timelock;
     curvePool = fixture.curvePoolOEthbWeth;
     curveGauge = fixture.curveGaugeOETHbWETH;
     curveChildLiquidityGaugeFactory = fixture.curveChildLiquidityGaugeFactory;
     crv = fixture.crv;
     harvester = fixture.harvester;
+
+    defaultDepositor = rafael;
 
     impersonatedVaultSigner = await impersonateAndFund(oethbVault.address);
     impersonatedStrategist = await impersonateAndFund(
@@ -60,9 +71,12 @@ describe("Curve AMO strategy", function () {
     impersonatedAMOGovernor = await impersonateAndFund(
       await curveAMOStrategy.governor()
     );
+    impersonatedTimelock = await impersonateAndFund(timelock.address);
 
     // Set vaultBuffer to 100%
-    await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
+    await oethbVault
+      .connect(impersonatedTimelock)
+      .setVaultBuffer(oethUnits("1"));
 
     await curveAMOStrategy
       .connect(impersonatedAMOGovernor)
@@ -90,7 +104,7 @@ describe("Curve AMO strategy", function () {
       expect(await curveAMOStrategy.oeth()).to.equal(oethb.address);
       expect(await curveAMOStrategy.weth()).to.equal(weth.address);
       expect(await curveAMOStrategy.governor()).to.equal(
-        addresses.base.governor
+        addresses.base.timelock
       );
       expect(await curveAMOStrategy.rewardTokenAddresses(0)).to.equal(
         addresses.base.CRV
@@ -252,6 +266,53 @@ describe("Curve AMO strategy", function () {
       expect(await crv.balanceOf(curveGauge.address)).to.equal(0);
     });
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    anna: rafael,
+    josh: nick,
+    matt: clement,
+    dai: crv,
+    strategy: curveAMOStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    anna: rafael,
+    strategy: curveAMOStrategy,
+    harvester: harvester,
+    oeth: oethb,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: curveAMOStrategy,
+    vault: oethbVault,
+    assets: [fixture.weth],
+    usdt: crv,
+    usdc: crv,
+    dai: crv,
+    weth: weth,
+    reth: crv,
+    stETH: crv,
+    frxETH: crv,
+    cvx: crv,
+    timelock: timelock,
+    governor: governor,
+    strategist: rafael,
+    harvester: harvester,
+    rewardToken: crv,
+    rewardTokenAddress: crv.address,
+    platformAddress: curvePool.address,
+    rewardTokenAmount: oethUnits("1000000"),
+    rewardTokenTimejump: 60,
+    rewardTokenCheckpoint: true,
+    anna: rafael,
+    matt: clement,
+    comp: crv,
+    bal: crv,
+    josh: nick,
+  }));
 
   const mintAndDepositToStrategy = async ({
     userOverride,

@@ -10,7 +10,7 @@ module.exports = deployOnBaseWithGuardian(
     deployName: "022_base_curve_amo",
   },
   async ({ ethers }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Deploy Base Curve AMO proxy
@@ -56,7 +56,7 @@ module.exports = deployOnBaseWithGuardian(
       cOETHBaseCurveAMOProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dOETHBaseCurveAMO.address,
-          governorAddr,
+          addresses.base.timelock,
           initData
         )
     );

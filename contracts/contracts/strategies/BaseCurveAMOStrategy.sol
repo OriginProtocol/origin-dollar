@@ -230,7 +230,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         address _weth,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        require(_amount > 0, "Invalid amount");
+        require(_amount > 0, "Must withdraw something");
         require(_weth == address(weth), "Can only withdraw WETH");
 
         emit Withdrawal(_weth, address(lpToken), _amount);
