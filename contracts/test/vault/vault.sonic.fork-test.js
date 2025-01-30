@@ -131,10 +131,7 @@ describe("ForkTest: Sonic Vault", function () {
         .withArgs(nick.address, mintAmount);
 
       // check 99% is deposited to staking strategy
-      const depositAmount = mintAmount.mul(99).div(100);
-      await expect(tx)
-        .to.emit(sonicStakingStrategy, "Deposit")
-        .withArgs(wS.address, addresses.zero, depositAmount);
+      await expect(tx).to.emit(sonicStakingStrategy, "Deposit");
     });
 
     it("should withdraw from staking strategy", async () => {

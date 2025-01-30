@@ -14,6 +14,7 @@ const {
 const { proposeGovernanceArgs } = require("./governor");
 const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
+const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
 function log(msg, deployResult = null) {
   if (isBaseFork || isArbFork || process.env.VERBOSE) {
@@ -221,6 +222,10 @@ function deployOnSonic(opts, fn) {
       getTxOpts: getTxOpts,
       withConfirmation,
     };
+
+    // Mine one block to workaround "No known hardfork for execution on historical block"
+    // https://github.com/NomicFoundation/hardhat/issues/5511
+    await mine(1);
 
     const adminAddr = addresses.sonic.admin;
     console.log("Sonic Admin addr", adminAddr);
