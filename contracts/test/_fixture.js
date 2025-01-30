@@ -649,7 +649,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const curvePoolBooster = isFork
     ? await ethers.getContractAt(
         "CurvePoolBooster",
-        "0xb8221A6271fc9eB8cEdd02955e4CB9557E902af1" // hardcoded as generated with CreateX.
+        "0xF4c001dfe53C584425d7943395C7E57b10BD1DC8" // hardcoded as generated with CreateX.
       )
     : undefined;
 
