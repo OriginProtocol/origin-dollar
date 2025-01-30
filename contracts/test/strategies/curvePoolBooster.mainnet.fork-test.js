@@ -28,9 +28,9 @@ describe("ForkTest: CurvePoolBooster", function () {
     wousd = fixture.wousd;
     josh = fixture.josh;
 
-    // Set Campaing Id to 0
-    const { strategist } = await getNamedAccounts();
-    sStrategist = await ethers.provider.getSigner(strategist);
+    // Set Campaign Id to 0
+    const { multichainStrategistAddr } = await getNamedAccounts();
+    sStrategist = await ethers.provider.getSigner(multichainStrategistAddr);
     const gov = await curvePoolBooster.governor();
     sGov = await ethers.provider.getSigner(gov);
     woethSigner = await impersonateAndFund(wousd.address);
