@@ -9,7 +9,7 @@ const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/Cur
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "119_pool_booster_curve",
+    deployName: "003_pool_booster_curve",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
