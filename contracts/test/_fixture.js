@@ -663,8 +663,15 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
+  const simpleHarvesterProxy = await ethers.getContract(
+    "OETHSimpleHarvesterProxy"
+  );
+
   const simpleOETHHarvester = isFork
-    ? await ethers.getContract("OETHHarvesterSimple")
+    ? await ethers.getContractAt(
+        "OETHHarvesterSimple",
+        simpleHarvesterProxy.address
+      )
     : undefined;
 
   const oethFixedRateDripperProxy = !isFork

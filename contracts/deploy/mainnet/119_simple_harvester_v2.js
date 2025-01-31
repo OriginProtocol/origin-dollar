@@ -10,8 +10,9 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: false,
     proposalId: "",
   },
-  async ({ deployWithConfirmation }) => {
-    const { multichainStrategistAddr } = await getNamedAccounts();
+  async ({ deployWithConfirmation, withConfirmation }) => {
+    const { multichainStrategistAddr, deployerAddr } = await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // ---- Menu ---
     // 1. Deploy new simple Harvester
@@ -24,20 +25,53 @@ module.exports = deploymentWithGovernanceProposal(
     const cOETHFixedRateDripperProxy = await ethers.getContract(
       "OETHFixedRateDripperProxy"
     );
-    const dOETHHarvesterSimple = await deployWithConfirmation(
+
+    // 1.a Deploy proxy
+    const dOETHSimpleHarvesterProxy = await deployWithConfirmation(
+      "OETHSimpleHarvesterProxy"
+    );
+
+    const cOETHSimpleHarvesterProxy = await ethers.getContractAt(
+      "OETHSimpleHarvesterProxy",
+      dOETHSimpleHarvesterProxy.address
+    );
+
+    // 1.b Deploy implementation
+    const dOETHHarvesterSimpleImpl = await deployWithConfirmation(
       "OETHHarvesterSimple",
+      [addresses.mainnet.WETH],
+      undefined,
+      true
+    );
+
+    const cOETHHarvesterSimpleImpl = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      dOETHHarvesterSimpleImpl.address
+    );
+
+    // 1.c Initialize the proxy
+    const initData = cOETHHarvesterSimpleImpl.interface.encodeFunctionData(
+      "initialize(address,address,address)",
       [
         addresses.mainnet.Timelock,
         multichainStrategistAddr,
         cOETHFixedRateDripperProxy.address,
-        addresses.mainnet.WETH,
-      ],
-      undefined,
-      true
+      ]
     );
+
+    const proxyInitFunction = "initialize(address,address,bytes)";
+    // prettier-ignore
+    await withConfirmation(
+      cOETHSimpleHarvesterProxy.connect(sDeployer)[proxyInitFunction](
+          cOETHHarvesterSimpleImpl.address,
+          addresses.mainnet.Timelock,
+          initData
+        )
+    );
+
     const cOETHHarvesterSimple = await ethers.getContractAt(
       "OETHHarvesterSimple",
-      dOETHHarvesterSimple.address
+      dOETHSimpleHarvesterProxy.address
     );
 
     // 2. Change harvester on all SSV strategies

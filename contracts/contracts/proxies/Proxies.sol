@@ -365,3 +365,10 @@ contract MorphoGauntletPrimeUSDTStrategyProxy is
 contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHSimpleHarvesterProxy delegates calls to a OETHSimpleHarvester implementation
+ */
+contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

@@ -5,8 +5,9 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "../utils/Initializable.sol";
 
-contract OETHHarvesterSimple is Strategizable {
+contract OETHHarvesterSimple is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
@@ -17,7 +18,10 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    uint256[50] private ___gap;
+
     address public dripper;
+
     mapping(address => bool) public supportedStrategies;
 
     ////////////////////////////////////////////////////
@@ -35,16 +39,18 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
-    constructor(
+    constructor(address _WETH) {
+        WETH = _WETH;
+    }
+
+    function initialize(
         address _governor,
         address _strategist,
-        address _dripper,
-        address _weth
-    ) {
+        address _dripper
+    ) external initializer {
         _setStrategistAddr(_strategist);
         _changeGovernor(_governor);
         _setDripper(_dripper);
-        WETH = _weth;
     }
 
     ////////////////////////////////////////////////////
