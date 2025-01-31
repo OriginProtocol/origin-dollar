@@ -4,6 +4,9 @@ const addresses = {};
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
+addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -155,6 +158,11 @@ addresses.mainnet.CurveLUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
+addresses.mainnet.CurveOUSDUSDTPool =
+  "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
+addresses.mainnet.CurveOUSDUSDTGauge =
+  "0x74231E4d96498A30FCEaf9aACCAbBD79339Ecd7f";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
@@ -164,6 +172,10 @@ addresses.mainnet.CurveOETHMetaPool =
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+
+// Votemarket - StakeDAO
+addresses.mainnet.CampaignRemoteManager =
+  "0x000000009dF57105d76B059178989E01356e4b45";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
@@ -287,6 +299,7 @@ addresses.mainnet.LidoWithdrawalQueue =
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+addresses.arbitrumOne.admin = "0xfD1383fb4eE74ED9D83F2cbC67507bA6Eac2896a";
 
 // Base
 addresses.base = {};
@@ -355,6 +368,10 @@ addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
 addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
 addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
+
+// SwapX on Sonic
+addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
+addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
