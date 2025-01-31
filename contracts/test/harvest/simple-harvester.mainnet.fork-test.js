@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
-const { isCI } = require("../helpers");
+const { isCI, oethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 
 const { loadDefaultFixture } = require("../_fixture");
@@ -36,6 +36,12 @@ describe("ForkTest: SimpleHarvester", function () {
     const { simpleOETHHarvester, convexEthMetaStrategy, crv, strategist } =
       fixture;
 
+    await ensureStrategyIsSupported(
+      simpleOETHHarvester,
+      convexEthMetaStrategy.address,
+      strategist
+    );
+
     const balanceBeforeCRV = await crv.balanceOf(strategist.address);
     // prettier-ignore
     await simpleOETHHarvester
@@ -52,7 +58,15 @@ describe("ForkTest: SimpleHarvester", function () {
       weth,
       strategist,
       oethFixedRateDripper,
+      josh,
+      nativeStakingFeeAccumulator,
     } = fixture;
+
+    // Send ETH to the FeeAccumulator to simulate yield.
+    await josh.sendTransaction({
+      to: nativeStakingFeeAccumulator.address,
+      value: oethUnits("1"),
+    });
 
     const balanceBeforeWETH = await weth.balanceOf(
       oethFixedRateDripper.address
@@ -90,7 +104,15 @@ describe("ForkTest: SimpleHarvester", function () {
       weth,
       timelock,
       oethFixedRateDripper,
+      josh,
+      nativeStakingFeeAccumulator,
     } = fixture;
+
+    // Send ETH to the FeeAccumulator to simulate yield.
+    await josh.sendTransaction({
+      to: nativeStakingFeeAccumulator.address,
+      value: oethUnits("1"),
+    });
 
     const balanceBeforeWETH = await weth.balanceOf(
       oethFixedRateDripper.address
@@ -288,4 +310,10 @@ describe("ForkTest: SimpleHarvester", function () {
       simpleOETHHarvester.connect(timelock).setDripper(addresses.zero)
     ).to.be.revertedWith("Invalid dripper");
   });
+
+  const ensureStrategyIsSupported = async (harvester, strategy, strategist) => {
+    if (!(await harvester.supportedStrategies(strategy))) {
+      await harvester.connect(strategist).setSupportedStrategy(strategy, true);
+    }
+  };
 });
