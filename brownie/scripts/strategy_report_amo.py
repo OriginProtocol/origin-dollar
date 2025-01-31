@@ -289,107 +289,60 @@ def run_simulations_amo(strategy_name):
     # pd.DataFrame.from_records(deposit_stats).to_csv(workspace + "deposit_stats.csv")
     
 
-    # # Test Balances
-    # print("# Test Balances")
-    # balance_stats = []
-    # for initial_tilt in [0.0, -1, -2, 1, 2]:
-    #     for deposit_x in range(0, NUM_BALANCE_TESTS_EACH + 1, 1):
-    #         try:
-    #             with TemporaryFork():
-    #                 stat = {}
-
-    #                 test_tilt = deposit_x / (NUM_BALANCE_TESTS_EACH / 2) - 1
-
-    #                 stat["action"] = "balance"
-    #                 stat["action_mix"] = test_tilt
-
-    #                 initial_deposit = harness.pool_create_mix(tilt=0.5, size=1.5)
-    #                 harness.vault_admin.depositToStrategy(
-    #                     harness.strat,
-    #                     list(initial_deposit.keys()),
-    #                     list(initial_deposit.values()),
-    #                     {"from": harness.STRATEGIST},
-    #                 )
-
-    #                 stat["pre_vault"] = harness.vault_core.totalValue()
-    #                 pb = list(harness.pool_balances().values())
-    #                 stat["pre_pool_0"] = pb[0]
-    #                 stat["pre_pool_1"] = pb[1]
-
-    #                 harness.tilt_pool(initial_tilt)
-
-    #                 stat["before_vault"] = harness.vault_core.totalValue()
-    #                 pb = list(harness.pool_balances().values())
-    #                 stat["before_pool_0"] = pb[0]
-    #                 stat["before_pool_1"] = pb[1]
-
-    #                 harness.tilt_pool(initial_tilt)
-
-    #                 stat["after_vault"] = harness.vault_core.totalValue()
-    #                 pb = list(harness.pool_balances().values())
-    #                 stat["after_pool_0"] = pb[0]
-    #                 stat["after_pool_1"] = pb[1]
-
-    #                 balance_stats.append(stat)
-    #         except:
-    #             pass
-
-    # pd.DataFrame.from_records(balance_stats).to_csv(workspace + "balance_stats.csv")
-
     # # Test Withdraws
-    withdraw_stats = []
-    for initial_tilt in np.linspace(-0.1, 0.1, 11):
-            with TemporaryFork():
-                stat = {}
+    # withdraw_stats = []
+    # for initial_tilt in np.linspace(-0.7, 0.7, 41):
+    #         with TemporaryFork():
+    #             stat = {}
 
-                stat["action"] = "withdraw"
-                stat["action_mix"] = initial_tilt
-                print("w Deposit")
-                pb = list(harness.pool_balances().values())
-                stat["pre_pool_0"] = pb[0]
-                stat["pre_pool_1"] = pb[1]
-                print(pb[0]/10**18,pb[1]/10**18)
+    #             stat["action"] = "withdraw"
+    #             stat["action_mix"] = initial_tilt
+    #             print("w Deposit")
+    #             pb = list(harness.pool_balances().values())
+    #             stat["pre_pool_0"] = pb[0]
+    #             stat["pre_pool_1"] = pb[1]
+    #             print(pb[0]/10**18,pb[1]/10**18)
 
-                harness.vault_admin.depositToStrategy(
-                    harness.strat,
-                    [harness.amo_base],
-                    [harness.base_size * 10**18],
-                    {"from": harness.STRATEGIST},
-                )
+    #             harness.vault_admin.depositToStrategy(
+    #                 harness.strat,
+    #                 [harness.amo_base],
+    #                 [harness.base_size * 1 * 10**18],
+    #                 {"from": harness.STRATEGIST},
+    #             )
 
-                stat["pre_vault"] = harness.vault_core.totalValue()
-                pb = list(harness.pool_balances().values())
-                stat["pre_pool_0"] = pb[0]
-                stat["pre_pool_1"] = pb[1]
-                print(pb[0]/10**18,pb[1]/10**18)
+    #             stat["pre_vault"] = harness.vault_core.totalValue()
+    #             pb = list(harness.pool_balances().values())
+    #             stat["pre_pool_0"] = pb[0]
+    #             stat["pre_pool_1"] = pb[1]
+    #             print(pb[0]/10**18,pb[1]/10**18)
 
-                print("Withdraw Tilt")
-                harness.tilt_pool(initial_tilt)
+    #             print("Withdraw Tilt")
+    #             harness.tilt_pool(initial_tilt)
 
-                stat["before_vault"] = harness.vault_core.totalValue()
-                stat["before_otoken"] = harness.otoken.totalSupply()
-                pb = list(harness.pool_balances().values())
-                stat["before_pool_0"] = pb[0]
-                stat["before_pool_1"] = pb[1]
-                print(pb[0]/10**18,pb[1]/10**18)
+    #             stat["before_vault"] = harness.vault_core.totalValue()
+    #             stat["before_otoken"] = harness.otoken.totalSupply()
+    #             pb = list(harness.pool_balances().values())
+    #             stat["before_pool_0"] = pb[0]
+    #             stat["before_pool_1"] = pb[1]
+    #             print(pb[0]/10**18,pb[1]/10**18)
 
-                print("Withdraw Withdraw")
-                harness.vault_admin.withdrawFromStrategy(
-                    harness.strat,
-                    [harness.amo_base],
-                    [3],
-                    {"from": harness.STRATEGIST, "allow_revert": True},
-                )
+    #             print("Withdraw Withdraw")
+    #             harness.vault_admin.withdrawFromStrategy(
+    #                 harness.strat,
+    #                 [harness.amo_base],
+    #                 [1e18],
+    #                 {"from": harness.STRATEGIST, "allow_revert": True},
+    #             )
 
-                stat["after_vault"] = harness.vault_core.totalValue()
-                stat["after_otoken"] = harness.otoken.totalSupply()
-                pb = list(harness.pool_balances().values())
-                stat["after_pool_0"] = pb[0]
-                stat["after_pool_1"] = pb[1]
+    #             stat["after_vault"] = harness.vault_core.totalValue()
+    #             stat["after_otoken"] = harness.otoken.totalSupply()
+    #             pb = list(harness.pool_balances().values())
+    #             stat["after_pool_0"] = pb[0]
+    #             stat["after_pool_1"] = pb[1]
 
-                withdraw_stats.append(stat)
+    #             withdraw_stats.append(stat)
 
-    pd.DataFrame.from_records(withdraw_stats).to_csv(workspace + "withdraw_stats.csv")
+    # pd.DataFrame.from_records(withdraw_stats).to_csv(workspace + "withdraw_stats.csv")
 
     # Test WithdrawAll
 
@@ -446,21 +399,10 @@ def run_report(strategy_name):
     harness = _getHarness(strategy_name)
 
     deposit_base = _load_data(workspace + "/deposit_stats.csv")
-    # balance_base = _load_data(workspace + "/balance_stats.csv")
     withdraw_base = _load_data(workspace + "/withdraw_stats.csv")
     withdrawall_base = _load_data(workspace + "/withdrawall_stats.csv")
 
     sections = []
-
-    # # Balance Section
-    # df = balance_base
-    # for before_mix, rows in df.groupby(df["before_mix"]):
-    #     plt.plot(rows["action_mix"], rows["after_profit"])
-    # plt.savefig(workspace + "balance.svg")
-    # plt.close()
-    # sections.append(
-    #     '<h2>Balance Check</h2><img src="balance.svg"><p class=note>Flat is good</p>'
-    # )
 
     # Deposit Section
     df = deposit_base.sort_values('action_mix')
