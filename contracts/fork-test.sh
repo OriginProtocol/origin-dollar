@@ -77,7 +77,7 @@ main()
 
     # Run specific files when a param is given
     if [[ ! -z "$1" ]]; then
-        params+="$@"
+        params+="--testfiles $@"
     fi
 
     # Add trace flag if enabled
@@ -89,7 +89,7 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage "${params[@]}"
     else
         echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
