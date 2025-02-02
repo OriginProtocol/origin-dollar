@@ -344,7 +344,7 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
-      base: MAINNET_MULTISIG,
+      base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
     },
     adjusterAddr: {
