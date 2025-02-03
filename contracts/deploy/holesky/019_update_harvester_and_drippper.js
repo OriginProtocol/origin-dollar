@@ -44,23 +44,54 @@ const mainExport = async () => {
   );
 
   // --- 2 Deploy new simple Harvester ---
-  const dOETHHarvesterSimple = await deployWithConfirmation(
+  // 2.a Deploy proxy
+  const dOETHSimpleHarvesterProxy = await deployWithConfirmation(
+    "OETHSimpleHarvesterProxy"
+  );
+  const cOETHSimpleHarvesterProxy = await ethers.getContractAt(
+    "OETHSimpleHarvesterProxy",
+    dOETHSimpleHarvesterProxy.address
+  );
+
+  // 2.b Deploy implementation
+  const dOETHHarvesterSimpleImpl = await deployWithConfirmation(
     "OETHHarvesterSimple",
-    [
-      addresses.holesky.Governor,
-      addresses.holesky.Governor,
-      cOETHFixedRateDripperProxy.address,
-      addresses.holesky.WETH,
-    ],
+    [addresses.holesky.WETH],
     undefined,
     true
   );
+
+  const cOETHHarvesterSimpleImpl = await ethers.getContractAt(
+    "OETHHarvesterSimple",
+    dOETHHarvesterSimpleImpl.address
+  );
+
+  // 1.c Initialize the proxy
+  const initData = cOETHHarvesterSimpleImpl.interface.encodeFunctionData(
+    "initialize(address,address,address)",
+    [
+      addresses.holesky.Governor,
+      addresses.holesky.Guardian,
+      cOETHFixedRateDripperProxy.address,
+    ]
+  );
+
+  const proxyInitFunction = "initialize(address,address,bytes)";
+  // prettier-ignore
+  await withConfirmation(
+    cOETHSimpleHarvesterProxy.connect(sDeployer)[proxyInitFunction](
+      cOETHHarvesterSimpleImpl.address,
+      addresses.holesky.Governor,
+      initData
+    )
+  );
+
   const cOETHHarvesterSimple = await ethers.getContractAt(
     "OETHHarvesterSimple",
-    dOETHHarvesterSimple.address
+    dOETHSimpleHarvesterProxy.address
   );
   console.log(
-    `Deployed OETHHarvesterSimple to ${dOETHHarvesterSimple.address}`
+    `Deployed OETHHarvesterSimple to ${cOETHHarvesterSimple.address}`
   );
 
   // --- 3 Change harvester SSV strategies ---
@@ -74,7 +105,7 @@ const mainExport = async () => {
   await withConfirmation(
     cNativeStakingStrategy
       .connect(sDeployer)
-      .setHarvesterAddress(dOETHHarvesterSimple.address)
+      .setHarvesterAddress(cOETHHarvesterSimple.address)
   );
   console.log("Changed harvester on the SSV strategy");
 

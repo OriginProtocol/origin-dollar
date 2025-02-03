@@ -124,7 +124,13 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       oethFixedRateDripperProxy.address
     );
 
-    simpleOETHHarvester = await ethers.getContract("OETHHarvesterSimple");
+    const simpleOETHHarvesterProxy = await ethers.getContract(
+      "OETHSimpleHarvesterProxy"
+    );
+    simpleOETHHarvester = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      simpleOETHHarvesterProxy.address
+    );
 
     const nativeStakingStrategyProxy = await ethers.getContract(
       "NativeStakingSSVStrategyProxy"
