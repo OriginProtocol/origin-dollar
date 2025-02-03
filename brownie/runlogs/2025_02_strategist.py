@@ -74,4 +74,61 @@ def main():
       {'from': OETHB_MULTICHAIN_STRATEGIST, 'value': ccip_fee}
     ))
 
-  
+
+# -------------------------------------
+# Feb 3, 2025 - Unwrap wOETH to OETH
+# -------------------------------------
+from world import *
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Unwrap wOETH to OETH
+    woeth_amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    oeth_amount_before = oeth.balanceOf(MULTICHAIN_STRATEGIST)
+    txs.append(
+      woeth.redeem(woeth_amount, MULTICHAIN_STRATEGIST, MULTICHAIN_STRATEGIST, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    oeth_amount_to_redeem = oeth.balanceOf(MULTICHAIN_STRATEGIST) - oeth_amount_before
+
+    # Redeem OETH to WETH
+    txs.append(
+      oeth_vault_core.requestWithdrawal(
+        oeth_amount_to_redeem,
+        {'from': MULTICHAIN_STRATEGIST}
+      )
+    )
+
+# -------------------------------------
+# Feb 3, 2025 - Claim WETH and bridge to Base
+# -------------------------------------
+from world import *
+def main():
+  with TemporaryForkForReallocations() as txs:
+    requestId = 1
+
+    weth_before = weth.balanceOf(MULTICHAIN_STRATEGIST)
+    # Claim withdrawal
+    txs.append(oeth_vault_core.claimWithdrawal(requestId, {'from': MULTICHAIN_STRATEGIST}))
+    
+    weth_received = weth.balanceOf(MULTICHAIN_STRATEGIST) - weth_before
+
+    print("--------------")
+    print("WETH Received", c18(weth_received), weth_received)
+    print("--------------")
+
+    # Unwrap WETH
+    txs.append(weth.withdraw(weth_received, {'from': MULTICHAIN_STRATEGIST}))
+
+    # hex-encoded string for "originprotocol"
+    extra_data = "0x6f726967696e70726f746f636f6c"
+
+    # Bridge it
+    txs.append(
+      superbridge.bridgeETHTo(
+        MULTICHAIN_STRATEGIST,
+        200000, # minGasLimit
+        extra_data, # extraData
+        {'value': weth_received}
+      )
+    )
