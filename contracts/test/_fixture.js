@@ -670,11 +670,10 @@ const defaultFixture = deployments.createFixture(async () => {
       )
     : undefined;
 
-
   const simpleHarvesterProxy = await ethers.getContract(
     "OETHSimpleHarvesterProxy"
   );
-  
+
   const simpleOETHHarvester = isFork
     ? await ethers.getContractAt(
         "OETHHarvesterSimple",
