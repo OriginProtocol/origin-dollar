@@ -7,21 +7,28 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "../utils/Initializable.sol";
 
+/// @title OETH Harvester Simple Contract
+/// @notice Contract to harvest rewards from strategies
+/// @author Origin Protocol Inc
 contract OETHHarvesterSimple is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
     ////////////////////////////////////////////////////
+    /// @notice WETH address
     address public immutable WETH;
 
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    /// @notice Gap for upgrade safety
     uint256[50] private ___gap;
 
+    /// @notice Dripper address
     address public dripper;
 
+    /// @notice Mapping of supported strategies
     mapping(address => bool) public supportedStrategies;
 
     ////////////////////////////////////////////////////
@@ -43,6 +50,10 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
         WETH = _WETH;
     }
 
+    /// @notice Initialize the contract
+    /// @param _governor Address of the governor
+    /// @param _strategist Address of the strategist
+    /// @param _dripper Address of the dripper
     function initialize(
         address _governor,
         address _strategist,
@@ -56,16 +67,21 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
+    /// @notice Harvest rewards from a strategy and transfer to strategist or dripper
+    /// @param _strategy Address of the strategy to harvest
     function harvestAndTransfer(address _strategy) external {
         _harvestAndTransfer(_strategy);
     }
 
+    /// @notice Harvest rewards from multiple strategies and transfer to strategist or dripper
+    /// @param _strategies Array of strategy addresses to harvest
     function harvestAndTransfer(address[] calldata _strategies) external {
         for (uint256 i = 0; i < _strategies.length; i++) {
             _harvestAndTransfer(_strategies[i]);
         }
     }
 
+    /// @notice Internal logic to harvest rewards from a strategy
     function _harvestAndTransfer(address _strategy) internal {
         // Ensure strategy is supported
         require(supportedStrategies[_strategy], "Strategy not supported");
@@ -97,6 +113,9 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE
     ////////////////////////////////////////////////////
+    /// @notice Set supported strategy
+    /// @param _strategy Address of the strategy
+    /// @param _isSupported Boolean indicating if strategy is supported
     function setSupportedStrategy(address _strategy, bool _isSupported)
         external
         onlyGovernorOrStrategist
@@ -106,6 +125,9 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
         emit SupportedStrategyUpdated(_strategy, _isSupported);
     }
 
+    /// @notice Transfer tokens to strategist
+    /// @param _asset Address of the token
+    /// @param _amount Amount of tokens to transfer
     function transferToken(address _asset, uint256 _amount)
         external
         onlyGovernorOrStrategist
@@ -113,10 +135,13 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
         IERC20(_asset).safeTransfer(strategistAddr, _amount);
     }
 
+    /// @notice Set the dripper address
+    /// @param _dripper Address of the dripper
     function setDripper(address _dripper) external onlyGovernor {
         _setDripper(_dripper);
     }
 
+    /// @notice Internal logic to set the dripper address
     function _setDripper(address _dripper) internal {
         require(_dripper != address(0), "Invalid dripper");
         dripper = _dripper;
