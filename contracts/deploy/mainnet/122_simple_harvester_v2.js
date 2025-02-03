@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "119_simple_harvester_v2",
+    deployName: "122_simple_harvester_v2",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -104,8 +104,6 @@ module.exports = deploymentWithGovernanceProposal(
     // 4. Sending all WETH from the OldDripper to FixedRateDripper
     const cOETHDripperProxy = await ethers.getContract("OETHDripperProxy");
 
-    console.log("Old dripper address: ", cOETHDripperProxy.address);
-
     const cOETHDripper = await ethers.getContractAt(
       "OETHDripper",
       cOETHDripperProxy.address
@@ -120,7 +118,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Todo",
+      name: "Move all strategies to new simple harvester",
       actions: [
         // 2. Change harvester on all SSV strategies
         {
