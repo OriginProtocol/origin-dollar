@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "121_pool_booster_curve",
+    deployName: "122_delegate_yield_curve_pool",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -22,7 +22,7 @@ module.exports = deploymentWithGovernanceProposal(
       actions: [
         {
           contract: OUSD,
-          signature: "delegateYield",
+          signature: "delegateYield(address,address)",
           args: [addresses.mainnet.CurveOUSDUSDTPool, OUSDUSDTCurvePoolBooster],
         },
       ],
