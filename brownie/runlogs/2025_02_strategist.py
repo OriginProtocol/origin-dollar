@@ -103,9 +103,14 @@ def main():
 # Feb 3, 2025 - Claim WETH and bridge to Base
 # -------------------------------------
 from world import *
+from brownie import accounts
+import brownie
 def main():
   with TemporaryForkForReallocations() as txs:
-    requestId = 1
+    requestId = 187
+
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
 
     weth_before = weth.balanceOf(MULTICHAIN_STRATEGIST)
     # Claim withdrawal
@@ -118,8 +123,10 @@ def main():
     print("--------------")
 
     # Unwrap WETH
-    txs.append(weth.withdraw(weth_received, {'from': MULTICHAIN_STRATEGIST}))
-
+    txs.append(
+      weth.withdraw(weth_received, {'from': MULTICHAIN_STRATEGIST})
+    )
+    
     # hex-encoded string for "originprotocol"
     extra_data = "0x6f726967696e70726f746f636f6c"
 
@@ -129,6 +136,6 @@ def main():
         MULTICHAIN_STRATEGIST,
         200000, # minGasLimit
         extra_data, # extraData
-        {'value': weth_received}
+        {'value': weth_received, 'from': MULTICHAIN_STRATEGIST}
       )
     )
