@@ -131,6 +131,41 @@ describe("Curve AMO strategy", function () {
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
+    it("Should deposit all to strategy", async () => {
+      await balancePool();
+
+      const amount = defaultDeposit;
+      const user = defaultDepositor;
+
+      const balance = await weth.balanceOf(user.address);
+      if (balance < amount) {
+        await setERC20TokenBalance(user.address, weth, amount + balance, hre);
+      }
+      await weth.connect(user).transfer(curveAMOStrategy.address, amount);
+
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.gt(0);
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
+
+      expect(
+        await curveAMOStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(
+        await curveGauge.balanceOf(curveAMOStrategy.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
+    });
+
+    it("Should deposit all to strategy with no balance", async () => {
+      await balancePool();
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
+
+      expect(await curveAMOStrategy.checkBalance(weth.address)).to.eq(0);
+      expect(await curveGauge.balanceOf(curveAMOStrategy.address)).to.eq(0);
+    });
+
     it("Should withdraw from strategy", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
@@ -268,6 +303,80 @@ describe("Curve AMO strategy", function () {
 
       expect(balanceCRVHarvesterAfter).to.be.gt(balanceCRVHarvesterBefore);
       expect(await crv.balanceOf(curveGauge.address)).to.equal(0);
+    });
+
+    it("Should deposit when pool is heavily unbalanced with OETH", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      await unbalancePool({ oethbAmount: defaultDeposit.mul(1000) });
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
+
+      expect(
+        await curveAMOStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(
+        await curveGauge.balanceOf(curveAMOStrategy.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
+    });
+
+    it("Should deposit when pool is heavily unbalanced with WETH", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      await unbalancePool({ wethbAmount: defaultDeposit.mul(1000) });
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
+
+      expect(
+        await curveAMOStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(
+        await curveGauge.balanceOf(curveAMOStrategy.address)
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
+    });
+
+    it("Should withdraw all when pool is heavily unbalanced with OETH", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      await unbalancePool({ oethbAmount: defaultDeposit.mul(1000) });
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
+
+      expect(
+        await curveAMOStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(0);
+      expect(
+        await curveGauge.balanceOf(curveAMOStrategy.address)
+      ).to.approxEqualTolerance(0);
+      expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
+        oethUnits("0")
+      );
+    });
+
+    it("Should withdraw all when pool is heavily unbalanced with WETH", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      await unbalancePool({ wethbAmount: defaultDeposit.mul(1000) });
+
+      await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
+
+      expect(
+        await curveAMOStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(0);
+      expect(
+        await curveGauge.balanceOf(curveAMOStrategy.address)
+      ).to.approxEqualTolerance(0);
+      expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
+      expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
+        oethUnits("0")
+      );
     });
   });
 
@@ -510,7 +619,7 @@ describe("Curve AMO strategy", function () {
     const user = userOverride || defaultDepositor;
     amount = amount || defaultDeposit;
 
-    const balance = weth.balanceOf(user.address);
+    const balance = await weth.balanceOf(user.address);
     if (balance < amount) {
       await setERC20TokenBalance(user.address, weth, amount + balance, hre);
     }
