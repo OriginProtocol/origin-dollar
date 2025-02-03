@@ -75,21 +75,12 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ]; then
-        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
-            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.holesky.fork-test.js"
-        else
-            # Run all files with `.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.fork-test.js"
-        fi
-    else
-        # Run specific files when a param is given
-        params+="$@"
+    # Run specific files when a param is given
+    if [[ ! -z "$1" ]]; then
+        params+="--testfiles $@"
     fi
 
+    # Add trace flag if enabled
     if [[ $is_trace == "true" ]]; then
         params+=" --trace"
     fi
@@ -98,7 +89,7 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage "${params[@]}"
     else
         echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
