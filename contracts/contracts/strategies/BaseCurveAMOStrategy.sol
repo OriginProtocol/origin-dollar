@@ -29,12 +29,35 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
 
     // New immutable variables that must be set in the constructor
-    IChildLiquidityGaugeFactory public immutable gaugeFactory;
-    ICurveXChainLiquidityGauge public immutable gauge;
-    ICurveStableSwapNG public immutable curvePool;
-    IERC20 public immutable lpToken;
-    IERC20 public immutable oeth;
+    /**
+     * @notice Address of the Wrapped ETH (WETH) contract.
+     */
     IWETH9 public immutable weth;
+
+    /**
+     * @notice Address of the OETH token contract.
+     */
+    IERC20 public immutable oeth;
+
+    /**
+     * @notice Address of the LP (Liquidity Provider) token contract.
+     */
+    IERC20 public immutable lpToken;
+
+    /**
+     * @notice Address of the Curve StableSwap NG pool contract.
+     */
+    ICurveStableSwapNG public immutable curvePool;
+
+    /**
+     * @notice Address of the Curve X-Chain Liquidity Gauge contract.
+     */
+    ICurveXChainLiquidityGauge public immutable gauge;
+
+    /**
+     * @notice Address of the Child Liquidity Gauge Factory contract.
+     */
+    IChildLiquidityGaugeFactory public immutable gaugeFactory;
 
     // Ordered list of pool assets
     uint128 public constant oethCoinIndex = 1;
