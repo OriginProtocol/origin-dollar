@@ -26,8 +26,8 @@ const handler = async (event) => {
   const networkName = network.chainId === 1 ? "mainnet" : "holesky";
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
-  const harvesterAddress = addresses[networkName].OETHHarvesterProxy;
-  log(`Resolved OETH Harvester address to ${harvesterAddress}`);
+  const harvesterAddress = addresses[networkName].OETHHarvesterSimpleProxy;
+  log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
 
   const firstNativeStakingProxyAddress =
@@ -79,11 +79,11 @@ const harvest = async (
   ) {
     const tx1 = await harvester
       .connect(signer)
-      .harvestAndSwap(nativeStakingProxyAddress);
-    await logTxDetails(tx1, `${stratDesc} harvestAndSwap`);
+      .harvestAndTransfer(nativeStakingProxyAddress);
+    await logTxDetails(tx1, `${stratDesc} harvestAndTransfer`);
   } else {
     log(
-      `Skipping ${stratDesc} harvestAndSwap due to low consensus and execution rewards`
+      `Skipping ${stratDesc} harvestAndTransfer due to low consensus and execution rewards`
     );
   }
 };
