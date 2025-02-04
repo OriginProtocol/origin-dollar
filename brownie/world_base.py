@@ -35,6 +35,8 @@ harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
 ccip_router = load_contract('ccip_router', BASE_CCIP_ROUTER)
 
+zapper = load_contract('oethb_zapper', OETHB_ZAPPER)
+
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
@@ -76,10 +78,14 @@ def amo_snapshot():
 
     print("------------------ AMO Strategy LP position ------------------")
     print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
-    print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
-    print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
-    print("Total      ", c18(stratTotal), pcts(100))
-    print("Dominance  ", pcts(stratTotal / totalTickTokens * 100))
+    if stratTotal > 0:  
+      print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
+      print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
+      print("Total      ", c18(stratTotal), pcts(100))
+    if totalTickTokens > 0:
+      print("Dominance  ", pcts(stratTotal / totalTickTokens * 100))
+    else:
+      print("Dominance  ", pcts(0))
 
 
     print("------------------ Others LP position ------------------------")
