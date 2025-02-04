@@ -76,7 +76,7 @@ describe("ForkTest: SimpleHarvester", function () {
       .connect(strategist)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
     const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
-    expect(balanceAfterWETH).to.be.gt(balanceBeforeWETH);
+    expect(balanceAfterWETH).to.be.gte(balanceBeforeWETH.add(oethUnits("1")));
   });
 
   it("Should Harvest and transfer rewards (out of WETH) as governor", async () => {
@@ -122,7 +122,7 @@ describe("ForkTest: SimpleHarvester", function () {
       .connect(timelock)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
     const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
-    expect(balanceAfterWETH).to.be.gt(balanceBeforeWETH);
+    expect(balanceAfterWETH).to.be.gte(balanceBeforeWETH.add(oethUnits("1")));
   });
 
   it("Should revert if strategy is not authorized", async () => {
