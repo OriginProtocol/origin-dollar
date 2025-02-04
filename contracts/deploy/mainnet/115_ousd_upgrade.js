@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "81330106807897532209861932892553497229066239651440694079747414212484833485320",
   },
   async ({ deployWithConfirmation }) => {
     // Deployer Actions
