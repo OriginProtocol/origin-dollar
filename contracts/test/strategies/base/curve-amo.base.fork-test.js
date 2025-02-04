@@ -194,6 +194,9 @@ describe("Curve AMO strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
+      const checkBalanceAMO = await curveAMOStrategy.checkBalance(weth.address);
+      const balanceVault = await weth.balanceOf(oethbVault.address);
+
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
       expect(
@@ -205,6 +208,9 @@ describe("Curve AMO strategy", function () {
       expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
+      );
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(
+        balanceVault.add(checkBalanceAMO)
       );
     });
 
@@ -345,6 +351,9 @@ describe("Curve AMO strategy", function () {
 
       await unbalancePool({ oethbAmount: defaultDeposit.mul(1000) });
 
+      const checkBalanceAMO = await curveAMOStrategy.checkBalance(weth.address);
+      const balanceVault = await weth.balanceOf(oethbVault.address);
+
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
       expect(
@@ -357,6 +366,9 @@ describe("Curve AMO strategy", function () {
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
       );
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(
+        balanceVault.add(checkBalanceAMO)
+      );
     });
 
     it("Should withdraw all when pool is heavily unbalanced with WETH", async () => {
@@ -364,6 +376,8 @@ describe("Curve AMO strategy", function () {
       await mintAndDepositToStrategy();
 
       await unbalancePool({ wethbAmount: defaultDeposit.mul(1000) });
+      const checkBalanceAMO = await curveAMOStrategy.checkBalance(weth.address);
+      const balanceVault = await weth.balanceOf(oethbVault.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
@@ -376,6 +390,9 @@ describe("Curve AMO strategy", function () {
       expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
+      );
+      expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(
+        balanceVault.add(checkBalanceAMO)
       );
     });
   });
