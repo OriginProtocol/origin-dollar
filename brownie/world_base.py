@@ -56,6 +56,19 @@ def scale_amount(from_token, to_token, amount, decimals=0):
 
     return int(scale_amount * 10**decimals) / (10**decimals)
 
+def get_tick_liquidity(tick):
+    liquidityGross = amo_pool.ticks(tick)[0]
+    wethInTickTotal, oethbInTickTotal =  aero_helper.getAmountsForLiquidity(
+        amo_pool.slot0()[0], #sqrtPriceX96
+        aero_helper.getSqrtRatioAtTick(tick), 
+        aero_helper.getSqrtRatioAtTick(tick + 1),
+        liquidityGross
+    )
+    print("------------------")
+    print("WETH       ", c18(wethInTickTotal))
+    print("OETHB      ", c18(oethbInTickTotal))
+    print("------------------")
+
 def amo_snapshot():
     wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
     superOETHbPoolBalance = oethb.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
