@@ -57,8 +57,7 @@ async function buildAndSimulateTimelockOperations(
   });
   const salt = keccak256(toUtf8Bytes(propDesc));
 
-  // For unscheduled operation, assume a delay of 60 seconds
-  const delay = 60;
+  const delay = await timelock.getMinDelay();
 
   // *** Build and write schedule JSON ***
   const scheduleFilePath = path.resolve(
