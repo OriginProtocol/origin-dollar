@@ -330,7 +330,6 @@ function deployOnBaseWithGuardian(opts, fn) {
     if (isFork) {
       const { deployerAddr } = await getNamedAccounts();
       await impersonateAndFund(deployerAddr);
-
       await impersonateGuardian(guardianAddr);
     }
 
@@ -446,16 +445,19 @@ function deployOnSonic(opts, fn) {
   const { deployName, dependencies, onlyOnFork, forceSkip, useTimelock } = opts;
 
   const runDeployment = async (hre) => {
+    // Check if it has any pending governance operations to be simulated
+    const foundAndExecuted = await simulateTimelockOperations(deployName);
+    if (foundAndExecuted) {
+      // If governance operations were found and executed, skip the deployment
+      return;
+    }
+
     const tools = {
       deployWithConfirmation,
       ethers: hre.ethers,
       getTxOpts: getTxOpts,
       withConfirmation,
     };
-
-    // Mine one block to workaround "No known hardfork for execution on historical block"
-    // https://github.com/NomicFoundation/hardhat/issues/5511
-    await mine(1);
 
     const adminAddr = addresses.sonic.admin;
     console.log("Sonic Admin addr", adminAddr);
@@ -482,7 +484,11 @@ function deployOnSonic(opts, fn) {
       const propDescription = proposal.name || deployName;
       const propArgs = await proposeGovernanceArgs(proposal.actions);
 
-      await handleTransitionGovernance(propDescription, propArgs);
+      await buildAndSimulateTimelockOperations(
+        deployName,
+        propDescription,
+        propArgs
+      );
     } else {
       // Handle Admin governance
       const sAdmin = !isFork
@@ -519,6 +525,10 @@ function deployOnSonic(opts, fn) {
   };
 
   const main = async (hre) => {
+    // Mine one block to workaround "No known hardfork for execution on historical block"
+    // https://github.com/NomicFoundation/hardhat/issues/5511
+    await mine(1);
+
     console.log(`Running ${deployName} deployment...`);
     if (!hre) {
       hre = require("hardhat");
