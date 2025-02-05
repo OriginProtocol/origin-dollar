@@ -79,7 +79,6 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
 
     function _addLiquidity(
         uint256[] memory _amounts,
-        uint256 _ethValue,
         uint256 _minMintAmount
     ) internal override returns (uint256) {
         uint256[2] memory amounts = [
@@ -87,15 +86,9 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
             _amounts[oethCoinIndex]
         ];
 
-        return
-            _ethValue != 0
-                ? ICurveETHPoolV1(address(curvePool)).add_liquidity{
-                    value: _amounts[ethCoinIndex]
-                }(amounts, _minMintAmount)
-                : ICurveETHPoolV1(address(curvePool)).add_liquidity(
-                    amounts,
-                    _minMintAmount
-                );
+        return ICurveETHPoolV1(address(curvePool)).add_liquidity{
+                value: _amounts[ethCoinIndex]
+            }(amounts, _minMintAmount);
     }
 
     function _removeLiquidity(

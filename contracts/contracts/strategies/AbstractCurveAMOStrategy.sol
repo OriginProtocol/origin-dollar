@@ -195,7 +195,6 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
 
         uint256 lpDeposited = _addLiquidity(
             _amounts,
-            _wethAmount,
             minMintAmount
         );
 
@@ -370,7 +369,7 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         // Add the minted OTokens to the Curve pool
-        uint256 lpDeposited = _addLiquidity(amounts, 0, minMintAmount);
+        uint256 lpDeposited = _addLiquidity(amounts, minMintAmount);
 
         // Deposit the Curve pool LP tokens to the Convex rewards pool
         _stakeLP(lpDeposited);
@@ -486,7 +485,6 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
 
     function _addLiquidity(
         uint256[] memory _amounts,
-        uint256 _ethValue,
         uint256 _minMintAmount
     ) internal virtual returns (uint256);
 

@@ -55,7 +55,6 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
 
     function _addLiquidity(
         uint256[] memory _amounts,
-        uint256,
         uint256 _minMintAmount
     ) internal override returns (uint256) {
         return
