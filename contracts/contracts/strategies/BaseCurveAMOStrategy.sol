@@ -68,10 +68,6 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
         uint256 _requiredLpTokens,
         uint256[] memory _minAmounts
     ) internal override {
-        if (_requiredLpTokens == type(uint256).max) {
-            _requiredLpTokens = lpToken.balanceOf(address(this));
-        }
-
         ICurveStableSwapNG(address(curvePool)).remove_liquidity(
             _requiredLpTokens,
             _minAmounts

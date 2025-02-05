@@ -100,10 +100,6 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
             _minAmounts[oethCoinIndex]
         ];
 
-        if (_requiredLpTokens == type(uint256).max) {
-            _requiredLpTokens = lpToken.balanceOf(address(this));
-        }
-
         ICurveETHPoolV1(address(curvePool)).remove_liquidity(
             _requiredLpTokens,
             minAmounts

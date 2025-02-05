@@ -307,7 +307,7 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         // Withdraws are proportional to assets held by 3Pool
         uint256[] memory minWithdrawAmounts = new uint256[](2);
 
-        _removeLiquidity(type(uint256).max, minWithdrawAmounts);
+        _removeLiquidity(lpToken.balanceOf(address(this)), minWithdrawAmounts);
 
         // Burn all OETH
         uint256 oethToBurn = oeth.balanceOf(address(this));
