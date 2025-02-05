@@ -503,7 +503,7 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
 
     function _stakeLP(uint256 _lpTokens) internal virtual;
 
-    function _unstakeLP(uint256 _wethAmount) internal virtual;
+    function _unstakeLP(uint256 _lpToken) internal virtual;
 
     function _claimReward() internal virtual;
 

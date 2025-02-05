@@ -97,13 +97,13 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
         gauge.deposit(_lpTokens);
     }
 
-    function _unstakeLP(uint256 _wethAmount) internal override {
-        if (_wethAmount == type(uint256).max) {
-            _wethAmount = gauge.balanceOf(address(this));
+    function _unstakeLP(uint256 _lpToken) internal override {
+        if (_lpToken == type(uint256).max) {
+            _lpToken = gauge.balanceOf(address(this));
         }
 
         // withdraw lp tokens from the gauge without claiming rewards
-        gauge.withdraw(_wethAmount);
+        gauge.withdraw(_lpToken);
     }
 
     function _claimReward() internal override {
