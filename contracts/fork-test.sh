@@ -77,7 +77,11 @@ main()
 
     # Run specific files when a param is given
     if [[ ! -z "$1" ]]; then
-        params+="--testfiles $@"
+        if [[ $is_coverage == "true" ]]; then
+            params+="--testfiles $@"
+        else
+            params+="$@"
+        fi
     fi
 
     # Add trace flag if enabled
