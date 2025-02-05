@@ -181,14 +181,14 @@ describe("ForkTest: OETH Vault", function () {
       // Mint 1:1
       await oethVault.connect(strategist).mint(weth.address, amount, amount);
 
-      const oethBalanceBefore = await oeth.balanceOf(strategist);
-      const wethBalanceBefore = await weth.balanceOf(strategist);
+      const oethBalanceBefore = await oeth.balanceOf(strategist.address);
+      const wethBalanceBefore = await weth.balanceOf(strategist.address);
 
       // Redeem 1:1 instantly
       await oethVault.connect(strategist).redeem(amount, amount);
 
-      const oethBalanceAfter = await oeth.balanceOf(strategist);
-      const wethBalanceAfter = await weth.balanceOf(strategist);
+      const oethBalanceAfter = await oeth.balanceOf(strategist.address);
+      const wethBalanceAfter = await weth.balanceOf(strategist.address);
 
       expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
       expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(amount));
@@ -205,14 +205,14 @@ describe("ForkTest: OETH Vault", function () {
       // Mint 1:1
       await oethVault.connect(josh).mint(weth.address, amount, amount);
 
-      const oethBalanceBefore = await oeth.balanceOf(josh);
-      const wethBalanceBefore = await weth.balanceOf(josh);
+      const oethBalanceBefore = await oeth.balanceOf(josh.address);
+      const wethBalanceBefore = await weth.balanceOf(josh.address);
 
       // Redeem 1:1 instantly
       await oethVault.connect(josh).redeem(amount, expectedWETH);
 
-      const oethBalanceAfter = await oeth.balanceOf(josh);
-      const wethBalanceAfter = await weth.balanceOf(josh);
+      const oethBalanceAfter = await oeth.balanceOf(josh.address);
+      const wethBalanceAfter = await weth.balanceOf(josh.address);
 
       expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
       expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(expectedWETH));
