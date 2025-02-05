@@ -131,7 +131,7 @@ contract OETHVaultCore is VaultCore {
 
         // Amount excluding fees
         // No fee for the strategist, makes it easier to do operations
-        uint256 amountMinusFee = msg.sender == strategistAddr
+        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
             ? _amount
             : _calculateRedeemOutputs(_amount)[wethAssetIndex];
 
