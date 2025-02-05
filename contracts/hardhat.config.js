@@ -341,8 +341,22 @@ module.exports = {
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
-      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
-      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      localhost:
+        process.env.FORK_NETWORK_NAME === "base"
+          ? BASE_GOVERNOR
+          : process.env.FORK_NETWORK_NAME === "sonic"
+          ? SONIC_ADMIN
+          : process.env.FORK == "true"
+          ? MAINNET_MULTISIG
+          : 1,
+      hardhat:
+        process.env.FORK_NETWORK_NAME === "base"
+          ? BASE_GOVERNOR
+          : process.env.FORK_NETWORK_NAME === "sonic"
+          ? SONIC_ADMIN
+          : process.env.FORK == "true"
+          ? MAINNET_MULTISIG
+          : 1,
       mainnet: MAINNET_MULTISIG,
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,

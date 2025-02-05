@@ -12,12 +12,16 @@ const {
   withConfirmation,
   impersonateGuardian,
   handleTransitionGovernance,
+  buildGnosisSafeJson,
+  constructContractMethod,
 } = require("./deploy");
 const { proposeGovernanceArgs } = require("./governor");
 const { isForkTest } = require("./hardhat-helpers");
 const { impersonateAndFund } = require("./signers");
 const { getTxOpts } = require("./tx");
 const { mine } = require("@nomicfoundation/hardhat-network-helpers");
+
+const { keccak256, toUtf8Bytes } = require("ethers/lib/utils.js");
 
 const fs = require("fs");
 const path = require("path");
@@ -32,7 +36,91 @@ function log(msg, deployResult = null) {
   }
 }
 
-async function handleTimelockProposalWithGuardian(deployName) {
+async function buildAndSimulateTimelockOperations(
+  deployName,
+  propDesc,
+  propArgs
+) {
+  console.log("Building and simulating timelock operations for", deployName);
+  const networkName = process.env.FORK_NETWORK_NAME;
+  const { guardianAddr, timelockAddr } = await getNamedAccounts();
+
+  const timelock = await ethers.getContractAt(
+    "ITimelockController",
+    timelockAddr
+  );
+
+  const payloads = propArgs[2].map((sig, i) => {
+    return `${keccak256(toUtf8Bytes(sig)).slice(0, 10)}${propArgs[3][i].slice(
+      2
+    )}`;
+  });
+  const salt = keccak256(toUtf8Bytes(propDesc));
+
+  // For unscheduled operation, assume a delay of 60 seconds
+  const delay = 60;
+
+  // *** Build and write schedule JSON ***
+  const scheduleFilePath = path.resolve(
+    __dirname,
+    `./../deployments/${networkName}/operations/${deployName}.schedule.json`
+  );
+  const scheduleContractMethod = constructContractMethod(
+    timelock,
+    "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)"
+  );
+  const scheduleInputValues = {
+    targets: JSON.stringify(propArgs[0]),
+    values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+    payloads: JSON.stringify(payloads),
+    predecessor:
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    salt: salt,
+    delay: delay.toString(),
+  };
+  const scheduleJson = await buildGnosisSafeJson(
+    guardianAddr,
+    [timelockAddr],
+    [scheduleContractMethod],
+    [scheduleInputValues]
+  );
+  fs.writeFileSync(
+    scheduleFilePath,
+    JSON.stringify(scheduleJson, undefined, 2)
+  );
+  console.log("Schedule JSON written to", scheduleFilePath);
+
+  // *** Build and write execute JSON ***
+  const executeFilePath = path.resolve(
+    __dirname,
+    `./../deployments/${networkName}/operations/${deployName}.execute.json`
+  );
+  const executeContractMethod = constructContractMethod(
+    timelock,
+    "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)"
+  );
+  const executeInputValues = {
+    targets: JSON.stringify(propArgs[0]),
+    values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+    payloads: JSON.stringify(payloads),
+    predecessor:
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    salt: salt,
+  };
+  const executeJson = await buildGnosisSafeJson(
+    guardianAddr,
+    [timelockAddr],
+    [executeContractMethod],
+    [executeInputValues]
+  );
+  fs.writeFileSync(executeFilePath, JSON.stringify(executeJson, undefined, 2));
+  console.log("Execute JSON written to", executeFilePath);
+
+  // Simulate the operations
+  await simulateTimelockOperations(deployName);
+}
+
+async function simulateTimelockOperations(deployName) {
   if (!isFork) {
     console.log("Skipping governance simulation on non-fork");
     return false;
@@ -58,6 +146,7 @@ async function handleTimelockProposalWithGuardian(deployName) {
     "ITimelockController",
     timelockAddr
   );
+  const timelockSigner = await impersonateAndFund(timelockAddr);
 
   const inputs = scheduleFile.transactions[0].contractInputsValues;
 
@@ -85,16 +174,7 @@ async function handleTimelockProposalWithGuardian(deployName) {
   if (!isScheduled) {
     // Needs to be scheduled
     console.log(`Reducing required queue time to 60 seconds`);
-    /* contracts/timelock/Timelock.sol storage slot layout:
-     * slot[0] address admin
-     * slot[1] address pendingAdmin
-     * slot[2] uint256 delay
-     */
-    await setStorageAt(
-      timelock.address,
-      "0x2",
-      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
-    );
+    await timelock.connect(timelockSigner).updateDelay(60);
 
     console.log("Scheduling batch on Timelock...");
     await timelock
@@ -129,8 +209,8 @@ async function handleTimelockProposalWithGuardian(deployName) {
 
   // Reset timelock delay if it was reduced
   if (reduceWaitTime) {
-    console.log("Setting queue time back to 172800 seconds");
-    await timelock.updateDelay(actualDelay);
+    console.log(`Setting queue time back to ${actualDelay} seconds`);
+    await timelock.connect(timelockSigner).updateDelay(actualDelay);
   }
 
   return true;
@@ -227,13 +307,19 @@ function deployOnBaseWithGuardian(opts, fn) {
   const { deployName, dependencies, onlyOnFork, forceSkip, useTimelock } = opts;
 
   const runDeployment = async (hre) => {
+    // Check if it has any pending governance operations to be simulated
+    const foundAndExecuted = await simulateTimelockOperations(deployName);
+    if (foundAndExecuted) {
+      // If governance operations were found and executed, skip the deployment
+      return;
+    }
+
     const tools = {
       deployWithConfirmation,
       ethers: hre.ethers,
       getTxOpts: getTxOpts,
       withConfirmation,
     };
-
     const guardianAddr = addresses.base.governor;
 
     if (onlyOnFork && !isFork) {
@@ -259,7 +345,11 @@ function deployOnBaseWithGuardian(opts, fn) {
       const propDescription = proposal.name || deployName;
       const propArgs = await proposeGovernanceArgs(proposal.actions);
 
-      await handleTransitionGovernance(propDescription, propArgs);
+      await buildAndSimulateTimelockOperations(
+        deployName,
+        propDescription,
+        propArgs
+      );
     } else {
       // Handle Guardian governance
       const sGuardian = !isFork
@@ -297,12 +387,9 @@ function deployOnBaseWithGuardian(opts, fn) {
   };
 
   const main = async (hre) => {
-    const foundAndExecuted = await handleTimelockProposalWithGuardian(
-      deployName
-    );
-    if (foundAndExecuted) {
-      return;
-    }
+    // Mine one block to workaround "No known hardfork for execution on historical block"
+    // https://github.com/NomicFoundation/hardhat/issues/5511
+    await mine(1);
 
     console.log(`Running ${deployName} deployment...`);
     if (!hre) {
