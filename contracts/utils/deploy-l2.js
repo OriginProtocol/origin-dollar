@@ -260,7 +260,7 @@ function deployOnArb(opts, fn) {
   return main;
 }
 
-function deployOnBase(opts, fn) {
+function deployOnBaseWithEOA(opts, fn) {
   const { deployName, dependencies } = opts;
 
   const runDeployment = async (hre) => {
@@ -435,7 +435,7 @@ function deployOnL2WithGuardianOrTimelock(opts, fn, tags) {
   return main;
 }
 
-function deployOnBaseWithGuardian(opts, fn) {
+function deployOnBase(opts, fn) {
   return deployOnL2WithGuardianOrTimelock(
     {
       ...opts,
@@ -471,7 +471,7 @@ function deployOnSonic(opts, fn) {
 
 module.exports = {
   deployOnArb,
+  deployOnBaseWithEOA,
   deployOnBase,
-  deployOnBaseWithGuardian,
   deployOnSonic,
 };

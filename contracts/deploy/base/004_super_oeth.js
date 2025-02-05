@@ -1,7 +1,7 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "004_super_oeth",
   },

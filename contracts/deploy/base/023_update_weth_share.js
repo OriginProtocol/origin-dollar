@@ -1,7 +1,7 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const { utils } = require("ethers");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "023_update_weth_share",
   },
