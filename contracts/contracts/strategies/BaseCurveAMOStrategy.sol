@@ -44,7 +44,7 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
         address _weth,
         address _gauge,
         address _gaugeFactory
-    ) AbstractCurveAMOStrategy(_baseConfig, _oeth, _weth) {
+    ) AbstractCurveAMOStrategy(_baseConfig, _oeth, _weth, false) {
         gauge = ICurveXChainLiquidityGauge(_gauge);
         gaugeFactory = IChildLiquidityGaugeFactory(_gaugeFactory);
     }
@@ -104,14 +104,6 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
 
         // withdraw lp tokens from the gauge without claiming rewards
         gauge.withdraw(_wethAmount);
-    }
-
-    function _wrapETH(uint256 _wethAmount) internal override {
-        // Do nothing
-    }
-
-    function _unwrapETH(uint256 _wethAmount) internal override {
-        // Do nothing
     }
 
     function _claimReward() internal override {

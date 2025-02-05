@@ -64,7 +64,8 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
         AbstractCurveAMOStrategy(
             _baseConfig,
             _convexConfig.oethAddress,
-            _convexConfig.wethAddress
+            _convexConfig.wethAddress,
+            true
         )
     {
         cvxDepositorAddress = _convexConfig.cvxDepositorAddress;
@@ -149,17 +150,6 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
         // withdraw and unwrap with claim takes back the lpTokens
         // and also collects the rewards for deposit
         cvxRewardStaker.withdrawAndUnwrap(_lpToken, true);
-    }
-
-    function _wrapETH(uint256 _wethAmount) internal override {
-        if (_wethAmount == type(uint256).max) {
-            _wethAmount = address(this).balance;
-        }
-        weth.deposit{ value: _wethAmount }();
-    }
-
-    function _unwrapETH(uint256 _amount) internal override {
-        weth.withdraw(_amount);
     }
 
     function _claimReward() internal override {

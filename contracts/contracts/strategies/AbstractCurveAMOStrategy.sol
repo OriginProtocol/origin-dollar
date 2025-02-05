@@ -32,6 +32,10 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
     uint128 public constant oethCoinIndex = 1;
     uint128 public constant ethCoinIndex = 0;
 
+    //@dev when true the strategy operates with native ETH when adding to or
+    //     removing liquidity from the underlying pool. 
+    bool public immutable operatesWithNativeETH;
+
     /**
      * @dev Verifies that the caller is the Strategist.
      */
@@ -83,13 +87,15 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _oeth,
-        address _weth
+        address _weth,
+        bool _operatesWithNativeETH
     ) InitializableAbstractStrategy(_baseConfig) {
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = IGeneralCurvePool(_baseConfig.platformAddress);
 
         oeth = IERC20(_oeth);
         weth = IWETH9(_weth);
+        operatesWithNativeETH = _operatesWithNativeETH;
     }
 
     /**
@@ -141,8 +147,9 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
 
-        // unwrap wETH in ETH if needed
-        _unwrapETH(_wethAmount);
+        if (operatesWithNativeETH){
+            weth.withdraw(_wethAmount);
+        }
 
         emit Deposit(_weth, address(lpToken), _wethAmount);
 
@@ -247,7 +254,9 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
 
         // Wrap ETH in wETH if needed
-        _wrapETH(_amount);
+        if (operatesWithNativeETH) {
+            weth.deposit{ value: _amount }();
+        }
 
         // Transfer WETH to the recipient
         require(
@@ -305,15 +314,24 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToBurn = oeth.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethToBurn);
 
-        _wrapETH(type(uint256).max);
+        // Get the strategy contract's ether/WETH balance.
+        // This includes all that was removed from the Curve pool and
+        // any ether that was sitting in the strategy contract before the removal.
+        uint256 wethBalance;
+        if (operatesWithNativeETH) {
+            // intentional misnomer as this ETH becomes WETH in the next step
+            wethBalance = address(this).balance;
+            weth.deposit{ value: wethBalance }();
+        } else {
+            wethBalance = weth.balanceOf(address(this));
+        }
 
-        uint256 ethBalance = weth.balanceOf(address(this));
         require(
-            weth.transfer(vaultAddress, ethBalance),
+            weth.transfer(vaultAddress, wethBalance),
             "Transfer of WETH not successful"
         );
 
-        emit Withdrawal(address(weth), address(lpToken), ethBalance);
+        emit Withdrawal(address(weth), address(lpToken), wethBalance);
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
 
@@ -416,9 +434,13 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalance
     {
         // Withdraw Curve pool LP tokens from Convex and remove ETH from the Curve pool
+        // misnomer as this is sometimes WETH sometimes ETH
         uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, ethCoinIndex);
 
-        _wrapETH(ethAmount);
+        // Wrap ETH in wETH if needed
+        if (operatesWithNativeETH) {
+            weth.deposit{ value: ethAmount }();
+        }
 
         // Transfer WETH to the vault
         require(
@@ -482,10 +504,6 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
     function _stakeLP(uint256 _lpTokens) internal virtual;
 
     function _unstakeLP(uint256 _wethAmount) internal virtual;
-
-    function _wrapETH(uint256 _wethAmount) internal virtual;
-
-    function _unwrapETH(uint256 _wethAmount) internal virtual;
 
     function _claimReward() internal virtual;
 
