@@ -93,10 +93,6 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
     }
 
     function _unstakeLP(uint256 _lpToken) internal override {
-        if (_lpToken == type(uint256).max) {
-            _lpToken = gauge.balanceOf(address(this));
-        }
-
         // withdraw lp tokens from the gauge without claiming rewards
         gauge.withdraw(_lpToken);
     }
@@ -142,6 +138,10 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
         return MAX_SLIPPAGE;
     }
 
+    function balanceOfStakedLP() internal view override returns (uint256) {
+        return gauge.balanceOf(address(this));
+    }
+
     /**
      * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
      * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
@@ -159,31 +159,6 @@ contract BaseCurveAMOStrategy is AbstractCurveAMOStrategy {
             SOLVENCY_THRESHOLD
         ) {
             revert("Protocol insolvent");
-        }
-    }
-
-    /***************************************
-                Assets and Rewards
-    ****************************************/
-
-    /**
-     * @notice Get the total asset value held in the platform
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
-        require(_asset == address(weth), "Unsupported asset");
-
-        // WETH balance needed here for the balance check that happens from vault during depositing.
-        balance = weth.balanceOf(address(this));
-        uint256 lpTokens = gauge.balanceOf(address(this));
-        if (lpTokens > 0) {
-            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
         }
     }
 }

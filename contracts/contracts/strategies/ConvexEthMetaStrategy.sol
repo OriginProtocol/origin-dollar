@@ -133,9 +133,6 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
     }
 
     function _unstakeLP(uint256 _lpToken) internal override {
-        if (_lpToken == type(uint256).max) {
-            _lpToken = cvxRewardStaker.balanceOf(address(this));
-        }
         // withdraw and unwrap with claim takes back the lpTokens
         // and also collects the rewards for deposit
         cvxRewardStaker.withdrawAndUnwrap(_lpToken, true);
@@ -177,24 +174,7 @@ contract ConvexEthMetaStrategy is AbstractCurveAMOStrategy {
         return MAX_SLIPPAGE;
     }
 
-    /**
-     * @notice Get the total asset value held in the platform
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
-        require(_asset == address(weth), "Unsupported asset");
-
-        // Eth balance needed here for the balance check that happens from vault during depositing.
-        balance = address(this).balance;
-        uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));
-        if (lpTokens > 0) {
-            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
-        }
+    function balanceOfStakedLP() internal view override returns (uint256) {
+        return cvxRewardStaker.balanceOf(address(this));
     }
 }

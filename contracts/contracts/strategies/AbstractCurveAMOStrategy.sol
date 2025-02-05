@@ -302,7 +302,7 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
      * convert the ETH to WETH and transfer to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        _unstakeLP(type(uint256).max);
+        _unstakeLP(balanceOfStakedLP());
 
         // Withdraws are proportional to assets held by 3Pool
         uint256[] memory minWithdrawAmounts = new uint256[](2);
@@ -479,6 +479,32 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
         coinsRemoved = _removeLiquidityOneCoin(_lpTokens, coinIndex, minAmount);
     }
 
+
+    /**
+     * @notice Get the total asset value held in the platform
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform
+     */
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(_asset == address(weth), "Unsupported asset");
+
+        // (W)ETH balance needed here for the balance check that happens from vault during depositing.
+        if (operatesWithNativeETH) {
+            balance = address(this).balance;
+        } else {
+            balance = weth.balanceOf(address(this));
+        }
+        uint256 lpTokens = balanceOfStakedLP();
+        if (lpTokens > 0) {
+            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
+        }
+    }
+
     /***************************************
                 Internal functions
     ****************************************/
@@ -512,6 +538,8 @@ abstract contract AbstractCurveAMOStrategy is InitializableAbstractStrategy {
     function _solvencyAssert() internal view virtual;
 
     function maxSlippage() internal view virtual returns (uint256);
+
+    function balanceOfStakedLP() internal view virtual returns (uint256);
 
     /***************************************
                 Assets and Rewards
