@@ -171,6 +171,53 @@ describe("ForkTest: OETH Vault", function () {
       });
     });
 
+    it("should allow strategist to redeem without fee", async () => {
+      const { oethVault, strategist, weth, oeth } = fixture;
+
+      const amount = oethUnits("10");
+
+      await weth.connect(strategist).approve(oethVault.address, amount);
+
+      // Mint 1:1
+      await oethVault.connect(strategist).mint(weth.address, amount, amount);
+
+      const oethBalanceBefore = await oeth.balanceOf(strategist.address);
+      const wethBalanceBefore = await weth.balanceOf(strategist.address);
+
+      // Redeem 1:1 instantly
+      await oethVault.connect(strategist).redeem(amount, amount);
+
+      const oethBalanceAfter = await oeth.balanceOf(strategist.address);
+      const wethBalanceAfter = await weth.balanceOf(strategist.address);
+
+      expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
+      expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(amount));
+    });
+
+    it("should enforce fee on other users for instant redeem", async () => {
+      const { oethVault, josh, weth, oeth } = fixture;
+
+      const amount = oethUnits("10");
+      const expectedWETH = amount.mul("9990").div("10000");
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      // Mint 1:1
+      await oethVault.connect(josh).mint(weth.address, amount, amount);
+
+      const oethBalanceBefore = await oeth.balanceOf(josh.address);
+      const wethBalanceBefore = await weth.balanceOf(josh.address);
+
+      // Redeem 1:1 instantly
+      await oethVault.connect(josh).redeem(amount, expectedWETH);
+
+      const oethBalanceAfter = await oeth.balanceOf(josh.address);
+      const wethBalanceAfter = await weth.balanceOf(josh.address);
+
+      expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
+      expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(expectedWETH));
+    });
+
     it("should partially redeem 10 OETH", async () => {
       const { domen, oeth, oethVault, weth } = fixture;
 
