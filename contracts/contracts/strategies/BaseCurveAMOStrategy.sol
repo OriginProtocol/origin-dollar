@@ -84,7 +84,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Checks the Curve pool's balances have improved and the balances
      * have not tipped to the other side.
-     * This modifier only works on functions that do a single sided add or remove.
+     * This modifier is only applied to functions that do a single sided add or remove.
      * The standard deposit function adds to both sides of the pool in a way that
      * the pool's balance is not worsened.
      * Withdrawals are proportional so doesn't change the pools asset balance.
