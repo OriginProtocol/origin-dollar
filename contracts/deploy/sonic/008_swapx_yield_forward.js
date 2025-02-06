@@ -14,7 +14,18 @@ module.exports = deployOnSonic(
         {
           contract: cOSonic,
           signature: "delegateYield(address,address)",
-          args: [addresses.sonic.SwapXOsUSDCePool, addresses.sonic.nodeDriver],
+          args: [
+            addresses.sonic.SwapXOsUSDCePool,
+            addresses.sonic.SwapXOsUSDCeMultisigBooster,
+          ],
+        },
+        {
+          contract: cOSonic,
+          signature: "delegateYield(address,address)",
+          args: [
+            addresses.sonic.SwapXOsGEMSxPool,
+            addresses.sonic.SwapXOsGEMSxMultisigBooster,
+          ],
         },
       ],
     };
