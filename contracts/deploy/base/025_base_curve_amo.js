@@ -49,8 +49,8 @@ module.exports = deployOnBaseWithGuardian(
 
     // Initialize Base Curve AMO implementation
     const initData = cOETHBaseCurveAMO.interface.encodeFunctionData(
-      "initialize(address[],address[],uint256)",
-      [[addresses.base.CRV], [addresses.base.WETH], oethUnits("0.2")]
+      "initialize(address[],uint256)",
+      [[addresses.base.CRV], oethUnits("0.2")]
     );
     await withConfirmation(
       // prettier-ignore

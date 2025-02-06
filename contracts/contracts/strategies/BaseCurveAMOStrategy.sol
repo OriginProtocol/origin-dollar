@@ -140,19 +140,17 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV
-     * @param _assets Addresses of supported assets. eg WETH
      * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the Curve pool.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV
-        address[] calldata _assets, // WETH
         uint256 _maxSlippage
     ) external onlyGovernor initializer {
-        require(_assets.length == 1, "Must have exactly one asset");
-        require(_assets[0] == address(weth), "Asset not WETH");
-
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
+
+        address[] memory _assets = new address[](1);
+        _assets[0] = address(weth);
 
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
