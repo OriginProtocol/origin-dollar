@@ -26,8 +26,6 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      */
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
 
-    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-
     // New immutable variables that must be set in the constructor
     /**
      * @notice Address of the Wrapped ETH (WETH) contract.
@@ -62,6 +60,13 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     // Ordered list of pool assets
     uint128 public constant oethCoinIndex = 1;
     uint128 public constant ethCoinIndex = 0;
+
+    /**
+     * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
+     */
+    uint256 public maxSlippage;
+
+    event MaxSlippageUpdated(uint256 newMaxSlippage);
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -133,14 +138,17 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV
      * @param _assets Addresses of supported assets. eg WETH
+     * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the Curve pool.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV
-        address[] calldata _assets // WETH
+        address[] calldata _assets, // WETH
+        uint256 _maxSlippage
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
         require(_assets[0] == address(weth), "Asset not WETH");
 
+        maxSlippage = _maxSlippage;
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
@@ -214,7 +222,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
+            uint256(1e18) - maxSlippage
         );
 
         // Do the deposit to the Curve pool
@@ -382,7 +390,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         );
         // Apply slippage to LP tokens
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
+            uint256(1e18) - maxSlippage
         );
 
         // Add the minted OTokens to the Curve pool
@@ -483,9 +491,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         // Apply slippage to ETH value
-        uint256 minAmount = valueInEth.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        uint256 minAmount = valueInEth.mulTruncate(uint256(1e18) - maxSlippage);
 
         // Remove just the ETH from the Curve pool
         coinsRemoved = curvePool.remove_liquidity_one_coin(
@@ -585,6 +591,17 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     /***************************************
                     Approvals
     ****************************************/
+
+
+    /**
+     * @notice Sets the maximum slippage allowed for any swap/liquidity operation
+     * @param _maxSlippage Maximum slippage allowed, 1e18 = 100%.
+     */
+    function setMaxSlippage(uint256 _maxSlippage) external onlyGovernor {
+        require(_maxSlippage <= 1e18, "Slippage must be less than 100%");
+        maxSlippage = _maxSlippage;
+        emit MaxSlippageUpdated(_maxSlippage);
+    }
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,
