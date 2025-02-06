@@ -151,7 +151,6 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         require(_assets.length == 1, "Must have exactly one asset");
         require(_assets[0] == address(weth), "Asset not WETH");
 
-        maxSlippage = _maxSlippage;
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
@@ -162,6 +161,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         _approveBase();
+        _setMaxSlippage(_maxSlippage);
     }
 
     /***************************************
@@ -600,6 +600,10 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      * @param _maxSlippage Maximum slippage allowed, 1e18 = 100%.
      */
     function setMaxSlippage(uint256 _maxSlippage) external onlyGovernor {
+        _setMaxSlippage(_maxSlippage);
+    }
+
+    function _setMaxSlippage(uint256 _maxSlippage) internal {
         require(_maxSlippage <= 1e18, "Slippage must be less than 100%");
         maxSlippage = _maxSlippage;
         emit MaxSlippageUpdated(_maxSlippage);
