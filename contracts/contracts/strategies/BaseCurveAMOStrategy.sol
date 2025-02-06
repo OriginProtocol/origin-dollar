@@ -6,7 +6,8 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the Curve OETH/WETH pool
  * @author Origin Protocol Inc
  */
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -18,6 +19,7 @@ import { IChildLiquidityGaugeFactory } from "../interfaces/IChildLiquidityGaugeF
 
 contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
+    using SafeCast for uint256;
 
     /**
      * @dev a threshold under which the contract no longer allows for the protocol to manually rebalance.
@@ -91,16 +93,16 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffBefore = int256(balancesBefore[ethCoinIndex]) -
-            int256(balancesBefore[oethCoinIndex]);
+        int256 diffBefore = balancesBefore[ethCoinIndex].toInt256() -
+            balancesBefore[oethCoinIndex].toInt256();
 
         _;
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffAfter = int256(balancesAfter[ethCoinIndex]) -
-            int256(balancesAfter[oethCoinIndex]);
+        int256 diffAfter = balancesAfter[ethCoinIndex].toInt256() -
+            balancesAfter[oethCoinIndex].toInt256();
 
         if (diffBefore <= 0) {
             // If the pool was originally imbalanced in favor of OETH, then
@@ -191,9 +193,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                int256(balances[ethCoinIndex]) +
-                    int256(_wethAmount) -
-                    int256(balances[oethCoinIndex])
+                balances[ethCoinIndex].toInt256() +
+                    _wethAmount.toInt256() -
+                    balances[oethCoinIndex].toInt256()
             )
         );
 
@@ -591,7 +593,6 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     /***************************************
                     Approvals
     ****************************************/
-
 
     /**
      * @notice Sets the maximum slippage allowed for any swap/liquidity operation
