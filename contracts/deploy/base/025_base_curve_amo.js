@@ -8,7 +8,7 @@ const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "022_base_curve_amo",
+    deployName: "025_base_curve_amo",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
