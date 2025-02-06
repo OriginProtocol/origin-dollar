@@ -42,7 +42,9 @@ async function buildAndSimulateTimelockOperations(
   propArgs
 ) {
   console.log("Building and simulating timelock operations for", deployName);
-  const networkName = process.env.FORK_NETWORK_NAME;
+  const networkName = isFork
+    ? "localhost"
+    : process.env.NETWORK_NAME || "mainnet";
   const { guardianAddr, timelockAddr } = await getNamedAccounts();
 
   const timelock = await ethers.getContractAt(
@@ -125,7 +127,9 @@ async function simulateTimelockOperations(deployName) {
     return false;
   }
 
-  const networkName = process.env.FORK_NETWORK_NAME;
+  const networkName = isFork
+    ? "localhost"
+    : process.env.NETWORK_NAME || "mainnet";
 
   const scheduleFilePath = path.resolve(
     __dirname,
