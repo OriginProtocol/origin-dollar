@@ -6,12 +6,10 @@ const {
   advanceTime,
   advanceBlocks,
 } = require("../test/helpers");
-const addresses = require("./addresses");
 const {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  handleTransitionGovernance,
   buildGnosisSafeJson,
   constructContractMethod,
 } = require("./deploy");
@@ -36,13 +34,23 @@ function log(msg, deployResult = null) {
   }
 }
 
+function getNetworkName() {
+  if (isForkTest) {
+    return "hardhat";
+  } else if (isFork) {
+    return "localhost";
+  } else {
+    return process.env.NETWORK_NAME || "mainnet";
+  }
+}
+
 async function buildAndSimulateTimelockOperations(
   deployName,
   propDesc,
   propArgs
 ) {
   console.log("Building and simulating timelock operations for", deployName);
-  const networkName = process.env.FORK_NETWORK_NAME;
+  const networkName = getNetworkName();
   const { guardianAddr, timelockAddr } = await getNamedAccounts();
 
   const timelock = await ethers.getContractAt(
@@ -125,7 +133,7 @@ async function simulateTimelockOperations(deployName) {
     return false;
   }
 
-  const networkName = process.env.FORK_NETWORK_NAME;
+  const networkName = getNetworkName();
 
   const scheduleFilePath = path.resolve(
     __dirname,
