@@ -6,12 +6,10 @@ const {
   advanceTime,
   advanceBlocks,
 } = require("../test/helpers");
-const addresses = require("./addresses");
 const {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  handleTransitionGovernance,
   buildGnosisSafeJson,
   constructContractMethod,
 } = require("./deploy");
