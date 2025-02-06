@@ -113,6 +113,7 @@ describe("Curve AMO strategy", function () {
       expect(await curveAMOStrategy.rewardTokenAddresses(0)).to.equal(
         addresses.base.CRV
       );
+      expect(await curveAMOStrategy.maxSlippage()).to.equal(oethUnits("0.002"));
     });
 
     it("Should deposit to strategy", async () => {
