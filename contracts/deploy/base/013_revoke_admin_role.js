@@ -1,10 +1,10 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
 
 const ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "013_revoke_admin_role",
   },
