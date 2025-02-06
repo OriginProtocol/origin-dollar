@@ -104,13 +104,14 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         int256 diffAfter = balancesAfter[ethCoinIndex].toInt256() -
             balancesAfter[oethCoinIndex].toInt256();
 
-        if (diffBefore <= 0) {
+        if (diffBefore == 0) {
+            require(diffAfter == 0, "Position balance is worsened");
+        } else if (diffBefore < 0) {
             // If the pool was originally imbalanced in favor of OETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
-        }
-        if (diffBefore >= 0) {
+        } else if (diffBefore > 0) {
             // If the pool was originally imbalanced in favor of ETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
