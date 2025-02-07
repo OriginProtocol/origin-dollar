@@ -624,11 +624,6 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Accept unwrapped WETH
-     */
-    receive() external payable {}
-
-    /**
      * @dev Since we are unwrapping WETH before depositing it to Curve
      *      there is no need to set an approval for WETH on the Curve
      *      pool
