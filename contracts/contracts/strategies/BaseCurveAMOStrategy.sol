@@ -61,7 +61,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
 
     // Ordered list of pool assets
     uint128 public constant oethCoinIndex = 1;
-    uint128 public constant ethCoinIndex = 0;
+    uint128 public constant wethCoinIndex = 0;
 
     /**
      * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
@@ -93,7 +93,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffBefore = balancesBefore[ethCoinIndex].toInt256() -
+        int256 diffBefore = balancesBefore[wethCoinIndex].toInt256() -
             balancesBefore[oethCoinIndex].toInt256();
 
         _;
@@ -101,7 +101,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffAfter = balancesAfter[ethCoinIndex].toInt256() -
+        int256 diffAfter = balancesAfter[wethCoinIndex].toInt256() -
             balancesAfter[oethCoinIndex].toInt256();
 
         if (diffBefore == 0) {
@@ -192,7 +192,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                balances[ethCoinIndex].toInt256() +
+                balances[wethCoinIndex].toInt256() +
                     _wethAmount.toInt256() -
                     balances[oethCoinIndex].toInt256()
             )
@@ -216,7 +216,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         emit Deposit(address(oeth), address(lpToken), oethToAdd);
 
         uint256[] memory _amounts = new uint256[](2);
-        _amounts[ethCoinIndex] = _wethAmount;
+        _amounts[wethCoinIndex] = _wethAmount;
         _amounts[oethCoinIndex] = oethToAdd;
 
         uint256 valueInLpTokens = (_wethAmount + oethToAdd).divPrecisely(
@@ -275,7 +275,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
          * in that the strategy receives enough WETH on balanced removal
          */
         uint256[] memory _minWithdrawalAmounts = new uint256[](2);
-        _minWithdrawalAmounts[ethCoinIndex] = _amount;
+        _minWithdrawalAmounts[wethCoinIndex] = _amount;
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
@@ -313,7 +313,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        uint256 poolWETHBalance = curvePool.balances(ethCoinIndex);
+        uint256 poolWETHBalance = curvePool.balances(wethCoinIndex);
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
@@ -459,7 +459,10 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalance
     {
         // Withdraw Curve pool LP tokens from Curve gauge and remove ETH from the Curve pool
-        uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, ethCoinIndex);
+        uint256 ethAmount = _withdrawAndRemoveFromPool(
+            _lpTokens,
+            wethCoinIndex
+        );
 
         // Transfer WETH to the vault
         require(
