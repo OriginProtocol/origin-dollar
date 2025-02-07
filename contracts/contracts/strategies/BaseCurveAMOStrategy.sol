@@ -6,7 +6,8 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the Curve OETH/WETH pool
  * @author Origin Protocol Inc
  */
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -18,6 +19,7 @@ import { IChildLiquidityGaugeFactory } from "../interfaces/IChildLiquidityGaugeF
 
 contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
+    using SafeCast for uint256;
 
     /**
      * @dev a threshold under which the contract no longer allows for the protocol to manually rebalance.
@@ -25,8 +27,6 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      *      draining the protocol funds.
      */
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
-
-    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
 
     // New immutable variables that must be set in the constructor
     /**
@@ -64,6 +64,13 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     uint128 public constant ethCoinIndex = 0;
 
     /**
+     * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
+     */
+    uint256 public maxSlippage;
+
+    event MaxSlippageUpdated(uint256 newMaxSlippage);
+
+    /**
      * @dev Verifies that the caller is the Strategist.
      */
     modifier onlyStrategist() {
@@ -77,7 +84,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Checks the Curve pool's balances have improved and the balances
      * have not tipped to the other side.
-     * This modifier only works on functions that do a single sided add or remove.
+     * This modifier is only applied to functions that do a single sided add or remove.
      * The standard deposit function adds to both sides of the pool in a way that
      * the pool's balance is not worsened.
      * Withdrawals are proportional so doesn't change the pools asset balance.
@@ -86,24 +93,25 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffBefore = int256(balancesBefore[ethCoinIndex]) -
-            int256(balancesBefore[oethCoinIndex]);
+        int256 diffBefore = balancesBefore[ethCoinIndex].toInt256() -
+            balancesBefore[oethCoinIndex].toInt256();
 
         _;
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffAfter = int256(balancesAfter[ethCoinIndex]) -
-            int256(balancesAfter[oethCoinIndex]);
+        int256 diffAfter = balancesAfter[ethCoinIndex].toInt256() -
+            balancesAfter[oethCoinIndex].toInt256();
 
-        if (diffBefore <= 0) {
+        if (diffBefore == 0) {
+            require(diffAfter == 0, "Position balance is worsened");
+        } else if (diffBefore < 0) {
             // If the pool was originally imbalanced in favor of OETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
-        }
-        if (diffBefore >= 0) {
+        } else if (diffBefore > 0) {
             // If the pool was originally imbalanced in favor of ETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
@@ -132,17 +140,17 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV
-     * @param _assets Addresses of supported assets. eg WETH
+     * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the Curve pool.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV
-        address[] calldata _assets // WETH
+        uint256 _maxSlippage
     ) external onlyGovernor initializer {
-        require(_assets.length == 1, "Must have exactly one asset");
-        require(_assets[0] == address(weth), "Asset not WETH");
-
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
+
+        address[] memory _assets = new address[](1);
+        _assets[0] = address(weth);
 
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -151,6 +159,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         _approveBase();
+        _setMaxSlippage(_maxSlippage);
     }
 
     /***************************************
@@ -183,9 +192,9 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                int256(balances[ethCoinIndex]) +
-                    int256(_wethAmount) -
-                    int256(balances[oethCoinIndex])
+                balances[ethCoinIndex].toInt256() +
+                    _wethAmount.toInt256() -
+                    balances[oethCoinIndex].toInt256()
             )
         );
 
@@ -214,7 +223,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
+            uint256(1e18) - maxSlippage
         );
 
         // Do the deposit to the Curve pool
@@ -382,7 +391,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         );
         // Apply slippage to LP tokens
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
+            uint256(1e18) - maxSlippage
         );
 
         // Add the minted OTokens to the Curve pool
@@ -483,9 +492,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         // Apply slippage to ETH value
-        uint256 minAmount = valueInEth.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        uint256 minAmount = valueInEth.mulTruncate(uint256(1e18) - maxSlippage);
 
         // Remove just the ETH from the Curve pool
         coinsRemoved = curvePool.remove_liquidity_one_coin(
@@ -585,6 +592,20 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     /***************************************
                     Approvals
     ****************************************/
+
+    /**
+     * @notice Sets the maximum slippage allowed for any swap/liquidity operation
+     * @param _maxSlippage Maximum slippage allowed, 1e18 = 100%.
+     */
+    function setMaxSlippage(uint256 _maxSlippage) external onlyGovernor {
+        _setMaxSlippage(_maxSlippage);
+    }
+
+    function _setMaxSlippage(uint256 _maxSlippage) internal {
+        require(_maxSlippage <= 5e16, "Slippage must be less than 100%");
+        maxSlippage = _maxSlippage;
+        emit MaxSlippageUpdated(_maxSlippage);
+    }
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,

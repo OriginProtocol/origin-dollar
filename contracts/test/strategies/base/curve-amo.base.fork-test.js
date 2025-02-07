@@ -113,6 +113,7 @@ describe("Curve AMO strategy", function () {
       expect(await curveAMOStrategy.rewardTokenAddresses(0)).to.equal(
         addresses.base.CRV
       );
+      expect(await curveAMOStrategy.maxSlippage()).to.equal(oethUnits("0.002"));
     });
 
     it("Should deposit to strategy", async () => {
@@ -395,6 +396,16 @@ describe("Curve AMO strategy", function () {
         balanceVault.add(checkBalanceAMO)
       );
     });
+
+    it("Should set max slippage", async () => {
+      await curveAMOStrategy
+        .connect(impersonatedAMOGovernor)
+        .setMaxSlippage(oethUnits("0.01456"));
+
+      expect(await curveAMOStrategy.maxSlippage()).to.equal(
+        oethUnits("0.01456")
+      );
+    });
   });
 
   describe("Should revert when", () => {
@@ -581,6 +592,13 @@ describe("Curve AMO strategy", function () {
       await expect(
         curveAMOStrategy.checkBalance(oethb.address)
       ).to.be.revertedWith("Unsupported asset");
+    });
+    it("Max slippage is too high", async () => {
+      await expect(
+        curveAMOStrategy
+          .connect(impersonatedAMOGovernor)
+          .setMaxSlippage(oethUnits("0.51"))
+      ).to.be.revertedWith("Slippage must be less than 100%");
     });
   });
 

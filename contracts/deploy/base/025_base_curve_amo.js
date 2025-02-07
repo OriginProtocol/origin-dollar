@@ -4,10 +4,11 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnBaseWithGuardian(
   {
-    deployName: "022_base_curve_amo",
+    deployName: "025_base_curve_amo",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
@@ -48,8 +49,8 @@ module.exports = deployOnBaseWithGuardian(
 
     // Initialize Base Curve AMO implementation
     const initData = cOETHBaseCurveAMO.interface.encodeFunctionData(
-      "initialize(address[],address[])",
-      [[addresses.base.CRV], [addresses.base.WETH]]
+      "initialize(address[],uint256)",
+      [[addresses.base.CRV], oethUnits("0.002")]
     );
     await withConfirmation(
       // prettier-ignore
