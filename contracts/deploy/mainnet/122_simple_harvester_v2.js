@@ -33,22 +33,20 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHSimpleHarvesterProxy"
     );
 
-    const cOETHSimpleHarvesterProxy = await ethers.getContractAt(
-      "OETHSimpleHarvesterProxy",
-      dOETHSimpleHarvesterProxy.address
+    const cOETHSimpleHarvesterProxy = await ethers.getContract(
+      "OETHSimpleHarvesterProxy"
     );
 
     // 1.b Deploy implementation
-    const dOETHHarvesterSimpleImpl = await deployWithConfirmation(
+    await deployWithConfirmation(
       "OETHHarvesterSimple",
       [addresses.mainnet.WETH],
       undefined,
       true
     );
 
-    const cOETHHarvesterSimpleImpl = await ethers.getContractAt(
-      "OETHHarvesterSimple",
-      dOETHHarvesterSimpleImpl.address
+    const cOETHHarvesterSimpleImpl = await ethers.getContract(
+      "OETHHarvesterSimple"
     );
 
     // 1.c Initialize the proxy
