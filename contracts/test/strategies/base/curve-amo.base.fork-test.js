@@ -195,7 +195,6 @@ describe("Curve AMO strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      const checkBalanceAMO = await curveAMOStrategy.checkBalance(weth.address);
       const balanceVault = await weth.balanceOf(oethbVault.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
@@ -211,7 +210,7 @@ describe("Curve AMO strategy", function () {
         oethUnits("0")
       );
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(
-        balanceVault.add(checkBalanceAMO)
+        balanceVault.add(defaultDeposit)
       );
     });
 
