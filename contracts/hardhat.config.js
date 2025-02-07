@@ -1,7 +1,9 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
+  isArbitrum,
   isArbitrumFork,
+  isArbForkTest,
   isHoleskyFork,
   isHolesky,
   isForkTest,
@@ -91,6 +93,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/base";
 } else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
   paths.deploy = "deploy/sonic";
+} else if (isArbitrum || isArbitrumFork || isArbForkTest) {
+  paths.deploy = "deploy/arbitrumOne";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -337,10 +341,24 @@ module.exports = {
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
-      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
-      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      localhost:
+        process.env.FORK_NETWORK_NAME === "base"
+          ? BASE_GOVERNOR
+          : process.env.FORK_NETWORK_NAME === "sonic"
+          ? SONIC_ADMIN
+          : process.env.FORK == "true"
+          ? MAINNET_MULTISIG
+          : 1,
+      hardhat:
+        process.env.FORK_NETWORK_NAME === "base"
+          ? BASE_GOVERNOR
+          : process.env.FORK_NETWORK_NAME === "sonic"
+          ? SONIC_ADMIN
+          : process.env.FORK == "true"
+          ? MAINNET_MULTISIG
+          : 1,
       mainnet: MAINNET_MULTISIG,
-      base: MAINNET_MULTISIG,
+      base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
     },
     adjusterAddr: {

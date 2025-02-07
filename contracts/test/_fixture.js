@@ -646,6 +646,13 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
+  const curvePoolBooster = isFork
+    ? await ethers.getContractAt(
+        "CurvePoolBooster",
+        "0xF4c001dfe53C584425d7943395C7E57b10BD1DC8" // hardcoded as generated with CreateX.
+      )
+    : undefined;
+
   const simpleOETHHarvester = isFork
     ? await ethers.getContract("OETHHarvesterSimple")
     : undefined;
@@ -1120,6 +1127,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
+    curvePoolBooster,
     simpleOETHHarvester,
 
     // Flux strategy

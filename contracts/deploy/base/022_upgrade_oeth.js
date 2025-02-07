@@ -1,9 +1,10 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
-    deployName: "021_upgrade_oeth",
+    deployName: "022_upgrade_oeth",
+    // forceSkip: true,
   },
   async ({ ethers }) => {
     const dOETHb = await deployWithConfirmation(

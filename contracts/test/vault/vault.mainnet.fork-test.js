@@ -79,9 +79,7 @@ describe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(
-        addresses.mainnet.ConvexOUSDAMOStrategy
-      );
+      expect(await vault.ousdMetaStrategy()).to.equal(addresses.zero);
     });
 
     it("Should have supported assets", async () => {
@@ -345,7 +343,6 @@ describe("ForkTest: Vault", function () {
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC

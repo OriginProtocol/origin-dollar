@@ -1,6 +1,6 @@
 from world_abstract import *
 
-std = {'from': STRATEGIST}
+std = {'from': MULTICHAIN_STRATEGIST}
 
 # ousd = Contract.from_explorer(OUSD, as_proxy_for=OUSD_IMPL)
 # usdt = Contract.from_explorer(USDT)
@@ -94,6 +94,10 @@ cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)
 
 uniswap_v3_quoter = load_contract('uniswap_v3_quoter', UNISWAP_V3_QUOTER)
+
+oeth_arm = load_contract('oeth_arm', OETH_ARM)
+
+superbridge = load_contract('superbridge', SUPERBRIDGE_ETH)
 
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}

@@ -33,6 +33,10 @@ dripper = load_contract('oethb_dripper', OETHB_DRIPPER)
 
 harvester = load_contract('oethb_harvester', OETHB_HARVESTER)
 
+ccip_router = load_contract('ccip_router', BASE_CCIP_ROUTER)
+
+zapper = load_contract('oethb_zapper', OETHB_ZAPPER)
+
 decimalsMap = {
     AERO_BASE: 18,
     WETH_BASE: 18,
@@ -51,6 +55,19 @@ def scale_amount(from_token, to_token, amount, decimals=0):
         return int(scaled_amount * 10**6) / 10**6
 
     return int(scale_amount * 10**decimals) / (10**decimals)
+
+def get_tick_liquidity(tick):
+    liquidityGross = amo_pool.ticks(tick)[0]
+    wethInTickTotal, oethbInTickTotal =  aero_helper.getAmountsForLiquidity(
+        amo_pool.slot0()[0], #sqrtPriceX96
+        aero_helper.getSqrtRatioAtTick(tick), 
+        aero_helper.getSqrtRatioAtTick(tick + 1),
+        liquidityGross
+    )
+    print("------------------")
+    print("WETH       ", c18(wethInTickTotal))
+    print("OETHB      ", c18(oethbInTickTotal))
+    print("------------------")
 
 def amo_snapshot():
     wethPoolBalance = weth.balanceOf(AERODROME_WETH_OETHB_POOL_BASE)
@@ -74,10 +91,14 @@ def amo_snapshot():
 
     print("------------------ AMO Strategy LP position ------------------")
     print("           ", leading_whitespace("Amount"), leading_whitespace("Percentage"))
-    print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
-    print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
-    print("Total      ", c18(stratTotal), pcts(100))
-    print("Dominance  ", pcts(stratTotal / totalTickTokens * 100))
+    if stratTotal > 0:  
+      print("WETH       ", c18(wethOwned), pcts(wethOwned * 100 / stratTotal))
+      print("superOETH  ", c18(oethbOwned), pcts(oethbOwned * 100 / stratTotal))
+      print("Total      ", c18(stratTotal), pcts(100))
+    if totalTickTokens > 0:
+      print("Dominance  ", pcts(stratTotal / totalTickTokens * 100))
+    else:
+      print("Dominance  ", pcts(0))
 
 
     print("------------------ Others LP position ------------------------")
