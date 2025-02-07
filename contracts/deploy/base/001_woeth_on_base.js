@@ -1,11 +1,11 @@
-const { deployOnBase } = require("../../utils/deploy-l2");
+const { deployOnBaseWithEOA } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
 const { getTxOpts } = require("../../utils/tx");
 
-module.exports = deployOnBase(
+module.exports = deployOnBaseWithEOA(
   {
     deployName: "001_woeth_on_base",
   },

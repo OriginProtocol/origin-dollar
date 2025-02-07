@@ -991,12 +991,11 @@ function constructContractMethod(contract, functionSignature) {
   };
 }
 
-async function buildAndWriteGnosisJson(
+async function buildGnosisSafeJson(
   safeAddress,
   targets,
   contractMethods,
-  contractInputsValues,
-  name
+  contractInputsValues
 ) {
   const { chainId } = await ethers.provider.getNetwork();
   const json = {
@@ -1019,6 +1018,22 @@ async function buildAndWriteGnosisJson(
     })),
   };
 
+  return json;
+}
+
+async function buildAndWriteGnosisJson(
+  safeAddress,
+  targets,
+  contractMethods,
+  contractInputsValues,
+  name
+) {
+  const json = await buildGnosisSafeJson(
+    safeAddress,
+    targets,
+    contractMethods,
+    contractInputsValues
+  );
   const fileName = path.join(
     __dirname,
     "..",
@@ -1085,8 +1100,8 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
     // construct contractInputsValues
     const contractInputsValues = {
-      targets: JSON.stringify(propArgs[0]),
-      values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+      targets: JSON.stringify(args[0]),
+      values: JSON.stringify(args[1].map((arg) => arg.toString())),
       payloads: JSON.stringify(payloads),
       predecessor: args[3],
       salt: args[4],
@@ -1648,6 +1663,9 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+
+  constructContractMethod,
+  buildGnosisSafeJson,
 
   handleTransitionGovernance,
   encodeSaltForCreateX,

@@ -1,6 +1,6 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   { deployName: "008_oethb_zapper", forceDeploy: false },
   async ({ deployWithConfirmation }) => {
     // Deployer Actions

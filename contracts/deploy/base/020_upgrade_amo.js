@@ -1,9 +1,9 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployBaseAerodromeAMOStrategyImplementation,
 } = require("../deployActions");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "020_upgrade_amo",
   },
