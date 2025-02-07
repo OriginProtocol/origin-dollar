@@ -130,9 +130,10 @@ contract OETHVaultCore is VaultCore {
         }
 
         // Amount excluding fees
-        uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[
-            wethAssetIndex
-        ];
+        // No fee for the strategist or the governor, makes it easier to do operations
+        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
+            ? _amount
+            : _calculateRedeemOutputs(_amount)[wethAssetIndex];
 
         require(
             amountMinusFee >= _minimumUnitAmount,
