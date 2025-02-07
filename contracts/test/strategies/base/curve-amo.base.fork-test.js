@@ -597,7 +597,7 @@ describe("Curve AMO strategy", function () {
       await expect(
         curveAMOStrategy
           .connect(impersonatedAMOGovernor)
-          .setMaxSlippage(oethUnits("1.01"))
+          .setMaxSlippage(oethUnits("0.51"))
       ).to.be.revertedWith("Slippage must be less than 100%");
     });
   });
