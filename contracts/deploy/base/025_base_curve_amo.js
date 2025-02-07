@@ -1,4 +1,4 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
   withConfirmation,
@@ -6,7 +6,7 @@ const {
 const addresses = require("../../utils/addresses");
 const { oethUnits } = require("../../test/helpers");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "025_base_curve_amo",
   },
