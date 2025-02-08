@@ -372,6 +372,13 @@ addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 // SwapX on Sonic
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
+addresses.sonic.SwapXOsUSDCePool = "0x84EA9fAfD41abAEc5a53248f79Fa05ADA0058a96";
+addresses.sonic.SwapXOsGEMSxPool = "0x9ac7f5961a452e9cd5be5717bd2c3df412d1c1a5";
+
+addresses.sonic.SwapXOsUSDCeMultisigBooster =
+  "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
+addresses.sonic.SwapXOsGEMSxMultisigBooster =
+  "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
