@@ -46,7 +46,18 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     event FeeUpdated(uint16 newFee);
     event FeeCollected(address feeCollector, uint256 feeAmount);
     event FeeCollectorUpdated(address newFeeCollector);
-    event CampaignCreated(address gauge, address rewardToken, uint256 maxRewardPerVote, uint256 totalRewardAmount);
+    event CampaignClosed(uint256 campaignId);
+    event CampaignCreated(
+        uint256 campaignId,
+        address indexed gauge,
+        address indexed rewardToken,
+        uint256 maxRewardPerVote,
+        uint256 totalRewardAmount
+    );
+    event CampaignManaged(
+        uint256 campaignId, uint8 numberOfPeriods, uint256 maxRewardPerVote, uint256 totalRewardAmount
+    );
+    event TokensRescued(address token, uint256 amount, address receiver);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
@@ -99,7 +110,42 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
             true
         );
 
-        emit CampaignCreated(campaignId, _numberOfPeriods, _maxRewardPerVote, balanceSubFee);
+        emit CampaignCreated(campaignId, gauge, address(rewardToken), _maxRewardPerVote, balanceSubFee);
+    }
+
+    function manageCampaign(uint8 _numberOfPeriods, uint256 _maxRewardPerVote, uint256 _totalRewardAmount)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
+        require(campaignId != 0, "Campaign not created");
+
+        // Handle fee (if any)
+        uint256 balanceSubFee;
+        if (_totalRewardAmount > 0) {
+            balanceSubFee = _handleFee();
+
+            // Approve the reward token to votemarket
+            rewardToken.safeApprove(address(votemarket), 0);
+            rewardToken.safeApprove(address(votemarket), balanceSubFee);
+        }
+
+        // Update the campaign
+        votemarket.manageCampaign(campaignId, _numberOfPeriods, _totalRewardAmount, _maxRewardPerVote);
+
+        emit CampaignManaged(campaignId, _numberOfPeriods, _maxRewardPerVote, _totalRewardAmount);
+    }
+
+    function closeCampaign() external nonReentrant onlyGovernorOrStrategist {
+        require(campaignId != 0, "Campaign not created");
+
+        // Close the campaign
+        votemarket.closeCampaign(campaignId);
+
+        // Reset the campaignId
+        delete campaignId;
+
+        emit CampaignClosed(campaignId);
     }
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
@@ -127,9 +173,19 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE && OPERATION
     ////////////////////////////////////////////////////
+    /// @notice Rescue ERC20 tokens from the contract
+    /// @dev Only callable by the governor or strategist
+    /// @param token Address of the token to rescue
+    function rescueToken(address token, address receiver) external nonReentrant onlyGovernor {
+        require(receiver != address(0), "Invalid receiver");
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        IERC20(token).safeTransfer(receiver, balance);
+        emit TokensRescued(token, balance, receiver);
+    }
     /// @notice Set the fee
     /// @dev Only callable by the governor
     /// @param _fee New fee
+
     function setFee(uint16 _fee) external onlyGovernor {
         _setFee(_fee);
     }
