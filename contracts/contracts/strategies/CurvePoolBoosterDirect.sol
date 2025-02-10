@@ -80,10 +80,16 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
+    /// @notice Create a new campaign on VotemarketV2
+    /// @dev This will use all token available in this contract
+    /// @param _numberOfPeriods Duration of the campaign in weeks
+    /// @param _maxRewardPerVote Maximum reward per vote to distribute, to avoid overspending
+    /// @param _blacklist  List of addresses to exclude from the campaign
     function createCampaign(uint8 _numberOfPeriods, uint256 _maxRewardPerVote, address[] calldata _blacklist)
         external
         nonReentrant
         onlyGovernorOrStrategist
+        returns (uint256)
     {
         require(campaignId == 0, "Campaign already created");
         require(_numberOfPeriods > 1, "Invalid number of periods");
@@ -111,9 +117,17 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         );
 
         emit CampaignCreated(campaignId, gauge, address(rewardToken), _maxRewardPerVote, balanceSubFee);
+
+        return campaignId;
     }
 
-    function manageCampaign(uint8 _numberOfPeriods, uint256 _maxRewardPerVote, uint256 _totalRewardAmount)
+    /// @notice Manage the campaign created
+    /// @dev This will use all token available in this contract
+    /// @param _extraNumberOfPeriods Number of additional periods (cannot be 0)
+    ///         that will be added to already existing amount of periods.
+    /// @param _newMaxRewardPerVote New maximum reward per vote
+    /// @param _increaseTotalReward Boolean to increase the total reward amount or not
+    function manageCampaign(uint8 _extraNumberOfPeriods, uint256 _newMaxRewardPerVote, bool _increaseTotalReward)
         external
         nonReentrant
         onlyGovernorOrStrategist
@@ -122,7 +136,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
 
         // Handle fee (if any)
         uint256 balanceSubFee;
-        if (_totalRewardAmount > 0) {
+        if (_increaseTotalReward) {
             balanceSubFee = _handleFee();
 
             // Approve the reward token to votemarket
@@ -131,11 +145,12 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         }
 
         // Update the campaign
-        votemarket.manageCampaign(campaignId, _numberOfPeriods, _totalRewardAmount, _maxRewardPerVote);
+        votemarket.manageCampaign(campaignId, _extraNumberOfPeriods, balanceSubFee, _newMaxRewardPerVote);
 
-        emit CampaignManaged(campaignId, _numberOfPeriods, _maxRewardPerVote, _totalRewardAmount);
+        emit CampaignManaged(campaignId, _extraNumberOfPeriods, _newMaxRewardPerVote, balanceSubFee);
     }
 
+    /// @notice Close the campaign.
     function closeCampaign() external nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
