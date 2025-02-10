@@ -354,6 +354,13 @@ addresses.base.oethbBribesContract =
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 
+// Curve
+addresses.base.OETHbWETH = {};
+addresses.base.OETHbWETH.curvePool =
+  "0x302a94e3c28c290eaf2a4605fc52e11eb915f378";
+addresses.base.OETHbWETH.curveGauge =
+  "0x9da8420dbeebdfc4902b356017610259ef7eedd8";
+
 // Sonic
 addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";

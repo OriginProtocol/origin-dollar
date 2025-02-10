@@ -379,3 +379,10 @@ contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice CurvePoolBoosterDirectProxy delegates calls to a CurvePoolBoosterDirect implementation
+ */
+contract CurvePoolBoosterDirectProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
