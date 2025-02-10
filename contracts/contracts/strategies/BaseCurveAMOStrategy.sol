@@ -133,6 +133,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         weth = IWETH9(_weth);
         gauge = ICurveXChainLiquidityGauge(_gauge);
         gaugeFactory = IChildLiquidityGaugeFactory(_gaugeFactory);
+
+        _setGovernor(address(0));
     }
 
     /**
@@ -228,6 +230,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
 
         // Do the deposit to the Curve pool
         uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        require(lpDeposited >= minMintAmount, "Min LP amount error");
 
         // Deposit the Curve pool's LP tokens into the Curve gauge
         gauge.deposit(lpDeposited);
@@ -396,6 +399,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
 
         // Add the minted OTokens to the Curve pool
         uint256 lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
+        require(lpDeposited >= minMintAmount, "Min LP amount error");
 
         // Deposit the Curve pool LP tokens to the Curve gauge
         gauge.deposit(lpDeposited);
@@ -569,7 +573,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        public
+        external
         view
         override
         returns (uint256 balance)
