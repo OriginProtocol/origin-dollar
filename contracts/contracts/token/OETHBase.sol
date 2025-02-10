@@ -8,6 +8,11 @@ import { OUSD } from "./OUSD.sol";
  * @author Origin Protocol Inc
  */
 contract OETHBase is OUSD {
+    constructor() {
+        // Nobody owns the implementation contract
+        _setGovernor(address(0));
+    }
+
     function symbol() external pure override returns (string memory) {
         return "superOETHb";
     }
