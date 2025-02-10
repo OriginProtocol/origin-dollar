@@ -683,8 +683,12 @@ describe("Curve AMO strategy", function () {
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, weth, amount + balance, hre);
       }
-      await weth.connect(nick).approve(oethbVault.address, amount);
-      await oethbVault.connect(nick).mint(weth.address, amount, amount);
+      await weth
+        .connect(nick)
+        .approve(oethbVault.address, amount.mul(101).div(10));
+      await oethbVault
+        .connect(nick)
+        .mint(weth.address, amount.mul(101).div(10), amount);
       await oethb.connect(nick).approve(curvePool.address, amount);
       // prettier-ignore
       await curvePool
