@@ -22,5 +22,6 @@
   "021_multichain_strategist": 1736267102,
   "022_upgrade_oeth": 1738333643,
   "023_update_weth_share": 1738333646,
-  "024_multisig_as_canceller": 1737993822
+  "024_multisig_as_canceller": 1737993822,
+  "025_base_curve_amo": 1739214342
 }
