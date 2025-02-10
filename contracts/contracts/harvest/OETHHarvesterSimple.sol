@@ -5,42 +5,83 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "../utils/Initializable.sol";
 
-contract OETHHarvesterSimple is Strategizable {
+/// @title OETH Harvester Simple Contract
+/// @notice Contract to harvest rewards from strategies
+/// @author Origin Protocol Inc
+contract OETHHarvesterSimple is Initializable, Strategizable {
     using SafeERC20 for IERC20;
+
+    ////////////////////////////////////////////////////
+    /// --- CONSTANTS & IMMUTABLES
+    ////////////////////////////////////////////////////
+    /// @notice WETH address
+    address public immutable WETH;
 
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    /// @notice Dripper address
+    address public dripper;
+
+    /// @notice Mapping of supported strategies
     mapping(address => bool) public supportedStrategies;
+
+    /// @notice Gap for upgrade safety
+    uint256[48] private ___gap;
 
     ////////////////////////////////////////////////////
     /// --- EVENTS
     ////////////////////////////////////////////////////
-    event Harvested(address strategy, address token, uint256 amount);
+    event Harvested(
+        address indexed strategy,
+        address token,
+        uint256 amount,
+        address indexed receiver
+    );
     event SupportedStrategyUpdated(address strategy, bool status);
+    event DripperUpdated(address dripper);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
-    constructor(address _governor, address _strategist) {
+    constructor(address _WETH) {
+        WETH = _WETH;
+    }
+
+    /// @notice Initialize the contract
+    /// @param _governor Address of the governor
+    /// @param _strategist Address of the strategist
+    /// @param _dripper Address of the dripper
+    function initialize(
+        address _governor,
+        address _strategist,
+        address _dripper
+    ) external initializer {
         _setStrategistAddr(_strategist);
         _changeGovernor(_governor);
+        _setDripper(_dripper);
     }
 
     ////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     ////////////////////////////////////////////////////
+    /// @notice Harvest rewards from a strategy and transfer to strategist or dripper
+    /// @param _strategy Address of the strategy to harvest
     function harvestAndTransfer(address _strategy) external {
         _harvestAndTransfer(_strategy);
     }
 
+    /// @notice Harvest rewards from multiple strategies and transfer to strategist or dripper
+    /// @param _strategies Array of strategy addresses to harvest
     function harvestAndTransfer(address[] calldata _strategies) external {
         for (uint256 i = 0; i < _strategies.length; i++) {
             _harvestAndTransfer(_strategies[i]);
         }
     }
 
+    /// @notice Internal logic to harvest rewards from a strategy
     function _harvestAndTransfer(address _strategy) internal {
         // Ensure strategy is supported
         require(supportedStrategies[_strategy], "Strategy not supported");
@@ -51,13 +92,20 @@ contract OETHHarvesterSimple is Strategizable {
         // Cache reward tokens
         address[] memory rewardTokens = IStrategy(_strategy)
             .getRewardTokenAddresses();
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
+
+        uint256 len = rewardTokens.length;
+        for (uint256 i = 0; i < len; i++) {
             // Cache balance
-            uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
+            address token = rewardTokens[i];
+            uint256 balance = IERC20(token).balanceOf(address(this));
             if (balance > 0) {
+                // Determine receiver
+                address receiver = token == WETH ? dripper : strategistAddr;
+                require(receiver != address(0), "Invalid receiver");
+
                 // Transfer to strategist
-                IERC20(rewardTokens[i]).safeTransfer(strategistAddr, balance);
-                emit Harvested(_strategy, rewardTokens[i], balance);
+                IERC20(token).safeTransfer(receiver, balance);
+                emit Harvested(_strategy, token, balance, receiver);
             }
         }
     }
@@ -65,6 +113,9 @@ contract OETHHarvesterSimple is Strategizable {
     ////////////////////////////////////////////////////
     /// --- GOVERNANCE
     ////////////////////////////////////////////////////
+    /// @notice Set supported strategy
+    /// @param _strategy Address of the strategy
+    /// @param _isSupported Boolean indicating if strategy is supported
     function setSupportedStrategy(address _strategy, bool _isSupported)
         external
         onlyGovernorOrStrategist
@@ -74,10 +125,26 @@ contract OETHHarvesterSimple is Strategizable {
         emit SupportedStrategyUpdated(_strategy, _isSupported);
     }
 
+    /// @notice Transfer tokens to strategist
+    /// @param _asset Address of the token
+    /// @param _amount Amount of tokens to transfer
     function transferToken(address _asset, uint256 _amount)
         external
         onlyGovernorOrStrategist
     {
         IERC20(_asset).safeTransfer(strategistAddr, _amount);
+    }
+
+    /// @notice Set the dripper address
+    /// @param _dripper Address of the dripper
+    function setDripper(address _dripper) external onlyGovernor {
+        _setDripper(_dripper);
+    }
+
+    /// @notice Internal logic to set the dripper address
+    function _setDripper(address _dripper) internal {
+        require(_dripper != address(0), "Invalid dripper");
+        dripper = _dripper;
+        emit DripperUpdated(_dripper);
     }
 }

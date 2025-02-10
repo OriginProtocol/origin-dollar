@@ -94,7 +94,12 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
-  let weth, ssv, nativeStakingSSVStrategy, oethDripper;
+  let weth,
+    ssv,
+    nativeStakingSSVStrategy,
+    oethDripper,
+    oethFixedRateDripper,
+    simpleOETHHarvester;
 
   if (isFork) {
     let addressContext = addresses.mainnet;
@@ -109,6 +114,22 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oethDripper = await ethers.getContractAt(
       "OETHDripper",
       oethDripperProxy.address
+    );
+
+    const oethFixedRateDripperProxy = await ethers.getContract(
+      "OETHFixedRateDripperProxy"
+    );
+    oethFixedRateDripper = await ethers.getContractAt(
+      "OETHFixedRateDripper",
+      oethFixedRateDripperProxy.address
+    );
+
+    const simpleOETHHarvesterProxy = await ethers.getContract(
+      "OETHSimpleHarvesterProxy"
+    );
+    simpleOETHHarvester = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      simpleOETHHarvesterProxy.address
     );
 
     const nativeStakingStrategyProxy = await ethers.getContract(
@@ -186,7 +207,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oeth,
     nativeStakingSSVStrategy,
     oethDripper,
+    oethFixedRateDripper,
     oethHarvester,
+    simpleOETHHarvester,
   };
 });
 
@@ -653,9 +676,26 @@ const defaultFixture = deployments.createFixture(async () => {
       )
     : undefined;
 
-  const simpleOETHHarvester = isFork
-    ? await ethers.getContract("OETHHarvesterSimple")
+  const simpleHarvesterProxy = isFork
+    ? await ethers.getContract("OETHSimpleHarvesterProxy")
     : undefined;
+
+  const simpleOETHHarvester = isFork
+    ? await ethers.getContractAt(
+        "OETHHarvesterSimple",
+        simpleHarvesterProxy.address
+      )
+    : undefined;
+
+  const oethFixedRateDripperProxy = !isFork
+    ? undefined
+    : await ethers.getContract("OETHFixedRateDripperProxy");
+  const oethFixedRateDripper = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "OETHFixedRateDripper",
+        oethFixedRateDripperProxy.address
+      );
 
   let usdt,
     dai,
@@ -1129,6 +1169,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDTVault,
     curvePoolBooster,
     simpleOETHHarvester,
+    oethFixedRateDripper,
 
     // Flux strategy
     fluxStrategy,

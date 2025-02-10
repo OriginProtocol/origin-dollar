@@ -373,4 +373,16 @@ contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {}
+/**
+ * @notice OETHBaseCurveAMOProxy delegates calls to a OETHBaseCurveAMO implementation
+ */
+contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHSimpleHarvesterProxy delegates calls to a OETHSimpleHarvester implementation
+ */
+contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

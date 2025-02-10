@@ -396,7 +396,9 @@ function deployOnL2WithGuardianOrTimelock(opts, fn, tags) {
   const main = async (hre) => {
     // Mine one block to workaround "No known hardfork for execution on historical block"
     // https://github.com/NomicFoundation/hardhat/issues/5511
-    await mine(1);
+    if (isFork) {
+      await mine(1);
+    }
 
     console.log(`Running ${deployName} deployment...`);
     if (!hre) {
