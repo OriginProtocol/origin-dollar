@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "122_simple_harvester_v2",
+    deployName: "123_simple_harvester_v2",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
