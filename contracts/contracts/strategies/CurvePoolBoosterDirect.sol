@@ -196,7 +196,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         uint256 balance = rewardToken.balanceOf(address(this));
         require(balance > 0, "No reward to manage");
 
-        uint256 feeAmount = (balance * fee) / FEE_BASE;
+        uint256 feeAmount = (balance * fee + (FEE_BASE - 1)) / FEE_BASE;
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
