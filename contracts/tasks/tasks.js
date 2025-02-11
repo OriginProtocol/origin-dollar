@@ -1274,7 +1274,7 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
   .addOptionalParam(
     "sleep",
     "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    20,
+    30,
     types.int
   )
   .setAction(async (taskArgs) => {
@@ -1350,7 +1350,7 @@ subtask(
   .addOptionalParam(
     "sleep",
     "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    20,
+    30,
     types.int
   )
   .setAction(async (taskArgs) => {
