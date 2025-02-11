@@ -1271,6 +1271,12 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    20,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
@@ -1278,10 +1284,11 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     const pubKeys = taskArgs.pubkeys.split(",");
     // For each public key
     for (const pubkey of pubKeys) {
+      log(`About to exit validator with pubkey: ${pubkey}`);
       await exitValidator({ ...taskArgs, pubkey, signer });
 
-      // wait for 20 seconds so the SSV API can be updated
-      await sleep(20000);
+      // wait for the SSV API can be updated
+      await sleep(taskArgs.sleep * 1000);
     }
   });
 task("exitValidators").setAction(async (_, __, runSuper) => {
@@ -1340,6 +1347,12 @@ subtask(
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    20,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
@@ -1347,10 +1360,11 @@ subtask(
     const pubKeys = taskArgs.pubkeys.split(",");
     // For each public key
     for (const pubkey of pubKeys) {
+      log(`About to remove validator with pubkey: ${pubkey}`);
       await removeValidator({ ...taskArgs, pubkey, signer });
 
-      // wait for 20 seconds so the SSV API can be updated
-      await sleep(20000);
+      // wait for the SSV API can be updated
+      await sleep(taskArgs.sleep * 1000);
     }
   });
 task("removeValidators").setAction(async (_, __, runSuper) => {
