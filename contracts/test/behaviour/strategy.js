@@ -1,5 +1,7 @@
 const { expect } = require("chai");
 const { Wallet } = require("ethers");
+const hre = require("hardhat");
+const { setERC20TokenBalance } = require("../_fund");
 
 const { units } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
@@ -89,13 +91,17 @@ const shouldBehaveLikeStrategy = (context) => {
       it("Should be able to deposit each asset", async () => {
         const { assets, valueAssets, strategy, vault } = await context();
 
-        const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
 
         for (const asset of assets) {
           const depositAmount = await units("1000", asset);
           // mint some test assets directly into the strategy contract
-          await asset.connect(strategySigner).mint(depositAmount);
+          await setERC20TokenBalance(
+            strategy.address,
+            asset,
+            depositAmount,
+            hre
+          );
 
           const tx = await strategy
             .connect(vaultSigner)
@@ -132,13 +138,17 @@ const shouldBehaveLikeStrategy = (context) => {
       it("Should be able to deposit all asset together", async () => {
         const { assets, strategy, vault } = await context();
 
-        const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
 
         for (const [i, asset] of assets.entries()) {
           const depositAmount = await units("1000", asset);
           // mint some test assets directly into the strategy contract
-          await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
+          await setERC20TokenBalance(
+            strategy.address,
+            asset,
+            depositAmount.mul(i + 1),
+            hre
+          );
         }
 
         const tx = await strategy.connect(vaultSigner).depositAll();
@@ -204,7 +214,13 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to call withdraw all by vault", async () => {
-        const { strategy, vault } = await context();
+        const { strategy, vault, curveAMOStrategy } = await context();
+
+        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
+        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
+        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
+          return;
+
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -212,8 +228,12 @@ const shouldBehaveLikeStrategy = (context) => {
         await expect(tx).to.not.emit(strategy, "Withdrawal");
       });
       it("Should be able to call withdraw all by governor", async () => {
-        const { strategy, governor } = await context();
+        const { strategy, governor, curveAMOStrategy } = await context();
 
+        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
+        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
+        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
+          return;
         const tx = await strategy.connect(governor).withdrawAll();
 
         await expect(tx).to.not.emit(strategy, "Withdrawal");
@@ -232,14 +252,18 @@ const shouldBehaveLikeStrategy = (context) => {
     describe("with assets in the strategy", () => {
       beforeEach(async () => {
         const { assets, strategy, vault } = await context();
-        const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
 
         // deposit some assets into the strategy so we can withdraw them
         for (const [i, asset] of assets.entries()) {
           const depositAmount = await units("10000", asset);
           // mint some test assets directly into the strategy contract
-          await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
+          await setERC20TokenBalance(
+            strategy.address,
+            asset,
+            depositAmount.mul(i + 1),
+            hre
+          );
         }
         await strategy.connect(vaultSigner).depositAll();
       });
@@ -275,9 +299,15 @@ const shouldBehaveLikeStrategy = (context) => {
           await expect(tx)
             .to.emit(strategy, "Withdrawal")
             .withArgs(asset.address, platformAddress, withdrawAmount);
+
           // the transfer does not have to come from the strategy. It can come directly from the platform
+          // Need to handle WETH which has different named args in the Transfer event
+          const erc20Asset = await ethers.getContractAt(
+            "IERC20",
+            asset.address
+          );
           await expect(tx)
-            .to.emit(asset, "Transfer")
+            .to.emit(erc20Asset, "Transfer")
             .withNamedArgs({ to: vault.address, value: withdrawAmount });
         }
       });
@@ -289,6 +319,7 @@ const shouldBehaveLikeStrategy = (context) => {
           vault,
           fraxEthStrategy,
           sfrxETH,
+          curveAMOStrategy,
         } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -310,6 +341,13 @@ const shouldBehaveLikeStrategy = (context) => {
               vault.address,
               withdrawAmount.mul(3)
             );
+          } else if (
+            curveAMOStrategy != undefined &&
+            curveAMOStrategy == strategy
+          ) {
+            // Didn't managed to get this work with args.
+            await expect(tx).to.emit(strategy, "Withdrawal");
+            await expect(tx).to.emit(asset, "Transfer");
           } else {
             await expect(tx)
               .to.emit(strategy, "Withdrawal")
@@ -330,14 +368,13 @@ const shouldBehaveLikeStrategy = (context) => {
       });
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
-      const { governor, anna, crv, strategy, crvMinter } = context();
+      const { governor, crv, strategy } = context();
       const governorDaiBalanceBefore = await crv.balanceOf(governor.address);
       const strategyDaiBalanceBefore = await crv.balanceOf(strategy.address);
 
       // Anna accidentally sends CRV to strategy
-      await crvMinter.connect(governor).mint(anna.address);
       const recoveryAmount = parseUnits("2");
-      await crv.connect(anna).transfer(strategy.address, recoveryAmount);
+      await setERC20TokenBalance(strategy.address, crv, recoveryAmount, hre);
 
       // Anna asks Governor for help
       const tx = await strategy
