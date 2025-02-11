@@ -122,7 +122,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
             _maxRewardPerVote,
             balanceSubFee,
             _blacklist,
-            address(this),
+            address(0),
             true
         );
 
