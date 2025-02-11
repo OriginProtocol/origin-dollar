@@ -201,8 +201,9 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
             // Transfer the fee to the feeCollector
-            rewardToken.safeTransfer(feeCollector, feeAmount);
-            emit FeeCollected(feeCollector, feeAmount);
+            address feeCollector_ = feeCollector;
+            rewardToken.safeTransfer(feeCollector_, feeAmount);
+            emit FeeCollected(feeCollector_, feeAmount);
 
             return rewardToken.balanceOf(address(this));
         }
