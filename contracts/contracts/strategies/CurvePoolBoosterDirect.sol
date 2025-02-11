@@ -31,7 +31,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
-    /// @notice Fee in FEE_BASE unit payed when managing campaign.
+    /// @notice Fee in FEE_BASE unit paid when managing campaign.
     uint16 public fee;
 
     /// @notice Address of the fee collector
