@@ -392,6 +392,14 @@ addresses.sonic.SwapXOsUSDCeMultisigBooster =
 addresses.sonic.SwapXOsGEMSxMultisigBooster =
   "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
 
+// Curve
+addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
+addresses.sonic.WS_OS = {};
+addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
+addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.childLiquidityGaugeFactory =
+  "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
+
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
 

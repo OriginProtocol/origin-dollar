@@ -60,8 +60,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     IChildLiquidityGaugeFactory public immutable gaugeFactory;
 
     // Ordered list of pool assets
-    uint128 public constant oethCoinIndex = 1;
-    uint128 public constant wethCoinIndex = 0;
+    uint128 public immutable oethCoinIndex;
+    uint128 public immutable wethCoinIndex;
 
     /**
      * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
@@ -124,8 +124,13 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         address _oeth,
         address _weth,
         address _gauge,
-        address _gaugeFactory
+        address _gaugeFactory,
+        uint128 _oethCoinIndex,
+        uint128 _wethCoinIndex
     ) InitializableAbstractStrategy(_baseConfig) {
+        oethCoinIndex = _oethCoinIndex;
+        wethCoinIndex = _wethCoinIndex;
+
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
 
