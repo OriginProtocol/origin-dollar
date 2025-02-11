@@ -26,7 +26,7 @@ module.exports = deployOnBase(
       "CurvePoolBoosterDirect",
       [
         cOETHbProxy.address,
-        addresses.base.OETHbWETH.curveGauge,
+        addresses.base.OETHb_WETH.gauge,
         addresses.votemarket,
       ]
     );

@@ -7,6 +7,7 @@ const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
+const votemarketAbi = require("./abi/votemarket.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("../utils/logger")("test:fixtures-base");
@@ -65,7 +66,13 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oethbVaultProxy.address
   );
 
-  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar, curveAMOStrategy;
+  let aerodromeAmoStrategy,
+    dripper,
+    harvester,
+    quoter,
+    sugar,
+    curveAMOStrategy,
+    curvePoolBoosterDirect;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -107,6 +114,14 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     curveAMOStrategy = await ethers.getContractAt(
       "BaseCurveAMOStrategy",
       curveAMOProxy.address
+    );
+
+    const curvePoolBoosterDirectProxy = await ethers.getContract(
+      "CurvePoolBoosterDirectProxy"
+    );
+    curvePoolBoosterDirect = await ethers.getContractAt(
+      "CurvePoolBoosterDirect",
+      curvePoolBoosterDirectProxy.address
     );
   }
 
@@ -221,6 +236,11 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
   const crv = await ethers.getContractAt(erc20Abi, addresses.base.CRV);
 
+  const votemarket = await ethers.getContractAt(
+    votemarketAbi,
+    addresses.votemarket
+  );
+
   return {
     // Aerodrome
     aeroSwapRouter,
@@ -233,6 +253,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     curvePoolOEthbWeth,
     curveGaugeOETHbWETH,
     curveChildLiquidityGaugeFactory,
+    curvePoolBoosterDirect,
+    votemarket,
 
     // OETHb
     oethb,
