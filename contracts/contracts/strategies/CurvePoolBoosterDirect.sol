@@ -207,7 +207,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
             return rewardToken.balanceOf(address(this));
         }
 
-        // Return remaining balance
+        // Return balance as no fee was taken
         return balance;
     }
 
