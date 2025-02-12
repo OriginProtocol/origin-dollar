@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { VaultAdmin } from "./VaultAdmin.sol";
+import { OETHVaultAdmin } from "./OETHVaultAdmin.sol";
 
 /**
  * @title OETH Base VaultAdmin Contract
  * @author Origin Protocol Inc
  */
-contract OETHBaseVaultAdmin is VaultAdmin {
+contract OETHBaseVaultAdmin is OETHVaultAdmin {
+    constructor(address _weth) OETHVaultAdmin(_weth) {}
+
     /**
      * @notice Adds a strategy to the mint whitelist.
      *          Reverts if strategy isn't approved on Vault.
