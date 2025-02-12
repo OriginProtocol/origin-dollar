@@ -395,8 +395,8 @@ addresses.sonic.SwapXOsGEMSxMultisigBooster =
 // Curve on Sonic
 addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
 addresses.sonic.WS_OS = {};
-addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
-addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.WS_OS.pool = "0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9";
+addresses.sonic.WS_OS.gauge = "0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207";
 addresses.sonic.childLiquidityGaugeFactory =
   "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
 

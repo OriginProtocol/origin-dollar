@@ -64,6 +64,12 @@ module.exports = deployOnSonic(
         )
     );
 
+    // Deploy a new Vault Core implementation
+    const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
+      addresses.sonic.wS,
+    ]);
+    console.log(`Deployed Vault Core to ${dOSonicVaultCore.address}`);
+
     // Deploy a new Vault Admin implementation
     const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
       addresses.sonic.wS,
@@ -74,19 +80,25 @@ module.exports = deployOnSonic(
 
     return {
       actions: [
-        // 1. Upgrade the VaultAdmin
+        // 1. Upgrade Vault proxy to new VaultCore
+        {
+          contract: cOSonicVaultProxy,
+          signature: "upgradeTo(address)",
+          args: [dOSonicVaultCore.address],
+        },
+        // 2. Upgrade the VaultAdmin
         {
           contract: cOSonicVaultAdmin,
           signature: "setAdminImpl(address)",
           args: [dOSonicVaultAdmin.address],
         },
-        // 2. Approve strategy on vault
+        // 3. Approve strategy on vault
         {
           contract: cOSonicVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cSonicCurveAMOStrategyProxy.address],
         },
-        // 3. Add strategy to mint whitelist
+        // 4. Add strategy to mint whitelist
         {
           contract: cOSonicVaultAdmin,
           signature: "addStrategyToMintWhitelist(address)",
