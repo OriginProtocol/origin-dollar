@@ -19,6 +19,9 @@ contract OETHVaultAdmin is VaultAdmin {
 
     constructor(address _weth) {
         weth = _weth;
+
+        // prevent implementation contract to be governed
+        _setGovernor(address(0));
     }
 
     /// @dev Simplified version of the deposit function as WETH is the only supported asset.
