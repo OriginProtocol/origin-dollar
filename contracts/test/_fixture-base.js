@@ -72,7 +72,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     quoter,
     sugar,
     curveAMOStrategy,
-    curvePoolBoosterDirect;
+    curvePoolBoosterL2;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -116,12 +116,12 @@ const defaultBaseFixture = deployments.createFixture(async () => {
       curveAMOProxy.address
     );
 
-    const curvePoolBoosterDirectProxy = await ethers.getContract(
-      "CurvePoolBoosterDirectProxy"
+    const curvePoolBoosterL2Proxy = await ethers.getContract(
+      "CurvePoolBoosterL2Proxy"
     );
-    curvePoolBoosterDirect = await ethers.getContractAt(
-      "CurvePoolBoosterDirect",
-      curvePoolBoosterDirectProxy.address
+    curvePoolBoosterL2 = await ethers.getContractAt(
+      "CurvePoolBoosterL2",
+      curvePoolBoosterL2Proxy.address
     );
   }
 
@@ -253,7 +253,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     curvePoolOEthbWeth,
     curveGaugeOETHbWETH,
     curveChildLiquidityGaugeFactory,
-    curvePoolBoosterDirect,
+    curvePoolBoosterL2,
     votemarket,
 
     // OETHb

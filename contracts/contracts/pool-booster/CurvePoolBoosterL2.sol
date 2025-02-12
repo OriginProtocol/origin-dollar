@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "../utils/Initializable.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
-import { IVotemarket } from "../interfaces/IVotemarket.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Initializable} from "../utils/Initializable.sol";
+import {Strategizable} from "../governance/Strategizable.sol";
+import {IVotemarket} from "../interfaces/IVotemarket.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
 /// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge.
-contract CurvePoolBoosterDirect is Initializable, Strategizable {
+contract CurvePoolBoosterL2 is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
@@ -55,21 +55,14 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         uint256 totalRewardAmount
     );
     event CampaignManaged(
-        uint256 campaignId,
-        uint8 numberOfPeriods,
-        uint256 maxRewardPerVote,
-        uint256 totalRewardAmount
+        uint256 campaignId, uint8 numberOfPeriods, uint256 maxRewardPerVote, uint256 totalRewardAmount
     );
     event TokensRescued(address token, uint256 amount, address receiver);
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
-    constructor(
-        address _rewardToken,
-        address _gauge,
-        address _votemarket
-    ) {
+    constructor(address _rewardToken, address _gauge, address _votemarket) {
         gauge = _gauge;
         votemarket = IVotemarket(_votemarket);
         rewardToken = IERC20(_rewardToken);
@@ -78,11 +71,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         _setGovernor(address(0));
     }
 
-    function initialize(
-        address _strategist,
-        uint16 _fee,
-        address _feeCollector
-    ) external onlyGovernor initializer {
+    function initialize(address _strategist, uint16 _fee, address _feeCollector) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
@@ -96,11 +85,12 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     /// @param _numberOfPeriods Duration of the campaign in weeks
     /// @param _maxRewardPerVote Maximum reward per vote to distribute, to avoid overspending
     /// @param _blacklist  List of addresses to exclude from the campaign
-    function createCampaign(
-        uint8 _numberOfPeriods,
-        uint256 _maxRewardPerVote,
-        address[] calldata _blacklist
-    ) external nonReentrant onlyGovernorOrStrategist returns (uint256) {
+    function createCampaign(uint8 _numberOfPeriods, uint256 _maxRewardPerVote, address[] calldata _blacklist)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+        returns (uint256)
+    {
         require(campaignId == 0, "Campaign already created");
         require(_numberOfPeriods > 1, "Invalid number of periods");
         require(_maxRewardPerVote > 0, "Invalid reward per vote");
@@ -126,13 +116,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
             true
         );
 
-        emit CampaignCreated(
-            campaignId,
-            gauge,
-            address(rewardToken),
-            _maxRewardPerVote,
-            balanceSubFee
-        );
+        emit CampaignCreated(campaignId, gauge, address(rewardToken), _maxRewardPerVote, balanceSubFee);
 
         return campaignId;
     }
@@ -143,11 +127,11 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     ///         that will be added to already existing amount of periods.
     /// @param _newMaxRewardPerVote New maximum reward per vote
     /// @param _increaseTotalReward Boolean to increase the total reward amount or not
-    function manageCampaign(
-        uint8 _extraNumberOfPeriods,
-        uint256 _newMaxRewardPerVote,
-        bool _increaseTotalReward
-    ) external nonReentrant onlyGovernorOrStrategist {
+    function manageCampaign(uint8 _extraNumberOfPeriods, uint256 _newMaxRewardPerVote, bool _increaseTotalReward)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
         require(campaignId != 0, "Campaign not created");
 
         // Handle fee (if any)
@@ -161,19 +145,9 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
         }
 
         // Update the campaign
-        votemarket.manageCampaign(
-            campaignId,
-            _extraNumberOfPeriods,
-            balanceSubFee,
-            _newMaxRewardPerVote
-        );
+        votemarket.manageCampaign(campaignId, _extraNumberOfPeriods, balanceSubFee, _newMaxRewardPerVote);
 
-        emit CampaignManaged(
-            campaignId,
-            _extraNumberOfPeriods,
-            _newMaxRewardPerVote,
-            balanceSubFee
-        );
+        emit CampaignManaged(campaignId, _extraNumberOfPeriods, _newMaxRewardPerVote, balanceSubFee);
     }
 
     /// @notice Close the campaign.
@@ -218,11 +192,7 @@ contract CurvePoolBoosterDirect is Initializable, Strategizable {
     /// @notice Rescue ERC20 tokens from the contract
     /// @dev Only callable by the governor or strategist
     /// @param token Address of the token to rescue
-    function rescueToken(address token, address receiver)
-        external
-        nonReentrant
-        onlyGovernor
-    {
+    function rescueToken(address token, address receiver) external nonReentrant onlyGovernor {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
         IERC20(token).safeTransfer(receiver, balance);

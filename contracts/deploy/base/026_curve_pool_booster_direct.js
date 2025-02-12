@@ -16,14 +16,14 @@ module.exports = deployOnBase(
     const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
 
     // Deploy Proxy
-    await deployWithConfirmation("CurvePoolBoosterDirectProxy");
-    const cCurvePoolBoosterDirectProxy = await ethers.getContract(
-      "CurvePoolBoosterDirectProxy"
+    await deployWithConfirmation("CurvePoolBoosterL2Proxy");
+    const cCurvePoolBoosterL2Proxy = await ethers.getContract(
+      "CurvePoolBoosterL2Proxy"
     );
 
     // Deploy Implementation
-    const dCurvePoolBoosterDirect = await deployWithConfirmation(
-      "CurvePoolBoosterDirect",
+    const dCurvePoolBoosterL2 = await deployWithConfirmation(
+      "CurvePoolBoosterL2",
       [
         cOETHbProxy.address,
         addresses.base.OETHb_WETH.gauge,
@@ -31,12 +31,12 @@ module.exports = deployOnBase(
       ]
     );
 
-    const cCurvePoolBoosterDirect = await ethers.getContractAt(
-      "CurvePoolBoosterDirect",
-      cCurvePoolBoosterDirectProxy.address
+    const cCurvePoolBoosterL2 = await ethers.getContractAt(
+      "CurvePoolBoosterL2",
+      cCurvePoolBoosterL2Proxy.address
     );
 
-    const initData = cCurvePoolBoosterDirect.interface.encodeFunctionData(
+    const initData = cCurvePoolBoosterL2.interface.encodeFunctionData(
       "initialize(address,uint16,address)",
       [
         addresses.base.multichainStrategist,
@@ -48,9 +48,9 @@ module.exports = deployOnBase(
     // Initialize Proxy
     // prettier-ignore
     await withConfirmation(
-      cCurvePoolBoosterDirectProxy
+      cCurvePoolBoosterL2Proxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
-          dCurvePoolBoosterDirect.address,
+          dCurvePoolBoosterL2.address,
           addresses.base.timelock,
           initData
         )
