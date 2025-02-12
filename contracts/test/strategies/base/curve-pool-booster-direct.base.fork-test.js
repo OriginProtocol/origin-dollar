@@ -34,11 +34,9 @@ describe("Curve Pool Booster L2", function () {
     epochLength = await votemarket.EPOCH_LENGTH();
   });
 
-  describe.only("Classic behavior", () => {
+  describe("Classic behavior", () => {
     it("Should have correct parameters after deployment", async () => {
-      expect(await curvePoolBoosterL2.rewardToken()).to.be.equal(
-        oethb.address
-      );
+      expect(await curvePoolBoosterL2.rewardToken()).to.be.equal(oethb.address);
       expect(await curvePoolBoosterL2.gauge()).to.be.equal(
         addresses.base.OETHb_WETH.gauge
       );
@@ -175,9 +173,7 @@ describe("Curve Pool Booster L2", function () {
       await curvePoolBoosterL2
         .connect(timelockImpersonated)
         .rescueToken(oethb.address, strategist.address);
-      expect(await oethb.balanceOf(curvePoolBoosterL2.address)).to.be.equal(
-        0
-      );
+      expect(await oethb.balanceOf(curvePoolBoosterL2.address)).to.be.equal(0);
     });
     it("Should set fee", async () => {
       expect(await curvePoolBoosterL2.fee()).to.be.equal(0);
@@ -225,9 +221,7 @@ describe("Curve Pool Booster L2", function () {
     });
     it("Manage campaign because: No campaign created", async () => {
       await createCampaign(oethUnits("100"), 2, oethUnits("0.2"));
-      await curvePoolBoosterL2
-        .connect(strategist)
-        .manageCampaign(0, 0, false);
+      await curvePoolBoosterL2.connect(strategist).manageCampaign(0, 0, false);
     });
     it("Manage campaign because: No reward to manage", async () => {
       await createCampaign(oethUnits("100"), 2, oethUnits("0.2"));
@@ -266,9 +260,7 @@ describe("Curve Pool Booster L2", function () {
     });
     it("Set fee collector because: Caller is not the Governor", async () => {
       await expect(
-        curvePoolBoosterL2
-          .connect(strategist)
-          .setFeeCollector(timelock.address)
+        curvePoolBoosterL2.connect(strategist).setFeeCollector(timelock.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
     it("Set fee collector because: Invalid fee collector", async () => {
