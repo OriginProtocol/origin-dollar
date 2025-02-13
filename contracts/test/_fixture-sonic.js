@@ -7,6 +7,11 @@ const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
+const erc20Abi = require("./abi/erc20.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
+const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
+const curveChildLiquidityGaugeFactoryAbi = require("./abi/curveChildLiquidityGaugeFactory.json");
+
 const log = require("../utils/logger")("test:fixtures-sonic");
 
 const MINTER_ROLE =
@@ -126,6 +131,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
   }
 
+  // Curve
+  const curveAMOProxy = await ethers.getContract("SonicCurveAMOStrategyProxy");
+  const curveAMOStrategy = await ethers.getContractAt(
+    "SonicCurveAMOStrategy",
+    curveAMOProxy.address
+  );
+
   for (const user of [rafael, nick, clement]) {
     // Mint some Sonic Wrapped S
     await hhHelpers.setBalance(user.address, oethUnits("100000000"));
@@ -134,6 +146,23 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     // Set allowance on the vault
     await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
   }
+
+  const curvePool = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.sonic.WS_OS.pool
+  );
+
+  const curveGauge = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.sonic.WS_OS.gauge
+  );
+
+  const curveChildLiquidityGaugeFactory = await ethers.getContractAt(
+    curveChildLiquidityGaugeFactoryAbi,
+    addresses.sonic.childLiquidityGaugeFactory
+  );
+
+  const crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
 
   return {
     // Origin S
@@ -148,6 +177,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     // Wrapped S
     wS,
+
+    // Curve
+    curveAMOStrategy,
+    curvePool,
+    curveGauge,
+    curveChildLiquidityGaugeFactory,
+    crv,
 
     // Signers
     governor,
