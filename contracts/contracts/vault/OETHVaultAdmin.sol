@@ -42,7 +42,7 @@ contract OETHVaultAdmin is VaultAdmin {
 
         isMintWhitelistedStrategy[strategyAddr] = true;
 
-        emit StrategyAddedToMintWhitelist(strategistAddr);
+        emit StrategyAddedToMintWhitelist(strategyAddr);
     }
 
     /**
@@ -60,7 +60,7 @@ contract OETHVaultAdmin is VaultAdmin {
 
         isMintWhitelistedStrategy[strategyAddr] = false;
 
-        emit StrategyRemovedFromMintWhitelist(strategistAddr);
+        emit StrategyRemovedFromMintWhitelist(strategyAddr);
     }
 
     /// @dev Simplified version of the deposit function as WETH is the only supported asset.
