@@ -29,6 +29,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OETHHarvester -o OETHHarvesterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHHarvester -o OETHHarvesterSquashed.svg
 sol2uml storage .. -c OETHHarvester -o OETHHarvesterStorage.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -b OETHHarvesterSimple -o OETHHarvesterSimpleHierarchy.svg
+sol2uml .. -s -d 0 -b OETHHarvesterSimple -o OETHHarvesterSimpleSquashed.svg
+sol2uml storage .. -c OETHHarvesterSimple -o OETHHarvesterSimpleStorage.svg --hideExpand __gap,___gap,______gap
+
 # contracts/governance
 sol2uml .. -v -hv -hf -he -hs -hl -b Governor -o GovernorHierarchy.svg
 sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
@@ -156,17 +160,21 @@ sol2uml .. -s -d 0 -b WOSonic -o WOSonicSquashed.svg
 sol2uml storage .. -c WOSonic -o WOSonicStorage.svg --hideExpand  ______gap
 
 # contracts/vault
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBaseVaultCore,OETHBaseVaultAdmin,OSonicVaultCore,OSonicVaultAdmin -o VaultHierarchy.svg
+
 sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
 sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHVaultCore,OETHVaultAdmin -o OETHVaultHierarchy.svg
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
 sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OSonicVaultCore,OSonicVaultAdmin -o OSonicVaultHierarchy.svg
+sol2uml .. -s -d 0 -b OETHBaseVaultCore -o OETHBaseVaultCoreSquashed.svg
+sol2uml .. -s -d 0 -b OETHBaseVaultAdmin -o OETHBaseVaultAdminSquashed.svg
+sol2uml storage .. -c OETHBaseVaultCore -o OETHBaseVaultStorage.svg --hideExpand __gap,______gap
+
 sol2uml .. -s -d 0 -b OSonicVaultCore -o OSonicVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OSonicVaultAdmin -o OSonicVaultAdminSquashed.svg
 sol2uml storage .. -c OSonicVaultCore -o OSonicVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
