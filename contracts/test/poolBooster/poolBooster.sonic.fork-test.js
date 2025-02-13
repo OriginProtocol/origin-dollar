@@ -12,7 +12,8 @@ describe.only("ForkTest: Pool Booster", function () {
   });
 
   it("Should have the correct initial state", async () => {
-    const { oethb } = fixture;
+    const { oSonic, poolBoosterFactory } = fixture;
     
+    expect(await poolBoosterFactory.oSonic()).to.equal(oSonic.address);
   });
 });

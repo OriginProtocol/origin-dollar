@@ -25,7 +25,7 @@ module.exports = deployOnSonic(
     );
     const dPoolBoosterFactory = await deployWithConfirmation(
       "PoolBoosterFactory",
-      []
+      [addresses.sonic.OSonicProxy]
     );
     console.log(
       `Deployed Pool Booster Factory to ${dPoolBoosterFactory.address}`

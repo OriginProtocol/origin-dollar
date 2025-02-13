@@ -25,10 +25,16 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         PoolBoosterType boosterType;
     }
 
-    // list of all the pool boosters
+    event PoolBoosterDeployed(address poolBoosterAddress, PoolBoosterType poolBoosterType);
+
+    // @notice address of Origin Sonic
+    address public immutable oSonic;
+
+    // @notice list of all the pool boosters
     PoolBoosterEntry[] public poolBoosters;
 
-    constructor(){
+    constructor(address _oSonic){
+        oSonic = _oSonic;
         // implementation contract has no governor
         _setGovernor(address(0));
     }
@@ -58,8 +64,23 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         uint256 split
     ) external onlyGovernor {
 
+        address poolBoosterAddress = _deployContract(
+            abi.encodePacked(type(PoolBoosterSwapxIchi).creationCode, abi.encode(
+                bribeAdressOS,
+                bribeAdressOther,
+                oSonic,
+                split  
+            ))
+        );
 
-        //abi.encodePacked(bytecode, abi.encode(arg1, arg2));
+        poolBoosters.push(
+            PoolBoosterEntry(
+                poolBoosterAddress,
+                PoolBoosterType.SwapXIchiVault
+            )
+        );
+
+        emit PoolBoosterDeployed(poolBoosterAddress, PoolBoosterType.SwapXIchiVault);
     }
 
     function _deployContract(
