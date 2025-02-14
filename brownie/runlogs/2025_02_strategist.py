@@ -220,3 +220,39 @@ def main():
       ccip_message,
       {'from': OETHB_MULTICHAIN_STRATEGIST, 'value': ccip_fee}
     ))
+
+
+# -------------------------------------
+# Feb 13, 2025 - Base deposit 10 WETH to the new Curve AMO strategy
+# -------------------------------------
+from aerodrome_harvest import *
+from brownie import accounts
+import eth_abi
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Deposit 10 WETH to the new Curve AMO strategy
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_CURVE_AMO_STRATEGY, 
+        [weth],
+        [10 * 10**18],
+        {'from': OETHB_MULTICHAIN_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
