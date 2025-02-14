@@ -118,13 +118,24 @@ describe("Base Fork Test: Curve AMO strategy", function () {
 
     it("Should deposit to strategy", async () => {
       await balancePool();
+
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
       await mintAndDepositToStrategy();
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
+        (await curveAMOStrategy.checkBalance(weth.address)).sub(
+          checkBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(await oethb.balanceOf(defaultDepositor.address)).to.equal(
         defaultDeposit
@@ -137,6 +148,12 @@ describe("Base Fork Test: Curve AMO strategy", function () {
 
       const amount = defaultDeposit;
       const user = defaultDepositor;
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
 
       const balance = await weth.balanceOf(user.address);
       if (balance < amount) {
@@ -145,14 +162,17 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       await weth.connect(user).transfer(curveAMOStrategy.address, amount);
 
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.gt(0);
-
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
+        (await curveAMOStrategy.checkBalance(weth.address)).sub(
+          checkBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
@@ -160,11 +180,25 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     it("Should deposit all to strategy with no balance", async () => {
       await balancePool();
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
-      expect(await curveAMOStrategy.checkBalance(weth.address)).to.eq(0);
-      expect(await curveGauge.balanceOf(curveAMOStrategy.address)).to.eq(0);
+      expect(
+        (await curveAMOStrategy.checkBalance(weth.address)).sub(
+          checkBalanceBefore
+        )
+      ).to.eq(0);
+      expect(
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
+      ).to.eq(0);
     });
 
     it("Should withdraw from strategy", async () => {
@@ -175,16 +209,27 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         oethbVault.address
       );
 
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
+
       await curveAMOStrategy
         .connect(impersonatedVaultSigner)
         .withdraw(oethbVault.address, weth.address, oethUnits("1"));
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(defaultDeposit.sub(oethUnits("1")).mul(2));
+        checkBalanceBefore.sub(
+          await curveAMOStrategy.checkBalance(weth.address)
+        )
+      ).to.approxEqualTolerance(oethUnits("1").mul(2));
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.sub(oethUnits("1")).mul(2));
+        gaugeBalanceBefore.sub(
+          await curveGauge.balanceOf(curveAMOStrategy.address)
+        )
+      ).to.approxEqualTolerance(oethUnits("1").mul(2));
       expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
@@ -220,15 +265,26 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         wethbAmount: defaultDeposit,
       });
 
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
+
       await curveAMOStrategy
         .connect(impersonatedStrategist)
         .mintAndAddOTokens(defaultDeposit);
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
+        (await curveAMOStrategy.checkBalance(weth.address)).sub(
+          checkBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit);
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
       ).to.approxEqualTolerance(defaultDeposit);
       expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
@@ -248,16 +304,27 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         oethbAmount: defaultDeposit.mul(2),
       });
 
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
+
       await curveAMOStrategy
         .connect(impersonatedStrategist)
         .removeAndBurnOTokens(defaultDeposit);
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(4).sub(defaultDeposit));
+        checkBalanceBefore.sub(
+          await curveAMOStrategy.checkBalance(weth.address)
+        )
+      ).to.approxEqualTolerance(defaultDeposit);
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(4).sub(defaultDeposit));
+        gaugeBalanceBefore.sub(
+          await curveGauge.balanceOf(curveAMOStrategy.address)
+        )
+      ).to.approxEqualTolerance(defaultDeposit);
       expect(await oethb.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(
         oethUnits("0")
@@ -277,17 +344,27 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       });
 
       const vaultETHBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        weth.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
 
       await curveAMOStrategy
         .connect(impersonatedStrategist)
         .removeOnlyAssets(defaultDeposit);
 
       expect(
-        await curveAMOStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(4).sub(defaultDeposit));
+        checkBalanceBefore.sub(
+          await curveAMOStrategy.checkBalance(weth.address)
+        )
+      ).to.approxEqualTolerance(defaultDeposit);
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(4).sub(defaultDeposit));
+        gaugeBalanceBefore.sub(
+          await curveGauge.balanceOf(curveAMOStrategy.address)
+        )
+      ).to.approxEqualTolerance(defaultDeposit);
       expect(await weth.balanceOf(oethbVault.address)).to.approxEqualTolerance(
         vaultETHBalanceBefore.add(defaultDeposit)
       );

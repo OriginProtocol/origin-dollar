@@ -146,8 +146,7 @@ const shouldBehaveLikeStrategy = (context) => {
           await setERC20TokenBalance(
             strategy.address,
             asset,
-            depositAmount.mul(i + 1),
-            hre
+            depositAmount.mul(i + 1)
           );
         }
 
