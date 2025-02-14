@@ -79,7 +79,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // Harvester
     const harvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
     harvester = await ethers.getContractAt(
-      "OETHBaseHarvester",
+      "SuperOETHHarvester",
       harvesterProxy.address
     );
 
