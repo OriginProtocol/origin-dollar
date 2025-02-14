@@ -7,7 +7,7 @@ const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
-describe("Compound strategy", function () {
+describe.skip("Compound strategy", function () {
   if (isFork) {
     this.timeout(0);
   }

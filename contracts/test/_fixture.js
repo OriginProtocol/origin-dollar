@@ -141,7 +141,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
       nativeStakingStrategyProxy.address
     );
   } else {
-    weth = await ethers.getContractAt("MockWETH");
+    weth = await ethers.getContract("MockWETH");
     ssv = await ethers.getContract("MockSSV");
 
     const nativeStakingStrategyProxy = await ethers.getContract(
