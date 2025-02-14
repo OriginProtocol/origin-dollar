@@ -88,6 +88,7 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
 
         // Store locally for some gas savings
         address _strategist = strategistAddr;
+        address _dripper = dripper;
 
         // Harvest rewards
         IStrategy(_strategy).collectRewardTokens();
@@ -104,7 +105,7 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
             if (balance > 0) {
                 // Determine receiver
                 address receiver = token == wrappedNativeToken
-                    ? dripper
+                    ? _dripper
                     : _strategist;
                 require(receiver != address(0), "Invalid receiver");
 
