@@ -4,6 +4,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy.js");
+const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnSonic(
   {
@@ -55,7 +56,16 @@ module.exports = deployOnSonic(
 
     return {
       actions: [
-
+        {
+          contract: cPoolBoosterFactory,
+          signature: "createPoolBoosterSwapxIchi(address,address,address,uint256)",
+          args: [
+            addresses.sonic.SwapXOsUSDCe.extBribeOS,
+            addresses.sonic.SwapXOsUSDCe.extBribeUSDC,
+            addresses.sonic.SwapXOsUSDCe.pool,
+            oethUnits("0.7") // 70%
+          ],
+        },
       ],
     };
   }

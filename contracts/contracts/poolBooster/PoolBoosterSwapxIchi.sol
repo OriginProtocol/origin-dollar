@@ -28,7 +28,7 @@ contract PoolBoosterSwapxIchi is IPoolBooster {
     	address _bribeContractOther,
     	address _osToken,
     	uint256 _split
-    ){
+    ) {
     	// expect it to be between 1% & 99%
     	require(_split > 1e16 && _split < 99e16, "Unexpected split amount");
 

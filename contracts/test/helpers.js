@@ -135,6 +135,7 @@ chai.Assertion.addMethod(
 chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   const tx = this._obj;
   const { events } = await tx.wait();
+  console.log("events,", events);
   const log = events.find((e) => e.event == eventName);
   chai.expect(log).to.not.be.undefined;
 
