@@ -335,15 +335,14 @@ describe("OETH Vault", function () {
 
     it("Fail to cacheWETHAssetIndex if WETH is not a supported asset", async () => {
       const { frxETH, weth } = fixture;
-      const { deployerAddr } = await hre.getNamedAccounts();
-      const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
       await deployWithConfirmation("MockOETHVault", [weth.address]);
       const mockVault = await hre.ethers.getContract("MockOETHVault");
 
       await mockVault.supportAsset(frxETH.address);
 
-      const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
+      const mockGovernor = await impersonateAndFund(addresses.dead);
+      const tx = mockVault.connect(mockGovernor).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
 
@@ -441,7 +440,10 @@ describe("OETH Vault", function () {
     it("Should allow strategy to burnForStrategy", async () => {
       const { oethVault, oeth, weth, governor, daniel } = fixture;
 
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
 
       // First increase netOusdMintForStrategyThreshold
       await oethVault
@@ -463,26 +465,21 @@ describe("OETH Vault", function () {
       );
     });
 
-    it("Fail when burnForStrategy because Amoount too high", async () => {
+    it("Fail when burnForStrategy because amount > int256 ", async () => {
       const { oethVault, governor, daniel } = fixture;
 
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
+
       const tx = oethVault
         .connect(daniel)
         .burnForStrategy(parseUnits("10", 76));
 
-      await expect(tx).to.be.revertedWith("Amount too high");
-    });
-
-    it("Fail when burnForStrategy because Attempting to burn too much OUSD.", async () => {
-      const { oethVault, governor, daniel } = fixture;
-
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
-
-      // Then try to burn more than authorized
-      const tx = oethVault.connect(daniel).burnForStrategy(oethUnits("0"));
-
-      await expect(tx).to.be.revertedWith("Attempting to burn too much OUSD.");
+      await expect(tx).to.be.revertedWith(
+        "SafeCast: value doesn't fit in an int256"
+      );
     });
   });
 
