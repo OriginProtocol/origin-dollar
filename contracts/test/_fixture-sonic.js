@@ -87,7 +87,9 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     zapper = await ethers.getContract("OSonicZapper");
 
-    const poolBoosterFactoryProxy = await ethers.getContract("PoolBoosterFactoryProxy");
+    const poolBoosterFactoryProxy = await ethers.getContract(
+      "PoolBoosterFactoryProxy"
+    );
     poolBoosterFactory = await ethers.getContractAt(
       "PoolBoosterFactory",
       poolBoosterFactoryProxy.address
@@ -106,8 +108,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { strategistAddr, timelockAddr } =
-    await getNamedAccounts();
+  const { strategistAddr, timelockAddr } = await getNamedAccounts();
   // Impersonate governor
   const governor = await impersonateAndFund(addresses.sonic.timelock);
   governor.address = addresses.sonic.timelock;

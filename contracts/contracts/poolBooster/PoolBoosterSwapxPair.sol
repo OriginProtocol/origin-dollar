@@ -11,26 +11,23 @@ import { StableMath } from "../utils/StableMath.sol";
  * @author Origin Protocol Inc
  */
 contract PoolBoosterSwapxPair is IPoolBooster {
-	using StableMath for uint256;
+    using StableMath for uint256;
 
-	// @notice address of the Bribes.sol(Bribe) contract
+    // @notice address of the Bribes.sol(Bribe) contract
     IBribe public immutable bribeContract;
     // @notice address of the OS token
     IERC20 public immutable osToken;
 
-    constructor(
-    	address _bribeContract,
-    	address _osToken
-    ) {
-    	bribeContract = IBribe(_bribeContract);
-    	osToken = IERC20(_osToken);
+    constructor(address _bribeContract, address _osToken) {
+        bribeContract = IBribe(_bribeContract);
+        osToken = IERC20(_osToken);
     }
 
-    function bribe() override external {
-    	uint256 balance = osToken.balanceOf(address(this));
-    	osToken.approve(address(bribeContract), balance);
+    function bribe() external override {
+        uint256 balance = osToken.balanceOf(address(this));
+        osToken.approve(address(bribeContract), balance);
 
-    	bribeContract.notifyRewardAmount(address(osToken), balance);
-    	emit BribeExecuted(balance);
+        bribeContract.notifyRewardAmount(address(osToken), balance);
+        emit BribeExecuted(balance);
     }
 }

@@ -38,10 +38,10 @@ module.exports = deployOnSonic(
 
     // Init the Pool Booster Factory
     const initPoolBoosterFactory =
-      cPoolBoosterFactory.interface.encodeFunctionData("initialize(address,address)", [
-        addresses.sonic.timelock,
-        addresses.sonic.guardian
-      ]);
+      cPoolBoosterFactory.interface.encodeFunctionData(
+        "initialize(address,address)",
+        [addresses.sonic.timelock, addresses.sonic.guardian]
+      );
 
     // prettier-ignore
     await withConfirmation(
@@ -58,12 +58,13 @@ module.exports = deployOnSonic(
       actions: [
         {
           contract: cPoolBoosterFactory,
-          signature: "createPoolBoosterSwapxIchi(address,address,address,uint256)",
+          signature:
+            "createPoolBoosterSwapxIchi(address,address,address,uint256)",
           args: [
             addresses.sonic.SwapXOsUSDCe.extBribeOS,
             addresses.sonic.SwapXOsUSDCe.extBribeUSDC,
             addresses.sonic.SwapXOsUSDCe.pool,
-            oethUnits("0.7") // 70%
+            oethUnits("0.7"), // 70%
           ],
         },
       ],
