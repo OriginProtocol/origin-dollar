@@ -1,10 +1,34 @@
 {
-  "solcVersion": "0.8.7",
+  "solcVersion": "0.8.28",
   "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
     {
       "label": "strategistAddr",
       "offset": 0,
-      "slot": "0",
+      "slot": "51",
       "type": "t_address",
       "contract": "Strategizable",
       "src": "contracts/governance/Strategizable.sol:10"
@@ -12,24 +36,44 @@
     {
       "label": "__gap",
       "offset": 0,
-      "slot": "1",
+      "slot": "52",
       "type": "t_array(t_uint256)50_storage",
       "contract": "Strategizable",
       "src": "contracts/governance/Strategizable.sol:13"
     },
     {
+      "label": "dripper",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_address",
+      "contract": "OETHHarvesterSimple",
+      "src": "contracts/harvest/OETHHarvesterSimple.sol:26"
+    },
+    {
       "label": "supportedStrategies",
       "offset": 0,
-      "slot": "51",
+      "slot": "103",
       "type": "t_mapping(t_address,t_bool)",
       "contract": "OETHHarvesterSimple",
-      "src": "contracts/harvest/OETHHarvesterSimple.sol:15"
+      "src": "contracts/harvest/OETHHarvesterSimple.sol:29"
+    },
+    {
+      "label": "___gap",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_array(t_uint256)48_storage",
+      "contract": "OETHHarvesterSimple",
+      "src": "contracts/harvest/OETHHarvesterSimple.sol:32"
     }
   ],
   "types": {
     "t_address": {
       "label": "address",
       "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)48_storage": {
+      "label": "uint256[48]",
+      "numberOfBytes": "1536"
     },
     "t_array(t_uint256)50_storage": {
       "label": "uint256[50]",
