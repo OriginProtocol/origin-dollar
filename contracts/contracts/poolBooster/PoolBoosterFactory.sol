@@ -91,26 +91,26 @@ contract PoolBoosterFactory is Strategizable, Initializable {
 
     /**
      * @dev Create a Pool Booster for SwapX Ichi vault based pool
-     * @param _bribeAdressOS address of the Bribes.sol(Bribe) contract for the OS token side
-     * @param _bribeAdressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
+     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
+     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
      * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
      *        bribe contract and 60% to other bribe contract
      */
     function createPoolBoosterSwapxIchi(
-        address _bribeAdressOS,
-        address _bribeAdressOther,
+        address _bribeAddressOS,
+        address _bribeAddressOther,
         address _ammPoolAddress,
         uint256 _split
     ) external onlyGovernor {
-        require(_bribeAdressOS != address(0), "Invalid bribeAdressOS address");
-        require(_bribeAdressOther != address(0), "Invalid bribeAdressOther address");
+        require(_bribeAddressOS != address(0), "Invalid bribeAdressOS address");
+        require(_bribeAddressOther != address(0), "Invalid bribeAdressOther address");
         require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(type(PoolBoosterSwapxIchi).creationCode, abi.encode(
-                _bribeAdressOS,
-                _bribeAdressOther,
+                _bribeAddressOS,
+                _bribeAddressOther,
                 oSonic,
                 _split  
             ))
@@ -130,19 +130,20 @@ contract PoolBoosterFactory is Strategizable, Initializable {
 
     /**
      * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools
-     * @param _bribeAdress address of the Bribes.sol contract
+     * @param _bribeAddress address of the Bribes.sol contract
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
      */
     function createPoolBoosterSwapxClassic(
-        address _bribeAdress,
+        address _bribeAddress,
         address _ammPoolAddress
     ) external onlyGovernor {
-        require(_bribeAdress != address(0), "Invalid bribeAdress address");
+        require(_bribeAddress != address(0), "Invalid bribeAdress address");
         require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(type(PoolBoosterSwapxPair).creationCode, abi.encode(
-                _bribeAdress
+                _bribeAddress,
+                oSonic
             ))
         );
 
@@ -168,8 +169,8 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         }
     }
 
-    function poolBoosterLength() external returns(uint256 length) {
-        length = poolBoosters.length;
+    function poolBoosterLength() external view returns(uint256) {
+        return poolBoosters.length;
     }
 
 }

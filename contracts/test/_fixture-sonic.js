@@ -106,11 +106,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr, timelockAddr } =
+  const { strategistAddr, timelockAddr } =
     await getNamedAccounts();
   // Impersonate governor
-  const governor = await impersonateAndFund(governorAddr);
-  governor.address = governorAddr;
+  const governor = await impersonateAndFund(addresses.sonic.timelock);
+  governor.address = addresses.sonic.timelock;
 
   // Impersonate strategist
   const strategist = await impersonateAndFund(strategistAddr);

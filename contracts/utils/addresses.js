@@ -384,7 +384,7 @@ addresses.sonic.SwapXOsUSDCe.gaugeUSDC = "0xB660B984F80a89044Aa3841F1a1C78B2F596
 addresses.sonic.SwapXOsUSDCe.extBribeUSDC = "0xBCF88f38865B7712da4DE0a8eFC286C601CAE5e7";
 
 addresses.sonic.SwapXOsGEMSx = {}
-addresses.sonic.SwapXOsGEMSx.pool = "0x9ac7f5961a452e9cd5be5717bd2c3df412d1c1a5";
+addresses.sonic.SwapXOsGEMSx.pool = "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
 
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =

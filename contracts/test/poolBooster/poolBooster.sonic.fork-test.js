@@ -91,6 +91,86 @@ describe("ForkTest: Pool Booster", function () {
     expect(balanceAfter).to.lte(1);
   });
 
+  it("Should be able to remove a pool booster", async () => {
+    const { poolBoosterFactory, governor } = fixture;
+
+    const osUsdcePoolBooster = await poolBoosterFactory.poolBoosterFromPool(addresses.sonic.SwapXOsUSDCe.pool);
+    const initialLength = await poolBoosterFactory.poolBoosterLength();
+
+    const tx = await poolBoosterFactory
+      .connect(governor)
+      .removePoolBooster(osUsdcePoolBooster.boosterAddress)
+
+    await expect(tx)
+      .to.emit(poolBoosterFactory, "PoolBoosterRemoved")
+      .withArgs(
+        osUsdcePoolBooster.boosterAddress
+      );
+
+    expect(await poolBoosterFactory.poolBoosterLength()).to.equal(
+      initialLength.sub(ethers.BigNumber.from("1"))
+    );
+
+    const poolBooster = await poolBoosterFactory.poolBoosterFromPool(addresses.sonic.SwapXOsUSDCe.pool);
+    expect(poolBooster.boosterAddress).to.equal(
+      addresses.zero
+    );
+  });
+
+  it("Should be able to create an Ichi pool booster", async () => {
+    const { oSonic, poolBoosterFactory, governor } = fixture;
+
+    const tx = await poolBoosterFactory
+      .connect(governor)
+      // the addresses below are not suitable for pool boosting. Still they will serve the 
+      // purpose of confirming correct setup.
+      .createPoolBoosterSwapxIchi(
+        addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+        addresses.sonic.SwapXOsUSDCe.extBribeUSDC, //_bribeAddressOther
+        addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+        oethUnits("0.5") //_split
+      );
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(addresses.sonic.SwapXOsGEMSx.pool);
+
+    await expect(tx).to
+      .emit(poolBoosterFactory, "PoolBoosterDeployed")
+      .withArgs(
+        poolBooster.address,
+        addresses.sonic.SwapXOsGEMSx.pool,
+        ethers.BigNumber.from("0") // PoolBoosterType.SwapXIchiVault
+      );
+
+    expect(await poolBooster.osToken()).to.equal(oSonic.address);
+    expect(await poolBooster.bribeContractOS()).to.equal(addresses.sonic.SwapXOsUSDCe.extBribeOS);
+    expect(await poolBooster.bribeContractOther()).to.equal(addresses.sonic.SwapXOsUSDCe.extBribeUSDC);
+    expect(await poolBooster.split()).to.equal(oethUnits("0.5")); // 50%  
+  });
+
+  it("Should be able to create a pair pool booster", async () => {
+    const { oSonic, poolBoosterFactory, governor } = fixture;
+
+    const tx = await poolBoosterFactory
+      .connect(governor)
+      .createPoolBoosterSwapxClassic(
+        addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
+        addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+      );
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(addresses.sonic.SwapXOsGEMSx.pool);
+
+    await expect(tx).to
+      .emit(poolBoosterFactory, "PoolBoosterDeployed")
+      .withArgs(
+        poolBooster.address,
+        addresses.sonic.SwapXOsGEMSx.pool,
+        ethers.BigNumber.from("1") // PoolBoosterType.SwapXClassicPool
+      );
+
+    expect(await poolBooster.osToken()).to.equal(oSonic.address);
+    expect(await poolBooster.bribeContract()).to.equal(addresses.sonic.SwapXOsUSDCe.extBribeOS);
+  });
+
   const filterAndParseRewardAddedEvents = async (tx) => {
     // keccak256("RewardAdded(address,uint256,uint256)")
     const rewardAddedTopic = "0x6a6f77044107a33658235d41bedbbaf2fe9ccdceb313143c947a5e76e1ec8474";
