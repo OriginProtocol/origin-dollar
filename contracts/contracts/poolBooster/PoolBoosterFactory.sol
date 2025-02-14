@@ -5,6 +5,7 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { PoolBoosterSwapxIchi } from "./PoolBoosterSwapxIchi.sol";
 import { PoolBoosterSwapxPair } from "./PoolBoosterSwapxPair.sol";
+import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 
 /**
  * @title Pool booster factory
@@ -57,7 +58,10 @@ contract PoolBoosterFactory is Strategizable, Initializable {
     }
 
     function bribeAll() external {
-
+        uint256 length = poolBoosters.length;
+        for(uint256 i = 0; i < length; i++) {
+            IPoolBooster(poolBoosters[i].boosterAddress).bribe();
+        }
     }
 
     /**

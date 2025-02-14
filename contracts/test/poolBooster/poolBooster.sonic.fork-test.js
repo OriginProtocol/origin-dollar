@@ -7,7 +7,7 @@ const { oethUnits } = require("../helpers");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
-describe.only("ForkTest: Pool Booster", function () {
+describe("ForkTest: Pool Booster", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await sonicFixture();
@@ -41,8 +41,7 @@ describe.only("ForkTest: Pool Booster", function () {
   });
 
   it("Should call bribe on pool booster to send incentives to the 2 Ichi bribe contracts ", async () => {
-    const { oSonic, wS, oSonicVault, poolBoosterFactory, nick } = fixture;
-
+    const { oSonic, nick } = fixture;
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(addresses.sonic.SwapXOsUSDCe.pool);
     // make sure pool booster has some balance
@@ -50,32 +49,71 @@ describe.only("ForkTest: Pool Booster", function () {
       .connect(nick)
       .transfer(poolBooster.address, oethUnits("10"));    
 
-    const balanceBefore = await oSonic.balanceOf(poolBooster.address);
-    console.log("balanceBefore", balanceBefore);
-
+    const bribeBalance = await oSonic.balanceOf(poolBooster.address);
     const tx = await poolBooster.bribe();
+    const balanceAfter = await oSonic.balanceOf(poolBooster.address);
 
-    console.log("balanceAfter", await oSonic.balanceOf(poolBooster.address));
+    // extract the emitted RewardAdded events
+    const rewardAddedEvents = await filterAndParseRewardAddedEvents(tx);
 
-    await expect(tx).to.emittedEvent("RewardAdded", [
-      wS.address,
-      async (rewardAmount) => {
-        console.log("rewardAmount", rewardAmount);
-        expect(rewardAmount).to.lt(0, "Unexpected reward amount");
-      },
-      async (startTimestamp) => {
-        expect(startTimestamp).to.gt(0, "Timestamp should be greater than 0");
-      },
-    ]);
+    expect(rewardAddedEvents.length).to.equal(2);
+    expect(rewardAddedEvents[0].rewardToken).to.equal(oSonic.address);
+    expect(rewardAddedEvents[1].rewardToken).to.equal(oSonic.address);
 
+    expect(rewardAddedEvents[0].amount).to.approxEqual(bribeBalance.mul(oethUnits("0.70")).div(oethUnits("1")));
+    expect(rewardAddedEvents[1].amount).to.approxEqual(bribeBalance.mul(oethUnits("0.30")).div(oethUnits("1")));
 
-    // emitted by the function notifyRewardAmount
-    // emit RewardAdded(_rewardsToken, reward, _startTimestamp)
+    expect(balanceAfter).to.lte(1);
   });
+
+  it("Should call bribeAll on factory to send incentives to the 2 Ichi bribe contracts ", async () => {
+    const { oSonic, poolBoosterFactory, nick } = fixture;
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(addresses.sonic.SwapXOsUSDCe.pool);
+    // make sure pool booster has some balance
+    await oSonic
+      .connect(nick)
+      .transfer(poolBooster.address, oethUnits("10"));    
+
+    const bribeBalance = await oSonic.balanceOf(poolBooster.address);
+    const tx = await poolBoosterFactory.bribeAll();
+    const balanceAfter = await oSonic.balanceOf(poolBooster.address);
+
+    // extract the emitted RewardAdded events
+    const rewardAddedEvents = await filterAndParseRewardAddedEvents(tx);
+
+    expect(rewardAddedEvents[0].rewardToken).to.equal(oSonic.address);
+    expect(rewardAddedEvents[1].rewardToken).to.equal(oSonic.address);
+
+    expect(rewardAddedEvents[0].amount).to.approxEqual(bribeBalance.mul(oethUnits("0.70")).div(oethUnits("1")));
+    expect(rewardAddedEvents[1].amount).to.approxEqual(bribeBalance.mul(oethUnits("0.30")).div(oethUnits("1")));
+
+    expect(balanceAfter).to.lte(1);
+  });
+
+  const filterAndParseRewardAddedEvents = async (tx) => {
+    // keccak256("RewardAdded(address,uint256,uint256)")
+    const rewardAddedTopic = "0x6a6f77044107a33658235d41bedbbaf2fe9ccdceb313143c947a5e76e1ec8474";
+
+    const { events } = await tx.wait();
+    return events
+      .filter( e => e.topics[0] == rewardAddedTopic)
+      .map(e => {
+        const decoded = ethers.utils.defaultAbiCoder.decode(
+          ['address', 'uint256', 'uint256'],
+          e.data
+        );
+        return {
+          "rewardToken": decoded[0],
+          "amount": decoded[1],
+          "startTimestamp": decoded[2],
+        };
+      });
+  };
 
   const getPoolBoosterContractFromPoolAddress = async (poolAddress) => {
     const { poolBoosterFactory } = fixture;
-    const poolBoosterEntry = await poolBoosterFactory.poolBoosterFromPool(addresses.sonic.SwapXOsUSDCe.pool);
+    const poolBoosterEntry = await poolBoosterFactory.poolBoosterFromPool(poolAddress);
     const poolBoosterType = poolBoosterEntry.boosterType;
 
     if (poolBoosterType == 0) {
