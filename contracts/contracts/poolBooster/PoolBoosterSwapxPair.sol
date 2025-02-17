@@ -21,6 +21,8 @@ contract PoolBoosterSwapxPair is IPoolBooster {
     uint256 public constant MIN_BRIBE_AMOUNT = 1e10;
 
     constructor(address _bribeContract, address _osToken) {
+        require(_bribeContract != address(0), "Invalid bribeContract address");
+
         bribeContract = IBribe(_bribeContract);
         osToken = IERC20(_osToken);
     }

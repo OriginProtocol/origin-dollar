@@ -32,6 +32,14 @@ contract PoolBoosterSwapxIchi is IPoolBooster {
         address _osToken,
         uint256 _split
     ) {
+        require(
+            _bribeContractOS != address(0),
+            "Invalid bribeContractOS address"
+        );
+        require(
+            _bribeContractOther != address(0),
+            "Invalid bribeContractOther address"
+        );
         // expect it to be between 1% & 99%
         require(_split > 1e16 && _split < 99e16, "Unexpected split amount");
 

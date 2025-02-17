@@ -111,11 +111,6 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         uint256 _split,
         uint256 _salt
     ) external onlyGovernor {
-        require(_bribeAddressOS != address(0), "Invalid bribeAdressOS address");
-        require(
-            _bribeAddressOther != address(0),
-            "Invalid bribeAdressOther address"
-        );
         require(
             _ammPoolAddress != address(0),
             "Invalid ammPoolAddress address"

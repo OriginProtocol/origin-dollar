@@ -238,6 +238,10 @@ describe("ForkTest: Pool Booster", function () {
     );
   });
 
+  describe("Should test require checks", async () => {
+    it("Should throw error when 0 address passed to ichi as bribe contract", async () => {});
+  });
+
   const filterAndParseRewardAddedEvents = async (tx) => {
     // keccak256("RewardAdded(address,uint256,uint256)")
     const rewardAddedTopic =
