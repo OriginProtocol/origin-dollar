@@ -132,16 +132,7 @@ contract PoolBoosterFactory is Strategizable, Initializable {
             _salt
         );
 
-        PoolBoosterEntry memory entry = PoolBoosterEntry(
-            poolBoosterAddress,
-            _ammPoolAddress,
-            PoolBoosterType.SwapXIchiVault
-        );
-
-        poolBoosters.push(entry);
-        poolBoosterFromPool[_ammPoolAddress] = entry;
-
-        emit PoolBoosterDeployed(
+        _storePoolBoosterEntry(
             poolBoosterAddress,
             _ammPoolAddress,
             PoolBoosterType.SwapXIchiVault
@@ -172,19 +163,31 @@ contract PoolBoosterFactory is Strategizable, Initializable {
             _salt
         );
 
-        PoolBoosterEntry memory entry = PoolBoosterEntry(
+        _storePoolBoosterEntry(
             poolBoosterAddress,
             _ammPoolAddress,
             PoolBoosterType.SwapXClassicPool
+        );
+    }
+
+    function _storePoolBoosterEntry(
+        address _poolBoosterAddress,
+        address _ammPoolAddress,
+        PoolBoosterType boosterType
+    ) internal {
+        PoolBoosterEntry memory entry = PoolBoosterEntry(
+            _poolBoosterAddress,
+            _ammPoolAddress,
+            boosterType
         );
 
         poolBoosters.push(entry);
         poolBoosterFromPool[_ammPoolAddress] = entry;
 
         emit PoolBoosterDeployed(
-            poolBoosterAddress,
+            _poolBoosterAddress,
             _ammPoolAddress,
-            PoolBoosterType.SwapXClassicPool
+            boosterType
         );
     }
 
