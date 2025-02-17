@@ -30,13 +30,15 @@ const handler = async (event) => {
   log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
 
+  const convexAMOProxyAddress = addresses[networkName].ConvexOETHAMOStrategy;
+
   // Always harvest from Convex AMO
   const strategiesToHarvest = [convexAMOProxyAddress];
 
   const nativeStakingStrategies = [
-    addresses.mainnet.NativeStakingSSVStrategyProxy,
-    addresses.mainnet.NativeStakingSSVStrategy2Proxy,
-    addresses.mainnet.NativeStakingSSVStrategy3Proxy,
+    addresses[networkName].NativeStakingSSVStrategyProxy,
+    addresses[networkName].NativeStakingSSVStrategy2Proxy,
+    addresses[networkName].NativeStakingSSVStrategy3Proxy,
   ];
 
   for (const strategy of nativeStakingStrategies) {
