@@ -63,7 +63,7 @@ const handler = async (event) => {
 
   const tx = await harvester
     .connect(signer)
-    .harvestAndTransfer(strategiesToHarvest);
+    ["harvestAndTransfer(address[])"](strategiesToHarvest);
   await logTxDetails(tx, `${strategiesDesc} harvestAndTransfer`);
 };
 
