@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { Strategizable } from "../governance/Strategizable.sol";
@@ -16,8 +16,8 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
     ////////////////////////////////////////////////////
-    /// @notice WETH address
-    address public immutable WETH;
+    /// @notice wrapped native token address (WETH or wS)
+    address public immutable wrappedNativeToken;
 
     ////////////////////////////////////////////////////
     /// --- STORAGE
@@ -46,8 +46,8 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
-    constructor(address _WETH) {
-        WETH = _WETH;
+    constructor(address _wrappedNativeToken) {
+        wrappedNativeToken = _wrappedNativeToken;
     }
 
     /// @notice Initialize the contract
@@ -82,9 +82,13 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     }
 
     /// @notice Internal logic to harvest rewards from a strategy
-    function _harvestAndTransfer(address _strategy) internal {
+    function _harvestAndTransfer(address _strategy) internal virtual {
         // Ensure strategy is supported
         require(supportedStrategies[_strategy], "Strategy not supported");
+
+        // Store locally for some gas savings
+        address _strategist = strategistAddr;
+        address _dripper = dripper;
 
         // Harvest rewards
         IStrategy(_strategy).collectRewardTokens();
@@ -100,10 +104,12 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
             uint256 balance = IERC20(token).balanceOf(address(this));
             if (balance > 0) {
                 // Determine receiver
-                address receiver = token == WETH ? dripper : strategistAddr;
+                address receiver = token == wrappedNativeToken
+                    ? _dripper
+                    : _strategist;
                 require(receiver != address(0), "Invalid receiver");
 
-                // Transfer to strategist
+                // Transfer to the Strategist or the Dripper
                 IERC20(token).safeTransfer(receiver, balance);
                 emit Harvested(_strategy, token, balance, receiver);
             }
