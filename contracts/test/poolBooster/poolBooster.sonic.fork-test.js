@@ -64,11 +64,11 @@ describe("ForkTest: Pool Booster", function () {
     await oSonic.connect(nick).transfer(poolBooster.address, oethUnits("10"));
 
     const bribeBalance = await oSonic.balanceOf(poolBooster.address);
-    const tx = await poolBooster.bribe();
+    let tx = await poolBooster.bribe();
     const balanceAfter = await oSonic.balanceOf(poolBooster.address);
 
     // extract the emitted RewardAdded events
-    const rewardAddedEvents = await filterAndParseRewardAddedEvents(tx);
+    let rewardAddedEvents = await filterAndParseRewardAddedEvents(tx);
 
     expect(rewardAddedEvents.length).to.equal(2);
     expect(rewardAddedEvents[0].rewardToken).to.equal(oSonic.address);
@@ -80,8 +80,20 @@ describe("ForkTest: Pool Booster", function () {
     expect(rewardAddedEvents[1].amount).to.approxEqual(
       bribeBalance.mul(oethUnits("0.30")).div(oethUnits("1"))
     );
-
     expect(balanceAfter).to.lte(1);
+
+    // Call bribe again, but this time with too little funds to execute the bribe (min amount is 1e10)
+    await oSonic
+      .connect(nick)
+      .transfer(poolBooster.address, ethers.BigNumber.from("1000000000")); // 1e19
+    expect(await oSonic.balanceOf(poolBooster.address)).to.lte(1000000001);
+    tx = await poolBooster.bribe();
+    rewardAddedEvents = await filterAndParseRewardAddedEvents(tx);
+
+    // expect that no bribes have been executed
+    expect(rewardAddedEvents.length).to.equal(0);
+    expect(await oSonic.balanceOf(poolBooster.address)).to.gte(1000000000);
+    expect(await oSonic.balanceOf(poolBooster.address)).to.lte(1000000001);
   });
 
   it("Should call bribeAll on factory to send incentives to the 2 Ichi bribe contracts ", async () => {

@@ -23,6 +23,9 @@ contract PoolBoosterSwapxIchi is IPoolBooster {
     //         bribe contract and 60% to other bribe contract
     uint256 public immutable split;
 
+    // @notice if balance under this amount the bribe action is skipped
+    uint256 public constant MIN_BRIBE_AMOUNT = 1e10;
+
     constructor(
         address _bribeContractOS,
         address _bribeContractOther,
@@ -40,6 +43,11 @@ contract PoolBoosterSwapxIchi is IPoolBooster {
 
     function bribe() external override {
         uint256 balance = osToken.balanceOf(address(this));
+        // balance too small, do no bribes
+        if (balance < MIN_BRIBE_AMOUNT) {
+            return;
+        }
+
         uint256 osBribeAmount = balance.mulTruncate(split);
         // -1 to prevent possible rounding issues with OS token
         uint256 otherBribeAmount = balance - osBribeAmount - 1;
