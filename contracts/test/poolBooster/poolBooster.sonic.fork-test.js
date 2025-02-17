@@ -106,7 +106,7 @@ describe("ForkTest: Pool Booster", function () {
     await oSonic.connect(nick).transfer(poolBooster.address, oethUnits("10"));
 
     const bribeBalance = await oSonic.balanceOf(poolBooster.address);
-    const tx = await poolBoosterFactory.bribeAll();
+    const tx = await poolBoosterFactory.bribeAll([]);
     const balanceAfter = await oSonic.balanceOf(poolBooster.address);
 
     // extract the emitted RewardAdded events
@@ -123,6 +123,22 @@ describe("ForkTest: Pool Booster", function () {
     );
 
     expect(balanceAfter).to.lte(1);
+  });
+
+  it("Should skip pool booster bribe call when pool booster on exclusion list", async () => {
+    const { oSonic, poolBoosterFactory, nick } = fixture;
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(
+      addresses.sonic.SwapXOsUSDCe.pool
+    );
+    // make sure pool booster has some balance
+    await oSonic.connect(nick).transfer(poolBooster.address, oethUnits("10"));
+
+    const balanceBefore = await oSonic.balanceOf(poolBooster.address);
+    await poolBoosterFactory.bribeAll([poolBooster.address]);
+
+    // balance before and after should be the same (no bribes have been executed)
+    expect(await oSonic.balanceOf(poolBooster.address)).to.eq(balanceBefore);
   });
 
   it("Should be able to remove a pool booster", async () => {

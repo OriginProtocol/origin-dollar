@@ -62,10 +62,28 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         _setStrategistAddr(strategist);
     }
 
-    function bribeAll() external {
+    /**
+     * @notice Goes over all the pool boosters created by this factory and
+     *         calls bribe() on them.
+     * @param _exclusionList A list of pool booster addresses to skip when
+     *        calling this function.
+     */
+    function bribeAll(address[] memory _exclusionList) external {
         uint256 length = poolBoosters.length;
         for (uint256 i = 0; i < length; i++) {
-            IPoolBooster(poolBoosters[i].boosterAddress).bribe();
+            address poolBoosterAddress = poolBoosters[i].boosterAddress;
+            bool skipBribeCall = false;
+            for (uint256 j = 0; j < _exclusionList.length; j++) {
+                // pool booster in exclusion list
+                if (_exclusionList[j] == poolBoosterAddress) {
+                    skipBribeCall = true;
+                    break;
+                }
+            }
+
+            if (!skipBribeCall) {
+                IPoolBooster(poolBoosterAddress).bribe();
+            }
         }
     }
 
