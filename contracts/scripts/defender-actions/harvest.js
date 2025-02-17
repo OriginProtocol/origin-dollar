@@ -13,9 +13,10 @@ const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.
 const log = require("../../utils/logger")("action:harvest");
 
 const labelsSSV = {
-  [addresses[networkName].NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
-  [addresses[networkName].NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
-  [addresses[networkName].NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
+  [addresses.mainnet.NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
+  [addresses.mainnet.NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
+  [addresses.mainnet.NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
+  [addresses.holesky.NativeStakingSSVStrategyProxy]: "Staking Strategy 1 Holesky",
 };
 
 // Entrypoint for the Defender Action
