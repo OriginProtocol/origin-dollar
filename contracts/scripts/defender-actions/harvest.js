@@ -30,45 +30,44 @@ const handler = async (event) => {
   log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
 
-  const firstNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategyProxy;
-  log(
-    `Resolved first Native Staking Strategy address to ${firstNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, firstNativeStakingProxyAddress, signer, "first");
+  // Always harvest from Convex AMO
+  const strategiesToHarvest = [convexAMOProxyAddress];
 
-  const secondNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategy2Proxy;
-  log(
-    `Resolved second Native Staking Strategy address to ${secondNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
+  const nativeStakingStrategies = [
+    addresses.mainnet.NativeStakingSSVStrategyProxy,
+    addresses.mainnet.NativeStakingSSVStrategy2Proxy,
+    addresses.mainnet.NativeStakingSSVStrategy3Proxy,
+  ];
 
-  const thirdNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategy3Proxy;
-  log(
-    `Resolved third Native Staking Strategy address to ${thirdNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, thirdNativeStakingProxyAddress, signer, "third");
+  for (const strategy of nativeStakingStrategies) {
+    log(`Resolved Native Staking Strategy address to ${strategy}`);
+    const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
+      strategy,
+      signer
+    );
 
-  const convexAMOProxyAddress = addresses[networkName].ConvexOETHAMOStrategy;
-  log(`Resolved Convex AMO Strategy address to ${convexAMOProxyAddress}`);
-  await harvest(harvester, convexAMOProxyAddress, signer, "Convex AMO");
+    if (shouldHarvest) {
+      // Harvest if there are sufficient rewards to be harvested
+      log(`Will harvest from ${strategy}`);
+      strategiesToHarvest.push(strategy);
+    }
+  }
+
+  const tx = await harvester
+    .connect(signer)
+    .harvestAndTransfer(strategiesToHarvest);
+  await logTxDetails(tx, `${stratDesc} harvestAndTransfer`);
 };
 
-const harvest = async (harvester, strategy, signer, stratDesc) => {
+const shouldHarvestFromNativeStakingStrategy = async (
+  nativeStakingStrategy,
+  signer
+) => {
   const nativeStakingStrategy = new ethers.Contract(
     strategy,
     nativeStakingStrategyAbi,
     signer
   );
-
-  // Convex AMO strategy does not have consensus rewards, so we harvest it regardless
-  if (stratDesc == "Convex AMO") {
-    const tx1 = await harvester.connect(signer).harvestAndTransfer(strategy);
-    await logTxDetails(tx1, `${stratDesc} harvestAndTransfer`);
-    return;
-  }
 
   const consensusRewards = await nativeStakingStrategy.consensusRewards();
   log(`Consensus rewards for ${stratDesc}: ${formatUnits(consensusRewards)}`);
@@ -80,17 +79,10 @@ const harvest = async (harvester, strategy, signer, stratDesc) => {
   );
   log(`Execution rewards for ${stratDesc}: ${formatUnits(executionRewards)}`);
 
-  if (
+  return (
     consensusRewards.gt(parseEther("1")) ||
     executionRewards.gt(parseEther("0.5"))
-  ) {
-    const tx1 = await harvester.connect(signer).harvestAndTransfer(strategy);
-    await logTxDetails(tx1, `${stratDesc} harvestAndTransfer`);
-  } else {
-    log(
-      `Skipping ${stratDesc} harvestAndTransfer due to low consensus and execution rewards`
-    );
-  }
+  );
 };
 
 module.exports = { handler };
