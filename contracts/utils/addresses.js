@@ -219,7 +219,8 @@ addresses.mainnet.FraxETHRedeemStrategy =
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 // TODO add after deployment
-addresses.mainnet.OETHHarvesterSimpleProxy = "";
+addresses.mainnet.OETHHarvesterSimpleProxy =
+  "0x6D416E576eECBB9F897856a7c86007905274ed04";
 addresses.mainnet.BalancerRETHStrategy =
   "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens

@@ -12,6 +12,13 @@ const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.
 
 const log = require("../../utils/logger")("action:harvest");
 
+const labelsSSV = {
+  [addresses.mainnet.NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
+  [addresses.mainnet.NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
+  [addresses.mainnet.NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
+  [addresses.holesky.NativeStakingSSVStrategyProxy]: "Staking Strategy 1 Holesky",
+};
+
 // Entrypoint for the Defender Action
 const handler = async (event) => {
   console.log(
@@ -30,62 +37,66 @@ const handler = async (event) => {
   log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
 
-  const firstNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategyProxy;
-  log(
-    `Resolved first Native Staking Strategy address to ${firstNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, firstNativeStakingProxyAddress, signer, "first");
+  const convexAMOProxyAddress = addresses[networkName].ConvexOETHAMOStrategy;
 
-  const secondNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategy2Proxy;
-  log(
-    `Resolved second Native Staking Strategy address to ${secondNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, secondNativeStakingProxyAddress, signer, "second");
+  // Always harvest from Convex AMO
+  const strategiesToHarvest = [convexAMOProxyAddress];
 
-  const thirdNativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategy3Proxy;
-  log(
-    `Resolved third Native Staking Strategy address to ${thirdNativeStakingProxyAddress}`
-  );
-  await harvest(harvester, thirdNativeStakingProxyAddress, signer, "third");
+  const nativeStakingStrategies = [
+    addresses[networkName].NativeStakingSSVStrategyProxy,
+    addresses[networkName].NativeStakingSSVStrategy2Proxy,
+    addresses[networkName].NativeStakingSSVStrategy3Proxy,
+  ];
+
+  for (const strategy of nativeStakingStrategies) {
+    log(`Resolved Native Staking Strategy address to ${strategy}`);
+    const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
+      strategy,
+      signer
+    );
+
+    if (shouldHarvest) {
+      // Harvest if there are sufficient rewards to be harvested
+      log(`Will harvest from ${strategy}`);
+      strategiesToHarvest.push(strategy);
+    }
+  }
+
+  const tx = await harvester
+    .connect(signer)
+    ["harvestAndTransfer(address[])"](strategiesToHarvest);
+  await logTxDetails(tx, `harvestAndTransfer`);
 };
 
-const harvest = async (
-  harvester,
-  nativeStakingProxyAddress,
-  signer,
-  stratDesc
-) => {
+const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
   const nativeStakingStrategy = new ethers.Contract(
-    nativeStakingProxyAddress,
+    strategy,
     nativeStakingStrategyAbi,
     signer
   );
+
   const consensusRewards = await nativeStakingStrategy.consensusRewards();
-  log(`Consensus rewards for ${stratDesc}: ${formatUnits(consensusRewards)}`);
+  log(
+    `Consensus rewards for ${labelsSSV[strategy]}: ${formatUnits(
+      consensusRewards
+    )}`
+  );
 
   const feeAccumulatorAddress =
     await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
   const executionRewards = await signer.provider.getBalance(
     feeAccumulatorAddress
   );
-  log(`Execution rewards for ${stratDesc}: ${formatUnits(executionRewards)}`);
+  log(
+    `Execution rewards for ${labelsSSV[strategy]}: ${formatUnits(
+      executionRewards
+    )}`
+  );
 
-  if (
+  return (
     consensusRewards.gt(parseEther("1")) ||
     executionRewards.gt(parseEther("0.5"))
-  ) {
-    const tx1 = await harvester
-      .connect(signer)
-      .harvestAndTransfer(nativeStakingProxyAddress);
-    await logTxDetails(tx1, `${stratDesc} harvestAndTransfer`);
-  } else {
-    log(
-      `Skipping ${stratDesc} harvestAndTransfer due to low consensus and execution rewards`
-    );
-  }
+  );
 };
 
 module.exports = { handler };
