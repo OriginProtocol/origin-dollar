@@ -61,10 +61,7 @@ const handler = async (event) => {
   await logTxDetails(tx, `${stratDesc} harvestAndTransfer`);
 };
 
-const shouldHarvestFromNativeStakingStrategy = async (
-  nativeStakingStrategy,
-  signer
-) => {
+const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
   const nativeStakingStrategy = new ethers.Contract(
     strategy,
     nativeStakingStrategyAbi,
