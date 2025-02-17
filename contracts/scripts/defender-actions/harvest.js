@@ -12,8 +12,7 @@ const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.
 
 const log = require("../../utils/logger")("action:harvest");
 
-const labels = {
-  [convexAMOProxyAddress]: "Convex AMO",
+const labelsSSV = {
   [addresses[networkName].NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
   [addresses[networkName].NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
   [addresses[networkName].NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
@@ -77,7 +76,7 @@ const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
 
   const consensusRewards = await nativeStakingStrategy.consensusRewards();
   log(
-    `Consensus rewards for ${labels[strategy]}: ${formatUnits(
+    `Consensus rewards for ${labelsSSV[strategy]}: ${formatUnits(
       consensusRewards
     )}`
   );
@@ -88,7 +87,7 @@ const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
     feeAccumulatorAddress
   );
   log(
-    `Execution rewards for ${labels[strategy]}: ${formatUnits(
+    `Execution rewards for ${labelsSSV[strategy]}: ${formatUnits(
       executionRewards
     )}`
   );
