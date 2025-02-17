@@ -34,13 +34,19 @@ const handler = async (event) => {
 
   // Always harvest from Convex AMO
   const strategiesToHarvest = [convexAMOProxyAddress];
-  const strategiesDesc = ["Convex AMO"];
 
   const nativeStakingStrategies = [
     addresses[networkName].NativeStakingSSVStrategyProxy,
     addresses[networkName].NativeStakingSSVStrategy2Proxy,
     addresses[networkName].NativeStakingSSVStrategy3Proxy,
   ];
+
+  const labels = {
+    [convexAMOProxyAddress]: "Convex AMO",
+    [addresses[networkName].NativeStakingProxy1]: "Staking Strategy 1",
+    [addresses[networkName].NativeStakingProxy2]: "Staking Strategy 2",
+    [addresses[networkName].NativeStakingProxy3]: "Staking Strategy 3",
+  };
 
   for (const strategy of nativeStakingStrategies) {
     log(`Resolved Native Staking Strategy address to ${strategy}`);
@@ -50,21 +56,20 @@ const handler = async (event) => {
     const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
       strategy,
       signer,
-      desc
+      labels[strategy]
     );
 
     if (shouldHarvest) {
       // Harvest if there are sufficient rewards to be harvested
       log(`Will harvest from ${strategy}`);
       strategiesToHarvest.push(strategy);
-      strategiesDesc.push(desc);
     }
   }
 
   const tx = await harvester
     .connect(signer)
     ["harvestAndTransfer(address[])"](strategiesToHarvest);
-  await logTxDetails(tx, `${strategiesDesc} harvestAndTransfer`);
+  await logTxDetails(tx, `harvestAndTransfer`);
 };
 
 const shouldHarvestFromNativeStakingStrategy = async (
