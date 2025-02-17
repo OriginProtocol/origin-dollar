@@ -84,13 +84,10 @@ contract PoolBoosterFactory is Strategizable, Initializable {
             if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {
                 // erase mapping
                 delete poolBoosterFromPool[poolBoosters[i].ammPoolAddress];
-                // erase array entry
-                poolBoosters[i].boosterAddress = poolBoosters[boostersLen - 1]
-                    .boosterAddress;
-                poolBoosters[i].ammPoolAddress = poolBoosters[boostersLen - 1]
-                    .ammPoolAddress;
-                poolBoosters[i].boosterType = poolBoosters[boostersLen - 1]
-                    .boosterType;
+
+                // overwrite current pool booster with the last entry in the list
+                poolBoosters[i] = poolBoosters[boostersLen - 1];
+                // drop the last entry
                 poolBoosters.pop();
 
                 emit PoolBoosterRemoved(_poolBoosterAddress);

@@ -116,11 +116,21 @@ describe("ForkTest: Pool Booster", function () {
   it("Should be able to remove a pool booster", async () => {
     const { poolBoosterFactory, governor } = fixture;
 
+    // create another pool booster (which is placed as the last entry in
+    // the poolBoosters array in PoolBoosterFactory)
+    await poolBoosterFactory.connect(governor).createPoolBoosterSwapxClassic(
+      addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddress
+      addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+      oethUnits("1") //_salt
+    );
+
     const osUsdcePoolBooster = await poolBoosterFactory.poolBoosterFromPool(
       addresses.sonic.SwapXOsUSDCe.pool
     );
     const initialLength = await poolBoosterFactory.poolBoosterLength();
 
+    // remove the pool booster. This step should also copy last entry in the pool
+    // booster list over the deleted one
     const tx = await poolBoosterFactory
       .connect(governor)
       .removePoolBooster(osUsdcePoolBooster.boosterAddress);
@@ -137,6 +147,17 @@ describe("ForkTest: Pool Booster", function () {
       addresses.sonic.SwapXOsUSDCe.pool
     );
     expect(poolBooster.boosterAddress).to.equal(addresses.zero);
+
+    // verify the newly added pool booster has had its data correctly copied
+    const osGemsxPoolBooster = await poolBoosterFactory.poolBoosterFromPool(
+      addresses.sonic.SwapXOsGEMSx.pool
+    );
+
+    expect(osGemsxPoolBooster.boosterAddress).to.not.equal(addresses.zero);
+    expect(osGemsxPoolBooster.ammPoolAddress).to.equal(
+      addresses.sonic.SwapXOsGEMSx.pool
+    );
+    expect(osGemsxPoolBooster.boosterType).to.equal(ethers.BigNumber.from("1")); // SwapXClassicPool
   });
 
   it("Should be able to create an Ichi pool booster", async () => {
