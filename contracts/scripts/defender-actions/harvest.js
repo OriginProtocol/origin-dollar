@@ -34,6 +34,7 @@ const handler = async (event) => {
 
   // Always harvest from Convex AMO
   const strategiesToHarvest = [convexAMOProxyAddress];
+  const strategiesDesc = ["Convex AMO"];
 
   const nativeStakingStrategies = [
     addresses[networkName].NativeStakingSSVStrategyProxy,
@@ -43,25 +44,34 @@ const handler = async (event) => {
 
   for (const strategy of nativeStakingStrategies) {
     log(`Resolved Native Staking Strategy address to ${strategy}`);
+    const desc =
+      "Native SSV - " +
+      (nativeStakingStrategies.indexOf(strategy) + 1).toString();
     const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
       strategy,
-      signer
+      signer,
+      desc
     );
 
     if (shouldHarvest) {
       // Harvest if there are sufficient rewards to be harvested
       log(`Will harvest from ${strategy}`);
       strategiesToHarvest.push(strategy);
+      strategiesDesc.push(desc);
     }
   }
 
   const tx = await harvester
     .connect(signer)
     .harvestAndTransfer(strategiesToHarvest);
-  await logTxDetails(tx, `${stratDesc} harvestAndTransfer`);
+  await logTxDetails(tx, `${strategiesDesc} harvestAndTransfer`);
 };
 
-const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
+const shouldHarvestFromNativeStakingStrategy = async (
+  strategy,
+  signer,
+  stratDesc
+) => {
   const nativeStakingStrategy = new ethers.Contract(
     strategy,
     nativeStakingStrategyAbi,
