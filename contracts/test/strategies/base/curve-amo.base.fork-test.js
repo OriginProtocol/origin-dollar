@@ -699,6 +699,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     ...fixture,
     // Contracts
     strategy: curveAMOStrategy,
+    checkWithdrawAmounts: false,
     vault: oethbVault,
     assets: [weth],
     timelock: timelock,

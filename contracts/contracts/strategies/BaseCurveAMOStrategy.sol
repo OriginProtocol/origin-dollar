@@ -340,6 +340,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 gaugeTokens = gauge.balanceOf(address(this));
+        // Can not withdraw zero LP tokens from the gauge
+        if (gaugeTokens == 0) return;
         _lpWithdraw(gaugeTokens);
 
         // Withdraws are proportional to assets held by 3Pool

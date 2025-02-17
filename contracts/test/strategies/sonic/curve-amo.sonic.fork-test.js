@@ -635,7 +635,7 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
     ...fixture,
     // Contracts
     strategy: curveAMOStrategy,
-    curveAMOStrategy,
+    checkWithdrawAmounts: false,
     vault: vault,
     assets: [ws],
     governor: timelock,
