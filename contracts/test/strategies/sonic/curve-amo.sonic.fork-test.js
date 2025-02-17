@@ -47,7 +47,7 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
     curveGauge = fixture.curveGauge;
     curveChildLiquidityGaugeFactory = fixture.curveChildLiquidityGaugeFactory;
     crv = fixture.crv;
-    // harvester = fixture.harvester;
+    harvester = fixture.harvester;
 
     defaultDepositor = rafael;
 
@@ -55,7 +55,7 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
     impersonatedStrategist = await impersonateAndFund(
       await vault.strategistAddr()
     );
-    // impersonatedHarvester = await impersonateAndFund(harvester.address);
+    impersonatedHarvester = await impersonateAndFund(harvester.address);
     impersonatedCurveGaugeFactory = await impersonateAndFund(
       curveChildLiquidityGaugeFactory.address
     );
@@ -69,10 +69,6 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
 
     // Set vaultBuffer to 100%
     await vault.connect(impersonatedTimelock).setVaultBuffer(oethUnits("1"));
-
-    // await curveAMOStrategy
-    //   .connect(impersonatedAMOGovernor)
-    //   .setHarvesterAddress(harvester.address);
   });
 
   it("Should have correct parameters after deployment", async () => {
@@ -104,14 +100,25 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
   describe("Operational functions", () => {
     it("Should deposit to strategy", async () => {
       await balancePool();
+
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        ws.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
       await mintAndDepositToStrategy();
 
-      expect(await curveAMOStrategy.checkBalance(ws.address)).to.approxEqual(
-        defaultDeposit.mul(2)
-      );
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
+        (await curveAMOStrategy.checkBalance(ws.address)).sub(
+          checkBalanceBefore
+        )
       ).to.approxEqual(defaultDeposit.mul(2));
+      expect(
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(await os.balanceOf(defaultDepositor.address)).to.equal(
         defaultDeposit
       );
@@ -123,6 +130,12 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
 
       const amount = defaultDeposit;
       const user = defaultDepositor;
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        ws.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
 
       const balance = await ws.balanceOf(user.address);
       if (balance < amount) {
@@ -131,15 +144,18 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
       await ws.connect(user).transfer(curveAMOStrategy.address, amount);
 
       expect(await ws.balanceOf(curveAMOStrategy.address)).to.gt(0);
-
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
-      expect(await curveAMOStrategy.checkBalance(ws.address)).to.approxEqual(
-        defaultDeposit.mul(2)
-      );
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqual(defaultDeposit.mul(2));
+        (await curveAMOStrategy.checkBalance(ws.address)).sub(
+          checkBalanceBefore
+        )
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      expect(
+        (await curveGauge.balanceOf(curveAMOStrategy.address)).sub(
+          gaugeBalanceBefore
+        )
+      ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(await ws.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
@@ -159,19 +175,29 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
 
       const impersonatedVaultSigner = await impersonateAndFund(vault.address);
 
+      const checkBalanceBefore = await curveAMOStrategy.checkBalance(
+        ws.address
+      );
+      const gaugeBalanceBefore = await curveGauge.balanceOf(
+        curveAMOStrategy.address
+      );
+
       await curveAMOStrategy
         .connect(impersonatedVaultSigner)
         .withdraw(vault.address, ws.address, oethUnits("1"));
 
-      expect(await curveAMOStrategy.checkBalance(ws.address)).to.approxEqual(
-        defaultDeposit.sub(oethUnits("1")).mul(2)
-      );
       expect(
-        await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqual(defaultDeposit.sub(oethUnits("1")).mul(2));
+        checkBalanceBefore.sub(await curveAMOStrategy.checkBalance(ws.address))
+      ).to.approxEqualTolerance(oethUnits("1").mul(2));
+      expect(
+        gaugeBalanceBefore.sub(
+          await curveGauge.balanceOf(curveAMOStrategy.address)
+        )
+      ).to.approxEqualTolerance(oethUnits("1").mul(2));
       expect(await os.balanceOf(curveAMOStrategy.address)).to.equal(0);
-      // Can get a dust amount left
-      expect(await ws.balanceOf(curveAMOStrategy.address)).to.lte(1);
+      expect(await ws.balanceOf(curveAMOStrategy.address)).to.equal(
+        oethUnits("0")
+      );
     });
 
     it("Should withdraw all from strategy", async () => {
@@ -602,12 +628,14 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
     strategy: curveAMOStrategy,
     harvester,
     oeth: os,
+    governor: timelock,
   }));
 
   shouldBehaveLikeStrategy(() => ({
     ...fixture,
     // Contracts
     strategy: curveAMOStrategy,
+    curveAMOStrategy,
     vault: vault,
     assets: [ws],
     governor: timelock,
@@ -660,11 +688,11 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
 
   const balancePool = async () => {
     let balances = await curvePool.get_balances();
-    const balanceWETH = balances[0];
-    const balanceOETH = balances[1];
+    const balanceOS = balances[0];
+    const balanceWS = balances[1];
 
-    if (balanceWETH > balanceOETH) {
-      const amount = balanceWETH.sub(balanceOETH);
+    if (balanceWS > balanceOS) {
+      const amount = balanceWS.sub(balanceOS);
       const balance = ws.balanceOf(nick.address);
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, ws, amount + balance, hre);
@@ -677,8 +705,8 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([amount, 0], 0);
-    } else if (balanceWETH < balanceOETH) {
-      const amount = balanceOETH.sub(balanceWETH);
+    } else if (balanceWS < balanceOS) {
+      const amount = balanceOS.sub(balanceWS);
       const balance = ws.balanceOf(nick.address);
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, ws, amount + balance, hre);

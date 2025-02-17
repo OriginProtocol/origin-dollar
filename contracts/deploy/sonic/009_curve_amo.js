@@ -11,7 +11,7 @@ module.exports = deployOnSonic(
     deployName: "009_curve_amo",
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Deploy Sonic Curve AMO Strategy proxy
@@ -78,6 +78,37 @@ module.exports = deployOnSonic(
       `Deployed Origin Sonic Vault Admin to ${dOSonicVaultAdmin.address}`
     );
 
+    // Deploy the Harvester proxy
+    await deployWithConfirmation("OSonicHarvesterProxy");
+
+    // Deploy the Harvester implementation
+    await deployWithConfirmation("OETHHarvesterSimple", [addresses.sonic.wS]);
+    const dHarvester = await ethers.getContract("OETHHarvesterSimple");
+
+    const cHarvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      cHarvesterProxy.address
+    );
+
+    const cDripperProxy = await ethers.getContract("OSonicDripperProxy");
+
+    const initSonicStakingStrategy = cHarvester.interface.encodeFunctionData(
+      "initialize(address,address,address)",
+      [addresses.sonic.timelock, strategistAddr, cDripperProxy.address]
+    );
+
+    // Initialize the Harvester
+    // prettier-ignore
+    await withConfirmation(
+      cHarvesterProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dHarvester.address,
+          addresses.sonic.timelock,
+          initSonicStakingStrategy
+        )
+    );
+
     return {
       actions: [
         // 1. Upgrade Vault proxy to new VaultCore
@@ -103,6 +134,18 @@ module.exports = deployOnSonic(
           contract: cOSonicVaultAdmin,
           signature: "addStrategyToMintWhitelist(address)",
           args: [cSonicCurveAMOStrategyProxy.address],
+        },
+        // 5. Enable for Curve AMO after it has been deployed
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cSonicCurveAMOStrategyProxy.address, true],
+        },
+        // 6. Set the Harvester on the Curve AMO strategy
+        {
+          contract: cSonicCurveAMOStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };
