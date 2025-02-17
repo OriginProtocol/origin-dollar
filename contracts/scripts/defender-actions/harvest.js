@@ -12,6 +12,13 @@ const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.
 
 const log = require("../../utils/logger")("action:harvest");
 
+const labels = {
+  [convexAMOProxyAddress]: "Convex AMO",
+  [addresses[networkName].NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
+  [addresses[networkName].NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
+  [addresses[networkName].NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
+};
+
 // Entrypoint for the Defender Action
 const handler = async (event) => {
   console.log(
@@ -41,22 +48,11 @@ const handler = async (event) => {
     addresses[networkName].NativeStakingSSVStrategy3Proxy,
   ];
 
-  const labels = {
-    [convexAMOProxyAddress]: "Convex AMO",
-    [addresses[networkName].NativeStakingProxy1]: "Staking Strategy 1",
-    [addresses[networkName].NativeStakingProxy2]: "Staking Strategy 2",
-    [addresses[networkName].NativeStakingProxy3]: "Staking Strategy 3",
-  };
-
   for (const strategy of nativeStakingStrategies) {
     log(`Resolved Native Staking Strategy address to ${strategy}`);
-    const desc =
-      "Native SSV - " +
-      (nativeStakingStrategies.indexOf(strategy) + 1).toString();
     const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
       strategy,
-      signer,
-      labels[strategy]
+      signer
     );
 
     if (shouldHarvest) {
@@ -72,11 +68,7 @@ const handler = async (event) => {
   await logTxDetails(tx, `harvestAndTransfer`);
 };
 
-const shouldHarvestFromNativeStakingStrategy = async (
-  strategy,
-  signer,
-  stratDesc
-) => {
+const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
   const nativeStakingStrategy = new ethers.Contract(
     strategy,
     nativeStakingStrategyAbi,
@@ -84,14 +76,22 @@ const shouldHarvestFromNativeStakingStrategy = async (
   );
 
   const consensusRewards = await nativeStakingStrategy.consensusRewards();
-  log(`Consensus rewards for ${stratDesc}: ${formatUnits(consensusRewards)}`);
+  log(
+    `Consensus rewards for ${labels[strategy]}: ${formatUnits(
+      consensusRewards
+    )}`
+  );
 
   const feeAccumulatorAddress =
     await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
   const executionRewards = await signer.provider.getBalance(
     feeAccumulatorAddress
   );
-  log(`Execution rewards for ${stratDesc}: ${formatUnits(executionRewards)}`);
+  log(
+    `Execution rewards for ${labels[strategy]}: ${formatUnits(
+      executionRewards
+    )}`
+  );
 
   return (
     consensusRewards.gt(parseEther("1")) ||
