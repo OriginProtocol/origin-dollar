@@ -85,6 +85,8 @@ describe("Curve AMO strategy", function () {
     await curveAMOStrategy
       .connect(impersonatedAMOGovernor)
       .setHarvesterAddress(harvester.address);
+
+    await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
   });
 
   describe("Initial paramaters", () => {
@@ -602,7 +604,7 @@ describe("Curve AMO strategy", function () {
     });
     it("Burn OToken: Asset balance worse", async () => {
       await balancePool();
-      await mintAndDepositToStrategy();
+      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
       await unbalancePool({ wethbAmount: defaultDeposit.mul(2) }); // +10 WETH in the pool
       await expect(
         curveAMOStrategy
