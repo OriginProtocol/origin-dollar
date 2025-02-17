@@ -59,12 +59,13 @@ module.exports = deployOnSonic(
         {
           contract: cPoolBoosterFactory,
           signature:
-            "createPoolBoosterSwapxIchi(address,address,address,uint256)",
+            "createPoolBoosterSwapxIchi(address,address,address,uint256,uint256)",
           args: [
             addresses.sonic.SwapXOsUSDCe.extBribeOS,
             addresses.sonic.SwapXOsUSDCe.extBribeUSDC,
             addresses.sonic.SwapXOsUSDCe.pool,
             oethUnits("0.7"), // 70%
+            ethers.BigNumber.from(`${Date.now()}`), // current time as salt
           ],
         },
       ],

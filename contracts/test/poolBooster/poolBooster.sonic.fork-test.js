@@ -150,7 +150,8 @@ describe("ForkTest: Pool Booster", function () {
         addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
         addresses.sonic.SwapXOsUSDCe.extBribeUSDC, //_bribeAddressOther
         addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-        oethUnits("0.5") //_split
+        oethUnits("0.5"), //_split
+        oethUnits("1") //_salt
       );
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(
@@ -182,7 +183,8 @@ describe("ForkTest: Pool Booster", function () {
       .connect(governor)
       .createPoolBoosterSwapxClassic(
         addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
-        addresses.sonic.SwapXOsGEMSx.pool //_ammPoolAddress
+        addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+        oethUnits("1") //_salt
       );
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(

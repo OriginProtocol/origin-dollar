@@ -111,7 +111,8 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         address _bribeAddressOS,
         address _bribeAddressOther,
         address _ammPoolAddress,
-        uint256 _split
+        uint256 _split,
+        uint256 _salt
     ) external onlyGovernor {
         require(_bribeAddressOS != address(0), "Invalid bribeAdressOS address");
         require(
@@ -127,7 +128,8 @@ contract PoolBoosterFactory is Strategizable, Initializable {
             abi.encodePacked(
                 type(PoolBoosterSwapxIchi).creationCode,
                 abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)
-            )
+            ),
+            _salt
         );
 
         PoolBoosterEntry memory entry = PoolBoosterEntry(
@@ -153,7 +155,8 @@ contract PoolBoosterFactory is Strategizable, Initializable {
      */
     function createPoolBoosterSwapxClassic(
         address _bribeAddress,
-        address _ammPoolAddress
+        address _ammPoolAddress,
+        uint256 _salt
     ) external onlyGovernor {
         require(_bribeAddress != address(0), "Invalid bribeAdress address");
         require(
@@ -165,7 +168,8 @@ contract PoolBoosterFactory is Strategizable, Initializable {
             abi.encodePacked(
                 type(PoolBoosterSwapxPair).creationCode,
                 abi.encode(_bribeAddress, oSonic)
-            )
+            ),
+            _salt
         );
 
         PoolBoosterEntry memory entry = PoolBoosterEntry(
@@ -184,14 +188,13 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         );
     }
 
-    function _deployContract(bytes memory bytecode)
+    function _deployContract(bytes memory bytecode, uint256 _salt)
         internal
         returns (address _address)
     {
-        uint256 salt = 1;
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            _address := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+            _address := create2(0, add(bytecode, 0x20), mload(bytecode), _salt)
         }
     }
 
