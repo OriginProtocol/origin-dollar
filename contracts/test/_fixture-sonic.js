@@ -128,7 +128,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
-  let validatorRegistrator;
+  let validatorRegistrator, curveAMOStrategy;
   if (isFork) {
     validatorRegistrator = await impersonateAndFund(
       addresses.sonic.validatorRegistrator
@@ -136,14 +136,16 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
 
     await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
-  }
 
-  // Curve
-  const curveAMOProxy = await ethers.getContract("SonicCurveAMOStrategyProxy");
-  const curveAMOStrategy = await ethers.getContractAt(
-    "SonicCurveAMOStrategy",
-    curveAMOProxy.address
-  );
+    // Curve
+    const curveAMOProxy = await ethers.getContract(
+      "SonicCurveAMOStrategyProxy"
+    );
+    curveAMOStrategy = await ethers.getContractAt(
+      "SonicCurveAMOStrategy",
+      curveAMOProxy.address
+    );
+  }
 
   for (const user of [rafael, nick, clement]) {
     // Mint some Sonic Wrapped S
