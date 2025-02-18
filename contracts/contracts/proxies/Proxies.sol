@@ -381,8 +381,10 @@ contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice PoolBoosterFactoryProxy delegates calls to the PoolBoosterFactory implementation
+ * @notice PoolBoostCentralRegistryProxy delegates calls to the PoolBoostCentralRegistry implementation
  */
-contract PoolBoosterFactoryProxy is InitializeGovernedUpgradeabilityProxy {
+contract PoolBoostCentralRegistryProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }

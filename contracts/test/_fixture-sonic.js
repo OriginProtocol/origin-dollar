@@ -77,7 +77,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  let dripper, zapper, poolBoosterIchiFactoryV1, poolBoosterPairFactoryV1;
+  let dripper,
+    zapper,
+    poolBoosterIchiFactoryV1,
+    poolBoosterPairFactoryV1,
+    poolBoosterCentralRegistry;
   if (isFork) {
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
@@ -90,6 +94,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     poolBoosterIchiFactoryV1 = await ethers.getContract(
       "PoolBoosterFactorySwapxIchi_v1"
+    );
+
+    poolBoosterCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      (
+        await ethers.getContract("PoolBoostCentralRegistryProxy")
+      ).address
     );
 
     poolBoosterPairFactoryV1 = await deployPoolBoosterFactorySwapxPair();
@@ -153,6 +164,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     zapper,
     poolBoosterIchiFactoryV1,
     poolBoosterPairFactoryV1,
+    poolBoosterCentralRegistry,
 
     // Wrapped S
     wS,

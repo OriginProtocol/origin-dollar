@@ -376,13 +376,11 @@ describe("ForkTest: Pool Booster", function () {
         fixture;
 
       await expect(
-        poolBoosterPairFactoryV1
-          .connect(nick)
-          .createPoolBoosterSwapxClassic(
-            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
-            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-            oethUnits("1") //_salt
-          )
+        poolBoosterPairFactoryV1.connect(nick).createPoolBoosterSwapxClassic(
+          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
+          addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+          oethUnits("1") //_salt
+        )
       ).to.be.revertedWith("Caller is not the Governor");
 
       await expect(
@@ -394,7 +392,54 @@ describe("ForkTest: Pool Booster", function () {
           oethUnits("1") //_salt
         )
       ).to.be.revertedWith("Caller is not the Governor");
+    });
+  });
 
+  describe("Should test the central registry", async () => {
+    it("Governor should be able to add a new factory address", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+      const someFactoryAddress = addresses.sonic.SwapXOsUSDCe.extBribeOS;
+
+      const tx = await poolBoosterCentralRegistry
+        .connect(governor)
+        .approveFactory(someFactoryAddress);
+
+      await expect(tx)
+        .to.emit(poolBoosterCentralRegistry, "FactoryApproved")
+        .withArgs(someFactoryAddress);
+
+      expect(
+        await poolBoosterCentralRegistry.isApprovedFactory(someFactoryAddress)
+      ).to.equal(true);
+
+      expect(
+        (await poolBoosterCentralRegistry.getAllFactories()).length
+      ).to.be.gte(1);
+    });
+
+    it("Governor should be able to remove a factory address", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+      const someFactoryAddress = addresses.sonic.SwapXOsUSDCe.extBribeOS;
+
+      await poolBoosterCentralRegistry
+        .connect(governor)
+        .approveFactory(someFactoryAddress);
+
+      expect(
+        await poolBoosterCentralRegistry.isApprovedFactory(someFactoryAddress)
+      ).to.equal(true);
+
+      const tx = await poolBoosterCentralRegistry
+        .connect(governor)
+        .removeFactory(someFactoryAddress);
+
+      expect(
+        await poolBoosterCentralRegistry.isApprovedFactory(someFactoryAddress)
+      ).to.equal(false);
+
+      await expect(tx)
+        .to.emit(poolBoosterCentralRegistry, "FactoryRemoved")
+        .withArgs(someFactoryAddress);
     });
   });
 
