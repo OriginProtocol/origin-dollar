@@ -171,6 +171,17 @@ sol2uml .. -s -d 0 -b OSonicVaultCore -o OSonicVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OSonicVaultAdmin -o OSonicVaultAdminSquashed.svg
 sol2uml storage .. -c OSonicVaultCore -o OSonicVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
+# contracts/poolBooster
+# call stack size exceeded
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairStorage.svg
+
+# call stack size exceeded
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiStorage.svg
+
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b InitializableAbstractStrategy -o InitializableAbstractStrategySquashed.svg
