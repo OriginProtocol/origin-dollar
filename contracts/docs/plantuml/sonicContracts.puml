@@ -7,13 +7,13 @@
 !$changedColor = Orange
 !$thirdPartyColor = WhiteSmoke
 
-legend
-blue - Origin
-' green - new
-' orange - changed
-yellow - phase2
-white - 3rd Party
-end legend
+' legend
+' blue - Origin
+' ' green - new
+' ' orange - changed
+' yellow - phase2
+' white - 3rd Party
+' end legend
 
 title "Sonic Contract Dependencies"
 
@@ -51,13 +51,13 @@ object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
     asset: S
 }
 
-object "AMOStrategy" as amoStrat <<Origin>><<Proxy>> #$phase2 {
+object "Curve AMO Strategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
     asset: wS
-    reward: ?
+    reward: CRV
 }
 
-object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$phase2 {
-    rewards: ?
+object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: CRV
 }
 
 ' Oracle
