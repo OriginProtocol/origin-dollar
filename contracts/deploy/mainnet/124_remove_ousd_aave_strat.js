@@ -5,6 +5,9 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "124_remove_ousd_aave_strat",
     forceDeploy: false,
+    reduceQueueTime: true,
+    proposalId:
+      "17220948252813776682241285028495841512040920149452955785735049769329911757024",
   },
   async () => {
     const cVaultAdmin = await ethers.getContractAt(
