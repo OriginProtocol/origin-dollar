@@ -9,7 +9,7 @@
 
 legend
 blue - Origin
-green - new
+' green - new
 ' orange - changed
 ' yellow - phase2
 white - 3rd Party
@@ -43,7 +43,7 @@ object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
     asset: wS
 }
 
-object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$newColor {
+object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
     rewards: CRV
 }
 
@@ -59,7 +59,7 @@ object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
     asset: S
 }
 
-object "Curve AMO Strategy" as curveAmoStrat <<Origin>><<Proxy>> #$newColor {
+object "Curve AMO Strategy" as curveAmoStrat <<Origin>><<Proxy>> #$originColor {
     asset: wS
     reward: CRV
 }
