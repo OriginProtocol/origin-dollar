@@ -441,6 +441,23 @@ describe("ForkTest: Pool Booster", function () {
         .to.emit(poolBoosterCentralRegistry, "FactoryRemoved")
         .withArgs(someFactoryAddress);
     });
+
+    it("Non governor shouldn't be allowed to add or remove pool boosters", async () => {
+      const { poolBoosterCentralRegistry, nick } = fixture;
+      const someFactoryAddress = addresses.sonic.SwapXOsUSDCe.extBribeOS;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(nick)
+          .approveFactory(someFactoryAddress)
+      ).to.be.revertedWith("Caller is not the Governor");
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(nick)
+          .removeFactory(someFactoryAddress)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
   });
 
   const filterAndParseRewardAddedEvents = async (tx) => {

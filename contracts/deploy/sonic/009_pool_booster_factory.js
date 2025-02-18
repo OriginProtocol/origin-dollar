@@ -26,10 +26,7 @@ module.exports = deployOnSonic(
       `Pool Booster Ichi Factory deployed to ${dPoolBoosterFactory.address}`
     );
 
-    await deployWithConfirmation(
-      "PoolBoostCentralRegistryProxy",
-      []
-    );
+    await deployWithConfirmation("PoolBoostCentralRegistryProxy", []);
     const cPoolBoostCentralRegistryProxy = await ethers.getContract(
       "PoolBoostCentralRegistryProxy"
     );
