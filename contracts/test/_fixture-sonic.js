@@ -2,6 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
 const { isFork, isSonicFork, oethUnits } = require("./helpers");
+const { deployWithConfirmation } = require("../utils/deploy.js");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
@@ -76,7 +77,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  let dripper, zapper, poolBoosterFactory;
+  let dripper, zapper, poolBoosterIchiFactoryV1, poolBoosterPairFactoryV1;
   if (isFork) {
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
@@ -87,13 +88,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     zapper = await ethers.getContract("OSonicZapper");
 
-    const poolBoosterFactoryProxy = await ethers.getContract(
-      "PoolBoosterFactoryProxy"
+    poolBoosterIchiFactoryV1 = await ethers.getContract(
+      "PoolBoosterFactorySwapxIchi_v1"
     );
-    poolBoosterFactory = await ethers.getContractAt(
-      "PoolBoosterFactory",
-      poolBoosterFactoryProxy.address
-    );
+
+    poolBoosterPairFactoryV1 = await deployPoolBoosterFactorySwapxPair();
   }
 
   // Sonic's wrapped S token
@@ -152,7 +151,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sonicStakingStrategy,
     dripper,
     zapper,
-    poolBoosterFactory,
+    poolBoosterIchiFactoryV1,
+    poolBoosterPairFactoryV1,
 
     // Wrapped S
     wS,
@@ -174,6 +174,19 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sfc,
   };
 });
+
+const deployPoolBoosterFactorySwapxPair = async () => {
+  const dPoolBoosterFactory = await deployWithConfirmation(
+    "PoolBoosterFactorySwapxPair_v1",
+    [addresses.sonic.OSonicProxy, addresses.sonic.timelock],
+    "PoolBoosterFactorySwapxPair"
+  );
+  console.log(
+    `Deployed Pool Booster Pair Factory to ${dPoolBoosterFactory.address}`
+  );
+
+  return await ethers.getContract("PoolBoosterFactorySwapxPair_v1");
+};
 
 mocha.after(async () => {
   if (snapshotId) {

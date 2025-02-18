@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Strategizable } from "../governance/Strategizable.sol";
-import { Initializable } from "../utils/Initializable.sol";
+import { Governable } from "../governance/Governable.sol";
 import { PoolBoosterSwapxIchi } from "./PoolBoosterSwapxIchi.sol";
-import { PoolBoosterSwapxPair } from "./PoolBoosterSwapxPair.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 
 /**
- * @title Pool booster factory
+ * @title Abstract Pool booster factory
  * @author Origin Protocol Inc
  */
-contract PoolBoosterFactory is Strategizable, Initializable {
+contract AbstractPoolBoosterFactory is Governable {
     /**
      * @dev all the supported pool booster types are listed here. It is possible
      * to have multiple versions of the same pool booster gauge implementation.
@@ -43,23 +41,17 @@ contract PoolBoosterFactory is Strategizable, Initializable {
     // @notice mapping of AMM pool to pool booster
     mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
 
-    constructor(address _oSonic) {
-        oSonic = _oSonic;
-        // implementation contract has no governor
-        _setGovernor(address(0));
-    }
+    /// @notice Gap for upgrade safety
+    uint256[48] private ___gap;
 
-    /**
-     * @dev Initialize the state
-     * @param strategist address of strategist
-     */
-    function initialize(address governor, address strategist)
-        public
-        onlyGovernor
-        initializer
-    {
-        _setGovernor(governor);
-        _setStrategistAddr(strategist);
+    // @param address _oSonic address of the OSonic token
+    // @param address _governor address governor
+    constructor(address _oSonic, address _governor) {
+        require(_oSonic != address(0), "Invalid oSonic address");
+        require(_governor != address(0), "Invalid governor address");
+
+        oSonic = _oSonic;
+        _setGovernor(_governor);
     }
 
     /**
@@ -114,72 +106,6 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         }
     }
 
-    /**
-     * @dev Create a Pool Booster for SwapX Ichi vault based pool
-     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
-     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
-     *        bribe contract and 60% to other bribe contract
-     */
-    function createPoolBoosterSwapxIchi(
-        address _bribeAddressOS,
-        address _bribeAddressOther,
-        address _ammPoolAddress,
-        uint256 _split,
-        uint256 _salt
-    ) external onlyGovernor {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
-
-        address poolBoosterAddress = _deployContract(
-            abi.encodePacked(
-                type(PoolBoosterSwapxIchi).creationCode,
-                abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)
-            ),
-            _salt
-        );
-
-        _storePoolBoosterEntry(
-            poolBoosterAddress,
-            _ammPoolAddress,
-            PoolBoosterType.SwapXIchiVault
-        );
-    }
-
-    /**
-     * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools
-     * @param _bribeAddress address of the Bribes.sol contract
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     */
-    function createPoolBoosterSwapxClassic(
-        address _bribeAddress,
-        address _ammPoolAddress,
-        uint256 _salt
-    ) external onlyGovernor {
-        require(_bribeAddress != address(0), "Invalid bribeAdress address");
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
-
-        address poolBoosterAddress = _deployContract(
-            abi.encodePacked(
-                type(PoolBoosterSwapxPair).creationCode,
-                abi.encode(_bribeAddress, oSonic)
-            ),
-            _salt
-        );
-
-        _storePoolBoosterEntry(
-            poolBoosterAddress,
-            _ammPoolAddress,
-            PoolBoosterType.SwapXClassicPool
-        );
-    }
-
     function _storePoolBoosterEntry(
         address _poolBoosterAddress,
         address _ammPoolAddress,
@@ -209,6 +135,11 @@ contract PoolBoosterFactory is Strategizable, Initializable {
         assembly {
             _address := create2(0, add(bytecode, 0x20), mload(bytecode), _salt)
         }
+
+        require(
+            _address.code.length > 0 && _address != address(0),
+            "Failed creating a pool booster"
+        );
     }
 
     function poolBoosterLength() external view returns (uint256) {
