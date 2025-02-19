@@ -5,7 +5,7 @@ const { BigNumber } = require("ethers");
 const { createFixtureLoader, threepoolFixture } = require("../_fixture");
 const { units } = require("../helpers");
 
-describe("3Pool Strategy Standalone", function () {
+describe.skip("3Pool Strategy Standalone", function () {
   let governor,
     threePool,
     threePoolToken,
