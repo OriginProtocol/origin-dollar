@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import { PoolBoosterSwapxPair } from "./PoolBoosterSwapxPair.sol";
 import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Pool booster factory for creating SwapxIchi pool boosters
  * @author Origin Protocol Inc
