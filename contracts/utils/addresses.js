@@ -393,6 +393,18 @@ addresses.sonic.SwapXOsUSDCeMultisigBooster =
 addresses.sonic.SwapXOsGEMSxMultisigBooster =
   "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
 
+addresses.sonic.SwapX = {};
+
+addresses.sonic.SwapX.OsHedgy = {};
+addresses.sonic.SwapX.OsHedgy.pool = "0x1695d6bd8d8adc8b87c6204be34d34d19a3fe1d6";
+addresses.sonic.SwapX.OsHedgy.yf_treasury = "0x4c884677427a975d1b99286e99188c82d71223c8";
+
+// Sonic Shadow
+addresses.sonic.Shadow = {};
+addresses.sonic.Shadow.OsEco = {};
+addresses.sonic.Shadow.OsEco.pool = "0xfd0cee796348fd99ab792c471f4419b4c56cf6b8";
+addresses.sonic.Shadow.OsEco.yf_treasury = "0x4b9919603170c77936d8ec2c08b604844e861699";
+
 // Sonic Curve
 addresses.sonic.WS_OS = {};
 addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
