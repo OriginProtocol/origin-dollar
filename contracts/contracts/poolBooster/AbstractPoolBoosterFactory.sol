@@ -57,11 +57,12 @@ contract AbstractPoolBoosterFactory is Governable {
      *        calling this function.
      */
     function bribeAll(address[] memory _exclusionList) external {
-        uint256 length = poolBoosters.length;
-        for (uint256 i = 0; i < length; i++) {
+        uint256 lengthI = poolBoosters.length;
+        for (uint256 i = 0; i < lengthI; i++) {
             address poolBoosterAddress = poolBoosters[i].boosterAddress;
             bool skipBribeCall = false;
-            for (uint256 j = 0; j < _exclusionList.length; j++) {
+            uint256 lengthJ = _exclusionList.length;
+            for (uint256 j = 0; j < lengthJ; j++) {
                 // pool booster in exclusion list
                 if (_exclusionList[j] == poolBoosterAddress) {
                     skipBribeCall = true;
