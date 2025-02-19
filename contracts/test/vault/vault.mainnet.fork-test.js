@@ -232,7 +232,7 @@ describe("ForkTest: Vault", function () {
 
       expect(usdtBalanceDiff).to.equal(usdtUnits("90"));
 
-      expect(usdtStratDiff).to.gte(usdtUnits("-89.91"));
+      expect(usdtStratDiff).to.lte(usdtUnits("-89.91"));
     });
 
     it("Should have vault buffer disabled", async () => {
