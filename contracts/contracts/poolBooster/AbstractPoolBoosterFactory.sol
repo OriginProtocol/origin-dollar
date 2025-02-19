@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
-import { PoolBoosterSwapxIchi } from "./PoolBoosterSwapxIchi.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 
 /**
