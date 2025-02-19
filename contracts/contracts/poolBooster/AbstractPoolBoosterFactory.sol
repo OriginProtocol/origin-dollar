@@ -40,9 +40,6 @@ contract AbstractPoolBoosterFactory is Governable {
     // @notice mapping of AMM pool to pool booster
     mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
 
-    /// @notice Gap for upgrade safety
-    uint256[48] private ___gap;
-
     // @param address _oSonic address of the OSonic token
     // @param address _governor address governor
     constructor(address _oSonic, address _governor) {
