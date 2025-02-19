@@ -458,6 +458,22 @@ describe("ForkTest: Pool Booster", function () {
           .removeFactory(someFactoryAddress)
       ).to.be.revertedWith("Caller is not the Governor");
     });
+
+    it("Governor should be able to remove a factory address", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+      const someFactoryAddress = addresses.sonic.SwapXOsUSDCe.extBribeOS;
+
+      await poolBoosterCentralRegistry
+        .connect(governor)
+        .approveFactory(someFactoryAddress);
+
+      await expect(poolBoosterCentralRegistry
+        .connect(governor)
+        .approveFactory(someFactoryAddress)
+      ).to.be.revertedWith("Factory already approved");
+
+    });
+
   });
 
   const filterAndParseRewardAddedEvents = async (tx) => {
