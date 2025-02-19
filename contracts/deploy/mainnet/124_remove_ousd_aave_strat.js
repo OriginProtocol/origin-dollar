@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     proposalId:
-      "17220948252813776682241285028495841512040920149452955785735049769329911757024",
+      "88299129181157806559379214304016095228552624275043325103321115382026366391938",
   },
   async () => {
     const cVaultAdmin = await ethers.getContractAt(
@@ -18,6 +18,12 @@ module.exports = deploymentWithGovernanceProposal(
     const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
     const cMorphoGauntletPrimeUSDTProxy = await ethers.getContract(
       "MorphoGauntletPrimeUSDTStrategyProxy"
+    );
+
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
     );
 
     return {
@@ -32,6 +38,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "removeStrategy(address)",
           args: [cAaveStrategyProxy.address],
+        },
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cAaveStrategyProxy.address, false],
         },
       ],
     };
