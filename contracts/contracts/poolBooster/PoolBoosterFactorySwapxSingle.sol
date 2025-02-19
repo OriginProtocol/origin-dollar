@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { PoolBoosterSwapxIchi } from "./PoolBoosterSwapxIchi.sol";
+import { PoolBoosterSwapxSingle } from "./PoolBoosterSwapxSingle.sol";
 import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
 
 /**
- * @title Pool booster factory for creating SwapxIchi pool boosters
+ * @title Pool booster factory for creating Swapx Single pool boosters - where a single
+ *        gauge is created for a pool.
  * @author Origin Protocol Inc
  */
-contract PoolBoosterFactorySwapxIchi is AbstractPoolBoosterFactory {
+contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
     uint256 public constant version = 1;
 
     // @param address _oSonic address of the OSonic token
@@ -18,18 +19,14 @@ contract PoolBoosterFactorySwapxIchi is AbstractPoolBoosterFactory {
     {}
 
     /**
-     * @dev Create a Pool Booster for SwapX Ichi vault based pool
-     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
-     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
+     * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools where
+     *      a single Bribe contract is incentivized. 
+     * @param _bribeAddress address of the Bribes.sol contract
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
-     *        bribe contract and 60% to other bribe contract
      */
-    function createPoolBoosterSwapxIchi(
-        address _bribeAddressOS,
-        address _bribeAddressOther,
+    function createPoolBoosterSwapxSingle(
+        address _bribeAddress,
         address _ammPoolAddress,
-        uint256 _split,
         uint256 _salt
     ) external onlyGovernor {
         require(
@@ -40,8 +37,8 @@ contract PoolBoosterFactorySwapxIchi is AbstractPoolBoosterFactory {
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
-                type(PoolBoosterSwapxIchi).creationCode,
-                abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)
+                type(PoolBoosterSwapxSingle).creationCode,
+                abi.encode(_bribeAddress, oSonic)
             ),
             _salt
         );
@@ -49,7 +46,7 @@ contract PoolBoosterFactorySwapxIchi is AbstractPoolBoosterFactory {
         _storePoolBoosterEntry(
             poolBoosterAddress,
             _ammPoolAddress,
-            PoolBoosterType.SwapXIchiVault
+            PoolBoosterType.SwapXSingleBooster
         );
     }
 }

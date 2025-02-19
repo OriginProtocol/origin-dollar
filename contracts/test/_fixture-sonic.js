@@ -79,8 +79,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   let dripper,
     zapper,
-    poolBoosterIchiFactoryV1,
-    poolBoosterPairFactoryV1,
+    poolBoosterDoubleFactoryV1,
+    poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry;
   if (isFork) {
     // Dripper
@@ -92,8 +92,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     zapper = await ethers.getContract("OSonicZapper");
 
-    poolBoosterIchiFactoryV1 = await ethers.getContract(
-      "PoolBoosterFactorySwapxIchi_v1"
+    poolBoosterDoubleFactoryV1 = await ethers.getContract(
+      "PoolBoosterFactorySwapxDouble_v1"
     );
 
     poolBoosterCentralRegistry = await ethers.getContractAt(
@@ -103,7 +103,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
       ).address
     );
 
-    poolBoosterPairFactoryV1 = await deployPoolBoosterFactorySwapxPair();
+    poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle();
   }
 
   // Sonic's wrapped S token
@@ -162,8 +162,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sonicStakingStrategy,
     dripper,
     zapper,
-    poolBoosterIchiFactoryV1,
-    poolBoosterPairFactoryV1,
+    poolBoosterDoubleFactoryV1,
+    poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
 
     // Wrapped S
@@ -187,17 +187,17 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   };
 });
 
-const deployPoolBoosterFactorySwapxPair = async () => {
+const deployPoolBoosterFactorySwapxSingle = async () => {
   const dPoolBoosterFactory = await deployWithConfirmation(
-    "PoolBoosterFactorySwapxPair_v1",
+    "PoolBoosterFactorySwapxSingle_v1",
     [addresses.sonic.OSonicProxy, addresses.sonic.timelock],
-    "PoolBoosterFactorySwapxPair"
+    "PoolBoosterFactorySwapxSingle"
   );
   console.log(
     `Deployed Pool Booster Pair Factory to ${dPoolBoosterFactory.address}`
   );
 
-  return await ethers.getContract("PoolBoosterFactorySwapxPair_v1");
+  return await ethers.getContract("PoolBoosterFactorySwapxSingle_v1");
 };
 
 mocha.after(async () => {

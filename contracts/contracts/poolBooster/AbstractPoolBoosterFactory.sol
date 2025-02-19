@@ -12,11 +12,13 @@ contract AbstractPoolBoosterFactory is Governable {
     /**
      * @dev all the supported pool booster types are listed here. It is possible
      * to have multiple versions of the same pool booster gauge implementation.
-     * e.g. "SwapXIchiVault" & "SwapXIchiVault_v2"
+     * e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
      */
     enum PoolBoosterType {
-        SwapXIchiVault,
-        SwapXClassicPool
+        // supports bribing 2 contracts per pool
+        SwapXDoubleBooster,
+        // supports bribing a single contract per pool
+        SwapXSingleBooster
     }
 
     struct PoolBoosterEntry {

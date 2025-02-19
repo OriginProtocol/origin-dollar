@@ -173,14 +173,14 @@ sol2uml storage .. -c OSonicVaultCore -o OSonicVaultStorage.svg --hideExpand __g
 
 # contracts/poolBooster
 # call stack size exceeded
-#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairHierarchy.svg
-#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairSquashed.svg
-sol2uml storage .. -c PoolBoosterFactorySwapxPair -o PoolBoosterFactorySwapxPairStorage.svg
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleStorage.svg
 
 # call stack size exceeded
-#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiHierarchy.svg
-#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiSquashed.svg
-sol2uml storage .. -c PoolBoosterFactorySwapxIchi -o PoolBoosterFactorySwapxIchiStorage.svg
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleStorage.svg
 
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg

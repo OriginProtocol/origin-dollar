@@ -7,10 +7,11 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 /**
- * @title Pool booster for SwapX concentrated liquidity Ichi vault enabled pools
+ * @title Pool booster for SwapX concentrated liquidity where 2 gauges are created for 
+ *        every pool. Ichi vaults currently have such setup.
  * @author Origin Protocol Inc
  */
-contract PoolBoosterSwapxIchi is IPoolBooster {
+contract PoolBoosterSwapxDouble is IPoolBooster {
     using StableMath for uint256;
 
     // @notice address of the Bribes.sol(Bribe) contract for the OS token side

@@ -15,12 +15,12 @@ module.exports = deployOnSonic(
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const dPoolBoosterFactory = await deployWithConfirmation(
-      "PoolBoosterFactorySwapxIchi_v1",
+      "PoolBoosterFactorySwapxDouble_v1",
       [addresses.sonic.OSonicProxy, addresses.sonic.timelock],
-      "PoolBoosterFactorySwapxIchi"
+      "PoolBoosterFactorySwapxDouble"
     );
     const cPoolBoosterFactory = await ethers.getContract(
-      "PoolBoosterFactorySwapxIchi_v1"
+      "PoolBoosterFactorySwapxDouble_v1"
     );
     console.log(
       `Pool Booster Ichi Factory deployed to ${dPoolBoosterFactory.address}`
@@ -64,7 +64,7 @@ module.exports = deployOnSonic(
         {
           contract: cPoolBoosterFactory,
           signature:
-            "createPoolBoosterSwapxIchi(address,address,address,uint256,uint256)",
+            "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
           args: [
             addresses.sonic.SwapXOsUSDCe.extBribeOS,
             addresses.sonic.SwapXOsUSDCe.extBribeUSDC,

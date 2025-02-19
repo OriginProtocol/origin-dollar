@@ -19,10 +19,10 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should have the correct initial state", async () => {
-    const { oSonic, poolBoosterIchiFactoryV1 } = fixture;
+    const { oSonic, poolBoosterDoubleFactoryV1 } = fixture;
 
-    expect(await poolBoosterIchiFactoryV1.oSonic()).to.equal(oSonic.address);
-    expect(await poolBoosterIchiFactoryV1.governor()).to.equal(
+    expect(await poolBoosterDoubleFactoryV1.oSonic()).to.equal(oSonic.address);
+    expect(await poolBoosterDoubleFactoryV1.governor()).to.equal(
       addresses.sonic.timelock
     );
   });
@@ -33,7 +33,7 @@ describe("ForkTest: Pool Booster", function () {
     const factoryConfigs = [
       {
         name: "First Ichi Factory",
-        factoryName: "poolBoosterIchiFactoryV1",
+        factoryName: "poolBoosterDoubleFactoryV1",
         ammPool: addresses.sonic.SwapXOsUSDCe.pool,
         bribeContractOS: addresses.sonic.SwapXOsUSDCe.extBribeOS,
         bribeContractOther: addresses.sonic.SwapXOsUSDCe.extBribeUSDC,
@@ -54,7 +54,7 @@ describe("ForkTest: Pool Booster", function () {
         const factory = fixture[factoryName];
 
         const poolBoosterEntry = await factory.poolBoosterFromPool(ammPool);
-        expect(poolBoosterEntry.boosterType).to.equal(0); // SwapXIchiVault enum value
+        expect(poolBoosterEntry.boosterType).to.equal(0); // SwapXDoubleBooster pool booster enum value
         expect(poolBoosterEntry.ammPoolAddress).to.equal(ammPool);
 
         const poolBooster = await getPoolBoosterContractFromPoolAddress(
@@ -155,28 +155,28 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should skip pool booster bribe call when pool booster on exclusion list", async () => {
-    const { oSonic, poolBoosterIchiFactoryV1, nick } = fixture;
+    const { oSonic, poolBoosterDoubleFactoryV1, nick } = fixture;
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(
-      poolBoosterIchiFactoryV1,
+      poolBoosterDoubleFactoryV1,
       addresses.sonic.SwapXOsUSDCe.pool
     );
     // make sure pool booster has some balance
     await oSonic.connect(nick).transfer(poolBooster.address, oethUnits("10"));
 
     const balanceBefore = await oSonic.balanceOf(poolBooster.address);
-    await poolBoosterIchiFactoryV1.bribeAll([poolBooster.address]);
+    await poolBoosterDoubleFactoryV1.bribeAll([poolBooster.address]);
 
     // balance before and after should be the same (no bribes have been executed)
     expect(await oSonic.balanceOf(poolBooster.address)).to.eq(balanceBefore);
   });
 
   it("Should be able to remove a pool booster", async () => {
-    const { poolBoosterIchiFactoryV1, governor } = fixture;
+    const { poolBoosterDoubleFactoryV1, governor } = fixture;
 
     // create another pool booster (which is placed as the last entry in
-    // the poolBoosters array in poolBoosterIchiFactoryV1)
-    await poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+    // the poolBoosters array in poolBoosterDoubleFactoryV1)
+    await poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
       addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddress
       addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddressOther
       addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -185,33 +185,33 @@ describe("ForkTest: Pool Booster", function () {
     );
 
     const osUsdcePoolBooster =
-      await poolBoosterIchiFactoryV1.poolBoosterFromPool(
+      await poolBoosterDoubleFactoryV1.poolBoosterFromPool(
         addresses.sonic.SwapXOsUSDCe.pool
       );
-    const initialLength = await poolBoosterIchiFactoryV1.poolBoosterLength();
+    const initialLength = await poolBoosterDoubleFactoryV1.poolBoosterLength();
 
     // remove the pool booster. This step should also copy last entry in the pool
     // booster list over the deleted one
-    const tx = await poolBoosterIchiFactoryV1
+    const tx = await poolBoosterDoubleFactoryV1
       .connect(governor)
       .removePoolBooster(osUsdcePoolBooster.boosterAddress);
 
     await expect(tx)
-      .to.emit(poolBoosterIchiFactoryV1, "PoolBoosterRemoved")
+      .to.emit(poolBoosterDoubleFactoryV1, "PoolBoosterRemoved")
       .withArgs(osUsdcePoolBooster.boosterAddress);
 
-    expect(await poolBoosterIchiFactoryV1.poolBoosterLength()).to.equal(
+    expect(await poolBoosterDoubleFactoryV1.poolBoosterLength()).to.equal(
       initialLength.sub(ethers.BigNumber.from("1"))
     );
 
-    const poolBooster = await poolBoosterIchiFactoryV1.poolBoosterFromPool(
+    const poolBooster = await poolBoosterDoubleFactoryV1.poolBoosterFromPool(
       addresses.sonic.SwapXOsUSDCe.pool
     );
     expect(poolBooster.boosterAddress).to.equal(addresses.zero);
 
     // verify the newly added pool booster has had its data correctly copied
     const osGemsxPoolBooster =
-      await poolBoosterIchiFactoryV1.poolBoosterFromPool(
+      await poolBoosterDoubleFactoryV1.poolBoosterFromPool(
         addresses.sonic.SwapXOsGEMSx.pool
       );
 
@@ -219,17 +219,17 @@ describe("ForkTest: Pool Booster", function () {
     expect(osGemsxPoolBooster.ammPoolAddress).to.equal(
       addresses.sonic.SwapXOsGEMSx.pool
     );
-    expect(osGemsxPoolBooster.boosterType).to.equal(ethers.BigNumber.from("0")); // SwapXClassicPool
+    expect(osGemsxPoolBooster.boosterType).to.equal(ethers.BigNumber.from("0")); // SwapXSingleBooster
   });
 
   it("Should be able to create an Ichi pool booster", async () => {
-    const { oSonic, poolBoosterIchiFactoryV1, governor } = fixture;
+    const { oSonic, poolBoosterDoubleFactoryV1, governor } = fixture;
 
-    const tx = await poolBoosterIchiFactoryV1
+    const tx = await poolBoosterDoubleFactoryV1
       .connect(governor)
       // the addresses below are not suitable for pool boosting. Still they will serve the
       // purpose of confirming correct setup.
-      .createPoolBoosterSwapxIchi(
+      .createPoolBoosterSwapxDouble(
         addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
         addresses.sonic.SwapXOsUSDCe.extBribeUSDC, //_bribeAddressOther
         addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -238,16 +238,16 @@ describe("ForkTest: Pool Booster", function () {
       );
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(
-      poolBoosterIchiFactoryV1,
+      poolBoosterDoubleFactoryV1,
       addresses.sonic.SwapXOsGEMSx.pool
     );
 
     await expect(tx)
-      .to.emit(poolBoosterIchiFactoryV1, "PoolBoosterDeployed")
+      .to.emit(poolBoosterDoubleFactoryV1, "PoolBoosterDeployed")
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
-        ethers.BigNumber.from("0") // PoolBoosterType.SwapXIchiVault
+        ethers.BigNumber.from("0") // PoolBoosterType.SwapXDoubleBooster
       );
 
     expect(await poolBooster.osToken()).to.equal(oSonic.address);
@@ -261,27 +261,27 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to create a pair pool booster", async () => {
-    const { oSonic, poolBoosterPairFactoryV1, governor } = fixture;
+    const { oSonic, poolBoosterSingleFactoryV1, governor } = fixture;
 
-    const tx = await poolBoosterPairFactoryV1
+    const tx = await poolBoosterSingleFactoryV1
       .connect(governor)
-      .createPoolBoosterSwapxClassic(
+      .createPoolBoosterSwapxSingle(
         addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
         addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
         oethUnits("1") //_salt
       );
 
     const poolBooster = await getPoolBoosterContractFromPoolAddress(
-      poolBoosterPairFactoryV1,
+      poolBoosterSingleFactoryV1,
       addresses.sonic.SwapXOsGEMSx.pool
     );
 
     await expect(tx)
-      .to.emit(poolBoosterPairFactoryV1, "PoolBoosterDeployed")
+      .to.emit(poolBoosterSingleFactoryV1, "PoolBoosterDeployed")
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
-        ethers.BigNumber.from("1") // PoolBoosterType.SwapXClassicPool
+        ethers.BigNumber.from("1") // PoolBoosterType.SwapXSingleBooster
       );
 
     expect(await poolBooster.osToken()).to.equal(oSonic.address);
@@ -292,13 +292,13 @@ describe("ForkTest: Pool Booster", function () {
 
   describe("Should test require checks", async () => {
     it("Should throw an error when invalid params are passed to swapx pair booster creation function", async () => {
-      const { poolBoosterPairFactoryV1, poolBoosterIchiFactoryV1, governor } =
+      const { poolBoosterSingleFactoryV1, poolBoosterDoubleFactoryV1, governor } =
         fixture;
 
       await expect(
-        poolBoosterPairFactoryV1
+        poolBoosterSingleFactoryV1
           .connect(governor)
-          .createPoolBoosterSwapxClassic(
+          .createPoolBoosterSwapxSingle(
             addresses.zero, //_bribeAddress
             addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
             oethUnits("1") //_salt
@@ -307,9 +307,9 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterPairFactoryV1
+        poolBoosterSingleFactoryV1
           .connect(governor)
-          .createPoolBoosterSwapxClassic(
+          .createPoolBoosterSwapxSingle(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
             addresses.zero, //_ammPoolAddress
             oethUnits("1") //_salt
@@ -317,7 +317,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid ammPoolAddress address");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
           addresses.zero, //_ammPoolAddress
@@ -327,7 +327,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid ammPoolAddress address");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
           addresses.zero, //_bribeAddressOS
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -338,7 +338,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
           addresses.zero, //_bribeAddressOther
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -349,7 +349,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -360,7 +360,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(governor).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -372,11 +372,11 @@ describe("ForkTest: Pool Booster", function () {
     });
 
     it("Should throw an error when non govenor is trying to create a pool booster", async () => {
-      const { poolBoosterPairFactoryV1, poolBoosterIchiFactoryV1, nick } =
+      const { poolBoosterSingleFactoryV1, poolBoosterDoubleFactoryV1, nick } =
         fixture;
 
       await expect(
-        poolBoosterPairFactoryV1.connect(nick).createPoolBoosterSwapxClassic(
+        poolBoosterSingleFactoryV1.connect(nick).createPoolBoosterSwapxSingle(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
           oethUnits("1") //_salt
@@ -384,7 +384,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Caller is not the Governor");
 
       await expect(
-        poolBoosterIchiFactoryV1.connect(nick).createPoolBoosterSwapxIchi(
+        poolBoosterDoubleFactoryV1.connect(nick).createPoolBoosterSwapxDouble(
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
           addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
           addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -505,12 +505,12 @@ describe("ForkTest: Pool Booster", function () {
 
     if (poolBoosterType == 0) {
       return await ethers.getContractAt(
-        "PoolBoosterSwapxIchi",
+        "PoolBoosterSwapxDouble",
         poolBoosterEntry.boosterAddress
       );
     } else if (poolBoosterType == 1) {
       return await ethers.getContractAt(
-        "PoolBoosterSwapxPair",
+        "PoolBoosterSwapxSingle",
         poolBoosterEntry.boosterAddress
       );
     } else {
