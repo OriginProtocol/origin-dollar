@@ -89,10 +89,10 @@ contract VaultStorage is Initializable, Governable {
 
     /// @dev mapping of supported vault assets to their configuration
     // slither-disable-next-line uninitialized-state
-    mapping(address => Asset) internal assets;
+    mapping(address => Asset) public assets;
     /// @dev list of all assets supported by the vault.
     // slither-disable-next-line uninitialized-state
-    address[] internal allAssets;
+    address[] public allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
@@ -101,9 +101,9 @@ contract VaultStorage is Initializable, Governable {
     }
     /// @dev mapping of strategy contracts to their configuration
     // slither-disable-next-line uninitialized-state
-    mapping(address => Strategy) internal strategies;
+    mapping(address => Strategy) public strategies;
     /// @dev list of all vault strategies
-    address[] internal allStrategies;
+    address[] public allStrategies;
 
     /// @notice Address of the Oracle price provider contract
     // slither-disable-next-line uninitialized-state
@@ -124,11 +124,11 @@ contract VaultStorage is Initializable, Governable {
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
     // slither-disable-next-line uninitialized-state
-    OUSD internal oUSD;
+    OUSD public oUSD;
 
     /// @dev Storage slot for the address of the VaultAdmin contract that is delegated to
     // keccak256("OUSD.vault.governor.admin.impl");
-    bytes32 constant adminImplPosition =
+    bytes32 public constant adminImplPosition =
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     /// @dev Address of the contract responsible for post rebase syncs with AMMs
