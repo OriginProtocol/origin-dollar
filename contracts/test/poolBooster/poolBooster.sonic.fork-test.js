@@ -467,13 +467,12 @@ describe("ForkTest: Pool Booster", function () {
         .connect(governor)
         .approveFactory(someFactoryAddress);
 
-      await expect(poolBoosterCentralRegistry
-        .connect(governor)
-        .approveFactory(someFactoryAddress)
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(governor)
+          .approveFactory(someFactoryAddress)
       ).to.be.revertedWith("Factory already approved");
-
     });
-
   });
 
   const filterAndParseRewardAddedEvents = async (tx) => {

@@ -26,7 +26,10 @@ contract PoolBoostCentralRegistry is Governable {
      */
     function approveFactory(address _factoryAddress) external onlyGovernor {
         require(_factoryAddress != address(0), "Invalid address");
-        require(!isApprovedFactory(_factoryAddress), "Factory already approved");
+        require(
+            !isApprovedFactory(_factoryAddress),
+            "Factory already approved"
+        );
 
         factories.push(_factoryAddress);
         emit FactoryApproved(_factoryAddress);
