@@ -19,6 +19,7 @@ describe("VaultAdmin Upgrades", async function () {
   it("should upgrade to a new admin implementation", async function () {
     const newVaultImpl = ousd.address; // ;)
     await vaultStorage.connect(governor).setAdminImpl(newVaultImpl);
+    expect(await vaultStorage.ADMIN_IMPLEMENTATION()).to.eq(newVaultImpl);
   });
 
   it("should not upgrade to a non-contract admin implementation", async function () {
