@@ -89,10 +89,10 @@ contract VaultStorage is Initializable, Governable {
 
     /// @dev mapping of supported vault assets to their configuration
     // slither-disable-next-line uninitialized-state
-    mapping(address => Asset) public assets;
+    mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
     // slither-disable-next-line uninitialized-state
-    address[] public allAssets;
+    address[] internal allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
@@ -103,7 +103,7 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) public strategies;
     /// @dev list of all vault strategies
-    address[] public allStrategies;
+    address[] internal allStrategies;
 
     /// @notice Address of the Oracle price provider contract
     // slither-disable-next-line uninitialized-state
