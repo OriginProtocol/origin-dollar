@@ -57,6 +57,8 @@ interface IVault {
 
     function governor() external view returns (address);
 
+    function ADMIN_IMPLEMENTATION() external view returns (address);
+
     // VaultAdmin.sol
     function setPriceProvider(address _priceProvider) external;
 

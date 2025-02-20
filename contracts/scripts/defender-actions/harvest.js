@@ -16,7 +16,8 @@ const labelsSSV = {
   [addresses.mainnet.NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
   [addresses.mainnet.NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
   [addresses.mainnet.NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
-  [addresses.holesky.NativeStakingSSVStrategyProxy]: "Staking Strategy 1 Holesky",
+  [addresses.holesky.NativeStakingSSVStrategyProxy]:
+    "Staking Strategy 1 Holesky",
 };
 
 // Entrypoint for the Defender Action
