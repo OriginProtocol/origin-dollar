@@ -77,7 +77,7 @@ contract PoolBoostCentralRegistry is Governable {
     /**
      * @notice Returns all supported factories
      */
-    function getAllFactories() public view returns (address[] memory) {
+    function getAllFactories() external view returns (address[] memory) {
         return factories;
     }
 }

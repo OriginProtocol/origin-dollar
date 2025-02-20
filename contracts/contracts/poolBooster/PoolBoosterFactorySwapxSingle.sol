@@ -6,7 +6,8 @@ import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
 
 /**
  * @title Pool booster factory for creating Swapx Single pool boosters - where a single
- *        gauge is created for a pool.
+ *        gauge is created for a pool. this is appropriate for Classic Stable & Classic
+ *        Volatile SwapX pools.
  * @author Origin Protocol Inc
  */
 contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
