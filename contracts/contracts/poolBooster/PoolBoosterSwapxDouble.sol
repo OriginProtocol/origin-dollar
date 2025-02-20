@@ -46,6 +46,7 @@ contract PoolBoosterSwapxDouble is IPoolBooster {
 
         bribeContractOS = IBribe(_bribeContractOS);
         bribeContractOther = IBribe(_bribeContractOther);
+        // Abstract factory already validates this is not a zero address
         osToken = IERC20(_osToken);
         split = _split;
     }

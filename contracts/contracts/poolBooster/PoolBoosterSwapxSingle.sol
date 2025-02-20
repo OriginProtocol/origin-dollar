@@ -20,6 +20,7 @@ contract PoolBoosterSwapxSingle is IPoolBooster {
     constructor(address _bribeContract, address _osToken) {
         require(_bribeContract != address(0), "Invalid bribeContract address");
         bribeContract = IBribe(_bribeContract);
+        // Abstract factory already validates this is not a zero address
         osToken = IERC20(_osToken);
     }
 
