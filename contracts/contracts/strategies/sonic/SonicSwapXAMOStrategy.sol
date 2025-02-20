@@ -48,12 +48,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      */
     address public immutable gauge;
 
-    /**
-     * @notice Maximum slippage allowed for adding/removing liquidity from the pool.
-     */
-    uint256 public maxSlippage;
-
-    event MaxSlippageUpdated(uint256 newMaxSlippage);
     event SwapOTokensToPool(
         uint256 osToMint,
         uint256 wsLiquidity,
@@ -115,6 +109,20 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /// @dev Checks that the strategy value has not decreased by more than a dust amount
+    modifier strategyValueChecker() {
+        // Get the strategy value before the call
+        uint256 balanceBefore = checkBalance(address(ws));
+
+        _;
+
+        // Get the strategy value after the call
+        uint256 balanceAfter = checkBalance(address(ws));
+
+        // The strategy value should not decrease by more than a dust amount
+        require(balanceAfter >= balanceBefore - 10, "Strategy value decreased");
+    }
+
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _os,
@@ -135,11 +143,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as SwapX strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV
-     * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the pool.
      */
     function initialize(
-        address[] calldata _rewardTokenAddresses, // CRV
-        uint256 _maxSlippage
+        address[] calldata _rewardTokenAddresses // CRV
     ) external onlyGovernor initializer {
         address[] memory pTokens = new address[](1);
         pTokens[0] = pool;
@@ -154,7 +160,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         );
 
         _approveBase();
-        _setMaxSlippage(_maxSlippage);
     }
 
     /***************************************
@@ -286,11 +291,18 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
                 Pool Rebalancing
     ****************************************/
 
+    /// @notice Used when there is more OS than wS in the pool.
+    /// wS and OS is removed from the pool, the received wS is swapped for OS
+    /// and the left over OS in the strategy is burnt.
+    /// The OS/wS price is < 1.0 so OS is being bought at a discount.
+    /// @param _wsAmount Amount of Wrapped S (wS) to swap into the pool.
     function swapAssetsToPool(uint256 _wsAmount)
         external
         onlyStrategist
         nonReentrant
+        // TODO which one is better to use here?
         improvePoolBalance
+        strategyValueChecker
     {
         // 1. Partially remove liquidity so there’s enough wS for the swap
 
@@ -315,11 +327,17 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
     }
 
+    /// @notice Used when there is more wS than OS in the pool.
+    /// OS is minted and swapped for wS against the pool,
+    /// more OS is minted and added back into the pool with the swapped out wS.
+    /// The OS/wS price is > 1.0 so OS is being sold at a premium.
     function swapOTokensToPool(uint256 _osAmount)
         external
         onlyStrategist
         nonReentrant
+        // TODO which one is better to use here?
         improvePoolBalance
+        strategyValueChecker
     {
         // 1. Mint OS so it can be swapped into the pool
 
@@ -435,7 +453,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Perform the swap on the pool
         IPair(pool).swap(amount0, amount1, address(this), new bytes(0));
 
-        // TODO do we need a slippage check if the swap is profitable?
+        // The slippage protection against the amount out is indirectly done via the improvePoolBalance and strategyValueChecker modifiers
     }
 
     /**
@@ -482,7 +500,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @return balance    Total value of the wS and OS tokens held in the pool
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         override
         returns (uint256 balance)
@@ -514,20 +532,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /***************************************
                     Approvals
     ****************************************/
-
-    /**
-     * @notice Sets the maximum slippage allowed for any swap/liquidity operation
-     * @param _maxSlippage Maximum slippage allowed, 1e18 = 100%.
-     */
-    function setMaxSlippage(uint256 _maxSlippage) external onlyGovernor {
-        _setMaxSlippage(_maxSlippage);
-    }
-
-    function _setMaxSlippage(uint256 _maxSlippage) internal {
-        require(_maxSlippage <= 5e16, "Slippage must be less than 100%");
-        maxSlippage = _maxSlippage;
-        emit MaxSlippageUpdated(_maxSlippage);
-    }
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,
