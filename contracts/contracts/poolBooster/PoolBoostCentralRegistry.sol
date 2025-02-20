@@ -41,9 +41,9 @@ contract PoolBoostCentralRegistry is Governable {
      */
     function removeFactory(address _factoryAddress) external onlyGovernor {
         require(_factoryAddress != address(0), "Invalid address");
-        require(isApprovedFactory(_factoryAddress), "Not an approved factory");
 
         uint256 length = factories.length;
+        bool factoryRemoved = false;
         for (uint256 i = 0; i < length; i++) {
             if (factories[i] != _factoryAddress) {
                 continue;
@@ -52,8 +52,10 @@ contract PoolBoostCentralRegistry is Governable {
             factories[i] = factories[length - 1];
             factories.pop();
             emit FactoryRemoved(_factoryAddress);
+            factoryRemoved = true;
             break;
         }
+        require(factoryRemoved, "Not an approved factory");
     }
 
     /**
