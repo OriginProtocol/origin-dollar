@@ -323,3 +323,10 @@ contract OETHFixedRateDripperProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice CurvePoolBoosterL2Proxy delegates calls to a CurvePoolBoosterL2 implementation
+ */
+contract CurvePoolBoosterL2Proxy is InitializeGovernedUpgradeabilityProxy {
+
+}
