@@ -453,7 +453,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Perform the swap on the pool
         IPair(pool).swap(amount0, amount1, address(this), new bytes(0));
 
-        // The slippage protection against the amount out is indirectly done via the improvePoolBalance and strategyValueChecker modifiers
+        // The slippage protection against the amount out is indirectly done
+        // via the improvePoolBalance and strategyValueChecker modifiers
     }
 
     /**
