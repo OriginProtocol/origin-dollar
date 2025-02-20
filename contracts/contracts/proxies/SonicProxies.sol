@@ -39,8 +39,15 @@ contract SonicStakingStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OSonicHarvesterProxy delegates calls to a OETHHarvesterSimple implementation
+ * @notice OSonicHarvesterProxy delegates calls to a OSonicHarvester implementation
  */
 contract OSonicHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice SonicCurveAMOStrategyProxy delegates calls to a SonicCurveAMOStrategy implementation
+ */
+contract SonicCurveAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

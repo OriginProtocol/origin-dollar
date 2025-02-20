@@ -138,7 +138,7 @@ const withConfirmation = async (
     ? process.env.HOLESKY_PROVIDER_URL
     : process.env.PROVIDER_URL;
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
-    console.log("Skipping confirmation on Tenderly or for unit tests");
+    log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
   }
