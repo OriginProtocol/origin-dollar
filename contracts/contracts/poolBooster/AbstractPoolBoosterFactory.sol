@@ -11,7 +11,9 @@ import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 contract AbstractPoolBoosterFactory is Governable {
     /**
      * @dev all the supported pool booster types are listed here. It is possible
-     * to have multiple versions of the same pool booster gauge implementation.
+     *      to have multiple versions of the factory that supports the same type of 
+     *      pool booster. Factories are immutable and this can happen when a factory
+     *      or related pool booster required code update. 
      * e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
      */
     enum PoolBoosterType {
