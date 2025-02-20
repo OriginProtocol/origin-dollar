@@ -54,6 +54,17 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     uint256 public maxSlippage;
 
     event MaxSlippageUpdated(uint256 newMaxSlippage);
+    event SwapOTokensToPool(
+        uint256 osToMint,
+        uint256 wsLiquidity,
+        uint256 osLiquidity,
+        uint256 lpTokens
+    );
+    event SwapAssetsToPool(
+        uint256 _wsAmount,
+        uint256 lpTokens,
+        uint256 osToBurn
+    );
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -64,6 +75,44 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
             "Caller is not the Strategist"
         );
         _;
+    }
+
+    /**
+     * @dev Checks the pool's balances have improved and the balances
+     * have not tipped to the other side.
+     * This modifier is only applied to functions that do swaps against the pool.
+     * Deposits and withdrawals are proportional to the pool's balances hence don't need this check.
+     */
+    modifier improvePoolBalance() {
+        // Get the asset and OToken balances in the pool
+        (uint256 wsReservesBefore, uint256 osReservesBefore, ) = IPair(pool)
+            .getReserves();
+        // diff = wS balance - OS balance
+        int256 diffBefore = wsReservesBefore.toInt256() -
+            osReservesBefore.toInt256();
+
+        _;
+
+        // Get the asset and OToken balances in the pool
+        (uint256 wsReservesAfter, uint256 osReservesAfter, ) = IPair(pool)
+            .getReserves();
+        // diff = wS balance - OS balance
+        int256 diffAfter = wsReservesAfter.toInt256() -
+            osReservesAfter.toInt256();
+
+        if (diffBefore == 0) {
+            require(diffAfter == 0, "Position balance is worsened");
+        } else if (diffBefore < 0) {
+            // If the pool was originally imbalanced in favor of OETH, then
+            // we want to check that the pool is now more balanced
+            require(diffAfter <= 0, "OTokens overshot peg");
+            require(diffBefore < diffAfter, "OTokens balance worse");
+        } else if (diffBefore > 0) {
+            // If the pool was originally imbalanced in favor of ETH, then
+            // we want to check that the pool is now more balanced
+            require(diffAfter >= 0, "Assets overshot peg");
+            require(diffAfter < diffBefore, "Assets balance worse");
+        }
     }
 
     constructor(
@@ -142,15 +191,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Mint the required OS tokens to the strategy
         IVault(vaultAddress).mintForStrategy(osAmount);
 
-        // Transfer wS to the pool
-        ws.transfer(pool, _wsAmount);
-        // Transfer OS to the pool
-        os.transfer(pool, osAmount);
-        // Mint LP tokens from the pool
-        uint256 lpTokens = IPair(pool).mint(address(this));
-
-        // deposit the pool's LP tokens into the gauge
-        IGauge(gauge).deposit(lpTokens);
+        // Add wS and OS liquidity to the pool and stake in gauge
+        _depositToPoolAndGauge(_wsAmount, osAmount);
 
         emit Deposit(address(os), pool, osAmount);
 
@@ -240,6 +282,82 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(os), pool, osToBurn);
     }
 
+    /***************************************
+                Pool Rebalancing
+    ****************************************/
+
+    function swapAssetsToPool(uint256 _wsAmount)
+        external
+        onlyStrategist
+        nonReentrant
+        improvePoolBalance
+    {
+        // 1. Partially remove liquidity so there’s enough wS for the swap
+
+        // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
+        uint256 lpTokens = calcTokensToBurn(_wsAmount);
+        require(lpTokens > 0, "No LP tokens to burn");
+
+        _withdrawFromGaugeAndPool(lpTokens);
+
+        // 2. Swap wS for OS against the pool
+        _swapExactTokensForTokens(_wsAmount, address(ws), address(os));
+
+        // 3. Burn all the OS left in the strategy from the remove liquidity and swap
+        uint256 osToBurn = os.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(osToBurn);
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
+
+        // TODO Emit event with the _wsAmount, lpTokens and osToBurn
+
+        emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
+    }
+
+    function swapOTokensToPool(uint256 _osAmount)
+        external
+        onlyStrategist
+        nonReentrant
+        improvePoolBalance
+    {
+        // 1. Mint OS so it can be swapped into the pool
+
+        // There shouldn't be any OS in the strategy but just in case
+        uint256 osInStrategy = os.balanceOf(address(this));
+        require(_osAmount > osInStrategy, "OS in strategy");
+        uint256 osToMint = _osAmount - osInStrategy;
+
+        // Mint the required OS tokens to the strategy
+        IVault(vaultAddress).mintForStrategy(osToMint);
+
+        // 2. Swap OS for wS against the pool
+        _swapExactTokensForTokens(_osAmount, address(os), address(ws));
+
+        // 3. Add wS and OS back to the pool in proportion to the pool's reserves
+
+        // The wS is from the swap and any wS that was sitting in the strategy
+        uint256 wsLiquidity = ws.balanceOf(address(this));
+        // Calculate how much OS liquidity is required from the wS liquidity
+        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
+        uint256 osLiquidity = (wsLiquidity * osReserves) / wsReserves;
+
+        // Mint more OS so it can be added to the pool
+        IVault(vaultAddress).mintForStrategy(osLiquidity);
+
+        // Add wS and OS liquidity to the pool and stake in gauge
+        uint256 lpTokens = _depositToPoolAndGauge(wsLiquidity, osLiquidity);
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
+
+        emit SwapOTokensToPool(osToMint, wsLiquidity, osLiquidity, lpTokens);
+    }
+
+    /***************************************
+                Pool Handling
+    ****************************************/
+
     function calcTokensToBurn(uint256 _wsAmount)
         internal
         returns (uint256 lpTokens)
@@ -265,6 +383,22 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
             ws.balanceOf(pool);
     }
 
+    function _depositToPoolAndGauge(uint256 _wsAmount, uint256 osAmount)
+        internal
+        returns (uint256 lpTokens)
+    {
+        // Transfer wS to the pool
+        ws.transfer(pool, _wsAmount);
+        // Transfer OS to the pool
+        os.transfer(pool, osAmount);
+
+        // Mint LP tokens from the pool
+        lpTokens = IPair(pool).mint(address(this));
+
+        // Deposit the pool's LP tokens into the gauge
+        IGauge(gauge).deposit(lpTokens);
+    }
+
     function _withdrawFromGaugeAndPool(uint256 lpTokens) internal {
         // Withdraw pool LP tokens from the gauge
         IGauge(gauge).withdraw(lpTokens);
@@ -273,6 +407,35 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IPair(pool).transfer(pool, lpTokens);
         // Burn the LP tokens and transfer the wS and OS back to the strategy
         IPair(pool).burn(address(this));
+    }
+
+    function _swapExactTokensForTokens(
+        uint256 _amountIn,
+        address _tokenIn,
+        address _tokenOut
+    ) internal {
+        // Transfer in tokens to the pool
+        ws.transfer(pool, _amountIn);
+
+        // Calculate how much out tokens we get from the swap
+        uint256 amountOut = IPair(pool).getAmountOut(_amountIn, _tokenIn);
+
+        // Safety check that we are dealing with the correct pool tokens
+        require(
+            (_tokenIn == address(ws) || _tokenIn == address(os)) &&
+                (_tokenOut == address(ws) || _tokenOut == address(os)),
+            "Unsupported swap"
+        );
+
+        // Work out the correct order of the amounts for the pool
+        (uint256 amount0, uint256 amount1) = _tokenIn == address(ws)
+            ? (uint256(0), amountOut)
+            : (amountOut, 0);
+
+        // Perform the swap on the pool
+        IPair(pool).swap(amount0, amount1, address(this), new bytes(0));
+
+        // TODO do we need a slippage check if the swap is profitable?
     }
 
     /**
