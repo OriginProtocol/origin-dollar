@@ -43,7 +43,7 @@ contract AbstractPoolBoosterFactory is Governable {
     // @notice address of Origin Sonic
     address public immutable oSonic;
 
-    // @notice list of all the pool boosters
+    // @notice list of all the pool boosters created by this factory
     PoolBoosterEntry[] public poolBoosters;
     // @notice mapping of AMM pool to pool booster
     mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
