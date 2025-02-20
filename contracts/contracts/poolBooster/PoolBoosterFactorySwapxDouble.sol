@@ -5,8 +5,8 @@ import { PoolBoosterSwapxDouble } from "./PoolBoosterSwapxDouble.sol";
 import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
 
 /**
- * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the 
- *        gauges need incentivizing. 
+ * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the
+ *        gauges need incentivizing.
  * @author Origin Protocol Inc
  */
 contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
@@ -26,6 +26,9 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
      * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
      *        bribe contract and 60% to other bribe contract
+     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
+     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
+     *        and pre-computed address to match
      */
     function createPoolBoosterSwapxDouble(
         address _bribeAddressOS,
@@ -53,5 +56,44 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
             _ammPoolAddress,
             PoolBoosterType.SwapXDoubleBooster
         );
+    }
+
+    /**
+     * @dev Compute the address of the pool booster to be deployed.
+     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
+     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
+     * @param _ammPoolAddress address of the AMM pool where the yield originates from
+     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
+     *        bribe contract and 60% to other bribe contract
+     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
+     *        should match the one from `createPoolBoosterSwapxDouble` in order for the final deployed address
+     *        and pre-computed address to match
+     */
+    function computePoolBoosterAddress(
+        address _bribeAddressOS,
+        address _bribeAddressOther,
+        address _ammPoolAddress,
+        uint256 _split,
+        uint256 _salt
+    ) external view returns (address) {
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
+        require(_salt > 0, "Invalid salt");
+
+        return
+            _computeAddress(
+                abi.encodePacked(
+                    type(PoolBoosterSwapxDouble).creationCode,
+                    abi.encode(
+                        _bribeAddressOS,
+                        _bribeAddressOther,
+                        oSonic,
+                        _split
+                    )
+                ),
+                _salt
+            );
     }
 }

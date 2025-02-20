@@ -176,13 +176,15 @@ describe("ForkTest: Pool Booster", function () {
 
     // create another pool booster (which is placed as the last entry in
     // the poolBoosters array in poolBoosterDoubleFactoryV1)
-    await poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-      addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddress
-      addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddressOther
-      addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-      oethUnits("0.5"), //_split
-      oethUnits("1") //_salt
-    );
+    await poolBoosterDoubleFactoryV1
+      .connect(governor)
+      .createPoolBoosterSwapxDouble(
+        addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddress
+        addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddressOther
+        addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+        oethUnits("0.5"), //_split
+        oethUnits("1") //_salt
+      );
 
     const osUsdcePoolBooster =
       await poolBoosterDoubleFactoryV1.poolBoosterFromPool(
@@ -260,6 +262,64 @@ describe("ForkTest: Pool Booster", function () {
     expect(await poolBooster.split()).to.equal(oethUnits("0.5")); // 50%
   });
 
+  it("When creating Double pool booster the computed and actual deployed address should match", async () => {
+    const { poolBoosterDoubleFactoryV1, governor } = fixture;
+
+    const creationParams = [
+      addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+      addresses.sonic.SwapXOsUSDCe.extBribeUSDC, //_bribeAddressOther
+      addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+      oethUnits("0.5"), //_split
+      oethUnits("1337"), //_salt
+    ];
+
+    await poolBoosterDoubleFactoryV1
+      .connect(governor)
+      // the addresses below are not suitable for pool boosting. Still they will serve the
+      // purpose of confirming correct setup.
+      .createPoolBoosterSwapxDouble(...creationParams);
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(
+      poolBoosterDoubleFactoryV1,
+      addresses.sonic.SwapXOsGEMSx.pool
+    );
+
+    const computedAddress =
+      await poolBoosterDoubleFactoryV1.computePoolBoosterAddress(
+        ...creationParams
+      );
+
+    expect(poolBooster.address).to.equal(computedAddress);
+  });
+
+  it("When creating Single pool booster the computed and actual deployed address should match", async () => {
+    const { poolBoosterSingleFactoryV1, governor } = fixture;
+
+    const creationParams = [
+      addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
+      addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+      oethUnits("12345"), //_salt
+    ];
+
+    await poolBoosterSingleFactoryV1
+      .connect(governor)
+      // the addresses below are not suitable for pool boosting. Still they will serve the
+      // purpose of confirming correct setup.
+      .createPoolBoosterSwapxSingle(...creationParams);
+
+    const poolBooster = await getPoolBoosterContractFromPoolAddress(
+      poolBoosterSingleFactoryV1,
+      addresses.sonic.SwapXOsGEMSx.pool
+    );
+
+    const computedAddress =
+      await poolBoosterSingleFactoryV1.computePoolBoosterAddress(
+        ...creationParams
+      );
+
+    expect(poolBooster.address).to.equal(computedAddress);
+  });
+
   it("Should be able to create a pair pool booster", async () => {
     const { oSonic, poolBoosterSingleFactoryV1, governor } = fixture;
 
@@ -292,8 +352,11 @@ describe("ForkTest: Pool Booster", function () {
 
   describe("Should test require checks", async () => {
     it("Should throw an error when invalid params are passed to swapx pair booster creation function", async () => {
-      const { poolBoosterSingleFactoryV1, poolBoosterDoubleFactoryV1, governor } =
-        fixture;
+      const {
+        poolBoosterSingleFactoryV1,
+        poolBoosterDoubleFactoryV1,
+        governor,
+      } = fixture;
 
       await expect(
         poolBoosterSingleFactoryV1
@@ -317,56 +380,66 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid ammPoolAddress address");
 
       await expect(
-        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
-          addresses.zero, //_ammPoolAddress
-          oethUnits("0.7"), //_split
-          oethUnits("1") //_salt
-        )
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
+            addresses.zero, //_ammPoolAddress
+            oethUnits("0.7"), //_split
+            oethUnits("1") //_salt
+          )
       ).to.be.revertedWith("Invalid ammPoolAddress address");
 
       await expect(
-        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-          addresses.zero, //_bribeAddressOS
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
-          addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-          oethUnits("0.7"), //_split
-          oethUnits("1") //_salt
-        )
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.zero, //_bribeAddressOS
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("0.7"), //_split
+            oethUnits("1") //_salt
+          )
         // Invalid bribeContractOS address
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
-          addresses.zero, //_bribeAddressOther
-          addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-          oethUnits("0.7"), //_split
-          oethUnits("1") //_salt
-        )
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+            addresses.zero, //_bribeAddressOther
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("0.7"), //_split
+            oethUnits("1") //_salt
+          )
         // Invalid bribeContractOther address
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
-          addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-          oethUnits("1"), //_split
-          oethUnits("1") //_salt
-        )
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("1"), //_split
+            oethUnits("1") //_salt
+          )
         // Unexpected split amount
       ).to.be.revertedWith("Failed creating a pool booster");
 
       await expect(
-        poolBoosterDoubleFactoryV1.connect(governor).createPoolBoosterSwapxDouble(
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
-          addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
-          addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
-          oethUnits("0.009"), //_split
-          oethUnits("1") //_salt
-        )
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("0.009"), //_split
+            oethUnits("1") //_salt
+          )
         // Unexpected split amount
       ).to.be.revertedWith("Failed creating a pool booster");
     });

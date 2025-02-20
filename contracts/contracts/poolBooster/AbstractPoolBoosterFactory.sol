@@ -11,9 +11,9 @@ import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 contract AbstractPoolBoosterFactory is Governable {
     /**
      * @dev all the supported pool booster types are listed here. It is possible
-     *      to have multiple versions of the factory that supports the same type of 
+     *      to have multiple versions of the factory that supports the same type of
      *      pool booster. Factories are immutable and this can happen when a factory
-     *      or related pool booster required code update. 
+     *      or related pool booster required code update.
      *      e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
      */
     enum PoolBoosterType {
@@ -21,8 +21,8 @@ contract AbstractPoolBoosterFactory is Governable {
         // liquidity pools where (which is expected in most/all cases) both pool gauges
         // require bribing.
         SwapXDoubleBooster,
-        // Supports bribing a single contract per pool. Appropriate for Classic Stable & 
-        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges) 
+        // Supports bribing a single contract per pool. Appropriate for Classic Stable &
+        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)
         // needs bribing
         SwapXSingleBooster
     }
@@ -145,6 +145,26 @@ contract AbstractPoolBoosterFactory is Governable {
             _address.code.length > 0 && _address != address(0),
             "Failed creating a pool booster"
         );
+    }
+
+    // pre-compute the address of the deployed contract that will be
+    // created when create2 is called
+    function _computeAddress(bytes memory bytecode, uint256 _salt)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                _salt,
+                keccak256(bytecode)
+            )
+        );
+
+        // cast last 20 bytes of hash to address
+        return address(uint160(uint256(hash)));
     }
 
     function poolBoosterLength() external view returns (uint256) {

@@ -20,9 +20,12 @@ contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
 
     /**
      * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools where
-     *      a single Bribe contract is incentivized. 
+     *      a single Bribe contract is incentivized.
      * @param _bribeAddress address of the Bribes.sol contract
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
+     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
+     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
+     *        and pre-computed address to match
      */
     function createPoolBoosterSwapxSingle(
         address _bribeAddress,
@@ -48,5 +51,35 @@ contract PoolBoosterFactorySwapxSingle is AbstractPoolBoosterFactory {
             _ammPoolAddress,
             PoolBoosterType.SwapXSingleBooster
         );
+    }
+
+    /**
+     * @dev Create a Pool Booster for SwapX classic volatile or classic stable pools where
+     *      a single Bribe contract is incentivized.
+     * @param _bribeAddress address of the Bribes.sol contract
+     * @param _ammPoolAddress address of the AMM pool where the yield originates from
+     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
+     *        should match the one from `createPoolBoosterSwapxSingle` in order for the final deployed address
+     *        and pre-computed address to match
+     */
+    function computePoolBoosterAddress(
+        address _bribeAddress,
+        address _ammPoolAddress,
+        uint256 _salt
+    ) external view returns (address) {
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
+        require(_salt > 0, "Invalid salt");
+
+        return
+            _computeAddress(
+                abi.encodePacked(
+                    type(PoolBoosterSwapxSingle).creationCode,
+                    abi.encode(_bribeAddress, oSonic)
+                ),
+                _salt
+            );
     }
 }
