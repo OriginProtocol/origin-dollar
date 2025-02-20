@@ -5,7 +5,8 @@ import { PoolBoosterSwapxDouble } from "./PoolBoosterSwapxDouble.sol";
 import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
 
 /**
- * @title Pool booster factory for creating SwapxIchi pool boosters
+ * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the 
+ *        gauges need incentivizing. 
  * @author Origin Protocol Inc
  */
 contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {

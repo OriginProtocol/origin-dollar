@@ -14,12 +14,16 @@ contract AbstractPoolBoosterFactory is Governable {
      *      to have multiple versions of the factory that supports the same type of 
      *      pool booster. Factories are immutable and this can happen when a factory
      *      or related pool booster required code update. 
-     * e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
+     *      e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
      */
     enum PoolBoosterType {
-        // supports bribing 2 contracts per pool
+        // Supports bribing 2 contracts per pool. Appropriate for Ichi vault concentrated
+        // liquidity pools where (which is expected in most/all cases) both pool gauges
+        // require bribing.
         SwapXDoubleBooster,
-        // supports bribing a single contract per pool
+        // Supports bribing a single contract per pool. Appropriate for Classic Stable & 
+        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges) 
+        // needs bribing
         SwapXSingleBooster
     }
 
