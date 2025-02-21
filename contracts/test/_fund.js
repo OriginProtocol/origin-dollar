@@ -22,7 +22,6 @@ const mappedFundingSlots = {};
 const balancesContractSlotCache = {
   [addresses.mainnet.stETH.toLowerCase()]: [0, false],
   [addresses.mainnet.frxETH.toLowerCase()]: [0, false],
-  [addresses.mainnet.WETH.toLowerCase()]: [3, false],
   [addresses.mainnet.rETH.toLowerCase()]: [1, false],
   [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
   [addresses.mainnet.ThreePoolToken.toLowerCase()]: [3, true],
@@ -45,6 +44,9 @@ const balancesContractSlotCache = {
 const findBalancesSlot = async (tokenAddress) => {
   tokenAddress = tokenAddress.toLowerCase();
   if (balancesContractSlotCache[tokenAddress]) {
+    console.log(
+      `Found balance slot ${balancesContractSlotCache[tokenAddress]} for ${tokenAddress} in cache`
+    );
     return balancesContractSlotCache[tokenAddress];
   }
 
@@ -97,7 +99,7 @@ const findBalancesSlot = async (tokenAddress) => {
         const isVyper = probedSlot == slots[1];
         balancesContractSlotCache[tokenAddress] = [i, isVyper];
         log(
-          `Found balance slot ${i} for ${tokenAddress}. is Vyper? ${isVyper} `
+          `Caching balance slot ${i} for ${tokenAddress}. is Vyper? ${isVyper} `
         );
         return [i, isVyper];
       }
@@ -131,6 +133,7 @@ const setTokenBalance = async (
     const [balanceSlot, isVyper] = await findBalancesSlot(
       tokenContract.address
     );
+    log(`Found balance slot ${balanceSlot} for ${tokenContract.address}`);
     // key, slot
     index = solidityKeccak256(
       ["uint256", "uint256"],
@@ -148,7 +151,7 @@ const setTokenBalance = async (
   );
   await setStorageAt(
     tokenContract.address,
-    toBytes32(ethrs.BigNumber.from(index)),
+    toBytes32(ethers.BigNumber.from(index)),
     toBytes32(amountBn).toString()
   );
 };
@@ -211,8 +214,7 @@ const setERC20TokenBalance = async (account, token, amount = "10000") => {
     account,
     token,
     amount,
-    config[token.address] ? config[token.address][account] : undefined,
-    hre
+    config[token.address] ? config[token.address][account] : undefined
   );
 
   // // Print out mapped slots and add them to config above

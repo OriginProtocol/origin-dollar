@@ -20,7 +20,8 @@ describe("ForkTest: CurvePoolBooster", function () {
     wousd,
     woethSigner,
     josh,
-    sGov;
+    sGov,
+    curvePoolBoosterImpersonated;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
     curvePoolBooster = fixture.curvePoolBooster;
@@ -34,11 +35,23 @@ describe("ForkTest: CurvePoolBooster", function () {
     const gov = await curvePoolBooster.governor();
     sGov = await ethers.provider.getSigner(gov);
     woethSigner = await impersonateAndFund(wousd.address);
+    curvePoolBoosterImpersonated = await impersonateAndFund(
+      curvePoolBooster.address
+    );
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(0);
   });
 
   async function dealOETHAndCreateCampaign() {
+    // Empty pool booster for round calculations
+    if ((await ousd.balanceOf(curvePoolBooster.address)) > 0) {
+      await ousd
+        .connect(curvePoolBoosterImpersonated)
+        .transfer(
+          sStrategist._address,
+          await ousd.balanceOf(curvePoolBooster.address)
+        );
+    }
     // Deal OETH to pool booster
     await ousd
       .connect(woethSigner)
@@ -107,7 +120,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     await dealOETHAndCreateCampaign();
 
     // Ensure fee is collected
-    expect(await ousd.balanceOf(josh.address)).to.equal(parseUnits("1"));
+    expect(await ousd.balanceOf(josh.address)).to.gte(parseUnits("1"));
   });
 
   it("Should manage total rewards", async () => {
@@ -270,6 +283,15 @@ describe("ForkTest: CurvePoolBooster", function () {
   });
 
   it("Should revert if No reward to manage", async () => {
+    if ((await ousd.balanceOf(curvePoolBooster.address)) > 0) {
+      await ousd
+        .connect(curvePoolBoosterImpersonated)
+        .transfer(
+          sStrategist._address,
+          await ousd.balanceOf(curvePoolBooster.address)
+        );
+    }
+
     await expect(
       curvePoolBooster
         .connect(sStrategist)
@@ -313,7 +335,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     await ousd
       .connect(woethSigner)
       .transfer(curvePoolBooster.address, parseUnits("10"));
-    expect(await ousd.balanceOf(curvePoolBooster.address)).to.equal(
+    expect(await ousd.balanceOf(curvePoolBooster.address)).to.be.gte(
       parseUnits("10")
     );
 

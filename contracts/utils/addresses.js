@@ -219,7 +219,8 @@ addresses.mainnet.FraxETHRedeemStrategy =
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 // TODO add after deployment
-addresses.mainnet.OETHHarvesterSimpleProxy = "";
+addresses.mainnet.OETHHarvesterSimpleProxy =
+  "0x6D416E576eECBB9F897856a7c86007905274ed04";
 addresses.mainnet.BalancerRETHStrategy =
   "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens
@@ -354,6 +355,14 @@ addresses.base.oethbBribesContract =
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
 
+// Base Curve
+addresses.base.CRV = "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415";
+addresses.base.OETHb_WETH = {};
+addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
+addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
+addresses.base.childLiquidityGaugeFactory =
+  "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
+
 // Sonic
 addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
@@ -396,6 +405,13 @@ addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
 addresses.sonic.SwapXOsGEMSxMultisigBooster =
   "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
+
+// Sonic Curve
+addresses.sonic.WS_OS = {};
+addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
+addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.childLiquidityGaugeFactory =
+  "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

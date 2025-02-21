@@ -3,12 +3,13 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "122_simple_harvester_v2",
+    deployName: "123_simple_harvester_v2",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "26550610486664057138305516943450169995813254080724548319324256884874259231291",
   },
   async ({ deployWithConfirmation, withConfirmation }) => {
     const { multichainStrategistAddr, deployerAddr } = await getNamedAccounts();

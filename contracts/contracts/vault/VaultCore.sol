@@ -803,6 +803,14 @@ contract VaultCore is VaultInitializer {
         return assets[_asset].isSupported;
     }
 
+    function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {
+        bytes32 slot = adminImplPosition;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            adminImpl := sload(slot)
+        }
+    }
+
     /**
      * @dev Falldown to the admin implementation
      * @notice This is a catch all for all functions not declared in core
