@@ -34,7 +34,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     }
 
     /**
-     * @notice Deposit Wrapped Sonic (wS) to this strategy so it can later be delegated to a validator.
+     * @notice Deposit Wrapped Sonic (wS) to this strategy and delegate to a validator.
      * @param _asset Address of Wrapped Sonic (wS) token
      * @param _amount Amount of Wrapped Sonic (wS) to deposit
      */
@@ -86,9 +86,9 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
         emit Withdrawal(wrappedSonic, address(0), _amount);
     }
 
-    /// @notice transfer all Wrapped Sonic (wS) deposits back to the vault.
+    /// @notice Transfer all Wrapped Sonic (wS) deposits back to the vault.
     /// This does not withdraw from delegated validators. That has to be done separately with `undelegate`.
-    /// Any native S in this strategy will not be withdrawn.
+    /// Any native S in this strategy will be withdrawn.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 balance = address(this).balance;
         if (balance > 0) {
