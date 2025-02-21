@@ -8,7 +8,7 @@ const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnSonic(
   {
-    deployName: "009_pool_booster_factory",
+    deployName: "010_pool_booster_factory",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
