@@ -194,7 +194,7 @@ const deployPoolBoosterFactorySwapxSingle = async () => {
     "PoolBoosterFactorySwapxSingle"
   );
   console.log(
-    `Deployed Pool Booster Pair Factory to ${dPoolBoosterFactory.address}`
+    `Deployed Pool Booster Single Factory to ${dPoolBoosterFactory.address}`
   );
 
   return await ethers.getContract("PoolBoosterFactorySwapxSingle_v1");

@@ -2,6 +2,9 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultSonicFixture } = require("../_fixture-sonic");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
+const {
+  deployWithConfirmation
+} = require("../../utils/deploy.js");
 const { ethers } = hre;
 const { oethUnits } = require("../helpers");
 
@@ -380,6 +383,16 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid ammPoolAddress address");
 
       await expect(
+        poolBoosterSingleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxSingle(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("0") //_salt
+          )
+      ).to.be.revertedWith("Invalid salt");
+
+      await expect(
         poolBoosterDoubleFactoryV1
           .connect(governor)
           .createPoolBoosterSwapxDouble(
@@ -442,6 +455,20 @@ describe("ForkTest: Pool Booster", function () {
           )
         // Unexpected split amount
       ).to.be.revertedWith("Failed creating a pool booster");
+
+      await expect(
+        poolBoosterDoubleFactoryV1
+          .connect(governor)
+          .createPoolBoosterSwapxDouble(
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
+            addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
+            addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
+            oethUnits("0.7"), //_split
+            oethUnits("0") //_salt
+          )
+        // Unexpected split amount
+      ).to.be.revertedWith("Invalid salt");
+
     });
 
     it("Should throw an error when non govenor is trying to create a pool booster", async () => {
@@ -545,6 +572,59 @@ describe("ForkTest: Pool Booster", function () {
           .connect(governor)
           .approveFactory(someFactoryAddress)
       ).to.be.revertedWith("Factory already approved");
+    });
+
+    it("Can not approve a zero address factory", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(governor)
+          .approveFactory(addresses.zero)
+      ).to.be.revertedWith("Invalid address");
+    });
+
+    it("Can not remove a zero address factory", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(governor)
+          .removeFactory(addresses.zero)
+      ).to.be.revertedWith("Invalid address");
+    });
+
+    it("Can not remove a factory that hasn't been approved", async () => {
+      const { poolBoosterCentralRegistry, governor } = fixture;
+      const someFactoryAddress = addresses.sonic.SwapXOsUSDCe.extBribeOS;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(governor)
+          .removeFactory(someFactoryAddress)
+      ).to.be.revertedWith("Not an approved factory");
+    });
+  });
+
+  describe("Deploying the new pool boosters", async () => {
+    it("Can not deploy a factory with zero sonic address", async () => {
+      await expect(
+        deployWithConfirmation(
+          "PoolBoosterFactorySwapxSingle_v1",
+          [addresses.zero, addresses.sonic.timelock],
+          "PoolBoosterFactorySwapxSingle"
+        )
+      ).to.be.revertedWith("Invalid oSonic address");
+    });
+
+    it("Can not deploy a factory with zero governor address", async () => {
+      await expect(
+        deployWithConfirmation(
+          "PoolBoosterFactorySwapxSingle_v1",
+          [addresses.sonic.OSonicProxy, addresses.zero],
+          "PoolBoosterFactorySwapxSingle"
+        )
+      ).to.be.revertedWith("Invalid governor address");
     });
   });
 
