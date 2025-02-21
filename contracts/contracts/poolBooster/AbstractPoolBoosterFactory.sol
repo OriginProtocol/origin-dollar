@@ -128,13 +128,13 @@ contract AbstractPoolBoosterFactory is Governable {
         );
     }
 
-    function _deployContract(bytes memory bytecode, uint256 _salt)
+    function _deployContract(bytes memory _bytecode, uint256 _salt)
         internal
         returns (address _address)
     {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            _address := create2(0, add(bytecode, 0x20), mload(bytecode), _salt)
+            _address := create2(0, add(_bytecode, 0x20), mload(_bytecode), _salt)
         }
 
         require(
@@ -145,7 +145,7 @@ contract AbstractPoolBoosterFactory is Governable {
 
     // pre-compute the address of the deployed contract that will be
     // created when create2 is called
-    function _computeAddress(bytes memory bytecode, uint256 _salt)
+    function _computeAddress(bytes memory _bytecode, uint256 _salt)
         internal
         view
         returns (address)
@@ -155,7 +155,7 @@ contract AbstractPoolBoosterFactory is Governable {
                 bytes1(0xff),
                 address(this),
                 _salt,
-                keccak256(bytecode)
+                keccak256(_bytecode)
             )
         );
 
