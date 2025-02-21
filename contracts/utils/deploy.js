@@ -117,7 +117,7 @@ const deployWithConfirmation = async (
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet || isArbitrumOne || isBase || isSonic) {
-    await storeStorageLayoutForContract(hre, contractName);
+    await storeStorageLayoutForContract(hre, contractName, contract);
   }
 
   log(`Deployed ${contractName}`, result);
