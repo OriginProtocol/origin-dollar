@@ -59,8 +59,7 @@ contract PoolBoosterSwapxDouble is IPoolBooster {
         }
 
         uint256 osBribeAmount = balance.mulTruncate(split);
-        // -1 to prevent possible rounding issues with OS token
-        uint256 otherBribeAmount = balance - osBribeAmount - 1;
+        uint256 otherBribeAmount = balance - osBribeAmount;
 
         osToken.approve(address(bribeContractOS), osBribeAmount);
         osToken.approve(address(bribeContractOther), otherBribeAmount);
@@ -71,6 +70,6 @@ contract PoolBoosterSwapxDouble is IPoolBooster {
             otherBribeAmount
         );
 
-        emit BribeExecuted(balance - 1);
+        emit BribeExecuted(balance);
     }
 }

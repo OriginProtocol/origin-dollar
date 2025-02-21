@@ -2,9 +2,7 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultSonicFixture } = require("../_fixture-sonic");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
-const {
-  deployWithConfirmation
-} = require("../../utils/deploy.js");
+const { deployWithConfirmation } = require("../../utils/deploy.js");
 const { ethers } = hre;
 const { oethUnits } = require("../helpers");
 
@@ -104,7 +102,7 @@ describe("ForkTest: Pool Booster", function () {
             .mul(oethUnits(`${1 - parseFloat(split)}`))
             .div(oethUnits("1"))
         );
-        expect(balanceAfter).to.lte(1);
+        expect(balanceAfter).to.equal(0);
 
         // Call bribe again, but this time with too little funds to execute the bribe (min amount is 1e10)
         await oSonic
@@ -152,7 +150,7 @@ describe("ForkTest: Pool Booster", function () {
             .div(oethUnits("1"))
         );
 
-        expect(balanceAfter).to.lte(1);
+        expect(balanceAfter).to.equal(0);
       });
     }
   });
@@ -468,7 +466,6 @@ describe("ForkTest: Pool Booster", function () {
           )
         // Unexpected split amount
       ).to.be.revertedWith("Invalid salt");
-
     });
 
     it("Should throw an error when non govenor is trying to create a pool booster", async () => {
