@@ -155,7 +155,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         nonReentrant
         returns (uint256 withdrawId)
     {
-        return _undelegate(_validatorId, _undelegateAmount);
+        withdrawId = _undelegate(_validatorId, _undelegateAmount);
     }
 
     function _undelegate(uint256 _validatorId, uint256 _undelegateAmount)
