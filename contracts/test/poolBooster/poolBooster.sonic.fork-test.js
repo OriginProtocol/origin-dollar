@@ -256,7 +256,8 @@ describe("ForkTest: Pool Booster", function () {
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
-        ethers.BigNumber.from("0") // PoolBoosterType.SwapXDoubleBooster
+        ethers.BigNumber.from("0"), // PoolBoosterType.SwapXDoubleBooster
+        poolBoosterDoubleFactoryV1.address
       );
 
     expect(await poolBooster.osToken()).to.equal(oSonic.address);
@@ -353,7 +354,8 @@ describe("ForkTest: Pool Booster", function () {
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
-        ethers.BigNumber.from("1") // PoolBoosterType.SwapXSingleBooster
+        ethers.BigNumber.from("1"), // PoolBoosterType.SwapXSingleBooster
+        poolBoosterSingleFactoryV1.address
       );
 
     expect(await poolBooster.osToken()).to.equal(oSonic.address);

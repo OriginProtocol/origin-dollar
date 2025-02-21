@@ -29,7 +29,8 @@ interface IPoolBoostCentralRegistry {
     event PoolBoosterCreated(
         address poolBoosterAddress,
         address ammPoolAddress,
-        PoolBoosterType poolBoosterType
+        PoolBoosterType poolBoosterType,
+        address factoryAddress
     );
     event PoolBoosterRemoved(address poolBoosterAddress);
 

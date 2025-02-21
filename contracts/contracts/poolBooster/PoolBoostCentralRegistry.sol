@@ -83,7 +83,8 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
         emit PoolBoosterCreated(
             _poolBoosterAddress,
             _ammPoolAddress,
-            _boosterType
+            _boosterType,
+            msg.sender // address of the factory
         );
     }
 
