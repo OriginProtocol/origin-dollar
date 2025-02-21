@@ -608,6 +608,26 @@ describe("ForkTest: Pool Booster", function () {
           .removeFactory(someFactoryAddress)
       ).to.be.revertedWith("Not an approved factory");
     });
+
+    it("Can not call emit pool booster created if not a factory", async () => {
+      const { poolBoosterCentralRegistry, nick } = fixture;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(nick)
+          .emitPoolBoosterCreated(addresses.zero, addresses.zero, 0)
+      ).to.be.revertedWith("Not an approved factory");
+    });
+
+    it("Can not call emit pool booster removed if not a factory", async () => {
+      const { poolBoosterCentralRegistry, nick } = fixture;
+
+      await expect(
+        poolBoosterCentralRegistry
+          .connect(nick)
+          .emitPoolBoosterRemoved(addresses.zero)
+      ).to.be.revertedWith("Not an approved factory");
+    });
   });
 
   describe("Deploying the new pool boosters", async () => {
@@ -639,6 +659,20 @@ describe("ForkTest: Pool Booster", function () {
           "PoolBoosterFactorySwapxSingle"
         )
       ).to.be.revertedWith("Invalid governor address");
+    });
+
+    it("Can not deploy a factory with zero central registry address", async () => {
+      await expect(
+        deployWithConfirmation(
+          "PoolBoosterFactorySwapxSingle_v1",
+          [
+            addresses.sonic.OSonicProxy,
+            addresses.sonic.timelock,
+            addresses.zero,
+          ],
+          "PoolBoosterFactorySwapxSingle"
+        )
+      ).to.be.revertedWith("Invalid central registry address");
     });
   });
 

@@ -17,7 +17,7 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
     mapping(address => bool) public factories;
 
     modifier onlyApprovedFactories() {
-        require(factories[msg.sender], "Not an approved facotry");
+        require(factories[msg.sender], "Not an approved factory");
         _;
     }
 
