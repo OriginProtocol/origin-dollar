@@ -13,11 +13,11 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
     event FactoryApproved(address factoryAddress);
     event FactoryRemoved(address factoryAddress);
 
-    // @notice Mapping of approved factories
-    mapping(address => bool) public factories;
+    // @notice List of approved factories
+    address[] public factories;
 
     modifier onlyApprovedFactories() {
-        require(factories[msg.sender], "Not an approved factory");
+        require(isApprovedFactory(msg.sender), "Not an approved factory");
         _;
     }
 
@@ -37,7 +37,7 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
             "Factory already approved"
         );
 
-        factories[_factoryAddress] = true;
+        factories.push(_factoryAddress);
         emit FactoryApproved(_factoryAddress);
     }
 
@@ -47,9 +47,22 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
      */
     function removeFactory(address _factoryAddress) external onlyGovernor {
         require(_factoryAddress != address(0), "Invalid address");
-        require(isApprovedFactory(_factoryAddress), "Not an approved factory");
 
-        factories[_factoryAddress] = false;
+        uint256 length = factories.length;
+        bool factoryRemoved = false;
+        for (uint256 i = 0; i < length; i++) {
+            if (factories[i] != _factoryAddress) {
+                continue;
+            }
+
+            factories[i] = factories[length - 1];
+            factories.pop();
+            emit FactoryRemoved(_factoryAddress);
+            factoryRemoved = true;
+            break;
+        }
+        require(factoryRemoved, "Not an approved factory");
+
         emit FactoryRemoved(_factoryAddress);
     }
 
@@ -97,6 +110,19 @@ contract PoolBoostCentralRegistry is Governable, IPoolBoostCentralRegistry {
         view
         returns (bool)
     {
-        return factories[_factoryAddress];
+        uint256 length = factories.length;
+        for (uint256 i = 0; i < length; i++) {
+            if (factories[i] == _factoryAddress) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @notice Returns all supported factories
+     */
+    function getAllFactories() external view returns (address[] memory) {
+        return factories;
     }
 }

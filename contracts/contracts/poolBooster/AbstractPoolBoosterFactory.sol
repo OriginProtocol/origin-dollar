@@ -134,7 +134,12 @@ contract AbstractPoolBoosterFactory is Governable {
     {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            _address := create2(0, add(_bytecode, 0x20), mload(_bytecode), _salt)
+            _address := create2(
+                0,
+                add(_bytecode, 0x20),
+                mload(_bytecode),
+                _salt
+            )
         }
 
         require(
