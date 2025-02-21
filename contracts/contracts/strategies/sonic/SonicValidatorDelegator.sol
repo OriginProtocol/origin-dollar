@@ -45,13 +45,13 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
     event Delegated(uint256 indexed validatorId, uint256 delegatedAmount);
     event Undelegated(
-        uint256 withdrawId,
-        uint256 validatorId,
+        uint256 indexed withdrawId,
+        uint256 indexed validatorId,
         uint256 undelegatedAmount
     );
     event Withdrawn(
-        uint256 withdrawId,
-        uint256 validatorId,
+        uint256 indexed withdrawId,
+        uint256 indexed validatorId,
         uint256 undelegatedAmount,
         uint256 withdrawnAmount
     );
