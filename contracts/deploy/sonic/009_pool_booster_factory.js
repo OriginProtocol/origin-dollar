@@ -19,18 +19,6 @@ module.exports = deployOnSonic(
       addresses.sonic.OSonicProxy
     );
 
-    const dPoolBoosterFactory = await deployWithConfirmation(
-      "PoolBoosterFactorySwapxDouble_v1",
-      [addresses.sonic.OSonicProxy, addresses.sonic.timelock],
-      "PoolBoosterFactorySwapxDouble"
-    );
-    const cPoolBoosterFactory = await ethers.getContract(
-      "PoolBoosterFactorySwapxDouble_v1"
-    );
-    console.log(
-      `Pool Booster Ichi Factory deployed to ${dPoolBoosterFactory.address}`
-    );
-
     await deployWithConfirmation("PoolBoostCentralRegistryProxy", []);
     const cPoolBoostCentralRegistryProxy = await ethers.getContract(
       "PoolBoostCentralRegistryProxy"
@@ -64,6 +52,22 @@ module.exports = deployOnSonic(
       "Initialized PoolBoostCentralRegistry proxy and implementation"
     );
 
+    const dPoolBoosterFactory = await deployWithConfirmation(
+      "PoolBoosterFactorySwapxDouble_v1",
+      [
+        addresses.sonic.OSonicProxy,
+        addresses.sonic.timelock,
+        cPoolBoostCentralRegistryProxy.address,
+      ],
+      "PoolBoosterFactorySwapxDouble"
+    );
+    const cPoolBoosterFactory = await ethers.getContract(
+      "PoolBoosterFactorySwapxDouble_v1"
+    );
+    console.log(
+      `Pool Booster Ichi Factory deployed to ${dPoolBoosterFactory.address}`
+    );
+
     const poolBoosterCreationArgs = [
       addresses.sonic.SwapXOsUSDCe.extBribeOS,
       addresses.sonic.SwapXOsUSDCe.extBribeUSDC,
@@ -80,15 +84,17 @@ module.exports = deployOnSonic(
     return {
       actions: [
         {
+          // set the factory as an approved one
+          contract: cPoolBoostCentralRegistry,
+          signature: "approveFactory(address)",
+          args: [dPoolBoosterFactory.address],
+        },
+        {
+          // crate a pool booster for the concentrated liquidity pool
           contract: cPoolBoosterFactory,
           signature:
             "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
           args: poolBoosterCreationArgs,
-        },
-        {
-          contract: cPoolBoostCentralRegistry,
-          signature: "approveFactory(address)",
-          args: [dPoolBoosterFactory.address],
         },
         {
           // Undelegate yield from the OS/USDC.e pool

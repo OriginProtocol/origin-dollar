@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { PoolBoosterSwapxDouble } from "./PoolBoosterSwapxDouble.sol";
-import { AbstractPoolBoosterFactory } from "./AbstractPoolBoosterFactory.sol";
+import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
 /**
  * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the
@@ -14,9 +14,12 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
 
     // @param address _oSonic address of the OSonic token
     // @param address _governor address governor
-    constructor(address _oSonic, address _governor)
-        AbstractPoolBoosterFactory(_oSonic, _governor)
-    {}
+    // @param address _centralRegistry address of the central registry
+    constructor(
+        address _oSonic,
+        address _governor,
+        address _centralRegistry
+    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {}
 
     /**
      * @dev Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be
@@ -54,7 +57,7 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
         _storePoolBoosterEntry(
             poolBoosterAddress,
             _ammPoolAddress,
-            PoolBoosterType.SwapXDoubleBooster
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXDoubleBooster
         );
     }
 

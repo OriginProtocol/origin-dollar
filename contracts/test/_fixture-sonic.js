@@ -17,6 +17,10 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultSonicFixture = deployments.createFixture(async () => {
+  // Impersonate governor
+  const governor = await impersonateAndFund(addresses.sonic.timelock);
+  governor.address = addresses.sonic.timelock;
+
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -103,7 +107,10 @@ const defaultSonicFixture = deployments.createFixture(async () => {
       ).address
     );
 
-    poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle();
+    poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle(
+      poolBoosterCentralRegistry,
+      governor
+    );
   }
 
   // Sonic's wrapped S token
@@ -119,9 +126,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
   const { strategistAddr, timelockAddr } = await getNamedAccounts();
-  // Impersonate governor
-  const governor = await impersonateAndFund(addresses.sonic.timelock);
-  governor.address = addresses.sonic.timelock;
 
   // Impersonate strategist
   const strategist = await impersonateAndFund(strategistAddr);
@@ -187,12 +191,25 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   };
 });
 
-const deployPoolBoosterFactorySwapxSingle = async () => {
+const deployPoolBoosterFactorySwapxSingle = async (
+  poolBoosterCentralRegistry,
+  governor
+) => {
   const dPoolBoosterFactory = await deployWithConfirmation(
     "PoolBoosterFactorySwapxSingle_v1",
-    [addresses.sonic.OSonicProxy, addresses.sonic.timelock],
+    [
+      addresses.sonic.OSonicProxy,
+      addresses.sonic.timelock,
+      poolBoosterCentralRegistry.address,
+    ],
     "PoolBoosterFactorySwapxSingle"
   );
+
+  // approve the pool booster on the factory
+  await poolBoosterCentralRegistry
+    .connect(governor)
+    .approveFactory(dPoolBoosterFactory.address);
+
   console.log(
     `Deployed Pool Booster Single Factory to ${dPoolBoosterFactory.address}`
   );

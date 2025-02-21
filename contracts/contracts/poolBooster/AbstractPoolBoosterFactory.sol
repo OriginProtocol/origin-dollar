@@ -3,45 +3,30 @@ pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
+import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /**
  * @title Abstract Pool booster factory
  * @author Origin Protocol Inc
  */
 contract AbstractPoolBoosterFactory is Governable {
-    /**
-     * @dev all the supported pool booster types are listed here. It is possible
-     *      to have multiple versions of the factory that supports the same type of
-     *      pool booster. Factories are immutable and this can happen when a factory
-     *      or related pool booster required code update.
-     *      e.g. "PoolBoosterSwapxDouble" & "PoolBoosterSwapxDouble_v2"
-     */
-    enum PoolBoosterType {
-        // Supports bribing 2 contracts per pool. Appropriate for Ichi vault concentrated
-        // liquidity pools where (which is expected in most/all cases) both pool gauges
-        // require bribing.
-        SwapXDoubleBooster,
-        // Supports bribing a single contract per pool. Appropriate for Classic Stable &
-        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)
-        // needs bribing
-        SwapXSingleBooster
-    }
-
     struct PoolBoosterEntry {
         address boosterAddress;
         address ammPoolAddress;
-        PoolBoosterType boosterType;
+        IPoolBoostCentralRegistry.PoolBoosterType boosterType;
     }
 
-    event PoolBoosterDeployed(
+    event PoolBoosterCreated(
         address poolBoosterAddress,
         address ammPoolAddress,
-        PoolBoosterType poolBoosterType
+        IPoolBoostCentralRegistry.PoolBoosterType poolBoosterType
     );
     event PoolBoosterRemoved(address poolBoosterAddress);
 
     // @notice address of Origin Sonic
     address public immutable oSonic;
+    // @notice Central registry contract
+    IPoolBoostCentralRegistry public centralRegistry;
 
     // @notice list of all the pool boosters created by this factory
     PoolBoosterEntry[] public poolBoosters;
@@ -50,11 +35,21 @@ contract AbstractPoolBoosterFactory is Governable {
 
     // @param address _oSonic address of the OSonic token
     // @param address _governor address governor
-    constructor(address _oSonic, address _governor) {
+    // @param address _centralRegistry address of the central registry
+    constructor(
+        address _oSonic,
+        address _governor,
+        address _centralRegistry
+    ) {
         require(_oSonic != address(0), "Invalid oSonic address");
         require(_governor != address(0), "Invalid governor address");
+        require(
+            _centralRegistry != address(0),
+            "Invalid central registry address"
+        );
 
         oSonic = _oSonic;
+        centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
         _setGovernor(_governor);
     }
 
@@ -105,7 +100,7 @@ contract AbstractPoolBoosterFactory is Governable {
                 // drop the last entry
                 poolBoosters.pop();
 
-                emit PoolBoosterRemoved(_poolBoosterAddress);
+                centralRegistry.emitPoolBoosterRemoved(_poolBoosterAddress);
                 break;
             }
         }
@@ -114,21 +109,22 @@ contract AbstractPoolBoosterFactory is Governable {
     function _storePoolBoosterEntry(
         address _poolBoosterAddress,
         address _ammPoolAddress,
-        PoolBoosterType boosterType
+        IPoolBoostCentralRegistry.PoolBoosterType _boosterType
     ) internal {
         PoolBoosterEntry memory entry = PoolBoosterEntry(
             _poolBoosterAddress,
             _ammPoolAddress,
-            boosterType
+            _boosterType
         );
 
         poolBoosters.push(entry);
         poolBoosterFromPool[_ammPoolAddress] = entry;
 
-        emit PoolBoosterDeployed(
+        // emit the events of the pool booster created
+        centralRegistry.emitPoolBoosterCreated(
             _poolBoosterAddress,
             _ammPoolAddress,
-            boosterType
+            _boosterType
         );
     }
 

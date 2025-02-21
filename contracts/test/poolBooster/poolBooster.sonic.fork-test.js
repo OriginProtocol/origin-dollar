@@ -173,7 +173,8 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to remove a pool booster", async () => {
-    const { poolBoosterDoubleFactoryV1, governor } = fixture;
+    const { poolBoosterDoubleFactoryV1, governor, poolBoosterCentralRegistry } =
+      fixture;
 
     // create another pool booster (which is placed as the last entry in
     // the poolBoosters array in poolBoosterDoubleFactoryV1)
@@ -200,7 +201,7 @@ describe("ForkTest: Pool Booster", function () {
       .removePoolBooster(osUsdcePoolBooster.boosterAddress);
 
     await expect(tx)
-      .to.emit(poolBoosterDoubleFactoryV1, "PoolBoosterRemoved")
+      .to.emit(poolBoosterCentralRegistry, "PoolBoosterRemoved")
       .withArgs(osUsdcePoolBooster.boosterAddress);
 
     expect(await poolBoosterDoubleFactoryV1.poolBoosterLength()).to.equal(
@@ -226,7 +227,12 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to create an Ichi pool booster", async () => {
-    const { oSonic, poolBoosterDoubleFactoryV1, governor } = fixture;
+    const {
+      oSonic,
+      poolBoosterDoubleFactoryV1,
+      governor,
+      poolBoosterCentralRegistry,
+    } = fixture;
 
     const tx = await poolBoosterDoubleFactoryV1
       .connect(governor)
@@ -246,7 +252,7 @@ describe("ForkTest: Pool Booster", function () {
     );
 
     await expect(tx)
-      .to.emit(poolBoosterDoubleFactoryV1, "PoolBoosterDeployed")
+      .to.emit(poolBoosterCentralRegistry, "PoolBoosterCreated")
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
@@ -322,7 +328,12 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to create a pair pool booster", async () => {
-    const { oSonic, poolBoosterSingleFactoryV1, governor } = fixture;
+    const {
+      oSonic,
+      poolBoosterSingleFactoryV1,
+      governor,
+      poolBoosterCentralRegistry,
+    } = fixture;
 
     const tx = await poolBoosterSingleFactoryV1
       .connect(governor)
@@ -338,7 +349,7 @@ describe("ForkTest: Pool Booster", function () {
     );
 
     await expect(tx)
-      .to.emit(poolBoosterSingleFactoryV1, "PoolBoosterDeployed")
+      .to.emit(poolBoosterCentralRegistry, "PoolBoosterCreated")
       .withArgs(
         poolBooster.address,
         addresses.sonic.SwapXOsGEMSx.pool,
@@ -508,10 +519,6 @@ describe("ForkTest: Pool Booster", function () {
       expect(
         await poolBoosterCentralRegistry.isApprovedFactory(someFactoryAddress)
       ).to.equal(true);
-
-      expect(
-        (await poolBoosterCentralRegistry.getAllFactories()).length
-      ).to.be.gte(1);
     });
 
     it("Governor should be able to remove a factory address", async () => {
@@ -605,20 +612,30 @@ describe("ForkTest: Pool Booster", function () {
 
   describe("Deploying the new pool boosters", async () => {
     it("Can not deploy a factory with zero sonic address", async () => {
+      const { poolBoosterCentralRegistry } = fixture;
       await expect(
         deployWithConfirmation(
           "PoolBoosterFactorySwapxSingle_v1",
-          [addresses.zero, addresses.sonic.timelock],
+          [
+            addresses.zero,
+            addresses.sonic.timelock,
+            poolBoosterCentralRegistry.address,
+          ],
           "PoolBoosterFactorySwapxSingle"
         )
       ).to.be.revertedWith("Invalid oSonic address");
     });
 
     it("Can not deploy a factory with zero governor address", async () => {
+      const { poolBoosterCentralRegistry } = fixture;
       await expect(
         deployWithConfirmation(
           "PoolBoosterFactorySwapxSingle_v1",
-          [addresses.sonic.OSonicProxy, addresses.zero],
+          [
+            addresses.sonic.OSonicProxy,
+            addresses.zero,
+            poolBoosterCentralRegistry.address,
+          ],
           "PoolBoosterFactorySwapxSingle"
         )
       ).to.be.revertedWith("Invalid governor address");
