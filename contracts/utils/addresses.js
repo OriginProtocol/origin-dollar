@@ -382,10 +382,14 @@ addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 
 // SwapX on Sonic
+addresses.sonic.SWPx = "0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70";
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 addresses.sonic.SwapXOsUSDCePool = "0x84EA9fAfD41abAEc5a53248f79Fa05ADA0058a96";
 addresses.sonic.SwapXOsGEMSxPool = "0x9ac7f5961a452e9cd5be5717bd2c3df412d1c1a5";
+addresses.sonic.SwapXWSOSPool = "0xcfe67b6c7b65c8d038e666b3241a161888b7f2b0";
+// TODO replace once the gauge is deployed
+addresses.sonic.SwapXWSOSPoolGauge = addresses.dead;
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
