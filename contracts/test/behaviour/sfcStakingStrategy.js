@@ -193,7 +193,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         .connect(validatorRegistrator)
         .collectRewards(testValidatorIds);
 
-      expect(tx).to.emittedEvent("Withdrawal", [
+      await expect(tx).to.emittedEvent("Withdrawal", [
         wS.address,
         AddressZero,
         async (amount) => {

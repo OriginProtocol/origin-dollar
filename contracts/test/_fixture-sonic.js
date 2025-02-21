@@ -2,6 +2,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
 const { isFork, isSonicFork, oethUnits } = require("./helpers");
+const { deployWithConfirmation } = require("../utils/deploy.js");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
@@ -16,6 +17,10 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultSonicFixture = deployments.createFixture(async () => {
+  // Impersonate governor
+  const governor = await impersonateAndFund(addresses.sonic.timelock);
+  governor.address = addresses.sonic.timelock;
+
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -76,7 +81,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  let dripper, zapper;
+  let dripper,
+    zapper,
+    poolBoosterDoubleFactoryV1,
+    poolBoosterSingleFactoryV1,
+    poolBoosterCentralRegistry;
   if (isFork) {
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
@@ -86,6 +95,22 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     );
 
     zapper = await ethers.getContract("OSonicZapper");
+
+    poolBoosterDoubleFactoryV1 = await ethers.getContract(
+      "PoolBoosterFactorySwapxDouble_v1"
+    );
+
+    poolBoosterCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      (
+        await ethers.getContract("PoolBoostCentralRegistryProxy")
+      ).address
+    );
+
+    poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle(
+      poolBoosterCentralRegistry,
+      governor
+    );
   }
 
   // Sonic's wrapped S token
@@ -100,11 +125,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr, timelockAddr } =
-    await getNamedAccounts();
-  // Impersonate governor
-  const governor = await impersonateAndFund(governorAddr);
-  governor.address = governorAddr;
+  const { strategistAddr, timelockAddr } = await getNamedAccounts();
 
   // Impersonate strategist
   const strategist = await impersonateAndFund(strategistAddr);
@@ -145,6 +166,9 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sonicStakingStrategy,
     dripper,
     zapper,
+    poolBoosterDoubleFactoryV1,
+    poolBoosterSingleFactoryV1,
+    poolBoosterCentralRegistry,
 
     // Wrapped S
     wS,
@@ -166,6 +190,32 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sfc,
   };
 });
+
+const deployPoolBoosterFactorySwapxSingle = async (
+  poolBoosterCentralRegistry,
+  governor
+) => {
+  const dPoolBoosterFactory = await deployWithConfirmation(
+    "PoolBoosterFactorySwapxSingle_v1",
+    [
+      addresses.sonic.OSonicProxy,
+      addresses.sonic.timelock,
+      poolBoosterCentralRegistry.address,
+    ],
+    "PoolBoosterFactorySwapxSingle"
+  );
+
+  // approve the pool booster on the factory
+  await poolBoosterCentralRegistry
+    .connect(governor)
+    .approveFactory(dPoolBoosterFactory.address);
+
+  console.log(
+    `Deployed Pool Booster Single Factory to ${dPoolBoosterFactory.address}`
+  );
+
+  return await ethers.getContract("PoolBoosterFactorySwapxSingle_v1");
+};
 
 mocha.after(async () => {
   if (snapshotId) {
