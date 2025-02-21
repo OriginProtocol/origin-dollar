@@ -16,13 +16,6 @@ contract AbstractPoolBoosterFactory is Governable {
         IPoolBoostCentralRegistry.PoolBoosterType boosterType;
     }
 
-    event PoolBoosterCreated(
-        address poolBoosterAddress,
-        address ammPoolAddress,
-        IPoolBoostCentralRegistry.PoolBoosterType poolBoosterType
-    );
-    event PoolBoosterRemoved(address poolBoosterAddress);
-
     // @notice address of Origin Sonic
     address public immutable oSonic;
     // @notice Central registry contract
