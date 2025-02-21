@@ -26,7 +26,7 @@ contract AbstractPoolBoosterFactory is Governable {
     // @notice address of Origin Sonic
     address public immutable oSonic;
     // @notice Central registry contract
-    IPoolBoostCentralRegistry public centralRegistry;
+    IPoolBoostCentralRegistry public immutable centralRegistry;
 
     // @notice list of all the pool boosters created by this factory
     PoolBoosterEntry[] public poolBoosters;
