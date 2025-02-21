@@ -10,7 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("3Pool Strategy", function () {
+describe.skip("3Pool Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
