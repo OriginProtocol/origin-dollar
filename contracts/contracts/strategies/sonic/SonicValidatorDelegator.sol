@@ -214,7 +214,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
         try sfc.withdraw(withdrawal.validatorId, _withdrawId) {
             // continue below
         } catch (bytes memory err) {
-            bytes4 errorSelector = abi.decode(err, (bytes4));
+            bytes4 errorSelector = bytes4(err);
 
             // If the validator has been fully slashed, SFC's withdraw function will
             // revert with a StakeIsFullySlashed custom error.
@@ -236,8 +236,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
                 // Exit here as there is nothing to transfer to the Vault
                 return withdrawnAmount;
             } else {
-                // There was some other error, revert the transaction
-                revert("Failed SFC withdraw");
+                // Bubble up custom errors
+                assembly {
+                    revert(add(32, err), mload(err))
+                }
             }
         }
 
