@@ -148,6 +148,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
      * This needs to be followed by a `withdrawFromSFC` two weeks later.
      * @param _validatorId The Sonic validator ID to undelegate from.
      * @param _undelegateAmount the amount of Sonic (S) to undelegate.
+     * @return withdrawId The unique ID of the withdrawal request.
      */
     function undelegate(uint256 _validatorId, uint256 _undelegateAmount)
         external
@@ -188,7 +189,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     /**
      * @notice Withdraw native S from a previously undelegated validator.
      * The native S is wrapped wS and transferred to the Vault.
-     * @param _withdrawId The withdraw ID returned from `undelegate` and emitted in `Undelegated`.
+     * @param _withdrawId The unique withdraw ID used to `undelegate`
      * @return withdrawnAmount The amount of Sonic (S) withdrawn.
      * This can be less than the undelegated amount in the event of slashing.
      */
@@ -231,6 +232,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice returns a bool whether a withdrawalId has already been withdrawn or not
+    /// @param _withdrawId The unique withdraw ID used to `undelegate`
     function isWithdrawnFromSFC(uint256 _withdrawId)
         public
         view
@@ -319,13 +321,18 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
                 Admin functions
     ****************************************/
 
-    /// @notice Set the address of the Registrator which can delegate, undelegate and withdraw
-    function setRegistrator(address _address) external onlyGovernor {
-        validatorRegistrator = _address;
-        emit RegistratorChanged(_address);
+    /// @notice Set the address of the Registrator which can undelegate, withdraw and collect rewards
+    /// @param _validatorRegistrator The address of the Registrator
+    function setRegistrator(address _validatorRegistrator)
+        external
+        onlyGovernor
+    {
+        validatorRegistrator = _validatorRegistrator;
+        emit RegistratorChanged(_validatorRegistrator);
     }
 
     /// @notice Set the default validatorId to delegate to on deposit
+    /// @param _validatorId The validator identifier. eg 18
     function setDefaultValidatorId(uint256 _validatorId)
         external
         onlyRegistratorOrStrategist
@@ -336,6 +343,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice Allows a validator to be delegated to by the Registrator
+    /// @param _validatorId The validator identifier. eg 18
     function supportValidator(uint256 _validatorId) external onlyGovernor {
         require(
             !isSupportedValidator(_validatorId),
@@ -349,6 +357,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
     /// @notice Removes a validator from the supported list.
     /// Unsupported validators can still be undelegated from, withdrawn from and rewards collected.
+    /// @param _validatorId The validator identifier. eg 18
     function unsupportValidator(uint256 _validatorId) external onlyGovernor {
         require(isSupportedValidator(_validatorId), "Validator not supported");
 
@@ -376,6 +385,7 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /// @notice Returns whether a validator is supported by this strategy
+    /// @param _validatorId The validator identifier
     function isSupportedValidator(uint256 _validatorId)
         public
         view
