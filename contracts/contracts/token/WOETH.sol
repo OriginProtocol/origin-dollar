@@ -129,7 +129,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     /** @dev See {IERC4262-totalAssets} */
-    function totalAssets() public view virtual override returns (uint256) {
+    function totalAssets() public view override returns (uint256) {
         (, uint256 creditsPerTokenHighres, ) = OETH(asset())
             .creditsBalanceOfHighres(address(this));
 
@@ -139,7 +139,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     /** @dev See {IERC4262-deposit} */
     function deposit(uint256 oethAmount, address receiver)
         public
-        virtual
         override
         returns (uint256 woethAmount)
     {
@@ -150,7 +149,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     /** @dev See {IERC4262-mint} */
     function mint(uint256 woethAmount, address receiver)
         public
-        virtual
         override
         returns (uint256 oethAmount)
     {
@@ -163,7 +161,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 oethAmount,
         address receiver,
         address owner
-    ) public virtual override returns (uint256 woethAmount) {
+    ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         oethCreditsHighres -= _oethToCredits(oethAmount);
     }
@@ -173,7 +171,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 woethAmount,
         address receiver,
         address owner
-    ) public virtual override returns (uint256 oethAmount) {
+    ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
         oethCreditsHighres -= _oethToCredits(oethAmount);
     }
