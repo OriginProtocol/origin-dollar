@@ -1515,9 +1515,7 @@ const deployWOeth = async () => {
 
   const oeth = await ethers.getContract("OETHProxy");
   const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
-    oeth.address,
-    "Wrapped OETH IMPL",
-    "WOETH IMPL",
+    oeth.address
   ]);
   await deployWithConfirmation("WOETHProxy");
   const woethProxy = await ethers.getContract("WOETHProxy");
