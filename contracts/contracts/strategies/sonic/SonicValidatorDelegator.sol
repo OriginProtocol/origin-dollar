@@ -272,8 +272,8 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Claim any pending validator rewards for all supported validators
-     * @param _validatorIds List of Sonic validator IDs to restake rewards
+     * @notice Claim any pending rewards from validators
+     * @param _validatorIds List of Sonic validator IDs to claim rewards
      */
     function collectRewards(uint256[] calldata _validatorIds)
         external
