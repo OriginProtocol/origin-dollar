@@ -190,12 +190,12 @@ module.exports = deploymentWithGovernanceProposal(
           args: [migrationStrategy.address],
         },
 
-        {
-          // Optional: Allocate USDS from the Vault to the SSR Strategy
-          contract: cVault,
-          signature: "allocate()",
-          args: [],
-        },
+        // {
+        //   // Optional: Allocate USDS from the Vault to the SSR Strategy
+        //   contract: cVault,
+        //   signature: "allocate()",
+        //   args: [],
+        // },
 
         {
           // Remove DAI
