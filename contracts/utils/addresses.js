@@ -30,6 +30,8 @@ addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
+addresses.mainnet.USDS = "0xdc035d45d973e3ec169d2276ddab16f1e407384f";
+addresses.mainnet.sUSDS = "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd";
 // AAVE
 addresses.mainnet.AAVE_ADDRESS_PROVIDER =
   "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
@@ -300,6 +302,10 @@ addresses.mainnet.validatorRegistrator =
 // Lido Withdrawal Queue
 addresses.mainnet.LidoWithdrawalQueue =
   "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";
+
+// DAI > USDS Migration Contract
+addresses.mainnet.DaiUsdsMigrationContract =
+  "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
 // Arbitrum One
 addresses.arbitrumOne = {};

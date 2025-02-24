@@ -105,7 +105,7 @@ interface IVault {
     function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
         external;
 
-    function supportAsset(address _asset, uint8 _supportsAsset) external;
+    function supportAsset(address _asset, uint8 _unitConversion) external;
 
     function approveStrategy(address _addr) external;
 

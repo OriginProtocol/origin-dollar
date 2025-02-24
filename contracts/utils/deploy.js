@@ -1185,6 +1185,21 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   }
 }
 
+async function simulateWithTimelockImpersonation(proposal) {
+  log("Simulating the proposal directly on the timelock...");
+  const { timelockAddr } = await getNamedAccounts();
+  const timelock = await impersonateAndFund(timelockAddr);
+
+  for (const action of proposal.actions) {
+    const { contract, signature, args } = action;
+
+    log(`Sending governance action ${signature} to ${contract.address}`);
+    await contract.connect(timelock)[signature](...args, await getTxOpts());
+
+    console.log(`... ${signature} completed`);
+  }
+}
+
 /**
  * Shortcut to create a deployment on decentralized Governance (xOGN) for hardhat to use
  * @param {Object} options for deployment
@@ -1203,6 +1218,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
     reduceQueueTime = false, // reduce governance queue times
     executeGasLimit = null,
     skipSimulation = false, // Skips simulating execution of proposal on fork
+    // Simulates the actions by impersonating the timelock, helpful when debugging failing actions
+    simulateDirectlyOnTimelock = false,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -1271,6 +1288,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
       if (skipSimulation) {
         log("Building xOGN governance proposal...");
         await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      } else if (simulateDirectlyOnTimelock) {
+        await simulateWithTimelockImpersonation(proposal);
       } else {
         // On Fork we can send the proposal then impersonate the guardian to execute it.
         log("Sending the governance proposal to xOGN governance");
