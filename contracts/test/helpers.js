@@ -147,10 +147,7 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   const tx = this._obj;
   const { events } = await tx.wait();
   const log = events.find((e) => e.event == eventName);
-  chai.expect(
-    log,
-    `Failed to find event "${eventName}" on the tx`
-  ).to.not.be.undefined;
+  chai.expect(log, `Failed to find event "${eventName}" on the tx`).to.exist;
 
   if (Array.isArray(args)) {
     chai
