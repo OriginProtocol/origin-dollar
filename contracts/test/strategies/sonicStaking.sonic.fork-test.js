@@ -16,7 +16,7 @@ describe("Sonic ForkTest: Sonic Staking Strategy", function () {
     return {
       ...fixture,
       addresses: addresses.sonic,
-      sfcAddress: await ethers.getContractAt("ISFC", addresses.sonic.SFC),
+      sfc: await ethers.getContractAt("ISFC", addresses.sonic.SFC),
       // see validators here: https://explorer.soniclabs.com/staking
       testValidatorIds: [15, 16, 17, 18],
       unsupportedValidators: [1, 2, 3],
