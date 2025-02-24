@@ -111,10 +111,10 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         /**
          * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
-         * is internally being done in OETH:
+         * is internally being done in OETH. (Except that in case of OUSD it is being rounded up)
          */
         // solhint-disable-next-line max-line-length
-        /** https://github.com/OriginProtocol/origin-dollar/blob/2314cccf2933f5c1f76a6549c1f5c9cc935b6f05/contracts/contracts/token/OUSD.sol#L242-L249
+        /** https://github.com/OriginProtocol/origin-dollar/blob/c02572bd1c06eb3c2652c8692e52144be2efa741/contracts/contracts/token/OUSD.sol#L498
          *
          * This should make sure that the rounding will always be correct / mimic the rounding
          * of OETH.
