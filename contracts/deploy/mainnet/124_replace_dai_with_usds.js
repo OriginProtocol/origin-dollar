@@ -31,6 +31,8 @@ module.exports = deploymentWithGovernanceProposal(
       cHarvesterProxy.address
     );
 
+    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
     // 1. Deploy OracleRouter
     await deployWithConfirmation("OracleRouter");
     const cOracleRouter = await ethers.getContract("OracleRouter");
@@ -117,6 +119,13 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Replace DAI with USDS",
       actions: [
+        {
+          // Upgrade VaultAdmin implementation
+          // For some reason, removeAsset fails without upgrading
+          contract: cVault,
+          signature: "setAdminImpl(address)",
+          args: [dVaultAdmin.address],
+        },
         {
           // Set OracleRouter on Vault
           contract: cVault,
