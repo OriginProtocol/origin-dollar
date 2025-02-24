@@ -8,6 +8,11 @@ const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
+const erc20Abi = require("./abi/erc20.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
+const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
+const curveChildLiquidityGaugeFactoryAbi = require("./abi/curveChildLiquidityGaugeFactory.json");
+
 const log = require("../utils/logger")("test:fixtures-sonic");
 
 const MINTER_ROLE =
@@ -81,12 +86,20 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  let dripper,
+  let harvester,
+    dripper,
     zapper,
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry;
   if (isFork) {
+    // Harvester
+    const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
+    harvester = await ethers.getContractAt(
+      "OSonicHarvester",
+      harvesterProxy.address
+    );
+
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
     dripper = await ethers.getContractAt(
@@ -137,7 +150,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
-  let validatorRegistrator;
+  let validatorRegistrator, curveAMOStrategy;
   if (isFork) {
     validatorRegistrator = await impersonateAndFund(
       addresses.sonic.validatorRegistrator
@@ -145,6 +158,15 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
 
     await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
+
+    // Curve
+    const curveAMOProxy = await ethers.getContract(
+      "SonicCurveAMOStrategyProxy"
+    );
+    curveAMOStrategy = await ethers.getContractAt(
+      "SonicCurveAMOStrategy",
+      curveAMOProxy.address
+    );
   }
 
   for (const user of [rafael, nick, clement]) {
@@ -156,13 +178,29 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
   }
 
+  const curvePool = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.sonic.WS_OS.pool
+  );
+
+  const curveGauge = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.sonic.WS_OS.gauge
+  );
+
+  const curveChildLiquidityGaugeFactory = await ethers.getContractAt(
+    curveChildLiquidityGaugeFactoryAbi,
+    addresses.sonic.childLiquidityGaugeFactory
+  );
+
+  const crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
+
   return {
     // Origin S
     oSonic,
     oSonicVault,
     wOSonic,
-    // harvester,
-    // dripper,
+    harvester,
     sonicStakingStrategy,
     dripper,
     zapper,
@@ -172,6 +210,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     // Wrapped S
     wS,
+
+    // Curve
+    curveAMOStrategy,
+    curvePool,
+    curveGauge,
+    curveChildLiquidityGaugeFactory,
+    crv,
 
     // Signers
     governor,

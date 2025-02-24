@@ -1,10 +1,10 @@
-const { defaultSonicFixture } = require("./../_fixture-sonic");
+const { defaultSonicFixture } = require("../../_fixture-sonic");
 const {
   shouldBehaveLikeASFCStakingStrategy,
-} = require("../behaviour/sfcStakingStrategy");
-const addresses = require("../../utils/addresses");
+} = require("../../behaviour/sfcStakingStrategy");
+const addresses = require("../../../utils/addresses");
 
-describe("Sonic ForkTest: Sonic Staking Strategy", function () {
+describe("Sonic Fork Test: Sonic Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;
