@@ -35,10 +35,8 @@ describe("Vault with Compound strategy", function () {
     const { governor, compoundStrategy } = fixture;
 
     const tx = await compoundStrategy.connect(governor).removePToken(0);
-    const receipt = await tx.wait();
 
-    const event = receipt.events.find((e) => e.event === "PTokenRemoved");
-    expect(event).to.not.be.undefined;
+    await expect(tx).to.emit(compoundStrategy, "PTokenRemoved");
   });
 
   it("Governor can call setPTokenAddress", async () => {
