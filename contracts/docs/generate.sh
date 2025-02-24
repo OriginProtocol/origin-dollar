@@ -105,6 +105,11 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerMetaPoolStrategy -o BalancerMet
 sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
 sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
 
+# contracts/strategies/sonic
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b SonicStakingStrategy -o SonicStakingStrategySquashed.svg
+sol2uml storage .. -c SonicStakingStrategy -o SonicStakingStrategyStorage.svg --hideExpand __gap,______gap,_reserved
+
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
 sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
@@ -116,29 +121,39 @@ sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
 sol2uml storage .. -c Timelock -o TimelockStorage.svg
 
 # contracts/token
-sol2uml .. -v -hv -hf -he -hs -hl -b OUSD -o OUSDHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b OUSD -o OUSDHierarchy.svg
 sol2uml .. -s -d 0 -b OUSD -o OUSDSquashed.svg
-sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WrappedOusd -o WOUSDHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b WrappedOusd -o WOUSDHierarchy.svg
 sol2uml .. -s -d 0 -b WrappedOusd -o WOUSDSquashed.svg
-sol2uml storage .. -c WrappedOusd -o WOUSDStorage.svg
+sol2uml storage .. -c WrappedOusd -o WOUSDStorage.svg --hideExpand ______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETH -o OETHHierarchy.svg
 sol2uml .. -s -d 0 -b OETH -o OETHSquashed.svg
-sol2uml storage .. -c OETH -o OETHStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OETH -o OETHStorage.svg --hideExpand _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WOETH -o WOETHHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi  -b WOETH -o WOETHHierarchy.svg
 sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
-sol2uml storage .. -c WOETH -o WOETHStorage.svg
+sol2uml storage .. -c WOETH -o WOETHStorage.svg --hideExpand ______gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHBase -o OETHBaseHierarchy.svg
+# Base tokens
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBase -o OETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
-sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand  _gap,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b WOETHBase -o WOETHBaseHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b WOETHBase -o WOETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
-sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand _____gap,______gap
+sol2uml storage .. -c WOETHBase -o WOETHBaseStorage.svg --hideExpand  ______gap
+
+# Sonic tokens
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OSonic -o OSonicHierarchy.svg
+sol2uml .. -s -d 0 -b OSonic -o OSonicSquashed.svg
+sol2uml storage .. -c OSonic -o OSonicStorage.svg --hideExpand _gap,__gap
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b WOSonic -o WOSonicHierarchy.svg
+sol2uml .. -s -d 0 -b WOSonic -o WOSonicSquashed.svg
+sol2uml storage .. -c WOSonic -o WOSonicStorage.svg --hideExpand  ______gap
 
 # contracts/vault
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
@@ -150,6 +165,22 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHVaultCore,OETHVaultAdmin -o OETHVau
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
 sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OSonicVaultCore,OSonicVaultAdmin -o OSonicVaultHierarchy.svg
+sol2uml .. -s -d 0 -b OSonicVaultCore -o OSonicVaultCoreSquashed.svg
+sol2uml .. -s -d 0 -b OSonicVaultAdmin -o OSonicVaultAdminSquashed.svg
+sol2uml storage .. -c OSonicVaultCore -o OSonicVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+
+# contracts/poolBooster
+# call stack size exceeded
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleStorage.svg
+
+# call stack size exceeded
+#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleHierarchy.svg
+#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleSquashed.svg
+sol2uml storage .. -c PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleStorage.svg
 
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg

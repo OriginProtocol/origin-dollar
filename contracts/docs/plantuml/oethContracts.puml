@@ -27,7 +27,7 @@ object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
 }
 
 
-object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
+object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
@@ -49,8 +49,8 @@ object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
 asset: WETH
 }
 
-object "OETHHarvester" as harv <<Origin>><<Proxy>> #$originColor {
-    rewards: CRV, CVX
+object "OETHHarvesterSimple" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: WETH, CRV, CVX
 }
 
 ' Strategies

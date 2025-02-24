@@ -9,11 +9,14 @@ const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
-const log = require("../utils/logger")("test:fixtures-arb");
+const log = require("../utils/logger")("test:fixtures-base");
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
 const aerodromeSugarAbi = require("./abi/aerodromeSugarHelper.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
+const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
+const curveChildLiquidityGaugeFactoryAbi = require("./abi/curveChildLiquidityGaugeFactory.json");
 
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
@@ -62,7 +65,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     oethbVaultProxy.address
   );
 
-  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar;
+  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar, curveAMOStrategy;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -76,7 +79,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     // Harvester
     const harvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
     harvester = await ethers.getContractAt(
-      "OETHBaseHarvester",
+      "SuperOETHHarvester",
       harvesterProxy.address
     );
 
@@ -98,6 +101,12 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     dripper = await ethers.getContractAt(
       "FixedRateDripper",
       dripperProxy.address
+    );
+
+    const curveAMOProxy = await ethers.getContract("OETHBaseCurveAMOProxy");
+    curveAMOStrategy = await ethers.getContractAt(
+      "BaseCurveAMOStrategy",
+      curveAMOProxy.address
     );
   }
 
@@ -136,7 +145,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { governorAddr, strategistAddr, timelockAddr } =
+  const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
   const governor = await ethers.getSigner(isFork ? timelockAddr : governorAddr);
   await hhHelpers.setBalance(governorAddr, oethUnits("1")); // Fund governor with some ETH
@@ -151,8 +160,8 @@ const defaultBaseFixture = deployments.createFixture(async () => {
   let strategist;
   if (isFork) {
     // Impersonate strategist on Fork
-    strategist = await impersonateAndFund(strategistAddr);
-    strategist.address = strategistAddr;
+    strategist = await impersonateAndFund(multichainStrategistAddr);
+    strategist.address = multichainStrategistAddr;
 
     await impersonateAndFund(governor.address);
     await impersonateAndFund(timelock.address);
@@ -195,12 +204,35 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     addresses.base.nonFungiblePositionManager
   );
 
+  const curvePoolOEthbWeth = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.base.OETHb_WETH.pool
+  );
+
+  const curveGaugeOETHbWETH = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.base.OETHb_WETH.gauge
+  );
+
+  const curveChildLiquidityGaugeFactory = await ethers.getContractAt(
+    curveChildLiquidityGaugeFactoryAbi,
+    addresses.base.childLiquidityGaugeFactory
+  );
+
+  const crv = await ethers.getContractAt(erc20Abi, addresses.base.CRV);
+
   return {
     // Aerodrome
     aeroSwapRouter,
     aeroNftManager,
     aeroClGauge,
     aero,
+
+    // Curve
+    crv,
+    curvePoolOEthbWeth,
+    curveGaugeOETHbWETH,
+    curveChildLiquidityGaugeFactory,
 
     // OETHb
     oethb,
@@ -218,6 +250,7 @@ const defaultBaseFixture = deployments.createFixture(async () => {
 
     // Strategies
     aerodromeAmoStrategy,
+    curveAMOStrategy,
 
     // WETH
     weth,

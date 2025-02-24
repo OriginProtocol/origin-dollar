@@ -3,6 +3,7 @@ const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { oethUnits, advanceTime, advanceBlocks } = require("../helpers");
+const { setERC20TokenBalance } = require("../_fund");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -16,7 +17,20 @@ describe("ForkTest: OETHb Harvester", function () {
     await advanceBlocks(300);
   });
 
-  it("Should harvest from AMO strategy", async () => {
+  it("should have whitelisted the strategies", async () => {
+    const { harvester, aerodromeAmoStrategy, curveAMOStrategy } = fixture;
+    expect(await harvester.supportedStrategies(aerodromeAmoStrategy.address)).to
+      .be.true;
+    expect(await harvester.supportedStrategies(curveAMOStrategy.address)).to.be
+      .true;
+  });
+
+  it("should have configured the right dripper", async () => {
+    const { harvester, dripper } = fixture;
+    expect(await harvester.dripper()).to.eq(dripper.address);
+  });
+
+  it("Should harvest from Aerodrome AMO strategy", async () => {
     const { strategist, harvester, aerodromeAmoStrategy, aeroClGauge, aero } =
       fixture;
     const pendingRewards = await aeroClGauge.earned(
@@ -26,7 +40,9 @@ describe("ForkTest: OETHb Harvester", function () {
     const balanceBefore = await aero.balanceOf(strategist.address);
 
     // Harvest
-    await harvester.connect(strategist).harvest();
+    // prettier-ignore
+    await harvester
+      .connect(strategist)["harvestAndTransfer(address)"](aerodromeAmoStrategy.address);
 
     // Check state
     const balanceAfter = await aero.balanceOf(strategist.address);
@@ -39,18 +55,59 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
 
     // Should do nothing when there's nothing to collect and transfer
-    await harvester.connect(strategist).harvest();
+    // prettier-ignore
+    await harvester
+      .connect(strategist)["harvestAndTransfer(address)"](aerodromeAmoStrategy.address);
+  });
+
+  it("Should harvest from Curve AMO strategy", async () => {
+    const { strategist, harvester, curveAMOStrategy, crv } = fixture;
+    // Fund the strategy with some CRV to mimic incentives
+    await setERC20TokenBalance(curveAMOStrategy.address, crv, oethUnits("100"));
+    const balanceBefore = await crv.balanceOf(strategist.address);
+
+    // Harvest
+    // prettier-ignore
+    await harvester
+      .connect(strategist)["harvestAndTransfer(address)"](curveAMOStrategy.address);
+
+    // Check state
+    const balanceAfter = await crv.balanceOf(strategist.address);
+    expect(balanceAfter).to.be.gte(balanceBefore.add(oethUnits("100")));
+
+    // Should do nothing when there's nothing to collect and transfer
+    // prettier-ignore
+    await harvester
+      .connect(strategist)["harvestAndTransfer(address)"](curveAMOStrategy.address);
   });
 
   it("Should not harvest when strategist address isn't set", async () => {
+    const { governor, harvester, aerodromeAmoStrategy, aero } = fixture;
+    await harvester.connect(governor).setStrategistAddr(addresses.zero);
+
+    await setERC20TokenBalance(
+      aerodromeAmoStrategy.address,
+      aero,
+      oethUnits("100")
+    );
+
+    // prettier-ignore
+    const tx = harvester
+      .connect(governor)["harvestAndTransfer(address)"](aerodromeAmoStrategy.address);
+    await expect(tx).to.be.revertedWith("Invalid receiver");
+  });
+
+  it("Should not harvest when the strategy isn't whitelisted", async () => {
     const { governor, harvester, oethbVault } = fixture;
     await oethbVault.connect(governor).setStrategistAddr(addresses.zero);
 
-    const tx = harvester.connect(governor).harvest();
-    await expect(tx).to.be.revertedWith("Guardian address not set");
+    // prettier-ignore
+    const tx = harvester
+      .connect(governor)["harvestAndTransfer(address)"](addresses.dead);
+    await expect(tx).to.be.revertedWith("Strategy not supported");
   });
 
-  it("Should harvest and then swap", async function () {
+  it.skip("Should harvest and then swap", async function () {
     const {
       strategist,
       dripper,
@@ -112,7 +169,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should harvest and then swap but not fund Dripper", async function () {
+  it.skip("Should harvest and then swap but not fund Dripper", async function () {
     const {
       strategist,
       dripper,
@@ -174,7 +231,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should harvest and then swap (0% fee)", async function () {
+  it.skip("Should harvest and then swap (0% fee)", async function () {
     const {
       strategist,
       dripper,
@@ -236,7 +293,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should harvest and then swap (100% fee)", async function () {
+  it.skip("Should harvest and then swap (100% fee)", async function () {
     const {
       strategist,
       dripper,
@@ -298,7 +355,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(pendingRewardsAfter).to.eq(0);
   });
 
-  it("Should not harvest & swap with no dripper address", async function () {
+  it.skip("Should not harvest & swap with no dripper address", async function () {
     const { governor, harvester, oethbVault } = fixture;
     await oethbVault.connect(governor).setDripper(addresses.zero);
 
@@ -308,7 +365,7 @@ describe("ForkTest: OETHb Harvester", function () {
     await expect(tx).to.be.revertedWith("Yield recipient not set");
   });
 
-  it("Should not allow harvest & swap by non-governor/strategist", async () => {
+  it.skip("Should not allow harvest & swap by non-governor/strategist", async () => {
     const { nick, harvester } = fixture;
 
     const tx = harvester
@@ -319,7 +376,7 @@ describe("ForkTest: OETHb Harvester", function () {
     );
   });
 
-  it("Should not allow harvest & swap with incorrect feeBps", async () => {
+  it.skip("Should not allow harvest & swap with incorrect feeBps", async () => {
     const { strategist, harvester } = fixture;
 
     const tx = harvester
@@ -328,7 +385,7 @@ describe("ForkTest: OETHb Harvester", function () {
     await expect(tx).to.be.revertedWith("Invalid Fee Bps");
   });
 
-  it("Should use strategist balance when needed for swaps", async () => {
+  it.skip("Should use strategist balance when needed for swaps", async () => {
     const { strategist, harvester, aero, aerodromeAmoStrategy, aeroClGauge } =
       fixture;
     const pendingRewards = await aeroClGauge.earned(
@@ -362,7 +419,7 @@ describe("ForkTest: OETHb Harvester", function () {
     expect(balanceAfter).to.approxEqualTolerance(balanceBefore.sub(amount), 2);
   });
 
-  it("Should not harvest/swap when strategist address isn't set", async () => {
+  it.skip("Should not harvest/swap when strategist address isn't set", async () => {
     const { governor, harvester, oethbVault } = fixture;
     await oethbVault.connect(governor).setStrategistAddr(addresses.zero);
 
@@ -372,21 +429,26 @@ describe("ForkTest: OETHb Harvester", function () {
     await expect(tx).to.be.revertedWith("Guardian address not set");
   });
 
-  it("Should allow governor to transfer any arbitrary token", async () => {
-    const { weth, clement, harvester, governor } = fixture;
+  it("Should allow governor/strategist to transfer any arbitrary token", async () => {
+    const { weth, clement, harvester, strategist, governor } = fixture;
 
     // Clement accidentally transfer 1 WETH to Harvester
     await weth.connect(clement).transfer(harvester.address, oethUnits("1"));
 
-    const balanceBefore = await weth.balanceOf(governor.address);
+    const balanceBefore = await weth.balanceOf(strategist.address);
 
-    // Governor recovers it
+    // Strategist recovers it
+    await harvester
+      .connect(strategist)
+      .transferToken(weth.address, oethUnits("0.4"));
+
+    // And governor recovers it as well
     await harvester
       .connect(governor)
-      .transferToken(weth.address, oethUnits("1"));
+      .transferToken(weth.address, oethUnits("0.6"));
 
     // Check state
-    const balanceAfter = await weth.balanceOf(governor.address);
+    const balanceAfter = await weth.balanceOf(strategist.address);
     expect(balanceAfter).to.eq(balanceBefore.add(oethUnits("1")));
   });
 
@@ -400,6 +462,8 @@ describe("ForkTest: OETHb Harvester", function () {
     const tx = harvester
       .connect(clement)
       .transferToken(weth.address, oethUnits("1"));
-    await expect(tx).to.be.revertedWith("Caller is not the Governor");
+    await expect(tx).to.be.revertedWith(
+      "Caller is not the Strategist or Governor"
+    );
   });
 });

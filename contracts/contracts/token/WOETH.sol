@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { ERC4626 } from "../../lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
@@ -67,11 +68,12 @@ contract WOETH is ERC4626, Governable, Initializable {
         );
     }
 
+
     function name()
         public
         view
         virtual
-        override(ERC20)
+        override(ERC20,IERC20Metadata)
         returns (string memory)
     {
         return "Wrapped OETH";
@@ -81,7 +83,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         view
         virtual
-        override(ERC20)
+        override(ERC20,IERC20Metadata)
         returns (string memory)
     {
         return "wOETH";

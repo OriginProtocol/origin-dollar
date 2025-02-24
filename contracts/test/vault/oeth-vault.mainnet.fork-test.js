@@ -6,9 +6,6 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI, oethUnits, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { logTxDetails } = require("../../utils/txLogger");
-const {
-  shouldHaveRewardTokensConfigured,
-} = require("../behaviour/reward-tokens.fork");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
@@ -169,6 +166,53 @@ describe("ForkTest: OETH Vault", function () {
           expect(x).to.equal("0");
         }
       });
+    });
+
+    it("should allow strategist to redeem without fee", async () => {
+      const { oethVault, strategist, weth, oeth } = fixture;
+
+      const amount = oethUnits("10");
+
+      await weth.connect(strategist).approve(oethVault.address, amount);
+
+      // Mint 1:1
+      await oethVault.connect(strategist).mint(weth.address, amount, amount);
+
+      const oethBalanceBefore = await oeth.balanceOf(strategist.address);
+      const wethBalanceBefore = await weth.balanceOf(strategist.address);
+
+      // Redeem 1:1 instantly
+      await oethVault.connect(strategist).redeem(amount, amount);
+
+      const oethBalanceAfter = await oeth.balanceOf(strategist.address);
+      const wethBalanceAfter = await weth.balanceOf(strategist.address);
+
+      expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
+      expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(amount));
+    });
+
+    it("should enforce fee on other users for instant redeem", async () => {
+      const { oethVault, josh, weth, oeth } = fixture;
+
+      const amount = oethUnits("10");
+      const expectedWETH = amount.mul("9990").div("10000");
+
+      await weth.connect(josh).approve(oethVault.address, amount);
+
+      // Mint 1:1
+      await oethVault.connect(josh).mint(weth.address, amount, amount);
+
+      const oethBalanceBefore = await oeth.balanceOf(josh.address);
+      const wethBalanceBefore = await weth.balanceOf(josh.address);
+
+      // Redeem 1:1 instantly
+      await oethVault.connect(josh).redeem(amount, expectedWETH);
+
+      const oethBalanceAfter = await oeth.balanceOf(josh.address);
+      const wethBalanceAfter = await weth.balanceOf(josh.address);
+
+      expect(oethBalanceAfter).to.equal(oethBalanceBefore.sub(amount));
+      expect(wethBalanceAfter).to.equal(wethBalanceBefore.add(expectedWETH));
     });
 
     it("should partially redeem 10 OETH", async () => {
@@ -349,29 +393,30 @@ describe("ForkTest: OETH Vault", function () {
     });
   });
 
-  shouldHaveRewardTokensConfigured(() => ({
-    vault: fixture.oethVault,
-    harvester: fixture.oethHarvester,
-    ignoreTokens: [fixture.weth.address.toLowerCase()],
-    expectedConfigs: {
-      [fixture.cvx.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
-        doSwapRewardToken: true,
-        swapPlatform: 3,
-        liquidationLimit: oethUnits("2500"),
-        curvePoolIndices: [1, 0],
-      },
-      [fixture.crv.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14",
-        doSwapRewardToken: true,
-        swapPlatform: 3,
-        liquidationLimit: oethUnits("4000"),
-        curvePoolIndices: [2, 1],
-      },
-    },
-  }));
+  // We have migrated to simplified Harvester and this is no longer relevant
+  // shouldHaveRewardTokensConfigured(() => ({
+  //   vault: fixture.oethVault,
+  //   harvester: fixture.oethHarvester,
+  //   ignoreTokens: [fixture.weth.address.toLowerCase()],
+  //   expectedConfigs: {
+  //     [fixture.cvx.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 200,
+  //       swapPlatformAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 3,
+  //       liquidationLimit: oethUnits("2500"),
+  //       curvePoolIndices: [1, 0],
+  //     },
+  //     [fixture.crv.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 200,
+  //       swapPlatformAddr: "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 3,
+  //       liquidationLimit: oethUnits("4000"),
+  //       curvePoolIndices: [2, 1],
+  //     },
+  //   },
+  // }));
 });

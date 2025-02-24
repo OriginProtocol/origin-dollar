@@ -308,7 +308,7 @@ end group
 
 group Harvester collects ETH rewards
 
-sender -> harv : harvestAndSwap(\nstrtaegy)
+sender -> harv : harvestAndTransfer(\nstrategy)
 activate harv
 harv -> nativeStrat : collectRewardTokens()
 activate nativeStrat
@@ -334,6 +334,12 @@ note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return
 
 return
+
+harv -> weth : transfer(\nDripper,\nETH rewards)
+activate weth
+note left : transfer WETH rewards\nfrom Harvester\nto Dripper
+return
+
 return
 
 end group

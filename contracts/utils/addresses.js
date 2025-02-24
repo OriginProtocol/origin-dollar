@@ -4,6 +4,9 @@ const addresses = {};
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
+addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -155,6 +158,11 @@ addresses.mainnet.CurveLUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
+addresses.mainnet.CurveOUSDUSDTPool =
+  "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
+addresses.mainnet.CurveOUSDUSDTGauge =
+  "0x74231E4d96498A30FCEaf9aACCAbBD79339Ecd7f";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
@@ -165,14 +173,22 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
+// Votemarket - StakeDAO
+addresses.mainnet.CampaignRemoteManager =
+  "0x000000009dF57105d76B059178989E01356e4b45";
+
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
-addresses.mainnet.MetaMorphoUSDCSteakHouseVault =
+addresses.mainnet.MorphoSteakhouseUSDCVault =
   "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB";
+addresses.mainnet.MorphoGauntletPrimeUSDCVault =
+  "0xdd0f28e19C1780eb6396170735D45153D261490d";
+addresses.mainnet.MorphoGauntletPrimeUSDTVault =
+  "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -202,6 +218,9 @@ addresses.mainnet.FraxETHRedeemStrategy =
   "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
+// TODO add after deployment
+addresses.mainnet.OETHHarvesterSimpleProxy =
+  "0x6D416E576eECBB9F897856a7c86007905274ed04";
 addresses.mainnet.BalancerRETHStrategy =
   "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens
@@ -257,6 +276,8 @@ addresses.mainnet.FrxEthWethDualOracle =
 // Curve Pools
 addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
+addresses.mainnet.CurveOUSDUSDTPool =
+  "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -283,6 +304,7 @@ addresses.mainnet.LidoWithdrawalQueue =
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+addresses.arbitrumOne.admin = "0xfD1383fb4eE74ED9D83F2cbC67507bA6Eac2896a";
 
 // Base
 addresses.base = {};
@@ -308,6 +330,8 @@ addresses.base.governor = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // 2/8 Multisig
 addresses.base.strategist = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
 addresses.base.timelock = "0xf817cb3092179083c48c014688D98B72fB61464f";
+addresses.base.multichainStrategist =
+  "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 // Chainlink: https://data.chain.link/feeds/base/base/woeth-oeth-exchange-rate
 addresses.base.BridgedWOETHOracleFeed =
@@ -330,6 +354,64 @@ addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+
+// Base Curve
+addresses.base.CRV = "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415";
+addresses.base.OETHb_WETH = {};
+addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
+addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
+addresses.base.childLiquidityGaugeFactory =
+  "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
+
+// Sonic
+addresses.sonic = {};
+addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
+addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
+addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
+addresses.sonic.nodeDriver = "0xd100a01e00000000000000000000000000000001";
+addresses.sonic.nodeDriveAuth = "0xd100ae0000000000000000000000000000000000";
+addresses.sonic.validatorRegistrator =
+  "0x531B8D5eD6db72A56cF1238D4cE478E7cB7f2825";
+// 5/8 Multisig - formally known as the Governor but not to be confused with the Governor contract
+addresses.sonic.admin = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 2/8 Multisig - formally known as the Strategist
+addresses.sonic.guardian = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
+
+addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
+addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
+addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
+
+// SwapX on Sonic
+addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
+addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
+addresses.sonic.SwapXOsUSDCe = {};
+addresses.sonic.SwapXOsUSDCe.pool =
+  "0x84EA9fAfD41abAEc5a53248f79Fa05ADA0058a96";
+addresses.sonic.SwapXOsUSDCe.gaugeOS =
+  "0x737938a25D811A3F324aC0257d75b5e88d0a6FC3";
+addresses.sonic.SwapXOsUSDCe.extBribeOS =
+  "0x41688C9bb59ce191F6BB57c5829ac9D50A03E410";
+addresses.sonic.SwapXOsUSDCe.gaugeUSDC =
+  "0xB660B984F80a89044Aa3841F1a1C78B2F596393f";
+addresses.sonic.SwapXOsUSDCe.extBribeUSDC =
+  "0xBCF88f38865B7712da4DE0a8eFC286C601CAE5e7";
+
+addresses.sonic.SwapXOsGEMSx = {};
+addresses.sonic.SwapXOsGEMSx.pool =
+  "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
+
+addresses.sonic.SwapXOsUSDCeMultisigBooster =
+  "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
+addresses.sonic.SwapXOsGEMSxMultisigBooster =
+  "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
+
+// Sonic Curve
+addresses.sonic.WS_OS = {};
+addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
+addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.childLiquidityGaugeFactory =
+  "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

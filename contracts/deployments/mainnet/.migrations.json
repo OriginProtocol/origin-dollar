@@ -97,6 +97,20 @@
   "105_ousd_remove_flux_strat": 1724650407,
   "106_ousd_metamorpho_usdc": 1725548135,
   "107_arm_buyback": 1726909418,
+  "108_vault_upgrade": 1738940736,
   "109_3rd_native_ssv_staking": 1731456871,
-  "111_morpho_wrap_and_transfer": 1732639817
+  "111_morpho_wrap_and_transfer": 1732639817,
+  "112_ousd_morpho_gauntlet_usdc": 1734483227,
+  "113_ousd_morpho_gauntlet_usdt": 1734560711,
+  "114_simple_harvester": 1736329331,
+  "115_ousd_upgrade": 1737705479,
+  "116_oeth_upgrade": 1738245839,
+  "117_oeth_fixed_rate_dripper": 1736875175,
+  "118_multichain_strategist": 1736875175,
+  "119_multisig_as_canceller": 1737991984,
+  "120_remove_ousd_amo": 1737992146,
+  "121_pool_booster_curve": 1737965774,
+  "122_delegate_yield_curve_pool": 1739200325,
+  "123_simple_harvester_v2": 1739168735,
+  "124_remove_ousd_aave_strat": 1739880781
 }

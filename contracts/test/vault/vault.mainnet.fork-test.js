@@ -13,9 +13,6 @@ const {
   isCI,
 } = require("./../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
-const {
-  shouldHaveRewardTokensConfigured,
-} = require("../behaviour/reward-tokens.fork");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -79,9 +76,7 @@ describe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(
-        addresses.mainnet.ConvexOUSDAMOStrategy
-      );
+      expect(await vault.ousdMetaStrategy()).to.equal(addresses.zero);
     });
 
     it("Should have supported assets", async () => {
@@ -183,66 +178,61 @@ describe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, aaveStrategy } = fixture;
-      await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
-      await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
+      const { vault, josh, usdt, morphoGauntletPrimeUSDTStrategy } = fixture;
+      await vault.connect(josh).mint(usdt.address, usdtUnits("90"), 0);
       const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );
 
-      let daiBalanceDiff, usdcBalanceDiff, daiStratDiff, usdcStratDiff;
+      let usdtBalanceDiff, usdtStratDiff;
 
-      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
-        [vault.address, vault.address],
-        [dai, usdc],
+      [usdtBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address],
+        [usdt],
         async () => {
-          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
-            [dai.address, usdc.address],
-            [aaveStrategy, aaveStrategy],
+          [usdtStratDiff] = await differenceInStrategyBalance(
+            [usdt.address],
+            [morphoGauntletPrimeUSDTStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  aaveStrategy.address,
-                  [dai.address, usdc.address],
-                  [daiUnits("50"), usdcUnits("90")]
+                  morphoGauntletPrimeUSDTStrategy.address,
+                  [usdt.address],
+                  [usdtUnits("90")]
                 );
             }
           );
         }
       );
 
-      expect(daiBalanceDiff).to.equal(daiUnits("-50"));
-      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
+      expect(usdtBalanceDiff).to.equal(usdtUnits("-90"));
 
-      expect(daiStratDiff).gte(daiUnits("49.95"));
-      expect(usdcStratDiff).gte(usdcUnits("89.91"));
+      expect(usdtStratDiff).gte(usdtUnits("89.91"));
 
-      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
-        [vault.address, vault.address],
-        [dai, usdc],
+      [usdtBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address],
+        [usdt],
         async () => {
-          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
-            [dai.address, usdc.address],
-            [aaveStrategy, aaveStrategy],
+          [usdtStratDiff] = await differenceInStrategyBalance(
+            [usdt.address],
+            [morphoGauntletPrimeUSDTStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  aaveStrategy.address,
-                  [dai.address, usdc.address],
-                  [daiUnits("50"), usdcUnits("90")]
+                  morphoGauntletPrimeUSDTStrategy.address,
+                  [usdt.address],
+                  [usdtUnits("90")]
                 );
             }
           );
         }
       );
 
-      expect(daiBalanceDiff).to.approxEqualTolerance(daiUnits("50"), 1);
-      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
+      expect(usdtBalanceDiff).to.equal(usdtUnits("90"));
 
-      expect(daiStratDiff).approxEqualTolerance(daiUnits("-50"));
-      expect(usdcStratDiff).approxEqualTolerance(usdcUnits("-90"));
+      expect(usdtStratDiff).to.lte(usdtUnits("-89.91"));
     });
 
     it("Should have vault buffer disabled", async () => {
@@ -344,11 +334,11 @@ describe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
+        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
+        "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
       ];
 
       for (const s of strategies) {
@@ -369,21 +359,16 @@ describe("ForkTest: Vault", function () {
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26", // Morpho Gauntlet Prime USDT
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
     it("Should have correct default strategy set for USDC", async () => {
       const { vault, usdc } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
@@ -392,10 +377,7 @@ describe("ForkTest: Vault", function () {
     it("Should have correct default strategy set for DAI", async () => {
       const { vault, dai } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
@@ -407,40 +389,41 @@ describe("ForkTest: Vault", function () {
     });
   });
 
-  shouldHaveRewardTokensConfigured(() => ({
-    vault: fixture.vault,
-    harvester: fixture.harvester,
-    expectedConfigs: {
-      [fixture.aave.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: 0,
-        uniswapV3Path:
-          "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.cvx.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: ousdUnits("2500"),
-        uniswapV3Path:
-          "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.crv.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: ousdUnits("4000"),
-        uniswapV3Path:
-          "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-    },
-  }));
+  // We no longer have any strategies that harvest these reward tokens
+  // shouldHaveRewardTokensConfigured(() => ({
+  //   vault: fixture.vault,
+  //   harvester: fixture.harvester,
+  //   expectedConfigs: {
+  //     [fixture.aave.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 100,
+  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 1,
+  //       liquidationLimit: 0,
+  //       uniswapV3Path:
+  //         "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+  //     },
+  //     [fixture.cvx.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 100,
+  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 1,
+  //       liquidationLimit: ousdUnits("2500"),
+  //       uniswapV3Path:
+  //         "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+  //     },
+  //     [fixture.crv.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 200,
+  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 1,
+  //       liquidationLimit: ousdUnits("4000"),
+  //       uniswapV3Path:
+  //         "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
+  //     },
+  //   },
+  // }));
 });

@@ -1,4 +1,4 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
   withConfirmation,
@@ -43,7 +43,7 @@ const {
 //   return await amoPool.gauge();
 // };
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "006_base_amo_strategy",
   },

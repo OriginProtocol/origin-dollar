@@ -6,6 +6,9 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isHoleskyOrFork,
+  isSonicOrFork,
+  isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
@@ -1018,22 +1021,26 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHolesky) {
+  } else if (isHoleskyOrFork) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
+    args = [addresses.zero];
+  } else if (isSonicOrFork) {
+    oracleContract = "OSonicOracleRouter";
+    contractName = "OSonicOracleRouter";
     args = [addresses.zero];
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  log("Deployed OracleRouter");
-
-  if (isHolesky) {
+  if (isHoleskyOrFork || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
     return;
   }
+
+  const oracleRouter = await ethers.getContract("OracleRouter");
+  log("Deployed OracleRouter");
 
   const assetAddresses = await getAssetAddresses(deployments);
   await deployWithConfirmation("AuraWETHPriceFeed", [
@@ -1172,9 +1179,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH
-      .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1192,7 +1197,12 @@ const deployOUSDCore = async () => {
   await deployWithConfirmation("VaultProxy");
 
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
+  let dOUSD;
+  if (isTest) {
+    dOUSD = await deployWithConfirmation("TestUpgradedOUSD");
+  } else {
+    dOUSD = await deployWithConfirmation("OUSD");
+  }
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -1260,9 +1270,7 @@ const deployOUSDCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOUSD
-      .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
+    cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
 };

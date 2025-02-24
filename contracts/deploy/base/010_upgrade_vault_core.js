@@ -1,8 +1,8 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "010_upgrade_vault_core",
   },

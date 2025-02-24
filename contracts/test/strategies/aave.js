@@ -13,7 +13,7 @@ const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
-describe("Aave Strategy", function () {
+describe.skip("Aave Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }

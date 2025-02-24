@@ -364,11 +364,11 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     it("Should have the correct initial state", async function () {
       // correct pool weth share interval
       expect(await aerodromeAmoStrategy.allowedWethShareStart()).to.equal(
-        oethUnits("0.10")
+        oethUnits("0.010000001")
       );
 
       expect(await aerodromeAmoStrategy.allowedWethShareEnd()).to.equal(
-        oethUnits("0.20")
+        oethUnits("0.15")
       );
 
       // correct harvester set

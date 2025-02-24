@@ -23,6 +23,8 @@ const {
   isArbitrumOne,
   isBase,
   isBaseFork,
+  isSonic,
+  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -56,6 +58,7 @@ const {
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 NUM_CONFIRMATIONS = isHolesky ? 4 : NUM_CONFIRMATIONS;
+NUM_CONFIRMATIONS = isSonic ? 4 : NUM_CONFIRMATIONS;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrFork || process.env.VERBOSE) {
@@ -92,7 +95,10 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
-  const feeData = await hre.ethers.provider.getFeeData();
+  let feeData;
+  if (!useFeeData && !isSonic) {
+    feeData = await hre.ethers.provider.getFeeData();
+  }
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -110,7 +116,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic) {
     await storeStorageLayoutForContract(hre, contractName);
   }
 
@@ -124,10 +130,15 @@ const withConfirmation = async (
 ) => {
   const result = await deployOrTransactionPromise;
 
-  if (
-    process.env.PROVIDER_URL?.includes("rpc.tenderly.co") ||
-    (isTest && !isForkTest)
-  ) {
+  const providerUrl = isBase
+    ? process.env.BASE_PROVIDER_URL
+    : isSonic
+    ? process.env.SONIC_PROVIDER_URL
+    : isHolesky
+    ? process.env.HOLESKY_PROVIDER_URL
+    : process.env.PROVIDER_URL;
+  if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
+    console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
   }
@@ -155,8 +166,9 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isBaseFork) {
-    // Skip proxy check on base for now
+  if (isSonicFork) {
+    // Skip proxy check on sonic for now
+    console.log("Skipping proxy check on Sonic for now");
     return;
   }
 
@@ -167,6 +179,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     ![
       addresses.mainnet.Timelock.toLowerCase(),
       addresses.mainnet.OldTimelock.toLowerCase(),
+      addresses.base.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
@@ -180,7 +193,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
  */
 const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork");
+    throw new Error("impersonate Guardian only works on Fork");
   }
 
   // If an address is passed, use that otherwise default to
@@ -188,9 +201,11 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  await impersonateAndFund(guardianAddr);
+  const signer = await impersonateAndFund(guardianAddr);
 
   log(`Impersonated Guardian at ${guardianAddr}`);
+  signer.address = guardianAddr;
+  return signer;
 };
 
 /**
@@ -453,7 +468,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Succeeded") {
     await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
-    newState = await getProposalState(proposalIdBn);
+    let newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
         `Proposal state should now be "Queued" but is ${newState}`
@@ -976,16 +991,16 @@ function constructContractMethod(contract, functionSignature) {
   };
 }
 
-function buildAndWriteGnosisJson(
+async function buildGnosisSafeJson(
   safeAddress,
   targets,
   contractMethods,
-  contractInputsValues,
-  name
+  contractInputsValues
 ) {
+  const { chainId } = await ethers.provider.getNetwork();
   const json = {
     version: "1.0",
-    chainId: "1",
+    chainId: chainId.toString(),
     createdAt: parseInt(Date.now() / 1000),
     meta: {
       name: "Transaction Batch",
@@ -1003,6 +1018,22 @@ function buildAndWriteGnosisJson(
     })),
   };
 
+  return json;
+}
+
+async function buildAndWriteGnosisJson(
+  safeAddress,
+  targets,
+  contractMethods,
+  contractInputsValues,
+  name
+) {
+  const json = await buildGnosisSafeJson(
+    safeAddress,
+    targets,
+    contractMethods,
+    contractInputsValues
+  );
   const fileName = path.join(
     __dirname,
     "..",
@@ -1038,6 +1069,8 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
   const opHash = await timelock.hashOperationBatch(...args);
 
+  console.log("Proposal Hash", opHash);
+
   if (await timelock.isOperationDone(opHash)) {
     // Already executed
     return;
@@ -1050,7 +1083,11 @@ async function handleTransitionGovernance(propDesc, propArgs) {
   const guardian = !isFork
     ? undefined
     : await impersonateAndFund(
-        isBaseFork ? addresses.base.governor : addresses.mainnet.Guardian
+        isBaseFork
+          ? addresses.base.governor
+          : isSonicFork
+          ? addresses.sonic.admin
+          : addresses.mainnet.Guardian
       );
 
   if (!isScheduled) {
@@ -1063,15 +1100,15 @@ async function handleTransitionGovernance(propDesc, propArgs) {
 
     // construct contractInputsValues
     const contractInputsValues = {
-      targets: JSON.stringify(propArgs[0]),
-      values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
+      targets: JSON.stringify(args[0]),
+      values: JSON.stringify(args[1].map((arg) => arg.toString())),
       payloads: JSON.stringify(payloads),
       predecessor: args[3],
       salt: args[4],
       delay: delay.toString(),
     };
 
-    buildAndWriteGnosisJson(
+    await buildAndWriteGnosisJson(
       addresses.mainnet.Guardian,
       [timelock.address],
       [contractMethod],
@@ -1120,7 +1157,7 @@ async function handleTransitionGovernance(propDesc, propArgs) {
     salt: args[4],
   };
 
-  buildAndWriteGnosisJson(
+  await buildAndWriteGnosisJson(
     addresses.mainnet.Guardian,
     [timelock.address],
     [executionContractMethod],
@@ -1586,6 +1623,34 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
+function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
+  // Generate encoded salt (deployer address || crossChainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
+
+  // convert deployer address to bytes20
+  const addressDeployerBytes20 = ethers.utils.hexlify(
+    ethers.utils.zeroPad(deployer, 20)
+  );
+
+  // convert crossChainProtectionFlag to bytes1
+  const crossChainProtectionFlagBytes1 = crossChainProtectionFlag
+    ? "0x01"
+    : "0x00";
+
+  // convert salt to bytes11
+  const saltBytes11 = "0x" + salt.slice(2, 24);
+
+  // concat all bytes into a bytes32
+  const encodedSalt = ethers.utils.hexlify(
+    ethers.utils.concat([
+      addressDeployerBytes20,
+      crossChainProtectionFlagBytes1,
+      saltBytes11,
+    ])
+  );
+
+  return encodedSalt;
+}
+
 module.exports = {
   log,
   sleep,
@@ -1599,5 +1664,9 @@ module.exports = {
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
 
+  constructContractMethod,
+  buildGnosisSafeJson,
+
   handleTransitionGovernance,
+  encodeSaltForCreateX,
 };

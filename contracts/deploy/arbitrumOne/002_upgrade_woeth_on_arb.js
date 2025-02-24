@@ -5,7 +5,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deployOnArb(
   {
-    deployName: "088_upgrade_woeth_on_arb",
+    deployName: "002_upgrade_woeth_on_arb",
   },
   async ({ ethers }) => {
     const cWOETHProxy = await ethers.getContract("BridgedWOETHProxy");

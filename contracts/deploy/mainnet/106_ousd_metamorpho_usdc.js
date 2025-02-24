@@ -41,7 +41,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dMetaMorphoStrategyImpl = await deployWithConfirmation(
       "Generalized4626Strategy",
       [
-        [addresses.mainnet.MetaMorphoUSDCSteakHouseVault, cVaultProxy.address],
+        [addresses.mainnet.MorphoSteakhouseUSDCVault, cVaultProxy.address],
         addresses.mainnet.USDC,
       ],
       undefined,
