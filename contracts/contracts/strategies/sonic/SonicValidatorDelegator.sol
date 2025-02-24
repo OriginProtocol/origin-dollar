@@ -211,9 +211,40 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
 
         uint256 sBalanceBefore = address(this).balance;
 
-        sfc.withdraw(withdrawal.validatorId, _withdrawId);
+        // Try to withdraw from SFC
+        try sfc.withdraw(withdrawal.validatorId, _withdrawId) {
+            // continue below
+        } catch (bytes memory err) {
+            bytes4 errorSelector = bytes4(err);
 
-        // Save state to storage
+            // If the validator has been fully slashed, SFC's withdraw function will
+            // revert with a StakeIsFullySlashed custom error.
+            if (errorSelector == ISFC.StakeIsFullySlashed.selector) {
+                // The validator was fully slashed, so all the delegated amounts were lost.
+                // Will swallow the error as we still want to update the
+                // withdrawals and pendingWithdrawals storage variables.
+
+                // The return param defaults to zero but lets set it explicitly so it's clear
+                withdrawnAmount = 0;
+
+                emit Withdrawn(
+                    _withdrawId,
+                    withdrawal.validatorId,
+                    withdrawal.undelegatedAmount,
+                    withdrawnAmount
+                );
+
+                // Exit here as there is nothing to transfer to the Vault
+                return withdrawnAmount;
+            } else {
+                // Bubble up custom errors
+                assembly {
+                    revert(add(32, err), mload(err))
+                }
+            }
+        }
+
+        // Set return parameter
         withdrawnAmount = address(this).balance - sBalanceBefore;
 
         // Wrap Sonic (S) to Wrapped Sonic (wS)
