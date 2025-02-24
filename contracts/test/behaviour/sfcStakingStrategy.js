@@ -16,7 +16,7 @@ const log = require("../../utils/logger")("test:sonic:staking");
     return {
       ...fixture,
       addresses: addresses.sonic,
-      sfcAddress: await ethers.getContractAt(
+      sfc: await ethers.getContractAt(
         "ISFC",
         addresses.sonic.SFC
       ),
@@ -314,11 +314,16 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should undelegate when unsupporting a validator with delegated funds", async () => {
-      const { sonicStakingStrategy, timelock } = await context();
+      const { sfc, sonicStakingStrategy, timelock } = await context();
 
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
       const expectedWithdrawId = await sonicStakingStrategy.nextWithdrawId();
+
+      const stakedAmount = await sfc.getStake(
+        sonicStakingStrategy.address,
+        defaultValidatorId
+      );
 
       const tx = await sonicStakingStrategy
         .connect(timelock)
@@ -326,7 +331,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
       await expect(tx)
         .to.emit(sonicStakingStrategy, "Undelegated")
-        .withArgs(expectedWithdrawId, defaultValidatorId, amount);
+        .withArgs(expectedWithdrawId, defaultValidatorId, stakedAmount);
     });
 
     it("Should not undelegate with 0 amount", async () => {
@@ -674,10 +679,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     }
     const slashedWithdrawAmount = slashingRefundRatio.eq(0)
       ? slashingRefundRatio
-      : amountToWithdraw
-          .mul(slashingRefundRatio)
-          .div(parseUnits("1", 18))
-          .sub(1);
+      : amountToWithdraw.mul(slashingRefundRatio).div(parseUnits("1", 18));
 
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address
@@ -725,24 +727,35 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     );
 
     if (slashedWithdrawAmount.gt(0)) {
-      await expect(tx)
-        .to.emit(sonicStakingStrategy, "Withdrawal")
-        .withArgs(wS.address, AddressZero, slashedWithdrawAmount);
+      await expect(tx).to.emittedEvent("Withdrawal", [
+        wS.address,
+        AddressZero,
+        async (amount) => {
+          expect(amount).to.be.withinRange(
+            slashedWithdrawAmount.sub(1),
+            slashedWithdrawAmount,
+            "Withdrawal event's amount not within dust amount"
+          );
+        },
+      ]);
     }
 
-    await expect(tx)
-      .to.emit(sonicStakingStrategy, "Withdrawn")
-      .withArgs(
-        withdrawalId,
-        withdrawal.validatorId,
-        amountToWithdraw,
-        slashedWithdrawAmount
-      );
+    await expect(tx).to.emittedEvent("Withdrawn", [
+      withdrawalId,
+      withdrawal.validatorId,
+      amountToWithdraw,
+      async (amount) => {
+        expect(amount).to.be.withinRange(
+          slashedWithdrawAmount.sub(1),
+          slashedWithdrawAmount,
+          "Withdrawn event's withdrawnAmount not within dust amount"
+        );
+      },
+    ]);
 
-    expect(await wS.balanceOf(oSonicVault.address)).to.equal(
-      vaultBalanceBefore.add(slashedWithdrawAmount),
-      "Vault wS balance"
-    );
+    expect(await wS.balanceOf(oSonicVault.address))
+      .to.lte(vaultBalanceBefore.add(slashedWithdrawAmount))
+      .gte(vaultBalanceBefore.add(slashedWithdrawAmount.sub(1)));
     expect(withdrawalAfter.undelegatedAmount).to.equal(oethUnits("0"));
 
     expect(await sonicStakingStrategy.pendingWithdrawals()).to.equal(
