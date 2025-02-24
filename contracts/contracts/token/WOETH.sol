@@ -114,8 +114,8 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @return amount of OETH credits the OETH amount corresponds to
      */
     function _oethToCredits(uint256 oethAmount) internal returns (uint256) {
-        (, uint256 creditsPerTokenHighres, ) = OETH(asset())
-            .creditsBalanceOfHighres(address(this));
+        uint256 creditsPerTokenHighres = OETH(asset())
+            .rebasingCreditsPerTokenHighres();
 
         /**
          * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
@@ -132,8 +132,8 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        (, uint256 creditsPerTokenHighres, ) = OETH(asset())
-            .creditsBalanceOfHighres(address(this));
+        uint256 creditsPerTokenHighres = OETH(asset())
+            .rebasingCreditsPerTokenHighres();
 
         return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
