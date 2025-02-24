@@ -332,3 +332,10 @@ contract PoolBoostCentralRegistryProxy is
 {
 
 }
+
+/**
+ * @notice CurvePoolBoosterL2Proxy delegates calls to a CurvePoolBoosterL2 implementation
+ */
+contract CurvePoolBoosterL2Proxy is InitializeGovernedUpgradeabilityProxy {
+
+}
