@@ -41,9 +41,16 @@ contract WOETH is ERC4626, Governable, Initializable {
      */
     function initialize() external onlyGovernor initializer {
         OETH(address(asset())).rebaseOptIn();
+
+        initialize2();
     }
 
-    function initialize2() external onlyGovernor {
+    /**
+     * @notice secondary initializer that newly deployed contracts will execute as part
+     *         of primary initialize function and the existing contracts will have it called
+     *         as a governance operation.
+     */
+    function initialize2() public onlyGovernor {
         require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;

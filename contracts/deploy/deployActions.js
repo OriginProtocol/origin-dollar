@@ -1511,7 +1511,6 @@ const deployWOusd = async () => {
 const deployWOeth = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const oeth = await ethers.getContract("OETHProxy");
   const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
@@ -1527,11 +1526,6 @@ const deployWOeth = async () => {
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
   ](dWrappedOethImpl.address, governorAddr, initData);
-
-  await woeth.connect(sGovernor)[
-    // eslint-disable-next-line no-unexpected-multiline
-    "initialize2()"
-  ]();
 };
 
 const deployOETHSwapper = async () => {
