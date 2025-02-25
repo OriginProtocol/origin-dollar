@@ -113,7 +113,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
 
-    function getOETHCredits() internal view returns (uint256 oethCreditsHighres) {
+    function _getOETHCredits() internal view returns (uint256 oethCreditsHighres) {
         (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
             address(this)
         );
@@ -125,9 +125,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 woethAmount)
     {   
-        uint256 creditsBefore = getOETHCredits();
+        uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += getOETHCredits() - creditsBefore;
+        oethCreditsHighres += _getOETHCredits() - creditsBefore;
     }
 
     /** @dev See {IERC4262-mint} */
@@ -136,9 +136,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 oethAmount)
     {   
-        uint256 creditsBefore = getOETHCredits();
+        uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += getOETHCredits() - creditsBefore;
+        oethCreditsHighres += _getOETHCredits() - creditsBefore;
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -147,9 +147,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
-        uint256 creditsBefore = getOETHCredits();
+        uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - getOETHCredits();
+        oethCreditsHighres -= creditsBefore - _getOETHCredits();
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -158,8 +158,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
-        uint256 creditsBefore = getOETHCredits();
+        uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - getOETHCredits();
+        oethCreditsHighres -= creditsBefore - _getOETHCredits();
     }
 }
