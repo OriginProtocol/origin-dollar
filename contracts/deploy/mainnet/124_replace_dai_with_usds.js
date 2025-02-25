@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     deployerIsProposer: false,
     proposalId: "",
-    // simulateDirectlyOnTimelock: true,
+    // TODO: Temporary hack to test it on CI
+    simulateDirectlyOnTimelock: isFork,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation, ethers }) => {
     const DAI = addresses.mainnet.DAI;
