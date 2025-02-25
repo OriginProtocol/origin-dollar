@@ -28,6 +28,17 @@ contract OracleRouter is AbstractOracleRouter {
             // Chainlink: DAI/USD
             feedAddress = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
             maxStaleness = 1 hours + STALENESS_BUFFER;
+        } else if (asset == 0xdC035D45d973E3EC169d2276DDab16f1e407384F) {
+            // https://data.chain.link/ethereum/mainnet/stablecoins/dai-usd
+            // Chainlink: DAI/USD
+            feedAddress = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
+            maxStaleness = 1 hours + STALENESS_BUFFER;
+            // } else if (asset == 0xdC035D45d973E3EC169d2276DDab16f1e407384F) {
+            // solhint-disable-next-line
+            //     // https://chroniclelabs.org/dashboard/oracle/USDS/USD?blockchain=ETH&txn=0x963edc177ee0cb8e5ecdb39b535b800c5037b2e2fc20b335e44a95a979d4719a&contract=0x74661a9ea74fD04975c6eBc6B155Abf8f885636c
+            //     // Chronicle: USDS/USD
+            //     feedAddress = 0x74661a9ea74fD04975c6eBc6B155Abf8f885636c;
+            //     maxStaleness = 1 hours + STALENESS_BUFFER;
         } else if (asset == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) {
             // https://data.chain.link/ethereum/mainnet/stablecoins/usdc-usd
             // Chainlink: USDC/USD
