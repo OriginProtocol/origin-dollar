@@ -122,7 +122,23 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         override
         returns (uint256 woethAmount)
-    {   
+    {
+        /**
+         * Initially we attempted to do the credits calculation within this contract and try
+         * to mimic OUSD's implementation. This way 1 external call less would be required. Due
+         * to a different way OUSD is calculating credits:
+         *  - always rounds credits up
+         *  - operates on final user balances before converting to credits
+         *  - doesn't perform additive / subtractive calculation with credits once they are converted
+         *    from balances
+         *
+         * We've decided that it is safer to read the credits diff directly from the OUSD contract
+         * and not face the risk of a compounding error in oethCreditsHighres that could result in 
+         * inaccurate `convertToShares` & `convertToAssets` which consequently would result in faulty
+         * `previewMint` & `previewRedeem`. High enough error can result in different conversion rates
+         * which a flash loan entering via `deposit` and exiting via `redeem` (or entering via `mint`
+         * and exiting via `withdraw`) could take advantage of.
+         */
         uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
         oethCreditsHighres += _getOETHCredits() - creditsBefore;
