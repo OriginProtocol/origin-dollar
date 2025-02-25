@@ -33,15 +33,11 @@ module.exports = deployOnSonic(
       "SonicSwapXAMOStrategyProxy"
     );
 
-    console.log(
-      `Getting reference to swapXVoter ${addresses.sonic.SwapXVoter}`
-    );
     const swapXVoter = await ethers.getContractAt(
       "IVoterV3",
       addresses.sonic.SwapXVoter
     );
 
-    console.log(`About to get gauge for the wS/OS pool`);
     const gaugeAddress = await swapXVoter.gauges(
       addresses.sonic.SwapXWSOS.pool
     );
@@ -52,7 +48,6 @@ module.exports = deployOnSonic(
     );
 
     if (gaugeAddress === addresses.zero) {
-      console.log(`Getting SwapX owner signer ${addresses.sonic.SwapXOwner}`);
       // Create the wS/OS Gauge
       const swapXOwnerSigner = await impersonateAndFund(
         addresses.sonic.SwapXOwner
@@ -63,19 +58,9 @@ module.exports = deployOnSonic(
           addresses.sonic.SwapXWSOS.pool
         } using signer ${await swapXOwnerSigner.getAddress()}`
       );
-      const tx = await swapXVoter
+      await swapXVoter
         .connect(swapXOwnerSigner)
         .createGauge(addresses.sonic.SwapXWSOS.pool, 0);
-
-      console.log(`Waiting for the createGauge tx ${tx.hash}`);
-
-      const receipt = await tx.wait();
-      const createGaugeEvent = receipt.events.find(
-        (e) => e.event === "GaugeCreated"
-      );
-
-      console.log(`Gauge created: ${createGaugeEvent.args.gauge}`);
-      addresses.sonic.SwapXWSOS.gauge = createGaugeEvent.args.gauge;
     } else {
       addresses.sonic.SwapXWSOS.gauge = gaugeAddress;
     }
