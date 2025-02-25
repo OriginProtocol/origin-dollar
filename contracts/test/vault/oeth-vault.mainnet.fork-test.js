@@ -6,9 +6,6 @@ const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { isCI, oethUnits, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { logTxDetails } = require("../../utils/txLogger");
-const {
-  shouldHaveRewardTokensConfigured,
-} = require("../behaviour/reward-tokens.fork");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
@@ -396,29 +393,30 @@ describe("ForkTest: OETH Vault", function () {
     });
   });
 
-  shouldHaveRewardTokensConfigured(() => ({
-    vault: fixture.oethVault,
-    harvester: fixture.oethHarvester,
-    ignoreTokens: [fixture.weth.address.toLowerCase()],
-    expectedConfigs: {
-      [fixture.cvx.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
-        doSwapRewardToken: true,
-        swapPlatform: 3,
-        liquidationLimit: oethUnits("2500"),
-        curvePoolIndices: [1, 0],
-      },
-      [fixture.crv.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14",
-        doSwapRewardToken: true,
-        swapPlatform: 3,
-        liquidationLimit: oethUnits("4000"),
-        curvePoolIndices: [2, 1],
-      },
-    },
-  }));
+  // We have migrated to simplified Harvester and this is no longer relevant
+  // shouldHaveRewardTokensConfigured(() => ({
+  //   vault: fixture.oethVault,
+  //   harvester: fixture.oethHarvester,
+  //   ignoreTokens: [fixture.weth.address.toLowerCase()],
+  //   expectedConfigs: {
+  //     [fixture.cvx.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 200,
+  //       swapPlatformAddr: "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 3,
+  //       liquidationLimit: oethUnits("2500"),
+  //       curvePoolIndices: [1, 0],
+  //     },
+  //     [fixture.crv.address]: {
+  //       allowedSlippageBps: 300,
+  //       harvestRewardBps: 200,
+  //       swapPlatformAddr: "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14",
+  //       doSwapRewardToken: true,
+  //       swapPlatform: 3,
+  //       liquidationLimit: oethUnits("4000"),
+  //       curvePoolIndices: [2, 1],
+  //     },
+  //   },
+  // }));
 });
