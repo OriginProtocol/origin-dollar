@@ -4,15 +4,15 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deployOnSonic(
   {
-    deployName: "010_swapx_amo",
+    deployName: "011_swapx_amo",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
     // Deploy Sonic SwapX AMO Strategy proxy
     const cOSonicProxy = await ethers.getContract("OSonicProxy");
     const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
@@ -25,15 +25,60 @@ module.exports = deployOnSonic(
       "OETHHarvesterSimple",
       cHarvesterProxy.address
     );
-
     const dSonicSwapXAMOStrategyProxy = await deployWithConfirmation(
       "SonicSwapXAMOStrategyProxy",
       []
     );
-
     const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
       "SonicSwapXAMOStrategyProxy"
     );
+
+    console.log(
+      `Getting reference to swapXVoter ${addresses.sonic.SwapXVoter}`
+    );
+    const swapXVoter = await ethers.getContractAt(
+      "IVoterV3",
+      addresses.sonic.SwapXVoter
+    );
+
+    console.log(`About to get gauge for the wS/OS pool`);
+    const gaugeAddress = await swapXVoter.gauges(
+      addresses.sonic.SwapXWSOS.pool
+    );
+    console.log(
+      `Gauge for the wS/OS pool ${
+        addresses.sonic.SwapXWSOS.pool
+      } is ${await swapXVoter.gauges(addresses.sonic.SwapXWSOS.pool)}`
+    );
+
+    if (gaugeAddress === addresses.zero) {
+      console.log(`Getting SwapX owner signer ${addresses.sonic.SwapXOwner}`);
+      // Create the wS/OS Gauge
+      const swapXOwnerSigner = await impersonateAndFund(
+        addresses.sonic.SwapXOwner
+      );
+
+      console.log(
+        `Creating gauge for the wS/OS pool ${
+          addresses.sonic.SwapXWSOS.pool
+        } using signer ${await swapXOwnerSigner.getAddress()}`
+      );
+      const tx = await swapXVoter
+        .connect(swapXOwnerSigner)
+        .createGauge(addresses.sonic.SwapXWSOS.pool, 0);
+
+      console.log(`Waiting for the createGauge tx ${tx.hash}`);
+
+      const receipt = await tx.wait();
+      const createGaugeEvent = receipt.events.find(
+        (e) => e.event === "GaugeCreated"
+      );
+
+      console.log(`Gauge created: ${createGaugeEvent.args.gauge}`);
+      addresses.sonic.SwapXWSOS.gauge = createGaugeEvent.args.gauge;
+    } else {
+      addresses.sonic.SwapXWSOS.gauge = gaugeAddress;
+    }
 
     // Deploy Sonic SwapX AMO Strategy implementation
     const dSonicSwapXAMOStrategy = await deployWithConfirmation(
@@ -49,7 +94,6 @@ module.exports = deployOnSonic(
       "SonicSwapXAMOStrategy",
       dSonicSwapXAMOStrategyProxy.address
     );
-
     // Initialize Sonic Curve AMO Strategy implementation
     const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
       "initialize(address[])",
@@ -64,7 +108,6 @@ module.exports = deployOnSonic(
           initData
         )
     );
-
     return {
       actions: [
         // 1. Approve new strategy on the Vault
