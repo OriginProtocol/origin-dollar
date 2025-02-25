@@ -105,31 +105,6 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /**
-     * @dev This function converts requested OETH token amount to its underlying OETH
-     * credits value that is stored internally in OETH.sol and is required in order to
-     * be able to rebase.
-     *
-     * @param oethAmount Amount of OETH to be converted to OETH credits
-     * @return amount of OETH credits the OETH amount corresponds to
-     */
-    function _oethToCredits(uint256 oethAmount) internal returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
-
-        /**
-         * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
-         * is internally being done in OETH. (Except that in case of OUSD it is being rounded up)
-         */
-        // solhint-disable-next-line max-line-length
-        /** https://github.com/OriginProtocol/origin-dollar/blob/c02572bd1c06eb3c2652c8692e52144be2efa741/contracts/contracts/token/OUSD.sol#L498
-         *
-         * This should make sure that the rounding will always be correct / mimic the rounding
-         * of OETH.
-         */
-        return oethAmount.mulTruncate(creditsPerTokenHighres);
-    }
-
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
         uint256 creditsPerTokenHighres = OETH(asset())
@@ -138,14 +113,21 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
 
+    function getOETHCredits() internal view returns (uint256 oethCreditsHighres) {
+        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
+            address(this)
+        );
+    }
+
     /** @dev See {IERC4262-deposit} */
     function deposit(uint256 oethAmount, address receiver)
         public
         override
         returns (uint256 woethAmount)
-    {
+    {   
+        uint256 creditsBefore = getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += _oethToCredits(oethAmount);
+        oethCreditsHighres += getOETHCredits() - creditsBefore;
     }
 
     /** @dev See {IERC4262-mint} */
@@ -153,9 +135,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         override
         returns (uint256 oethAmount)
-    {
+    {   
+        uint256 creditsBefore = getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += _oethToCredits(oethAmount);
+        oethCreditsHighres += getOETHCredits() - creditsBefore;
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -164,8 +147,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
+        uint256 creditsBefore = getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= _oethToCredits(oethAmount);
+        oethCreditsHighres -= creditsBefore - getOETHCredits();
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -174,7 +158,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
+        uint256 creditsBefore = getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= _oethToCredits(oethAmount);
+        oethCreditsHighres -= creditsBefore - getOETHCredits();
     }
 }
