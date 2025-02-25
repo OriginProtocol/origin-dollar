@@ -1,12 +1,14 @@
 const hre = require("hardhat");
 const { ethers } = hre;
+const { parseUnits } = ethers.utils;
 const mocha = require("mocha");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+
 const { isFork, isSonicFork, oethUnits } = require("./helpers");
 const { deployWithConfirmation } = require("../utils/deploy.js");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const erc20Abi = require("./abi/erc20.json");
 const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
@@ -150,7 +152,15 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
-  let validatorRegistrator, curveAMOStrategy;
+  let validatorRegistrator,
+    curveAMOStrategy,
+    curvePool,
+    curveGauge,
+    curveChildLiquidityGaugeFactory,
+    crv,
+    swapXAMOStrategy,
+    swapXPool,
+    swapXGauge;
   if (isFork) {
     validatorRegistrator = await impersonateAndFund(
       addresses.sonic.validatorRegistrator
@@ -159,13 +169,49 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
 
-    // Curve
+    // Curve AMO
     const curveAMOProxy = await ethers.getContract(
       "SonicCurveAMOStrategyProxy"
     );
     curveAMOStrategy = await ethers.getContractAt(
       "SonicCurveAMOStrategy",
       curveAMOProxy.address
+    );
+
+    curvePool = await ethers.getContractAt(
+      curveStableSwapNGAbi,
+      addresses.sonic.WS_OS.pool
+    );
+
+    curveGauge = await ethers.getContractAt(
+      curveXChainLiquidityGaugeAbi,
+      addresses.sonic.WS_OS.gauge
+    );
+
+    curveChildLiquidityGaugeFactory = await ethers.getContractAt(
+      curveChildLiquidityGaugeFactoryAbi,
+      addresses.sonic.childLiquidityGaugeFactory
+    );
+
+    crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
+
+    // SwapX AMO
+    const swapXAMOProxy = await ethers.getContract(
+      "SonicSwapXAMOStrategyProxy"
+    );
+    swapXAMOStrategy = await ethers.getContractAt(
+      "SonicSwapXAMOStrategy",
+      swapXAMOProxy.address
+    );
+
+    swapXPool = await ethers.getContractAt(
+      "IPair",
+      addresses.sonic.SwapXWSOS.pool
+    );
+
+    swapXGauge = await ethers.getContractAt(
+      "IGauge",
+      addresses.sonic.SwapXWSOS.gauge
     );
   }
 
@@ -177,23 +223,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     // Set allowance on the vault
     await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
   }
-
-  const curvePool = await ethers.getContractAt(
-    curveStableSwapNGAbi,
-    addresses.sonic.WS_OS.pool
-  );
-
-  const curveGauge = await ethers.getContractAt(
-    curveXChainLiquidityGaugeAbi,
-    addresses.sonic.WS_OS.gauge
-  );
-
-  const curveChildLiquidityGaugeFactory = await ethers.getContractAt(
-    curveChildLiquidityGaugeFactoryAbi,
-    addresses.sonic.childLiquidityGaugeFactory
-  );
-
-  const crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
 
   return {
     // Origin S
@@ -218,6 +247,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     curveChildLiquidityGaugeFactory,
     crv,
 
+    // SwapX
+    swapXAMOStrategy,
+    swapXPool,
+    swapXGauge,
+
     // Signers
     governor,
     strategist,
@@ -235,6 +269,61 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sfc,
   };
 });
+
+/**
+ * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
+ */
+async function swapXAMOFixture(
+  config = {
+    wsMintAmount: 0,
+    depositToStrategy: false,
+    poolAddwSAmount: 0,
+    poolAddOSAmount: 0,
+    balancePool: false,
+  }
+) {
+  const fixture = await defaultSonicFixture();
+
+  const { oSonicVault, nick, strategist, swapXAMOStrategy, timelock, wS } =
+    fixture;
+
+  await oSonicVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(wS.address, addresses.zero);
+
+  // mint some OS using wS if configured
+  if (config?.wsMintAmount > 0) {
+    const wsAmount = parseUnits(config.wsMintAmount.toString());
+    await oSonicVault.connect(nick).rebase();
+    await oSonicVault.connect(nick).allocate();
+
+    // Calculate how much to mint based on the wS in the vault,
+    // the withdrawal queue, and the wS to be sent to the strategy
+    const wsBalance = await wS.balanceOf(oSonicVault.address);
+    const queue = await oSonicVault.withdrawalQueueMetadata();
+    const available = wsBalance.add(queue.claimed).sub(queue.queued);
+    const mintAmount = wsAmount.sub(available);
+
+    if (mintAmount.gt(0)) {
+      // Approve the Vault to transfer wS
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+
+      // Mint OS with wS
+      // This will sit in the vault, not the strategy
+      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+    }
+
+    // Add ETH to the Metapool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the AMO strategy
+      await oSonicVault
+        .connect(strategist)
+        .depositToStrategy(swapXAMOStrategy.address, [wS.address], [wsAmount]);
+    }
+  }
+
+  return fixture;
+}
 
 const deployPoolBoosterFactorySwapxSingle = async (
   poolBoosterCentralRegistry,
@@ -270,6 +359,7 @@ mocha.after(async () => {
 
 module.exports = {
   defaultSonicFixture,
+  swapXAMOFixture,
   MINTER_ROLE,
   BURNER_ROLE,
 };
