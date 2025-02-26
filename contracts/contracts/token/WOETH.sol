@@ -33,9 +33,11 @@ contract WOETH is ERC4626, Governable, Initializable {
     uint256[48] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
-    constructor(
-        ERC20 underlying_
-    ) ERC20("", "") ERC4626(underlying_) Governable() {}
+    constructor(ERC20 underlying_)
+        ERC20("", "")
+        ERC4626(underlying_)
+        Governable()
+    {}
 
     /**
      * @notice Enable OETH rebasing for this contract
@@ -66,12 +68,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         oethCreditsHighres = _getOETHCredits();
     }
 
-
     function name()
         public
         view
         virtual
-        override(ERC20,IERC20Metadata)
+        override(ERC20, IERC20Metadata)
         returns (string memory)
     {
         return "Wrapped OETH";
@@ -81,7 +82,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         view
         virtual
-        override(ERC20,IERC20Metadata)
+        override(ERC20, IERC20Metadata)
         returns (string memory)
     {
         return "wOETH";
@@ -111,7 +112,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
 
-    function _getOETHCredits() internal view returns (uint256 oethCreditsHighres) {
+    function _getOETHCredits()
+        internal
+        view
+        returns (uint256 oethCreditsHighres)
+    {
         (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
             address(this)
         );
@@ -133,7 +138,7 @@ contract WOETH is ERC4626, Governable, Initializable {
          *    from balances
          *
          * We've decided that it is safer to read the credits diff directly from the OUSD contract
-         * and not face the risk of a compounding error in oethCreditsHighres that could result in 
+         * and not face the risk of a compounding error in oethCreditsHighres that could result in
          * inaccurate `convertToShares` & `convertToAssets` which consequently would result in faulty
          * `previewMint` & `previewRedeem`. High enough error can result in different conversion rates
          * which a flash loan entering via `deposit` and exiting via `redeem` (or entering via `mint`
@@ -149,7 +154,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         override
         returns (uint256 oethAmount)
-    {   
+    {
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
         oethCreditsHighres += _getOETHCredits() - creditsBefore;
