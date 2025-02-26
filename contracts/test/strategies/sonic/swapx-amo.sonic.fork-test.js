@@ -104,24 +104,23 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const wsDepositAmount = await units("5000", wS);
 
-      // Vault transfers wS to strategy
-      await wS
-        .connect(oSonicVaultSigner)
-        .transfer(swapXAMOStrategy.address, wsDepositAmount);
-
-      const {
-        osMintAmount,
-        wsReserves: wsReservesBefore,
-        osReserves: osReservesBefore,
-      } = await calcOSMintAmount(fixture, wsDepositAmount);
-      const osSupplyBefore = await oSonic.totalSupply();
       const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
         wS.address
+      );
+      const osSupplyBefore = await oSonic.totalSupply();
+      const { osMintAmount, reserves: reservesBefore } = await calcOSMintAmount(
+        fixture,
+        wsDepositAmount
       );
       const stratGaugeBalanceBefore = await swapXGauge.balanceOf(
         swapXAMOStrategy.address
       );
 
+      // Vault transfers wS to strategy
+      await wS
+        .connect(oSonicVaultSigner)
+        .transfer(swapXAMOStrategy.address, wsDepositAmount);
+      // Vault calls deposit on the strategy
       const tx = await swapXAMOStrategy
         .connect(oSonicVaultSigner)
         .deposit(wS.address, wsDepositAmount);
@@ -135,21 +134,24 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         .withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
       // Check the strategy balance increased
-      expect(
-        await swapXAMOStrategy.checkBalance(wS.address)
-      ).to.approxEqualTolerance(
-        stratBalanceBefore.add(wsDepositAmount).add(osMintAmount)
+      const expectedStratBalance = stratBalanceBefore
+        .add(wsDepositAmount)
+        .add(osMintAmount);
+      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
+        expectedStratBalance.sub(1),
+        expectedStratBalance
       );
 
       // Check the OS total supply increase
-      const oethSupplyAfter = await oSonic.totalSupply();
-      expect(oethSupplyAfter).to.equal(osSupplyBefore.add(osMintAmount));
+      expect(await oSonic.totalSupply()).to.equal(
+        osSupplyBefore.add(osMintAmount)
+      );
 
       // Check the reserves in the pool
       const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
         await swapXPool.getReserves();
-      expect(wsReservesAfter).to.equal(wsReservesBefore.add(wsDepositAmount));
-      expect(osReservesAfter).to.equal(osReservesBefore.add(osMintAmount));
+      expect(wsReservesAfter).to.equal(reservesBefore.ws.add(wsDepositAmount));
+      expect(osReservesAfter).to.equal(reservesBefore.os.add(osMintAmount));
 
       // Check the strategy's gauge balance increased
       expect(await swapXGauge.balanceOf(swapXAMOStrategy.address)).to.gt(
@@ -208,7 +210,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  describe.skip("with the strategy having some OS and wS in the pool", () => {
+  describe("with the strategy having some OS and wS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: true,
@@ -221,58 +223,48 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const { swapXAMOStrategy, swapXPool, oSonic, oSonicVaultSigner, wS } =
         fixture;
 
+      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
+        wS.address
+      );
       const {
-        oethBurnAmount,
-        ethWithdrawAmount,
-        curveBalances: curveBalancesBefore,
+        osBurnAmount,
+        wsWithdrawAmount,
+        reserves: reservesBefore,
       } = await calcWithdrawAllAmounts(fixture);
 
-      const oethSupplyBefore = await oSonic.totalSupply();
+      const osSupplyBefore = await oSonic.totalSupply();
 
-      log("Before withdraw all from strategy");
-      await run("amoStrat", {
-        pool: "OS",
-        output: false,
-      });
-
-      // Now try to withdraw all the WETH from the strategy
+      // Now try to withdraw all the wS from the strategy
       const tx = await swapXAMOStrategy
         .connect(oSonicVaultSigner)
         .withdrawAll();
 
-      const receipt = await tx.wait();
-
-      log("After withdraw all from strategy");
-      await run("amoStrat", {
-        pool: "OS",
-        output: false,
-        fromBlock: receipt.blockNumber - 1,
-      });
-
       // Check emitted events
       await expect(tx)
         .to.emit(swapXAMOStrategy, "Withdrawal")
-        .withArgs(wS.address, swapXPool.address, ethWithdrawAmount);
+        .withArgs(wS.address, swapXPool.address, wsWithdrawAmount);
       await expect(tx)
         .to.emit(swapXAMOStrategy, "Withdrawal")
-        .withArgs(oSonic.address, swapXPool.address, oethBurnAmount);
+        .withArgs(oSonic.address, swapXPool.address, osBurnAmount);
 
-      // Check the ETH and OS balances in the Curve pool
-      const curveBalancesAfter = await swapXPool.get_balances();
-      expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-        curveBalancesBefore[0].sub(ethWithdrawAmount),
-        0.05 // 0.05% or 5 basis point
+      // Check the strategy balance decreased
+      const expectedStratBalance = stratBalanceBefore
+        .sub(wsWithdrawAmount)
+        .sub(osBurnAmount);
+      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
+        expectedStratBalance.sub(1),
+        expectedStratBalance
       );
-      expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-        curveBalancesBefore[1].sub(oethBurnAmount),
-        0.05 // 0.05%
-      );
+
+      // Check the wS and OS reserves in the pool
+      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
+        await swapXPool.getReserves();
+      expect(wsReservesAfter).to.equal(reservesBefore.ws.sub(wsWithdrawAmount));
+      expect(osReservesAfter).to.equal(reservesBefore.os.sub(osBurnAmount));
 
       // Check the OS total supply decrease
-      const oethSupplyAfter = await oSonic.totalSupply();
-      expect(oethSupplyAfter).to.approxEqualTolerance(
-        oethSupplyBefore.sub(oethBurnAmount),
-        0.05 // 0.01% or 5 basis point
+      expect(await oSonic.totalSupply()).to.equal(
+        osSupplyBefore.sub(osBurnAmount)
       );
     });
     it("Vault should be able to withdraw some", async () => {
@@ -280,78 +272,68 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         swapXAMOStrategy,
         oSonic,
         swapXPool,
-        oethVault,
+        oSonicVault,
         oSonicVaultSigner,
         wS,
       } = fixture;
 
-      const withdrawAmount = oethUnits("1000");
+      const wsWithdrawAmount = oethUnits("1000");
 
-      const { oethBurnAmount, curveBalances: curveBalancesBefore } =
-        await calcOethWithdrawAmount(fixture, withdrawAmount);
-      const oethSupplyBefore = await oSonic.totalSupply();
-      const vaultWethBalanceBefore = await wS.balanceOf(oethVault.address);
+      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
+        wS.address
+      );
+      const { osBurnAmount, reserves: reservesBefore } =
+        await calcOSWithdrawAmount(fixture, wsWithdrawAmount);
+      const osSupplyBefore = await oSonic.totalSupply();
+      const vaultWSBalanceBefore = await wS.balanceOf(oSonicVault.address);
 
-      log("Before withdraw from strategy");
-      await run("amoStrat", {
-        pool: "OS",
-        output: false,
-      });
-
-      // Now try to withdraw the WETH from the strategy
+      // Now try to withdraw the wS from the strategy
       const tx = await swapXAMOStrategy
         .connect(oSonicVaultSigner)
-        .withdraw(oethVault.address, wS.address, withdrawAmount);
-
-      const receipt = await tx.wait();
-
-      log("After withdraw from strategy");
-      await run("amoStrat", {
-        pool: "OS",
-        output: false,
-        fromBlock: receipt.blockNumber - 1,
-      });
+        .withdraw(oSonicVault.address, wS.address, wsWithdrawAmount);
 
       // Check emitted events
       await expect(tx)
         .to.emit(swapXAMOStrategy, "Withdrawal")
-        .withArgs(wS.address, swapXPool.address, withdrawAmount);
+        .withArgs(wS.address, swapXPool.address, wsWithdrawAmount);
       await expect(tx).to.emit(swapXAMOStrategy, "Withdrawal").withNamedArgs({
         _asset: oSonic.address,
         _pToken: swapXPool.address,
       });
 
-      // Check the ETH and OS balances in the Curve pool
-      const curveBalancesAfter = await swapXPool.get_balances();
-      expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-        curveBalancesBefore[0].sub(withdrawAmount),
-        0.05 // 0.05% or 5 basis point
+      // Check the strategy balance decreased
+      const expectedStratBalance = stratBalanceBefore
+        .sub(wsWithdrawAmount)
+        .sub(osBurnAmount);
+      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
+        expectedStratBalance.sub(1),
+        expectedStratBalance
       );
-      expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-        curveBalancesBefore[1].sub(oethBurnAmount),
-        0.05 // 0.05%
-      );
+
+      // Check the wS and OS reserves in the pool
+      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
+        await swapXPool.getReserves();
+      expect(wsReservesAfter).to.equal(reservesBefore.ws.sub(wsWithdrawAmount));
+      expect(osReservesAfter).to.equal(reservesBefore.os.sub(osBurnAmount));
 
       // Check the OS total supply decrease
-      const oethSupplyAfter = await oSonic.totalSupply();
-      expect(oethSupplyAfter).to.approxEqualTolerance(
-        oethSupplyBefore.sub(oethBurnAmount),
-        0.05 // 0.05% or 5 basis point
+      expect(await oSonic.totalSupply()).to.equal(
+        osSupplyBefore.sub(osBurnAmount)
       );
 
-      // Check the WETH balance in the Vault
-      expect(await wS.balanceOf(oethVault.address)).to.equal(
-        vaultWethBalanceBefore.add(withdrawAmount)
+      // Check the wS balance in the Vault
+      expect(await wS.balanceOf(oSonicVault.address)).to.equal(
+        vaultWSBalanceBefore.add(wsWithdrawAmount)
       );
     });
     it("Only vault can withdraw some WETH from AMO strategy", async function () {
-      const { swapXAMOStrategy, oethVault, strategist, timelock, nick, wS } =
+      const { swapXAMOStrategy, oSonicVault, strategist, timelock, nick, wS } =
         fixture;
 
       for (const signer of [strategist, timelock, nick]) {
         const tx = swapXAMOStrategy
           .connect(signer)
-          .withdraw(oethVault.address, wS.address, parseUnits("50"));
+          .withdraw(oSonicVault.address, wS.address, parseUnits("50"));
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
@@ -385,8 +367,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OS from the pool", async () => {
-      const { cvxRewardPool, swapXAMOStrategy } = fixture;
-      const lpBalance = await cvxRewardPool.balanceOf(swapXAMOStrategy.address);
+      const { swapXGauge, swapXAMOStrategy } = fixture;
+      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
 
       const lpAmount = lpBalance
         // reduce by 1%
@@ -463,8 +445,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the pool", async () => {
-      const { cvxRewardPool, swapXAMOStrategy } = fixture;
-      const lpBalance = await cvxRewardPool.balanceOf(swapXAMOStrategy.address);
+      const { swapXGauge, swapXAMOStrategy } = fixture;
+      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
@@ -485,8 +467,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Strategist should remove ETH to balance the pool", async () => {
-      const { cvxRewardPool, swapXAMOStrategy } = fixture;
-      const lpBalance = await cvxRewardPool.balanceOf(swapXAMOStrategy.address);
+      const { swapXGauge, swapXAMOStrategy } = fixture;
+      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
@@ -549,8 +531,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Strategist should fail to remove too much OS from the pool", async () => {
-      const { cvxRewardPool, swapXAMOStrategy, strategist } = fixture;
-      const lpBalance = await cvxRewardPool.balanceOf(swapXAMOStrategy.address);
+      const { swapXGauge, swapXAMOStrategy, strategist } = fixture;
+      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
       const lpAmount = lpBalance
         // reduce by 1%
         .mul(99)
@@ -569,9 +551,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 async function assertRemoveAndBurn(lpAmount, fixture) {
   const { swapXAMOStrategy, swapXPool, oSonic, strategist } = fixture;
 
-  const oethBurnAmount = await calcOethRemoveAmount(fixture, lpAmount);
+  const oethBurnAmount = await calcOSRemoveAmount(fixture, lpAmount);
   const curveBalancesBefore = await swapXPool.get_balances();
-  const oethSupplyBefore = await oSonic.totalSupply();
+  const osSupplyBefore = await oSonic.totalSupply();
 
   log(`Before remove and burn of ${formatUnits(lpAmount)} OS from the pool`);
   await run("amoStrat", {
@@ -607,9 +589,8 @@ async function assertRemoveAndBurn(lpAmount, fixture) {
   );
 
   // Check the OS total supply decrease
-  const oethSupplyAfter = await oSonic.totalSupply();
-  expect(oethSupplyAfter).to.approxEqualTolerance(
-    oethSupplyBefore.sub(oethBurnAmount),
+  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
+    osSupplyBefore.sub(oethBurnAmount),
     0.01 // 0.01% or 1 basis point
   );
 }
@@ -618,7 +599,7 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
   const { swapXAMOStrategy, swapXPool, oSonic, strategist } = fixture;
 
   const curveBalancesBefore = await swapXPool.get_balances();
-  const oethSupplyBefore = await oSonic.totalSupply();
+  const osSupplyBefore = await oSonic.totalSupply();
 
   log(`Before mint and add ${formatUnits(oethMintAmount)} OS to the pool`);
   await run("amoStrat", {
@@ -657,9 +638,8 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
   );
 
   // Check the OS total supply decrease
-  const oethSupplyAfter = await oSonic.totalSupply();
-  expect(oethSupplyAfter).to.approxEqualTolerance(
-    oethSupplyBefore.add(oethMintAmount),
+  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
+    osSupplyBefore.add(oethMintAmount),
     0.01 // 0.01% or 1 basis point
   );
 }
@@ -667,24 +647,24 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
 async function assertRemoveOnlyAssets(lpAmount, fixture) {
   const {
     swapXAMOStrategy,
-    cvxRewardPool,
+    swapXGauge,
     swapXPool,
-    oethVault,
+    oSonicVault,
     oSonic,
     strategist,
     wS,
   } = fixture;
 
   log(`Removing ${formatUnits(lpAmount)} ETH from the pool`);
-  const ethRemoveAmount = await calcEthRemoveAmount(fixture, lpAmount);
+  const ethRemoveAmount = await calcWSRemoveAmount(fixture, lpAmount);
   log("After calc ETH remove amount");
   const curveBalancesBefore = await swapXPool.get_balances();
-  const oethSupplyBefore = await oSonic.totalSupply();
-  const vaultWethBalanceBefore = await wS.balanceOf(oethVault.address);
-  const strategyLpBalanceBefore = await cvxRewardPool.balanceOf(
+  const osSupplyBefore = await oSonic.totalSupply();
+  const vaultWethBalanceBefore = await wS.balanceOf(oSonicVault.address);
+  const strategyLpBalanceBefore = await swapXGauge.balanceOf(
     swapXAMOStrategy.address
   );
-  const vaultValueBefore = await oethVault.totalValue();
+  const vaultValueBefore = await oSonicVault.totalValue();
 
   log(`Before remove and burn of ${formatUnits(lpAmount)} ETH from the pool`);
   await run("amoStrat", {
@@ -720,23 +700,22 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
   expect(curveBalancesAfter[1]).to.equal(curveBalancesBefore[1]);
 
   // Check the OS total supply is the same
-  const oethSupplyAfter = await oSonic.totalSupply();
-  expect(oethSupplyAfter).to.approxEqualTolerance(
-    oethSupplyBefore,
+  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
+    osSupplyBefore,
     0.01 // 0.01% or 1 basis point
   );
 
   // Check the WETH balance in the Vault
-  expect(await wS.balanceOf(oethVault.address)).to.equal(
+  expect(await wS.balanceOf(oSonicVault.address)).to.equal(
     vaultWethBalanceBefore.add(ethRemoveAmount)
   );
 
   // Check the vault made money
-  const vaultValueAfter = await oethVault.totalValue();
+  const vaultValueAfter = await oSonicVault.totalValue();
   expect(vaultValueAfter.sub(vaultValueBefore)).to.gt(parseUnits("-1"));
 
   // Check the strategy LP balance decreased
-  const strategyLpBalanceAfter = await cvxRewardPool.balanceOf(
+  const strategyLpBalanceAfter = await swapXGauge.balanceOf(
     swapXAMOStrategy.address
   );
   expect(strategyLpBalanceBefore.sub(strategyLpBalanceAfter)).to.eq(lpAmount);
@@ -746,61 +725,60 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
 async function calcOSMintAmount(fixture, wsDepositAmount) {
   const { swapXPool } = fixture;
 
-  // Get the wS and OS balances in the pool
+  // Get the reserves of the pool
   const { _reserve0: wsReserves, _reserve1: osReserves } =
     await swapXPool.getReserves();
 
   const osMintAmount = wsDepositAmount.mul(osReserves).div(wsReserves);
   log(`OS mint amount : ${formatUnits(osMintAmount)}`);
 
-  return { osMintAmount, wsReserves, osReserves };
+  return { osMintAmount, reserves: { ws: wsReserves, os: osReserves } };
 }
 
 // Calculate the amount of OS burnt from a withdraw
-async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
+async function calcOSWithdrawAmount(fixture, wethWithdrawAmount) {
   const { swapXPool } = fixture;
 
-  // Get the ETH and OS balances in the Curve pool
-  const curveBalances = await swapXPool.get_balances();
+  // Get the reserves of the pool
+  const { _reserve0: wsReserves, _reserve1: osReserves } =
+    await swapXPool.getReserves();
 
-  // OS to burn = WETH withdrawn * OS pool balance / ETH pool balance
-  const oethBurnAmount = wethWithdrawAmount
-    .mul(curveBalances[1])
-    .div(curveBalances[0]);
+  // OS to burn = wS withdrawn * OS reserves / wS reserves
+  const osBurnAmount = wethWithdrawAmount.mul(osReserves).div(wsReserves);
 
-  log(`OS burn amount : ${formatUnits(oethBurnAmount)}`);
+  log(`OS burn amount : ${formatUnits(osBurnAmount)}`);
 
-  return { oethBurnAmount, curveBalances };
+  return { osBurnAmount, reserves: { ws: wsReserves, os: osReserves } };
 }
 
-// Calculate the OS and ETH amounts from a withdrawAll
+// Calculate the OS and wS amounts from a withdrawAll
 async function calcWithdrawAllAmounts(fixture) {
-  const { swapXAMOStrategy, cvxRewardPool, swapXPool } = fixture;
+  const { swapXAMOStrategy, swapXGauge, swapXPool } = fixture;
 
-  // Get the ETH and OS balances in the Curve pool
-  const curveBalances = await swapXPool.get_balances();
-  const strategyLpAmount = await cvxRewardPool.balanceOf(
-    swapXAMOStrategy.address
-  );
+  // Get the reserves of the pool
+  const { _reserve0: wsReserves, _reserve1: osReserves } =
+    await swapXPool.getReserves();
+  // const curveBalances = await swapXPool.get_balances();
+  const strategyLpAmount = await swapXGauge.balanceOf(swapXAMOStrategy.address);
   const totalLpSupply = await swapXPool.totalSupply();
 
+  // wS to withdraw = wS pool balance * strategy LP amount / total pool LP amount
+  const wsWithdrawAmount = wsReserves.mul(strategyLpAmount).div(totalLpSupply);
   // OS to burn = OS pool balance * strategy LP amount / total pool LP amount
-  const oethBurnAmount = curveBalances[1]
-    .mul(strategyLpAmount)
-    .div(totalLpSupply);
-  // ETH to withdraw = ETH pool balance * strategy LP amount / total pool LP amount
-  const ethWithdrawAmount = curveBalances[0]
-    .mul(strategyLpAmount)
-    .div(totalLpSupply);
+  const osBurnAmount = osReserves.mul(strategyLpAmount).div(totalLpSupply);
 
-  log(`OS burn amount    : ${formatUnits(oethBurnAmount)}`);
-  log(`ETH withdraw amount : ${formatUnits(ethWithdrawAmount)}`);
+  log(`wS withdraw amount : ${formatUnits(wsWithdrawAmount)}`);
+  log(`OS burn amount    : ${formatUnits(osBurnAmount)}`);
 
-  return { oethBurnAmount, ethWithdrawAmount, curveBalances };
+  return {
+    wsWithdrawAmount,
+    osBurnAmount,
+    reserves: { ws: wsReserves, os: osReserves },
+  };
 }
 
 // Calculate the amount of OS burned from a removeAndBurnOTokens
-async function calcOethRemoveAmount(fixture, lpAmount) {
+async function calcOSRemoveAmount(fixture, lpAmount) {
   const { oethGaugeSigner, swapXPool } = fixture;
 
   // Static call to get the OS removed from the pool for a given amount of LP tokens
@@ -817,8 +795,8 @@ async function calcOethRemoveAmount(fixture, lpAmount) {
   return oethBurnAmount;
 }
 
-// Calculate the amount of ETH burned from a removeOnlyAssets
-async function calcEthRemoveAmount(fixture, lpAmount) {
+// Calculate the amount of wS burned from a removeOnlyAssets
+async function calcWSRemoveAmount(fixture, lpAmount) {
   const { swapXPool } = fixture;
 
   // Get the ETH removed from the pool for a given amount of LP tokens
