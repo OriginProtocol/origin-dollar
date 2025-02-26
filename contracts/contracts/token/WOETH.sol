@@ -128,7 +128,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 woethAmount)
     {
-        require(oethAmount > 0, "Must deposit something");
+        if (oethAmount == 0) return 0;
 
         /**
          * Initially we attempted to do the credits calculation within this contract and try
@@ -157,7 +157,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 oethAmount)
     {
-        require(woethAmount > 0, "Must mint something");
+        if (woethAmount == 0) return 0;
 
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
@@ -170,7 +170,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
-        require(oethAmount > 0, "Must withdraw something");
+        if (oethAmount == 0) return 0;
 
         uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
@@ -183,7 +183,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
-        require(woethAmount > 0, "Must redeem something");
+        if (woethAmount == 0) return 0;
 
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
