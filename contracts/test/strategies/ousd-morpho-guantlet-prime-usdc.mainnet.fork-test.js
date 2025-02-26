@@ -250,20 +250,16 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       log("After withdraw all from strategy");
 
       // Check emitted event
-      await expect(tx)
-        .to.emit(morphoGauntletPrimeUSDCStrategy, "Withdrawal")
-        .withNamedArgs({
-          _asset: usdc.address,
-          _pToken: morphoGauntletPrimeUSDCVault.address,
-        });
-
-      const receipt = await tx.wait();
-      const event = receipt.events?.find((e) => e.event === "Withdrawal");
-      log(`Actual withdrawal amount: ${formatUnits(event.args[2])}`);
-      expect(event.args[2]).to.approxEqualTolerance(
-        usdcWithdrawAmountExpected,
-        0.01
-      );
+      await expect(tx).to.emittedEvent("Withdrawal", [
+        usdc.address,
+        morphoGauntletPrimeUSDCVault.address,
+        (amount) =>
+          expect(amount).approxEqualTolerance(
+            usdcWithdrawAmountExpected,
+            0.01,
+            "Withdrawal amount"
+          ),
+      ]);
 
       // Check the OUSD total supply stays the same
       expect(await ousd.totalSupply()).to.approxEqualTolerance(
