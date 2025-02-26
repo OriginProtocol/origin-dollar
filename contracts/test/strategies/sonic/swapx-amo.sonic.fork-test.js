@@ -83,6 +83,84 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
+  const snapData = async (fixture) => {
+    const { oSonicVault, swapXAMOStrategy, oSonic, swapXPool, swapXGauge, wS } =
+      fixture;
+
+    const stratBalance = await swapXAMOStrategy.checkBalance(wS.address);
+    const osSupply = await oSonic.totalSupply();
+    const poolSupply = await swapXPool.totalSupply();
+    const { _reserve0: wsReserves, _reserve1: osReserves } =
+      await swapXPool.getReserves();
+    const stratGaugeBalance = await swapXGauge.balanceOf(
+      swapXAMOStrategy.address
+    );
+    const vaultWSBalance = await wS.balanceOf(oSonicVault.address);
+
+    return {
+      stratBalance,
+      osSupply,
+      poolSupply,
+      reserves: { ws: wsReserves, os: osReserves },
+      stratGaugeBalance,
+      vaultWSBalance,
+    };
+  };
+
+  const assertChangedData = async (dataBefore, delta, fixture) => {
+    const { oSonic, oSonicVault, swapXAMOStrategy, swapXPool, swapXGauge, wS } =
+      fixture;
+
+    const expectedStratBalance = dataBefore.stratBalance.add(
+      delta.stratBalance
+    );
+    expect(
+      await swapXAMOStrategy.checkBalance(wS.address),
+      "Strategy's check balance"
+    ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
+    expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
+      dataBefore.osSupply.add(delta.osSupply)
+    );
+
+    // Check the pool's reserves
+    const { _reserve0: wsReserves, _reserve1: osReserves } =
+      await swapXPool.getReserves();
+    expect(wsReserves, "wS reserves").to.equal(
+      dataBefore.reserves.ws.add(delta.reserves.ws)
+    );
+    expect(osReserves, "OS reserves").to.equal(
+      dataBefore.reserves.os.add(delta.reserves.os)
+    );
+
+    // Check the strategy's gauge balance
+    // Calculate the liquidity added to the pool
+    const wsLiquidity = delta.reserves.ws
+      .mul(dataBefore.poolSupply)
+      .div(dataBefore.reserves.ws);
+    const osLiquidity = delta.reserves.os
+      .mul(dataBefore.poolSupply)
+      .div(dataBefore.reserves.os);
+    const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
+      ? wsLiquidity
+      : osLiquidity;
+    const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
+      deltaStratGaugeBalance
+    );
+    expect(
+      await swapXGauge.balanceOf(swapXAMOStrategy.address),
+      "Strategy's gauge balance"
+    ).to.withinRange(
+      expectedStratGaugeBalance.sub(1),
+      expectedStratGaugeBalance.add(1)
+    );
+
+    // Check Vault's wS balance
+    expect(
+      await wS.balanceOf(oSonicVault.address),
+      "Vault's wS balance"
+    ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
+  };
+
   describe("with some wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
@@ -93,28 +171,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit some wS to AMO strategy", async function () {
-      const {
-        swapXAMOStrategy,
-        oSonic,
-        swapXPool,
-        swapXGauge,
-        oSonicVaultSigner,
-        wS,
-      } = fixture;
+      const { swapXAMOStrategy, oSonic, swapXPool, oSonicVaultSigner, wS } =
+        fixture;
+
+      const dataBefore = await snapData(fixture);
 
       const wsDepositAmount = await units("5000", wS);
-
-      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
-        wS.address
-      );
-      const osSupplyBefore = await oSonic.totalSupply();
-      const { osMintAmount, reserves: reservesBefore } = await calcOSMintAmount(
-        fixture,
-        wsDepositAmount
-      );
-      const stratGaugeBalanceBefore = await swapXGauge.balanceOf(
-        swapXAMOStrategy.address
-      );
+      const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
 
       // Vault transfers wS to strategy
       await wS
@@ -133,29 +196,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         .to.emit(swapXAMOStrategy, "Deposit")
         .withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
-      // Check the strategy balance increased
-      const expectedStratBalance = stratBalanceBefore
-        .add(wsDepositAmount)
-        .add(osMintAmount);
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
-        expectedStratBalance.sub(1),
-        expectedStratBalance
-      );
-
-      // Check the OS total supply increase
-      expect(await oSonic.totalSupply()).to.equal(
-        osSupplyBefore.add(osMintAmount)
-      );
-
-      // Check the reserves in the pool
-      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
-        await swapXPool.getReserves();
-      expect(wsReservesAfter).to.equal(reservesBefore.ws.add(wsDepositAmount));
-      expect(osReservesAfter).to.equal(reservesBefore.os.add(osMintAmount));
-
-      // Check the strategy's gauge balance increased
-      expect(await swapXGauge.balanceOf(swapXAMOStrategy.address)).to.gt(
-        stratGaugeBalanceBefore
+      await assertChangedData(
+        dataBefore,
+        {
+          stratBalance: wsDepositAmount.add(osMintAmount).sub(1),
+          osSupply: osMintAmount,
+          reserves: { ws: wsDepositAmount, os: osMintAmount },
+          vaultWSBalance: wsDepositAmount.mul(-1),
+        },
+        fixture
       );
     });
     it("Only vault can deposit some wS to AMO strategy", async function () {
@@ -223,16 +272,11 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const { swapXAMOStrategy, swapXPool, oSonic, oSonicVaultSigner, wS } =
         fixture;
 
-      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
-        wS.address
-      );
-      const {
-        osBurnAmount,
-        wsWithdrawAmount,
-        reserves: reservesBefore,
-      } = await calcWithdrawAllAmounts(fixture);
+      const dataBefore = await snapData(fixture);
 
-      const osSupplyBefore = await oSonic.totalSupply();
+      const { osBurnAmount, wsWithdrawAmount } = await calcWithdrawAllAmounts(
+        fixture
+      );
 
       // Now try to withdraw all the wS from the strategy
       const tx = await swapXAMOStrategy
@@ -247,24 +291,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         .to.emit(swapXAMOStrategy, "Withdrawal")
         .withArgs(oSonic.address, swapXPool.address, osBurnAmount);
 
-      // Check the strategy balance decreased
-      const expectedStratBalance = stratBalanceBefore
-        .sub(wsWithdrawAmount)
-        .sub(osBurnAmount);
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
-        expectedStratBalance.sub(1),
-        expectedStratBalance
-      );
-
-      // Check the wS and OS reserves in the pool
-      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
-        await swapXPool.getReserves();
-      expect(wsReservesAfter).to.equal(reservesBefore.ws.sub(wsWithdrawAmount));
-      expect(osReservesAfter).to.equal(reservesBefore.os.sub(osBurnAmount));
-
-      // Check the OS total supply decrease
-      expect(await oSonic.totalSupply()).to.equal(
-        osSupplyBefore.sub(osBurnAmount)
+      await assertChangedData(
+        dataBefore,
+        {
+          stratBalance: wsWithdrawAmount.add(osBurnAmount).mul(-1),
+          osSupply: osBurnAmount.mul(-1),
+          reserves: { ws: wsWithdrawAmount.mul(-1), os: osBurnAmount.mul(-1) },
+          vaultWSBalance: wsWithdrawAmount,
+        },
+        fixture
       );
     });
     it("Vault should be able to withdraw some", async () => {
@@ -277,15 +312,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         wS,
       } = fixture;
 
-      const wsWithdrawAmount = oethUnits("1000");
+      const dataBefore = await snapData(fixture);
 
-      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
-        wS.address
+      const wsWithdrawAmount = oethUnits("1000");
+      const osBurnAmount = await calcOSWithdrawAmount(
+        fixture,
+        wsWithdrawAmount
       );
-      const { osBurnAmount, reserves: reservesBefore } =
-        await calcOSWithdrawAmount(fixture, wsWithdrawAmount);
-      const osSupplyBefore = await oSonic.totalSupply();
-      const vaultWSBalanceBefore = await wS.balanceOf(oSonicVault.address);
 
       // Now try to withdraw the wS from the strategy
       const tx = await swapXAMOStrategy
@@ -301,29 +334,18 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         _pToken: swapXPool.address,
       });
 
-      // Check the strategy balance decreased
-      const expectedStratBalance = stratBalanceBefore
-        .sub(wsWithdrawAmount)
-        .sub(osBurnAmount);
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
-        expectedStratBalance.sub(1),
-        expectedStratBalance
-      );
-
-      // Check the wS and OS reserves in the pool
-      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
-        await swapXPool.getReserves();
-      expect(wsReservesAfter).to.equal(reservesBefore.ws.sub(wsWithdrawAmount));
-      expect(osReservesAfter).to.equal(reservesBefore.os.sub(osBurnAmount));
-
-      // Check the OS total supply decrease
-      expect(await oSonic.totalSupply()).to.equal(
-        osSupplyBefore.sub(osBurnAmount)
-      );
-
-      // Check the wS balance in the Vault
-      expect(await wS.balanceOf(oSonicVault.address)).to.equal(
-        vaultWSBalanceBefore.add(wsWithdrawAmount)
+      await assertChangedData(
+        dataBefore,
+        {
+          stratBalance: wsWithdrawAmount.add(osBurnAmount).mul(-1),
+          osSupply: osBurnAmount.add(1).mul(-1),
+          reserves: {
+            ws: wsWithdrawAmount.mul(-1),
+            os: osBurnAmount.add(1).mul(-1),
+          },
+          vaultWSBalance: wsWithdrawAmount,
+        },
+        fixture
       );
     });
     it("Only vault can withdraw some WETH from AMO strategy", async function () {
@@ -732,7 +754,7 @@ async function calcOSMintAmount(fixture, wsDepositAmount) {
   const osMintAmount = wsDepositAmount.mul(osReserves).div(wsReserves);
   log(`OS mint amount : ${formatUnits(osMintAmount)}`);
 
-  return { osMintAmount, reserves: { ws: wsReserves, os: osReserves } };
+  return osMintAmount;
 }
 
 // Calculate the amount of OS burnt from a withdraw
@@ -748,7 +770,7 @@ async function calcOSWithdrawAmount(fixture, wethWithdrawAmount) {
 
   log(`OS burn amount : ${formatUnits(osBurnAmount)}`);
 
-  return { osBurnAmount, reserves: { ws: wsReserves, os: osReserves } };
+  return osBurnAmount;
 }
 
 // Calculate the OS and wS amounts from a withdrawAll
@@ -758,7 +780,6 @@ async function calcWithdrawAllAmounts(fixture) {
   // Get the reserves of the pool
   const { _reserve0: wsReserves, _reserve1: osReserves } =
     await swapXPool.getReserves();
-  // const curveBalances = await swapXPool.get_balances();
   const strategyLpAmount = await swapXGauge.balanceOf(swapXAMOStrategy.address);
   const totalLpSupply = await swapXPool.totalSupply();
 
@@ -773,7 +794,6 @@ async function calcWithdrawAllAmounts(fixture) {
   return {
     wsWithdrawAmount,
     osBurnAmount,
-    reserves: { ws: wsReserves, os: osReserves },
   };
 }
 
