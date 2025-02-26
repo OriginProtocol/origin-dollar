@@ -121,6 +121,30 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("0");
       await expect(await woeth.totalAssets()).to.equal(oethUnits("0"));
     });
+
+    it("should not be allowed to deposit 0", async () => {
+      await expect(
+        woeth.connect(josh).deposit(oethUnits("0"), josh.address)
+      ).to.be.revertedWith("Must deposit something");
+    });
+
+    it("should not be allowed to mint 0", async () => {
+      await expect(
+        woeth.connect(josh).mint(oethUnits("0"), josh.address)
+      ).to.be.revertedWith("Must mint something");
+    });
+
+    it("should not be allowed to redeem 0", async () => {
+      await expect(
+        woeth.connect(josh).redeem(oethUnits("0"), josh.address, josh.address)
+      ).to.be.revertedWith("Must redeem something");
+    });
+
+    it("should not be allowed to withdraw 0", async () => {
+      await expect(
+        woeth.connect(josh).withdraw(oethUnits("0"), josh.address, josh.address)
+      ).to.be.revertedWith("Must withdraw something");
+    });
   });
 
   describe("Collects Rebase", async () => {

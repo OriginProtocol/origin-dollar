@@ -128,6 +128,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 woethAmount)
     {
+        require(oethAmount > 0, "Must deposit something");
+
         /**
          * Initially we attempted to do the credits calculation within this contract and try
          * to mimic OUSD's implementation. This way 1 external call less would be required. Due
@@ -155,6 +157,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 oethAmount)
     {
+        require(woethAmount > 0, "Must mint something");
+
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
         oethCreditsHighres += _getOETHCredits() - creditsBefore;
@@ -166,6 +170,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
+        require(oethAmount > 0, "Must withdraw something");
+
         uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         oethCreditsHighres -= creditsBefore - _getOETHCredits();
@@ -177,6 +183,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
+        require(woethAmount > 0, "Must redeem something");
+
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
         oethCreditsHighres -= creditsBefore - _getOETHCredits();
