@@ -157,10 +157,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     curvePool,
     curveGauge,
     curveChildLiquidityGaugeFactory,
-    crv,
-    swapXAMOStrategy,
-    swapXPool,
-    swapXGauge;
+    crv;
   if (isFork) {
     validatorRegistrator = await impersonateAndFund(
       addresses.sonic.validatorRegistrator
@@ -194,25 +191,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     );
 
     crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
-
-    // SwapX AMO
-    const swapXAMOProxy = await ethers.getContract(
-      "SonicSwapXAMOStrategyProxy"
-    );
-    swapXAMOStrategy = await ethers.getContractAt(
-      "SonicSwapXAMOStrategy",
-      swapXAMOProxy.address
-    );
-
-    swapXPool = await ethers.getContractAt(
-      "IPair",
-      addresses.sonic.SwapXWSOS.pool
-    );
-
-    swapXGauge = await ethers.getContractAt(
-      "IGauge",
-      addresses.sonic.SwapXWSOS.gauge
-    );
   }
 
   for (const user of [rafael, nick, clement]) {
@@ -247,11 +225,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     curveChildLiquidityGaugeFactory,
     crv,
 
-    // SwapX
-    swapXAMOStrategy,
-    swapXPool,
-    swapXGauge,
-
     // Signers
     governor,
     strategist,
@@ -284,8 +257,29 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonicVault, nick, strategist, swapXAMOStrategy, timelock, wS } =
-    fixture;
+  const { oSonicVault, nick, strategist, timelock, wS } = fixture;
+
+  let swapXAMOStrategy, swapXPool, swapXGauge;
+
+  if (isFork) {
+    const swapXAMOProxy = await ethers.getContract(
+      "SonicSwapXAMOStrategyProxy"
+    );
+    swapXAMOStrategy = await ethers.getContractAt(
+      "SonicSwapXAMOStrategy",
+      swapXAMOProxy.address
+    );
+
+    swapXPool = await ethers.getContractAt(
+      "IPair",
+      addresses.sonic.SwapXWSOS.pool
+    );
+
+    swapXGauge = await ethers.getContractAt(
+      "IGauge",
+      addresses.sonic.SwapXWSOS.gauge
+    );
+  }
 
   await oSonicVault
     .connect(timelock)
@@ -322,7 +316,7 @@ async function swapXAMOFixture(
     }
   }
 
-  return fixture;
+  return { ...fixture, swapXAMOStrategy, swapXPool, swapXGauge };
 }
 
 const deployPoolBoosterFactorySwapxSingle = async (

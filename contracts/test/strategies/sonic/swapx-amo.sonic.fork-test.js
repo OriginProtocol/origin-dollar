@@ -3,10 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { run } = require("hardhat");
 
 const { createFixtureLoader } = require("../../_fixture");
-const {
-  defaultSonicFixture,
-  swapXAMOFixture,
-} = require("../../_fixture-sonic");
+const { swapXAMOFixture } = require("../../_fixture-sonic");
 const { units, oethUnits, isCI } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
 
@@ -19,7 +16,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   let fixture;
 
   describe("post deployment", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture);
+    const loadFixture = createFixtureLoader(swapXAMOFixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
@@ -86,7 +83,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  describe.skip("with some wS in the vault", () => {
+  describe("with some wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: false,
@@ -96,38 +93,38 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit some wS to AMO strategy", async function () {
-      const { swapXAMOStrategy, oSonic, swapXPool, oSonicVaultSigner, wS } =
-        fixture;
+      const {
+        swapXAMOStrategy,
+        oSonic,
+        swapXPool,
+        swapXGauge,
+        oSonicVaultSigner,
+        wS,
+      } = fixture;
 
       const wsDepositAmount = await units("5000", wS);
 
-      // Vault transfers WETH to strategy
+      // Vault transfers wS to strategy
       await wS
         .connect(oSonicVaultSigner)
         .transfer(swapXAMOStrategy.address, wsDepositAmount);
 
-      const { osMintAmount, curveBalances: curveBalancesBefore } =
-        await calcOSMintAmount(fixture, wsDepositAmount);
+      const {
+        osMintAmount,
+        wsReserves: wsReservesBefore,
+        osReserves: osReservesBefore,
+      } = await calcOSMintAmount(fixture, wsDepositAmount);
       const osSupplyBefore = await oSonic.totalSupply();
-
-      //   log("Before deposit to strategy");
-      //   await run("amoStrat", {
-      //     pool: "OS",
-      //     output: false,
-      //   });
+      const stratBalanceBefore = await swapXAMOStrategy.checkBalance(
+        wS.address
+      );
+      const stratGaugeBalanceBefore = await swapXGauge.balanceOf(
+        swapXAMOStrategy.address
+      );
 
       const tx = await swapXAMOStrategy
         .connect(oSonicVaultSigner)
         .deposit(wS.address, wsDepositAmount);
-
-      //   const receipt = await tx.wait();
-
-      //   log("After deposit to strategy");
-      //   await run("amoStrat", {
-      //     pool: "OS",
-      //     output: false,
-      //     fromBlock: receipt.blockNumber - 1,
-      //   });
 
       // Check emitted events
       await expect(tx)
@@ -137,22 +134,26 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         .to.emit(swapXAMOStrategy, "Deposit")
         .withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
-      // Check the ETH and OS balances in the Curve pool
-      const curveBalancesAfter = await swapXPool.get_balances();
-      expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-        curveBalancesBefore[0].add(wsDepositAmount),
-        0.01 // 0.01% or 1 basis point
-      );
-      expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-        curveBalancesBefore[1].add(osMintAmount),
-        0.01 // 0.01% or 1 basis point
+      // Check the strategy balance increased
+      expect(
+        await swapXAMOStrategy.checkBalance(wS.address)
+      ).to.approxEqualTolerance(
+        stratBalanceBefore.add(wsDepositAmount).add(osMintAmount)
       );
 
       // Check the OS total supply increase
       const oethSupplyAfter = await oSonic.totalSupply();
-      expect(oethSupplyAfter).to.approxEqualTolerance(
-        osSupplyBefore.add(osMintAmount),
-        0.01 // 0.01% or 1 basis point
+      expect(oethSupplyAfter).to.equal(osSupplyBefore.add(osMintAmount));
+
+      // Check the reserves in the pool
+      const { _reserve0: wsReservesAfter, _reserve1: osReservesAfter } =
+        await swapXPool.getReserves();
+      expect(wsReservesAfter).to.equal(wsReservesBefore.add(wsDepositAmount));
+      expect(osReservesAfter).to.equal(osReservesBefore.add(osMintAmount));
+
+      // Check the strategy's gauge balance increased
+      expect(await swapXGauge.balanceOf(swapXAMOStrategy.address)).to.gt(
+        stratGaugeBalanceBefore
       );
     });
     it("Only vault can deposit some wS to AMO strategy", async function () {
@@ -208,7 +209,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with the strategy having some OS and wS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: true,
       balancePool: true,
@@ -371,7 +372,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a lot more OS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: false,
       poolAddOethAmount: 60000,
@@ -407,7 +408,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a lot more OS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: false,
       poolAddOethAmount: 6000,
@@ -429,7 +430,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a lot more wS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: false,
       poolAddEthAmount: 200000,
@@ -474,7 +475,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a little more wS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 20000,
       depositToStrategy: false,
       poolAddEthAmount: 22000,
@@ -496,7 +497,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a little more wS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 20000,
       depositToStrategy: true,
       poolAddEthAmount: 8000,
@@ -538,7 +539,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 
   describe.skip("with a little more OS in the pool", () => {
-    const loadFixture = createFixtureLoader(defaultSonicFixture, {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 20000,
       depositToStrategy: false,
       poolAddOethAmount: 5000,
@@ -748,21 +749,8 @@ async function calcOSMintAmount(fixture, wsDepositAmount) {
   // Get the wS and OS balances in the pool
   const { _reserve0: wsReserves, _reserve1: osReserves } =
     await swapXPool.getReserves();
-  console.log("wsBalance", wsReserves);
-  console.log("osBalance", osReserves);
-  // wS balance - OS balance
-  const balanceDiff = wsReserves.sub(osReserves);
 
-  let osMintAmount = balanceDiff.lte(0)
-    ? // If more OS than wS then mint same amount of OS as wS
-      wsDepositAmount
-    : // If less OS than wS then mint the difference
-      balanceDiff.add(wsDepositAmount);
-  // Cap the minting to twice the ETH deposit amount
-  const doubleWethDepositAmount = wsDepositAmount.mul(2);
-  osMintAmount = osMintAmount.lte(doubleWethDepositAmount)
-    ? osMintAmount
-    : doubleWethDepositAmount;
+  const osMintAmount = wsDepositAmount.mul(osReserves).div(wsReserves);
   log(`OS mint amount : ${formatUnits(osMintAmount)}`);
 
   return { osMintAmount, wsReserves, osReserves };
