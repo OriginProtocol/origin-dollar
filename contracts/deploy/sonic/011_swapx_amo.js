@@ -33,38 +33,6 @@ module.exports = deployOnSonic(
       "SonicSwapXAMOStrategyProxy"
     );
 
-    const swapXVoter = await ethers.getContractAt(
-      "IVoterV3",
-      addresses.sonic.SwapXVoter
-    );
-
-    const gaugeAddress = await swapXVoter.gauges(
-      addresses.sonic.SwapXWSOS.pool
-    );
-    console.log(
-      `Gauge for the wS/OS pool ${
-        addresses.sonic.SwapXWSOS.pool
-      } is ${await swapXVoter.gauges(addresses.sonic.SwapXWSOS.pool)}`
-    );
-
-    if (gaugeAddress === addresses.zero) {
-      // Create the wS/OS Gauge
-      const swapXOwnerSigner = await impersonateAndFund(
-        addresses.sonic.SwapXOwner
-      );
-
-      console.log(
-        `Creating gauge for the wS/OS pool ${
-          addresses.sonic.SwapXWSOS.pool
-        } using signer ${await swapXOwnerSigner.getAddress()}`
-      );
-      await swapXVoter
-        .connect(swapXOwnerSigner)
-        .createGauge(addresses.sonic.SwapXWSOS.pool, 0);
-    } else {
-      addresses.sonic.SwapXWSOS.gauge = gaugeAddress;
-    }
-
     // Deploy Sonic SwapX AMO Strategy implementation
     const dSonicSwapXAMOStrategy = await deployWithConfirmation(
       "SonicSwapXAMOStrategy",

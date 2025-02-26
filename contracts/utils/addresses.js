@@ -406,8 +406,7 @@ addresses.sonic.SwapXOsGEMSx.pool =
 
 addresses.sonic.SwapXWSOS = {};
 addresses.sonic.SwapXWSOS.pool = "0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0";
-// TODO replace once the gauge is deployed
-addresses.sonic.SwapXWSOS.gauge = "0x2E5228cFEcFEFA439f92Aa4823E5593de5bFcB7D";
+addresses.sonic.SwapXWSOS.gauge = "0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709";
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
