@@ -4,7 +4,6 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
-const { impersonateAndFund } = require("../../utils/signers");
 
 module.exports = deployOnSonic(
   {

@@ -199,7 +199,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).deposit({ value: oethUnits("10000000") });
 
     // Set allowance on the vault
-    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
+    await wS.connect(user).approve(oSonicVault.address, oethUnits("100000000"));
   }
 
   return {
@@ -257,7 +257,8 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonicVault, nick, strategist, timelock, wS } = fixture;
+  const { oSonic, oSonicVault, rafael, nick, strategist, timelock, wS } =
+    fixture;
 
   let swapXAMOStrategy, swapXPool, swapXGauge;
 
@@ -315,6 +316,45 @@ async function swapXAMOFixture(
         .depositToStrategy(swapXAMOStrategy.address, [wS.address], [wsAmount]);
     }
   }
+
+  if (config?.balancePool) {
+    const { _reserve0: wsReserves, _reserve1: osReserves } =
+      await swapXPool.getReserves();
+
+    const diff = parseInt(
+      wsReserves.sub(osReserves).div(oethUnits("1")).toString()
+    );
+
+    if (diff > 0) {
+      config.poolAddOSAmount = (config.poolAddOSAmount || 0) + diff;
+    } else if (diff < 0) {
+      config.poolAddwSAmount = (config.poolAddwSAmount || 0) - diff;
+    }
+  }
+
+  // Add wS to the pool
+  if (config?.poolAddwSAmount > 0) {
+    log(`Adding ${config.poolAddwSAmount} wS to the pool`);
+    // transfer wS to the pool
+    const wsAmount = parseUnits(config.poolAddwSAmount.toString(), 18);
+    await wS.connect(nick).transfer(swapXPool.address, wsAmount);
+  }
+
+  // Add OS to the pool
+  if (config?.poolAddOSAmount > 0) {
+    log(`Adding ${config.poolAddOSAmount} OS to the pool`);
+
+    const osAmount = parseUnits(config.poolAddOSAmount.toString(), 18);
+
+    // Mint OS with wS
+    await oSonicVault.connect(rafael).mint(wS.address, osAmount, 0);
+
+    // transfer OS to the pool
+    await oSonic.connect(rafael).transfer(swapXPool.address, osAmount);
+  }
+
+  // force reserves to match balances
+  await swapXPool.sync();
 
   return { ...fixture, swapXAMOStrategy, swapXPool, swapXGauge };
 }

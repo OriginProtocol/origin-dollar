@@ -83,84 +83,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  const snapData = async (fixture) => {
-    const { oSonicVault, swapXAMOStrategy, oSonic, swapXPool, swapXGauge, wS } =
-      fixture;
-
-    const stratBalance = await swapXAMOStrategy.checkBalance(wS.address);
-    const osSupply = await oSonic.totalSupply();
-    const poolSupply = await swapXPool.totalSupply();
-    const { _reserve0: wsReserves, _reserve1: osReserves } =
-      await swapXPool.getReserves();
-    const stratGaugeBalance = await swapXGauge.balanceOf(
-      swapXAMOStrategy.address
-    );
-    const vaultWSBalance = await wS.balanceOf(oSonicVault.address);
-
-    return {
-      stratBalance,
-      osSupply,
-      poolSupply,
-      reserves: { ws: wsReserves, os: osReserves },
-      stratGaugeBalance,
-      vaultWSBalance,
-    };
-  };
-
-  const assertChangedData = async (dataBefore, delta, fixture) => {
-    const { oSonic, oSonicVault, swapXAMOStrategy, swapXPool, swapXGauge, wS } =
-      fixture;
-
-    const expectedStratBalance = dataBefore.stratBalance.add(
-      delta.stratBalance
-    );
-    expect(
-      await swapXAMOStrategy.checkBalance(wS.address),
-      "Strategy's check balance"
-    ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
-    expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
-      dataBefore.osSupply.add(delta.osSupply)
-    );
-
-    // Check the pool's reserves
-    const { _reserve0: wsReserves, _reserve1: osReserves } =
-      await swapXPool.getReserves();
-    expect(wsReserves, "wS reserves").to.equal(
-      dataBefore.reserves.ws.add(delta.reserves.ws)
-    );
-    expect(osReserves, "OS reserves").to.equal(
-      dataBefore.reserves.os.add(delta.reserves.os)
-    );
-
-    // Check the strategy's gauge balance
-    // Calculate the liquidity added to the pool
-    const wsLiquidity = delta.reserves.ws
-      .mul(dataBefore.poolSupply)
-      .div(dataBefore.reserves.ws);
-    const osLiquidity = delta.reserves.os
-      .mul(dataBefore.poolSupply)
-      .div(dataBefore.reserves.os);
-    const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
-      ? wsLiquidity
-      : osLiquidity;
-    const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
-      deltaStratGaugeBalance
-    );
-    expect(
-      await swapXGauge.balanceOf(swapXAMOStrategy.address),
-      "Strategy's gauge balance"
-    ).to.withinRange(
-      expectedStratGaugeBalance.sub(1),
-      expectedStratGaugeBalance.add(1)
-    );
-
-    // Check Vault's wS balance
-    expect(
-      await wS.balanceOf(oSonicVault.address),
-      "Vault's wS balance"
-    ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
-  };
-
   describe("with some wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
@@ -375,18 +297,18 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  describe.skip("with a lot more OS in the pool", () => {
+  describe("with a lot more OS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
-      depositToStrategy: false,
-      poolAddOethAmount: 60000,
+      depositToStrategy: true,
+      poolAddOSAmount: 60000,
       balancePool: true,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Strategist should remove a little OS from the pool", async () => {
-      await assertRemoveAndBurn(parseUnits("3"), fixture);
+    it("Strategist should swap assets to the pool", async () => {
+      await assertSwapAssetsToPool(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OS from the pool", async () => {
       const { swapXGauge, swapXAMOStrategy } = fixture;
@@ -397,7 +319,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         .mul(99)
         .div(100);
 
-      await assertRemoveAndBurn(lpAmount, fixture);
+      await assertSwapAssetsToPool(lpAmount, fixture);
     });
     it("Strategist should fail to add even more OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -570,51 +492,112 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   });
 });
 
-async function assertRemoveAndBurn(lpAmount, fixture) {
-  const { swapXAMOStrategy, swapXPool, oSonic, strategist } = fixture;
+const snapData = async (fixture) => {
+  const { oSonicVault, swapXAMOStrategy, oSonic, swapXPool, swapXGauge, wS } =
+    fixture;
 
-  const oethBurnAmount = await calcOSRemoveAmount(fixture, lpAmount);
-  const curveBalancesBefore = await swapXPool.get_balances();
-  const osSupplyBefore = await oSonic.totalSupply();
+  const stratBalance = await swapXAMOStrategy.checkBalance(wS.address);
+  const osSupply = await oSonic.totalSupply();
+  const poolSupply = await swapXPool.totalSupply();
+  const { _reserve0: wsReserves, _reserve1: osReserves } =
+    await swapXPool.getReserves();
+  const stratGaugeBalance = await swapXGauge.balanceOf(
+    swapXAMOStrategy.address
+  );
+  const vaultWSBalance = await wS.balanceOf(oSonicVault.address);
+  const stratWSBalance = await wS.balanceOf(swapXAMOStrategy.address);
 
-  log(`Before remove and burn of ${formatUnits(lpAmount)} OS from the pool`);
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-  });
+  return {
+    stratBalance,
+    osSupply,
+    poolSupply,
+    reserves: { ws: wsReserves, os: osReserves },
+    stratGaugeBalance,
+    vaultWSBalance,
+    stratWSBalance,
+  };
+};
 
-  // Remove and burn OS from the pool
+const assertChangedData = async (dataBefore, delta, fixture) => {
+  const { oSonic, oSonicVault, swapXAMOStrategy, swapXPool, swapXGauge, wS } =
+    fixture;
+
+  const expectedStratBalance = dataBefore.stratBalance.add(delta.stratBalance);
+  expect(
+    await swapXAMOStrategy.checkBalance(wS.address),
+    "Strategy's check balance"
+  ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
+  expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
+    dataBefore.osSupply.add(delta.osSupply)
+  );
+
+  // Check the pool's reserves
+  const { _reserve0: wsReserves, _reserve1: osReserves } =
+    await swapXPool.getReserves();
+  expect(wsReserves, "wS reserves").to.equal(
+    dataBefore.reserves.ws.add(delta.reserves.ws)
+  );
+  expect(osReserves, "OS reserves").to.equal(
+    dataBefore.reserves.os.add(delta.reserves.os)
+  );
+
+  // Check the strategy's gauge balance
+  // Calculate the liquidity added to the pool
+  const wsLiquidity = delta.reserves.ws
+    .mul(dataBefore.poolSupply)
+    .div(dataBefore.reserves.ws);
+  const osLiquidity = delta.reserves.os
+    .mul(dataBefore.poolSupply)
+    .div(dataBefore.reserves.os);
+  const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
+    ? wsLiquidity
+    : osLiquidity;
+  const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
+    deltaStratGaugeBalance
+  );
+  expect(
+    await swapXGauge.balanceOf(swapXAMOStrategy.address),
+    "Strategy's gauge balance"
+  ).to.withinRange(
+    expectedStratGaugeBalance.sub(1),
+    expectedStratGaugeBalance.add(1)
+  );
+
+  // Check Vault's wS balance
+  expect(
+    await wS.balanceOf(oSonicVault.address),
+    "Vault's wS balance"
+  ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
+};
+
+async function assertSwapAssetsToPool(wsAmount, fixture) {
+  const { swapXAMOStrategy, strategist } = fixture;
+
+  const dataBefore = await snapData(fixture);
+
+  log(`wS in the strategy : ${formatUnits(dataBefore.stratWSBalance)}`);
+
+  // Swap wS to the pool and burn the received OS from the pool
   const tx = await swapXAMOStrategy
     .connect(strategist)
-    .removeAndBurnOTokens(lpAmount);
-
-  const receipt = await tx.wait();
-
-  log("After remove and burn of OS from pool");
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-    fromBlock: receipt.blockNumber - 1,
-  });
+    .swapAssetsToPool(wsAmount);
 
   // Check emitted event
-  await expect(tx)
-    .to.emit(swapXAMOStrategy, "Withdrawal")
-    .withArgs(oSonic.address, swapXPool.address, oethBurnAmount);
+  // const expectedLpAmount = BigNumber.from(0);
+  // const expectedOSBurnAmount = BigNumber.from(0);
+  await expect(tx).to.emit(swapXAMOStrategy, "SwapAssetsToPool");
+  // .withArgs(wsAmount, expectedLpAmount, expectedOSBurnAmount);
 
-  // Check the ETH and OS balances in the Curve pool
-  const curveBalancesAfter = await swapXPool.get_balances();
-  expect(curveBalancesAfter[0]).to.equal(curveBalancesBefore[0]);
-  expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-    curveBalancesBefore[1].sub(oethBurnAmount),
-    0.01 // 0.01%
-  );
-
-  // Check the OS total supply decrease
-  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
-    osSupplyBefore.sub(oethBurnAmount),
-    0.01 // 0.01% or 1 basis point
-  );
+  // await assertChangedData(
+  //   dataBefore,
+  //   {
+  //     stratBalance: wsAmount.add(expectedOSBurnAmount).sub(1),
+  //     osSupply: expectedOSBurnAmount.mul(-1),
+  //     reserves: { ws: wsAmount.mul(-1), os: expectedOSBurnAmount.mul(-1) },
+  //     vaultWSBalance: BigNumber.from(0),
+  //   },
+  //   fixture
+  // );
 }
 
 async function assertMintAndAddOTokens(oethMintAmount, fixture) {
@@ -795,24 +778,6 @@ async function calcWithdrawAllAmounts(fixture) {
     wsWithdrawAmount,
     osBurnAmount,
   };
-}
-
-// Calculate the amount of OS burned from a removeAndBurnOTokens
-async function calcOSRemoveAmount(fixture, lpAmount) {
-  const { oethGaugeSigner, swapXPool } = fixture;
-
-  // Static call to get the OS removed from the pool for a given amount of LP tokens
-  const oethBurnAmount = await swapXPool
-    .connect(oethGaugeSigner)
-    .callStatic["remove_liquidity_one_coin(uint256,int128,uint256)"](
-      lpAmount,
-      1,
-      0
-    );
-
-  log(`OS burn amount : ${formatUnits(oethBurnAmount)}`);
-
-  return oethBurnAmount;
 }
 
 // Calculate the amount of wS burned from a removeOnlyAssets

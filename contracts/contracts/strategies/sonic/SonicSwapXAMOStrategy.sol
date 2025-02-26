@@ -417,7 +417,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IGauge(gauge).deposit(lpTokens);
     }
 
+    /// @param lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
     function _withdrawFromGaugeAndPool(uint256 lpTokens) internal {
+        require(
+            IGauge(gauge).balanceOf(address(this)) >= lpTokens,
+            "Not enough LP tokens in gauge"
+        );
+
         // Withdraw pool LP tokens from the gauge
         IGauge(gauge).withdraw(lpTokens);
 

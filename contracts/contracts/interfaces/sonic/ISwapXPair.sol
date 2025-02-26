@@ -117,4 +117,6 @@ interface IPair {
     function isStable() external view returns (bool);
 
     function skim(address to) external;
+
+    function sync() external;
 }
