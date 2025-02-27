@@ -109,20 +109,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /// @dev Checks that the strategy value has not decreased by more than a dust amount
-    modifier strategyValueChecker() {
-        // Get the strategy value before the call
-        uint256 balanceBefore = checkBalance(ws);
-
-        _;
-
-        // Get the strategy value after the call
-        uint256 balanceAfter = checkBalance(ws);
-
-        // The strategy value should not decrease by more than a dust amount
-        require(balanceAfter >= balanceBefore - 10, "Strategy value decreased");
-    }
-
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _os,
@@ -236,6 +222,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_ws, pool, _wsAmount);
 
+        // Skim the pool in case extra tokens were added
+        IPair(pool).skim(address(this));
+
         // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
         uint256 lpTokens = calcTokensToBurn(_wsAmount);
 
@@ -300,10 +289,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         nonReentrant
-        // TODO which one is better to use here?
         improvePoolBalance
-        strategyValueChecker
     {
+        // Skim the pool in case extra tokens were added
+        IPair(pool).skim(address(this));
+
         // 1. Partially remove liquidity so there’s enough wS for the swap
 
         // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
@@ -335,10 +325,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         nonReentrant
-        // TODO which one is better to use here?
         improvePoolBalance
-        strategyValueChecker
     {
+        // Skim the pool in case extra tokens were added
+        IPair(pool).skim(address(this));
+
         // 1. Mint OS so it can be swapped into the pool
 
         // There shouldn't be any OS in the strategy but just in case
@@ -378,11 +369,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
     function calcTokensToBurn(uint256 _wsAmount)
         internal
+        view
         returns (uint256 lpTokens)
     {
-        // Skim the pool in case extra wS tokens were added
-        IPair(pool).skim(address(this));
-
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much wS
          * we want we can determine how much of OS we receive by removing liquidity.

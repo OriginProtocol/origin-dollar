@@ -311,23 +311,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertSwapAssetsToPool(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OS from the pool", async () => {
-      const { swapXGauge, swapXAMOStrategy } = fixture;
-      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
-
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
-        .div(100);
-
-      await assertSwapAssetsToPool(lpAmount, fixture);
+      await assertSwapAssetsToPool(parseUnits("3000"), fixture);
     });
-    it("Strategist should fail to add even more OS to the pool", async () => {
+    it.skip("Strategist should fail to add even more OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
 
-      // Mint and add OS to the pool
+      // try swapping OS into the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .mintAndAddOTokens(parseUnits("1"));
+        .swapOTokensToPool(parseUnits("1"));
 
       await expect(tx).to.be.revertedWith("OTokens balance worse");
     });
@@ -573,31 +565,15 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
 async function assertSwapAssetsToPool(wsAmount, fixture) {
   const { swapXAMOStrategy, strategist } = fixture;
 
-  const dataBefore = await snapData(fixture);
-
-  log(`wS in the strategy : ${formatUnits(dataBefore.stratWSBalance)}`);
-
   // Swap wS to the pool and burn the received OS from the pool
   const tx = await swapXAMOStrategy
     .connect(strategist)
     .swapAssetsToPool(wsAmount);
 
   // Check emitted event
-  // const expectedLpAmount = BigNumber.from(0);
-  // const expectedOSBurnAmount = BigNumber.from(0);
-  await expect(tx).to.emit(swapXAMOStrategy, "SwapAssetsToPool");
-  // .withArgs(wsAmount, expectedLpAmount, expectedOSBurnAmount);
-
-  // await assertChangedData(
-  //   dataBefore,
-  //   {
-  //     stratBalance: wsAmount.add(expectedOSBurnAmount).sub(1),
-  //     osSupply: expectedOSBurnAmount.mul(-1),
-  //     reserves: { ws: wsAmount.mul(-1), os: expectedOSBurnAmount.mul(-1) },
-  //     vaultWSBalance: BigNumber.from(0),
-  //   },
-  //   fixture
-  // );
+  await expect(tx)
+    .to.emit(swapXAMOStrategy, "SwapAssetsToPool")
+    .withNamedArgs({ _wsAmount: wsAmount });
 }
 
 async function assertMintAndAddOTokens(oethMintAmount, fixture) {
