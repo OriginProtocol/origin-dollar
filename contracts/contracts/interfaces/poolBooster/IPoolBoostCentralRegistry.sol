@@ -17,7 +17,9 @@ interface IPoolBoostCentralRegistry {
         // Supports bribing a single contract per pool. Appropriate for Classic Stable &
         // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)
         // needs bribing
-        SwapXSingleBooster
+        SwapXSingleBooster,
+        // Support bribing a mainnet Curve gauge using votemarket and campaignRemoteManager
+        CurveMainnetBooster
     }
 
     struct PoolBoosterEntry {
@@ -27,18 +29,12 @@ interface IPoolBoostCentralRegistry {
     }
 
     event PoolBoosterCreated(
-        address poolBoosterAddress,
-        address ammPoolAddress,
-        PoolBoosterType poolBoosterType,
-        address factoryAddress
+        address poolBoosterAddress, address ammPoolAddress, PoolBoosterType poolBoosterType, address factoryAddress
     );
     event PoolBoosterRemoved(address poolBoosterAddress);
 
-    function emitPoolBoosterCreated(
-        address _poolBoosterAddress,
-        address _ammPoolAddress,
-        PoolBoosterType _boosterType
-    ) external;
+    function emitPoolBoosterCreated(address _poolBoosterAddress, address _ammPoolAddress, PoolBoosterType _boosterType)
+        external;
 
     function emitPoolBoosterRemoved(address _poolBoosterAddress) external;
 }
