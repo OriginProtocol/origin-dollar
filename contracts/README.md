@@ -456,3 +456,12 @@ yarn test:fork:coverage
 ```
 
 The CI will upload the coverage reports to Codecov if they complete successfully.
+
+## Active yield forwards
+
+Here is the list of active yield forwards (which shall be removed once Monitoring shall be able to display it): 
+| Chain | From                               | To                                        |
+|-------|------------------------------------|-------------------------------------------|
+| sonic | addresses.sonic.Shadow.OsEco.pool  | addresses.sonic.Shadow.OsEco.yf_treasury  |
+| sonic | addresses.sonic.SwapX.OsHedgy.pool | addresses.sonic.SwapX.OsHedgy.yf_treasury |
+|       |                                    |                                           |
