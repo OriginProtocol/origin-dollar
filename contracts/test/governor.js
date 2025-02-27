@@ -232,10 +232,10 @@ describe("Can claim governance with Governor contract and govern", () => {
     );
 
     const tx = await governorContract.connect(governor).cancel(proposalId);
-    const events = (await tx.wait()).events || [];
-    const cancelEvent = events.find((e) => e.event === "ProposalCancelled");
 
-    expect(cancelEvent).to.not.be.undefined;
+    await expect(tx)
+      .to.emit(governorContract, "ProposalCancelled")
+      .withArgs(proposalId);
 
     // Expired = 2 in ProposalState enum
     expect(await governorContract.connect(governor).state(proposalId)).to.equal(
@@ -270,10 +270,10 @@ describe("Can claim governance with Governor contract and govern", () => {
     );
 
     const tx = await governorContract.connect(governor).cancel(proposalId);
-    const events = (await tx.wait()).events || [];
-    const cancelEvent = events.find((e) => e.event === "ProposalCancelled");
 
-    expect(cancelEvent).to.not.be.undefined;
+    await expect(tx)
+      .to.emit(governorContract, "ProposalCancelled")
+      .withArgs(proposalId);
 
     // Expired = 2 in ProposalState enum
     expect(await governorContract.connect(governor).state(proposalId)).to.equal(

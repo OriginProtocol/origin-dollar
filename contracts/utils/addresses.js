@@ -383,6 +383,9 @@ addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
 
 // SwapX on Sonic
+addresses.sonic.SWPx = "0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70";
+addresses.sonic.SwapXOwner = "0xAdB5A1518713095C39dBcA08Da6656af7249Dd20";
+addresses.sonic.SwapXVoter = "0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2";
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 addresses.sonic.SwapXOsUSDCe = {};
@@ -400,6 +403,10 @@ addresses.sonic.SwapXOsUSDCe.extBribeUSDC =
 addresses.sonic.SwapXOsGEMSx = {};
 addresses.sonic.SwapXOsGEMSx.pool =
   "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
+
+addresses.sonic.SwapXWSOS = {};
+addresses.sonic.SwapXWSOS.pool = "0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0";
+addresses.sonic.SwapXWSOS.gauge = "0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709";
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
