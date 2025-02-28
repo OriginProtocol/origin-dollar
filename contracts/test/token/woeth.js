@@ -188,7 +188,7 @@ describe("WOETH", function () {
       );
 
       // Sudden donation that wouldn't increase the existing yield drip rate
-      // doesn't alter the rate
+      // dosn't alter the rate
       await increaseOETHSupplyAndRebase(29);
       await woeth.startYield();
 
