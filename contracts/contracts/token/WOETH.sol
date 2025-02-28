@@ -194,7 +194,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         startYield();
     }
 
-    function _min(uint256 a, uint256 b) internal {
+    function _min(uint256 a, uint256 b) internal returns (uint256) {
         return a < b ? a : b;
     }
 }
