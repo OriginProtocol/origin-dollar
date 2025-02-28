@@ -109,10 +109,6 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     // @notice Called to start a yield period, if one is not active
     function startYield() public {
-        // If we are currently giving yield, do not adjust the yield rate
-        if (block.timestamp < yieldEnd) {
-            return;
-        }
         uint256 _computedAssets = totalAssets();
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
         if (_actualAssets == _computedAssets) {
@@ -126,6 +122,14 @@ contract WOETH is ERC4626, Governable, Initializable {
             // Cap yield
             uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
+
+            // If we are currently giving yield and the new drip rate would be smaller than
+            // the existing one keep the existing drip rate. If the new drip rate is larger
+            // than allow for the reset of the drip rate and drip period.
+            if (_newYield < yieldAssets && block.timestamp < yieldEnd) {
+                return;
+            }
+
             yieldAssets = _newYield.toUint128();
         }
         hardAssets = _computedAssets.toInt256();

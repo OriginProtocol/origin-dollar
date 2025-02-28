@@ -187,8 +187,9 @@ describe("WOETH", function () {
         startingAssets.add(2 * 10)
       );
 
-      // Sudden donation here will not change yield schedule
-      await increaseOETHSupplyAndRebase(100000000000);
+      // Sudden donation that wouldn't increase the existing yield drip rate
+      // doesn't alter the rate
+      await increaseOETHSupplyAndRebase(29);
       await woeth.startYield();
 
       // Yield continues. Previous donation commands advanced time 4 seconds
@@ -209,6 +210,55 @@ describe("WOETH", function () {
       await advanceTime(1);
       await expect(await woeth.totalAssets()).to.equal(
         startingAssets.add(toDistribute)
+      );
+    });
+
+    it("should distributed yield over time", async () => {
+      let startingAssets = oethUnits("100");
+      // Ten yield per s
+      const toDistribute = 10 * 24 * 60 * 60 + 25;
+      // OETH has 400 total supply. WOETH has 100 OETH
+      // So yield is multiped by 4
+      await expect(woeth).to.have.a.balanceOf("100", oeth);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets);
+      await increaseOETHSupplyAndRebase(4 * toDistribute + 3);
+
+      await woeth.startYield();
+
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets.add(1 * 10));
+
+      // Sudden donation that increases the drip rate of the yield should reset
+      // the drip rate
+      await increaseOETHSupplyAndRebase(4 * toDistribute + 3);
+      await woeth.startYield();
+
+      // Yield continues. Previous donation commands advanced time 4 seconds
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(5 * 10)
+      );
+
+      await advanceTime(1);
+      // Yield should continue with double the rate
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(7 * 10)
+      );
+
+      // One block before the end. minus 20 
+      await advanceTime(24 * 60 * 60 - 2);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute * 2).sub(20)
+      );
+
+      // End, should be exact plus 1 for the rounding error
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute * 2 + 1)
+      );
+      // After end, no change
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute * 2 + 1)
       );
     });
   });
