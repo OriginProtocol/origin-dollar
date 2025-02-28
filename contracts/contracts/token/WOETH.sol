@@ -97,7 +97,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /**
      * @notice Transfer token to governor. Intended for recovering tokens stuck in
-     *      contract, i.e. mistaken sends. Cannot transfer OETH
+     *      contract, i.e. mistaken sends. Cannot transfer the core asset
      * @param asset_ Address for the asset
      * @param amount_ Amount of the asset to transfer
      */
@@ -105,9 +105,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        //@dev TODO: we could implement a feature where if anyone sends OETH directly to
-        // the contract, that we can let the governor transfer the excess of the token.
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        require(asset_ != address(asset()), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
