@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits, daiUnits, isFork } = require("../helpers");
+const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
 describe("WOETH", function () {
@@ -33,8 +33,10 @@ describe("WOETH", function () {
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
-
-    // josh account starts each test with 100 OETH
+    for (i = 0; i < 122; i++) {
+      await woeth.startYield();
+      await advanceTime(10000);
+    }
   });
 
   const increaseOETHSupplyAndRebase = async (wethAmount) => {
@@ -61,10 +63,13 @@ describe("WOETH", function () {
   describe("Funds in, Funds out", async () => {
     it("should deposit at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
+      await expect(woeth).to.have.a.balanceOf("100", oeth);
+      expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
       await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
+      await expect(woeth).to.have.a.totalSupply("75");
+      await expect(woeth).to.have.a.balanceOf("150", oeth);
       await expect(josh).to.have.a.balanceOf("75", woeth);
       await expect(josh).to.have.a.balanceOf("50", oeth);
-      await expect(woeth).to.have.a.totalSupply("75");
     });
 
     it("should withdraw at the correct ratio", async () => {
