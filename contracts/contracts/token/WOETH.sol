@@ -104,33 +104,33 @@ contract WOETH is ERC4626, Governable, Initializable {
     // @notice Called to start a yield period, if one is not active
     function startYield() public {
         // If we are currently giving yield, do not adjust the yield rate
-        if (block.timestamp < yieldEnd) {
+        if(block.timestamp < yieldEnd){ 
             return;
         }
-        // This method should not revert, since that would block deposits and withdraws.
         uint256 _computedAssets = totalAssets();
         uint256 actualAssets = OETH(asset()).balanceOf(address(this));
-        if (actualAssets == _computedAssets) {
+        if(actualAssets == _computedAssets){
+            // No balance change
             return;
-        } else if (actualAssets < _computedAssets) {
-            hardAssets = _computedAssets;
+        }
+        if(actualAssets < _computedAssets){
             yieldAssets = 0;
             yieldRate = 0;
-            yieldEnd = uint128(block.timestamp + YIELD_TIME);
-        } else if (actualAssets > _computedAssets) {
+        } else if (actualAssets > _computedAssets ){
             uint256 _newYield = actualAssets - _computedAssets;
-            uint256 _maxYield = (actualAssets * 3) / 100; // Maximum of 3% increase in assets per day
-            if (_newYield > _maxYield) {
-                _newYield = _maxYield;
+            uint256 _maxYield = actualAssets * 3 / 100; // Maximum of 3% increase in assets per day
+            if( _newYield > _maxYield){
+                _newYield = _maxYield ;
             }
-            if (_newYield > type(uint128).max) {
+            if( _newYield > type(uint128).max){
                 _newYield = type(uint128).max;
             }
-            hardAssets = _computedAssets;
             yieldAssets = _newYield;
-            yieldRate = uint128(_newYield / YIELD_TIME); // _newYield is <= uint128.max
-            yieldEnd = uint128(block.timestamp + YIELD_TIME);
+            yieldRate = (_newYield / YIELD_TIME).toUint128();
         }
+        hardAssets = _computedAssets;
+        yieldEnd = uint128(block.timestamp + YIELD_TIME);
+        emit YiedPeriodStarted(hardAssets, yieldAssets, yieldRate, yieldEnd);
     }
 
     /** @dev See {IERC4262-totalAssets} */
