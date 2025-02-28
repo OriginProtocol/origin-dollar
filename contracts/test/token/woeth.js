@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits, daiUnits, isFork } = require("../helpers");
+const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
 describe("WOETH", function () {
@@ -33,8 +33,14 @@ describe("WOETH", function () {
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
-
     // josh account starts each test with 100 OETH
+
+    // 3% max drip rate within WOETH means 34 days for the doubling of WOETH
+    // value to drip
+    for (let i = 0; i < 34; i++) {
+      await woeth.connect(josh).deposit(oethUnits("0"), josh.address);
+      await advanceTime(86400);
+    }
   });
 
   const increaseOETHSupplyAndRebase = async (wethAmount) => {
@@ -62,6 +68,8 @@ describe("WOETH", function () {
     it("should deposit at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
       await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
+
+
       await expect(josh).to.have.a.balanceOf("75", woeth);
       await expect(josh).to.have.a.balanceOf("50", oeth);
       await expect(woeth).to.have.a.totalSupply("75");
@@ -159,6 +167,7 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(woeth).to.have.approxBalanceOf("100", oeth);
       await expect(josh).to.have.a.balanceOf("50", woeth);
+      await expect(josh).to.have.a.balanceOf("100", oeth);
 
       // attempt to "attack" the contract to inflate the WOETH balance
       await oeth.connect(josh).transfer(woeth.address, oethUnits("50"));
@@ -170,7 +179,10 @@ describe("WOETH", function () {
         .redeem(oethUnits("50"), josh.address, josh.address);
 
       await expect(josh).to.have.a.balanceOf("0", woeth);
-      await expect(woeth).to.have.approxBalanceOf("50", oeth);
+      await expect(josh).to.have.a.balanceOf("150", oeth);
+      await expect(woeth).to.have.a.balanceOf("50", oeth);
+
+      //await expect(woeth).to.have.approxBalanceOf("50", oeth);
       await expect(await woeth.totalAssets()).to.equal("0");
       await expect(woeth).to.have.a.totalSupply("0");
     });
