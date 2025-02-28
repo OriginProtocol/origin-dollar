@@ -126,7 +126,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
             // Cap yield
-            uint256 _maxYield = (_actualAssets * 3) / 100; // Maximum of 3% increase in assets per day
+            uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
             yieldAssets = uint128(_newYield);
             yieldRate = uint128(_newYield / YIELD_TIME);
