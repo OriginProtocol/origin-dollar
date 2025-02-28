@@ -186,11 +186,27 @@ describe("WOETH", function () {
       await expect(await woeth.totalAssets()).to.equal(
         startingAssets.add(2 * 10)
       );
+
+      // Sudden donation here will not change yield schedule
+      await increaseOETHSupplyAndRebase(100000000000);
+      await woeth.startYield();
+
+      // Yield continues. Previous donation commands advanced time 4 seconds
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(6 * 10)
+      );
+      // One block before the end. minus 10 and rounding error
+      await advanceTime(24 * 60 * 60 - 7);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute).sub(11)
+      );
+      // End, should be exact
       await advanceTime(1);
       await expect(await woeth.totalAssets()).to.equal(
-        startingAssets.add(3 * 10)
+        startingAssets.add(toDistribute)
       );
-      await advanceTime(24 * 60 * 60 - 2);
+      // After end, no change
+      await advanceTime(1);
       await expect(await woeth.totalAssets()).to.equal(
         startingAssets.add(toDistribute)
       );
