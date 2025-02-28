@@ -28,9 +28,8 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    uint128 public yieldRate;
-    uint128 public yieldEnd;
     int256 public hardAssets;
+    uint128 public yieldEnd;
     uint256 public yieldAssets;
     bool private _oethCreditsInitialized;
     uint256[48] private __gap;
@@ -40,7 +39,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     event YiedPeriodStarted(
         int256 hardAssets,
         uint256 yieldAssets,
-        uint256 yieldRate,
         uint256 yieldEnd
     );
 
@@ -122,18 +120,16 @@ contract WOETH is ERC4626, Governable, Initializable {
         }
         if (_actualAssets < _computedAssets) {
             yieldAssets = 0;
-            yieldRate = 0;
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
             // Cap yield
             uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
             yieldAssets = uint128(_newYield);
-            yieldRate = uint128(_newYield / YIELD_TIME);
         }
         hardAssets = int256(_computedAssets);
         yieldEnd = uint128(block.timestamp + YIELD_TIME);
-        emit YiedPeriodStarted(hardAssets, yieldAssets, yieldRate, yieldEnd);
+        emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
     }
 
     /** @dev See {IERC4262-totalAssets} */

@@ -140,7 +140,7 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("50");
     });
 
-    it("should not increase exchange rate when OETH is transferred to the contract", async () => {
+    it("should not instantly increase exchange rate when OETH is transferred to the contract", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(woeth).to.have.approxBalanceOf("100", oeth);
       await expect(josh).to.have.a.balanceOf("50", woeth);
@@ -158,6 +158,42 @@ describe("WOETH", function () {
       await expect(woeth).to.have.approxBalanceOf("50", oeth);
       await expect(await woeth.totalAssets()).to.equal("0");
       await expect(woeth).to.have.a.totalSupply("0");
+    });
+
+    it("should distributed yield over time", async () => {
+      startingAssets = oethUnits("100");
+      // Ten yield per s
+      toDistribute = 10 * 24 * 60 * 60 + 25;
+      // OETH has 400 total supply. WOETH has 100 OETH
+      // So yield is multiped by 4
+      await expect(woeth).to.have.a.balanceOf("100", oeth);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets);
+      await increaseOETHSupplyAndRebase(4 * toDistribute + 3);
+
+      await woeth.startYield();
+
+      await expect(await oeth.balanceOf(woeth.address)).to.equal(
+        startingAssets.add(toDistribute)
+      );
+      await expect(await woeth.yieldAssets()).to.equal(toDistribute);
+
+      // Should not change the same block
+      await expect(await woeth.totalAssets()).to.equal(startingAssets);
+      // Next second, we should collect the second's yield, and any remaining rounding error
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets.add(10));
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(2 * 10)
+      );
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(3 * 10)
+      );
+      await advanceTime(24 * 60 * 60 - 2);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute)
+      );
     });
   });
 
