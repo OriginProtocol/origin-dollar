@@ -56,43 +56,47 @@ module.exports = deployOnSonic(
     // ---------------------------------------------------------------------------------------------------------
     const poolBoosterSingleCreationArgs = {};
     const poolBoosterSingleComputedAddresses = {};
-    const poolsSingle = ["EqualizerWsOs", "EqualizerThcOS", "SwapXFieryOs"];
+    const poolsSingle = ["Equalizer.WsOs", "Equalizer.ThcOs", "SwapX.OsFiery"];
+
+    const getAddress = (path) =>
+      path.split(".").reduce((obj, key) => obj?.[key], addresses.sonic);
 
     await Promise.all(
       poolsSingle.map(async (pool) => {
+        const current = getAddress(pool);
+        if (!current?.extBribeOS || !current?.pool) return;
+
         poolBoosterSingleCreationArgs[pool] = [
-          addresses.sonic[pool].extBribeOS,
-          addresses.sonic[pool].pool,
+          current.extBribeOS,
+          current.pool,
           SALT,
         ];
-
         poolBoosterSingleComputedAddresses[pool] =
           await cPoolBoosterFactorySwapxSingle.computePoolBoosterAddress(
             ...poolBoosterSingleCreationArgs[pool]
           );
-
-        console.log(
-          `PoolBooster for ${pool} will be created at ${poolBoosterSingleComputedAddresses[pool]}`
-        );
       })
     );
 
     const yieldforwardAndPoolBoosterSwapXSingleActions = poolsSingle.flatMap(
-      (pool) => [
-        {
-          contract: cPoolBoosterFactorySwapxSingle,
-          signature: "createPoolBoosterSwapxSingle(address,address,uint256)",
-          args: poolBoosterSingleCreationArgs[pool],
-        },
-        {
-          contract: cOSonic,
-          signature: "delegateYield(address,address)",
-          args: [
-            addresses.sonic[pool].pool,
-            poolBoosterSingleComputedAddresses[pool],
-          ],
-        },
-      ]
+      (pool) => {
+        const current = getAddress(pool);
+        if (!current?.pool || !poolBoosterSingleComputedAddresses[pool])
+          return [];
+
+        return [
+          {
+            contract: cPoolBoosterFactorySwapxSingle,
+            signature: "createPoolBoosterSwapxSingle(address,address,uint256)",
+            args: poolBoosterSingleCreationArgs[pool],
+          },
+          {
+            contract: cOSonic,
+            signature: "delegateYield(address,address)",
+            args: [current.pool, poolBoosterSingleComputedAddresses[pool]],
+          },
+        ];
+      }
     );
 
     // ---------------------------------------------------------------------------------------------------------
@@ -104,14 +108,14 @@ module.exports = deployOnSonic(
     const poolBoosterDoubleCreationArgs = {};
     const poolBoosterDoubleComputedAddresses = {};
 
-    const poolsDouble = ["SwapXOsSfrxUSD", "SwapXOsScUSD", "SwapXOsSilo"];
+    const poolsDouble = ["OsSfrxUSD", "OsScUSD", "OsSilo"];
 
     await Promise.all(
       poolsDouble.map(async (pool) => {
         poolBoosterDoubleCreationArgs[pool] = [
-          addresses.sonic[pool].extBribeOS,
-          addresses.sonic[pool].extBribeOther,
-          addresses.sonic[pool].pool,
+          addresses.sonic.SwapX[pool].extBribeOS,
+          addresses.sonic.SwapX[pool].extBribeOther,
+          addresses.sonic.SwapX[pool].pool,
           SPLIT,
           SALT,
         ];
@@ -139,7 +143,7 @@ module.exports = deployOnSonic(
           contract: cOSonic,
           signature: "delegateYield(address,address)",
           args: [
-            addresses.sonic[pool].pool,
+            addresses.sonic.SwapX[pool].pool,
             poolBoosterDoubleComputedAddresses[pool],
           ],
         },
