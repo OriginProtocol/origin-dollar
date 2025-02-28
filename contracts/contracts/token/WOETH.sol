@@ -35,7 +35,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     int256 public hardAssets;
     uint128 public yieldEnd;
-    uint256 public yieldAssets;
+    uint128 public yieldAssets;
     bool private _oethCreditsInitialized;
     uint256[47] private __gap;
 
