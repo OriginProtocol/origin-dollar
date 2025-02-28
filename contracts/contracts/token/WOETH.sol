@@ -37,7 +37,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     bool private _oethCreditsInitialized;
     uint256[47] private __gap;
 
-    uint256 public constant YIELD_TIME = 1 days;
+    uint256 public constant YIELD_TIME = 1 days - 1 hours;
 
     event YiedPeriodStarted(
         int256 hardAssets,
@@ -154,7 +154,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         woethAmount = super.deposit(oethAmount, receiver);
         hardAssets += oethAmount.toInt256();
-        startYield();
     }
 
     /** @dev See {IERC4262-mint} */
@@ -165,7 +164,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         oethAmount = super.mint(woethAmount, receiver);
         hardAssets += oethAmount.toInt256();
-        startYield();
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -176,7 +174,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
-        startYield();
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -187,6 +184,14 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
+    }
+
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal override {
+        super._transfer(sender, recipient, amount);
         startYield();
     }
 

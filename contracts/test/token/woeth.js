@@ -163,7 +163,9 @@ describe("WOETH", function () {
     it("should distributed yield over time", async () => {
       let startingAssets = oethUnits("100");
       // Ten yield per s
-      const toDistribute = 10 * 24 * 60 * 60 + 25;
+      const toDistribute = 10 * 23 * 60 * 60 + 25;
+      console.log(toDistribute);
+      console.log("ASHFHEHWFE");
       // OETH has 400 total supply. WOETH has 100 OETH
       // So yield is multiped by 4
       await expect(woeth).to.have.a.balanceOf("100", oeth);
@@ -196,7 +198,7 @@ describe("WOETH", function () {
         startingAssets.add(6 * 10)
       );
       // One block before the end. minus 10 and rounding error
-      await advanceTime(24 * 60 * 60 - 7);
+      await advanceTime(23 * 60 * 60 - 7);
       await expect(await woeth.totalAssets()).to.equal(
         startingAssets.add(toDistribute).sub(11)
       );
