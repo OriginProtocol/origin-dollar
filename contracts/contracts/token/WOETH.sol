@@ -129,17 +129,19 @@ contract WOETH is ERC4626, Governable, Initializable {
 
             uint128 _newYieldRate = (_newYield / YIELD_TIME).toUint128();
             /**
-             * Don't allow for negative changes in the yield rate. If allowed continuous calls to 
+             * Don't allow for negative changes in the yield rate if that yield drip is still
+             * active. If allowed continuous calls to 
              * deposit/mint/withdraw/redeem could delay or minimize the yield drip.
+             * 
              * 
              * TODO: add a test for this
              */
-            //if (_newYieldRate > yieldRate) {
+            if (_newYieldRate > yieldRate || yieldEnd + YIELD_TIME < block.timestamp) {
                 yieldRate = _newYieldRate;
                 yieldAssets = _newYield;
                 hardAssets = _computedAssets;
                 yieldEnd = uint128(block.timestamp);
-            //}
+            }
         }
     }
 
