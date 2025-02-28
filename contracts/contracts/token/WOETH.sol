@@ -35,7 +35,14 @@ contract WOETH is ERC4626, Governable, Initializable {
     bool private _oethCreditsInitialized;
     uint256[48] private __gap;
 
-    uint256 YIELD_TIME = 1 days;
+    uint256 public constant YIELD_TIME = 1 days;
+
+    event YiedPeriodStarted(
+        uint256 hardAssets,
+        uint256 yieldAssets,
+        uint256 yieldRate,
+        uint256 yieldEnd
+    );
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(ERC20 underlying_)
@@ -104,29 +111,25 @@ contract WOETH is ERC4626, Governable, Initializable {
     // @notice Called to start a yield period, if one is not active
     function startYield() public {
         // If we are currently giving yield, do not adjust the yield rate
-        if(block.timestamp < yieldEnd){ 
+        if (block.timestamp < yieldEnd) {
             return;
         }
         uint256 _computedAssets = totalAssets();
-        uint256 actualAssets = OETH(asset()).balanceOf(address(this));
-        if(actualAssets == _computedAssets){
-            // No balance change
+        uint256 _actualAssets = OETH(asset()).balanceOf(address(this));
+        if (_actualAssets == _computedAssets) {
+            // No change needed
             return;
         }
-        if(actualAssets < _computedAssets){
+        if (_actualAssets < _computedAssets) {
             yieldAssets = 0;
             yieldRate = 0;
-        } else if (actualAssets > _computedAssets ){
-            uint256 _newYield = actualAssets - _computedAssets;
-            uint256 _maxYield = actualAssets * 3 / 100; // Maximum of 3% increase in assets per day
-            if( _newYield > _maxYield){
-                _newYield = _maxYield ;
-            }
-            if( _newYield > type(uint128).max){
-                _newYield = type(uint128).max;
-            }
-            yieldAssets = _newYield;
-            yieldRate = (_newYield / YIELD_TIME).toUint128();
+        } else if (_actualAssets > _computedAssets) {
+            uint256 _newYield = _actualAssets - _computedAssets;
+            // Cap yield
+            uint256 _maxYield = (_actualAssets * 3) / 100; // Maximum of 3% increase in assets per day
+            _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
+            yieldAssets = uint128(_newYield);
+            yieldRate = uint128(_newYield / YIELD_TIME);
         }
         hardAssets = _computedAssets;
         yieldEnd = uint128(block.timestamp + YIELD_TIME);
@@ -189,5 +192,9 @@ contract WOETH is ERC4626, Governable, Initializable {
         oethAmount = super.redeem(woethAmount, receiver, owner);
         hardAssets -= oethAmount;
         startYield();
+    }
+
+    function _min(uint256 a, uint256 b) internal {
+        return a < b ? a : b;
     }
 }
