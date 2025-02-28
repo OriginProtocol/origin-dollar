@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -28,11 +29,15 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
+    using SafeCast for uint128;
+    using SafeCast for int256;
+
     int256 public hardAssets;
     uint128 public yieldEnd;
     uint256 public yieldAssets;
     bool private _oethCreditsInitialized;
-    uint256[48] private __gap;
+    uint256[47] private __gap;
 
     uint256 public constant YIELD_TIME = 1 days;
 
@@ -67,7 +72,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;
-        hardAssets = int256(OETH(asset()).balanceOf(address(this)));
+        hardAssets = OETH(asset()).balanceOf(address(this)).toInt256();
     }
 
     function name()
@@ -118,6 +123,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             // No change needed
             return;
         }
+
         if (_actualAssets < _computedAssets) {
             yieldAssets = 0;
         } else if (_actualAssets > _computedAssets) {
@@ -125,10 +131,10 @@ contract WOETH is ERC4626, Governable, Initializable {
             // Cap yield
             uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
-            yieldAssets = uint128(_newYield);
+            yieldAssets = _newYield.toUint128();
         }
-        hardAssets = int256(_computedAssets);
-        yieldEnd = uint128(block.timestamp + YIELD_TIME);
+        hardAssets = _computedAssets.toInt256();
+        yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
         emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
     }
 
@@ -136,13 +142,14 @@ contract WOETH is ERC4626, Governable, Initializable {
     function totalAssets() public view override returns (uint256) {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
-            return uint256(hardAssets + int256(yieldAssets));
+            // int128 & uint128
+            return (hardAssets + uint256(yieldAssets).toInt256()).toUint256();
         } else if (block.timestamp <= _end - YIELD_TIME) {
-            return uint256(hardAssets);
+            return hardAssets.toUint256();
         }
         uint256 _unlockedYield = (yieldAssets *
             (YIELD_TIME - (_end - block.timestamp))) / (YIELD_TIME);
-        return uint256(hardAssets + int256(_unlockedYield));
+        return (hardAssets + _unlockedYield.toInt256()).toUint256();
     }
 
     /** @dev See {IERC4262-deposit} */
@@ -152,7 +159,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 woethAmount)
     {
         woethAmount = super.deposit(oethAmount, receiver);
-        hardAssets += int256(oethAmount);
+        hardAssets += oethAmount.toInt256();
         startYield();
     }
 
@@ -163,7 +170,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 oethAmount)
     {
         oethAmount = super.mint(woethAmount, receiver);
-        hardAssets += int256(oethAmount);
+        hardAssets += oethAmount.toInt256();
         startYield();
     }
 
@@ -174,7 +181,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        hardAssets -= int256(oethAmount);
+        hardAssets -= oethAmount.toInt256();
         startYield();
     }
 
@@ -185,7 +192,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        hardAssets -= int256(oethAmount);
+        hardAssets -= oethAmount.toInt256();
         startYield();
     }
 
