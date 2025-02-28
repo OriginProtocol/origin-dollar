@@ -141,7 +141,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
             return hardAssets + yieldAssets;
-        } else if (block.timestamp < _end - YIELD_TIME) {
+        } else if (block.timestamp <= _end - YIELD_TIME) {
             return hardAssets;
         }
         return
