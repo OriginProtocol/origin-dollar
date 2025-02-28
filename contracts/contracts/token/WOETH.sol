@@ -29,7 +29,6 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    using SafeCast for uint256;
     uint128 public yieldRate;
     uint128 public yieldEnd;
     uint256 public hardAssets;
@@ -109,10 +108,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         if (block.timestamp < yieldEnd) {
             return;
         }
+        // This method should not revert, since that would block deposits and withdraws.
         uint256 _computedAssets = totalAssets();
         uint256 actualAssets = OETH(asset()).balanceOf(address(this));
         if (actualAssets == _computedAssets) {
-            // No balance change
             return;
         } else if (actualAssets < _computedAssets) {
             hardAssets = _computedAssets;
@@ -130,7 +129,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             }
             hardAssets = _computedAssets;
             yieldAssets = _newYield;
-            yieldRate = (_newYield / YIELD_TIME).toUint128();
+            yieldRate = uint128(_newYield / YIELD_TIME); // _newYield is <= uint128.max
             yieldEnd = uint128(block.timestamp + YIELD_TIME);
         }
     }
