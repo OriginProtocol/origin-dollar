@@ -72,7 +72,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;
-        hardAssets = OETH(asset()).balanceOf(address(this)).toInt256();
+        hardAssets = IERC20(asset()).balanceOf(address(this)).toInt256();
     }
 
     function name()
@@ -118,7 +118,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             return;
         }
         uint256 _computedAssets = totalAssets();
-        uint256 _actualAssets = OETH(asset()).balanceOf(address(this));
+        uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
         if (_actualAssets == _computedAssets) {
             // No change needed
             return;
