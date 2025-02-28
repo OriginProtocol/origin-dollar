@@ -14,8 +14,6 @@ import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title OETH Token Contract
  * @author Origin Protocol Inc
@@ -132,14 +130,16 @@ contract WOETH is ERC4626, Governable, Initializable {
             uint128 _newYieldRate = (_newYield / YIELD_TIME).toUint128();
             /**
              * Don't allow for negative changes in the yield rate. If allowed continuous calls to 
-             * deposit/mint/withdraw/redeem could delay or minimise the yield drip
+             * deposit/mint/withdraw/redeem could delay or minimize the yield drip.
+             * 
+             * TODO: add a test for this
              */
-            if (_newYieldRate > yieldRate) {
+            //if (_newYieldRate > yieldRate) {
                 yieldRate = _newYieldRate;
                 yieldAssets = _newYield;
                 hardAssets = _computedAssets;
                 yieldEnd = uint128(block.timestamp);
-            }
+            //}
         }
     }
 
