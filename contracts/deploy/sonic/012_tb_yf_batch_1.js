@@ -207,6 +207,16 @@ module.exports = deployOnSonic(
             "0x3b99636439FBA6314C0F52D35FEd2fF442191407",
           ],
         },
+        {
+          // Protocol: HOG
+          // From: HogGenesisRewardPool --> To: Safe Contract
+          contract: cOSonic,
+          signature: "delegateYield(address,address)",
+          args: [
+            "0x2e585b96a2ef1661508110e41c005be86b63fc34",
+            "0xF0E3E07e11bFA26AEB0C0693824Eb0BF1653AE77",
+          ],
+        },
         ...yieldforwardAndPoolBoosterSwapXSingleActions,
         ...yieldforwardAndPoolBoosterSwapXDoubleActions,
       ],
