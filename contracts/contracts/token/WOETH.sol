@@ -27,7 +27,6 @@ import { OETH } from "./OETH.sol";
 
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
     using SafeCast for uint256;
     using SafeCast for uint128;
     using SafeCast for int256;

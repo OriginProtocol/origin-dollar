@@ -233,7 +233,7 @@ describe("WOETH", function () {
     it("should not allow a governor to collect OETH", async () => {
       await expect(
         woeth.connect(governor).transferToken(oeth.address, oethUnits("2"))
-      ).to.be.revertedWith("Cannot collect OETH");
+      ).to.be.revertedWith("Cannot collect core asset");
     });
     it("should not allow a non governor to recover tokens ", async () => {
       await expect(
