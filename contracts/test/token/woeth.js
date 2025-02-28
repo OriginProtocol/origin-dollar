@@ -33,7 +33,7 @@ describe("WOETH", function () {
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
-    for (i = 0; i < 122; i++) {
+    for (let i = 0; i < 122; i++) {
       await woeth.startYield();
       await advanceTime(10000);
     }
@@ -161,9 +161,9 @@ describe("WOETH", function () {
     });
 
     it("should distributed yield over time", async () => {
-      startingAssets = oethUnits("100");
+      let startingAssets = oethUnits("100");
       // Ten yield per s
-      toDistribute = 10 * 24 * 60 * 60 + 25;
+      const toDistribute = 10 * 24 * 60 * 60 + 25;
       // OETH has 400 total supply. WOETH has 100 OETH
       // So yield is multiped by 4
       await expect(woeth).to.have.a.balanceOf("100", oeth);
