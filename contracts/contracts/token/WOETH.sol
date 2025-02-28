@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -28,14 +29,22 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    uint256 public oethCreditsHighres;
+    using SafeCast for uint256;
+    uint128 public yieldRate;
+    uint128 public yieldEnd;
+    uint256 public hardAssets;
+    uint256 public yieldAssets;
     bool private _oethCreditsInitialized;
     uint256[48] private __gap;
 
+    uint256 YIELD_TIME = 1 days;
+
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
-    constructor(
-        ERC20 underlying_
-    ) ERC20("", "") ERC4626(underlying_) Governable() {}
+    constructor(ERC20 underlying_)
+        ERC20("", "")
+        ERC4626(underlying_)
+        Governable()
+    {}
 
     /**
      * @notice Enable OETH rebasing for this contract
@@ -55,25 +64,14 @@ contract WOETH is ERC4626, Governable, Initializable {
         require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;
-        /*
-         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
-         * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
-         * finicky since it reports Highres version of credits and creditsPerToken
-         * when the account is a fresh one. That doesn't have an effect on mainnet since
-         * WOETH has already seen transactions. But it is rather annoying in unit test
-         * environment.
-         */
-        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
+        hardAssets = OETH(asset()).balanceOf(address(this));
     }
-
 
     function name()
         public
         view
         virtual
-        override(ERC20,IERC20Metadata)
+        override(ERC20, IERC20Metadata)
         returns (string memory)
     {
         return "Wrapped OETH";
@@ -83,7 +81,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         public
         view
         virtual
-        override(ERC20,IERC20Metadata)
+        override(ERC20, IERC20Metadata)
         returns (string memory)
     {
         return "wOETH";
@@ -105,36 +103,50 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /**
-     * @dev This function converts requested OETH token amount to its underlying OETH
-     * credits value that is stored internally in OETH.sol and is required in order to
-     * be able to rebase.
-     *
-     * @param oethAmount Amount of OETH to be converted to OETH credits
-     * @param roundUp when true round the amount of credits returned up
-     * @return amount of OETH credits the OETH amount corresponds to
-     */
-    function _oethToCredits(uint256 oethAmount, bool roundUp) internal returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
-
-        /**
-         * Multiplying OETH amount with the creditsPerTokenHighres is exactly the math that
-         * is internally being done in OETH. OETH is always rounding up, WOETH is rounding
-         * up / down depending on what favours this contract
-         */
-        // solhint-disable-next-line max-line-length
-        /** https://github.com/OriginProtocol/origin-dollar/blob/c02572bd1c06eb3c2652c8692e52144be2efa741/contracts/contracts/token/OUSD.sol#L498
-         */
-        return (oethAmount * creditsPerTokenHighres + (roundUp ? 1e18 - 1 : 0)) / 1e18;
+    // @notice Called to start a yield period, if one is not active
+    function startYield() public {
+        // If we are currently giving yield, do not adjust the yield rate
+        if (block.timestamp < yieldEnd) {
+            return;
+        }
+        uint256 _computedAssets = totalAssets();
+        uint256 actualAssets = OETH(asset()).balanceOf(address(this));
+        if (actualAssets == _computedAssets) {
+            // No balance change
+            return;
+        } else if (actualAssets < _computedAssets) {
+            hardAssets = _computedAssets;
+            yieldAssets = 0;
+            yieldRate = 0;
+            yieldEnd = uint128(block.timestamp + YIELD_TIME);
+        } else if (actualAssets > _computedAssets) {
+            uint256 _newYield = actualAssets - _computedAssets;
+            uint256 _maxYield = (actualAssets * 3) / 100; // Maximum of 3% increase in assets per day
+            if (_newYield > _maxYield) {
+                _newYield = _maxYield;
+            }
+            if (_newYield > type(uint128).max) {
+                _newYield = type(uint128).max;
+            }
+            hardAssets = _computedAssets;
+            yieldAssets = _newYield;
+            yieldRate = (_newYield / YIELD_TIME).toUint128();
+            yieldEnd = uint128(block.timestamp + YIELD_TIME);
+        }
     }
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
-
-        return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
+        uint256 _end = yieldEnd;
+        if (block.timestamp >= _end) {
+            return hardAssets + yieldAssets;
+        } else if (block.timestamp < _end - YIELD_TIME) {
+            return hardAssets;
+        }
+        return
+            hardAssets +
+            (yieldAssets * (YIELD_TIME - (_end - block.timestamp))) /
+            (YIELD_TIME);
     }
 
     /** @dev See {IERC4262-deposit} */
@@ -144,7 +156,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 woethAmount)
     {
         woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += _oethToCredits(oethAmount, true);
+        hardAssets += oethAmount;
+        startYield();
     }
 
     /** @dev See {IERC4262-mint} */
@@ -154,7 +167,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 oethAmount)
     {
         oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += _oethToCredits(oethAmount, true);
+        hardAssets += oethAmount;
+        startYield();
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -164,7 +178,8 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= _oethToCredits(oethAmount, false);
+        hardAssets -= oethAmount;
+        startYield();
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -174,6 +189,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= _oethToCredits(oethAmount, false);
+        hardAssets -= oethAmount;
+        startYield();
     }
 }
