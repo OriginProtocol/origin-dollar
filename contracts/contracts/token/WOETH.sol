@@ -123,7 +123,6 @@ contract WOETH is ERC4626, Governable, Initializable {
             // No change needed
             return;
         }
-
         if (_actualAssets < _computedAssets) {
             yieldAssets = 0;
         } else if (_actualAssets > _computedAssets) {
@@ -142,7 +141,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     function totalAssets() public view override returns (uint256) {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
-            // int128 & uint128
             return (hardAssets + uint256(yieldAssets).toInt256()).toUint256();
         } else if (block.timestamp <= _end - YIELD_TIME) {
             return hardAssets.toUint256();
