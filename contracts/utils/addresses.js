@@ -428,6 +428,13 @@ addresses.sonic.SwapXOsSilo.gaugeOther =
   "0x6e4e2e895223f62Cc53bA56128a58bC58D79BEa0"; // Silo
 addresses.sonic.SwapXOsSilo.extBribeOther =
   "0xe0fd09bae2A254e19fc75fCEC967a373E0b63909"; // Silo
+addresses.sonic.SwapXFieryOs = {};
+addresses.sonic.SwapXFieryOs.pool =
+  "0xc3a185226d594b56d3e5cf52308d07fe972ca769";
+addresses.sonic.SwapXFieryOs.gaugeOS =
+  "0xBb3cFc4f69ecfaeb9fd4d263bD8549C8CCFd25d7";
+addresses.sonic.SwapXFieryOs.extBribeOS =
+  "0x5ee96bE5747867560D18F042991E045401601b01";
 addresses.sonic.EqualizerWsOs = {};
 addresses.sonic.EqualizerWsOs.pool =
   "0x99ff9d3E8B26Fea85a7a103D9e576EfdC38fB530";

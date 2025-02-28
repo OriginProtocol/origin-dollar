@@ -56,7 +56,7 @@ module.exports = deployOnSonic(
     // ---------------------------------------------------------------------------------------------------------
     const poolBoosterSingleCreationArgs = {};
     const poolBoosterSingleComputedAddresses = {};
-    const poolsSingle = ["EqualizerWsOs", "EqualizerThcOS"];
+    const poolsSingle = ["EqualizerWsOs", "EqualizerThcOS", "SwapXFieryOs"];
 
     await Promise.all(
       poolsSingle.map(async (pool) => {
