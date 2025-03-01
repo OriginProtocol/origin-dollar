@@ -75,6 +75,9 @@ module.exports = deployOnSonic(
           await cPoolBoosterFactorySwapxSingle.computePoolBoosterAddress(
             ...poolBoosterSingleCreationArgs[pool]
           );
+        console.log(
+          `Pool Booster Swapx Single ${pool} computed address: ${poolBoosterSingleComputedAddresses[pool]}`
+        );
       })
     );
 
@@ -107,15 +110,17 @@ module.exports = deployOnSonic(
     const SPLIT = oethUnits("0.7");
     const poolBoosterDoubleCreationArgs = {};
     const poolBoosterDoubleComputedAddresses = {};
-
-    const poolsDouble = ["OsSfrxUSD", "OsScUSD", "OsSilo"];
+    const poolsDouble = ["SwapX.OsSfrxUSD", "SwapX.OsScUSD", "SwapX.OsSilo"];
 
     await Promise.all(
       poolsDouble.map(async (pool) => {
+        const current = getAddress(pool);
+        if (!current?.extBribeOS || !current?.extBribeOther || !current?.pool) return;
+
         poolBoosterDoubleCreationArgs[pool] = [
-          addresses.sonic.SwapX[pool].extBribeOS,
-          addresses.sonic.SwapX[pool].extBribeOther,
-          addresses.sonic.SwapX[pool].pool,
+          current.extBribeOS,
+          current.extBribeOther,
+          current.pool,
           SPLIT,
           SALT,
         ];
@@ -126,29 +131,28 @@ module.exports = deployOnSonic(
           );
 
         console.log(
-          `PoolBooster for ${pool} will be created at ${poolBoosterDoubleComputedAddresses[pool]}`
+          `Pool Booster Swapx Double ${pool} computed address: ${poolBoosterDoubleComputedAddresses[pool]}`
         );
       })
     );
 
-    const yieldforwardAndPoolBoosterSwapXDoubleActions = poolsDouble.flatMap(
-      (pool) => [
+    const yieldforwardAndPoolBoosterSwapXDoubleActions = poolsDouble.flatMap((pool) => {
+      const current = getAddress(pool);
+      if (!current?.pool || !poolBoosterDoubleComputedAddresses[pool]) return [];
+
+      return [
         {
           contract: cPoolBoosterFactorySwapxDouble,
-          signature:
-            "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
+          signature: "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
           args: poolBoosterDoubleCreationArgs[pool],
         },
         {
           contract: cOSonic,
           signature: "delegateYield(address,address)",
-          args: [
-            addresses.sonic.SwapX[pool].pool,
-            poolBoosterDoubleComputedAddresses[pool],
-          ],
+          args: [current.pool, poolBoosterDoubleComputedAddresses[pool]],
         },
-      ]
-    );
+      ];
+    });
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
