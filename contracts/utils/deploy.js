@@ -1651,12 +1651,16 @@ function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
   return encodedSalt;
 }
 
-async function createPoolBoosterSingle(
+async function createPoolBoosterSonic({
   cOSonic,
-  cPoolBoosterFactorySwapxSingle,
+  factoryContract,
   pools,
-  salt
-) {
+  salt,
+  split = null,
+  type = "Single", // "Single" or "Double"
+  signatureSingle = "createPoolBoosterSwapxSingle(address,address,uint256)",
+  signatureDouble = "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
+}) {
   const poolBoosterCreationArgs = {};
   const poolBoosterComputedAddresses = {};
 
@@ -1668,26 +1672,42 @@ async function createPoolBoosterSingle(
       const current = getAddress(pool);
       if (!current?.extBribeOS || !current?.pool) return;
 
-      poolBoosterCreationArgs[pool] = [current.extBribeOS, current.pool, salt];
+      const args =
+        type === "Single"
+          ? [current.extBribeOS, current.pool, salt]
+          : [
+              current.extBribeOS,
+              current.extBribeOther,
+              current.pool,
+              split,
+              salt,
+            ];
+
+      if (args.some((arg) => arg === undefined)) return;
+
+      poolBoosterCreationArgs[pool] = args;
+
       poolBoosterComputedAddresses[pool] =
-        await cPoolBoosterFactorySwapxSingle.computePoolBoosterAddress(
+        await factoryContract.computePoolBoosterAddress(
           ...poolBoosterCreationArgs[pool]
         );
 
       console.log(
-        `Pool Booster Swapx Single ${pool} computed address: ${poolBoosterComputedAddresses[pool]}`
+        `Pool Booster Swapx ${type} ${pool} computed address: ${poolBoosterComputedAddresses[pool]}`
       );
     })
   );
 
-  const actionsSingle = pools.flatMap((pool) => {
+  const actions = pools.flatMap((pool) => {
     const current = getAddress(pool);
     if (!current?.pool || !poolBoosterComputedAddresses[pool]) return [];
 
+    const signature = type === "Single" ? signatureSingle : signatureDouble;
+
     return [
       {
-        contract: cPoolBoosterFactorySwapxSingle,
-        signature: "createPoolBoosterSwapxSingle(address,address,uint256)",
+        contract: factoryContract,
+        signature,
         args: poolBoosterCreationArgs[pool],
       },
       {
@@ -1701,71 +1721,7 @@ async function createPoolBoosterSingle(
   return {
     poolBoosterCreationArgs,
     poolBoosterComputedAddresses,
-    actionsSingle: actionsSingle ?? [], // Ensure actionsSingle is always an array
-  };
-}
-
-async function createPoolBoosterDouble(
-  cOSonic,
-  cPoolBoosterFactorySwapxDouble,
-  pools,
-  salt,
-  split
-) {
-  const poolBoosterCreationArgs = {};
-  const poolBoosterComputedAddresses = {};
-
-  const getAddress = (path) =>
-    path.split(".").reduce((obj, key) => obj?.[key], addresses.sonic);
-
-  await Promise.all(
-    pools.map(async (pool) => {
-      const current = getAddress(pool);
-      if (!current?.extBribeOS || !current?.extBribeOther || !current?.pool)
-        return;
-
-      poolBoosterCreationArgs[pool] = [
-        current.extBribeOS,
-        current.extBribeOther,
-        current.pool,
-        split,
-        salt,
-      ];
-
-      poolBoosterComputedAddresses[pool] =
-        await cPoolBoosterFactorySwapxDouble.computePoolBoosterAddress(
-          ...poolBoosterCreationArgs[pool]
-        );
-
-      console.log(
-        `Pool Booster Swapx Double ${pool} computed address: ${poolBoosterComputedAddresses[pool]}`
-      );
-    })
-  );
-
-  const actionsDouble = pools.flatMap((pool) => {
-    const current = getAddress(pool);
-    if (!current?.pool || !poolBoosterComputedAddresses[pool]) return [];
-
-    return [
-      {
-        contract: cPoolBoosterFactorySwapxDouble,
-        signature:
-          "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
-        args: poolBoosterCreationArgs[pool],
-      },
-      {
-        contract: cOSonic,
-        signature: "delegateYield(address,address)",
-        args: [current.pool, poolBoosterComputedAddresses[pool]],
-      },
-    ];
-  });
-
-  return {
-    poolBoosterCreationArgs,
-    poolBoosterComputedAddresses,
-    actionsDouble: actionsDouble ?? [], // Ensure actionsDouble is always an array
+    actions: actions ?? [],
   };
 }
 
@@ -1787,6 +1743,5 @@ module.exports = {
 
   handleTransitionGovernance,
   encodeSaltForCreateX,
-  createPoolBoosterSingle,
-  createPoolBoosterDouble,
+  createPoolBoosterSonic,
 };

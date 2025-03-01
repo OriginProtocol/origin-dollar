@@ -2,8 +2,7 @@ const { deployOnSonic } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
 const {
   deployWithConfirmation,
-  createPoolBoosterSingle,
-  createPoolBoosterDouble,
+  createPoolBoosterSonic,
 } = require("../../utils/deploy.js");
 const { oethUnits } = require("../../test/helpers");
 
@@ -12,6 +11,11 @@ module.exports = deployOnSonic(
     deployName: "012_tb_yf_batch_1",
   },
   async ({ ethers }) => {
+    // ---------------------------------------------------------------------------------------------------------
+    // ---
+    // --- Contracts
+    // ---
+    // ---------------------------------------------------------------------------------------------------------
     const cOSonic = await ethers.getContractAt(
       "OSonic",
       addresses.sonic.OSonicProxy
@@ -58,25 +62,26 @@ module.exports = deployOnSonic(
     // --- PoolBooster SwapxSingle
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    const { actionsSingle } = await createPoolBoosterSingle(
+    const { actions: actionsSingle } = await createPoolBoosterSonic({
       cOSonic,
-      cPoolBoosterFactorySwapxSingle,
-      ["Equalizer.WsOs", "Equalizer.ThcOs", "SwapX.OsFiery"],
-      SALT
-    );
-
+      factoryContract: cPoolBoosterFactorySwapxSingle,
+      pools: ["Equalizer.WsOs", "Equalizer.ThcOs", "SwapX.OsFiery"],
+      salt: SALT,
+      type: "Single",
+    });
     // ---------------------------------------------------------------------------------------------------------
     // ---
     // --- PoolBooster SwapxDouble
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    const { actionsDouble } = await createPoolBoosterDouble(
+    const { actions: actionsDouble } = await createPoolBoosterSonic({
       cOSonic,
-      cPoolBoosterFactorySwapxDouble,
-      ["SwapX.OsSfrxUSD", "SwapX.OsScUSD", "SwapX.OsSilo"],
-      SALT,
-      oethUnits("0.7")
-    );
+      factoryContract: cPoolBoosterFactorySwapxDouble,
+      pools: ["SwapX.OsSfrxUSD", "SwapX.OsScUSD", "SwapX.OsSilo"],
+      salt: SALT,
+      split: oethUnits("0.7"),
+      type: "Double",
+    });
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
@@ -151,9 +156,3 @@ module.exports = deployOnSonic(
     };
   }
 );
-
-/*
-
-
-
-*/
