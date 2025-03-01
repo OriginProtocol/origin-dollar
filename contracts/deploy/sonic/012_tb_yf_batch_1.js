@@ -1,6 +1,10 @@
 const { deployOnSonic } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
-const { deployWithConfirmation } = require("../../utils/deploy.js");
+const {
+  deployWithConfirmation,
+  createPoolBoosterSingle,
+  createPoolBoosterDouble,
+} = require("../../utils/deploy.js");
 const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnSonic(
@@ -54,52 +58,11 @@ module.exports = deployOnSonic(
     // --- PoolBooster SwapxSingle
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    const poolBoosterSingleCreationArgs = {};
-    const poolBoosterSingleComputedAddresses = {};
-    const poolsSingle = ["Equalizer.WsOs", "Equalizer.ThcOs", "SwapX.OsFiery"];
-
-    const getAddress = (path) =>
-      path.split(".").reduce((obj, key) => obj?.[key], addresses.sonic);
-
-    await Promise.all(
-      poolsSingle.map(async (pool) => {
-        const current = getAddress(pool);
-        if (!current?.extBribeOS || !current?.pool) return;
-
-        poolBoosterSingleCreationArgs[pool] = [
-          current.extBribeOS,
-          current.pool,
-          SALT,
-        ];
-        poolBoosterSingleComputedAddresses[pool] =
-          await cPoolBoosterFactorySwapxSingle.computePoolBoosterAddress(
-            ...poolBoosterSingleCreationArgs[pool]
-          );
-        console.log(
-          `Pool Booster Swapx Single ${pool} computed address: ${poolBoosterSingleComputedAddresses[pool]}`
-        );
-      })
-    );
-
-    const yieldforwardAndPoolBoosterSwapXSingleActions = poolsSingle.flatMap(
-      (pool) => {
-        const current = getAddress(pool);
-        if (!current?.pool || !poolBoosterSingleComputedAddresses[pool])
-          return [];
-
-        return [
-          {
-            contract: cPoolBoosterFactorySwapxSingle,
-            signature: "createPoolBoosterSwapxSingle(address,address,uint256)",
-            args: poolBoosterSingleCreationArgs[pool],
-          },
-          {
-            contract: cOSonic,
-            signature: "delegateYield(address,address)",
-            args: [current.pool, poolBoosterSingleComputedAddresses[pool]],
-          },
-        ];
-      }
+    const { actionsSingle } = await createPoolBoosterSingle(
+      cOSonic,
+      cPoolBoosterFactorySwapxSingle,
+      ["Equalizer.WsOs", "Equalizer.ThcOs", "SwapX.OsFiery"],
+      SALT
     );
 
     // ---------------------------------------------------------------------------------------------------------
@@ -107,52 +70,13 @@ module.exports = deployOnSonic(
     // --- PoolBooster SwapxDouble
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    const SPLIT = oethUnits("0.7");
-    const poolBoosterDoubleCreationArgs = {};
-    const poolBoosterDoubleComputedAddresses = {};
-    const poolsDouble = ["SwapX.OsSfrxUSD", "SwapX.OsScUSD", "SwapX.OsSilo"];
-
-    await Promise.all(
-      poolsDouble.map(async (pool) => {
-        const current = getAddress(pool);
-        if (!current?.extBribeOS || !current?.extBribeOther || !current?.pool) return;
-
-        poolBoosterDoubleCreationArgs[pool] = [
-          current.extBribeOS,
-          current.extBribeOther,
-          current.pool,
-          SPLIT,
-          SALT,
-        ];
-
-        poolBoosterDoubleComputedAddresses[pool] =
-          await cPoolBoosterFactorySwapxDouble.computePoolBoosterAddress(
-            ...poolBoosterDoubleCreationArgs[pool]
-          );
-
-        console.log(
-          `Pool Booster Swapx Double ${pool} computed address: ${poolBoosterDoubleComputedAddresses[pool]}`
-        );
-      })
+    const { actionsDouble } = await createPoolBoosterDouble(
+      cOSonic,
+      cPoolBoosterFactorySwapxDouble,
+      ["SwapX.OsSfrxUSD", "SwapX.OsScUSD", "SwapX.OsSilo"],
+      SALT,
+      oethUnits("0.7")
     );
-
-    const yieldforwardAndPoolBoosterSwapXDoubleActions = poolsDouble.flatMap((pool) => {
-      const current = getAddress(pool);
-      if (!current?.pool || !poolBoosterDoubleComputedAddresses[pool]) return [];
-
-      return [
-        {
-          contract: cPoolBoosterFactorySwapxDouble,
-          signature: "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
-          args: poolBoosterDoubleCreationArgs[pool],
-        },
-        {
-          contract: cOSonic,
-          signature: "delegateYield(address,address)",
-          args: [current.pool, poolBoosterDoubleComputedAddresses[pool]],
-        },
-      ];
-    });
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
@@ -221,8 +145,8 @@ module.exports = deployOnSonic(
             "0xF0E3E07e11bFA26AEB0C0693824Eb0BF1653AE77",
           ],
         },
-        ...yieldforwardAndPoolBoosterSwapXSingleActions,
-        ...yieldforwardAndPoolBoosterSwapXDoubleActions,
+        ...actionsSingle,
+        ...actionsDouble,
       ],
     };
   }
