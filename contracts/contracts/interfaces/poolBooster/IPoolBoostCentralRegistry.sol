@@ -29,12 +29,18 @@ interface IPoolBoostCentralRegistry {
     }
 
     event PoolBoosterCreated(
-        address poolBoosterAddress, address ammPoolAddress, PoolBoosterType poolBoosterType, address factoryAddress
+        address poolBoosterAddress,
+        address ammPoolAddress,
+        PoolBoosterType poolBoosterType,
+        address factoryAddress
     );
     event PoolBoosterRemoved(address poolBoosterAddress);
 
-    function emitPoolBoosterCreated(address _poolBoosterAddress, address _ammPoolAddress, PoolBoosterType _boosterType)
-        external;
+    function emitPoolBoosterCreated(
+        address _poolBoosterAddress,
+        address _ammPoolAddress,
+        PoolBoosterType _boosterType
+    ) external;
 
     function emitPoolBoosterRemoved(address _poolBoosterAddress) external;
 }
