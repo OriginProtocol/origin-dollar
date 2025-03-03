@@ -68,9 +68,9 @@ contract PoolBoosterFactoryCurveMainnet is AbstractPoolBoosterFactory {
 
         // --- Deploy ---
         // Deploy Implementation
-        address impl = createX.deployCreate2(encodedSalt, bytecodeImpl);
+        address impl = createX.deployCreate3(encodedSalt, bytecodeImpl);
         // Deploy and Init Proxy
-        address pb = createX.deployCreate2AndInit(
+        address pb = createX.deployCreate3AndInit(
             encodedSalt,
             bytecodeProxy,
             abi.encodeWithSignature(
