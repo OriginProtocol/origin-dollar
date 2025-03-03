@@ -98,12 +98,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         } else if (diffBefore < 0) {
             // If the pool was originally imbalanced in favor of OS, then
             // we want to check that the pool is now more balanced
-            require(diffAfter <= 0, "OTokens overshot peg");
+            require(diffAfter <= 0, "Assets overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
         } else if (diffBefore > 0) {
             // If the pool was originally imbalanced in favor of wS, then
             // we want to check that the pool is now more balanced
-            require(diffAfter >= 0, "Assets overshot peg");
+            require(diffAfter >= 0, "OTokens overshot peg");
             require(diffAfter < diffBefore, "Assets balance worse");
         }
     }
@@ -290,6 +290,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
         improvePoolBalance
     {
+        require(_wsAmount > 0, "Must swap some wS");
+
         // Skim the pool in case extra tokens were added
         IPair(pool).skim(address(this));
 
@@ -327,6 +329,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
         improvePoolBalance
     {
+        require(_osAmount > 0, "Must swap some OS");
+
         // Skim the pool in case extra tokens were added
         IPair(pool).skim(address(this));
 
@@ -334,7 +338,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // There shouldn't be any OS in the strategy but just in case
         uint256 osInStrategy = IERC20(os).balanceOf(address(this));
-        require(_osAmount > osInStrategy, "OS in strategy");
+        require(_osAmount >= osInStrategy, "Too much OS in strategy");
         uint256 osToMint = _osAmount - osInStrategy;
 
         // Mint the required OS tokens to the strategy

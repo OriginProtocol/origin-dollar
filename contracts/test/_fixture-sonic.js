@@ -250,9 +250,9 @@ async function swapXAMOFixture(
   config = {
     wsMintAmount: 0,
     depositToStrategy: false,
+    balancePool: false,
     poolAddwSAmount: 0,
     poolAddOSAmount: 0,
-    balancePool: false,
   }
 ) {
   const fixture = await defaultSonicFixture();

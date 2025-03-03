@@ -1,10 +1,9 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
-const { run } = require("hardhat");
 
 const { createFixtureLoader } = require("../../_fixture");
 const { swapXAMOFixture } = require("../../_fixture-sonic");
-const { units, oethUnits, isCI } = require("../../helpers");
+const { isCI } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
@@ -98,7 +97,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const dataBefore = await snapData(fixture);
 
-      const wsDepositAmount = await units("5000", wS);
+      const wsDepositAmount = await parseUnits("5000");
       const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
 
       // Vault transfers wS to strategy
@@ -236,7 +235,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const dataBefore = await snapData(fixture);
 
-      const wsWithdrawAmount = oethUnits("1000");
+      const wsWithdrawAmount = parseUnits("1000");
       const osBurnAmount = await calcOSWithdrawAmount(
         fixture,
         wsWithdrawAmount
@@ -260,10 +259,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         dataBefore,
         {
           stratBalance: wsWithdrawAmount.add(osBurnAmount).mul(-1),
-          osSupply: osBurnAmount.add(1).mul(-1),
+          osSupply: osBurnAmount.mul(-1),
           reserves: {
             ws: wsWithdrawAmount.mul(-1),
-            os: osBurnAmount.add(1).mul(-1),
+            os: osBurnAmount.mul(-1),
           },
           vaultWSBalance: wsWithdrawAmount,
         },
@@ -301,128 +300,153 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: true,
-      poolAddOSAmount: 60000,
       balancePool: true,
+      poolAddOSAmount: 60000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Strategist should swap assets to the pool", async () => {
+    it("Strategist should swap a little assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3"), fixture);
     });
-    it("Strategist should remove a lot of OS from the pool", async () => {
+    it("Strategist should swap a lot of assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3000"), fixture);
     });
-    it.skip("Strategist should fail to add even more OS to the pool", async () => {
+    it("Strategist should swap most of the wS owned by the strategy", async () => {
+      await assertSwapAssetsToPool(parseUnits("4500"), fixture);
+    });
+    it("Strategist should fail to swap all wS owned by the strategy", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapAssetsToPool(parseUnits("5000"));
+
+      await expect(tx).to.be.revertedWith("Assets overshot peg");
+    });
+    it("Strategist should fail to add more wS than owned by the strategy", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapAssetsToPool(parseUnits("20000"));
+
+      await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
+    });
+    it("Strategist should fail to add more OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
 
       // try swapping OS into the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapOTokensToPool(parseUnits("1"));
+        .swapOTokensToPool(parseUnits("0.001"));
 
       await expect(tx).to.be.revertedWith("OTokens balance worse");
     });
   });
 
-  describe.skip("with a lot more OS in the pool", () => {
+  describe("with a little more OS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 5000,
-      depositToStrategy: false,
-      poolAddOethAmount: 6000,
+      wsMintAmount: 20000,
+      depositToStrategy: true,
       balancePool: true,
+      poolAddOSAmount: 500,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Strategist should fail to remove the little ETH from the pool", async () => {
+    it("Strategist should swap a little assets to the pool", async () => {
+      await assertSwapAssetsToPool(parseUnits("3"), fixture);
+    });
+    it("Strategist should swap enough wS to get the pool close to balanced", async () => {
+      // just under half the extra OS amount
+      const osAmount = parseUnits("247");
+      await assertSwapAssetsToPool(osAmount, fixture);
+    });
+    it("Strategist should fail to add too much wS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
 
-      // Remove ETH form the pool
+      // try swapping half the extra OS in the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .removeOnlyAssets(parseUnits("1"));
+        .swapAssetsToPool(parseUnits("250"));
+
+      await expect(tx).to.be.revertedWith("Assets overshot peg");
+    });
+    it("Strategist should fail to add zero wS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy.connect(strategist).swapAssetsToPool(0);
+
+      await expect(tx).to.be.revertedWith("Must swap some wS");
+    });
+    it("Strategist should fail to add more OS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      // try swapping OS into the pool
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapOTokensToPool(parseUnits("0.001"));
 
       await expect(tx).to.be.revertedWith("OTokens balance worse");
     });
   });
 
-  describe.skip("with a lot more wS in the pool", () => {
+  describe("with a lot more wS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
-      depositToStrategy: false,
-      poolAddEthAmount: 200000,
+      depositToStrategy: true,
       balancePool: true,
+      poolAddwSAmount: 20000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
     });
     it("Strategist should add a little OS to the pool", async () => {
-      const oethMintAmount = oethUnits("3");
-      await assertMintAndAddOTokens(oethMintAmount, fixture);
+      const osAmount = parseUnits("0.3");
+      await assertSwapOTokensToPool(osAmount, fixture);
     });
     it("Strategist should add a lot of OS to the pool", async () => {
-      const oethMintAmount = oethUnits("150000");
-      await assertMintAndAddOTokens(oethMintAmount, fixture);
+      const osAmount = parseUnits("9000");
+      await assertSwapOTokensToPool(osAmount, fixture);
     });
-    it("Strategist should add OS to balance the pool", async () => {
-      const { swapXPool } = fixture;
-      const curveBalances = await swapXPool.get_balances();
-      const oethMintAmount = curveBalances[0]
-        .sub(curveBalances[1])
-        // reduce by 0.001%
-        .mul(99999)
-        .div(100000);
+    it("Strategist should fail to add more wS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
 
-      await assertMintAndAddOTokens(oethMintAmount, fixture);
-    });
-    it("Strategist should remove a little ETH from the pool", async () => {
-      const lpAmount = parseUnits("2");
-      await assertRemoveOnlyAssets(lpAmount, fixture);
-    });
-    it("Strategist should remove a lot ETH from the pool", async () => {
-      const { swapXGauge, swapXAMOStrategy } = fixture;
-      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
-        .div(100);
+      // try swapping wS into the pool
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapAssetsToPool(parseUnits("0.0001"));
 
-      await assertRemoveOnlyAssets(lpAmount, fixture);
+      await expect(tx).to.be.revertedWith("Assets balance worse");
     });
   });
 
-  describe.skip("with a little more wS in the pool", () => {
-    const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 20000,
-      depositToStrategy: false,
-      poolAddEthAmount: 22000,
-      balancePool: true,
-    });
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-    it("Strategist should remove ETH to balance the pool", async () => {
-      const { swapXGauge, swapXAMOStrategy } = fixture;
-      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
-        .div(100);
-
-      await assertRemoveOnlyAssets(lpAmount, fixture);
-    });
-  });
-
-  describe.skip("with a little more wS in the pool", () => {
+  describe("with a little more wS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 20000,
       depositToStrategy: true,
-      poolAddEthAmount: 8000,
       balancePool: true,
+      poolAddwSAmount: 200,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
+    });
+    it("Strategist should add a little OS to the pool", async () => {
+      const osAmount = parseUnits("8");
+      await assertSwapOTokensToPool(osAmount, fixture);
+    });
+    it("Strategist should get the pool close to balanced", async () => {
+      // just under half the extra wS amount
+      const osAmount = parseUnits("99");
+      await assertSwapOTokensToPool(osAmount, fixture);
+    });
+    it("Strategist should fail to add zero OS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy.connect(strategist).swapOTokensToPool(0);
+
+      await expect(tx).to.be.revertedWith("Must swap some OS");
     });
     it("Strategist should fail to add too much OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -430,56 +454,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // Add OS to the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .mintAndAddOTokens(parseUnits("10000"));
-
-      await expect(tx).to.be.revertedWith("Assets overshot peg");
-    });
-    it("Strategist should fail to remove too much ETH from the pool", async () => {
-      const { swapXAMOStrategy, strategist } = fixture;
-
-      // Remove ETH from the pool
-      const tx = swapXAMOStrategy
-        .connect(strategist)
-        .removeOnlyAssets(parseUnits("8000"));
-
-      await expect(tx).to.be.revertedWith("Assets overshot peg");
-    });
-    it("Strategist should fail to remove the little OS from the pool", async () => {
-      const { swapXAMOStrategy, strategist } = fixture;
-
-      // Remove ETH from the pool
-      const tx = swapXAMOStrategy
-        .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("1"));
-
-      await expect(tx).to.be.revertedWith("Assets balance worse");
-    });
-  });
-
-  describe.skip("with a little more OS in the pool", () => {
-    const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 20000,
-      depositToStrategy: false,
-      poolAddOethAmount: 5000,
-      balancePool: true,
-    });
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-    it("Strategist should fail to remove too much OS from the pool", async () => {
-      const { swapXGauge, swapXAMOStrategy, strategist } = fixture;
-      const lpBalance = await swapXGauge.balanceOf(swapXAMOStrategy.address);
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
-        .div(100);
-
-      // Remove OS from the pool
-      const tx = swapXAMOStrategy
-        .connect(strategist)
-        .removeAndBurnOTokens(lpAmount);
+        .swapOTokensToPool(parseUnits("110"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
+    });
+    it("Strategist should fail to add more wS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      // try swapping wS into the pool
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapAssetsToPool(parseUnits("0.0001"));
+
+      await expect(tx).to.be.revertedWith("Assets balance worse");
     });
   });
 });
@@ -519,8 +506,9 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
     await swapXAMOStrategy.checkBalance(wS.address),
     "Strategy's check balance"
   ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
+  const expectedSupply = dataBefore.osSupply.add(delta.osSupply);
   expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
-    dataBefore.osSupply.add(delta.osSupply)
+    expectedSupply
   );
 
   // Check the pool's reserves
@@ -573,133 +561,21 @@ async function assertSwapAssetsToPool(wsAmount, fixture) {
   // Check emitted event
   await expect(tx)
     .to.emit(swapXAMOStrategy, "SwapAssetsToPool")
-    .withNamedArgs({ _wsAmount: wsAmount });
+    .withNamedArgs({ wsSwapped: wsAmount });
 }
 
-async function assertMintAndAddOTokens(oethMintAmount, fixture) {
-  const { swapXAMOStrategy, swapXPool, oSonic, strategist } = fixture;
+async function assertSwapOTokensToPool(osAmount, fixture) {
+  const { swapXAMOStrategy, strategist } = fixture;
 
-  const curveBalancesBefore = await swapXPool.get_balances();
-  const osSupplyBefore = await oSonic.totalSupply();
-
-  log(`Before mint and add ${formatUnits(oethMintAmount)} OS to the pool`);
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-  });
-
-  // Mint and add OS to the pool
+  // Mint OS and swap into the pool, then mint more OS to add with the wS swapped out
   const tx = await swapXAMOStrategy
     .connect(strategist)
-    .mintAndAddOTokens(oethMintAmount);
-
-  const receipt = await tx.wait();
+    .swapOTokensToPool(osAmount);
 
   // Check emitted event
   await expect(tx)
-    .emit(swapXAMOStrategy, "Deposit")
-    .withArgs(oSonic.address, swapXPool.address, oethMintAmount);
-
-  log("After mint and add of OS to the pool");
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-    fromBlock: receipt.blockNumber - 1,
-  });
-
-  // Check the ETH and OS balances in the Curve pool
-  const curveBalancesAfter = await swapXPool.get_balances();
-  expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-    curveBalancesBefore[0],
-    0.01 // 0.01% or 1 basis point
-  );
-  expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-    curveBalancesBefore[1].add(oethMintAmount),
-    0.01 // 0.01%
-  );
-
-  // Check the OS total supply decrease
-  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
-    osSupplyBefore.add(oethMintAmount),
-    0.01 // 0.01% or 1 basis point
-  );
-}
-
-async function assertRemoveOnlyAssets(lpAmount, fixture) {
-  const {
-    swapXAMOStrategy,
-    swapXGauge,
-    swapXPool,
-    oSonicVault,
-    oSonic,
-    strategist,
-    wS,
-  } = fixture;
-
-  log(`Removing ${formatUnits(lpAmount)} ETH from the pool`);
-  const ethRemoveAmount = await calcWSRemoveAmount(fixture, lpAmount);
-  log("After calc ETH remove amount");
-  const curveBalancesBefore = await swapXPool.get_balances();
-  const osSupplyBefore = await oSonic.totalSupply();
-  const vaultWethBalanceBefore = await wS.balanceOf(oSonicVault.address);
-  const strategyLpBalanceBefore = await swapXGauge.balanceOf(
-    swapXAMOStrategy.address
-  );
-  const vaultValueBefore = await oSonicVault.totalValue();
-
-  log(`Before remove and burn of ${formatUnits(lpAmount)} ETH from the pool`);
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-  });
-
-  // Remove ETH from the pool and transfer to the Vault as WETH
-  const tx = await swapXAMOStrategy
-    .connect(strategist)
-    .removeOnlyAssets(lpAmount);
-
-  const receipt = await tx.wait();
-
-  log("After remove and burn of ETH from pool");
-  await run("amoStrat", {
-    pool: "OS",
-    output: false,
-    fromBlock: receipt.blockNumber - 1,
-  });
-
-  // Check emitted event
-  await expect(tx)
-    .to.emit(swapXAMOStrategy, "Withdrawal")
-    .withArgs(wS.address, swapXPool.address, ethRemoveAmount);
-
-  // Check the ETH and OS balances in the Curve pool
-  const curveBalancesAfter = await swapXPool.get_balances();
-  expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-    curveBalancesBefore[0].sub(ethRemoveAmount),
-    0.01 // 0.01% or 1 basis point
-  );
-  expect(curveBalancesAfter[1]).to.equal(curveBalancesBefore[1]);
-
-  // Check the OS total supply is the same
-  expect(await oSonic.totalSupply()).to.approxEqualTolerance(
-    osSupplyBefore,
-    0.01 // 0.01% or 1 basis point
-  );
-
-  // Check the WETH balance in the Vault
-  expect(await wS.balanceOf(oSonicVault.address)).to.equal(
-    vaultWethBalanceBefore.add(ethRemoveAmount)
-  );
-
-  // Check the vault made money
-  const vaultValueAfter = await oSonicVault.totalValue();
-  expect(vaultValueAfter.sub(vaultValueBefore)).to.gt(parseUnits("-1"));
-
-  // Check the strategy LP balance decreased
-  const strategyLpBalanceAfter = await swapXGauge.balanceOf(
-    swapXAMOStrategy.address
-  );
-  expect(strategyLpBalanceBefore.sub(strategyLpBalanceAfter)).to.eq(lpAmount);
+    .emit(swapXAMOStrategy, "SwapOTokensToPool")
+    .withNamedArgs({ osMinted: osAmount });
 }
 
 // Calculate the minted OS amount for a deposit
@@ -754,16 +630,4 @@ async function calcWithdrawAllAmounts(fixture) {
     wsWithdrawAmount,
     osBurnAmount,
   };
-}
-
-// Calculate the amount of wS burned from a removeOnlyAssets
-async function calcWSRemoveAmount(fixture, lpAmount) {
-  const { swapXPool } = fixture;
-
-  // Get the ETH removed from the pool for a given amount of LP tokens
-  const ethRemoveAmount = await swapXPool.calc_withdraw_one_coin(lpAmount, 0);
-
-  log(`ETH burn amount : ${formatUnits(ethRemoveAmount)}`);
-
-  return ethRemoveAmount;
 }
