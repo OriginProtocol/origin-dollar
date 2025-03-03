@@ -1670,7 +1670,9 @@ async function createPoolBoosterSonic({
   await Promise.all(
     pools.map(async (pool) => {
       const current = getAddress(pool);
-      if (!current?.extBribeOS || !current?.pool) return;
+      if (!current?.extBribeOS || !current?.pool) {
+        throw new Error(`Missing required properties for pool: ${pool}`);
+      }
 
       const args =
         type === "Single"
@@ -1683,7 +1685,9 @@ async function createPoolBoosterSonic({
               salt,
             ];
 
-      if (args.some((arg) => arg === undefined)) return;
+      if (args.some((arg) => arg === undefined)) {
+        throw new Error(`Undefined argument found for pool: ${pool}`);
+      }
 
       poolBoosterCreationArgs[pool] = args;
 
@@ -1700,7 +1704,11 @@ async function createPoolBoosterSonic({
 
   const actions = pools.flatMap((pool) => {
     const current = getAddress(pool);
-    if (!current?.pool || !poolBoosterComputedAddresses[pool]) return [];
+    if (!current?.pool || !poolBoosterComputedAddresses[pool]) {
+      throw new Error(
+        `Missing required properties or computed address for pool: ${pool}`
+      );
+    }
 
     const signature = type === "Single" ? signatureSingle : signatureDouble;
 
