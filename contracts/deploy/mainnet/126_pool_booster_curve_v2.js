@@ -110,7 +110,8 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      actions: [
+      "name": "Approve PoolBoosterFactoryCurveMainnet on PoolBoostCentralRegistry",
+      "actions": [
         {
           // set the factory as an approved one
           contract: cPoolBoostCentralRegistry,
