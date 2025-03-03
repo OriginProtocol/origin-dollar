@@ -48,15 +48,15 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     address public immutable gauge;
 
     event SwapOTokensToPool(
-        uint256 osToMint,
+        uint256 osMinted,
         uint256 wsLiquidity,
         uint256 osLiquidity,
         uint256 lpTokens
     );
     event SwapAssetsToPool(
-        uint256 _wsAmount,
+        uint256 wsSwapped,
         uint256 lpTokens,
-        uint256 osToBurn
+        uint256 osBurnt
     );
 
     /**
@@ -96,12 +96,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         if (diffBefore == 0) {
             require(diffAfter == 0, "Position balance is worsened");
         } else if (diffBefore < 0) {
-            // If the pool was originally imbalanced in favor of OETH, then
+            // If the pool was originally imbalanced in favor of OS, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
         } else if (diffBefore > 0) {
-            // If the pool was originally imbalanced in favor of ETH, then
+            // If the pool was originally imbalanced in favor of wS, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
             require(diffAfter < diffBefore, "Assets balance worse");
@@ -302,7 +302,10 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _withdrawFromGaugeAndPool(lpTokens);
 
         // 2. Swap wS for OS against the pool
-        _swapExactTokensForTokens(_wsAmount, ws, os);
+        // Get the wS balance in the strategy as it could be less than the wsAmount due to rounding
+        uint256 wsInStrategy = IERC20(ws).balanceOf(address(this));
+        // Swap exact amount of wS for OS against the pool
+        _swapExactTokensForTokens(wsInStrategy, ws, os);
 
         // 3. Burn all the OS left in the strategy from the remove liquidity and swap
         uint256 osToBurn = IERC20(os).balanceOf(address(this));
@@ -311,9 +314,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        // TODO Emit event with the _wsAmount, lpTokens and osToBurn
-
-        emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
+        emit SwapAssetsToPool(wsInStrategy, lpTokens, osToBurn);
     }
 
     /// @notice Used when there is more wS than OS in the pool.
