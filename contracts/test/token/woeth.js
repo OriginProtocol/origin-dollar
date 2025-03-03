@@ -126,6 +126,26 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("0");
       await expect(await woeth.totalAssets()).to.equal(oethUnits("0"));
     });
+
+    it("should be allowed to deposit 0", async () => {
+      await woeth.connect(josh).deposit(oethUnits("0"), josh.address);
+    });
+
+    it("should be allowed to mint 0", async () => {
+      await woeth.connect(josh).mint(oethUnits("0"), josh.address);
+    });
+
+    it("should be allowed to redeem 0", async () => {
+      await woeth
+        .connect(josh)
+        .redeem(oethUnits("0"), josh.address, josh.address);
+    });
+
+    it("should be allowed to withdraw 0", async () => {
+      await woeth
+        .connect(josh)
+        .withdraw(oethUnits("0"), josh.address, josh.address);
+    });
   });
 
   describe("Collects Rebase", async () => {
@@ -164,8 +184,6 @@ describe("WOETH", function () {
       let startingAssets = oethUnits("100");
       // Ten yield per s
       const toDistribute = 10 * 23 * 60 * 60 + 25;
-      console.log(toDistribute);
-      console.log("ASHFHEHWFE");
       // OETH has 400 total supply. WOETH has 100 OETH
       // So yield is multiped by 4
       await expect(woeth).to.have.a.balanceOf("100", oeth);

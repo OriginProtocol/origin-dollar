@@ -1078,7 +1078,9 @@ const defaultFixture = deployments.createFixture(async () => {
       // Fund WETH contract
       await hardhatSetBalance(user.address, "500");
       await weth.connect(user).deposit({ value: oethUnits("100") });
-      await weth.connect(user).approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
+      await weth
+        .connect(user)
+        .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
     }
   }
   return {
