@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
 import { IVotemarket } from "../interfaces/IVotemarket.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
@@ -11,7 +10,7 @@ import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 /// @title CurvePoolBooster
 /// @author Origin Protocol
 /// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge.
-contract CurvePoolBoosterL2 is Initializable, Strategizable, IPoolBooster {
+contract PoolBoosterCurveL2 is Strategizable, IPoolBooster {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
@@ -69,21 +68,14 @@ contract CurvePoolBoosterL2 is Initializable, Strategizable, IPoolBooster {
     constructor(
         address _rewardToken,
         address _gauge,
-        address _votemarket
+        address _votemarket,
+        address _strategist,
+        uint16 _fee,
+        address _feeCollector
     ) {
         gauge = _gauge;
         votemarket = IVotemarket(_votemarket);
         rewardToken = IERC20(_rewardToken);
-
-        // Prevent implementation contract to be governed
-        _setGovernor(address(0));
-    }
-
-    function initialize(
-        address _strategist,
-        uint16 _fee,
-        address _feeCollector
-    ) external onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);

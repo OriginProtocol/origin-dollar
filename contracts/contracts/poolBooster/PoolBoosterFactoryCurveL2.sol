@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { PoolBoosterSwapxDouble } from "./PoolBoosterSwapxDouble.sol";
 import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
+import { PoolBoosterCurveL2 } from "./PoolBoosterCurveL2.sol";
 
 /**
  * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the
@@ -12,91 +12,123 @@ import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./Abstrac
 contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
     uint256 public constant version = 1;
 
+    /// @notice Address of the votemarket contract
+    address public votemarket;
+
+    event VotemarketUpdated(address votemarket);
+
     // @param address _oSonic address of the OSonic token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
     constructor(
         address _oSonic,
         address _governor,
-        address _centralRegistry
-    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {}
+        address _centralRegistry,
+        address _votemarket
+    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {
+        require(_votemarket != address(0), "Invalid votemarket address");
+        _setVotemarket(_votemarket);
+    }
 
     /**
      * @dev Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be
      *      bribed
-     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
-     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
-     *        bribe contract and 60% to other bribe contract
+     * @param _gauge address of the gauge to bribe
+     * @param _pool address of the pool linked to the gauge
+     * @param _strategist address of the strategist
+     * @param _fee fee in FEE_BASE unit paid when managing campaign.
+     * @param _feeCollector address of the fee collector
      * @param _salt A unique number that affects the address of the pool booster created. Note: this number
      *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
      *        and pre-computed address to match
      */
     function createPoolBoosterCurveL2(
-        address _bribeAddressOS,
-        address _bribeAddressOther,
-        address _ammPoolAddress,
-        uint256 _split,
+        address _gauge,
+        address _pool,
+        address _strategist,
+        uint16 _fee,
+        address _feeCollector,
         uint256 _salt
     ) external onlyGovernor {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
+        require(_gauge != address(0), "Invalid gaugeAddress address");
+        require(_pool != address(0), "Invalid pool address");
+        require(_strategist != address(0), "Invalid strategist address");
         require(_salt > 0, "Invalid salt");
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
-                type(PoolBoosterSwapxDouble).creationCode,
-                abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)
+                type(PoolBoosterCurveL2).creationCode,
+                abi.encode(
+                    oSonic,
+                    _gauge,
+                    votemarket,
+                    _strategist,
+                    _fee,
+                    _feeCollector
+                )
             ),
             _salt
         );
 
         _storePoolBoosterEntry(
             poolBoosterAddress,
-            _ammPoolAddress,
-            IPoolBoostCentralRegistry.PoolBoosterType.SwapXDoubleBooster
+            _pool,
+            IPoolBoostCentralRegistry.PoolBoosterType.CurveL2Booster
         );
     }
 
     /**
      * @dev Compute the address of the pool booster to be deployed.
-     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side
-     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS
-     *        bribe contract and 60% to other bribe contract
+     * @param _gauge address of the gauge to bribe
+     * @param _strategist address of the strategist
+     * @param _fee fee in FEE_BASE unit paid when managing campaign.
+     * @param _feeCollector address of the fee collector
      * @param _salt A unique number that affects the address of the pool booster created. Note: this number
      *        should match the one from `createPoolBoosterSwapxDouble` in order for the final deployed address
      *        and pre-computed address to match
      */
     function computePoolBoosterAddress(
-        address _bribeAddressOS,
-        address _bribeAddressOther,
-        address _ammPoolAddress,
-        uint256 _split,
+        address _gauge,
+        address _strategist,
+        uint16 _fee,
+        address _feeCollector,
         uint256 _salt
     ) external view returns (address) {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
+        require(_gauge != address(0), "Invalid gaugeAddress address");
+        require(_strategist != address(0), "Invalid strategist address");
         require(_salt > 0, "Invalid salt");
 
         return
             _computeAddress(
                 abi.encodePacked(
-                    type(PoolBoosterSwapxDouble).creationCode,
+                    type(PoolBoosterCurveL2).creationCode,
                     abi.encode(
-                        _bribeAddressOS,
-                        _bribeAddressOther,
                         oSonic,
-                        _split
+                        _gauge,
+                        votemarket,
+                        _strategist,
+                        _fee,
+                        _feeCollector
                     )
                 ),
                 _salt
             );
+    }
+
+    /**
+     * @notice Set the votemarket address
+     * @param _votemarket address of the votemarket contract
+     */
+    function setVotemarket(address _votemarket) external onlyGovernor {
+        _setVotemarket(_votemarket);
+    }
+
+    /**
+     * @notice Internal logic to set the votemarket address
+     * @param _votemarket address of the votemarket contract
+     */
+    function _setVotemarket(address _votemarket) internal {
+        votemarket = _votemarket;
+        emit VotemarketUpdated(_votemarket);
     }
 }

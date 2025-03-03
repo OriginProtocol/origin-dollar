@@ -19,7 +19,9 @@ interface IPoolBoostCentralRegistry {
         // needs bribing
         SwapXSingleBooster,
         // Support bribing a mainnet Curve gauge using votemarket and campaignRemoteManager
-        CurveMainnetBooster
+        CurveMainnetBooster,
+        // Support bribing a L2 Curve gauge using direct interaction with votemarket
+        CurveL2Booster
     }
 
     struct PoolBoosterEntry {
