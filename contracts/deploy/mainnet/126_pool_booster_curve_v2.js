@@ -114,7 +114,7 @@ module.exports = deploymentWithGovernanceProposal(
         {
           // set the factory as an approved one
           contract: cPoolBoostCentralRegistry,
-          signature: "isApprovedFactory(address)",
+          signature: "approveFactory(address)",
           args: [implementationAddress],
         },
       ],
