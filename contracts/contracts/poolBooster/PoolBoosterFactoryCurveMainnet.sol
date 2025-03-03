@@ -67,26 +67,11 @@ contract PoolBoosterFactoryCurveMainnet is AbstractPoolBoosterFactory {
         );
 
         // --- Deploy ---
-        // Deploy Implementation
-        address impl = createX.deployCreate3(encodedSalt, bytecodeImpl);
-        // Deploy and Init Proxy
-        address pb = createX.deployCreate3AndInit(
+        address pb = _runDeployment(
             encodedSalt,
+            bytecodeImpl,
             bytecodeProxy,
-            abi.encodeWithSignature(
-                "initialize(address,address,bytes)",
-                impl,
-                governor(),
-                abi.encodeWithSelector(
-                    PoolBoosterCurveMainnet.initialize.selector,
-                    _args.strategist,
-                    _args.fee,
-                    _args.feeCollector,
-                    _args.campaignRemoteManager,
-                    _args.votemarket
-                )
-            ),
-            ICreateX.Values(0, 0)
+            _args
         );
 
         _storePoolBoosterEntry(
@@ -94,6 +79,34 @@ contract PoolBoosterFactoryCurveMainnet is AbstractPoolBoosterFactory {
             _args.curveGauge,
             IPoolBoostCentralRegistry.PoolBoosterType.CurveMainnetBooster
         );
+    }
+
+    // Done to avoid -stack too deep- error
+    function _runDeployment(
+        bytes32 _salt,
+        bytes memory _bytecodeImpl,
+        bytes memory _bytecodeProxy,
+        CreatePoolBooster memory _data
+    ) internal returns (address) {
+        return
+            createX.deployCreate3AndInit(
+                _salt,
+                _bytecodeProxy,
+                abi.encodeWithSignature(
+                    "initialize(address,address,bytes)",
+                    createX.deployCreate3(_salt, _bytecodeImpl),
+                    governor(),
+                    abi.encodeWithSelector(
+                        PoolBoosterCurveMainnet.initialize.selector,
+                        _data.strategist,
+                        _data.fee,
+                        _data.feeCollector,
+                        _data.campaignRemoteManager,
+                        _data.votemarket
+                    )
+                ),
+                ICreateX.Values(0, 0)
+            );
     }
 
     function computePoolBoosterAddress(

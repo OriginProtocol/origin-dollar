@@ -109,6 +109,15 @@ module.exports = deploymentWithGovernanceProposal(
       `PoolBoosterFactoryCurveMainnet deployed at: ${implementationAddress}`
     );
 
-    return {};
+    return {
+      actions: [
+        {
+          // set the factory as an approved one
+          contract: cPoolBoostCentralRegistry,
+          signature: "isApprovedFactory(address)",
+          args: [implementationAddress],
+        },
+      ],
+    };
   }
 );
