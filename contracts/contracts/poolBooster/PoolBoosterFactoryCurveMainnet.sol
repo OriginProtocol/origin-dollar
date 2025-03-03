@@ -66,19 +66,25 @@ contract PoolBoosterFactoryCurveMainnet is AbstractPoolBoosterFactory {
             type(CurvePoolBoosterProxy).creationCode
         );
 
+        // --- Deploy ---
         // Deploy Implementation
-        createX.deployCreate2(encodedSalt, bytecodeImpl);
+        address impl = createX.deployCreate2(encodedSalt, bytecodeImpl);
         // Deploy and Init Proxy
         address pb = createX.deployCreate2AndInit(
             encodedSalt,
             bytecodeProxy,
-            abi.encodeWithSelector(
-                PoolBoosterCurveMainnet.initialize.selector,
-                _args.strategist,
-                _args.fee,
-                _args.feeCollector,
-                _args.campaignRemoteManager,
-                _args.votemarket
+            abi.encodeWithSignature(
+                "initialize(address,address,bytes)",
+                impl,
+                governor(),
+                abi.encodeWithSelector(
+                    PoolBoosterCurveMainnet.initialize.selector,
+                    _args.strategist,
+                    _args.fee,
+                    _args.feeCollector,
+                    _args.campaignRemoteManager,
+                    _args.votemarket
+                )
             ),
             ICreateX.Values(0, 0)
         );
