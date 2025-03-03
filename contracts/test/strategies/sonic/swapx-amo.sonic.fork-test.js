@@ -516,57 +516,70 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
   const { oSonic, oSonicVault, swapXAMOStrategy, swapXPool, swapXGauge, wS } =
     fixture;
 
-  const expectedStratBalance = dataBefore.stratBalance.add(delta.stratBalance);
-  expect(
-    await swapXAMOStrategy.checkBalance(wS.address),
-    "Strategy's check balance"
-  ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
-  const expectedSupply = dataBefore.osSupply.add(delta.osSupply);
-  expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
-    expectedSupply
-  );
+  if (delta.stratBalance != undefined) {
+    const expectedStratBalance = dataBefore.stratBalance.add(
+      delta.stratBalance
+    );
+    expect(
+      await swapXAMOStrategy.checkBalance(wS.address),
+      "Strategy's check balance"
+    ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
+  }
+
+  if (delta.osSupply != undefined) {
+    const expectedSupply = dataBefore.osSupply.add(delta.osSupply);
+    expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
+      expectedSupply
+    );
+  }
 
   // Check the pool's reserves
-  const { _reserve0: wsReserves, _reserve1: osReserves } =
-    await swapXPool.getReserves();
-  expect(wsReserves, "wS reserves").to.equal(
-    dataBefore.reserves.ws.add(delta.reserves.ws)
-  );
-  expect(osReserves, "OS reserves").to.equal(
-    dataBefore.reserves.os.add(delta.reserves.os)
-  );
+  if (delta.reserves != undefined) {
+    const { _reserve0: wsReserves, _reserve1: osReserves } =
+      await swapXPool.getReserves();
+    expect(wsReserves, "wS reserves").to.equal(
+      dataBefore.reserves.ws.add(delta.reserves.ws)
+    );
+    expect(osReserves, "OS reserves").to.equal(
+      dataBefore.reserves.os.add(delta.reserves.os)
+    );
 
-  // Check the strategy's gauge balance
-  // Calculate the liquidity added to the pool
-  const wsLiquidity = delta.reserves.ws
-    .mul(dataBefore.poolSupply)
-    .div(dataBefore.reserves.ws);
-  const osLiquidity = delta.reserves.os
-    .mul(dataBefore.poolSupply)
-    .div(dataBefore.reserves.os);
-  const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
-    ? wsLiquidity
-    : osLiquidity;
-  const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
-    deltaStratGaugeBalance
-  );
-  expect(
-    await swapXGauge.balanceOf(swapXAMOStrategy.address),
-    "Strategy's gauge balance"
-  ).to.withinRange(
-    expectedStratGaugeBalance.sub(1),
-    expectedStratGaugeBalance.add(1)
-  );
+    // Check the strategy's gauge balance
+    // Calculate the liquidity added to the pool
+    const wsLiquidity = delta.reserves.ws
+      .mul(dataBefore.poolSupply)
+      .div(dataBefore.reserves.ws);
+    const osLiquidity = delta.reserves.os
+      .mul(dataBefore.poolSupply)
+      .div(dataBefore.reserves.os);
+    const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
+      ? wsLiquidity
+      : osLiquidity;
+    const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
+      deltaStratGaugeBalance
+    );
+    expect(
+      await swapXGauge.balanceOf(swapXAMOStrategy.address),
+      "Strategy's gauge balance"
+    ).to.withinRange(
+      expectedStratGaugeBalance.sub(1),
+      expectedStratGaugeBalance.add(1)
+    );
+  }
 
   // Check Vault's wS balance
-  expect(
-    await wS.balanceOf(oSonicVault.address),
-    "Vault's wS balance"
-  ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
+  if (delta.vaultWSBalance != undefined) {
+    expect(
+      await wS.balanceOf(oSonicVault.address),
+      "Vault's wS balance"
+    ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
+  }
 };
 
 async function assertSwapAssetsToPool(wsAmount, fixture) {
   const { swapXAMOStrategy, strategist } = fixture;
+
+  const dataBefore = await snapData(fixture);
 
   // Swap wS to the pool and burn the received OS from the pool
   const tx = await swapXAMOStrategy
@@ -574,9 +587,24 @@ async function assertSwapAssetsToPool(wsAmount, fixture) {
     .swapAssetsToPool(wsAmount);
 
   // Check emitted event
-  await expect(tx)
-    .to.emit(swapXAMOStrategy, "SwapAssetsToPool")
-    .withNamedArgs({ wsSwapped: wsAmount });
+  await expect(tx).to.emittedEvent("SwapAssetsToPool", [
+    wsAmount,
+    (lpTokens) => {
+      expect(lpTokens).to.approxEqualTolerance(wsAmount, 5);
+    },
+    (osBurnt) => {
+      // TODO narrow down the range
+      expect(osBurnt).to.gt(wsAmount, 1);
+    },
+  ]);
+
+  await assertChangedData(
+    dataBefore,
+    {
+      vaultWSBalance: 0,
+    },
+    fixture
+  );
 }
 
 async function assertSwapOTokensToPool(osAmount, fixture) {
