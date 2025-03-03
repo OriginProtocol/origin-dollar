@@ -34,7 +34,7 @@ module.exports = deployOnSonic(
       "PoolBoosterFactorySwapxDouble_v1"
     );
 
-    const SALT = ethers.BigNumber.from("1740758400"); // epoch as Friday 28th Feb 2025 4PM UTC
+    const SALT = ethers.BigNumber.from("1741009056"); // epoch as Friday 28th Feb 2025 4PM UTC
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
@@ -42,16 +42,15 @@ module.exports = deployOnSonic(
     // ---
     // ---------------------------------------------------------------------------------------------------------
     const dPoolBoosterSwapxSingleFactory = await deployWithConfirmation(
-      "PoolBoosterFactorySwapxSingle_v1",
+      "PoolBoosterFactorySwapxSingle",
       [
         addresses.sonic.OSonicProxy,
         addresses.sonic.timelock,
         cPoolBoostCentralRegistryProxy.address,
       ],
-      "PoolBoosterFactorySwapxSingle"
     );
     const cPoolBoosterFactorySwapxSingle = await ethers.getContract(
-      "PoolBoosterFactorySwapxSingle_v1"
+      "PoolBoosterFactorySwapxSingle"
     );
     console.log(
       `Pool Booster Swapx Single deployed to ${dPoolBoosterSwapxSingleFactory.address}`
