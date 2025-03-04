@@ -117,9 +117,24 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         os = _os;
         ws = _ws;
 
+        // Check the pool tokens are correct
+        require(
+            IPair(_baseConfig.platformAddress).token0() == _ws &&
+                IPair(_baseConfig.platformAddress).token1() == _os,
+            "Incorrect pool tokens"
+        );
+
+        // Check the gauge is for the pool
+        require(
+            IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
+            "Incorrect gauge"
+        );
+
+        // Set the immutable variables
         pool = _baseConfig.platformAddress;
         gauge = _gauge;
 
+        // This is an implementation contract. The governor is set in the proxy contract.
         _setGovernor(address(0));
     }
 
