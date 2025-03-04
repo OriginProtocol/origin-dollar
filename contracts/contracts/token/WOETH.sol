@@ -109,31 +109,28 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     // @notice Called to start a yield period, if one is not active
     function startYield() public {
-        // If we are currently giving yield, do not adjust the yield rate
+        // If we are currently distributing yield, continue until done
         if (block.timestamp < yieldEnd) {
             return;
         }
+        // Change to next yield period
+        yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
+        // Compute yield and set future yield
         uint256 _computedAssets = totalAssets();
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
-        if (_actualAssets == _computedAssets) {
-            // No change needed
-            return;
-        }
-        if (_actualAssets < _computedAssets) {
+        if (_actualAssets <= _computedAssets) {
             yieldAssets = 0;
+            hardAssets = _actualAssets;
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
-            // Cap yield
             uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
             yieldAssets = _newYield.toUint128();
+            hardAssets = _computedAssets.toInt256();
         }
-        hardAssets = _computedAssets.toInt256();
-        yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
         emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
     }
 
-    /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
@@ -146,7 +143,6 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (hardAssets + _unlockedYield.toInt256()).toUint256();
     }
 
-    /** @dev See {IERC4262-deposit} */
     function deposit(uint256 oethAmount, address receiver)
         public
         override
@@ -154,9 +150,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         woethAmount = super.deposit(oethAmount, receiver);
         hardAssets += oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-mint} */
     function mint(uint256 woethAmount, address receiver)
         public
         override
@@ -164,9 +160,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         oethAmount = super.mint(woethAmount, receiver);
         hardAssets += oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-withdraw} */
     function withdraw(
         uint256 oethAmount,
         address receiver,
@@ -174,9 +170,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-redeem} */
     function redeem(
         uint256 woethAmount,
         address receiver,
@@ -184,6 +180,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
+        startYield();
     }
 
     function _transfer(
