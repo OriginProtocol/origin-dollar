@@ -464,4 +464,16 @@ Here is the list of active yield forwards (which shall be removed once Monitorin
 |-------|------------------------------------|-------------------------------------------|
 | sonic | addresses.sonic.Shadow.OsEco.pool  | addresses.sonic.Shadow.OsEco.yf_treasury  |
 | sonic | addresses.sonic.SwapX.OsHedgy.pool | addresses.sonic.SwapX.OsHedgy.yf_treasury |
-|       |                                    |                                           |
+| sonic | 0x51caf8b6d184e46aeb606472258242aacee3e23b (SwapX: MOON/OS ) | 0xa9d3b1408353d05064d47daf0dc98e104eb9c98a |
+| sonic | 0x0666b11a59f02781854e778687ce312d6b306ce4 (SwapX: BOL/OS) | 0x3ef000Bae3e8105be55F76FDa784fD7d69CFf30e |
+| sonic | 0x6feae13b486a225fb2247ccfda40bf8f1dd9d4b1 (SwapX: OS/EGGS) | 0x98Fc4CE3dFf1d0D7c9dF94f7d9b4E6E6468D5EfF |
+| sonic | 0xbb9e9f35e5eda1eeed3d811366501d940866268f (Metropolis: BRUSH/OS) | 0x3b99636439FBA6314C0F52D35FEd2fF442191407 |
+| sonic | 0x2e585b96a2ef1661508110e41c005be86b63fc34 (HOG Genesis reward pool) | 0xF0E3E07e11bFA26AEB0C0693824Eb0BF1653AE77 |
+| sonic | SwapX.OsSfrxUSD.pool | address t.b.a (PB) |
+| sonic | SwapX.OsScUSD.pool | address t.b.a (PB) |
+| sonic | SwapX.OsSilo.pool | address t.b.a (PB) |
+| sonic | SwapX.OsFiery.pool | address t.b.a (PB) |
+| sonic | Equalizer.WsOs.pool | address t.b.a (PB) |
+| sonic | Equalizer.ThcOs.pool | address t.b.a (PB) |
+|  |  |  |
+
