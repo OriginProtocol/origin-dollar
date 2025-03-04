@@ -120,7 +120,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
         if (_actualAssets <= _computedAssets) {
             yieldAssets = 0;
-            hardAssets = _actualAssets;
+            hardAssets = _actualAssets.toInt256();
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
             uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
