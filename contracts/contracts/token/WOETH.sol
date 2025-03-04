@@ -6,8 +6,8 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
@@ -27,10 +27,23 @@ import { OETH } from "./OETH.sol";
 
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
-    uint256 public oethCreditsHighres;
+    using SafeCast for uint256;
+    using SafeCast for uint128;
+    using SafeCast for int256;
+
+    int256 public hardAssets;
+    uint128 public yieldAssets;
+    uint128 public yieldEnd;
     bool private _oethCreditsInitialized;
-    uint256[48] private __gap;
+    uint256[47] private __gap;
+
+    uint256 public constant YIELD_TIME = 1 days - 1 hours;
+
+    event YiedPeriodStarted(
+        int256 hardAssets,
+        uint256 yieldAssets,
+        uint256 yieldEnd
+    );
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(ERC20 underlying_)
@@ -57,15 +70,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         require(!_oethCreditsInitialized, "Initialize2 already called");
 
         _oethCreditsInitialized = true;
-        /*
-         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
-         * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
-         * finicky since it reports Highres version of credits and creditsPerToken
-         * when the account is a fresh one. That doesn't have an effect on mainnet since
-         * WOETH has already seen transactions. But it is rather annoying in unit test
-         * environment.
-         */
-        oethCreditsHighres = _getOETHCredits();
+        hardAssets = IERC20(asset()).balanceOf(address(this)).toInt256();
     }
 
     function name()
@@ -90,7 +95,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /**
      * @notice Transfer token to governor. Intended for recovering tokens stuck in
-     *      contract, i.e. mistaken sends. Cannot transfer OETH
+     *      contract, i.e. mistaken sends. Cannot transfer the core asset
      * @param asset_ Address for the asset
      * @param amount_ Amount of the asset to transfer
      */
@@ -98,95 +103,97 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        //@dev TODO: we could implement a feature where if anyone sends OETH directly to
-        // the contract, that we can let the governor transfer the excess of the token.
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        require(asset_ != address(asset()), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /** @dev See {IERC4262-totalAssets} */
+    // @notice Called to start a yield period, if one is not active
+    function startYield() public {
+        // If we are currently distributing yield, continue until done
+        if (block.timestamp < yieldEnd) {
+            return;
+        }
+
+        // Compute yield and set future yield
+        uint256 _computedAssets = totalAssets();
+        uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
+        if (_actualAssets <= _computedAssets) {
+            yieldAssets = 0;
+            hardAssets = _actualAssets.toInt256();
+        } else if (_actualAssets > _computedAssets) {
+            uint256 _newYield = _actualAssets - _computedAssets;
+            uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
+            _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
+            yieldAssets = _newYield.toUint128();
+            hardAssets = _computedAssets.toInt256();
+            // Change to next yield period
+            yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
+            emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
+        }
+    }
+
     function totalAssets() public view override returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
-
-        return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
+        uint256 _end = yieldEnd;
+        if (block.timestamp >= _end) {
+            return (hardAssets + uint256(yieldAssets).toInt256()).toUint256();
+        } else if (block.timestamp <= _end - YIELD_TIME) {
+            return hardAssets.toUint256();
+        }
+        uint256 elapsed = (block.timestamp + YIELD_TIME) - _end;
+        uint256 _unlockedYield = (yieldAssets * elapsed) / YIELD_TIME;
+        return (hardAssets + _unlockedYield.toInt256()).toUint256();
     }
 
-    function _getOETHCredits()
-        internal
-        view
-        returns (uint256 oethCreditsHighres)
-    {
-        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
-    }
-
-    /** @dev See {IERC4262-deposit} */
     function deposit(uint256 oethAmount, address receiver)
         public
         override
         returns (uint256 woethAmount)
     {
-        if (oethAmount == 0) return 0;
-
-        /**
-         * Initially we attempted to do the credits calculation within this contract and try
-         * to mimic OUSD's implementation. This way 1 external call less would be required. Due
-         * to a different way OUSD is calculating credits:
-         *  - always rounds credits up
-         *  - operates on final user balances before converting to credits
-         *  - doesn't perform additive / subtractive calculation with credits once they are converted
-         *    from balances
-         *
-         * We've decided that it is safer to read the credits diff directly from the OUSD contract
-         * and not face the risk of a compounding error in oethCreditsHighres that could result in
-         * inaccurate `convertToShares` & `convertToAssets` which consequently would result in faulty
-         * `previewMint` & `previewRedeem`. High enough error can result in different conversion rates
-         * which a flash loan entering via `deposit` and exiting via `redeem` (or entering via `mint`
-         * and exiting via `withdraw`) could take advantage of.
-         */
-        uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        hardAssets += oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-mint} */
     function mint(uint256 woethAmount, address receiver)
         public
         override
         returns (uint256 oethAmount)
     {
-        if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        hardAssets += oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-withdraw} */
     function withdraw(
         uint256 oethAmount,
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
-        if (oethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        hardAssets -= oethAmount.toInt256();
+        startYield();
     }
 
-    /** @dev See {IERC4262-redeem} */
     function redeem(
         uint256 woethAmount,
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
-        if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        hardAssets -= oethAmount.toInt256();
+        startYield();
+    }
+
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal override {
+        super._transfer(sender, recipient, amount);
+        startYield();
+    }
+
+    function _min(uint256 a, uint256 b) internal returns (uint256) {
+        return a < b ? a : b;
     }
 }
