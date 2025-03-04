@@ -19,8 +19,13 @@ const handler = async (event) => {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
 
-  const poolBoosterCentralRegistryProxyAddress = "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A";
-  const poolBoosterCentralRegistryProxy = new ethers.Contract(poolBoosterCentralRegistryProxyAddress, poolBoosterCentralRegistryAbi, signer);
+  const poolBoosterCentralRegistryProxyAddress =
+    "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A";
+  const poolBoosterCentralRegistryProxy = new ethers.Contract(
+    poolBoosterCentralRegistryProxyAddress,
+    poolBoosterCentralRegistryAbi,
+    signer
+  );
 
   // Fetch all factories
   const factories = await poolBoosterCentralRegistryProxy.getAllFactories();

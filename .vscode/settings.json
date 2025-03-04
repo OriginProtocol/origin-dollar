@@ -1,11 +1,11 @@
 {
-    "solidity.packageDefaultDependenciesContractsDirectory": "contracts/contracts",
-    "solidity.packageDefaultDependenciesDirectory": "contracts/node_modules",
-    "solidity.compileUsingRemoteVersion": "v0.8.7+commit.e28d00a7",
-    "solidity.monoRepoSupport": false,
-    "prettier.configPath": "./contracts/.prettierrc",
-    "plantuml.exportOutDir": "contracts/docs/plantuml",
-    "plantuml.exportFormat": "png",
-    "plantuml.exportIncludeFolderHeirarchy": false,
-    "plantuml.exportSubFolder": false,
+  "solidity.packageDefaultDependenciesContractsDirectory": "contracts/contracts",
+  "solidity.packageDefaultDependenciesDirectory": "contracts/node_modules",
+  "solidity.compileUsingRemoteVersion": "v0.8.28+commit.7893614a",
+  "solidity.monoRepoSupport": false,
+  "prettier.configPath": "./contracts/.prettierrc",
+  "plantuml.exportOutDir": "contracts/docs/plantuml",
+  "plantuml.exportFormat": "png",
+  "plantuml.exportIncludeFolderHeirarchy": false,
+  "plantuml.exportSubFolder": false
 }
