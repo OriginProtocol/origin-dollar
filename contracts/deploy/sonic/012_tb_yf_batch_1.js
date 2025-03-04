@@ -47,7 +47,7 @@ module.exports = deployOnSonic(
         addresses.sonic.OSonicProxy,
         addresses.sonic.timelock,
         cPoolBoostCentralRegistryProxy.address,
-      ],
+      ]
     );
     const cPoolBoosterFactorySwapxSingle = await ethers.getContract(
       "PoolBoosterFactorySwapxSingle"
