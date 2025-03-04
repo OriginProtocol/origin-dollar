@@ -14,15 +14,14 @@ import { OETH } from "./OETH.sol";
 
 /**
  * @title OETH Token Contract
- * @author Origin Protocol Inc
+ * @author Origin Protocol
  *
- * @dev An important capability of this contract is that it isn't susceptible to changes of the
- * exchange rate of WOETH/OETH if/when someone sends the underlying asset (OETH) to the contract.
- * If OETH weren't rebasing this could be achieved by solely tracking the ERC20 transfers of the OETH
- * token on mint, deposit, redeem, withdraw. The issue is that OETH is rebasing and OETH balances
- * will change when the token rebases. For that reason we are tracking the WOETH contract credits and
- * credits per token in those 4 actions. That way WOETH can keep an accurate track of the OETH balance
- * ignoring any unexpected transfers of OETH to this contract.
+ * @dev An ERC4626 contract that wraps a rebasing token
+ *     and allows it to be treated as a non-rebasing value accrual token.
+ *     This contract distributes yield slowly over 23 hours which prevents
+ *     donation attacks against lending platforms.
+ *     It is designed to work only with up-only rebasing tokens.
+ *     The asset token must not make reenterable external calls on transfers.
  */
 
 contract WOETH is ERC4626, Governable, Initializable {
@@ -62,9 +61,8 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     /**
-     * @notice secondary initializer that newly deployed contracts will execute as part
-     *         of primary initialize function and the existing contracts will have it called
-     *         as a governance operation.
+     * @notice Upgrade contract to support yield periods.
+     *     Called automaticly on new contracts via initialize()
      */
     function initialize2() public onlyGovernor {
         require(!_initialized2, "Initialize2 already called");
@@ -107,16 +105,19 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    // @notice Called to start a yield period, if one is not active
+    /* @notice Start the next yield period, if one is not active.
+     *     New yield will not start until time has moved forward.
+     */
     function scheduleYield() public {
-        // If we are currently distributing yield, continue until done
+        // If we are currently distributing yield, continue until end
         if (block.timestamp < yieldEnd) {
             return;
         }
-        // Compute yield and set future yield
+        // Read current assets
         uint256 _computedAssets = totalAssets();
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
 
+        // Compute next yield period values
         if (_actualAssets <= _computedAssets) {
             yieldAssets = 0;
             userAssets = _actualAssets.toInt256();
@@ -131,6 +132,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         emit YiedPeriodStarted(userAssets, yieldAssets, yieldEnd);
     }
 
+    /**
+     * @notice Returns the assets currently backing the total supply. 
+     *    Does not include future yield held that will stream per block.
+     * @return totalAssets()
+     */
     function totalAssets() public view override returns (uint256) {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
