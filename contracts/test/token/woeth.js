@@ -61,6 +61,64 @@ describe("WOETH", function () {
   });
 
   describe("Funds in, Funds out", async () => {
+    it("Mint should trigger a yield start ", async () => {
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      const tx = await woeth
+        .connect(josh)
+        .mint(oethUnits("1"), josh.address);
+
+      await expect(tx)
+        .to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Deposit should trigger a yield start ", async () => {
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      const tx = await woeth
+        .connect(josh)
+        .deposit(oethUnits("1"), josh.address);
+
+      await expect(tx)
+        .to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Withdraw should trigger a yield start ", async () => {
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+
+      const tx = await woeth
+        .connect(josh)
+        .withdraw(oethUnits("1"), josh.address, josh.address);
+
+      await expect(tx)
+        .to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Redeem should trigger a yield start ", async () => {
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+
+      const tx = await woeth
+        .connect(josh)
+        .redeem(oethUnits("1"), josh.address, josh.address);
+
+      await expect(tx)
+        .to.emit(woeth, "YiedPeriodStarted");
+    });
+
     it("should deposit at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(woeth).to.have.a.balanceOf("100", oeth);
