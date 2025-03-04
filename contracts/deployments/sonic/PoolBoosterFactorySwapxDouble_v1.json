@@ -1,0 +1,504 @@
+{
+  "address": "0x840081c97256d553A8F234D469D797B9535a3B49",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oSonic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_governor",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_centralRegistry",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "GovernorshipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "PendingGovernorshipTransfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_exclusionList",
+          "type": "address[]"
+        }
+      ],
+      "name": "bribeAll",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "centralRegistry",
+      "outputs": [
+        {
+          "internalType": "contract IPoolBoostCentralRegistry",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_bribeAddressOS",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_bribeAddressOther",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_split",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_salt",
+          "type": "uint256"
+        }
+      ],
+      "name": "computePoolBoosterAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_bribeAddressOS",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_bribeAddressOther",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_split",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_salt",
+          "type": "uint256"
+        }
+      ],
+      "name": "createPoolBoosterSwapxDouble",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isGovernor",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oSonic",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "poolBoosterFromPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "boosterAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolBoosterLength",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "poolBoosters",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "boosterAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_poolBoosterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "removePoolBooster",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "transferGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "version",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x51088f96ba679f43ead0606e4c79455fd838e8bc546ee5f1edbf29ba7f2ae407",
+  "receipt": {
+    "to": null,
+    "from": "0xFD9E6005187F448957a0972a7d0C0A6dA2911236",
+    "contractAddress": "0x840081c97256d553A8F234D469D797B9535a3B49",
+    "transactionIndex": 0,
+    "gasUsed": "1498794",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001008000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000020000000000000000000800000000000001000000000000000000000004000000000000000000000000000000000000002000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x423b98c98886e84d333559900f94a88cb55bba512650e962958e028d5ae1ad64",
+    "transactionHash": "0x51088f96ba679f43ead0606e4c79455fd838e8bc546ee5f1edbf29ba7f2ae407",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 9219739,
+        "transactionHash": "0x51088f96ba679f43ead0606e4c79455fd838e8bc546ee5f1edbf29ba7f2ae407",
+        "address": "0x840081c97256d553A8F234D469D797B9535a3B49",
+        "topics": [
+          "0xc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x000000000000000000000000fd9e6005187f448957a0972a7d0c0a6da2911236"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0x423b98c98886e84d333559900f94a88cb55bba512650e962958e028d5ae1ad64"
+      }
+    ],
+    "blockNumber": 9219739,
+    "cumulativeGasUsed": "1498794",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794",
+    "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
+    "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "e02839e21728de5828a3aff25ff02409",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_oSonic\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_governor\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_centralRegistry\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"GovernorshipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"PendingGovernorshipTransfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_exclusionList\",\"type\":\"address[]\"}],\"name\":\"bribeAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"centralRegistry\",\"outputs\":[{\"internalType\":\"contract IPoolBoostCentralRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"claimGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_bribeAddressOS\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_bribeAddressOther\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_split\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_salt\",\"type\":\"uint256\"}],\"name\":\"computePoolBoosterAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_bribeAddressOS\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_bribeAddressOther\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_split\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_salt\",\"type\":\"uint256\"}],\"name\":\"createPoolBoosterSwapxDouble\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"governor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isGovernor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oSonic\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"poolBoosterFromPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"boosterAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"enum IPoolBoostCentralRegistry.PoolBoosterType\",\"name\":\"boosterType\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolBoosterLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"poolBoosters\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"boosterAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"enum IPoolBoostCentralRegistry.PoolBoosterType\",\"name\":\"boosterType\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_poolBoosterAddress\",\"type\":\"address\"}],\"name\":\"removePoolBooster\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newGovernor\",\"type\":\"address\"}],\"name\":\"transferGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"kind\":\"dev\",\"methods\":{\"bribeAll(address[])\":{\"params\":{\"_exclusionList\":\"A list of pool booster addresses to skip when        calling this function.\"}},\"computePoolBoosterAddress(address,address,address,uint256,uint256)\":{\"details\":\"Compute the address of the pool booster to be deployed.\",\"params\":{\"_ammPoolAddress\":\"address of the AMM pool where the yield originates from\",\"_bribeAddressOS\":\"address of the Bribes.sol(Bribe) contract for the OS token side\",\"_bribeAddressOther\":\"address of the Bribes.sol(Bribe) contract for the other token in the pool\",\"_salt\":\"A unique number that affects the address of the pool booster created. Note: this number        should match the one from `createPoolBoosterSwapxDouble` in order for the final deployed address        and pre-computed address to match\",\"_split\":\"1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS        bribe contract and 60% to other bribe contract\"}},\"createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)\":{\"details\":\"Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be      bribed\",\"params\":{\"_ammPoolAddress\":\"address of the AMM pool where the yield originates from\",\"_bribeAddressOS\":\"address of the Bribes.sol(Bribe) contract for the OS token side\",\"_bribeAddressOther\":\"address of the Bribes.sol(Bribe) contract for the other token in the pool\",\"_salt\":\"A unique number that affects the address of the pool booster created. Note: this number        should match the one from `computePoolBoosterAddress` in order for the final deployed address        and pre-computed address to match\",\"_split\":\"1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS        bribe contract and 60% to other bribe contract\"}},\"removePoolBooster(address)\":{\"details\":\"This action does not destroy the pool booster contract nor does it      stop the yield delegation to it.\",\"params\":{\"_poolBoosterAddress\":\"address of the pool booster\"}},\"transferGovernance(address)\":{\"params\":{\"_newGovernor\":\"Address of the new Governor\"}}},\"title\":\"Pool booster factory for creating Swapx Ichi pool boosters where both of the        gauges need incentivizing.\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"bribeAll(address[])\":{\"notice\":\"Goes over all the pool boosters created by this factory and         calls bribe() on them.\"},\"claimGovernance()\":{\"notice\":\"Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor.\"},\"governor()\":{\"notice\":\"Returns the address of the current Governor.\"},\"isGovernor()\":{\"notice\":\"Returns true if the caller is the current Governor.\"},\"removePoolBooster(address)\":{\"notice\":\"Removes the pool booster from the internal list of pool boosters.\"},\"transferGovernance(address)\":{\"notice\":\"Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol\":\"PoolBoosterFactorySwapxDouble\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address recipient, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n}\\n\",\"keccak256\":\"0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/math/SafeMath.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/math/SafeMath.sol)\\n\\npragma solidity ^0.8.0;\\n\\n// CAUTION\\n// This version of SafeMath should only be used with Solidity 0.8 or later,\\n// because it relies on the compiler's built in overflow checks.\\n\\n/**\\n * @dev Wrappers over Solidity's arithmetic operations.\\n *\\n * NOTE: `SafeMath` is generally not needed starting with Solidity 0.8, since the compiler\\n * now has built in overflow checking.\\n */\\nlibrary SafeMath {\\n    /**\\n     * @dev Returns the addition of two unsigned integers, with an overflow flag.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {\\n        unchecked {\\n            uint256 c = a + b;\\n            if (c < a) return (false, 0);\\n            return (true, c);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the substraction of two unsigned integers, with an overflow flag.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {\\n        unchecked {\\n            if (b > a) return (false, 0);\\n            return (true, a - b);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {\\n        unchecked {\\n            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the\\n            // benefit is lost if 'b' is also tested.\\n            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522\\n            if (a == 0) return (true, 0);\\n            uint256 c = a * b;\\n            if (c / a != b) return (false, 0);\\n            return (true, c);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the division of two unsigned integers, with a division by zero flag.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {\\n        unchecked {\\n            if (b == 0) return (false, 0);\\n            return (true, a / b);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {\\n        unchecked {\\n            if (b == 0) return (false, 0);\\n            return (true, a % b);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the addition of two unsigned integers, reverting on\\n     * overflow.\\n     *\\n     * Counterpart to Solidity's `+` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - Addition cannot overflow.\\n     */\\n    function add(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return a + b;\\n    }\\n\\n    /**\\n     * @dev Returns the subtraction of two unsigned integers, reverting on\\n     * overflow (when the result is negative).\\n     *\\n     * Counterpart to Solidity's `-` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - Subtraction cannot overflow.\\n     */\\n    function sub(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return a - b;\\n    }\\n\\n    /**\\n     * @dev Returns the multiplication of two unsigned integers, reverting on\\n     * overflow.\\n     *\\n     * Counterpart to Solidity's `*` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - Multiplication cannot overflow.\\n     */\\n    function mul(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return a * b;\\n    }\\n\\n    /**\\n     * @dev Returns the integer division of two unsigned integers, reverting on\\n     * division by zero. The result is rounded towards zero.\\n     *\\n     * Counterpart to Solidity's `/` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - The divisor cannot be zero.\\n     */\\n    function div(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return a / b;\\n    }\\n\\n    /**\\n     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),\\n     * reverting when dividing by zero.\\n     *\\n     * Counterpart to Solidity's `%` operator. This function uses a `revert`\\n     * opcode (which leaves remaining gas untouched) while Solidity uses an\\n     * invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     *\\n     * - The divisor cannot be zero.\\n     */\\n    function mod(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return a % b;\\n    }\\n\\n    /**\\n     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on\\n     * overflow (when the result is negative).\\n     *\\n     * CAUTION: This function is deprecated because it requires allocating memory for the error\\n     * message unnecessarily. For custom revert reasons use {trySub}.\\n     *\\n     * Counterpart to Solidity's `-` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - Subtraction cannot overflow.\\n     */\\n    function sub(\\n        uint256 a,\\n        uint256 b,\\n        string memory errorMessage\\n    ) internal pure returns (uint256) {\\n        unchecked {\\n            require(b <= a, errorMessage);\\n            return a - b;\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the integer division of two unsigned integers, reverting with custom message on\\n     * division by zero. The result is rounded towards zero.\\n     *\\n     * Counterpart to Solidity's `/` operator. Note: this function uses a\\n     * `revert` opcode (which leaves remaining gas untouched) while Solidity\\n     * uses an invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     *\\n     * - The divisor cannot be zero.\\n     */\\n    function div(\\n        uint256 a,\\n        uint256 b,\\n        string memory errorMessage\\n    ) internal pure returns (uint256) {\\n        unchecked {\\n            require(b > 0, errorMessage);\\n            return a / b;\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),\\n     * reverting with custom message when dividing by zero.\\n     *\\n     * CAUTION: This function is deprecated because it requires allocating memory for the error\\n     * message unnecessarily. For custom revert reasons use {tryMod}.\\n     *\\n     * Counterpart to Solidity's `%` operator. This function uses a `revert`\\n     * opcode (which leaves remaining gas untouched) while Solidity uses an\\n     * invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     *\\n     * - The divisor cannot be zero.\\n     */\\n    function mod(\\n        uint256 a,\\n        uint256 b,\\n        string memory errorMessage\\n    ) internal pure returns (uint256) {\\n        unchecked {\\n            require(b > 0, errorMessage);\\n            return a % b;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xa2f576be637946f767aa56601c26d717f48a0aff44f82e46f13807eea1009a21\",\"license\":\"MIT\"},\"contracts/governance/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Base for contracts that are managed by the Origin Protocol's Governor.\\n * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change\\n *      from owner to governor and renounce methods removed. Does not use\\n *      Context.sol like Ownable.sol does for simplification.\\n * @author Origin Protocol Inc\\n */\\ncontract Governable {\\n    // Storage position of the owner and pendingOwner of the contract\\n    // keccak256(\\\"OUSD.governor\\\");\\n    bytes32 private constant governorPosition =\\n        0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;\\n\\n    // keccak256(\\\"OUSD.pending.governor\\\");\\n    bytes32 private constant pendingGovernorPosition =\\n        0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;\\n\\n    // keccak256(\\\"OUSD.reentry.status\\\");\\n    bytes32 private constant reentryStatusPosition =\\n        0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;\\n\\n    // See OpenZeppelin ReentrancyGuard implementation\\n    uint256 constant _NOT_ENTERED = 1;\\n    uint256 constant _ENTERED = 2;\\n\\n    event PendingGovernorshipTransfer(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    event GovernorshipTransferred(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial Governor.\\n     */\\n    constructor() {\\n        _setGovernor(msg.sender);\\n        emit GovernorshipTransferred(address(0), _governor());\\n    }\\n\\n    /**\\n     * @notice Returns the address of the current Governor.\\n     */\\n    function governor() public view returns (address) {\\n        return _governor();\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current Governor.\\n     */\\n    function _governor() internal view returns (address governorOut) {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            governorOut := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address of the pending Governor.\\n     */\\n    function _pendingGovernor()\\n        internal\\n        view\\n        returns (address pendingGovernor)\\n    {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            pendingGovernor := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the Governor.\\n     */\\n    modifier onlyGovernor() {\\n        require(isGovernor(), \\\"Caller is not the Governor\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @notice Returns true if the caller is the current Governor.\\n     */\\n    function isGovernor() public view returns (bool) {\\n        return msg.sender == _governor();\\n    }\\n\\n    function _setGovernor(address newGovernor) internal {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\n     * function is not supported. It is possible to prevent this from happening\\n     * by making the `nonReentrant` function external, and make it call a\\n     * `private` function that does the actual work.\\n     */\\n    modifier nonReentrant() {\\n        bytes32 position = reentryStatusPosition;\\n        uint256 _reentry_status;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _reentry_status := sload(position)\\n        }\\n\\n        // On the first call to nonReentrant, _notEntered will be true\\n        require(_reentry_status != _ENTERED, \\\"Reentrant call\\\");\\n\\n        // Any calls to nonReentrant after this point will fail\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _ENTERED)\\n        }\\n\\n        _;\\n\\n        // By storing the original value once again, a refund is triggered (see\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _NOT_ENTERED)\\n        }\\n    }\\n\\n    function _setPendingGovernor(address newGovernor) internal {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @notice Transfers Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the current Governor. Must be claimed for this to complete\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function transferGovernance(address _newGovernor) external onlyGovernor {\\n        _setPendingGovernor(_newGovernor);\\n        emit PendingGovernorshipTransfer(_governor(), _newGovernor);\\n    }\\n\\n    /**\\n     * @notice Claim Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the new Governor.\\n     */\\n    function claimGovernance() external {\\n        require(\\n            msg.sender == _pendingGovernor(),\\n            \\\"Only the pending Governor can complete the claim\\\"\\n        );\\n        _changeGovernor(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Change Governance of the contract to a new account (`newGovernor`).\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function _changeGovernor(address _newGovernor) internal {\\n        require(_newGovernor != address(0), \\\"New Governor is address(0)\\\");\\n        emit GovernorshipTransferred(_governor(), _newGovernor);\\n        _setGovernor(_newGovernor);\\n    }\\n}\\n\",\"keccak256\":\"0xb7133d6ce7a9e673ff79fcedb3fd41ae6e58e251f94915bb65731abe524270b4\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IPoolBoostCentralRegistry {\\n    /**\\n     * @dev all the supported pool booster types are listed here. It is possible\\n     *      to have multiple versions of the factory that supports the same type of\\n     *      pool booster. Factories are immutable and this can happen when a factory\\n     *      or related pool booster required code update.\\n     *      e.g. \\\"PoolBoosterSwapxDouble\\\" & \\\"PoolBoosterSwapxDouble_v2\\\"\\n     */\\n    enum PoolBoosterType {\\n        // Supports bribing 2 contracts per pool. Appropriate for Ichi vault concentrated\\n        // liquidity pools where (which is expected in most/all cases) both pool gauges\\n        // require bribing.\\n        SwapXDoubleBooster,\\n        // Supports bribing a single contract per pool. Appropriate for Classic Stable &\\n        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)\\n        // needs bribing\\n        SwapXSingleBooster\\n    }\\n\\n    struct PoolBoosterEntry {\\n        address boosterAddress;\\n        address ammPoolAddress;\\n        PoolBoosterType boosterType;\\n    }\\n\\n    event PoolBoosterCreated(\\n        address poolBoosterAddress,\\n        address ammPoolAddress,\\n        PoolBoosterType poolBoosterType,\\n        address factoryAddress\\n    );\\n    event PoolBoosterRemoved(address poolBoosterAddress);\\n\\n    function emitPoolBoosterCreated(\\n        address _poolBoosterAddress,\\n        address _ammPoolAddress,\\n        PoolBoosterType _boosterType\\n    ) external;\\n\\n    function emitPoolBoosterRemoved(address _poolBoosterAddress) external;\\n}\\n\",\"keccak256\":\"0xdb5a617204dc90b207dbb22d3482e0f6af76350791da6e48d96b461965fe79d9\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/IPoolBooster.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IPoolBooster {\\n    event BribeExecuted(uint256 amount);\\n\\n    /// @notice Execute the bribe action\\n    function bribe() external;\\n}\\n\",\"keccak256\":\"0x7d0ec960fef6b539a1c472826a38026fd72e687c2351c259f18ef0cc2c9b322a\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IBribe {\\n    /// @notice Notify a bribe amount\\n    /// @dev    Rewards are saved into NEXT EPOCH mapping.\\n    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;\\n}\\n\",\"keccak256\":\"0x9298dab447c5dc95a37ef18b7ae86618ccf1031fbe346970e3c11b78e638875d\",\"license\":\"MIT\"},\"contracts/poolBooster/AbstractPoolBoosterFactory.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { Governable } from \\\"../governance/Governable.sol\\\";\\nimport { IPoolBooster } from \\\"../interfaces/poolBooster/IPoolBooster.sol\\\";\\nimport { IPoolBoostCentralRegistry } from \\\"../interfaces/poolBooster/IPoolBoostCentralRegistry.sol\\\";\\n\\n/**\\n * @title Abstract Pool booster factory\\n * @author Origin Protocol Inc\\n */\\ncontract AbstractPoolBoosterFactory is Governable {\\n    struct PoolBoosterEntry {\\n        address boosterAddress;\\n        address ammPoolAddress;\\n        IPoolBoostCentralRegistry.PoolBoosterType boosterType;\\n    }\\n\\n    // @notice address of Origin Sonic\\n    address public immutable oSonic;\\n    // @notice Central registry contract\\n    IPoolBoostCentralRegistry public immutable centralRegistry;\\n\\n    // @notice list of all the pool boosters created by this factory\\n    PoolBoosterEntry[] public poolBoosters;\\n    // @notice mapping of AMM pool to pool booster\\n    mapping(address => PoolBoosterEntry) public poolBoosterFromPool;\\n\\n    // @param address _oSonic address of the OSonic token\\n    // @param address _governor address governor\\n    // @param address _centralRegistry address of the central registry\\n    constructor(\\n        address _oSonic,\\n        address _governor,\\n        address _centralRegistry\\n    ) {\\n        require(_oSonic != address(0), \\\"Invalid oSonic address\\\");\\n        require(_governor != address(0), \\\"Invalid governor address\\\");\\n        require(\\n            _centralRegistry != address(0),\\n            \\\"Invalid central registry address\\\"\\n        );\\n\\n        oSonic = _oSonic;\\n        centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);\\n        _setGovernor(_governor);\\n    }\\n\\n    /**\\n     * @notice Goes over all the pool boosters created by this factory and\\n     *         calls bribe() on them.\\n     * @param _exclusionList A list of pool booster addresses to skip when\\n     *        calling this function.\\n     */\\n    function bribeAll(address[] memory _exclusionList) external {\\n        uint256 lengthI = poolBoosters.length;\\n        for (uint256 i = 0; i < lengthI; i++) {\\n            address poolBoosterAddress = poolBoosters[i].boosterAddress;\\n            bool skipBribeCall = false;\\n            uint256 lengthJ = _exclusionList.length;\\n            for (uint256 j = 0; j < lengthJ; j++) {\\n                // pool booster in exclusion list\\n                if (_exclusionList[j] == poolBoosterAddress) {\\n                    skipBribeCall = true;\\n                    break;\\n                }\\n            }\\n\\n            if (!skipBribeCall) {\\n                IPoolBooster(poolBoosterAddress).bribe();\\n            }\\n        }\\n    }\\n\\n    /**\\n     * @notice Removes the pool booster from the internal list of pool boosters.\\n     * @dev This action does not destroy the pool booster contract nor does it\\n     *      stop the yield delegation to it.\\n     * @param _poolBoosterAddress address of the pool booster\\n     */\\n    function removePoolBooster(address _poolBoosterAddress)\\n        external\\n        onlyGovernor\\n    {\\n        uint256 boostersLen = poolBoosters.length;\\n        for (uint256 i = 0; i < boostersLen; ++i) {\\n            if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {\\n                // erase mapping\\n                delete poolBoosterFromPool[poolBoosters[i].ammPoolAddress];\\n\\n                // overwrite current pool booster with the last entry in the list\\n                poolBoosters[i] = poolBoosters[boostersLen - 1];\\n                // drop the last entry\\n                poolBoosters.pop();\\n\\n                centralRegistry.emitPoolBoosterRemoved(_poolBoosterAddress);\\n                break;\\n            }\\n        }\\n    }\\n\\n    function _storePoolBoosterEntry(\\n        address _poolBoosterAddress,\\n        address _ammPoolAddress,\\n        IPoolBoostCentralRegistry.PoolBoosterType _boosterType\\n    ) internal {\\n        PoolBoosterEntry memory entry = PoolBoosterEntry(\\n            _poolBoosterAddress,\\n            _ammPoolAddress,\\n            _boosterType\\n        );\\n\\n        poolBoosters.push(entry);\\n        poolBoosterFromPool[_ammPoolAddress] = entry;\\n\\n        // emit the events of the pool booster created\\n        centralRegistry.emitPoolBoosterCreated(\\n            _poolBoosterAddress,\\n            _ammPoolAddress,\\n            _boosterType\\n        );\\n    }\\n\\n    function _deployContract(bytes memory _bytecode, uint256 _salt)\\n        internal\\n        returns (address _address)\\n    {\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _address := create2(\\n                0,\\n                add(_bytecode, 0x20),\\n                mload(_bytecode),\\n                _salt\\n            )\\n        }\\n\\n        require(\\n            _address.code.length > 0 && _address != address(0),\\n            \\\"Failed creating a pool booster\\\"\\n        );\\n    }\\n\\n    // pre-compute the address of the deployed contract that will be\\n    // created when create2 is called\\n    function _computeAddress(bytes memory _bytecode, uint256 _salt)\\n        internal\\n        view\\n        returns (address)\\n    {\\n        bytes32 hash = keccak256(\\n            abi.encodePacked(\\n                bytes1(0xff),\\n                address(this),\\n                _salt,\\n                keccak256(_bytecode)\\n            )\\n        );\\n\\n        // cast last 20 bytes of hash to address\\n        return address(uint160(uint256(hash)));\\n    }\\n\\n    function poolBoosterLength() external view returns (uint256) {\\n        return poolBoosters.length;\\n    }\\n}\\n\",\"keccak256\":\"0xf0252e97fd2ca5a026a04ce1e2244febc1fc362b079532edf45407befc34b05b\",\"license\":\"MIT\"},\"contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { PoolBoosterSwapxDouble } from \\\"./PoolBoosterSwapxDouble.sol\\\";\\nimport { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from \\\"./AbstractPoolBoosterFactory.sol\\\";\\n\\n/**\\n * @title Pool booster factory for creating Swapx Ichi pool boosters where both of the\\n *        gauges need incentivizing.\\n * @author Origin Protocol Inc\\n */\\ncontract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {\\n    uint256 public constant version = 1;\\n\\n    // @param address _oSonic address of the OSonic token\\n    // @param address _governor address governor\\n    // @param address _centralRegistry address of the central registry\\n    constructor(\\n        address _oSonic,\\n        address _governor,\\n        address _centralRegistry\\n    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {}\\n\\n    /**\\n     * @dev Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be\\n     *      bribed\\n     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side\\n     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool\\n     * @param _ammPoolAddress address of the AMM pool where the yield originates from\\n     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS\\n     *        bribe contract and 60% to other bribe contract\\n     * @param _salt A unique number that affects the address of the pool booster created. Note: this number\\n     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address\\n     *        and pre-computed address to match\\n     */\\n    function createPoolBoosterSwapxDouble(\\n        address _bribeAddressOS,\\n        address _bribeAddressOther,\\n        address _ammPoolAddress,\\n        uint256 _split,\\n        uint256 _salt\\n    ) external onlyGovernor {\\n        require(\\n            _ammPoolAddress != address(0),\\n            \\\"Invalid ammPoolAddress address\\\"\\n        );\\n        require(_salt > 0, \\\"Invalid salt\\\");\\n\\n        address poolBoosterAddress = _deployContract(\\n            abi.encodePacked(\\n                type(PoolBoosterSwapxDouble).creationCode,\\n                abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)\\n            ),\\n            _salt\\n        );\\n\\n        _storePoolBoosterEntry(\\n            poolBoosterAddress,\\n            _ammPoolAddress,\\n            IPoolBoostCentralRegistry.PoolBoosterType.SwapXDoubleBooster\\n        );\\n    }\\n\\n    /**\\n     * @dev Compute the address of the pool booster to be deployed.\\n     * @param _bribeAddressOS address of the Bribes.sol(Bribe) contract for the OS token side\\n     * @param _bribeAddressOther address of the Bribes.sol(Bribe) contract for the other token in the pool\\n     * @param _ammPoolAddress address of the AMM pool where the yield originates from\\n     * @param _split 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS\\n     *        bribe contract and 60% to other bribe contract\\n     * @param _salt A unique number that affects the address of the pool booster created. Note: this number\\n     *        should match the one from `createPoolBoosterSwapxDouble` in order for the final deployed address\\n     *        and pre-computed address to match\\n     */\\n    function computePoolBoosterAddress(\\n        address _bribeAddressOS,\\n        address _bribeAddressOther,\\n        address _ammPoolAddress,\\n        uint256 _split,\\n        uint256 _salt\\n    ) external view returns (address) {\\n        require(\\n            _ammPoolAddress != address(0),\\n            \\\"Invalid ammPoolAddress address\\\"\\n        );\\n        require(_salt > 0, \\\"Invalid salt\\\");\\n\\n        return\\n            _computeAddress(\\n                abi.encodePacked(\\n                    type(PoolBoosterSwapxDouble).creationCode,\\n                    abi.encode(\\n                        _bribeAddressOS,\\n                        _bribeAddressOther,\\n                        oSonic,\\n                        _split\\n                    )\\n                ),\\n                _salt\\n            );\\n    }\\n}\\n\",\"keccak256\":\"0xef71f20cce5c81d4b7f89665b68c2085ed30fd9307d6a2b05a305e562b945e3b\",\"license\":\"MIT\"},\"contracts/poolBooster/PoolBoosterSwapxDouble.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { IBribe } from \\\"../interfaces/poolBooster/ISwapXAlgebraBribe.sol\\\";\\nimport { IPoolBooster } from \\\"../interfaces/poolBooster/IPoolBooster.sol\\\";\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport { StableMath } from \\\"../utils/StableMath.sol\\\";\\n\\n/**\\n * @title Pool booster for SwapX concentrated liquidity where 2 gauges are created for\\n *        every pool. Ichi vaults currently have such setup.\\n * @author Origin Protocol Inc\\n */\\ncontract PoolBoosterSwapxDouble is IPoolBooster {\\n    using StableMath for uint256;\\n\\n    // @notice address of the Bribes.sol(Bribe) contract for the OS token side\\n    IBribe public immutable bribeContractOS;\\n    // @notice address of the  Bribes.sol(Bribe) contract for the other token in the pool\\n    IBribe public immutable bribeContractOther;\\n    // @notice address of the OS token\\n    IERC20 public immutable osToken;\\n    // @notice 1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS\\n    //         bribe contract and 60% to other bribe contract\\n    uint256 public immutable split;\\n\\n    // @notice if balance under this amount the bribe action is skipped\\n    uint256 public constant MIN_BRIBE_AMOUNT = 1e10;\\n\\n    constructor(\\n        address _bribeContractOS,\\n        address _bribeContractOther,\\n        address _osToken,\\n        uint256 _split\\n    ) {\\n        require(\\n            _bribeContractOS != address(0),\\n            \\\"Invalid bribeContractOS address\\\"\\n        );\\n        require(\\n            _bribeContractOther != address(0),\\n            \\\"Invalid bribeContractOther address\\\"\\n        );\\n        // expect it to be between 1% & 99%\\n        require(_split > 1e16 && _split < 99e16, \\\"Unexpected split amount\\\");\\n\\n        bribeContractOS = IBribe(_bribeContractOS);\\n        bribeContractOther = IBribe(_bribeContractOther);\\n        // Abstract factory already validates this is not a zero address\\n        osToken = IERC20(_osToken);\\n        split = _split;\\n    }\\n\\n    function bribe() external override {\\n        uint256 balance = osToken.balanceOf(address(this));\\n        // balance too small, do no bribes\\n        if (balance < MIN_BRIBE_AMOUNT) {\\n            return;\\n        }\\n\\n        uint256 osBribeAmount = balance.mulTruncate(split);\\n        uint256 otherBribeAmount = balance - osBribeAmount;\\n\\n        osToken.approve(address(bribeContractOS), osBribeAmount);\\n        osToken.approve(address(bribeContractOther), otherBribeAmount);\\n\\n        bribeContractOS.notifyRewardAmount(address(osToken), osBribeAmount);\\n        bribeContractOther.notifyRewardAmount(\\n            address(osToken),\\n            otherBribeAmount\\n        );\\n\\n        emit BribeExecuted(balance);\\n    }\\n}\\n\",\"keccak256\":\"0x8f652dcba2bd8109381b7b66548fbcd0a6f6fed493512a95554c62f3b4592dc0\",\"license\":\"MIT\"},\"contracts/utils/StableMath.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { SafeMath } from \\\"@openzeppelin/contracts/utils/math/SafeMath.sol\\\";\\n\\n// Based on StableMath from Stability Labs Pty. Ltd.\\n// https://github.com/mstable/mStable-contracts/blob/master/contracts/shared/StableMath.sol\\n\\nlibrary StableMath {\\n    using SafeMath for uint256;\\n\\n    /**\\n     * @dev Scaling unit for use in specific calculations,\\n     * where 1 * 10**18, or 1e18 represents a unit '1'\\n     */\\n    uint256 private constant FULL_SCALE = 1e18;\\n\\n    /***************************************\\n                    Helpers\\n    ****************************************/\\n\\n    /**\\n     * @dev Adjust the scale of an integer\\n     * @param to Decimals to scale to\\n     * @param from Decimals to scale from\\n     */\\n    function scaleBy(\\n        uint256 x,\\n        uint256 to,\\n        uint256 from\\n    ) internal pure returns (uint256) {\\n        if (to > from) {\\n            x = x.mul(10**(to - from));\\n        } else if (to < from) {\\n            // slither-disable-next-line divide-before-multiply\\n            x = x.div(10**(from - to));\\n        }\\n        return x;\\n    }\\n\\n    /***************************************\\n               Precise Arithmetic\\n    ****************************************/\\n\\n    /**\\n     * @dev Multiplies two precise units, and then truncates by the full scale\\n     * @param x Left hand input to multiplication\\n     * @param y Right hand input to multiplication\\n     * @return Result after multiplying the two inputs and then dividing by the shared\\n     *         scale unit\\n     */\\n    function mulTruncate(uint256 x, uint256 y) internal pure returns (uint256) {\\n        return mulTruncateScale(x, y, FULL_SCALE);\\n    }\\n\\n    /**\\n     * @dev Multiplies two precise units, and then truncates by the given scale. For example,\\n     * when calculating 90% of 10e18, (10e18 * 9e17) / 1e18 = (9e36) / 1e18 = 9e18\\n     * @param x Left hand input to multiplication\\n     * @param y Right hand input to multiplication\\n     * @param scale Scale unit\\n     * @return Result after multiplying the two inputs and then dividing by the shared\\n     *         scale unit\\n     */\\n    function mulTruncateScale(\\n        uint256 x,\\n        uint256 y,\\n        uint256 scale\\n    ) internal pure returns (uint256) {\\n        // e.g. assume scale = fullScale\\n        // z = 10e18 * 9e17 = 9e36\\n        uint256 z = x.mul(y);\\n        // return 9e36 / 1e18 = 9e18\\n        return z.div(scale);\\n    }\\n\\n    /**\\n     * @dev Multiplies two precise units, and then truncates by the full scale, rounding up the result\\n     * @param x Left hand input to multiplication\\n     * @param y Right hand input to multiplication\\n     * @return Result after multiplying the two inputs and then dividing by the shared\\n     *          scale unit, rounded up to the closest base unit.\\n     */\\n    function mulTruncateCeil(uint256 x, uint256 y)\\n        internal\\n        pure\\n        returns (uint256)\\n    {\\n        // e.g. 8e17 * 17268172638 = 138145381104e17\\n        uint256 scaled = x.mul(y);\\n        // e.g. 138145381104e17 + 9.99...e17 = 138145381113.99...e17\\n        uint256 ceil = scaled.add(FULL_SCALE.sub(1));\\n        // e.g. 13814538111.399...e18 / 1e18 = 13814538111\\n        return ceil.div(FULL_SCALE);\\n    }\\n\\n    /**\\n     * @dev Precisely divides two units, by first scaling the left hand operand. Useful\\n     *      for finding percentage weightings, i.e. 8e18/10e18 = 80% (or 8e17)\\n     * @param x Left hand input to division\\n     * @param y Right hand input to division\\n     * @return Result after multiplying the left operand by the scale, and\\n     *         executing the division on the right hand input.\\n     */\\n    function divPrecisely(uint256 x, uint256 y)\\n        internal\\n        pure\\n        returns (uint256)\\n    {\\n        // e.g. 8e18 * 1e18 = 8e36\\n        uint256 z = x.mul(FULL_SCALE);\\n        // e.g. 8e36 / 10e18 = 8e17\\n        return z.div(y);\\n    }\\n}\\n\",\"keccak256\":\"0x1eb49f6f79045d9e0a8e1dced8e01d9e559e5fac554dcbb53e43140b601b04e7\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60c060405234801561001057600080fd5b50604051611c31380380611c3183398101604081905261002f916101e6565b82828261004833600080516020611c1183398151915255565b600080516020611c11833981519152546040516001600160a01b03909116906000907fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a908290a36001600160a01b0383166100ea5760405162461bcd60e51b815260206004820152601660248201527f496e76616c6964206f536f6e696320616464726573730000000000000000000060448201526064015b60405180910390fd5b6001600160a01b0382166101405760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420676f7665726e6f722061646472657373000000000000000060448201526064016100e1565b6001600160a01b0381166101965760405162461bcd60e51b815260206004820181905260248201527f496e76616c69642063656e7472616c207265676973747279206164647265737360448201526064016100e1565b6001600160a01b03808416608052811660a0526101bf82600080516020611c1183398151915255565b505050505050610229565b80516001600160a01b03811681146101e157600080fd5b919050565b6000806000606084860312156101fb57600080fd5b610204846101ca565b9250610212602085016101ca565b9150610220604085016101ca565b90509250925092565b60805160a0516119a761026a60003960008181610172015281816109e00152610d7f01526000818161023d0152818161044501526105dc01526119a76000f3fe608060405234801561001057600080fd5b50600436106100ea5760003560e01c8063b6eee9621161008c578063d38bfff411610066578063d38bfff4146101ff578063d517786814610212578063e24abe6314610225578063fa89f9921461023857600080fd5b8063b6eee96214610194578063c7af3352146101d4578063d3889825146101ec57600080fd5b806354fd4d50116100c857806354fd4d50146101485780635d36b19014610150578063830ca0671461015a5780638f73dcfa1461016d57600080fd5b80630c340a24146100ef578063110c1a411461011457806317c01cb314610136575b600080fd5b6100f761025f565b6040516001600160a01b0390911681526020015b60405180910390f35b610127610122366004610dfe565b61027c565b60405161010b93929190610e2d565b6000545b60405190815260200161010b565b61013a600181565b6101586102c2565b005b6100f7610168366004610e8d565b61036d565b6100f77f000000000000000000000000000000000000000000000000000000000000000081565b6101276101a2366004610ee2565b600160208190526000918252604090912080549101546001600160a01b0391821691811690600160a01b900460ff1683565b6101dc6104af565b604051901515815260200161010b565b6101586101fa366004610e8d565b6104e0565b61015861020d366004610ee2565b610652565b610158610220366004610f1a565b6106f6565b610158610233366004610ee2565b6107ee565b6100f77f000000000000000000000000000000000000000000000000000000000000000081565b60006102776000805160206119528339815191525490565b905090565b6000818154811061028c57600080fd5b6000918252602090912060029091020180546001909101546001600160a01b03918216925090811690600160a01b900460ff1683565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b0316146103625760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084015b60405180910390fd5b61036b33610a49565b565b60006001600160a01b0384166103c55760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610359565b600082116104045760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610359565b6104a56040518060200161041790610df1565b601f1982820381018352601f9091011660408181526001600160a01b038a81166020840152898116828401527f000000000000000000000000000000000000000000000000000000000000000016606083015260808083018890528151808403909101815260a08301909152610490929160c00161101a565b60405160208183030381529060405283610b0d565b9695505050505050565b60006104c76000805160206119528339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6104e86104af565b6105045760405162461bcd60e51b815260040161035990611037565b6001600160a01b03831661055a5760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610359565b600081116105995760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610359565b600061063c604051806020016105ae90610df1565b601f1982820381018352601f9091011660408181526001600160a01b038a81166020840152898116828401527f000000000000000000000000000000000000000000000000000000000000000016606083015260808083018890528151808403909101815260a08301909152610627929160c00161101a565b60405160208183030381529060405283610b6c565b905061064a81856000610be8565b505050505050565b61065a6104af565b6106765760405162461bcd60e51b815260040161035990611037565b61069e817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166106be6000805160206119528339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b60008054905b818110156107e95760008082815481106107185761071861106e565b6000918252602082206002909102015485516001600160a01b039091169250815b8181101561078457836001600160a01b031687828151811061075d5761075d61106e565b60200260200101516001600160a01b03160361077c5760019250610784565b600101610739565b50816107de57826001600160a01b03166337d0208c6040518163ffffffff1660e01b8152600401600060405180830381600087803b1580156107c557600080fd5b505af11580156107d9573d6000803e3d6000fd5b505050505b5050506001016106fc565b505050565b6107f66104af565b6108125760405162461bcd60e51b815260040161035990611037565b60008054905b818110156107e957826001600160a01b03166000828154811061083d5761083d61106e565b60009182526020909120600290910201546001600160a01b031603610a4157600160008083815481106108725761087261106e565b6000918252602080832060016002909302018201546001600160a01b031684528301939093526040909101812080546001600160a01b0319168155820180546001600160a81b0319169055906108c89084611084565b815481106108d8576108d861106e565b9060005260206000209060020201600082815481106108f9576108f961106e565b60009182526020909120825460029092020180546001600160a01b03199081166001600160a01b039384161782556001808501805482850180549485169190961690811786559054939460ff600160a01b95869004169490936001600160a81b03191690911791849081111561097157610971610e17565b0217905550905050600080548061098a5761098a6110a5565b6000828152602090206002600019929092019182020180546001600160a01b031916815560010180546001600160a81b03191690559055604051630702522960e01b81526001600160a01b0384811660048301527f00000000000000000000000000000000000000000000000000000000000000001690630702522990602401600060405180830381600087803b158015610a2457600080fd5b505af1158015610a38573d6000803e3d6000fd5b50505050505050565b600101610818565b6001600160a01b038116610a9f5760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610359565b806001600160a01b0316610abf6000805160206119528339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a3610b0a8160008051602061195283398151915255565b50565b8151602080840191909120604080516001600160f81b0319818501523060601b6bffffffffffffffffffffffff191660218201526035810185905260558082019390935281518082039093018352607501905280519101205b92915050565b6000818351602085016000f590506000816001600160a01b03163b118015610b9c57506001600160a01b03811615155b610b665760405162461bcd60e51b815260206004820152601e60248201527f4661696c6564206372656174696e67206120706f6f6c20626f6f7374657200006044820152606401610359565b60006040518060600160405280856001600160a01b03168152602001846001600160a01b03168152602001836001811115610c2557610c25610e17565b90526000805460018181018355918052825160029091027f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563810180546001600160a01b039384166001600160a01b031991821617825560208601517f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e564909301805493909416908316811784556040860151959650869591949193926001600160a81b0319161790600160a01b908490811115610ce357610ce3610e17565b021790555050506001600160a01b03808416600090815260016020818152604092839020855181549086166001600160a01b031991821617825591860151818401805491909616928116831786559386015186959194909391926001600160a81b03199091161790600160a01b908490811115610d6257610d62610e17565b021790555050604051630b22521d60e31b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016915063591290e890610db990879087908790600401610e2d565b600060405180830381600087803b158015610dd357600080fd5b505af1158015610de7573d6000803e3d6000fd5b5050505050505050565b610896806110bc83390190565b600060208284031215610e1057600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b6001600160a01b038481168252831660208201526060810160028310610e6357634e487b7160e01b600052602160045260246000fd5b826040830152949350505050565b80356001600160a01b0381168114610e8857600080fd5b919050565b600080600080600060a08688031215610ea557600080fd5b610eae86610e71565b9450610ebc60208701610e71565b9350610eca60408701610e71565b94979396509394606081013594506080013592915050565b600060208284031215610ef457600080fd5b610efd82610e71565b9392505050565b634e487b7160e01b600052604160045260246000fd5b600060208284031215610f2c57600080fd5b813567ffffffffffffffff811115610f4357600080fd5b8201601f81018413610f5457600080fd5b803567ffffffffffffffff811115610f6e57610f6e610f04565b8060051b604051601f19603f830116810181811067ffffffffffffffff82111715610f9b57610f9b610f04565b604052918252602081840181019290810187841115610fb957600080fd5b6020850194505b83851015610fdf57610fd185610e71565b815260209485019401610fc0565b509695505050505050565b6000815160005b8181101561100b5760208185018101518683015201610ff1565b50600093019283525090919050565b600061102f6110298386610fea565b84610fea565b949350505050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b634e487b7160e01b600052603260045260246000fd5b81810381811115610b6657634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe61010060405234801561001157600080fd5b5060405161089638038061089683398101604081905261003091610193565b6001600160a01b03841661008b5760405162461bcd60e51b815260206004820152601f60248201527f496e76616c6964206272696265436f6e74726163744f5320616464726573730060448201526064015b60405180910390fd5b6001600160a01b0383166100ec5760405162461bcd60e51b815260206004820152602260248201527f496e76616c6964206272696265436f6e74726163744f74686572206164647265604482015261737360f01b6064820152608401610082565b662386f26fc10000811180156101095750670dbd2fc137a3000081105b6101555760405162461bcd60e51b815260206004820152601760248201527f556e65787065637465642073706c697420616d6f756e740000000000000000006044820152606401610082565b6001600160a01b0393841660805291831660a05290911660c05260e0526101de565b80516001600160a01b038116811461018e57600080fd5b919050565b600080600080608085870312156101a957600080fd5b6101b285610177565b93506101c060208601610177565b92506101ce60408601610177565b6060959095015193969295505050565b60805160a05160c05160e05161063c61025a6000396000818161012201526101e9015260008181606c0152818161015c015281816102640152818161031a0152818161039f015261043f01526000818160d4015281816102eb015261046e01526000818160fb0152818161023201526103ce015261063c6000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806312c587c51461006757806337d0208c146100ab5780633978033f146100b5578063840841d4146100cf578063ecdb9ea1146100f6578063f76541761461011d575b600080fd5b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b6100b3610144565b005b6100c16402540be40081565b6040519081526020016100a2565b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b6100c17f000000000000000000000000000000000000000000000000000000000000000081565b6040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a0823190602401602060405180830381865afa1580156101ab573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101cf9190610562565b90506402540be4008110156101e15750565b600061020d827f000000000000000000000000000000000000000000000000000000000000000061050a565b9050600061021b8284610591565b60405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018590529192507f00000000000000000000000000000000000000000000000000000000000000009091169063095ea7b3906044016020604051808303816000875af11580156102af573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102d391906105a4565b5060405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018390527f0000000000000000000000000000000000000000000000000000000000000000169063095ea7b3906044016020604051808303816000875af1158015610363573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061038791906105a4565b5060405163b66503cf60e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018490527f0000000000000000000000000000000000000000000000000000000000000000169063b66503cf90604401600060405180830381600087803b15801561041257600080fd5b505af1158015610426573d6000803e3d6000fd5b505060405163b66503cf60e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018590527f000000000000000000000000000000000000000000000000000000000000000016925063b66503cf9150604401600060405180830381600087803b1580156104b457600080fd5b505af11580156104c8573d6000803e3d6000fd5b505050507f1424c3a24f9b1f30558ab0a7b48e07ce9f7d85b293a69a90356e1478504232eb836040516104fd91815260200190565b60405180910390a1505050565b600061051f8383670de0b6b3a7640000610528565b90505b92915050565b600080610535858561054a565b90506105418184610556565b95945050505050565b600061051f82846105cd565b600061051f82846105e4565b60006020828403121561057457600080fd5b5051919050565b634e487b7160e01b600052601160045260246000fd5b818103818111156105225761052261057b565b6000602082840312156105b657600080fd5b815180151581146105c657600080fd5b9392505050565b80820281158282048414176105225761052261057b565b60008261060157634e487b7160e01b600052601260045260246000fd5b50049056fea26469706673582212206eefe34c590c18a5dcc0b5061823b4ffe2e78139379aedb27e105441fa9f043664736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa2646970667358221220f15eb021b699116e5593bb0e1d793f2bb77906cf06bb831e2e1e2a1b3867c26464736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100ea5760003560e01c8063b6eee9621161008c578063d38bfff411610066578063d38bfff4146101ff578063d517786814610212578063e24abe6314610225578063fa89f9921461023857600080fd5b8063b6eee96214610194578063c7af3352146101d4578063d3889825146101ec57600080fd5b806354fd4d50116100c857806354fd4d50146101485780635d36b19014610150578063830ca0671461015a5780638f73dcfa1461016d57600080fd5b80630c340a24146100ef578063110c1a411461011457806317c01cb314610136575b600080fd5b6100f761025f565b6040516001600160a01b0390911681526020015b60405180910390f35b610127610122366004610dfe565b61027c565b60405161010b93929190610e2d565b6000545b60405190815260200161010b565b61013a600181565b6101586102c2565b005b6100f7610168366004610e8d565b61036d565b6100f77f000000000000000000000000000000000000000000000000000000000000000081565b6101276101a2366004610ee2565b600160208190526000918252604090912080549101546001600160a01b0391821691811690600160a01b900460ff1683565b6101dc6104af565b604051901515815260200161010b565b6101586101fa366004610e8d565b6104e0565b61015861020d366004610ee2565b610652565b610158610220366004610f1a565b6106f6565b610158610233366004610ee2565b6107ee565b6100f77f000000000000000000000000000000000000000000000000000000000000000081565b60006102776000805160206119528339815191525490565b905090565b6000818154811061028c57600080fd5b6000918252602090912060029091020180546001909101546001600160a01b03918216925090811690600160a01b900460ff1683565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b0316146103625760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084015b60405180910390fd5b61036b33610a49565b565b60006001600160a01b0384166103c55760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610359565b600082116104045760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610359565b6104a56040518060200161041790610df1565b601f1982820381018352601f9091011660408181526001600160a01b038a81166020840152898116828401527f000000000000000000000000000000000000000000000000000000000000000016606083015260808083018890528151808403909101815260a08301909152610490929160c00161101a565b60405160208183030381529060405283610b0d565b9695505050505050565b60006104c76000805160206119528339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6104e86104af565b6105045760405162461bcd60e51b815260040161035990611037565b6001600160a01b03831661055a5760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610359565b600081116105995760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610359565b600061063c604051806020016105ae90610df1565b601f1982820381018352601f9091011660408181526001600160a01b038a81166020840152898116828401527f000000000000000000000000000000000000000000000000000000000000000016606083015260808083018890528151808403909101815260a08301909152610627929160c00161101a565b60405160208183030381529060405283610b6c565b905061064a81856000610be8565b505050505050565b61065a6104af565b6106765760405162461bcd60e51b815260040161035990611037565b61069e817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166106be6000805160206119528339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b60008054905b818110156107e95760008082815481106107185761071861106e565b6000918252602082206002909102015485516001600160a01b039091169250815b8181101561078457836001600160a01b031687828151811061075d5761075d61106e565b60200260200101516001600160a01b03160361077c5760019250610784565b600101610739565b50816107de57826001600160a01b03166337d0208c6040518163ffffffff1660e01b8152600401600060405180830381600087803b1580156107c557600080fd5b505af11580156107d9573d6000803e3d6000fd5b505050505b5050506001016106fc565b505050565b6107f66104af565b6108125760405162461bcd60e51b815260040161035990611037565b60008054905b818110156107e957826001600160a01b03166000828154811061083d5761083d61106e565b60009182526020909120600290910201546001600160a01b031603610a4157600160008083815481106108725761087261106e565b6000918252602080832060016002909302018201546001600160a01b031684528301939093526040909101812080546001600160a01b0319168155820180546001600160a81b0319169055906108c89084611084565b815481106108d8576108d861106e565b9060005260206000209060020201600082815481106108f9576108f961106e565b60009182526020909120825460029092020180546001600160a01b03199081166001600160a01b039384161782556001808501805482850180549485169190961690811786559054939460ff600160a01b95869004169490936001600160a81b03191690911791849081111561097157610971610e17565b0217905550905050600080548061098a5761098a6110a5565b6000828152602090206002600019929092019182020180546001600160a01b031916815560010180546001600160a81b03191690559055604051630702522960e01b81526001600160a01b0384811660048301527f00000000000000000000000000000000000000000000000000000000000000001690630702522990602401600060405180830381600087803b158015610a2457600080fd5b505af1158015610a38573d6000803e3d6000fd5b50505050505050565b600101610818565b6001600160a01b038116610a9f5760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610359565b806001600160a01b0316610abf6000805160206119528339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a3610b0a8160008051602061195283398151915255565b50565b8151602080840191909120604080516001600160f81b0319818501523060601b6bffffffffffffffffffffffff191660218201526035810185905260558082019390935281518082039093018352607501905280519101205b92915050565b6000818351602085016000f590506000816001600160a01b03163b118015610b9c57506001600160a01b03811615155b610b665760405162461bcd60e51b815260206004820152601e60248201527f4661696c6564206372656174696e67206120706f6f6c20626f6f7374657200006044820152606401610359565b60006040518060600160405280856001600160a01b03168152602001846001600160a01b03168152602001836001811115610c2557610c25610e17565b90526000805460018181018355918052825160029091027f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563810180546001600160a01b039384166001600160a01b031991821617825560208601517f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e564909301805493909416908316811784556040860151959650869591949193926001600160a81b0319161790600160a01b908490811115610ce357610ce3610e17565b021790555050506001600160a01b03808416600090815260016020818152604092839020855181549086166001600160a01b031991821617825591860151818401805491909616928116831786559386015186959194909391926001600160a81b03199091161790600160a01b908490811115610d6257610d62610e17565b021790555050604051630b22521d60e31b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016915063591290e890610db990879087908790600401610e2d565b600060405180830381600087803b158015610dd357600080fd5b505af1158015610de7573d6000803e3d6000fd5b5050505050505050565b610896806110bc83390190565b600060208284031215610e1057600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b6001600160a01b038481168252831660208201526060810160028310610e6357634e487b7160e01b600052602160045260246000fd5b826040830152949350505050565b80356001600160a01b0381168114610e8857600080fd5b919050565b600080600080600060a08688031215610ea557600080fd5b610eae86610e71565b9450610ebc60208701610e71565b9350610eca60408701610e71565b94979396509394606081013594506080013592915050565b600060208284031215610ef457600080fd5b610efd82610e71565b9392505050565b634e487b7160e01b600052604160045260246000fd5b600060208284031215610f2c57600080fd5b813567ffffffffffffffff811115610f4357600080fd5b8201601f81018413610f5457600080fd5b803567ffffffffffffffff811115610f6e57610f6e610f04565b8060051b604051601f19603f830116810181811067ffffffffffffffff82111715610f9b57610f9b610f04565b604052918252602081840181019290810187841115610fb957600080fd5b6020850194505b83851015610fdf57610fd185610e71565b815260209485019401610fc0565b509695505050505050565b6000815160005b8181101561100b5760208185018101518683015201610ff1565b50600093019283525090919050565b600061102f6110298386610fea565b84610fea565b949350505050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b634e487b7160e01b600052603260045260246000fd5b81810381811115610b6657634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe61010060405234801561001157600080fd5b5060405161089638038061089683398101604081905261003091610193565b6001600160a01b03841661008b5760405162461bcd60e51b815260206004820152601f60248201527f496e76616c6964206272696265436f6e74726163744f5320616464726573730060448201526064015b60405180910390fd5b6001600160a01b0383166100ec5760405162461bcd60e51b815260206004820152602260248201527f496e76616c6964206272696265436f6e74726163744f74686572206164647265604482015261737360f01b6064820152608401610082565b662386f26fc10000811180156101095750670dbd2fc137a3000081105b6101555760405162461bcd60e51b815260206004820152601760248201527f556e65787065637465642073706c697420616d6f756e740000000000000000006044820152606401610082565b6001600160a01b0393841660805291831660a05290911660c05260e0526101de565b80516001600160a01b038116811461018e57600080fd5b919050565b600080600080608085870312156101a957600080fd5b6101b285610177565b93506101c060208601610177565b92506101ce60408601610177565b6060959095015193969295505050565b60805160a05160c05160e05161063c61025a6000396000818161012201526101e9015260008181606c0152818161015c015281816102640152818161031a0152818161039f015261043f01526000818160d4015281816102eb015261046e01526000818160fb0152818161023201526103ce015261063c6000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806312c587c51461006757806337d0208c146100ab5780633978033f146100b5578063840841d4146100cf578063ecdb9ea1146100f6578063f76541761461011d575b600080fd5b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b6100b3610144565b005b6100c16402540be40081565b6040519081526020016100a2565b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b61008e7f000000000000000000000000000000000000000000000000000000000000000081565b6100c17f000000000000000000000000000000000000000000000000000000000000000081565b6040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a0823190602401602060405180830381865afa1580156101ab573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101cf9190610562565b90506402540be4008110156101e15750565b600061020d827f000000000000000000000000000000000000000000000000000000000000000061050a565b9050600061021b8284610591565b60405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018590529192507f00000000000000000000000000000000000000000000000000000000000000009091169063095ea7b3906044016020604051808303816000875af11580156102af573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102d391906105a4565b5060405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018390527f0000000000000000000000000000000000000000000000000000000000000000169063095ea7b3906044016020604051808303816000875af1158015610363573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061038791906105a4565b5060405163b66503cf60e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018490527f0000000000000000000000000000000000000000000000000000000000000000169063b66503cf90604401600060405180830381600087803b15801561041257600080fd5b505af1158015610426573d6000803e3d6000fd5b505060405163b66503cf60e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018590527f000000000000000000000000000000000000000000000000000000000000000016925063b66503cf9150604401600060405180830381600087803b1580156104b457600080fd5b505af11580156104c8573d6000803e3d6000fd5b505050507f1424c3a24f9b1f30558ab0a7b48e07ce9f7d85b293a69a90356e1478504232eb836040516104fd91815260200190565b60405180910390a1505050565b600061051f8383670de0b6b3a7640000610528565b90505b92915050565b600080610535858561054a565b90506105418184610556565b95945050505050565b600061051f82846105cd565b600061051f82846105e4565b60006020828403121561057457600080fd5b5051919050565b634e487b7160e01b600052601160045260246000fd5b818103818111156105225761052261057b565b6000602082840312156105b657600080fd5b815180151581146105c657600080fd5b9392505050565b80820281158282048414176105225761052261057b565b60008261060157634e487b7160e01b600052601260045260246000fd5b50049056fea26469706673582212206eefe34c590c18a5dcc0b5061823b4ffe2e78139379aedb27e105441fa9f043664736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa2646970667358221220f15eb021b699116e5593bb0e1d793f2bb77906cf06bb831e2e1e2a1b3867c26464736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "kind": "dev",
+    "methods": {
+      "bribeAll(address[])": {
+        "params": {
+          "_exclusionList": "A list of pool booster addresses to skip when        calling this function."
+        }
+      },
+      "computePoolBoosterAddress(address,address,address,uint256,uint256)": {
+        "details": "Compute the address of the pool booster to be deployed.",
+        "params": {
+          "_ammPoolAddress": "address of the AMM pool where the yield originates from",
+          "_bribeAddressOS": "address of the Bribes.sol(Bribe) contract for the OS token side",
+          "_bribeAddressOther": "address of the Bribes.sol(Bribe) contract for the other token in the pool",
+          "_salt": "A unique number that affects the address of the pool booster created. Note: this number        should match the one from `createPoolBoosterSwapxDouble` in order for the final deployed address        and pre-computed address to match",
+          "_split": "1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS        bribe contract and 60% to other bribe contract"
+        }
+      },
+      "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)": {
+        "details": "Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be      bribed",
+        "params": {
+          "_ammPoolAddress": "address of the AMM pool where the yield originates from",
+          "_bribeAddressOS": "address of the Bribes.sol(Bribe) contract for the OS token side",
+          "_bribeAddressOther": "address of the Bribes.sol(Bribe) contract for the other token in the pool",
+          "_salt": "A unique number that affects the address of the pool booster created. Note: this number        should match the one from `computePoolBoosterAddress` in order for the final deployed address        and pre-computed address to match",
+          "_split": "1e18 denominated split between OS and Other bribe. E.g. 0.4e17 means 40% to OS        bribe contract and 60% to other bribe contract"
+        }
+      },
+      "removePoolBooster(address)": {
+        "details": "This action does not destroy the pool booster contract nor does it      stop the yield delegation to it.",
+        "params": {
+          "_poolBoosterAddress": "address of the pool booster"
+        }
+      },
+      "transferGovernance(address)": {
+        "params": {
+          "_newGovernor": "Address of the new Governor"
+        }
+      }
+    },
+    "title": "Pool booster factory for creating Swapx Ichi pool boosters where both of the        gauges need incentivizing.",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "bribeAll(address[])": {
+        "notice": "Goes over all the pool boosters created by this factory and         calls bribe() on them."
+      },
+      "claimGovernance()": {
+        "notice": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+      },
+      "governor()": {
+        "notice": "Returns the address of the current Governor."
+      },
+      "isGovernor()": {
+        "notice": "Returns true if the caller is the current Governor."
+      },
+      "removePoolBooster(address)": {
+        "notice": "Removes the pool booster from the internal list of pool boosters."
+      },
+      "transferGovernance(address)": {
+        "notice": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 28209,
+        "contract": "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+        "label": "poolBoosters",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_array(t_struct(PoolBoosterEntry)28200_storage)dyn_storage"
+      },
+      {
+        "astId": 28214,
+        "contract": "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+        "label": "poolBoosterFromPool",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_address,t_struct(PoolBoosterEntry)28200_storage)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_struct(PoolBoosterEntry)28200_storage)dyn_storage": {
+        "base": "t_struct(PoolBoosterEntry)28200_storage",
+        "encoding": "dynamic_array",
+        "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry[]",
+        "numberOfBytes": "32"
+      },
+      "t_enum(PoolBoosterType)17486": {
+        "encoding": "inplace",
+        "label": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_struct(PoolBoosterEntry)28200_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct AbstractPoolBoosterFactory.PoolBoosterEntry)",
+        "numberOfBytes": "32",
+        "value": "t_struct(PoolBoosterEntry)28200_storage"
+      },
+      "t_struct(PoolBoosterEntry)28200_storage": {
+        "encoding": "inplace",
+        "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry",
+        "members": [
+          {
+            "astId": 28194,
+            "contract": "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+            "label": "boosterAddress",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 28196,
+            "contract": "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+            "label": "ammPoolAddress",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address"
+          },
+          {
+            "astId": 28199,
+            "contract": "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+            "label": "boosterType",
+            "offset": 20,
+            "slot": "1",
+            "type": "t_enum(PoolBoosterType)17486"
+          }
+        ],
+        "numberOfBytes": "64"
+      }
+    }
+  }
+}

@@ -40,9 +40,12 @@ const getStorageFileLocation = (hre, contractName) => {
   return `${layoutFolder}${contractName}.json`;
 };
 
-const getStorageLayoutForContract = async (hre, contractName) => {
+const getStorageLayoutForContract = async (hre, contractName, contract) => {
+  if (!contract) {
+    contract = contractName;
+  }
   const validations = await readValidations(hre);
-  const implFactory = await hre.ethers.getContractFactory(contractName);
+  const implFactory = await hre.ethers.getContractFactory(contract);
   const unlinkedBytecode = getUnlinkedBytecode(
     validations,
     implFactory.bytecode
@@ -63,8 +66,14 @@ const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
   return JSON.parse(await promises.readFile(location, "utf8"));
 };
 
-const storeStorageLayoutForContract = async (hre, contractName) => {
-  const layout = await getStorageLayoutForContract(hre, contractName);
+// @dev   contractName and contract can be different when the deploy procedure wants to
+//        store a certain contract deployment under a different name as is the name of
+//        the contract in the source code.
+// @param contract the name of the contract as is in the source code of the contract
+// @param contractName a potential override of the contract as is to be stored in the
+//        deployment descriptors
+const storeStorageLayoutForContract = async (hre, contractName, contract) => {
+  const layout = await getStorageLayoutForContract(hre, contractName, contract);
   const storageLayoutFile = getStorageFileLocation(hre, contractName);
 
   // pretty print storage layout for the contract

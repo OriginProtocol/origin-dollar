@@ -1,6 +1,5 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { BigNumber } = ethers;
 const { formatUnits } = require("ethers/lib/utils");
 const mocha = require("mocha");
 
@@ -12,10 +11,7 @@ const { setFraxOraclePrice } = require("../utils/frax");
 const { resolveContract } = require("../utils/resolvers");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 
-const {
-  balancer_rETH_WETH_PID,
-  balancer_stETH_WETH_PID,
-} = require("../utils/constants");
+const { balancer_rETH_WETH_PID } = require("../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -52,7 +48,6 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
-const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");
@@ -1476,111 +1471,6 @@ async function convexVaultFixture() {
   return fixture;
 }
 
-/* Deposit WETH liquidity in Balancer metaStable WETH pool to simulate
- * MEV attack.
- */
-async function tiltBalancerMetaStableWETHPool({
-  // how much of pool TVL should be deposited. 100 == 100%
-  percentageOfTVLDeposit = 100,
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-  reth,
-  weth,
-}) {
-  const amountsIn = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-  // calculate the amount of WETH that should be deposited in relation to pool TVL
-  amountsIn[wethIndex] = (await bptToken.totalSupply())
-    .mul(BigNumber.from(percentageOfTVLDeposit))
-    .div(BigNumber.from("100"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_TOKENS_IN_FOR_BPT_OUT:
-   * User sends precise quantities of tokens, and receives an
-   * estimated but unknown (computed at run time) quantity of BPT.
-   *
-   * ['uint256', 'uint256[]', 'uint256']
-   * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256[]", "uint256"],
-    [1, amountsIn, BigNumber.from("0")]
-  );
-
-  await reth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-  await weth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).joinPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //JoinPoolRequest
-      assetAddressArray, // assets
-      amountsIn, // maxAmountsIn
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
-}
-
-/* Withdraw WETH liquidity in Balancer metaStable WETH pool to simulate
- * second part of the MEV attack. All attacker WETH liquidity is withdrawn.
- */
-async function untiltBalancerMetaStableWETHPool({
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-}) {
-  const amountsOut = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
-   * User sends a precise quantity of BPT, and receives an estimated
-   * but unknown (computed at run time) quantity of a single token
-   *
-   * ['uint256', 'uint256', 'uint256']
-   * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256", "uint256"],
-    [
-      0,
-      await bptToken.balanceOf(attackerSigner.address),
-      BigNumber.from(wethIndex.toString()),
-    ]
-  );
-
-  await bptToken
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).exitPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //ExitPoolRequest
-      assetAddressArray, // assets
-      amountsOut, // minAmountsOut
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
-}
-
 /**
  * Configure a Vault with the balancerREthStrategy
  */
@@ -1625,72 +1515,6 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
 
   await setERC20TokenBalance(josh.address, reth, "1000000", hre);
   await hardhatSetBalance(josh.address, "1000000");
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with the balancer strategy for wstETH/WETH pool
- */
-async function balancerWstEthFixture() {
-  const fixture = await defaultFixture();
-
-  const d = balancerStrategyDeployment({
-    deploymentOpts: {
-      deployName: "99999_balancer_wstETH_WETH",
-      forceDeploy: true,
-      deployerIsProposer: true,
-      reduceQueueTime: true,
-    },
-    proxyContractName: "OETHBalancerMetaPoolwstEthStrategyProxy",
-
-    platformAddress: addresses.mainnet.wstETH_WETH_BPT,
-    poolId: balancer_stETH_WETH_PID,
-
-    auraRewardsContractAddress: addresses.mainnet.wstETH_WETH_AuraRewards,
-
-    rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
-    assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
-  });
-
-  await d(hre);
-
-  const balancerWstEthStrategyProxy = await ethers.getContract(
-    "OETHBalancerMetaPoolwstEthStrategyProxy"
-  );
-  const balancerWstEthStrategy = await ethers.getContractAt(
-    "BalancerMetaPoolStrategy",
-    balancerWstEthStrategyProxy.address
-  );
-
-  fixture.balancerWstEthStrategy = balancerWstEthStrategy;
-
-  const { oethVault, timelock, weth, stETH, josh } = fixture;
-
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(stETH.address, balancerWstEthStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerWstEthStrategy.address);
-
-  fixture.stEthBPT = await ethers.getContractAt(
-    "IERC20Metadata",
-    addresses.mainnet.wstETH_WETH_BPT,
-    josh
-  );
-  fixture.balancerWstEthPID = balancer_stETH_WETH_PID;
-
-  fixture.auraPool = await ethers.getContractAt(
-    "IERC4626",
-    addresses.mainnet.wstETH_WETH_AuraRewards
-  );
-
-  fixture.balancerVault = await ethers.getContractAt(
-    "IBalancerVault",
-    addresses.mainnet.balancerVault,
-    josh
-  );
 
   return fixture;
 }
@@ -2519,30 +2343,6 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
- * Configure a Vault with only the Aave strategy.
- */
-async function aaveVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add Aave which only supports DAI
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.aaveStrategy.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.aaveStrategy.address, true);
-
-  // Add direct allocation of DAI to Aave
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(fixture.dai.address, fixture.aaveStrategy.address);
-  return fixture;
-}
-
-/**
  * Configure a Vault hold frxEth to be redeemed by the frxEthRedeemStrategy
  */
 async function frxEthRedeemStrategyFixture() {
@@ -2659,76 +2459,6 @@ async function threepoolFixture() {
     "initialize(address[],address[],address[],address,address)"
   ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter);
 
-  return fixture;
-}
-
-/**
- * Configure a Vault with two strategies
- */
-async function multiStrategyVaultFixture() {
-  const fixture = await compoundVaultFixture();
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deploy } = deployments;
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  await deploy("StrategyTwo", {
-    from: governorAddr,
-    contract: "CompoundStrategy",
-  });
-
-  const cStrategyTwo = await ethers.getContract("StrategyTwo");
-  // Initialize the second strategy with DAI and USDC
-  await cStrategyTwo
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      fixture.vault.address,
-      [assetAddresses.COMP],
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
-    );
-
-  await cStrategyTwo
-    .connect(sGovernor)
-    .setHarvesterAddress(fixture.harvester.address);
-
-  // Add second strategy to Vault
-  await fixture.vault.connect(sGovernor).approveStrategy(cStrategyTwo.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(cStrategyTwo.address, true);
-
-  // DAI to second strategy
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(fixture.dai.address, cStrategyTwo.address);
-
-  // Set up third strategy
-  await deploy("StrategyThree", {
-    from: governorAddr,
-    contract: "CompoundStrategy",
-  });
-  const cStrategyThree = await ethers.getContract("StrategyThree");
-  // Initialize the third strategy with only DAI
-  await cStrategyThree
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      fixture.vault.address,
-      [assetAddresses.COMP],
-      [assetAddresses.DAI],
-      [assetAddresses.cDAI]
-    );
-
-  await cStrategyThree
-    .connect(sGovernor)
-    .setHarvesterAddress(fixture.harvester.address);
-
-  fixture.strategyTwo = cStrategyTwo;
-  fixture.strategyThree = cStrategyThree;
   return fixture;
 }
 
@@ -3051,7 +2781,6 @@ module.exports = {
   mockVaultFixture,
   compoundFixture,
   compoundVaultFixture,
-  multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
   convexVaultFixture,
@@ -3066,13 +2795,9 @@ module.exports = {
   morphoCompoundFixture,
   aaveFixture,
   morphoAaveFixture,
-  aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
   balancerREthFixture,
-  balancerWstEthFixture,
-  tiltBalancerMetaStableWETHPool,
-  untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   frxEthRedeemStrategyFixture,
   lidoWithdrawalStrategyFixture,

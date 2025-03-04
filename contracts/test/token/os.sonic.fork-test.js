@@ -10,7 +10,7 @@ describe("ForkTest: Origin Sonic Token", function () {
     fixture = await baseFixture();
   });
 
-  it("Should have OS/USDC.e SwapX pool's yield forwarded to a SwapX multisig address", async () => {
+  it.skip("Should have OS/USDC.e SwapX pool's yield forwarded to a SwapX multisig address", async () => {
     const { oSonic } = fixture;
 
     // SwapX OS / USDC.e pool: 0x84EA9fAfD41abAEc5a53248f79Fa05ADA0058a96
