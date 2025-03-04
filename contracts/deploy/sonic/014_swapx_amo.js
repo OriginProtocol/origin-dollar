@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
   {
-    deployName: "011_swapx_amo",
+    deployName: "014_swapx_amo",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
