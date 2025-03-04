@@ -31,16 +31,16 @@ contract WOETH is ERC4626, Governable, Initializable {
     using SafeCast for uint128;
     using SafeCast for int256;
 
-    int256 public hardAssets;
+    int256 public userAssets;
     uint128 public yieldAssets;
     uint128 public yieldEnd;
-    bool private _oethCreditsInitialized;
+    bool private _initialized2;
     uint256[47] private __gap;
 
     uint256 public constant YIELD_TIME = 1 days - 1 hours;
 
     event YiedPeriodStarted(
-        int256 hardAssets,
+        int256 userAssets,
         uint256 yieldAssets,
         uint256 yieldEnd
     );
@@ -67,10 +67,10 @@ contract WOETH is ERC4626, Governable, Initializable {
      *         as a governance operation.
      */
     function initialize2() public onlyGovernor {
-        require(!_oethCreditsInitialized, "Initialize2 already called");
+        require(!_initialized2, "Initialize2 already called");
+        _initialized2 = true;
 
-        _oethCreditsInitialized = true;
-        hardAssets = IERC20(asset()).balanceOf(address(this)).toInt256();
+        userAssets = IERC20(asset()).balanceOf(address(this)).toInt256();
     }
 
     function name()
@@ -119,28 +119,28 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         if (_actualAssets <= _computedAssets) {
             yieldAssets = 0;
-            hardAssets = _actualAssets.toInt256();
+            userAssets = _actualAssets.toInt256();
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
             uint256 _maxYield = (_computedAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
             yieldAssets = _newYield.toUint128();
-            hardAssets = _computedAssets.toInt256();
+            userAssets = _computedAssets.toInt256();
         }
         yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
-        emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
+        emit YiedPeriodStarted(userAssets, yieldAssets, yieldEnd);
     }
 
     function totalAssets() public view override returns (uint256) {
         uint256 _end = yieldEnd;
         if (block.timestamp >= _end) {
-            return (hardAssets + uint256(yieldAssets).toInt256()).toUint256();
+            return (userAssets + uint256(yieldAssets).toInt256()).toUint256();
         } else if (block.timestamp <= _end - YIELD_TIME) {
-            return hardAssets.toUint256();
+            return userAssets.toUint256();
         }
         uint256 elapsed = (block.timestamp + YIELD_TIME) - _end;
         uint256 _unlockedYield = (yieldAssets * elapsed) / YIELD_TIME;
-        return (hardAssets + _unlockedYield.toInt256()).toUint256();
+        return (userAssets + _unlockedYield.toInt256()).toUint256();
     }
 
     function deposit(uint256 oethAmount, address receiver)
@@ -149,7 +149,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 woethAmount)
     {
         woethAmount = super.deposit(oethAmount, receiver);
-        hardAssets += oethAmount.toInt256();
+        userAssets += oethAmount.toInt256();
         scheduleYield();
     }
 
@@ -159,7 +159,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 oethAmount)
     {
         oethAmount = super.mint(woethAmount, receiver);
-        hardAssets += oethAmount.toInt256();
+        userAssets += oethAmount.toInt256();
         scheduleYield();
     }
 
@@ -169,7 +169,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        hardAssets -= oethAmount.toInt256();
+        userAssets -= oethAmount.toInt256();
         scheduleYield();
     }
 
@@ -179,7 +179,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        hardAssets -= oethAmount.toInt256();
+        userAssets -= oethAmount.toInt256();
         scheduleYield();
     }
 
