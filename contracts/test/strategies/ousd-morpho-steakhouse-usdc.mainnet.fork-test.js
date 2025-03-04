@@ -246,20 +246,16 @@ describe("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       log("After withdraw all from strategy");
 
       // Check emitted event
-      await expect(tx)
-        .to.emit(morphoSteakhouseUSDCStrategy, "Withdrawal")
-        .withNamedArgs({
-          _asset: usdc.address,
-          _pToken: morphoSteakHouseUSDCVault.address,
-        });
-
-      const receipt = await tx.wait();
-      const event = receipt.events?.find((e) => e.event === "Withdrawal");
-      log(`Actual withdrawal amount: ${formatUnits(event.args[2])}`);
-      expect(event.args[2]).to.approxEqualTolerance(
-        usdcWithdrawAmountExpected,
-        0.01
-      );
+      await expect(tx).to.emittedEvent("Withdrawal", [
+        usdc.address,
+        morphoSteakHouseUSDCVault.address,
+        (amount) =>
+          expect(amount).approxEqualTolerance(
+            usdcWithdrawAmountExpected,
+            0.01,
+            "Withdrawal amount"
+          ),
+      ]);
 
       // Check the OUSD total supply stays the same
       expect(await ousd.totalSupply()).to.approxEqualTolerance(
