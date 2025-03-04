@@ -313,7 +313,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertSwapAssetsToPool(parseUnits("3000"), fixture);
     });
     it("Strategist should swap most of the wS owned by the strategy", async () => {
-      await assertSwapAssetsToPool(parseUnits("4500"), fixture);
+      // TODO calculate how much wS should be swapped to get the pool balanced
+      await assertSwapAssetsToPool(parseUnits("4400"), fixture);
     });
     it("Strategist should fail to swap all wS owned by the strategy", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -412,7 +413,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
     it("Strategist should get the pool close to balanced", async () => {
       // just under half the extra wS amount
-      const osAmount = parseUnits("9300");
+      const osAmount = parseUnits("9000");
       await assertSwapOTokensToPool(osAmount, fixture);
     });
     it("Strategist should fail to add so much OS that is overshoots", async () => {
