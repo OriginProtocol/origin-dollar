@@ -17,10 +17,6 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultSonicFixture = deployments.createFixture(async () => {
-  // Impersonate governor
-  const governor = await impersonateAndFund(addresses.sonic.timelock);
-  governor.address = addresses.sonic.timelock;
-
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -30,13 +26,26 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     return;
   }
 
-  let deployerAddr;
+  const { deployerAddr, strategistAddr, timelockAddr, governorAddr } =
+    await getNamedAccounts();
+
   if (isFork) {
     // Fund deployer account
-    const namedAccounts = await getNamedAccounts();
-    deployerAddr = namedAccounts.deployerAddr;
     await impersonateAndFund(deployerAddr);
   }
+
+  // Impersonate governor
+  const governorAddress = isFork ? addresses.sonic.timelock : governorAddr;
+  const governor = await impersonateAndFund(governorAddress);
+  governor.address = governorAddress;
+
+  // Impersonate strategist
+  const strategist = await impersonateAndFund(strategistAddr);
+  strategist.address = strategistAddr;
+
+  // Impersonate strategist
+  const timelock = await impersonateAndFund(timelockAddr);
+  timelock.address = timelockAddr;
 
   log(
     `Before deployments with param "${
@@ -64,6 +73,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     "IVault",
     oSonicVaultProxy.address
   );
+
+  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
   // Sonic staking strategy
   const sonicStakingStrategyProxy = await ethers.getContract(
@@ -125,17 +136,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { strategistAddr, timelockAddr } = await getNamedAccounts();
-
-  // Impersonate strategist
-  const strategist = await impersonateAndFund(strategistAddr);
-  strategist.address = strategistAddr;
-
-  // Impersonate strategist
-  const timelock = await impersonateAndFund(timelockAddr);
-  timelock.address = timelockAddr;
-
-  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
   let validatorRegistrator;
   if (isFork) {
