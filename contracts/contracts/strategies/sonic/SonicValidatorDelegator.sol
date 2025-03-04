@@ -237,7 +237,10 @@ abstract contract SonicValidatorDelegator is InitializableAbstractStrategy {
                 // Exit here as there is nothing to transfer to the Vault
                 return withdrawnAmount;
             } else {
-                // Bubble up custom errors
+                // Bubble up any other SFC custom errors.
+                // Inline assembly is currently the only way to generically rethrow the exact same custom error
+                // from the raw bytes err in a catch block while preserving its original selector and parameters.
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     revert(add(32, err), mload(err))
                 }
