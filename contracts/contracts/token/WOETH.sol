@@ -113,23 +113,22 @@ contract WOETH is ERC4626, Governable, Initializable {
         if (block.timestamp < yieldEnd) {
             return;
         }
-
         // Compute yield and set future yield
         uint256 _computedAssets = totalAssets();
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
+
         if (_actualAssets <= _computedAssets) {
             yieldAssets = 0;
             hardAssets = _actualAssets.toInt256();
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
-            uint256 _maxYield = (_actualAssets * 5) / 100; // Maximum of 5% increase in assets per day
+            uint256 _maxYield = (_computedAssets * 5) / 100; // Maximum of 5% increase in assets per day
             _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
             yieldAssets = _newYield.toUint128();
             hardAssets = _computedAssets.toInt256();
-            // Change to next yield period
-            yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
-            emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
         }
+        yieldEnd = (block.timestamp + YIELD_TIME).toUint128();
+        emit YiedPeriodStarted(hardAssets, yieldAssets, yieldEnd);
     }
 
     function totalAssets() public view override returns (uint256) {

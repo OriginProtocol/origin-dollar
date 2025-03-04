@@ -4,7 +4,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
-describe("WOETH", function () {
+describe.only("WOETH", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -30,13 +30,18 @@ describe("WOETH", function () {
     // Josh wraps 50 OETH to WOETH
     await oeth.connect(josh).approve(woeth.address, oethUnits("1000"));
     await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
+    await expect(woeth).to.have.a.totalSupply("50");
+    await expect(woeth).to.have.a.balanceOf("50", oeth);
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
-    for (let i = 0; i < 122; i++) {
+    for (let i = 0; i < 21; i++) {
       await woeth.startYield();
-      await advanceTime(10000);
+      await advanceTime(100000);
     }
+    await expect(woeth).to.have.a.totalSupply("50");
+    await expect(woeth).to.have.a.balanceOf("100", oeth);
+    expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
   });
 
   const increaseOETHSupplyAndRebase = async (wethAmount) => {
@@ -67,12 +72,9 @@ describe("WOETH", function () {
       // donate OETH to WOETH as yield
       await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
 
-      const tx = await woeth
-        .connect(josh)
-        .mint(oethUnits("1"), josh.address);
+      const tx = await woeth.connect(josh).mint(oethUnits("1"), josh.address);
 
-      await expect(tx)
-        .to.emit(woeth, "YiedPeriodStarted");
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
     });
 
     it("Deposit should trigger a yield start ", async () => {
@@ -85,8 +87,7 @@ describe("WOETH", function () {
         .connect(josh)
         .deposit(oethUnits("1"), josh.address);
 
-      await expect(tx)
-        .to.emit(woeth, "YiedPeriodStarted");
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
     });
 
     it("Withdraw should trigger a yield start ", async () => {
@@ -100,8 +101,7 @@ describe("WOETH", function () {
         .connect(josh)
         .withdraw(oethUnits("1"), josh.address, josh.address);
 
-      await expect(tx)
-        .to.emit(woeth, "YiedPeriodStarted");
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
     });
 
     it("Redeem should trigger a yield start ", async () => {
@@ -115,8 +115,7 @@ describe("WOETH", function () {
         .connect(josh)
         .redeem(oethUnits("1"), josh.address, josh.address);
 
-      await expect(tx)
-        .to.emit(woeth, "YiedPeriodStarted");
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
     });
 
     it("should deposit at the correct ratio", async () => {
