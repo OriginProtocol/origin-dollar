@@ -108,7 +108,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     // @notice Called to start a yield period, if one is not active
-    function startYield() public {
+    function scheduleYield() public {
         // If we are currently distributing yield, continue until done
         if (block.timestamp < yieldEnd) {
             return;
@@ -150,7 +150,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         woethAmount = super.deposit(oethAmount, receiver);
         hardAssets += oethAmount.toInt256();
-        startYield();
+        scheduleYield();
     }
 
     function mint(uint256 woethAmount, address receiver)
@@ -160,7 +160,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         oethAmount = super.mint(woethAmount, receiver);
         hardAssets += oethAmount.toInt256();
-        startYield();
+        scheduleYield();
     }
 
     function withdraw(
@@ -170,7 +170,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 woethAmount) {
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
-        startYield();
+        scheduleYield();
     }
 
     function redeem(
@@ -180,7 +180,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     ) public override returns (uint256 oethAmount) {
         oethAmount = super.redeem(woethAmount, receiver, owner);
         hardAssets -= oethAmount.toInt256();
-        startYield();
+        scheduleYield();
     }
 
     function _transfer(
@@ -189,7 +189,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 amount
     ) internal override {
         super._transfer(sender, recipient, amount);
-        startYield();
+        scheduleYield();
     }
 
     function _min(uint256 a, uint256 b) internal returns (uint256) {

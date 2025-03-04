@@ -4,7 +4,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
-describe.only("WOETH", function () {
+describe("WOETH", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -36,7 +36,7 @@ describe.only("WOETH", function () {
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
     for (let i = 0; i < 21; i++) {
-      await woeth.startYield();
+      await woeth.scheduleYield();
       await advanceTime(100000);
     }
     await expect(woeth).to.have.a.totalSupply("50");
@@ -247,7 +247,7 @@ describe.only("WOETH", function () {
       await expect(await woeth.totalAssets()).to.equal(startingAssets);
       await increaseOETHSupplyAndRebase(4 * toDistribute + 3);
 
-      await woeth.startYield();
+      await woeth.scheduleYield();
 
       await expect(await oeth.balanceOf(woeth.address)).to.equal(
         startingAssets.add(toDistribute)
@@ -266,7 +266,7 @@ describe.only("WOETH", function () {
 
       // Sudden donation here will not change yield schedule
       await increaseOETHSupplyAndRebase(100000000000);
-      await woeth.startYield();
+      await woeth.scheduleYield();
 
       // Yield continues. Previous donation commands advanced time 4 seconds
       await expect(await woeth.totalAssets()).to.equal(
