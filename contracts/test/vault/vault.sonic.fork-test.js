@@ -130,7 +130,7 @@ describe("ForkTest: Sonic Vault", function () {
         .to.emit(oSonicVault, "Mint")
         .withArgs(nick.address, mintAmount);
 
-      // check 99.75% is deposited to staking strategy
+      // check 99.5% is deposited to staking strategy
       await expect(tx).to.emit(sonicStakingStrategy, "Deposit");
     });
 
@@ -225,7 +225,7 @@ describe("ForkTest: Sonic Vault", function () {
     it("Should have vault buffer set", async () => {
       const { oSonicVault } = fixture;
       expect(await oSonicVault.vaultBuffer()).to.equal(
-        parseUnits("0.0025", 18) // 0.25%
+        parseUnits("0.005", 18) // 0.5%
       );
     });
   });

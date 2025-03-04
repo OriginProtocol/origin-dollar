@@ -24,10 +24,10 @@ module.exports = deployOnSonic(
           args: [oethUnits("20000", 18)],
         },
         {
-          // Reduce the vault buffer to 0.25%
+          // Reduce the vault buffer to 0.5%
           contract: cOSonicVault,
           signature: "setVaultBuffer(uint256)",
-          args: [oethUnits("0.0025", 18)],
+          args: [oethUnits("0.005", 18)],
         },
       ],
     };
