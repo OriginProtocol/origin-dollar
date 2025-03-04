@@ -153,7 +153,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).deposit({ value: oethUnits("10000000") });
 
     // Set allowance on the vault
-    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
+    await wS.connect(user).approve(oSonicVault.address, oethUnits("50000"));
   }
 
   return {
