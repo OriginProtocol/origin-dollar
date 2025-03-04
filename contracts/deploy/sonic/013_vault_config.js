@@ -4,7 +4,7 @@ const { resolveContract } = require("../../utils/resolvers");
 
 module.exports = deployOnSonic(
   {
-    deployName: "012_vault_config",
+    deployName: "013_vault_config",
   },
   async () => {
     const cOSonicVault = await resolveContract("OSonicVaultProxy", "IVault");

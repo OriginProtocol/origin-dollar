@@ -1651,6 +1651,88 @@ function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
   return encodedSalt;
 }
 
+async function createPoolBoosterSonic({
+  cOSonic,
+  factoryContract,
+  pools,
+  salt,
+  split = null,
+  type = "Single", // "Single" or "Double"
+  signatureSingle = "createPoolBoosterSwapxSingle(address,address,uint256)",
+  signatureDouble = "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
+}) {
+  const poolBoosterCreationArgs = {};
+  const poolBoosterComputedAddresses = {};
+
+  const getAddress = (path) =>
+    path.split(".").reduce((obj, key) => obj?.[key], addresses.sonic);
+
+  await Promise.all(
+    pools.map(async (pool) => {
+      const current = getAddress(pool);
+      if (!current?.extBribeOS || !current?.pool) {
+        throw new Error(`Missing required properties for pool: ${pool}`);
+      }
+
+      const args =
+        type === "Single"
+          ? [current.extBribeOS, current.pool, salt]
+          : [
+              current.extBribeOS,
+              current.extBribeOther,
+              current.pool,
+              split,
+              salt,
+            ];
+
+      if (args.some((arg) => arg === undefined)) {
+        throw new Error(`Undefined argument found for pool: ${pool}`);
+      }
+
+      poolBoosterCreationArgs[pool] = args;
+
+      poolBoosterComputedAddresses[pool] =
+        await factoryContract.computePoolBoosterAddress(
+          ...poolBoosterCreationArgs[pool]
+        );
+
+      console.log(
+        `Pool Booster Swapx ${type} ${pool} computed address: ${poolBoosterComputedAddresses[pool]}`
+      );
+    })
+  );
+
+  const actions = pools.flatMap((pool) => {
+    const current = getAddress(pool);
+    if (!current?.pool || !poolBoosterComputedAddresses[pool]) {
+      throw new Error(
+        `Missing required properties or computed address for pool: ${pool}`
+      );
+    }
+
+    const signature = type === "Single" ? signatureSingle : signatureDouble;
+
+    return [
+      {
+        contract: factoryContract,
+        signature,
+        args: poolBoosterCreationArgs[pool],
+      },
+      {
+        contract: cOSonic,
+        signature: "delegateYield(address,address)",
+        args: [current.pool, poolBoosterComputedAddresses[pool]],
+      },
+    ];
+  });
+
+  return {
+    poolBoosterCreationArgs,
+    poolBoosterComputedAddresses,
+    actions: actions ?? [],
+  };
+}
+
 module.exports = {
   log,
   sleep,
@@ -1669,4 +1751,5 @@ module.exports = {
 
   handleTransitionGovernance,
   encodeSaltForCreateX,
+  createPoolBoosterSonic,
 };
