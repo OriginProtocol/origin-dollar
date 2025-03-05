@@ -51,9 +51,11 @@ The protocol rounds against the user, in favor of the protocol
 
 > `previewRedeem()` will never go down, outside of an external loss of OETH balance
 
-> The sum of `userAssets + yieldAssets` will never exceed wOETH's balance of OETH, outside of an external loss of OETH balance
+> The `trackedAssets` will never exceed wOETH's balance of OETH, outside of an external loss of OETH balance
 
 > The sum of `totalAssets()` will never exceed wOETH's balance of OETH, outside of an external loss of OETH balance
+
+> `trackedAssets - yieldAssets` will never be negative
 
 ### 4626-ness
 
