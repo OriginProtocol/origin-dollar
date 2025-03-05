@@ -62,7 +62,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /**
      * @notice Upgrade contract to support yield periods.
-     *     Called automaticly on new contracts via initialize()
+     *     Called automatically on new contracts via initialize()
      */
     function initialize2() public onlyGovernor {
         require(!_initialized2, "Initialize2 already called");
@@ -109,10 +109,11 @@ contract WOETH is ERC4626, Governable, Initializable {
      *     New yield will not start until time has moved forward.
      */
     function scheduleYield() public {
-        // If we are currently distributing yield, continue until end
+        // If we are currently in a yield period, keep everything the same
         if (block.timestamp < yieldEnd) {
             return;
         }
+
         // Read current assets
         uint256 _computedAssets = totalAssets();
         uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
@@ -198,7 +199,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         scheduleYield();
     }
 
-    function _min(uint256 a, uint256 b) internal returns (uint256) {
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
 }
