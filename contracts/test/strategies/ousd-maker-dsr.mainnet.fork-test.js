@@ -220,17 +220,16 @@ describe("ForkTest: Maker DSR Strategy", function () {
       log("After withdraw all from strategy");
 
       // Check emitted event
-      await expect(tx)
-        .to.emit(makerDsrStrategy, "Withdrawal")
-        .withNamedArgs({ _asset: dai.address, _pToken: sDAI.address });
-
-      const receipt = await tx.wait();
-      const event = receipt.events?.find((e) => e.event === "Withdrawal");
-      log(`Actual withdrawal amount: ${formatUnits(event.args[2])}`);
-      expect(event.args[2]).to.approxEqualTolerance(
-        daiWithdrawAmountExpected,
-        0.01
-      );
+      await expect(tx).to.emittedEvent("Withdrawal", [
+        dai.address,
+        sDAI.address,
+        (amount) =>
+          expect(amount).approxEqualTolerance(
+            daiWithdrawAmountExpected,
+            0.01,
+            "Withdrawal amount"
+          ),
+      ]);
 
       // Check the OUSD total supply stays the same
       expect(await ousd.totalSupply()).to.approxEqualTolerance(

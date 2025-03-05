@@ -18,7 +18,7 @@ const { logTxDetails } = require("../utils/txLogger");
 const log = require("../utils/logger")("task:curve");
 
 /**
- * hardhat task that dumps the current state of a AMO Strategy
+ * Hardhat task that dumps the current state of an AMO strategy
  */
 async function amoStrategyTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;

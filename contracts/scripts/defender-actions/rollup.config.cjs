@@ -68,4 +68,13 @@ module.exports = [
       format: "cjs",
     },
   },
+  {
+    ...commonConfig,
+    input: "manageBribeOnSonic.js",
+    output: {
+      file: "dist/manageBribeOnSonic/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  }
 ];
