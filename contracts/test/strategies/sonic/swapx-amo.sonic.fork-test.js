@@ -5,6 +5,7 @@ const { createFixtureLoader } = require("../../_fixture");
 const { swapXAMOFixture } = require("../../_fixture-sonic");
 const { isCI } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
+const { ethers } = require("hardhat");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
@@ -96,6 +97,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         fixture;
 
       const dataBefore = await snapData(fixture);
+      await logSnapData(dataBefore);
 
       const wsDepositAmount = await parseUnits("5000");
       const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
@@ -180,6 +182,91 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
+  function sqrt(value) {
+    const ONE = ethers.BigNumber.from(1);
+    const TWO = ethers.BigNumber.from(2);
+
+    const x = ethers.BigNumber.from(value);
+    let z = x.add(ONE).div(TWO);
+    let y = x;
+    while (z.sub(y).isNegative()) {
+      y = z;
+      z = x.div(z).add(z).div(TWO);
+    }
+    return y;
+  }
+
+  describe("Pool testing", () => {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
+      wsMintAmount: 100,
+      depositToStrategy: true,
+      balancePool: true,
+    });
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    it("current state", async () => {
+      const data = await snapData(fixture);
+      await logSnapData(data);
+
+      const x = parseUnits("500");
+      const y = parseUnits("500");
+      const precision = parseUnits("1", 18);
+      const a = x.mul(y).div(precision);
+      const b = x.mul(x).div(precision).add(y.mul(y).div(precision));
+      const k = a.mul(b).div(precision);
+      log(`local k for 50:50  = ${formatUnits(k)}`);
+
+      const remoteK = await fixture.swapXAMOStrategy._invariant(x, y);
+      log(`remote k for 50:50 = ${formatUnits(remoteK)}`);
+
+      const remoteKactual = await fixture.swapXAMOStrategy._invariant(
+        data.reserves.ws,
+        data.reserves.os
+      );
+      log(`remote k actual = ${formatUnits(remoteKactual)}`);
+
+      log(`local sqrt(2500) = ${sqrt(2500)}`);
+      const remoteSqrt125 = await fixture.swapXAMOStrategy.sqrt("2500");
+      log(`remote sqrt(2500) = ${remoteSqrt125}`);
+
+      const lpValue = await fixture.swapXAMOStrategy.lpValue(parseUnits("250"));
+      log(`LP value = ${formatUnits(lpValue)}`);
+
+      const cubedPrecision = parseUnits("1", 54);
+      const z1 = sqrt(sqrt(k.mul(cubedPrecision).div(2)));
+      log(`first z = ${formatUnits(z1)}`);
+
+      const adjustedK2 = k.mul(parseUnits("1", 36)).div(2);
+      const sqrt1 = sqrt(adjustedK2);
+      const z2 = sqrt(sqrt1.mul(parseUnits("1", 9)));
+      log(`second z = ${formatUnits(z2)}`);
+
+      const adjustedK3 = k.mul(parseUnits("1", 18)).div(2);
+      const sqrt2 = sqrt(adjustedK3);
+      const z3 = sqrt(sqrt2.mul(parseUnits("1", 18)));
+      log(`third z = ${formatUnits(z3)}`);
+
+      const adjustedK4 = k.mul(parseUnits("1", 12)).div(2);
+      const sqrt3 = sqrt(adjustedK4);
+      const z4 = sqrt(sqrt3.mul(parseUnits("1", 21)));
+      log(`fourth z = ${formatUnits(z4)}`);
+
+      // const adjustedK4 = k.mul(parseUnits("1", 12)).div(2);
+      const sqrt4 = sqrt(k.div(2));
+      const z5 = sqrt(sqrt4.mul(parseUnits("1", 9)));
+      log(`fifth z = ${formatUnits(z5.mul(parseUnits("1", 9)))}`);
+
+      const val = sqrt(sqrt(k.mul(8)).mul(parseUnits("1", 9)));
+      log(`alt value = ${formatUnits(val)}`);
+
+      const fiftySquared = ethers.BigNumber.from(2500);
+      const sqrtFiftySquared = sqrt(fiftySquared);
+      log(`sqrt 2,500 ${sqrtFiftySquared}`);
+      expect(sqrtFiftySquared).to.equal(50);
+    });
+  });
+
   describe("with the strategy having some OS and wS in the pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
@@ -194,6 +281,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         fixture;
 
       const dataBefore = await snapData(fixture);
+      await logSnapData(dataBefore);
 
       const { osBurnAmount, wsWithdrawAmount } = await calcWithdrawAllAmounts(
         fixture
@@ -499,6 +587,7 @@ const snapData = async (fixture) => {
   const stratGaugeBalance = await swapXGauge.balanceOf(
     swapXAMOStrategy.address
   );
+  const gaugeSupply = await swapXGauge.totalSupply();
   const vaultWSBalance = await wS.balanceOf(oSonicVault.address);
   const stratWSBalance = await wS.balanceOf(swapXAMOStrategy.address);
 
@@ -508,9 +597,22 @@ const snapData = async (fixture) => {
     poolSupply,
     reserves: { ws: wsReserves, os: osReserves },
     stratGaugeBalance,
+    gaugeSupply,
     vaultWSBalance,
     stratWSBalance,
   };
+};
+
+const logSnapData = async (data) => {
+  log(`Strategy balance    : ${formatUnits(data.stratBalance)}`);
+  log(`OS supply           : ${formatUnits(data.osSupply)}`);
+  log(`pool supply         : ${formatUnits(data.poolSupply)}`);
+  log(`reserves wS         : ${formatUnits(data.reserves.ws)}`);
+  log(`reserves OS         : ${formatUnits(data.reserves.os)}`);
+  log(`strat gauge balance : ${formatUnits(data.stratGaugeBalance)}`);
+  log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
+  log(`vault wS balance    : ${formatUnits(data.vaultWSBalance)}`);
+  log(`strat wS balance    : ${formatUnits(data.stratWSBalance)}`);
 };
 
 const assertChangedData = async (dataBefore, delta, fixture) => {

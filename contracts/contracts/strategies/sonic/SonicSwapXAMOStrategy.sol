@@ -11,6 +11,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { IBasicToken } from "../../interfaces/IBasicToken.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IPair } from "../../interfaces/sonic/ISwapXPair.sol";
 import { IGauge } from "../../interfaces/sonic/ISwapXGauge.sol";
@@ -25,6 +26,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      *      draining the protocol funds.
      */
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
+    /// @dev Precision for the SwapX stable AMM invariant
+    uint256 public constant PRECISION = 1e18;
 
     // New immutable variables that must be set in the constructor
     /**
@@ -114,16 +117,23 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         address _ws,
         address _gauge
     ) InitializableAbstractStrategy(_baseConfig) {
-        os = _os;
-        ws = _ws;
-
         // Check the pool tokens are correct
         require(
             IPair(_baseConfig.platformAddress).token0() == _ws &&
                 IPair(_baseConfig.platformAddress).token1() == _os,
             "Incorrect pool tokens"
         );
-
+        // Checked both tokens are to 18 decimals
+        require(
+            IBasicToken(_ws).decimals() == 18 &&
+                IBasicToken(_os).decimals() == 18,
+            "Incorrect token decimals"
+        );
+        // Check the SwapX pool is a Stable AMM (sAMM)
+        require(
+            IPair(_baseConfig.platformAddress).isStable() == true,
+            "Pool not stable"
+        );
         // Check the gauge is for the pool
         require(
             IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
@@ -131,6 +141,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         );
 
         // Set the immutable variables
+        os = _os;
+        ws = _ws;
         pool = _baseConfig.platformAddress;
         gauge = _gauge;
 
@@ -471,6 +483,44 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // via the improvePoolBalance and strategyValueChecker modifiers
     }
 
+    /// @notice Calculate the value of a LP position in a SwapX stable pool
+    /// if the pool was balanced
+    function lpValue(uint256 lpTokens) public view returns (uint256) {
+        // Get total supply of LP tokens
+        uint256 totalSupply = IPair(pool).totalSupply();
+        require(totalSupply > 0, "No liquidity in pool");
+
+        // Get the current reserves of the pool
+        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
+
+        // Calculate the invariant of the pool assuming both tokens have 18 decimals.
+        // k is scaled to 18 decimals.
+        uint256 k = _invariant(wsReserves, osReserves);
+
+        // If x = y, let’s denote x = y = z (where z is the common reserve value)
+        // Substitute z into the invariant:
+        // k = z^3 * z + z * z^3
+        // k = 2 * z^4
+        // Going back the other way to calculate the common reserve value z
+        // z = (k / 2) ^ (1/4)
+        // the total value of the pool when x = y is 2 * z, which is 2 * (k / 2) ^ (1/4)
+        uint256 zSquared = sqrt((k * 1e18) / 2); // 18 + 18 = 36 decimals becomes 18 decimals after sqrt
+        uint256 z = sqrt(zSquared * 1e18); //  18 + 18 = 36 decimals becomes 18 decimals after sqrt
+        uint256 totalValueOfPool = 2 * z;
+
+        // lp value = lp tokens * value of pool  / total supply
+        return (lpTokens * totalValueOfPool) / totalSupply;
+    }
+
+    /// @dev Compute the invariant for a SwapX stable pool.
+    /// This assumed both x and y tokens are to 18 decimals.
+    // k = x^3 * y + x * y^3
+    function _invariant(uint256 x, uint256 y) public pure returns (uint256) {
+        uint256 _a = (x * y) / PRECISION;
+        uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
+        return (_a * _b) / PRECISION;
+    }
+
     /**
      * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
      * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
@@ -525,15 +575,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // wS balance needed here for the balance check that happens from vault during depositing.
         balance = IERC20(ws).balanceOf(address(this));
 
+        // This assumes 1 gauge LP token = 1 pool LP token
         uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
         if (lpTokens == 0) return balance;
 
         // Add the strategy’s share of the wS and OS tokens in the SwapX pool.
-        // (pool’s wS reserves + pool’s OS reserves) * strategy’s LP tokens / total supply of pool LP tokens
-        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
-        balance +=
-            ((wsReserves + osReserves) * lpTokens) /
-            IPair(pool).totalSupply();
+        balance += lpValue(lpTokens);
     }
 
     /**
@@ -587,5 +634,98 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      */
     function _max(int256 a, int256 b) internal pure returns (int256) {
         return a >= b ? a : b;
+    }
+
+    /// @dev including in here for now. This is a copy of PRBMath's sqrt function.
+    /// Can either move out into a new lib or import from the use the PRBMath project
+
+    /// @notice Calculates the square root of x using the Babylonian method.
+    ///
+    /// @dev See https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method.
+    ///
+    /// Notes:
+    /// - If x is not a perfect square, the result is rounded down.
+    /// - Credits to OpenZeppelin for the explanations in comments below.
+    ///
+    /// @param x The uint256 number for which to calculate the square root.
+    /// @return result The result as a uint256.
+    /// @custom:smtchecker abstract-function-nondet
+    function sqrt(uint256 x) public pure returns (uint256 result) {
+        if (x == 0) {
+            return 0;
+        }
+
+        // For our first guess, we calculate the biggest power of 2 which is smaller than the square root of x.
+        //
+        // We know that the "msb" (most significant bit) of x is a power of 2 such that we have:
+        //
+        // $$
+        // msb(x) <= x <= 2*msb(x)$
+        // $$
+        //
+        // We write $msb(x)$ as $2^k$, and we get:
+        //
+        // $$
+        // k = log_2(x)
+        // $$
+        //
+        // Thus, we can write the initial inequality as:
+        //
+        // $$
+        // 2^{log_2(x)} <= x <= 2*2^{log_2(x)+1} \\
+        // sqrt(2^k) <= sqrt(x) < sqrt(2^{k+1}) \\
+        // 2^{k/2} <= sqrt(x) < 2^{(k+1)/2} <= 2^{(k/2)+1}
+        // $$
+        //
+        // Consequently, $2^{log_2(x) /2} is a good first approximation of sqrt(x) with at least one correct bit.
+        uint256 xAux = uint256(x);
+        result = 1;
+        if (xAux >= 2**128) {
+            xAux >>= 128;
+            result <<= 64;
+        }
+        if (xAux >= 2**64) {
+            xAux >>= 64;
+            result <<= 32;
+        }
+        if (xAux >= 2**32) {
+            xAux >>= 32;
+            result <<= 16;
+        }
+        if (xAux >= 2**16) {
+            xAux >>= 16;
+            result <<= 8;
+        }
+        if (xAux >= 2**8) {
+            xAux >>= 8;
+            result <<= 4;
+        }
+        if (xAux >= 2**4) {
+            xAux >>= 4;
+            result <<= 2;
+        }
+        if (xAux >= 2**2) {
+            result <<= 1;
+        }
+
+        // At this point, `result` is an estimation with at least one bit of precision. We know the true value has at
+        // most 128 bits, since it is the square root of a uint256. Newton's method converges quadratically (precision
+        // doubles at every iteration). We thus need at most 7 iteration to turn our partial result with one bit of
+        // precision into the expected uint128 result.
+        unchecked {
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+            result = (result + x / result) >> 1;
+
+            // If x is not a perfect square, round the result toward zero.
+            uint256 roundedResult = x / result;
+            if (result >= roundedResult) {
+                result = roundedResult;
+            }
+        }
     }
 }
