@@ -129,7 +129,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
   it("Should be reverted trying to rebalance and we are not in the correct tick, below", async () => {
     await depositLiquidityToPool();
 
-    // Push price to tick -2, which is OutisdeExpectedTickRange
+    // Push price to tick -2, which is OutsideExpectedTickRange
     const priceAtTickM2 = await sugar.getSqrtRatioAtTick(-2);
     const { value, direction } = await quoteAmountToSwapToReachPrice({
       price: priceAtTickM2,
@@ -155,7 +155,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
 
   it("Should be reverted trying to rebalance and we are not in the correct tick, above", async () => {
     await depositLiquidityToPool();
-    // Push price to tick 1, which is OutisdeExpectedTickRange
+    // Push price to tick 1, which is OutsideExpectedTickRange
     const priceAtTick1 = await sugar.getSqrtRatioAtTick(1);
     const { value, direction } = await quoteAmountToSwapToReachPrice({
       price: priceAtTick1,
@@ -226,7 +226,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
   };
 
   const swap = async ({ amount, swapWeth, priceLimit }) => {
-    // Check if rafael as enough token to perfom swap
+    // Check if rafael as enough token to perform swap
     // If not, mint some
     const balanceOETHb = await oethb.balanceOf(rafael.address);
     if (!swapWeth && balanceOETHb.lt(amount)) {
@@ -301,7 +301,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
-  const cofigureAutomaticDepositOnMint = async (vaultBuffer) => {
+  const configureAutomaticDepositOnMint = async (vaultBuffer) => {
     await oethbVault.connect(governor).setVaultBuffer(vaultBuffer);
 
     const totalValue = await oethbVault.totalValue();
@@ -482,13 +482,15 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         hre
       );
       const aeroBalanceBefore = await aero.balanceOf(strategist.address);
-      await harvester.connect(strategist).harvest();
 
-      const aeroBalancediff = (await aero.balanceOf(strategist.address)).sub(
+      // prettier-ignore
+      await harvester.connect(strategist)["harvestAndTransfer(address)"](aerodromeAmoStrategy.address);
+
+      const aeroBalanceDiff = (await aero.balanceOf(strategist.address)).sub(
         aeroBalanceBefore
       );
 
-      expect(aeroBalancediff).to.gte(oethUnits("1337")); // Gte to take into account rewards already accumulated.
+      expect(aeroBalanceDiff).to.gte(oethUnits("1337")); // Gte to take into account rewards already accumulated.
       await verifyEndConditions();
     });
   });
@@ -1053,11 +1055,11 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
 
     const depositAllWethAndConfigure1Bp = async () => {
       // configure to leave no WETH on the vault
-      await cofigureAutomaticDepositOnMint(oethUnits("0"));
+      await configureAutomaticDepositOnMint(oethUnits("0"));
       // deposit all Vault's WETH
       await depositAllVaultWeth();
-      // cnofigure to only keep 1bp of the Vault's totalValue in the Vault;
-      const minAmountReserved = await cofigureAutomaticDepositOnMint(
+      // configure to only keep 1bp of the Vault's totalValue in the Vault;
+      const minAmountReserved = await configureAutomaticDepositOnMint(
         oethUnits("0.0001")
       );
 
@@ -1247,7 +1249,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   };
 
   const setup = async () => {
-    await mintAndDepositToStrategy({ amount: oethUnits("5") });
+    await mintAndDepositToStrategy({
+      amount: oethUnits("5"),
+      returnTransaction: true,
+    });
 
     const { value, direction } = await quoteAmountToSwapBeforeRebalance({
       lowValue: oethUnits("0"),
@@ -1300,7 +1305,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   };
 
   const swap = async ({ amount, swapWeth }) => {
-    // Check if rafael as enough token to perfom swap
+    // Check if rafael as enough token to perform swap
     // If not, mint some
     const balanceOETHb = await oethb.balanceOf(rafael.address);
     if (!swapWeth && balanceOETHb.lt(amount)) {

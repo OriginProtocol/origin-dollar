@@ -364,7 +364,7 @@ describe("ForkTest: Vault", function () {
 
       expect([
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
-        "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26", // Morpho Gauntlet Prime USDT
+        "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
