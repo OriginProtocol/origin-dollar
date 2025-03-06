@@ -482,6 +482,8 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         hre
       );
       const aeroBalanceBefore = await aero.balanceOf(strategist.address);
+
+      // prettier-ignore
       await harvester.connect(strategist)["harvestAndTransfer(address)"](aerodromeAmoStrategy.address);
 
       const aeroBalanceDiff = (await aero.balanceOf(strategist.address)).sub(
