@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 /**
  * @title SwapX Automated Market Maker (AMO) Strategy
- * @notice AMO strategy for the SwapX OS/wS pool
+ * @notice AMO strategy for the SwapX OS/wS stable pool
  * @author Origin Protocol Inc
  */
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -17,16 +17,17 @@ import { IPair } from "../../interfaces/sonic/ISwapXPair.sol";
 import { IGauge } from "../../interfaces/sonic/ISwapXGauge.sol";
 
 contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
+    using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
 
     /**
-     * @dev a threshold under which the contract no longer allows for the protocol to manually rebalance.
+     * @notice a threshold under which the contract no longer allows for the protocol to manually rebalance.
      *      Guarding against a strategist / guardian being taken over and with multiple transactions
      *      draining the protocol funds.
      */
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
-    /// @dev Precision for the SwapX stable AMM invariant
+    /// @notice Precision for the SwapX Stable AMM (sAMM) invariant
     uint256 public constant PRECISION = 1e18;
 
     // New immutable variables that must be set in the constructor
@@ -63,13 +64,21 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     );
 
     /**
-     * @dev Verifies that the caller is the Strategist.
+     * @dev Verifies that the caller is the Strategist of the Vault.
      */
     modifier onlyStrategist() {
         require(
             msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Strategist"
         );
+        _;
+    }
+
+    /**
+     * @dev Skim the SwapX pool in case any extra wS or OS tokens were added
+     */
+    modifier skimPool() {
+        IPair(pool).skim(address(this));
         _;
     }
 
@@ -154,11 +163,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as SwapX strategies don't fit
      * well within that abstraction.
-     * @param _rewardTokenAddresses Address of CRV
+     * @param _rewardTokenAddresses Address of SWPx token
      */
-    function initialize(
-        address[] calldata _rewardTokenAddresses // CRV
-    ) external onlyGovernor initializer {
+    function initialize(address[] calldata _rewardTokenAddresses)
+        external
+        onlyGovernor
+        initializer
+    {
         address[] memory pTokens = new address[](1);
         pTokens[0] = pool;
 
@@ -180,47 +191,45 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Deposit Wrapped S (wS) into the SwapX pool
-     * @param _wS Address of Wrapped S (wS) contract.
+     * @param _asset Address of Wrapped S (wS) contract.
      * @param _amount Amount of Wrapped S (wS) to deposit.
      */
-    function deposit(address _wS, uint256 _amount)
+    function deposit(address _asset, uint256 _amount)
         external
         override
         onlyVault
         nonReentrant
+        skimPool
     {
-        _deposit(_wS, _amount);
+        _deposit(_asset, _amount);
     }
 
     function _deposit(address _wS, uint256 _wsAmount) internal {
         require(_wsAmount > 0, "Must deposit something");
-        require(_wS == ws, "Can only deposit wS");
+        require(_wS == ws, "Unsupported asset");
 
-        emit Deposit(_wS, pool, _wsAmount);
+        // Calculate the required amount of OS to mint based on the wS amount.
+        uint256 osLiquidity = _calcTokensToMint(_wsAmount);
 
-        // Calculate the required amount of OS to mint based on the wS amount
-        // This ensure the proportion of OS tokens being added to the pool matches the proportion of wS tokens.
-        // For example, if the added wS tokens is 10% of existing wS tokens in the pool,
-        // then the OS tokens being added should also be 10% of the OS tokens in the pool.
-        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
-        uint256 osAmount = (_wsAmount * osReserves) / wsReserves;
-
-        // Mint the required OS tokens to the strategy
-        IVault(vaultAddress).mintForStrategy(osAmount);
+        // Mint the required OS tokens to this strategy
+        IVault(vaultAddress).mintForStrategy(osLiquidity);
 
         // Add wS and OS liquidity to the pool and stake in gauge
-        _depositToPoolAndGauge(_wsAmount, osAmount);
-
-        emit Deposit(os, pool, osAmount);
+        _depositToPoolAndGauge(_wsAmount, osLiquidity);
 
         // Ensure solvency of the vault
         _solvencyAssert();
+
+        // Emit event for the deposited wS tokens
+        emit Deposit(_wS, pool, _wsAmount);
+        // Emit event for the minted OS tokens
+        emit Deposit(os, pool, osLiquidity);
     }
 
     /**
      * @notice Deposit the strategy's entire balance of Wrapped S (wS) into the pool
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external override onlyVault nonReentrant skimPool {
         uint256 balance = IERC20(ws).balanceOf(address(this));
         if (balance > 0) {
             _deposit(ws, balance);
@@ -235,24 +244,19 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @notice Withdraw wS and OS from the SwapX pool, burn the OS,
      * and transfer the wS to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
-     * @param _ws Address of the Wrapped S (wS) contract.
+     * @param _asset Address of the Wrapped S (wS) contract.
      * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
      */
     function withdraw(
         address _recipient,
-        address _ws,
+        address _asset,
         uint256 _wsAmount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant skimPool {
         require(_wsAmount > 0, "Must withdraw something");
-        require(_ws == ws, "Can only withdraw wS");
-
-        emit Withdrawal(_ws, pool, _wsAmount);
-
-        // Skim the pool in case extra tokens were added
-        IPair(pool).skim(address(this));
+        require(_asset == ws, "Unsupported asset");
 
         // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
-        uint256 lpTokens = calcTokensToBurn(_wsAmount);
+        uint256 lpTokens = _calcTokensToBurn(_wsAmount);
 
         // Withdraw pool LP tokens from the gauge and remove assets from from the pool
         _withdrawFromGaugeAndPool(lpTokens);
@@ -261,23 +265,34 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 osToBurn = IERC20(os).balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(osToBurn);
 
-        emit Withdrawal(os, pool, osToBurn);
-
         // Transfer wS to the recipient
-        require(
-            IERC20(ws).transfer(_recipient, _wsAmount),
-            "Transfer of wS not successful"
-        );
+        IERC20(ws).safeTransfer(_recipient, _wsAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
+
+        // Emit event for the withdrawn wS tokens
+        emit Withdrawal(_asset, pool, _wsAmount);
+        // Emit event for the burnt OS tokens
+        emit Withdrawal(os, pool, osToBurn);
     }
 
     /**
-     * @notice Remove all wS and OS from the SwapX pool, burn all the OS,
+     * @notice Withdraw all pool LP tokens from the gauge,
+     * remove all wS and OS from the SwapX pool,
+     * burn all the OS tokens,
      * and transfer all the wS to the Vault contract.
+     * @dev There is no solvency check here as withdrawAll can be called to
+     * quickly secure assets to the Vault in emergencies.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+        skimPool
+    {
+        // Get all the pool LP tokens the strategy has staked in the gauge
         uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
         // Can not withdraw zero LP tokens from the gauge
         if (lpTokens == 0) return;
@@ -285,7 +300,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Withdraw pool LP tokens from the gauge and remove assets from from the pool
         _withdrawFromGaugeAndPool(lpTokens);
 
-        // Burn all OS
+        // Burn all OS in this strategy contract
         uint256 osToBurn = IERC20(os).balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(osToBurn);
 
@@ -293,12 +308,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // This includes all that was removed from the SwapX pool and
         // any that was sitting in the strategy contract before the removal.
         uint256 wsBalance = IERC20(ws).balanceOf(address(this));
-        require(
-            IERC20(ws).transfer(vaultAddress, wsBalance),
-            "Transfer of wS not successful"
-        );
+        IERC20(ws).safeTransfer(vaultAddress, wsBalance);
 
+        // Emit event for the withdrawn wS tokens
         emit Withdrawal(ws, pool, wsBalance);
+        // Emit event for the burnt OS tokens
         emit Withdrawal(os, pool, osToBurn);
     }
 
@@ -316,16 +330,14 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         onlyStrategist
         nonReentrant
         improvePoolBalance
+        skimPool
     {
         require(_wsAmount > 0, "Must swap some wS");
-
-        // Skim the pool in case extra tokens were added
-        IPair(pool).skim(address(this));
 
         // 1. Partially remove liquidity so there’s enough wS for the swap
 
         // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
-        uint256 lpTokens = calcTokensToBurn(_wsAmount);
+        uint256 lpTokens = _calcTokensToBurn(_wsAmount);
         require(lpTokens > 0, "No LP tokens to burn");
 
         _withdrawFromGaugeAndPool(lpTokens);
@@ -355,6 +367,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         onlyStrategist
         nonReentrant
         improvePoolBalance
+        skimPool
     {
         require(_osAmount > 0, "Must swap some OS");
 
@@ -368,7 +381,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         require(_osAmount >= osInStrategy, "Too much OS in strategy");
         uint256 osToMint = _osAmount - osInStrategy;
 
-        // Mint the required OS tokens to the strategy
+        // Mint the required OS tokens to this strategy
         IVault(vaultAddress).mintForStrategy(osToMint);
 
         // 2. Swap OS for wS against the pool
@@ -378,11 +391,10 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // The wS is from the swap and any wS that was sitting in the strategy
         uint256 wsLiquidity = IERC20(ws).balanceOf(address(this));
-        // Calculate how much OS liquidity is required from the wS liquidity
-        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
-        uint256 osLiquidity = (wsLiquidity * osReserves) / wsReserves;
+        // Calculate the required amount of OS to mint based on the wS amount.
+        uint256 osLiquidity = _calcTokensToMint(wsLiquidity);
 
-        // Mint more OS so it can be added to the pool
+        // Mint more OS to this strategy so they can then be added to the pool
         IVault(vaultAddress).mintForStrategy(osLiquidity);
 
         // Add wS and OS liquidity to the pool and stake in gauge
@@ -395,10 +407,36 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-                Pool Handling
+        Internal SwapX Pool and Gauge Functions
     ****************************************/
 
-    function calcTokensToBurn(uint256 _wsAmount)
+    /**
+     * @dev Calculate the required amount of OS to mint based on the wS amount.
+     * This ensures the proportion of OS tokens being added to the pool matches the proportion of wS tokens.
+     * For example, if the added wS tokens is 10% of existing wS tokens in the pool,
+     * then the OS tokens being added should also be 10% of the OS tokens in the pool.
+     * @param _wsAmount Amount of Wrapped S (wS) to be added to the pool.
+     * @return osAmount Amount of OS to be minted and added to the pool.
+     */
+    function _calcTokensToMint(uint256 _wsAmount)
+        internal
+        view
+        returns (uint256 osAmount)
+    {
+        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
+        require(wsReserves > 0, "Empty pool");
+
+        // OS to add = (wS being added * OS in pool) / wS in pool
+        osAmount = (_wsAmount * osReserves) / wsReserves;
+    }
+
+    /**
+     * @dev Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
+     * from the pool.
+     * @param _wsAmount Amount of Wrapped S (wS) to be removed from the pool.
+     * @return lpTokens Amount of SwapX pool LP tokens to burn.
+     */
+    function _calcTokensToBurn(uint256 _wsAmount)
         internal
         view
         returns (uint256 lpTokens)
@@ -412,23 +450,31 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
          *
          * Important: A downside is that the Strategist / Governor needs to be
          * cognizant of not removing too much liquidity. And while the proposal to remove liquidity
-         * is being voted on the pool tilt might change so much that the proposal that has been valid while
+         * is being voted on, the pool tilt might change so much that the proposal that has been valid while
          * created is no longer valid.
          */
 
-        lpTokens =
-            ((_wsAmount + 1) * IPair(pool).totalSupply()) /
-            IERC20(ws).balanceOf(pool);
+        (uint256 wsReserves, , ) = IPair(pool).getReserves();
+        require(wsReserves > 0, "Empty pool");
+
+        lpTokens = ((_wsAmount + 1) * IPair(pool).totalSupply()) / wsReserves;
     }
 
+    /**
+     * @dev Deposit Wrapped S (wS) and OS liquidity to the SwapX pool
+     * and stake the pool's LP token in the gauge.
+     * @param _wsAmount Amount of Wrapped S (wS) to deposit.
+     * @param osAmount Amount of OS to deposit.
+     * @return lpTokens Amount of SwapX pool LP tokens minted.
+     */
     function _depositToPoolAndGauge(uint256 _wsAmount, uint256 osAmount)
         internal
         returns (uint256 lpTokens)
     {
         // Transfer wS to the pool
-        IERC20(ws).transfer(pool, _wsAmount);
+        IERC20(ws).safeTransfer(pool, _wsAmount);
         // Transfer OS to the pool
-        IERC20(os).transfer(pool, osAmount);
+        IERC20(os).safeTransfer(pool, osAmount);
 
         // Mint LP tokens from the pool
         lpTokens = IPair(pool).mint(address(this));
@@ -448,18 +494,24 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IGauge(gauge).withdraw(lpTokens);
 
         // Transfer the pool LP tokens to the pool
-        IPair(pool).transfer(pool, lpTokens);
+        IERC20(pool).safeTransfer(pool, lpTokens);
         // Burn the LP tokens and transfer the wS and OS back to the strategy
         IPair(pool).burn(address(this));
     }
 
+    /**
+     * @dev Swap exact amount of tokens for another token against the pool.
+     * @param _amountIn Amount of tokens to swap into the pool.
+     * @param _tokenIn Address of the token going into the pool.
+     * @param _tokenOut Address of the token being swapped out of the pool.
+     */
     function _swapExactTokensForTokens(
         uint256 _amountIn,
         address _tokenIn,
         address _tokenOut
     ) internal {
         // Transfer in tokens to the pool
-        IERC20(_tokenIn).transfer(pool, _amountIn);
+        IERC20(_tokenIn).safeTransfer(pool, _amountIn);
 
         // Calculate how much out tokens we get from the swap
         uint256 amountOut = IPair(pool).getAmountOut(_amountIn, _tokenIn);
@@ -480,12 +532,14 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IPair(pool).swap(amount0, amount1, address(this), new bytes(0));
 
         // The slippage protection against the amount out is indirectly done
-        // via the improvePoolBalance and strategyValueChecker modifiers
+        // via the improvePoolBalance
     }
 
-    /// @notice Calculate the value of a LP position in a SwapX stable pool
-    /// if the pool was balanced
-    function lpValue(uint256 lpTokens) public view returns (uint256) {
+    /// @dev Calculate the value of a LP position in a SwapX stable pool
+    /// if the pool was balanced.
+    /// @param lpTokens Amount of LP tokens in the SwapX pool
+    /// @return The wS value of the LP tokens in the pool
+    function _lpValue(uint256 lpTokens) internal view returns (uint256) {
         // Get total supply of LP tokens
         uint256 totalSupply = IPair(pool).totalSupply();
         require(totalSupply > 0, "No liquidity in pool");
@@ -513,8 +567,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     }
 
     /// @dev Compute the invariant for a SwapX stable pool.
-    /// This assumed both x and y tokens are to 18 decimals.
-    // k = x^3 * y + x * y^3
+    /// This assumed both x and y tokens are to 18 decimals which is checked in the constructor.
+    /// invariant: k = x^3 * y + x * y^3
+    /// @param x The amount of Wrapped S (wS) tokens in the pool
+    /// @param y The amount of the OS tokens in the pool
+    /// @return The invariant k of the pool
     function _invariant(uint256 x, uint256 y) public pure returns (uint256) {
         uint256 _a = (x * y) / PRECISION;
         uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
@@ -522,7 +579,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
+     * @dev Checks that the protocol is solvent, protecting from a rogue Strategist / Guardian that can
      * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
      * funds each time.
      *
@@ -579,8 +636,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
         if (lpTokens == 0) return balance;
 
-        // Add the strategy’s share of the wS and OS tokens in the SwapX pool.
-        balance += lpValue(lpTokens);
+        // Add the strategy’s share of the wS and OS tokens in the SwapX pool if the pool was balanced.
+        balance += _lpValue(lpTokens);
     }
 
     /**
@@ -615,11 +672,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     {}
 
     function _approveBase() internal {
-        // Approve pool for OS (required for adding liquidity)
+        // Approve pool for OS and wS (required for adding liquidity)
         // slither-disable-next-line unused-return
         IERC20(os).approve(platformAddress, type(uint256).max);
-
-        // Approve SwapX pool for wS (required for adding liquidity)
         // slither-disable-next-line unused-return
         IERC20(ws).approve(platformAddress, type(uint256).max);
 
@@ -627,13 +682,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // This is needed for deposits of SwapX pool LP tokens into the gauge.
         // slither-disable-next-line unused-return
         IPair(pool).approve(address(gauge), type(uint256).max);
-    }
-
-    /**
-     * @dev Returns the largest of two numbers int256 version
-     */
-    function _max(int256 a, int256 b) internal pure returns (int256) {
-        return a >= b ? a : b;
     }
 
     /// @dev including in here for now. This is a copy of PRBMath's sqrt function.
