@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "125_update_amo_mint_threshold",
     forceDeploy: false,
     reduceQueueTime: true,
-    // proposalId:
+    proposalId:
+      "30965832335636924298210825232841816133670499253182025520679897537320067618960",
   },
   async () => {
     // Reference the OETH Vault
