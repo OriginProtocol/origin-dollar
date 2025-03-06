@@ -9,12 +9,12 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2498.6)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-2498.6 1292.06,-2498.6 1292.06,4 -4,4"/>
-<!-- 286 -->
+<!-- 282 -->
 <g id="node1" class="node">
-<title>286</title>
+<title>282</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-2494.1 1288.06,-2494.1 1288.06,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="644.03" y="-2477.5" font-family="Times,serif" font-size="14.00">OETHVaultAdmin</text>
-<text text-anchor="middle" x="644.03" y="-2460.7" font-family="Times,serif" font-size="14.00">../contracts/vault/OETHVaultAdmin.sol</text>
+<text text-anchor="middle" x="644.03" y="-2477.5" font-family="Times,serif" font-size="14.00">OETHBaseVaultAdmin</text>
+<text text-anchor="middle" x="644.03" y="-2460.7" font-family="Times,serif" font-size="14.00">../contracts/vault/OETHBaseVaultAdmin.sol</text>
 <polyline fill="none" stroke="black" points="0,-2452.5 1288.06,-2452.5 "/>
 <text text-anchor="start" x="8" y="-2435.9" font-family="Times,serif" font-size="14.00">Private:</text>
 <text text-anchor="start" x="8" y="-2419.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;initialized: bool &lt;&lt;Initializable&gt;&gt;</text>
@@ -161,7 +161,7 @@
 <text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-42.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isGovernor(): bool &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_weth: address) &lt;&lt;OETHVaultAdmin&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_weth: address) &lt;&lt;OETHBaseVaultAdmin&gt;&gt;</text>
 </g>
 </g>
 </svg>
