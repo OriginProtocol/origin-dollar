@@ -163,6 +163,10 @@ addresses.mainnet.CurveOUSDUSDTPool =
   "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
 addresses.mainnet.CurveOUSDUSDTGauge =
   "0x74231E4d96498A30FCEaf9aACCAbBD79339Ecd7f";
+addresses.mainnet.CurveTriOGNPool =
+  "0xb8ac7ce449ed72ff61de8043d67b507f9f523fa2";
+addresses.mainnet.CurveTriOGNGauge =
+  "0x92d956C1F89a2c71efEEB4Bac45d02016bdD2408";
 
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
