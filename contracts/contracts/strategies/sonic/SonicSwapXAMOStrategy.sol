@@ -11,10 +11,11 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { sqrt } from "../../utils/PRBMath.sol";
 import { IBasicToken } from "../../interfaces/IBasicToken.sol";
-import { IVault } from "../../interfaces/IVault.sol";
 import { IPair } from "../../interfaces/sonic/ISwapXPair.sol";
 import { IGauge } from "../../interfaces/sonic/ISwapXGauge.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 
 contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -27,28 +28,20 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      *      draining the protocol funds.
      */
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
-    /// @notice Precision for the SwapX Stable AMM (sAMM) invariant
+
+    /// @notice Precision for the SwapX Stable AMM (sAMM) invariant k.
     uint256 public constant PRECISION = 1e18;
 
-    // New immutable variables that must be set in the constructor
-    /**
-     * @notice Address of the Wrapped S (wS) token.
-     */
+    /// @notice Address of the Wrapped S (wS) token.
     address public immutable ws;
 
-    /**
-     * @notice Address of the OS token contract.
-     */
+    /// @notice Address of the OS token contract.
     address public immutable os;
 
-    /**
-     * @notice Address of the SwapX Stable pool contract.
-     */
+    /// @notice Address of the SwapX Stable pool contract.
     address public immutable pool;
 
-    /**
-     * @notice Address of the SwapX Gauge contract.
-     */
+    /// @notice Address of the SwapX Gauge contract.
     address public immutable gauge;
 
     event SwapOTokensToPool(
@@ -120,6 +113,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * @param _baseConfig The `platformAddress` is the address of the SwapX pool.
+     * The `vaultAddress` is the address of the Origin Sonic Vault.
+     * @param _os Address of the OS token.
+     * @param _ws Address of the Wrapped S (wS) token.
+     * @param _gauge Address of the SwapX gauge for the pool.
+     */
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _os,
@@ -320,11 +320,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
                 Pool Rebalancing
     ****************************************/
 
-    /// @notice Used when there is more OS than wS in the pool.
-    /// wS and OS is removed from the pool, the received wS is swapped for OS
-    /// and the left over OS in the strategy is burnt.
-    /// The OS/wS price is < 1.0 so OS is being bought at a discount.
-    /// @param _wsAmount Amount of Wrapped S (wS) to swap into the pool.
+    /** @notice Used when there is more OS than wS in the pool.
+     * wS and OS is removed from the pool, the received wS is swapped for OS
+     * and the left over OS in the strategy is burnt.
+     * The OS/wS price is < 1.0 so OS is being bought at a discount.
+     * @param _wsAmount Amount of Wrapped S (wS) to swap into the pool.
+     */
     function swapAssetsToPool(uint256 _wsAmount)
         external
         onlyStrategist
@@ -332,7 +333,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalance
         skimPool
     {
-        require(_wsAmount > 0, "Must swap some wS");
+        require(_wsAmount > 0, "Must swap something");
 
         // 1. Partially remove liquidity so there’s enough wS for the swap
 
@@ -358,10 +359,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         emit SwapAssetsToPool(wsInStrategy, lpTokens, osToBurn);
     }
 
-    /// @notice Used when there is more wS than OS in the pool.
-    /// OS is minted and swapped for wS against the pool,
-    /// more OS is minted and added back into the pool with the swapped out wS.
-    /// The OS/wS price is > 1.0 so OS is being sold at a premium.
+    /**
+     * @notice Used when there is more wS than OS in the pool.
+     * OS is minted and swapped for wS against the pool,
+     * more OS is minted and added back into the pool with the swapped out wS.
+     * The OS/wS price is > 1.0 so OS is being sold at a premium.
+     * @param _osAmount Amount of OS to swap into the pool.
+     */
     function swapOTokensToPool(uint256 _osAmount)
         external
         onlyStrategist
@@ -369,10 +373,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         improvePoolBalance
         skimPool
     {
-        require(_osAmount > 0, "Must swap some OS");
-
-        // Skim the pool in case extra tokens were added
-        IPair(pool).skim(address(this));
+        require(_osAmount > 0, "Must swap something");
 
         // 1. Mint OS so it can be swapped into the pool
 
@@ -404,6 +405,59 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _solvencyAssert();
 
         emit SwapOTokensToPool(osToMint, wsLiquidity, osLiquidity, lpTokens);
+    }
+
+    /***************************************
+                Assets and Rewards
+    ****************************************/
+
+    /**
+     * @notice Get the wS value of assets in the strategy and SwapX pool.
+     * The value of the assets in the pool is calculated assuming the pool is balanced.
+     * This way the value can not be manipulated by changing the pool's token balances.
+     * @param _asset      Address of the Wrapped S (wS) token
+     * @return balance    Total value in wS.
+     */
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(_asset == ws, "Unsupported asset");
+
+        // wS balance needed here for the balance check that happens from vault during depositing.
+        balance = IERC20(ws).balanceOf(address(this));
+
+        // This assumes 1 gauge LP token = 1 pool LP token
+        uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
+        if (lpTokens == 0) return balance;
+
+        // Add the strategy’s share of the wS and OS tokens in the SwapX pool if the pool was balanced.
+        balance += _lpValue(lpTokens);
+    }
+
+    /**
+     * @notice Returns bool indicating whether asset is supported by strategy
+     * @param _asset Address of the asset
+     */
+    function supportsAsset(address _asset) public view override returns (bool) {
+        return _asset == ws;
+    }
+
+    /**
+     * @notice Collect accumulated SWPx (and other) rewards and send to the Harvester.
+     */
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // Collect SWPx rewards from the gauge
+        IGauge(gauge).getReward();
+
+        _collectRewardTokens();
     }
 
     /***************************************
@@ -483,7 +537,10 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IGauge(gauge).deposit(lpTokens);
     }
 
-    /// @param lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
+    /**
+     * @dev Withdraw pool LP tokens from the gauge and remove wS and OS from the pool.
+     * @param lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
+     */
     function _withdrawFromGaugeAndPool(uint256 lpTokens) internal {
         require(
             IGauge(gauge).balanceOf(address(this)) >= lpTokens,
@@ -495,6 +552,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // Transfer the pool LP tokens to the pool
         IERC20(pool).safeTransfer(pool, lpTokens);
+
         // Burn the LP tokens and transfer the wS and OS back to the strategy
         IPair(pool).burn(address(this));
     }
@@ -538,8 +596,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @dev Calculate the value of a LP position in a SwapX stable pool
     /// if the pool was balanced.
     /// @param lpTokens Amount of LP tokens in the SwapX pool
-    /// @return The wS value of the LP tokens in the pool
-    function _lpValue(uint256 lpTokens) internal view returns (uint256) {
+    /// @return value The wS value of the LP tokens in the pool
+    function _lpValue(uint256 lpTokens) internal view returns (uint256 value) {
         // Get total supply of LP tokens
         uint256 totalSupply = IPair(pool).totalSupply();
         require(totalSupply > 0, "No liquidity in pool");
@@ -563,7 +621,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 totalValueOfPool = 2 * z;
 
         // lp value = lp tokens * value of pool  / total supply
-        return (lpTokens * totalValueOfPool) / totalSupply;
+        value = (lpTokens * totalValueOfPool) / totalSupply;
     }
 
     /// @dev Compute the invariant for a SwapX stable pool.
@@ -571,11 +629,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// invariant: k = x^3 * y + x * y^3
     /// @param x The amount of Wrapped S (wS) tokens in the pool
     /// @param y The amount of the OS tokens in the pool
-    /// @return The invariant k of the pool
-    function _invariant(uint256 x, uint256 y) public pure returns (uint256) {
+    /// @return k The invariant of the SwapX stable pool
+    function _invariant(uint256 x, uint256 y) public pure returns (uint256 k) {
         uint256 _a = (x * y) / PRECISION;
         uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
-        return (_a * _b) / PRECISION;
+        k = (_a * _b) / PRECISION;
     }
 
     /**
@@ -595,57 +653,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
-    }
-
-    /***************************************
-                Assets and Rewards
-    ****************************************/
-
-    /**
-     * @notice Collect accumulated SWPx (and other) rewards and send to the Harvester.
-     */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
-        // Collect SWPx rewards from the gauge
-        IGauge(gauge).getReward();
-
-        _collectRewardTokens();
-    }
-
-    /**
-     * @notice Get the total asset value held in the SwapX pool
-     * @param _asset      Address of the Wrapped S (wS) token
-     * @return balance    Total value of the wS and OS tokens held in the pool
-     */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
-        require(_asset == ws, "Unsupported asset");
-
-        // wS balance needed here for the balance check that happens from vault during depositing.
-        balance = IERC20(ws).balanceOf(address(this));
-
-        // This assumes 1 gauge LP token = 1 pool LP token
-        uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
-        if (lpTokens == 0) return balance;
-
-        // Add the strategy’s share of the wS and OS tokens in the SwapX pool if the pool was balanced.
-        balance += _lpValue(lpTokens);
-    }
-
-    /**
-     * @notice Returns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == ws;
     }
 
     /***************************************
@@ -682,98 +689,5 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // This is needed for deposits of SwapX pool LP tokens into the gauge.
         // slither-disable-next-line unused-return
         IPair(pool).approve(address(gauge), type(uint256).max);
-    }
-
-    /// @dev including in here for now. This is a copy of PRBMath's sqrt function.
-    /// Can either move out into a new lib or import from the use the PRBMath project
-
-    /// @notice Calculates the square root of x using the Babylonian method.
-    ///
-    /// @dev See https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method.
-    ///
-    /// Notes:
-    /// - If x is not a perfect square, the result is rounded down.
-    /// - Credits to OpenZeppelin for the explanations in comments below.
-    ///
-    /// @param x The uint256 number for which to calculate the square root.
-    /// @return result The result as a uint256.
-    /// @custom:smtchecker abstract-function-nondet
-    function sqrt(uint256 x) public pure returns (uint256 result) {
-        if (x == 0) {
-            return 0;
-        }
-
-        // For our first guess, we calculate the biggest power of 2 which is smaller than the square root of x.
-        //
-        // We know that the "msb" (most significant bit) of x is a power of 2 such that we have:
-        //
-        // $$
-        // msb(x) <= x <= 2*msb(x)$
-        // $$
-        //
-        // We write $msb(x)$ as $2^k$, and we get:
-        //
-        // $$
-        // k = log_2(x)
-        // $$
-        //
-        // Thus, we can write the initial inequality as:
-        //
-        // $$
-        // 2^{log_2(x)} <= x <= 2*2^{log_2(x)+1} \\
-        // sqrt(2^k) <= sqrt(x) < sqrt(2^{k+1}) \\
-        // 2^{k/2} <= sqrt(x) < 2^{(k+1)/2} <= 2^{(k/2)+1}
-        // $$
-        //
-        // Consequently, $2^{log_2(x) /2} is a good first approximation of sqrt(x) with at least one correct bit.
-        uint256 xAux = uint256(x);
-        result = 1;
-        if (xAux >= 2**128) {
-            xAux >>= 128;
-            result <<= 64;
-        }
-        if (xAux >= 2**64) {
-            xAux >>= 64;
-            result <<= 32;
-        }
-        if (xAux >= 2**32) {
-            xAux >>= 32;
-            result <<= 16;
-        }
-        if (xAux >= 2**16) {
-            xAux >>= 16;
-            result <<= 8;
-        }
-        if (xAux >= 2**8) {
-            xAux >>= 8;
-            result <<= 4;
-        }
-        if (xAux >= 2**4) {
-            xAux >>= 4;
-            result <<= 2;
-        }
-        if (xAux >= 2**2) {
-            result <<= 1;
-        }
-
-        // At this point, `result` is an estimation with at least one bit of precision. We know the true value has at
-        // most 128 bits, since it is the square root of a uint256. Newton's method converges quadratically (precision
-        // doubles at every iteration). We thus need at most 7 iteration to turn our partial result with one bit of
-        // precision into the expected uint128 result.
-        unchecked {
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-            result = (result + x / result) >> 1;
-
-            // If x is not a perfect square, round the result toward zero.
-            uint256 roundedResult = x / result;
-            if (result >= roundedResult) {
-                result = roundedResult;
-            }
-        }
     }
 }

@@ -467,7 +467,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const tx = swapXAMOStrategy.connect(strategist).swapAssetsToPool(0);
 
-      await expect(tx).to.be.revertedWith("Must swap some wS");
+      await expect(tx).to.be.revertedWith("Must swap something");
     });
     it("Strategist should fail to add more OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -550,7 +550,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const tx = swapXAMOStrategy.connect(strategist).swapOTokensToPool(0);
 
-      await expect(tx).to.be.revertedWith("Must swap some OS");
+      await expect(tx).to.be.revertedWith("Must swap swap something");
     });
     it("Strategist should fail to add too much OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
