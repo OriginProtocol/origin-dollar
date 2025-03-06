@@ -53,7 +53,10 @@ describe("ForkTest: OETHb Vault", function () {
     });
 
     it("Should allow only Strategist to redeem", async () => {
-      const { strategist, oethbVault, oethb, weth } = fixture;
+      const { strategist, oethbVault, oethb, weth, rafael } = fixture;
+
+      // Add WETH liquidity to allow redeem
+      await weth.connect(rafael).transfer(oethbVault.address, oethUnits("10000"));
 
       await oethbVault.rebase();
       await _mint(strategist);
@@ -76,7 +79,10 @@ describe("ForkTest: OETHb Vault", function () {
     });
 
     it("Should allow only Governor to redeem", async () => {
-      const { governor, oethbVault, oethb, weth } = fixture;
+      const { governor, oethbVault, oethb, weth, rafael } = fixture;
+
+      // Add WETH liquidity to allow redeem
+      await weth.connect(rafael).transfer(oethbVault.address, oethUnits("10000"));
 
       await oethbVault.rebase();
       await _mint(governor);
@@ -114,7 +120,10 @@ describe("ForkTest: OETHb Vault", function () {
 
   describe("Async withdrawals", function () {
     it("Should allow 1:1 async withdrawals", async () => {
-      const { rafael, governor, oethbVault } = fixture;
+      const { rafael, governor, oethbVault, weth } = fixture;
+
+      // Add WETH liquidity to allow withdrawal
+      await weth.connect(rafael).transfer(oethbVault.address, oethUnits("10000"));
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 
