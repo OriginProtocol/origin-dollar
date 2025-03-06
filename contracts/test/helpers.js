@@ -8,6 +8,17 @@ const addresses = require("../utils/addresses");
 const { decimalsFor, units } = require("../utils/units");
 
 /**
+ * Checks if the actual value is inclusively within a min and max range of values.
+ */
+chai.Assertion.addMethod("withinRange", function (min, max, message) {
+  const actual = this._obj;
+  min = BigNumber.from(min);
+
+  chai.expect(actual, message).gte(min);
+  chai.expect(actual, message).lte(max);
+});
+
+/**
  * Checks if the actual value is approximately equal to the expected value
  * within 0.99999 to 1.00001 tolerance.
  */
@@ -136,17 +147,19 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   const tx = this._obj;
   const { events } = await tx.wait();
   const log = events.find((e) => e.event == eventName);
-  chai.expect(log).to.not.be.undefined;
+  chai.expect(log, `Failed to find event "${eventName}" on the tx`).to.exist;
 
   if (Array.isArray(args)) {
     chai
       .expect(log.args.length)
-      .to.equal(args.length, "Invalid event arg count");
+      .to.equal(args.length, `Invalid arg count of event ${eventName}`);
     for (let i = 0; i < args.length; i++) {
       if (typeof args[i] == "function") {
         args[i](log.args[i]);
       } else {
-        chai.expect(log.args[i]).to.equal(args[i]);
+        chai
+          .expect(log.args[i], `Failed to match arg ${i} of event ${eventName}`)
+          .to.equal(args[i]);
       }
     }
   }
