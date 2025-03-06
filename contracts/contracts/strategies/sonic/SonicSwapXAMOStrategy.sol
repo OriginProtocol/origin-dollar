@@ -630,7 +630,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @param x The amount of Wrapped S (wS) tokens in the pool
     /// @param y The amount of the OS tokens in the pool
     /// @return k The invariant of the SwapX stable pool
-    function _invariant(uint256 x, uint256 y) public pure returns (uint256 k) {
+    function _invariant(uint256 x, uint256 y)
+        internal
+        pure
+        returns (uint256 k)
+    {
         uint256 _a = (x * y) / PRECISION;
         uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
         k = (_a * _b) / PRECISION;

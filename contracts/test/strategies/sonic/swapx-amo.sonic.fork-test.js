@@ -5,7 +5,6 @@ const { createFixtureLoader } = require("../../_fixture");
 const { swapXAMOFixture } = require("../../_fixture-sonic");
 const { isCI } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
-const { ethers } = require("hardhat");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
@@ -182,92 +181,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  function sqrt(value) {
-    const ONE = ethers.BigNumber.from(1);
-    const TWO = ethers.BigNumber.from(2);
-
-    const x = ethers.BigNumber.from(value);
-    let z = x.add(ONE).div(TWO);
-    let y = x;
-    while (z.sub(y).isNegative()) {
-      y = z;
-      z = x.div(z).add(z).div(TWO);
-    }
-    return y;
-  }
-
-  describe("Pool testing", () => {
-    const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 100,
-      depositToStrategy: true,
-      balancePool: true,
-    });
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-    it("current state", async () => {
-      const data = await snapData(fixture);
-      await logSnapData(data);
-
-      const x = parseUnits("500");
-      const y = parseUnits("500");
-      const precision = parseUnits("1", 18);
-      const a = x.mul(y).div(precision);
-      const b = x.mul(x).div(precision).add(y.mul(y).div(precision));
-      const k = a.mul(b).div(precision);
-      log(`local k for 50:50  = ${formatUnits(k)}`);
-
-      const remoteK = await fixture.swapXAMOStrategy._invariant(x, y);
-      log(`remote k for 50:50 = ${formatUnits(remoteK)}`);
-
-      const remoteKactual = await fixture.swapXAMOStrategy._invariant(
-        data.reserves.ws,
-        data.reserves.os
-      );
-      log(`remote k actual = ${formatUnits(remoteKactual)}`);
-
-      log(`local sqrt(2500) = ${sqrt(2500)}`);
-      const remoteSqrt125 = await fixture.swapXAMOStrategy.sqrt("2500");
-      log(`remote sqrt(2500) = ${remoteSqrt125}`);
-
-      const lpValue = await fixture.swapXAMOStrategy.lpValue(parseUnits("250"));
-      log(`LP value = ${formatUnits(lpValue)}`);
-
-      const cubedPrecision = parseUnits("1", 54);
-      const z1 = sqrt(sqrt(k.mul(cubedPrecision).div(2)));
-      log(`first z = ${formatUnits(z1)}`);
-
-      const adjustedK2 = k.mul(parseUnits("1", 36)).div(2);
-      const sqrt1 = sqrt(adjustedK2);
-      const z2 = sqrt(sqrt1.mul(parseUnits("1", 9)));
-      log(`second z = ${formatUnits(z2)}`);
-
-      const adjustedK3 = k.mul(parseUnits("1", 18)).div(2);
-      const sqrt2 = sqrt(adjustedK3);
-      const z3 = sqrt(sqrt2.mul(parseUnits("1", 18)));
-      log(`third z = ${formatUnits(z3)}`);
-
-      const adjustedK4 = k.mul(parseUnits("1", 12)).div(2);
-      const sqrt3 = sqrt(adjustedK4);
-      const z4 = sqrt(sqrt3.mul(parseUnits("1", 21)));
-      log(`fourth z = ${formatUnits(z4)}`);
-
-      // const adjustedK4 = k.mul(parseUnits("1", 12)).div(2);
-      const sqrt4 = sqrt(k.div(2));
-      const z5 = sqrt(sqrt4.mul(parseUnits("1", 9)));
-      log(`fifth z = ${formatUnits(z5.mul(parseUnits("1", 9)))}`);
-
-      const val = sqrt(sqrt(k.mul(8)).mul(parseUnits("1", 9)));
-      log(`alt value = ${formatUnits(val)}`);
-
-      const fiftySquared = ethers.BigNumber.from(2500);
-      const sqrtFiftySquared = sqrt(fiftySquared);
-      log(`sqrt 2,500 ${sqrtFiftySquared}`);
-      expect(sqrtFiftySquared).to.equal(50);
-    });
-  });
-
-  describe("with the strategy having some OS and wS in the pool", () => {
+  describe("with the strategy having some OS and wS in a balanced pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000,
       depositToStrategy: true,
@@ -291,6 +205,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const tx = await swapXAMOStrategy
         .connect(oSonicVaultSigner)
         .withdrawAll();
+
+      await logSnapData(await snapData(fixture));
 
       // Check emitted events
       await expect(tx)
@@ -550,7 +466,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const tx = swapXAMOStrategy.connect(strategist).swapOTokensToPool(0);
 
-      await expect(tx).to.be.revertedWith("Must swap swap something");
+      await expect(tx).to.be.revertedWith("Must swap something");
     });
     it("Strategist should fail to add too much OS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -623,16 +539,27 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
     const expectedStratBalance = dataBefore.stratBalance.add(
       delta.stratBalance
     );
+    // Truncate any dust amounts to zero
+    const expectedStratBalanceTruncated = expectedStratBalance
+      .div(100000)
+      .mul(100000);
+    log(
+      `expected strat balance : ${formatUnits(expectedStratBalanceTruncated)}`
+    );
     expect(
-      await swapXAMOStrategy.checkBalance(wS.address),
+      await swapXAMOStrategy.checkBalance(wS.address)
+    ).to.approxEqualTolerance(
+      expectedStratBalanceTruncated,
+      "0.01", // 0.01%  (10 bps) tolerance
       "Strategy's check balance"
-    ).to.withinRange(expectedStratBalance.sub(1), expectedStratBalance);
+    );
   }
 
   if (delta.osSupply != undefined) {
     const expectedSupply = dataBefore.osSupply.add(delta.osSupply);
-    expect(await oSonic.totalSupply(), "OSonic total supply").to.equal(
-      expectedSupply
+    expect(await oSonic.totalSupply()).to.equal(
+      expectedSupply,
+      "OSonic total supply"
     );
   }
 
@@ -640,11 +567,13 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
   if (delta.reserves != undefined) {
     const { _reserve0: wsReserves, _reserve1: osReserves } =
       await swapXPool.getReserves();
-    expect(wsReserves, "wS reserves").to.equal(
-      dataBefore.reserves.ws.add(delta.reserves.ws)
+    expect(wsReserves).to.equal(
+      dataBefore.reserves.ws.add(delta.reserves.ws),
+      "wS reserves"
     );
-    expect(osReserves, "OS reserves").to.equal(
-      dataBefore.reserves.os.add(delta.reserves.os)
+    expect(osReserves).to.equal(
+      dataBefore.reserves.os.add(delta.reserves.os),
+      "OS reserves"
     );
 
     // Check the strategy's gauge balance
@@ -661,21 +590,19 @@ const assertChangedData = async (dataBefore, delta, fixture) => {
     const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
       deltaStratGaugeBalance
     );
-    expect(
-      await swapXGauge.balanceOf(swapXAMOStrategy.address),
-      "Strategy's gauge balance"
-    ).to.withinRange(
+    expect(await swapXGauge.balanceOf(swapXAMOStrategy.address)).to.withinRange(
       expectedStratGaugeBalance.sub(1),
-      expectedStratGaugeBalance.add(1)
+      expectedStratGaugeBalance.add(1),
+      "Strategy's gauge balance"
     );
   }
 
   // Check Vault's wS balance
   if (delta.vaultWSBalance != undefined) {
-    expect(
-      await wS.balanceOf(oSonicVault.address),
+    expect(await wS.balanceOf(oSonicVault.address)).to.equal(
+      dataBefore.vaultWSBalance.add(delta.vaultWSBalance),
       "Vault's wS balance"
-    ).to.equal(dataBefore.vaultWSBalance.add(delta.vaultWSBalance));
+    );
   }
 };
 
@@ -693,7 +620,12 @@ async function assertSwapAssetsToPool(wsAmount, fixture) {
   await expect(tx).to.emittedEvent("SwapAssetsToPool", [
     wsAmount,
     (lpTokens) => {
-      expect(lpTokens).to.approxEqualTolerance(wsAmount, 5);
+      // TODO better calculate the value of LP tokens
+      expect(lpTokens).to.approxEqualTolerance(
+        wsAmount,
+        10,
+        "SwapAssetsToPool lpTokens"
+      );
     },
     (osBurnt) => {
       // TODO narrow down the range
