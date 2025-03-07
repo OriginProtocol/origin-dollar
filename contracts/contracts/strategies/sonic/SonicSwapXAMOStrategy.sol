@@ -7,7 +7,6 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -18,7 +17,6 @@ import { IGauge } from "../../interfaces/sonic/ISwapXGauge.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 
 contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
-    using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
 
@@ -268,7 +266,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Transfer wS to the recipient
         // Note there can be a dust amount of wS left in the strategy as
         // the burn of the pool's LP tokens is rounded up
-        IERC20(ws).safeTransfer(_recipient, _wsAmount);
+        require(
+            IERC20(ws).balanceOf(address(this)) >= _wsAmount,
+            "Not enough wS removed from pool"
+        );
+        IERC20(ws).transfer(_recipient, _wsAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -310,7 +312,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // This includes all that was removed from the SwapX pool and
         // any that was sitting in the strategy contract before the removal.
         uint256 wsBalance = IERC20(ws).balanceOf(address(this));
-        IERC20(ws).safeTransfer(vaultAddress, wsBalance);
+        IERC20(ws).transfer(vaultAddress, wsBalance);
 
         // Emit event for the withdrawn wS tokens
         emit Withdrawal(ws, pool, wsBalance);
@@ -528,9 +530,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         returns (uint256 lpTokens)
     {
         // Transfer wS to the pool
-        IERC20(ws).safeTransfer(pool, _wsAmount);
+        IERC20(ws).transfer(pool, _wsAmount);
         // Transfer OS to the pool
-        IERC20(os).safeTransfer(pool, osAmount);
+        IERC20(os).transfer(pool, osAmount);
 
         // Mint LP tokens from the pool
         lpTokens = IPair(pool).mint(address(this));
@@ -553,7 +555,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IGauge(gauge).withdraw(lpTokens);
 
         // Transfer the pool LP tokens to the pool
-        IERC20(pool).safeTransfer(pool, lpTokens);
+        IERC20(pool).transfer(pool, lpTokens);
 
         // Burn the LP tokens and transfer the wS and OS back to the strategy
         IPair(pool).burn(address(this));
@@ -571,7 +573,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         address _tokenOut
     ) internal {
         // Transfer in tokens to the pool
-        IERC20(_tokenIn).safeTransfer(pool, _amountIn);
+        IERC20(_tokenIn).transfer(pool, _amountIn);
 
         // Calculate how much out tokens we get from the swap
         uint256 amountOut = IPair(pool).getAmountOut(_amountIn, _tokenIn);
