@@ -628,12 +628,15 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         value = (lpTokens * totalValueOfPool) / totalSupply;
     }
 
-    /// @dev Compute the invariant for a SwapX stable pool.
-    /// This assumed both x and y tokens are to 18 decimals which is checked in the constructor.
-    /// invariant: k = x^3 * y + x * y^3
-    /// @param x The amount of Wrapped S (wS) tokens in the pool
-    /// @param y The amount of the OS tokens in the pool
-    /// @return k The invariant of the SwapX stable pool
+    /**
+     * @dev Compute the invariant for a SwapX stable pool.
+     * This assumed both x and y tokens are to 18 decimals which is checked in the constructor.
+     * invariant: k = x^3 * y + x * y^3
+     * @dev This implementation is copied from SwapX's Pair contract.
+     * @param x The amount of Wrapped S (wS) tokens in the pool
+     * @param y The amount of the OS tokens in the pool
+     * @return k The invariant of the SwapX stable pool
+     */
     function _invariant(uint256 x, uint256 y)
         internal
         pure
@@ -641,6 +644,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     {
         uint256 _a = (x * y) / PRECISION;
         uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
+        // slither-disable-next-line divide-before-multiply
         k = (_a * _b) / PRECISION;
     }
 
