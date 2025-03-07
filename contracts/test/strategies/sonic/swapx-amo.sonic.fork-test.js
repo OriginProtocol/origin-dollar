@@ -325,11 +325,11 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Vault should be able to partially withdraw", async () => {
       await assertWithdrawPartial(parseUnits("1000"));
     });
-    it("Strategist should add a little OS to the pool", async () => {
+    it("Strategist should swap a little OS to the pool", async () => {
       const osAmount = parseUnits("0.3");
       await assertSwapOTokensToPool(osAmount, fixture);
     });
-    it("Strategist should add a lot of OS to the pool", async () => {
+    it("Strategist should swap a lot of OS to the pool", async () => {
       const osAmount = parseUnits("5000");
       await assertSwapOTokensToPool(osAmount, fixture);
     });
@@ -379,7 +379,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Vault should be able to partially withdraw", async () => {
       await assertWithdrawPartial(parseUnits("1000"));
     });
-    it("Strategist should add a little OS to the pool", async () => {
+    it("Strategist should swap a little OS to the pool", async () => {
       const osAmount = parseUnits("8");
       await assertSwapOTokensToPool(osAmount, fixture);
     });
@@ -474,7 +474,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // Swap wS into the pool and OS out
       await poolSwapTokensIn(wS, parseUnits("1006000"));
 
-      await logSnapData(await snapData(), "After swapping wS into the pool");
+      await logSnapData(await snapData(), "\nAfter swapping wS into the pool");
 
       // Assert the strategy's balance
       expect(await swapXAMOStrategy.checkBalance(wS.address)).to.equal(
@@ -582,6 +582,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
     const stratBalance = await swapXAMOStrategy.checkBalance(wS.address);
     const osSupply = await oSonic.totalSupply();
+    const vaultAssets = await oSonicVault.totalValue();
     const poolSupply = await swapXPool.totalSupply();
     const { _reserve0: wsReserves, _reserve1: osReserves } =
       await swapXPool.getReserves();
@@ -595,6 +596,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     return {
       stratBalance,
       osSupply,
+      vaultAssets,
       poolSupply,
       reserves: { ws: wsReserves, os: osReserves },
       stratGaugeBalance,
@@ -602,6 +604,60 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultWSBalance,
       stratWSBalance,
     };
+  };
+
+  const logSnapData = async (data, message) => {
+    const totalReserves = data.reserves.ws.add(data.reserves.os);
+    const reserversPercentage = {
+      ws: data.reserves.ws.mul(10000).div(totalReserves),
+      os: data.reserves.os.mul(10000).div(totalReserves),
+    };
+    if (message) {
+      log(message);
+    }
+    log(`Strategy balance    : ${formatUnits(data.stratBalance)}`);
+    log(`OS supply           : ${formatUnits(data.osSupply)}`);
+    log(`Vault assets        : ${formatUnits(data.vaultAssets)}`);
+    log(`pool supply         : ${formatUnits(data.poolSupply)}`);
+    log(
+      `reserves wS         : ${formatUnits(data.reserves.ws)} ${formatUnits(
+        reserversPercentage.ws,
+        2
+      )}%`
+    );
+    log(
+      `reserves OS         : ${formatUnits(data.reserves.os)} ${formatUnits(
+        reserversPercentage.os,
+        2
+      )}%`
+    );
+    log(`strat gauge balance : ${formatUnits(data.stratGaugeBalance)}`);
+    log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
+    log(`vault wS balance    : ${formatUnits(data.vaultWSBalance)}`);
+    log(`strat wS balance    : ${formatUnits(data.stratWSBalance)}`);
+  };
+
+  const logProfit = async (dataBefore) => {
+    const { oSonic, oSonicVault } = fixture;
+
+    const osSupplyAfter = await oSonic.totalSupply();
+    const vaultAssetsAfter = await oSonicVault.totalValue();
+    const profit = vaultAssetsAfter
+      .sub(dataBefore.vaultAssets)
+      .add(dataBefore.osSupply.sub(osSupplyAfter));
+    log(
+      `Change vault assets : ${formatUnits(
+        vaultAssetsAfter.sub(dataBefore.vaultAssets)
+      )}`
+    );
+    log(
+      `Change OS supply    : ${formatUnits(
+        dataBefore.osSupply.sub(osSupplyAfter)
+      )}`
+    );
+    log(`Profit              : ${formatUnits(profit)}`);
+
+    return profit;
   };
 
   const assertChangedData = async (dataBefore, delta) => {
@@ -684,7 +740,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
 
     const dataBefore = await snapData();
-    await logSnapData(dataBefore, "Before depositing wS to strategy");
+    await logSnapData(dataBefore, "\nBefore depositing wS to strategy");
 
     const { lpMintAmount, osMintAmount } = await calcOSMintAmount(
       wsDepositAmount
@@ -701,8 +757,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
     await logSnapData(
       await snapData(),
-      `After depositing ${formatUnits(wsDepositAmount)} wS to strategy`
+      `\nAfter depositing ${formatUnits(wsDepositAmount)} wS to strategy`
     );
+    await logProfit(dataBefore);
 
     // Check emitted events
     await expect(tx)
@@ -740,7 +797,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     // Now try to withdraw all the wS from the strategy
     const tx = await swapXAMOStrategy.connect(oSonicVaultSigner).withdrawAll();
 
-    await logSnapData(await snapData());
+    await logSnapData(await snapData(), "\nAfter full withdraw");
+    await logProfit(dataBefore);
 
     // Check emitted events
     await expect(tx)
@@ -786,6 +844,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       .connect(oSonicVaultSigner)
       .withdraw(oSonicVault.address, wS.address, wsWithdrawAmount);
 
+    await logSnapData(
+      await snapData(),
+      `\nAfter withdraw of ${formatUnits(wsWithdrawAmount)}`
+    );
+    await logProfit(dataBefore);
+
     // Check emitted events
     await expect(tx)
       .to.emit(swapXAMOStrategy, "Withdrawal")
@@ -823,14 +887,24 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   }
 
   async function assertSwapAssetsToPool(wsAmount) {
-    const { swapXAMOStrategy, strategist } = fixture;
+    const { swapXAMOStrategy, swapXPool, strategist, wS } = fixture;
 
     const dataBefore = await snapData();
+    await logSnapData(dataBefore, "Before swapping assets to the pool");
+
+    const { lpBurnAmount: expectedLpBurnAmount, osBurnAmount: osBurnAmount1 } =
+      await calcOSWithdrawAmount(wsAmount);
+    // TODO this is not accurate as the liquidity needs to be removed first
+    const osBurnAmount2 = await swapXPool.getAmountOut(wsAmount, wS.address);
+    const osBurnAmount = osBurnAmount1.add(osBurnAmount2);
 
     // Swap wS to the pool and burn the received OS from the pool
     const tx = await swapXAMOStrategy
       .connect(strategist)
       .swapAssetsToPool(wsAmount);
+
+    await logSnapData(await snapData(), "\nAfter swapping assets to the pool");
+    await logProfit(dataBefore);
 
     // Check emitted event
     await expect(tx).to.emittedEvent("SwapAssetsToPool", [
@@ -841,25 +915,21 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
           "SwapAssetsToPool event wsAmount"
         );
       },
-      (lpTokens) => {
-        // TODO better calculate the value of LP tokens
-        expect(lpTokens).to.approxEqualTolerance(
-          wsAmount,
+      expectedLpBurnAmount,
+      (actualOsBurnAmount) => {
+        // TODO this can be tightened once osBurnAmount is more accurately calculated
+        expect(actualOsBurnAmount).to.approxEqualTolerance(
+          osBurnAmount,
           10,
-          "SwapAssetsToPool lpTokens"
+          "SwapAssetsToPool event osBurnt"
         );
-      },
-      (osBurnt) => {
-        // TODO narrow down the range
-        expect(osBurnt).to.gt(wsAmount, 1);
       },
     ]);
 
-    // TODO check the change in the strategy's balance
     await assertChangedData(
       dataBefore,
       {
-        // stratBalance: 0,
+        // stratBalance: osBurnAmount.mul(-1),
         vaultWSBalance: 0,
         stratGaugeBalance: 0,
       },
@@ -870,6 +940,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   async function assertSwapOTokensToPool(osAmount) {
     const { swapXAMOStrategy, strategist } = fixture;
 
+    const dataBefore = await snapData();
+
     // Mint OS and swap into the pool, then mint more OS to add with the wS swapped out
     const tx = await swapXAMOStrategy
       .connect(strategist)
@@ -879,6 +951,18 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     await expect(tx)
       .emit(swapXAMOStrategy, "SwapOTokensToPool")
       .withNamedArgs({ osMinted: osAmount });
+
+    await logProfit(dataBefore);
+
+    await assertChangedData(
+      dataBefore,
+      {
+        // stratBalance: osBurnAmount.mul(-1),
+        vaultWSBalance: 0,
+        stratGaugeBalance: 0,
+      },
+      fixture
+    );
   }
 
   // Calculate the minted OS amount for a deposit
@@ -948,33 +1032,3 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     };
   }
 });
-
-const logSnapData = async (data, message) => {
-  const totalReserves = data.reserves.ws.add(data.reserves.os);
-  const reserversPercentage = {
-    ws: data.reserves.ws.mul(10000).div(totalReserves),
-    os: data.reserves.os.mul(10000).div(totalReserves),
-  };
-  if (message) {
-    log(message);
-  }
-  log(`Strategy balance    : ${formatUnits(data.stratBalance)}`);
-  log(`OS supply           : ${formatUnits(data.osSupply)}`);
-  log(`pool supply         : ${formatUnits(data.poolSupply)}`);
-  log(
-    `reserves wS         : ${formatUnits(data.reserves.ws)} ${formatUnits(
-      reserversPercentage.ws,
-      2
-    )}%`
-  );
-  log(
-    `reserves OS         : ${formatUnits(data.reserves.os)} ${formatUnits(
-      reserversPercentage.os,
-      2
-    )}%`
-  );
-  log(`strat gauge balance : ${formatUnits(data.stratGaugeBalance)}`);
-  log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
-  log(`vault wS balance    : ${formatUnits(data.vaultWSBalance)}`);
-  log(`strat wS balance    : ${formatUnits(data.stratWSBalance)}`);
-};
