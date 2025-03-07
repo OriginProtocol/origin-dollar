@@ -32,7 +32,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     uint128 public yieldAssets;
     uint64 public yieldEnd;
     bool private _initialized2;
-    uint256[47] private __gap;
+    uint256[48] private __gap;
 
     uint256 public constant YIELD_TIME = 1 days - 1 hours;
 
