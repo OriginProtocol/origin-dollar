@@ -266,6 +266,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(osToBurn);
 
         // Transfer wS to the recipient
+        // Note there can be a dust amount of wS left in the strategy as
+        // the burn of the pool's LP tokens is rounded up
         IERC20(ws).safeTransfer(_recipient, _wsAmount);
 
         // Ensure solvency of the vault
@@ -344,10 +346,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _withdrawFromGaugeAndPool(lpTokens);
 
         // 2. Swap wS for OS against the pool
-        // Get the wS balance in the strategy as it could be less than the wsAmount due to rounding
-        uint256 wsInStrategy = IERC20(ws).balanceOf(address(this));
         // Swap exact amount of wS for OS against the pool
-        _swapExactTokensForTokens(wsInStrategy, ws, os);
+        // There can be a dust amount of wS left in the strategy as the burn of the pool's LP tokens is rounded up
+        _swapExactTokensForTokens(_wsAmount, ws, os);
 
         // 3. Burn all the OS left in the strategy from the remove liquidity and swap
         uint256 osToBurn = IERC20(os).balanceOf(address(this));
@@ -356,7 +357,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit SwapAssetsToPool(wsInStrategy, lpTokens, osToBurn);
+        emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
     }
 
     /**
@@ -511,7 +512,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         (uint256 wsReserves, , ) = IPair(pool).getReserves();
         require(wsReserves > 0, "Empty pool");
 
-        lpTokens = ((_wsAmount + 1) * IPair(pool).totalSupply()) / wsReserves;
+        lpTokens = (_wsAmount * IPair(pool).totalSupply()) / wsReserves;
+        lpTokens += 1; // Add 1 to ensure we get enough LP tokens with rounding
     }
 
     /**
