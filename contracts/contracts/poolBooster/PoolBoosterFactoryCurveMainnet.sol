@@ -1,143 +1,120 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Interfaces
-import { ICreateX } from "../interfaces/ICreateX.sol";
-
 // Contracts
-import { CurvePoolBoosterProxy } from "../proxies/Proxies.sol";
 import { PoolBoosterCurveMainnet } from "./PoolBoosterCurveMainnet.sol";
 import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { Strategizable } from "../governance/Strategizable.sol";
+import { SimpleBeaconProxy } from "../proxies/SimpleBeaconProxy.sol";
 
-contract PoolBoosterFactoryCurveMainnet is AbstractPoolBoosterFactory {
+contract PoolBoosterFactoryCurveMainnet is
+    Initializable,
+    Strategizable,
+    AbstractPoolBoosterFactory
+{
     uint256 public constant version = 1;
-
-    ICreateX public constant createX =
-        ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
-
-    struct CreatePoolBooster {
-        uint256 targetChainId;
-        address curveGauge;
-        address strategist;
-        uint16 fee;
-        address feeCollector;
-        address campaignRemoteManager;
-        address votemarket;
-        bytes32 entropySalt;
-    }
+    uint256 public immutable targetChainId;
+    address public votemarket;
+    address public campaignRemoteManager;
 
     constructor(
         address _oToken,
-        address _governor,
-        address _centralRegistry
-    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {}
-
-    function createPoolBoosterCurveMainnet(CreatePoolBooster calldata _args)
-        external
-        onlyGovernor
-    {
-        require(_args.curveGauge != address(0), "Invalid curve gauge address");
-        require(_args.entropySalt != 0, "Invalid entropy salt");
-        // --- Salts ---
-        bytes1 crosschainProtectionFlag = hex"00"; // Need to be 0, otherwise cross-chain is blocked.
-        bytes11 salt = bytes11(
-            keccak256(
-                abi.encodePacked(
-                    oSonic,
-                    _args.targetChainId,
-                    _args.curveGauge,
-                    _args.entropySalt
-                )
-            )
-        );
-        // deployer address || crossChainProtectionFlag || bytes11(randomness)
-        bytes32 encodedSalt = bytes32(
-            abi.encodePacked(address(this), crosschainProtectionFlag, salt)
-        );
-
-        // --- Bytecodes ---
-        // Impl
-        bytes memory bytecodeImpl = abi.encodePacked(
-            type(PoolBoosterCurveMainnet).creationCode,
-            abi.encode(_args.targetChainId, oSonic, _args.curveGauge)
-        );
-        // Proxy
-        bytes memory bytecodeProxy = abi.encodePacked(
-            type(CurvePoolBoosterProxy).creationCode
-        );
-
-        // --- Deploy ---
-        address pb = _runDeployment(
-            encodedSalt,
-            bytecodeImpl,
-            bytecodeProxy,
-            _args
-        );
-
-        _storePoolBoosterEntry(
-            pb,
-            _args.curveGauge,
-            IPoolBoostCentralRegistry.PoolBoosterType.CurveMainnetBooster
-        );
+        address _centralRegistry,
+        uint256 _targetChainId
+    ) AbstractPoolBoosterFactory(_oToken, address(0), _centralRegistry) {
+        targetChainId = _targetChainId;
+        // _setGovernor(address(0)); alreasy set in AbstractPoolBoosterFactory
+        _setStrategistAddr(address(0));
     }
 
-    // Done to avoid -stack too deep- error
-    function _runDeployment(
-        bytes32 _salt,
-        bytes memory _bytecodeImpl,
-        bytes memory _bytecodeProxy,
-        CreatePoolBooster memory _data
-    ) internal returns (address) {
-        return
-            createX.deployCreate3AndInit(
-                _salt,
-                _bytecodeProxy,
-                abi.encodeWithSignature(
-                    "initialize(address,address,bytes)",
-                    createX.deployCreate3(_salt, _bytecodeImpl),
-                    governor(),
-                    abi.encodeWithSelector(
-                        PoolBoosterCurveMainnet.initialize.selector,
-                        _data.strategist,
-                        _data.fee,
-                        _data.feeCollector,
-                        _data.campaignRemoteManager,
-                        _data.votemarket
-                    )
-                ),
-                ICreateX.Values(0, 0)
-            );
+    function initialize(
+        address _governor,
+        address _strategist,
+        address _campaignRemoteManager,
+        address _votemarket
+    ) public initializer {
+        _setGovernor(_governor);
+        _setStrategistAddr(_strategist);
+        campaignRemoteManager = _campaignRemoteManager;
+        votemarket = _votemarket;
+    }
+
+    function deployAndInitPoolBooster(
+        address _gauge,
+        address _rewardToken,
+        uint256 _entropy
+    ) public returns (address) {
+        require(_gauge != address(0), "Invalid gauge address");
+        require(_rewardToken != address(0), "Invalid reward token address");
+
+        // Compute salt
+        uint256 salt = uint256(
+            keccak256(
+                abi.encodePacked(targetChainId, _gauge, _rewardToken, _entropy)
+            )
+        );
+
+        // Deploy proxy
+        address pb = _deployContract(
+            abi.encodePacked(
+                type(SimpleBeaconProxy).creationCode,
+                abi.encode(address(this))
+            ),
+            salt
+        );
+
+        // Initialize PoolBooster
+        PoolBoosterCurveMainnet.InitParams
+            memory initParams = PoolBoosterCurveMainnet.InitParams({
+                targetChainId: targetChainId,
+                rewardToken: _rewardToken,
+                gauge: _gauge,
+                governor: governor(),
+                strategist: strategistAddr,
+                fee: 0,
+                feeCollector: strategistAddr,
+                campaignRemoteManager: campaignRemoteManager,
+                votemarket: votemarket
+            });
+        bytes memory data = abi.encodeWithSelector(
+            PoolBoosterCurveMainnet.initialize.selector,
+            initParams
+        );
+        (bool success, ) = pb.call(data);
+        require(success, "Failed to initialize PoolBooster");
+
+        // Store PoolBooster entry
+        _storePoolBoosterEntry(
+            pb,
+            _gauge,
+            IPoolBoostCentralRegistry.PoolBoosterType.CurveMainnetBooster
+        );
+
+        // Return address of the deployed PoolBooster
+        return address(pb);
     }
 
     function computePoolBoosterAddress(
-        uint256 _targetChainId,
-        address _curveGauge,
-        bytes32 _entropySalt
-    ) external view returns (address) {
-        require(_curveGauge != address(0), "Invalid curve gauge address");
-        require(_entropySalt != 0, "Invalid entropy salt");
-
-        bytes1 crosschainProtectionFlag = hex"00"; // Need to be 0, otherwise cross-chain is blocked.
-        bytes11 salt = bytes11(
+        address _gauge,
+        address _rewardToken,
+        uint256 _entropy
+    ) public view returns (address) {
+        // Compute salt
+        uint256 salt = uint256(
             keccak256(
-                abi.encodePacked(
-                    oSonic,
-                    _targetChainId,
-                    _curveGauge,
-                    _entropySalt
-                )
+                abi.encodePacked(targetChainId, _gauge, _rewardToken, _entropy)
             )
         );
-        bytes32 encodedSalt = bytes32(
-            abi.encodePacked(address(this), crosschainProtectionFlag, salt)
-        );
 
+        // Compute address
         return
-            createX.computeCreate2Address(
-                encodedSalt,
-                keccak256(
-                    abi.encodePacked(type(CurvePoolBoosterProxy).creationCode)
-                )
+            _computeAddress(
+                abi.encodePacked(
+                    type(SimpleBeaconProxy).creationCode,
+                    abi.encode(address(this))
+                ),
+                salt
             );
     }
 }

@@ -17,23 +17,38 @@ contract PoolBoosterCurveMainnet is Initializable, Strategizable, IPoolBooster {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////
+    /// --- STRUCTS && ENUMS
+    ////////////////////////////////////////////////////
+    struct InitParams {
+        uint256 targetChainId;
+        address rewardToken;
+        address gauge;
+        address governor;
+        address strategist;
+        uint16 fee;
+        address feeCollector;
+        address campaignRemoteManager;
+        address votemarket;
+    }
+
+    ////////////////////////////////////////////////////
     /// --- CONSTANTS && IMMUTABLES
     ////////////////////////////////////////////////////
     /// @notice Base fee for the contract, 100%
     uint16 public constant FEE_BASE = 10_000;
 
-    /// @notice Address of the gauge to manage
-    address public immutable gauge;
-
-    /// @notice Address of the reward token
-    address public immutable rewardToken;
-
-    /// @notice Chain id of the target chain
-    uint256 public immutable targetChainId;
-
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+    /// @notice Address of the gauge to manage
+    address public gauge;
+
+    /// @notice Address of the reward token
+    address public rewardToken;
+
+    /// @notice Chain id of the target chain
+    uint256 public targetChainId;
+
     /// @notice Fee in FEE_BASE unit payed when managing campaign.
     uint16 public fee;
 
@@ -73,35 +88,24 @@ contract PoolBoosterCurveMainnet is Initializable, Strategizable, IPoolBooster {
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
-    constructor(
-        uint256 _targetChainId,
-        address _rewardToken,
-        address _gauge
-    ) {
-        targetChainId = _targetChainId;
-        rewardToken = _rewardToken;
-        gauge = _gauge;
-
+    constructor() {
         // Prevent implementation contract to be governed
         _setGovernor(address(0));
     }
 
     /// @notice initialize function, to set up initial internal state
-    /// @param _strategist Address of the strategist
-    /// @param _fee Fee in FEE_BASE unit payed when managing campaign
-    /// @param _feeCollector Address of the fee collector
-    function initialize(
-        address _strategist,
-        uint16 _fee,
-        address _feeCollector,
-        address _campaignRemoteManager,
-        address _votemarket
-    ) external onlyGovernor initializer {
-        _setStrategistAddr(_strategist);
-        _setFee(_fee);
-        _setFeeCollector(_feeCollector);
-        _setCampaignRemoteManager(_campaignRemoteManager);
-        _setVotemarket(_votemarket);
+    /// Todo: Add more details
+    function initialize(InitParams memory params) external initializer {
+        gauge = params.gauge;
+        rewardToken = params.rewardToken;
+        targetChainId = params.targetChainId;
+
+        _setGovernor(params.governor);
+        _setStrategistAddr(params.strategist);
+        _setFee(params.fee);
+        _setFeeCollector(params.feeCollector);
+        _setCampaignRemoteManager(params.campaignRemoteManager);
+        _setVotemarket(params.votemarket);
     }
 
     ////////////////////////////////////////////////////
