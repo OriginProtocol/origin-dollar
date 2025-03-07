@@ -3,6 +3,8 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
+const { impersonateAndFund } = require("../../utils/signers");
+const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
 describe("WOETH", function () {
   if (isFork) {
@@ -10,6 +12,7 @@ describe("WOETH", function () {
   }
 
   let oeth, weth, woeth, oethVault, dai, matt, josh, governor;
+  const WOETH_YIELD_TIME = 60 * 60 * 23;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
@@ -202,6 +205,28 @@ describe("WOETH", function () {
       await woeth
         .connect(josh)
         .withdraw(oethUnits("0"), josh.address, josh.address);
+    });
+
+    it("should reduce tracked assets in case of loss of OETH funds", async () => {
+      // no active yield emissions
+      await advanceTime(100000);
+      const totalAssetsBefore = await woeth.totalAssets();
+      const woethSigner = await impersonateAndFund(woeth.address);
+
+      // make the WOETH lose OETH underlying capital. This could happen if
+      // negative rebases would be possible
+      await oeth.connect(woethSigner).transfer(josh.address, oethUnits("50"));
+
+      await woeth.scheduleYield();
+      const timestamp = await time.latest();
+
+      const totalAssetsAfter = await woeth.totalAssets();
+
+      await expect(totalAssetsBefore).to.equal(oethUnits("100"));
+      await expect(totalAssetsAfter).to.equal(oethUnits("50"));
+      await expect(await woeth.trackedAssets()).to.equal(oethUnits("50"));
+      await expect(await woeth.yieldAssets()).to.equal(0);
+      await expect(await woeth.yieldEnd()).to.equal(timestamp + WOETH_YIELD_TIME);
     });
   });
 
