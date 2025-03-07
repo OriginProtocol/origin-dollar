@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "chainId": "146",
+  "createdAt": 1741357990,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0xAdDEA7933Db7d83855786EB43a238111C69B00b6",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          },
+          {
+            "type": "uint256",
+            "name": "delay"
+          }
+        ],
+        "name": "scheduleBatch",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "targets": "[\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\"]",
+        "values": "[\"0\",\"0\",\"0\",\"0\"]",
+        "payloads": "[\"0x06a2da3d00000000000000000000000051caf8b6d184e46aeb606472258242aacee3e23b\",\"0x9d01fc72000000000000000000000000c0aac9bb9fb72a77e3bc8bee46d3e227c84a54c0000000000000000000000000a9d3b1408353d05064d47daf0dc98e104eb9c98a\",\"0x9d01fc72000000000000000000000000d1cb1622a50506f0fddf329cb857a0935c7fbbf90000000000000000000000000a156fe00de8a9fbfaa10abb6eac864d7374fba5\",\"0x9d01fc72000000000000000000000000784dd93f3c42dcbf88d45e6ad6d3cc20da169a60000000000000000000000000efb4da71d2fc85ceced7ad15f71e723ccd25f998\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x7ac95d6d15b82e7c6d4ea9fb3dd400a077737ec1331137273f57d2cec406b939",
+        "delay": "86400"
+      }
+    }
+  ]
+}
