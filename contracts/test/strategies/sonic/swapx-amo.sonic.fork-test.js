@@ -92,38 +92,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit wS to AMO strategy", async function () {
-      const { swapXAMOStrategy, oSonic, swapXPool, oSonicVaultSigner, wS } =
-        fixture;
-
-      const dataBefore = await snapData();
-      await logSnapData(dataBefore);
-
-      const wsDepositAmount = await parseUnits("5000");
-      const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
-
-      // Vault transfers wS to strategy
-      await wS
-        .connect(oSonicVaultSigner)
-        .transfer(swapXAMOStrategy.address, wsDepositAmount);
-      // Vault calls deposit on the strategy
-      const tx = await swapXAMOStrategy
-        .connect(oSonicVaultSigner)
-        .deposit(wS.address, wsDepositAmount);
-
-      // Check emitted events
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(wS.address, swapXPool.address, wsDepositAmount);
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(oSonic.address, swapXPool.address, osMintAmount);
-
-      await assertChangedData(dataBefore, {
-        stratBalance: wsDepositAmount.add(osMintAmount),
-        osSupply: osMintAmount,
-        reserves: { ws: wsDepositAmount, os: osMintAmount },
-        vaultWSBalance: wsDepositAmount.mul(-1),
-      });
+      await assertDeposit(parseUnits("2000"));
     });
     it("Only vault can deposit wS to AMO strategy", async function () {
       const {
@@ -187,47 +156,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit wS to AMO strategy", async function () {
-      const {
-        clement,
-        swapXAMOStrategy,
-        oSonic,
-        oSonicVault,
-        swapXPool,
-        oSonicVaultSigner,
-        wS,
-      } = fixture;
-
-      const wsDepositAmount = await parseUnits("5000");
-      await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
-
-      const dataBefore = await snapData();
-      await logSnapData(dataBefore);
-
-      const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
-
-      // Vault transfers wS to strategy
-      await wS
-        .connect(oSonicVaultSigner)
-        .transfer(swapXAMOStrategy.address, wsDepositAmount);
-      // Vault calls deposit on the strategy
-      const tx = await swapXAMOStrategy
-        .connect(oSonicVaultSigner)
-        .deposit(wS.address, wsDepositAmount);
-
-      // Check emitted events
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(wS.address, swapXPool.address, wsDepositAmount);
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(oSonic.address, swapXPool.address, osMintAmount);
-
-      await assertChangedData(dataBefore, {
-        stratBalance: wsDepositAmount.add(osMintAmount),
-        osSupply: osMintAmount,
-        reserves: { ws: wsDepositAmount, os: osMintAmount },
-        vaultWSBalance: wsDepositAmount.mul(-1),
-      });
+      await assertDeposit(parseUnits("5000"));
     });
     it("Vault should be able to withdraw all", async () => {
       const { swapXAMOStrategy, swapXPool, oSonic, oSonicVaultSigner, wS } =
@@ -337,59 +266,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit wS to AMO strategy", async function () {
-      const {
-        clement,
-        swapXAMOStrategy,
-        oSonic,
-        oSonicVault,
-        swapXPool,
-        oSonicVaultSigner,
-        wS,
-      } = fixture;
-
-      const wsDepositAmount = await parseUnits("5000");
-      await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
-
-      const dataBefore = await snapData();
-      await logSnapData(dataBefore, "Before depositing wS to strategy");
-
-      const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
-
-      // Vault transfers wS to strategy
-      await wS
-        .connect(oSonicVaultSigner)
-        .transfer(swapXAMOStrategy.address, wsDepositAmount);
-      // Vault calls deposit on the strategy
-      const tx = await swapXAMOStrategy
-        .connect(oSonicVaultSigner)
-        .deposit(wS.address, wsDepositAmount);
-
-      await logSnapData(
-        await snapData(),
-        `After depositing ${formatUnits(wsDepositAmount)} wS to strategy`
-      );
-
-      // Check emitted events
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(wS.address, swapXPool.address, wsDepositAmount);
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(oSonic.address, swapXPool.address, osMintAmount);
-
-      // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
-      const depositValue = calcReserveValue({
-        ws: wsDepositAmount,
-        os: osMintAmount,
-      });
-      log(`Value of deposit: ${formatUnits(depositValue)}`);
-
-      await assertChangedData(dataBefore, {
-        stratBalance: depositValue,
-        osSupply: osMintAmount,
-        reserves: { ws: wsDepositAmount, os: osMintAmount },
-        vaultWSBalance: wsDepositAmount.mul(-1),
-      });
+      await assertDeposit(parseUnits("5000"));
     });
     it("Strategist should swap a little assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3"));
@@ -441,6 +318,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
+    it("Vault should deposit wS to AMO strategy", async function () {
+      await assertDeposit(parseUnits("12000"));
+    });
     it("Strategist should swap a little assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3"));
     });
@@ -489,54 +369,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       fixture = await loadFixture();
     });
     it("Vault should deposit wS to AMO strategy", async function () {
-      const {
-        clement,
-        swapXAMOStrategy,
-        oSonic,
-        oSonicVault,
-        swapXPool,
-        oSonicVaultSigner,
-        wS,
-      } = fixture;
-
-      const wsDepositAmount = await parseUnits("5000");
-      await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
-
-      const dataBefore = await snapData();
-      await logSnapData(dataBefore);
-
-      const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
-
-      // Vault transfers wS to strategy
-      await wS
-        .connect(oSonicVaultSigner)
-        .transfer(swapXAMOStrategy.address, wsDepositAmount);
-      // Vault calls deposit on the strategy
-      const tx = await swapXAMOStrategy
-        .connect(oSonicVaultSigner)
-        .deposit(wS.address, wsDepositAmount);
-
-      // Check emitted events
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(wS.address, swapXPool.address, wsDepositAmount);
-      await expect(tx)
-        .to.emit(swapXAMOStrategy, "Deposit")
-        .withArgs(oSonic.address, swapXPool.address, osMintAmount);
-
-      // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
-      const depositValue = calcReserveValue({
-        ws: wsDepositAmount,
-        os: osMintAmount,
-      });
-      log(`Value of deposit: ${formatUnits(depositValue)}`);
-
-      await assertChangedData(dataBefore, {
-        stratBalance: depositValue,
-        osSupply: osMintAmount,
-        reserves: { ws: wsDepositAmount, os: osMintAmount },
-        vaultWSBalance: wsDepositAmount.mul(-1),
-      });
+      await assertDeposit(parseUnits("6000"));
     });
     it("Strategist should add a little OS to the pool", async () => {
       const osAmount = parseUnits("0.3");
@@ -582,6 +415,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
     beforeEach(async () => {
       fixture = await loadFixture();
+    });
+    it("Vault should deposit wS to AMO strategy", async function () {
+      await assertDeposit(parseUnits("18000"));
     });
     it("Strategist should add a little OS to the pool", async () => {
       const osAmount = parseUnits("8");
@@ -854,6 +690,61 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
     }
   };
+
+  async function assertDeposit(wsDepositAmount) {
+    const {
+      clement,
+      swapXAMOStrategy,
+      oSonic,
+      oSonicVault,
+      swapXPool,
+      oSonicVaultSigner,
+      wS,
+    } = fixture;
+
+    await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
+
+    const dataBefore = await snapData();
+    await logSnapData(dataBefore, "Before depositing wS to strategy");
+
+    const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
+
+    // Vault transfers wS to strategy
+    await wS
+      .connect(oSonicVaultSigner)
+      .transfer(swapXAMOStrategy.address, wsDepositAmount);
+    // Vault calls deposit on the strategy
+    const tx = await swapXAMOStrategy
+      .connect(oSonicVaultSigner)
+      .deposit(wS.address, wsDepositAmount);
+
+    await logSnapData(
+      await snapData(),
+      `After depositing ${formatUnits(wsDepositAmount)} wS to strategy`
+    );
+
+    // Check emitted events
+    await expect(tx)
+      .to.emit(swapXAMOStrategy, "Deposit")
+      .withArgs(wS.address, swapXPool.address, wsDepositAmount);
+    await expect(tx)
+      .to.emit(swapXAMOStrategy, "Deposit")
+      .withArgs(oSonic.address, swapXPool.address, osMintAmount);
+
+    // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
+    const depositValue = calcReserveValue({
+      ws: wsDepositAmount,
+      os: osMintAmount,
+    });
+    log(`Value of deposit: ${formatUnits(depositValue)}`);
+
+    await assertChangedData(dataBefore, {
+      stratBalance: depositValue,
+      osSupply: osMintAmount,
+      reserves: { ws: wsDepositAmount, os: osMintAmount },
+      vaultWSBalance: wsDepositAmount.mul(-1),
+    });
+  }
 
   async function assertSwapAssetsToPool(wsAmount) {
     const { swapXAMOStrategy, strategist } = fixture;
