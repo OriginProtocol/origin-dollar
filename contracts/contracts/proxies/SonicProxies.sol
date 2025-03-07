@@ -51,3 +51,10 @@ contract OSonicHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract SonicCurveAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice SonicSwapXAMOStrategyProxy delegates calls to a SonicSwapXAMOStrategy implementation
+ */
+contract SonicSwapXAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

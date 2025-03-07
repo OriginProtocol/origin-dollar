@@ -9,7 +9,7 @@
 
 legend
 blue - Origin
-' green - new
+green - new
 ' orange - changed
 ' yellow - phase2
 white - 3rd Party
@@ -74,6 +74,20 @@ object "Curve OS/wS\nGauge" as curveGauge <<Curve>> {
     lp: OSwS-gauge
 }
 
+object "SwapX AMO Strategy" as swapXAmoStrat <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+    reward: SWPx
+}
+
+object "SwapX OS/wS\nPool" as swapXPool <<SwapX>> {
+    assets: OS, wS
+    lp: OSwS
+}
+
+object "SwapX OS/wS\nGauge" as swapXGauge <<SwapX>> {
+    asset: OSwS
+    lp: OSwS-gauge
+}
 
 wos <. zap
 zap ..> os
@@ -96,5 +110,8 @@ harv <..> curveAmoStrat
 curveAmoStrat ..> curvePool
 curveAmoStrat ..> curveGauge
 
+harv <..> swapXAmoStrat
+swapXAmoStrat ..> swapXPool
+swapXAmoStrat ..> swapXGauge
 
 @enduml
