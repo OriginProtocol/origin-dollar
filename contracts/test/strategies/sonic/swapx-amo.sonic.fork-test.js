@@ -208,7 +208,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertWithdrawAll();
     });
     it("Vault should be able to partially withdraw", async () => {
-      await assertWithdrawPartial(parseUnits("1000"));
+      await assertWithdrawPartial(parseUnits("4000"));
     });
     it("Strategist should swap a little assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3"));
@@ -642,10 +642,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       // If the wS reserves delta is a function, call it to check the wS reserves
       if (typeof delta.reserves.ws == "function") {
+        // Call test function to check the wS reserves
         delta.reserves.ws(wsReserves);
-
-        // Exit early as we can't calculate the gauge balance
-        return;
       } else {
         expect(wsReserves, "wS reserves").to.equal(
           dataBefore.reserves.ws.add(delta.reserves.ws)
@@ -655,20 +653,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       expect(osReserves, "OS reserves").to.equal(
         dataBefore.reserves.os.add(delta.reserves.os)
       );
+    }
 
+    if (delta.stratGaugeBalance) {
       // Check the strategy's gauge balance
-      // Calculate the liquidity added to the pool
-      const wsLiquidity = delta.reserves.ws
-        .mul(dataBefore.poolSupply)
-        .div(dataBefore.reserves.ws);
-      const osLiquidity = delta.reserves.os
-        .mul(dataBefore.poolSupply)
-        .div(dataBefore.reserves.os);
-      const deltaStratGaugeBalance = wsLiquidity.lt(osLiquidity)
-        ? wsLiquidity
-        : osLiquidity;
       const expectedStratGaugeBalance = dataBefore.stratGaugeBalance.add(
-        deltaStratGaugeBalance
+        delta.stratGaugeBalance
       );
       expect(
         await swapXGauge.balanceOf(swapXAMOStrategy.address)
@@ -696,7 +686,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const dataBefore = await snapData();
     await logSnapData(dataBefore, "Before depositing wS to strategy");
 
-    const osMintAmount = await calcOSMintAmount(fixture, wsDepositAmount);
+    const { lpMintAmount, osMintAmount } = await calcOSMintAmount(
+      wsDepositAmount
+    );
 
     // Vault transfers wS to strategy
     await wS
@@ -732,6 +724,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       osSupply: osMintAmount,
       reserves: { ws: wsDepositAmount, os: osMintAmount },
       vaultWSBalance: wsDepositAmount.mul(-1),
+      gaugeSupply: lpMintAmount,
     });
   }
 
@@ -768,6 +761,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       osSupply: osBurnAmount.mul(-1),
       reserves: { ws: wsWithdrawAmount.mul(-1), os: osBurnAmount.mul(-1) },
       vaultWSBalance: wsWithdrawAmount,
+      stratGaugeBalance: dataBefore.gaugeSupply.mul(-1),
     });
   }
 
@@ -783,7 +777,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
     const dataBefore = await snapData();
 
-    const osBurnAmount = await calcOSWithdrawAmount(wsWithdrawAmount);
+    const { lpBurnAmount, osBurnAmount } = await calcOSWithdrawAmount(
+      wsWithdrawAmount
+    );
 
     // Now try to withdraw the wS from the strategy
     const tx = await swapXAMOStrategy
@@ -822,6 +818,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         os: osBurnAmount.mul(-1),
       },
       vaultWSBalance: wsWithdrawAmount,
+      gaugeSupply: lpBurnAmount.mul(-1),
     });
   }
 
@@ -864,6 +861,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       {
         // stratBalance: 0,
         vaultWSBalance: 0,
+        stratGaugeBalance: 0,
       },
       fixture
     );
@@ -884,7 +882,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   }
 
   // Calculate the minted OS amount for a deposit
-  async function calcOSMintAmount(fixture, wsDepositAmount) {
+  async function calcOSMintAmount(wsDepositAmount) {
     const { swapXPool } = fixture;
 
     // Get the reserves of the pool
@@ -894,7 +892,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const osMintAmount = wsDepositAmount.mul(osReserves).div(wsReserves);
     log(`OS mint amount      : ${formatUnits(osMintAmount)}`);
 
-    return osMintAmount;
+    const lpTotalSupply = await swapXPool.totalSupply();
+    const lpMintAmount = wsDepositAmount.mul(lpTotalSupply).div(wsReserves);
+
+    return { lpMintAmount, osMintAmount };
   }
 
   // Calculate the amount of OS burnt from a withdraw
@@ -916,7 +917,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
     log(`OS burn amount : ${formatUnits(osBurnAmount)}`);
 
-    return osBurnAmount;
+    return { lpBurnAmount, osBurnAmount };
   }
 
   // Calculate the OS and wS amounts from a withdrawAll
