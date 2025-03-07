@@ -133,7 +133,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     }
 
     /**
-     * @notice Returns the assets currently backing the total supply. 
+     * @notice Returns the assets currently backing the total supply.
      *    Does not include future yield held that will stream per block.
      * @return totalAssets()
      */

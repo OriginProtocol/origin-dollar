@@ -4,7 +4,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 const { impersonateAndFund } = require("../../utils/signers");
-const { time } = require('@nomicfoundation/hardhat-network-helpers');
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("WOETH", function () {
   if (isFork) {
@@ -226,7 +226,9 @@ describe("WOETH", function () {
       await expect(totalAssetsAfter).to.equal(oethUnits("50"));
       await expect(await woeth.trackedAssets()).to.equal(oethUnits("50"));
       await expect(await woeth.yieldAssets()).to.equal(0);
-      await expect(await woeth.yieldEnd()).to.equal(timestamp + WOETH_YIELD_TIME);
+      await expect(await woeth.yieldEnd()).to.equal(
+        timestamp + WOETH_YIELD_TIME
+      );
     });
   });
 
