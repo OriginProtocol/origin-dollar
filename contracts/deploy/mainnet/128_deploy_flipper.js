@@ -13,12 +13,17 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    const dFlipper = await deployWithConfirmation("Flipper", [
-      addresses.mainnet.OUSD,
-      addresses.mainnet.USDS,
-      addresses.mainnet.USDC,
-      addresses.mainnet.USDT,
-    ]);
+    const dFlipper = await deployWithConfirmation(
+      "Flipper",
+      [
+        addresses.mainnet.OUSD,
+        addresses.mainnet.USDS,
+        addresses.mainnet.USDC,
+        addresses.mainnet.USDT,
+      ],
+      undefined,
+      true
+    );
 
     const cFlipper = await ethers.getContractAt("Flipper", dFlipper.address);
 
