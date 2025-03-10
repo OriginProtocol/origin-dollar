@@ -21,20 +21,19 @@ contract PoolBoosterFactoryCurveMainnet is
     constructor(
         address _oToken,
         address _centralRegistry,
-        uint256 _targetChainId
-    ) AbstractPoolBoosterFactory(_oToken, address(0), _centralRegistry) {
+        uint256 _targetChainId,
+        address _governor
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
         targetChainId = _targetChainId;
-        // _setGovernor(address(0)); alreasy set in AbstractPoolBoosterFactory
+        _setGovernor(address(0));
         _setStrategistAddr(address(0));
     }
 
     function initialize(
-        address _governor,
         address _strategist,
         address _campaignRemoteManager,
         address _votemarket
-    ) public initializer {
-        _setGovernor(_governor);
+    ) public initializer onlyGovernor {
         _setStrategistAddr(_strategist);
         campaignRemoteManager = _campaignRemoteManager;
         votemarket = _votemarket;
@@ -65,8 +64,8 @@ contract PoolBoosterFactoryCurveMainnet is
         );
 
         // Initialize PoolBooster
-        PoolBoosterCurveMainnet.InitParams
-            memory initParams = PoolBoosterCurveMainnet.InitParams({
+        PoolBoosterCurveMainnet(payable(address(pb))).initialize(
+            PoolBoosterCurveMainnet.InitParams({
                 targetChainId: targetChainId,
                 rewardToken: _rewardToken,
                 gauge: _gauge,
@@ -76,13 +75,8 @@ contract PoolBoosterFactoryCurveMainnet is
                 feeCollector: strategistAddr,
                 campaignRemoteManager: campaignRemoteManager,
                 votemarket: votemarket
-            });
-        bytes memory data = abi.encodeWithSelector(
-            PoolBoosterCurveMainnet.initialize.selector,
-            initParams
+            })
         );
-        (bool success, ) = pb.call(data);
-        require(success, "Failed to initialize PoolBooster");
 
         // Store PoolBooster entry
         _storePoolBoosterEntry(

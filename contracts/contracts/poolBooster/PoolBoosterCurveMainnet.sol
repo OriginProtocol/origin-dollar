@@ -37,8 +37,6 @@ contract PoolBoosterCurveMainnet is Initializable, Strategizable, IPoolBooster {
     /// @notice Base fee for the contract, 100%
     uint16 public constant FEE_BASE = 10_000;
 
-    address public immutable FACTORY;
-
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
@@ -93,15 +91,11 @@ contract PoolBoosterCurveMainnet is Initializable, Strategizable, IPoolBooster {
     constructor() {
         // Prevent implementation contract to be governed
         _setGovernor(address(0));
-
-        // Set the factory address
-        FACTORY = msg.sender;
     }
 
     /// @notice initialize function, to set up initial internal state
     /// Todo: Add more details
     function initialize(InitParams memory params) external initializer {
-        require(msg.sender == FACTORY, "Only factory can initialize");
         gauge = params.gauge;
         rewardToken = params.rewardToken;
         targetChainId = params.targetChainId;
@@ -424,7 +418,7 @@ contract PoolBoosterCurveMainnet is Initializable, Strategizable, IPoolBooster {
     }
 
     /// @notice Internal logic to set the votemarket address
-    function _setVotemarket(address _votemarket) internal onlyGovernor {
+    function _setVotemarket(address _votemarket) internal {
         require(_votemarket != address(0), "Invalid votemarket");
         votemarket = _votemarket;
         emit VotemarketUpdated(_votemarket);

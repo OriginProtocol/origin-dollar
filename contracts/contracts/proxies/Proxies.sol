@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import { UpgradeableBeacon } from "./UpgradeableBeacon.sol";
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
 
 /**
@@ -332,3 +333,5 @@ contract PoolBoostCentralRegistryProxy is
 {
 
 }
+
+contract PoolBoosterFactoryCurveMainnetProxy is UpgradeableBeacon {}
