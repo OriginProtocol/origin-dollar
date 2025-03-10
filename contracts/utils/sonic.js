@@ -1,4 +1,4 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("../tasks/block");
 const addresses = require("../utils/addresses");
@@ -79,7 +79,23 @@ async function snapSonicStaking(taskArguments) {
   console.log(`Strategy balance      : ${formatUnits(strategyBalance, 18)}`);
 }
 
+async function undelegateValidator({ id, amount }) {
+  const signer = await getSigner();
+
+  const amountBN = parseUnits(amount.toString(), 18);
+
+  const strategy = await resolveContract(
+    `SonicStakingStrategyProxy`,
+    "SonicStakingStrategy"
+  );
+
+  log(`About to undelegate ${amount} S from validator ${id}`);
+  const tx = await strategy.connect(signer).undelegate(id, amountBN);
+  await logTxDetails(tx, "undelegate");
+}
+
 module.exports = {
   setDefaultValidator,
   snapSonicStaking,
+  undelegateValidator,
 };
