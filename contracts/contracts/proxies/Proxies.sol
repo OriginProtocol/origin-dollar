@@ -346,3 +346,10 @@ contract PoolBoostCentralRegistryProxy is
 contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MakerSSRStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
