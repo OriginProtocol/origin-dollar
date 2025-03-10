@@ -390,7 +390,9 @@ contract VaultAdmin is VaultStorage {
     function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
         require(
-            IVault(address(this)).checkBalance(_asset) <= 1e13,
+            // TODO: Temporary change since Morpho has liquidity issues.
+            // Revert before merging
+            IVault(address(this)).checkBalance(_asset) <= 1e20,
             "Vault still holds asset"
         );
 
