@@ -40,6 +40,15 @@ async function getContracts(hre, symbol, assetSymbol) {
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
   log(`Resolved ${network} ${symbol} OToken to address ${oToken.address}`);
 
+  // Resolve the wrapped OToken. eg wOETH, wOSonic
+  const wOTokenProxy = await ethers.getContract(
+    `W${symbol}${networkPrefix}Proxy`
+  );
+  const wOToken = await ethers.getContractAt(
+    `W${symbol}`,
+    wOTokenProxy.address
+  );
+
   // Resolve the Asset. eg WETH or wS
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
   assetSymbol = assetSymbol || network === "sonic" ? "wS" : "WETH";
@@ -51,6 +60,7 @@ async function getContracts(hre, symbol, assetSymbol) {
   return {
     vault,
     oToken,
+    wOToken,
     asset,
   };
 }
@@ -58,7 +68,7 @@ async function getContracts(hre, symbol, assetSymbol) {
 async function snapVault({ block }, hre) {
   const blockTag = getBlock(block);
 
-  const { vault, oToken, asset } = await getContracts(hre);
+  const { vault, oToken, wOToken, asset } = await getContracts(hre);
 
   const assetBalance = await asset.balanceOf(vault.address, {
     blockTag,
@@ -67,6 +77,8 @@ async function snapVault({ block }, hre) {
   const totalSupply = await oToken.totalSupply({
     blockTag,
   });
+  const nonRebasingSupply = await oToken.nonRebasingSupply({ blockTag });
+  const rebasingSupply = totalSupply.sub(nonRebasingSupply);
 
   const queue = await vault.withdrawalQueueMetadata({
     blockTag,
@@ -87,43 +99,72 @@ async function snapVault({ block }, hre) {
     .mul(vaultBufferPercentage)
     .div(parseUnits("1"));
 
+  const assetsPerShare = await wOToken.convertToAssets(parseUnits("1"), {
+    blockTag,
+  });
+
   console.log(
-    `Vault assets    : ${formatUnits(assetBalance)}, ${assetBalance} wei`
+    `Vault assets        : ${formatUnits(assetBalance)}, ${assetBalance} wei`
   );
 
   console.log(
-    `Queued          : ${formatUnits(queue.queued)}, ${queue.queued} wei`
+    `Queued              : ${formatUnits(queue.queued)}, ${queue.queued} wei`
   );
   console.log(
-    `Claimable       : ${formatUnits(queue.claimable)}, ${queue.claimable} wei`
+    `Claimable           : ${formatUnits(queue.claimable)}, ${
+      queue.claimable
+    } wei`
   );
   console.log(
-    `Claimed         : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+    `Claimed             : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
   );
-  console.log(`Shortfall       : ${formatUnits(shortfall)}, ${shortfall} wei`);
-  console.log(`Unclaimed       : ${formatUnits(unclaimed)}, ${unclaimed} wei`);
   console.log(
-    `Available       : ${formatUnits(
+    `Shortfall           : ${formatUnits(shortfall)}, ${shortfall} wei`
+  );
+  console.log(
+    `Unclaimed           : ${formatUnits(unclaimed)}, ${unclaimed} wei`
+  );
+  console.log(
+    `Available           : ${formatUnits(
       available
-    )}, ${available} wei (${formatUnits(availablePercentage, 2)}%)`
+    )}, ${available} wei, ${formatUnits(availablePercentage, 2)}%`
   );
   console.log(
-    `Target Buffer   : ${formatUnits(vaultBuffer)} (${formatUnits(
+    `Target Buffer       : ${formatUnits(vaultBuffer)}, ${formatUnits(
       vaultBufferPercentage,
       16
-    )}%)`
+    )}%`
   );
 
   console.log(
-    `Total Asset     : ${formatUnits(totalAssets)}, ${totalAssets} wei`
+    `Total Asset         : ${formatUnits(totalAssets)}, ${totalAssets} wei`
   );
   console.log(
-    `Total Supply    : ${formatUnits(totalSupply)}, ${totalSupply} wei`
+    `Total Supply        : ${formatUnits(totalSupply)}, ${totalSupply} wei`
   );
   console.log(
-    `Asset - Supply  : ${formatUnits(assetSupplyDiff)}, ${assetSupplyDiff} wei`
+    `Asset - Supply      : ${formatUnits(
+      assetSupplyDiff
+    )}, ${assetSupplyDiff} wei`
   );
-  console.log(`last request id : ${queue.nextWithdrawalIndex - 1}`);
+  console.log(
+    `Non-rebasing supply : ${formatUnits(
+      nonRebasingSupply
+    )}, ${nonRebasingSupply} wei, ${formatUnits(
+      nonRebasingSupply.mul(10000).div(totalSupply),
+      2
+    )}%`
+  );
+  console.log(
+    `Rebasing supply     : ${formatUnits(
+      rebasingSupply
+    )}, ${rebasingSupply} wei, ${formatUnits(
+      rebasingSupply.mul(10000).div(totalSupply),
+      2
+    )}%`
+  );
+  console.log(`Assets per share    : ${formatUnits(assetsPerShare, 18)}`);
+  console.log(`last request id     : ${queue.nextWithdrawalIndex - 1}`);
 }
 
 async function addWithdrawalQueueLiquidity(_, hre) {
