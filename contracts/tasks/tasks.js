@@ -1784,25 +1784,25 @@ task("mine").setAction(async (_, __, runSuper) => {
 
 // Sonic Staking Operations
 subtask(
-  "setDefaultValidator",
+  "sonicDefaultValidator",
   "Set the default validator for the Sonic Staking Strategy"
 )
   .addParam("id", "Validator identifier. eg 18", undefined, types.int)
   .setAction(setDefaultValidator);
-task("setDefaultValidator").setAction(async (_, __, runSuper) => {
+task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("undelegate", "Remove liquidity from a Sonic validator")
+subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
   .addParam("id", "Validator identifier. eg 18", undefined, types.int)
   .addParam("amount", "Amount of liquidity to remove", undefined, types.float)
   .setAction(undelegateValidator);
-task("undelegate").setAction(async (_, __, runSuper) => {
+task("sonicUndelegate").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
 subtask(
-  "withdrawSonic",
+  "sonicWithdraw",
   "Withdraw native S from a previously undelegated validator"
 )
   .addParam(
@@ -1812,7 +1812,7 @@ subtask(
     types.int
   )
   .setAction(withdrawFromSFC);
-task("withdrawSonic").setAction(async (_, __, runSuper) => {
+task("sonicWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
