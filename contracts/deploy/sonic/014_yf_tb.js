@@ -45,16 +45,16 @@ module.exports = deployOnSonic(
       actions: [
         {
           // Plateform: SwapX
-          // Protocol: Moon Bay
-          // From: VolatileV1 AMM - MOON/OS --> To: EOA
+          // Protocol: HOG
+          // From: Os/HOG to --> EOA
           contract: cOSonic,
           signature: "undelegateYield(address)",
           args: [addresses.sonic.SwapX.OsHOG.pool],
         },
         {
           // Plateform: SwapX
-          // Protocol: Moon Bay
-          // From: VolatileV1 AMM - MOON/OS --> To: EOA
+          // Protocol: HOG
+          // From: Os/GHOG to --> EOA
           contract: cOSonic,
           signature: "undelegateYield(address)",
           args: [addresses.sonic.SwapX.OsGHOG.pool],
