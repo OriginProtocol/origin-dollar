@@ -1788,7 +1788,7 @@ task("setDefaultValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("sonicStaking", "")
+subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
   .addOptionalParam(
     "block",
     "Block number. (default: latest)",
