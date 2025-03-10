@@ -159,7 +159,6 @@ contract VaultCore is VaultInitializer {
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
         external
-        virtual
         whenNotCapitalPaused
         nonReentrant
     {
