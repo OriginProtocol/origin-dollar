@@ -5,7 +5,7 @@ const { isFork } = require("../../utils/hardhat-helpers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "124_replace_dai_with_usds",
+    deployName: "127_replace_dai_with_usds",
     reduceQueueTime: true,
     // forceSkip: true,
     deployerIsProposer: false,
@@ -223,6 +223,13 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cDSRStrategyProxy.address, false],
+        },
+
+        {
+          // Set Oracle Slippage for USDS
+          contract: cVault,
+          signature: "setOracleSlippage(address,uint16)",
+          args: [USDS, 25],
         },
       ],
     };
