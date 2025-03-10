@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "chainId": "146",
+  "createdAt": 1741631195,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0xAdDEA7933Db7d83855786EB43a238111C69B00b6",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          },
+          {
+            "type": "uint256",
+            "name": "delay"
+          }
+        ],
+        "name": "scheduleBatch",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "targets": "[\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0x2d7C5a0a60a874A48bd538322f758EF43fa32953\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\",\"0x2d7C5a0a60a874A48bd538322f758EF43fa32953\",\"0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794\"]",
+        "values": "[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\"]",
+        "payloads": "[\"0x06a2da3d000000000000000000000000784dd93f3c42dcbf88d45e6ad6d3cc20da169a60\",\"0x06a2da3d000000000000000000000000d1cb1622a50506f0fddf329cb857a0935c7fbbf9\",\"0x0708be120000000000000000000000009e80dc105f34deedc99cfdb00d544d273bbf875c000000000000000000000000784dd93f3c42dcbf88d45e6ad6d3cc20da169a600000000000000000000000000000000000000000000000000000000067cf2c92\",\"0x9d01fc72000000000000000000000000784dd93f3c42dcbf88d45e6ad6d3cc20da169a600000000000000000000000004fdacefb8b281fb3fbf166a36386abbf34afbe57\",\"0x0708be1200000000000000000000000013a85d9a5b98f9369f498b693b4a0a4606a85083000000000000000000000000d1cb1622a50506f0fddf329cb857a0935c7fbbf90000000000000000000000000000000000000000000000000000000067cf2c92\",\"0x9d01fc72000000000000000000000000d1cb1622a50506f0fddf329cb857a0935c7fbbf90000000000000000000000006dd5cd610748f7c60ab34c5680de19518290a378\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x22eeb2ca765dc1c250e91cb1f42fa961ca5b021d6c03fb964b4477315d41d461",
+        "delay": "86400"
+      }
+    }
+  ]
+}
