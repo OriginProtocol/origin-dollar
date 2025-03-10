@@ -169,7 +169,10 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should allow strategist to redeem without fee", async () => {
-      const { oethVault, strategist, weth, oeth } = fixture;
+      const { oethVault, strategist, matt, weth, oeth } = fixture;
+
+      // Send a heap of WETH to the vault so it can be redeemed
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
 
       const amount = oethUnits("10");
 
@@ -192,7 +195,10 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should enforce fee on other users for instant redeem", async () => {
-      const { oethVault, josh, weth, oeth } = fixture;
+      const { oethVault, josh, matt, weth, oeth } = fixture;
+
+      // Send a heap of WETH to the vault so it can be redeemed
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
 
       const amount = oethUnits("10");
       const expectedWETH = amount.mul("9990").div("10000");
