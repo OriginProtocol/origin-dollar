@@ -16,8 +16,8 @@ module.exports = deploymentWithGovernanceProposal(
     const dFlipper = await deployWithConfirmation(
       "Flipper",
       [
-        addresses.mainnet.OUSD,
         addresses.mainnet.USDS,
+        addresses.mainnet.OUSD,
         addresses.mainnet.USDC,
         addresses.mainnet.USDT,
       ],
