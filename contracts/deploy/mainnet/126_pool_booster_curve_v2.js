@@ -2,10 +2,7 @@ const addresses = require("../../utils/addresses");
 const {
   deploymentWithGovernanceProposal,
   deployWithConfirmation,
-  encodeSaltForCreateX,
 } = require("../../utils/deploy");
-const createxAbi = require("../../abi/createx.json");
-const PoolBoosterFactoryCurveMainnetBytecode = require("../../artifacts/contracts/poolBooster/PoolBoosterFactoryCurveMainnet.sol/PoolBoosterFactoryCurveMainnet.json");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -30,9 +27,6 @@ module.exports = deploymentWithGovernanceProposal(
       "OETH",
       addresses.mainnet.OETHProxy
     );
-
-    // Get CreateX contract
-    const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
@@ -72,41 +66,69 @@ module.exports = deploymentWithGovernanceProposal(
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
-    // --- Deploy PoolBoosterFactoryCurveMainnet on Mainnet
+    // --- Deploy PoolBoosterFactoryCurveMainnet impl on Mainnet
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    // --- Generate salt
-    let salt = ethers.utils.hashMessage("PoolBoosterFactoryCurveMainnet v1");
-    let encodedSalt = encodeSaltForCreateX(deployerAddr, false, salt);
-    console.log(`Encoded salt: ${encodedSalt}`);
-
-    // --- Generate bytecode
-    const poolBoosterFactoryBytecode = ethers.utils.concat([
-      PoolBoosterFactoryCurveMainnetBytecode.bytecode,
-      ethers.utils.defaultAbiCoder.encode(
-        ["address", "address", "address"],
-        [
-          cOETH.address,
-          addresses.mainnet.Timelock,
-          cPoolBoostCentralRegistry.address,
-        ]
-      ),
-    ]);
-
-    const txResponse = await withConfirmation(
-      cCreateX
-        .connect(sDeployer)
-        .deployCreate3(encodedSalt, poolBoosterFactoryBytecode)
-    );
-    const txReceipt = await txResponse.wait();
-    // event 0 is GovernorshipTransferred
-    // event 1 is Create3ProxyContractCreation
-    // event 2 is ContractCreation, topics[0] is the address of the deployed contract
-    let implementationAddress = ethers.utils.getAddress(
-      `0x${txReceipt.events[2].topics[0].slice(26)}`
-    );
+    // --- Deploy Implementation
+    console.log("cOETH.address", cOETH.address);
     console.log(
-      `PoolBoosterFactoryCurveMainnet deployed at: ${implementationAddress}`
+      "cPoolBoostCentralRegistry.address",
+      cPoolBoostCentralRegistry.address
+    );
+
+    const dPoolBoosterFactoryCurveMainnetImpl = await deployWithConfirmation(
+      "PoolBoosterFactoryCurveMainnet",
+      [
+        cOETH.address,
+        cPoolBoostCentralRegistry.address,
+        42161,
+        addresses.mainnet.Timelock,
+      ]
+    );
+
+    let cPoolBoosterFactoryCurveMainnetImpl = await ethers.getContractAt(
+      "PoolBoosterFactoryCurveMainnet",
+      dPoolBoosterFactoryCurveMainnetImpl.address
+    );
+
+    // --- Deploy Beacon Implementation
+    const dPoolBoosterCurveMainnetBeacon = await deployWithConfirmation(
+      "PoolBoosterCurveMainnet",
+      []
+    );
+
+    // This action should have been done by the 2/8 MS using `CreateX::create2()`
+    const dPoolBoosterFactoryCurveMainnetProxy = await deployWithConfirmation(
+      "PoolBoosterFactoryCurveMainnetProxy",
+      []
+    );
+    const cPoolBoosterFactoryCurveMainnetProxy = await ethers.getContractAt(
+      "PoolBoosterFactoryCurveMainnetProxy",
+      dPoolBoosterFactoryCurveMainnetProxy.address
+    );
+
+    const initData =
+      cPoolBoosterFactoryCurveMainnetImpl.interface.encodeFunctionData(
+        "initialize(address,address,address)",
+        [
+          addresses.multichainStrategist,
+          addresses.mainnet.CampaignRemoteManager,
+          addresses.votemarket,
+        ]
+      );
+
+    // Initialize Proxy
+    // prettier-ignore
+    await withConfirmation(
+      cPoolBoosterFactoryCurveMainnetProxy
+        .connect(sDeployer)["initialize(address,address,address,bytes)"](
+          dPoolBoosterFactoryCurveMainnetImpl.address, dPoolBoosterCurveMainnetBeacon.address, addresses.mainnet.Timelock, initData
+        )
+    );
+
+    const cPoolBoosterFactoryCurveMainnet = await ethers.getContractAt(
+      "PoolBoosterFactoryCurveMainnet",
+      cPoolBoosterFactoryCurveMainnetProxy.address
     );
 
     return {
@@ -116,7 +138,7 @@ module.exports = deploymentWithGovernanceProposal(
           // set the factory as an approved one
           contract: cPoolBoostCentralRegistry,
           signature: "approveFactory(address)",
-          args: [implementationAddress],
+          args: [cPoolBoosterFactoryCurveMainnet.address],
         },
       ],
     };

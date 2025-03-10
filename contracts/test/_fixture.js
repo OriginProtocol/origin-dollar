@@ -692,6 +692,16 @@ const defaultFixture = deployments.createFixture(async () => {
         oethFixedRateDripperProxy.address
       );
 
+  const poolBoosterFactoryCurveMainnetProxy = isFork
+    ? await ethers.getContract("PoolBoosterFactoryCurveMainnetProxy")
+    : undefined;
+  const poolBoosterFactoryCurveMainnet = isFork
+    ? await ethers.getContractAt(
+        "PoolBoosterFactoryCurveMainnet",
+        poolBoosterFactoryCurveMainnetProxy.address
+      )
+    : undefined;
+
   let usdt,
     dai,
     tusd,
@@ -1165,6 +1175,7 @@ const defaultFixture = deployments.createFixture(async () => {
     curvePoolBooster,
     simpleOETHHarvester,
     oethFixedRateDripper,
+    poolBoosterFactoryCurveMainnet,
 
     // Flux strategy
     fluxStrategy,
