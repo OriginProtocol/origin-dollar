@@ -32,9 +32,22 @@ contract WOETH is ERC4626, Governable, Initializable {
     uint128 public yieldAssets;
     uint64 public yieldEnd;
     bool private _initialized2;
-    uint256[48] private __gap;
+    /* @dev to mitigate an inflation attack where:
+     *  - attacker flashloans WETH and mints OETH
+     *  - donates OETH to the WOETH contract
+     *  - mints WOETH with the flash loan funds
+     *  - maxYield greatly surpasses the 5% of "normal" TVL as it is calculated
+     *    out of normal TVL + flash loan funds
+     *  - attacker redeems WOETH and then OETH
+     *
+     *  We delay the maximum yield that is calculated out of TVL for 1 yield cycle to increase
+     *  the time between initial manipulation and potential attack profitability.
+     */
+    uint256 maxYieldPreviousRound;
+    uint256[47] private __gap;
 
     uint256 public constant YIELD_TIME = 1 days - 1 hours;
+    uint256 public constant MAX_DAILY_PCT_DRIP = 5;
 
     event YiedPeriodStarted(
         uint256 trackedAssets,
@@ -67,6 +80,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         _initialized2 = true;
 
         trackedAssets = IERC20(asset()).balanceOf(address(this));
+        maxYieldPreviousRound = (trackedAssets * MAX_DAILY_PCT_DRIP) / 100;
     }
 
     function name()
@@ -122,10 +136,15 @@ contract WOETH is ERC4626, Governable, Initializable {
             trackedAssets = _actualAssets;
         } else if (_actualAssets > _computedAssets) {
             uint256 _newYield = _actualAssets - _computedAssets;
-            uint256 _maxYield = (_computedAssets * 5) / 100; // Maximum of 5% increase in assets per day
-            _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
+            // Maximum of 5% increase in assets per day
+            uint256 _maxYieldNextRound = (_computedAssets * MAX_DAILY_PCT_DRIP) / 100;
+            _newYield = _min(
+                _min(_newYield, maxYieldPreviousRound),
+                type(uint128).max
+            );
             yieldAssets = _newYield.toUint128();
             trackedAssets = _computedAssets + yieldAssets;
+            maxYieldPreviousRound = _maxYieldNextRound;
         }
         // raw cast is deliberate, since this will not perma revert
         yieldEnd = uint64(block.timestamp + YIELD_TIME);
