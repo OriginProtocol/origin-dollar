@@ -40,6 +40,15 @@ async function getContracts(hre, symbol, assetSymbol) {
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
   log(`Resolved ${network} ${symbol} OToken to address ${oToken.address}`);
 
+  // Resolve the wrapped OToken. eg wOETH, wOSonic
+  const wOTokenProxy = await ethers.getContract(
+    `W${symbol}${networkPrefix}Proxy`
+  );
+  const wOToken = await ethers.getContractAt(
+    `W${symbol}`,
+    wOTokenProxy.address
+  );
+
   // Resolve the Asset. eg WETH or wS
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
   assetSymbol = assetSymbol || network === "sonic" ? "wS" : "WETH";
@@ -51,6 +60,7 @@ async function getContracts(hre, symbol, assetSymbol) {
   return {
     vault,
     oToken,
+    wOToken,
     asset,
   };
 }
@@ -58,7 +68,7 @@ async function getContracts(hre, symbol, assetSymbol) {
 async function snapVault({ block }, hre) {
   const blockTag = getBlock(block);
 
-  const { vault, oToken, asset } = await getContracts(hre);
+  const { vault, oToken, wOToken, asset } = await getContracts(hre);
 
   const assetBalance = await asset.balanceOf(vault.address, {
     blockTag,
@@ -88,6 +98,10 @@ async function snapVault({ block }, hre) {
   const vaultBuffer = totalSupply
     .mul(vaultBufferPercentage)
     .div(parseUnits("1"));
+
+  const assetsPerShare = await wOToken.convertToAssets(parseUnits("1"), {
+    blockTag,
+  });
 
   console.log(
     `Vault assets        : ${formatUnits(assetBalance)}, ${assetBalance} wei`
@@ -129,6 +143,11 @@ async function snapVault({ block }, hre) {
     `Total Supply        : ${formatUnits(totalSupply)}, ${totalSupply} wei`
   );
   console.log(
+    `Asset - Supply      : ${formatUnits(
+      assetSupplyDiff
+    )}, ${assetSupplyDiff} wei`
+  );
+  console.log(
     `Non-rebasing supply : ${formatUnits(
       nonRebasingSupply
     )}, ${nonRebasingSupply} wei, ${formatUnits(
@@ -144,11 +163,7 @@ async function snapVault({ block }, hre) {
       2
     )}%`
   );
-  console.log(
-    `Asset - Supply      : ${formatUnits(
-      assetSupplyDiff
-    )}, ${assetSupplyDiff} wei`
-  );
+  console.log(`Assets per share    : ${formatUnits(assetsPerShare, 18)}`);
   console.log(`last request id     : ${queue.nextWithdrawalIndex - 1}`);
 }
 
