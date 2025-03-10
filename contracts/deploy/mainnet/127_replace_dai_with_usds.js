@@ -18,8 +18,7 @@ module.exports = deploymentWithGovernanceProposal(
     const USDS = addresses.mainnet.USDS;
     const sUSDS = addresses.mainnet.sUSDS;
 
-    const { deployerAddr, timelockAddr, multichainStrategistAddr } =
-      await getNamedAccounts();
+    const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -106,15 +105,27 @@ module.exports = deploymentWithGovernanceProposal(
       );
 
       const daiBalance = await cMorphoAaveStrategy.checkBalance(DAI);
+      console.log(`DAI balance in Morpho Aave V2: ${daiBalance}`);
 
-      const strategist = await impersonateAndFund(multichainStrategistAddr);
-      await cVault
-        .connect(strategist)
-        .withdrawFromStrategy(
-          cMorphoAaveStrategyProxy.address,
-          [DAI],
-          [daiBalance]
-        );
+      // TODO: Temporary change since Morpho has liquidity issues.
+      const dTempVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+      const timelock = await impersonateAndFund(addresses.mainnet.Timelock);
+      await withConfirmation(
+        cVault.connect(timelock).setAdminImpl(dTempVaultAdmin.address)
+      );
+
+      // TODO: Uncomment this once Morpho has enough liquidity
+      // const strategist = await impersonateAndFund(multichainStrategistAddr);
+      // console.log(`Withdrawing DAI from Morpho Aave V2`);
+      // await cVault
+      //   .connect(strategist)
+      //   .withdrawFromStrategy(
+      //     cMorphoAaveStrategyProxy.address,
+      //     [DAI],
+      //     [daiBalance]
+      //   );
+      // console.log("Withdrew DAI from Morpho Aave V2");
     }
 
     return {
