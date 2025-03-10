@@ -94,8 +94,22 @@ async function undelegateValidator({ id, amount }) {
   await logTxDetails(tx, "undelegate");
 }
 
+async function withdrawFromSFC({ withdrawId }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    `SonicStakingStrategyProxy`,
+    "SonicStakingStrategy"
+  );
+
+  log(`About to withdraw id ${withdrawId} from sonic validator`);
+  const tx = await strategy.connect(signer).withdrawFromSFC(withdrawId);
+  await logTxDetails(tx, "withdrawFromSFC");
+}
+
 module.exports = {
   setDefaultValidator,
   snapSonicStaking,
   undelegateValidator,
+  withdrawFromSFC,
 };
