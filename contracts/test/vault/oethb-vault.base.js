@@ -97,7 +97,6 @@ describe("OETHb Vault", function () {
       await expect(tx).to.be.revertedWith("Not whitelisted");
     });
 
-    // prettier-ignore-start
     describe("Disabled functions", function () {
       it("Should not support redeemAll", async () => {
         const { oethbVault, nick } = fixture;
@@ -117,7 +116,6 @@ describe("OETHb Vault", function () {
         );
       });
     });
-    // prettier-ignore-end
   });
 
   describe("Mint & Burn For Strategy", function () {
