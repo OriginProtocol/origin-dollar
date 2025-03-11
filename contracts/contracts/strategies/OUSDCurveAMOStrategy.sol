@@ -600,10 +600,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         require(_asset == address(hardAsset), "Unsupported asset");
 
         // hardAsset balance needed here for the balance check that happens from vault during depositing.
-        balance = hardAsset.balanceOf(address(this)).scaleBy(
-            decimalsRef,
-            decimalsHardAsset
-        );
+        balance = hardAsset.balanceOf(address(this));
         uint256 lpTokens = gauge.balanceOf(address(this));
         if (lpTokens > 0) {
             balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
