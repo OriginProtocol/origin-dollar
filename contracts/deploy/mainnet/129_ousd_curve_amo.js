@@ -39,20 +39,15 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // Deploy Base Curve AMO implementation
-    const dOUSDCurveAMO = await deployWithConfirmation(
-      "OUSDCurveAMOStrategy",
-      [
-        [addresses.mainnet.CurveOUSDUSDTPool, cOUSDVaultProxy.address],
-        cOUSDProxy.address,
-        addresses.mainnet.USDT,
-        addresses.mainnet.CurveOUSDUSDTGauge,
-        0,
-        1,
-      ]
-    );
-    const cOUSDCurveAMOImpl = await ethers.getContract(
-      "OUSDCurveAMOStrategy"
-    );
+    const dOUSDCurveAMO = await deployWithConfirmation("OUSDCurveAMOStrategy", [
+      [addresses.mainnet.CurveOUSDUSDTPool, cOUSDVaultProxy.address],
+      cOUSDProxy.address,
+      addresses.mainnet.USDT,
+      addresses.mainnet.CurveOUSDUSDTGauge,
+      0,
+      1,
+    ]);
+    const cOUSDCurveAMOImpl = await ethers.getContract("OUSDCurveAMOStrategy");
 
     // Initialize Base Curve AMO implementation
     const initData = cOUSDCurveAMOImpl.interface.encodeFunctionData(
@@ -73,7 +68,7 @@ module.exports = deploymentWithGovernanceProposal(
     console.log("Vault Admin: ", cOUSDVaultAdmin.address);
 
     return {
-      /*
+      name: "Add Curve AMO Strategy to OUSD Vault",
       actions: [
         // Approve strategy on vault
         {
@@ -88,7 +83,6 @@ module.exports = deploymentWithGovernanceProposal(
           args: [cOUSDCurveAMOProxy.address],
         },
       ],
-      */
     };
   }
 );
