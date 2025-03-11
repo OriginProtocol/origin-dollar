@@ -79,6 +79,11 @@ describe("ForkTest: Sonic Vault", function () {
         addresses.sonic.guardian
       );
     });
+
+    it("Should have redeem fee set to 0.1%", async () => {
+      const { oSonicVault } = fixture;
+      expect(await oSonicVault.redeemFeeBps()).to.equal(BigNumber.from("10"));
+    });
   });
 
   describe("Rebase", () => {
@@ -120,7 +125,7 @@ describe("ForkTest: Sonic Vault", function () {
       // Clear any wS out of the Vault first
       await oSonicVault.allocate();
 
-      const mintAmount = parseUnits("20000");
+      const mintAmount = parseUnits("5000000");
       const tx = await oSonicVault
         .connect(nick)
         .mint(wS.address, mintAmount, 0);

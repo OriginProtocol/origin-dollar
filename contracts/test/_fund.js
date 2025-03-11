@@ -133,7 +133,7 @@ const setTokenBalance = async (
     const [balanceSlot, isVyper] = await findBalancesSlot(
       tokenContract.address
     );
-    log(`Found balance slot ${balanceSlot} for ${tokenContract.address}`);
+    // log(`Found balance slot ${balanceSlot} for ${tokenContract.address}`);
     // key, slot
     index = solidityKeccak256(
       ["uint256", "uint256"],
