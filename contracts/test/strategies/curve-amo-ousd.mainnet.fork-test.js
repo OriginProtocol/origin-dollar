@@ -79,9 +79,7 @@ describe("Curve AMO OUSD strategy", function () {
       .connect(impersonatedAMOGovernor)
       .setHarvesterAddress(harvester.address);
 
-    /*
-    await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
-    */
+    //await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
   });
 
   describe("Initial paramaters", () => {
@@ -738,7 +736,6 @@ describe("Curve AMO OUSD strategy", function () {
       await setERC20TokenBalance(user.address, usdt, amount + balance, hre);
     }
 
-    console.log("Amount to mint", amount.toString());
     await usdt.connect(user).approve(ousdVault.address, 0);
     await usdt.connect(user).approve(ousdVault.address, amount);
     await ousdVault.connect(user).mint(usdt.address, amount, amount);

@@ -20,6 +20,10 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
+    const cOracleRouter = await ethers.getContract("OracleRouter");
+    await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
+
+
     // Deploy Base Curve AMO proxy
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
     const cOUSDVaultProxy = await ethers.getContract("VaultProxy");
