@@ -10,11 +10,6 @@ const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 
-const erc20Abi = require("./abi/erc20.json");
-const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
-const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
-const curveChildLiquidityGaugeFactoryAbi = require("./abi/curveChildLiquidityGaugeFactory.json");
-
 const log = require("../utils/logger")("test:fixtures-sonic");
 
 const MINTER_ROLE =
@@ -152,12 +147,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
 
-  let validatorRegistrator,
-    curveAMOStrategy,
-    curvePool,
-    curveGauge,
-    curveChildLiquidityGaugeFactory,
-    crv;
+  let validatorRegistrator;
   if (isFork) {
     validatorRegistrator = await impersonateAndFund(
       addresses.sonic.validatorRegistrator
@@ -165,32 +155,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     validatorRegistrator.address = addresses.sonic.validatorRegistrator;
 
     await sonicStakingStrategy.connect(strategist).setDefaultValidatorId(18);
-
-    // Curve AMO
-    const curveAMOProxy = await ethers.getContract(
-      "SonicCurveAMOStrategyProxy"
-    );
-    curveAMOStrategy = await ethers.getContractAt(
-      "SonicCurveAMOStrategy",
-      curveAMOProxy.address
-    );
-
-    curvePool = await ethers.getContractAt(
-      curveStableSwapNGAbi,
-      addresses.sonic.WS_OS.pool
-    );
-
-    curveGauge = await ethers.getContractAt(
-      curveXChainLiquidityGaugeAbi,
-      addresses.sonic.WS_OS.gauge
-    );
-
-    curveChildLiquidityGaugeFactory = await ethers.getContractAt(
-      curveChildLiquidityGaugeFactoryAbi,
-      addresses.sonic.childLiquidityGaugeFactory
-    );
-
-    crv = await ethers.getContractAt(erc20Abi, addresses.sonic.CRV);
   }
 
   for (const user of [rafael, nick, clement]) {
@@ -217,13 +181,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
     // Wrapped S
     wS,
-
-    // Curve
-    curveAMOStrategy,
-    curvePool,
-    curveGauge,
-    curveChildLiquidityGaugeFactory,
-    crv,
 
     // Signers
     governor,
