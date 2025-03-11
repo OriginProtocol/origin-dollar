@@ -102,14 +102,18 @@ describe("OETHb Vault", function () {
         const { oethbVault, nick } = fixture;
 
         const tx = oethbVault.connect(nick).redeemAll(1);
-        await expect(tx).to.be.revertedWith("Caller is not the Strategist or Governor");
+        await expect(tx).to.be.revertedWith(
+          "Caller is not the Strategist or Governor"
+        );
       });
 
       it("Should not support redeem", async () => {
         const { oethbVault, nick } = fixture;
 
         const tx = oethbVault.connect(nick).redeem(1, 0);
-        await expect(tx).to.be.revertedWith("Caller is not the Strategist or Governor");
+        await expect(tx).to.be.revertedWith(
+          "Caller is not the Strategist or Governor"
+        );
       });
     });
   });
