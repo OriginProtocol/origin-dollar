@@ -5,6 +5,8 @@ const { createFixtureLoader } = require("../../_fixture");
 const { swapXAMOFixture } = require("../../_fixture-sonic");
 const { isCI } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
+const { impersonateAndFund } = require("../../../utils/signers");
+const { setERC20TokenBalance } = require("../../_fund");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
@@ -161,6 +163,18 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
     });
+    it("Vault should be able to withdraw all from empty strategy", async () => {
+      const { swapXAMOStrategy, oSonicVaultSigner } = fixture;
+      await assertWithdrawAll();
+
+      // Now try again after all the assets have already been withdrawn
+      const tx = await swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .withdrawAll();
+
+      // Check emitted events
+      await expect(tx).to.not.emit(swapXAMOStrategy, "Withdrawal");
+    });
     it("Vault should be able to partially withdraw", async () => {
       await assertWithdrawPartial(parseUnits("1000"));
     });
@@ -188,6 +202,42 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // Governor can withdraw all
       const tx = swapXAMOStrategy.connect(timelock).withdrawAll();
       await expect(tx).to.emit(swapXAMOStrategy, "Withdrawal");
+    });
+    it("Harvester can collect rewards", async () => {
+      const {
+        harvester,
+        nick,
+        swapXAMOStrategy,
+        swapXGauge,
+        swpx,
+        strategist,
+      } = fixture;
+
+      const swpxBalanceBefore = await swpx.balanceOf(strategist.address);
+
+      // Send some SWPx rewards to the gauge
+      const distributorAddress = await swapXGauge.DISTRIBUTION();
+      const distributorSigner = await impersonateAndFund(distributorAddress);
+      const rewardAmount = parseUnits("1000");
+      await setERC20TokenBalance(distributorAddress, swpx, rewardAmount);
+      await swapXGauge
+        .connect(distributorSigner)
+        .notifyRewardAmount(swpx.address, rewardAmount);
+
+      // Harvest the rewards
+      // prettier-ignore
+      const tx = await harvester
+        .connect(nick)["harvestAndTransfer(address)"](swapXAMOStrategy.address);
+
+      await expect(tx).to.emit(swapXAMOStrategy, "RewardTokenCollected");
+
+      const swpxBalanceAfter = await swpx.balanceOf(strategist.address);
+      log(
+        `Rewards collected ${formatUnits(
+          swpxBalanceAfter.sub(swpxBalanceBefore)
+        )} SWPx`
+      );
+      expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
     });
   });
 

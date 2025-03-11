@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 interface IGauge {
     function TOKEN() external view returns (address);
 
+    function DISTRIBUTION() external view returns (address);
+
     function balanceOf(address account) external view returns (uint256);
 
     function claimFees() external returns (uint256 claimed0, uint256 claimed1);

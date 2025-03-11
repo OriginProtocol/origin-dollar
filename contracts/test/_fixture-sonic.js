@@ -9,6 +9,7 @@ const { deployWithConfirmation } = require("../utils/deploy.js");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
+const { resolveAsset } = require("../utils/resolvers.js");
 
 const log = require("../utils/logger")("test:fixtures-sonic");
 
@@ -217,7 +218,7 @@ async function swapXAMOFixture(
   const { oSonic, oSonicVault, rafael, nick, strategist, timelock, wS } =
     fixture;
 
-  let swapXAMOStrategy, swapXPool, swapXGauge;
+  let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
 
   if (isFork) {
     const swapXAMOProxy = await ethers.getContract(
@@ -237,6 +238,8 @@ async function swapXAMOFixture(
       "IGauge",
       addresses.sonic.SwapXWSOS.gauge
     );
+
+    swpx = await resolveAsset("SWPx");
   }
 
   await oSonicVault
@@ -313,7 +316,7 @@ async function swapXAMOFixture(
   // force reserves to match balances
   await swapXPool.sync();
 
-  return { ...fixture, swapXAMOStrategy, swapXPool, swapXGauge };
+  return { ...fixture, swapXAMOStrategy, swapXPool, swapXGauge, swpx };
 }
 
 const deployPoolBoosterFactorySwapxSingle = async (
