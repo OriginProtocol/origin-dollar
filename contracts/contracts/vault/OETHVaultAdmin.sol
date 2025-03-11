@@ -21,7 +21,7 @@ contract OETHVaultAdmin is VaultAdmin {
         weth = _weth;
 
         // prevent implementation contract to be governed
-        _setGovernor(address(1));
+        _setGovernor(address(0));
     }
 
     /**

@@ -50,7 +50,7 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
         wrappedNativeToken = _wrappedNativeToken;
 
         // prevent implementation contract to be governed
-        _setGovernor(address(1));
+        _setGovernor(address(0));
     }
 
     /// @notice Initialize the contract
