@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Automated Market Maker (AMO) Strategy
- * @notice AMO strategy for the Curve OETH/WETH pool
+ * @notice AMO strategy for the Curve OUSD/USDT pool
  * @author Origin Protocol Inc
  */
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -12,7 +12,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {IERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
 import {StableMath} from "../utils/StableMath.sol";
 import {IVault} from "../interfaces/IVault.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
+import {Tether} from "../interfaces/Tether.sol";
 import {ICurveStableSwapNG} from "../interfaces/ICurveStableSwapNG.sol";
 import {ICurveXChainLiquidityGauge} from "../interfaces/ICurveXChainLiquidityGauge.sol";
 import {IBasicToken} from "../interfaces/IBasicToken.sol";
@@ -30,9 +30,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
     // New immutable variables that must be set in the constructor
     /**
-     * @notice Address of the Wrapped ETH (WETH) contract.
+     * @notice Address of the hard asset (weth, usdt, usdc).
      */
-    IWETH9 public immutable weth;
+    Tether public immutable hardAsset;
 
     /**
      * @notice Address of the OETH token contract.
@@ -56,10 +56,10 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
     // Ordered list of pool assets
     uint128 public immutable oethCoinIndex;
-    uint128 public immutable wethCoinIndex;
+    uint128 public immutable hardAssetCoinIndex;
 
     uint8 public immutable decimalsRef;
-    uint8 public immutable decimalsWeth;
+    uint8 public immutable decimalsHardAsset;
 
     /**
      * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
@@ -88,7 +88,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffBefore = (balancesBefore[wethCoinIndex].scaleBy(decimalsRef, decimalsWeth)).toInt256()
+        int256 diffBefore = (balancesBefore[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
             - balancesBefore[oethCoinIndex].toInt256();
 
         _;
@@ -96,7 +96,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
         // diff = ETH balance - OETH balance
-        int256 diffAfter = (balancesAfter[wethCoinIndex].scaleBy(decimalsRef, decimalsWeth)).toInt256()
+        int256 diffAfter = (balancesAfter[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
             - balancesAfter[oethCoinIndex].toInt256();
 
         if (diffBefore == 0) {
@@ -117,20 +117,20 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _oeth,
-        address _weth,
+        address _hardAsset,
         address _gauge,
         uint128 _oethCoinIndex,
-        uint128 _wethCoinIndex
+        uint128 _hardAssetCoinIndex
     ) InitializableAbstractStrategy(_baseConfig) {
         oethCoinIndex = _oethCoinIndex;
-        wethCoinIndex = _wethCoinIndex;
+        hardAssetCoinIndex = _hardAssetCoinIndex;
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
 
         oeth = IERC20(_oeth);
-        weth = IWETH9(_weth);
+        hardAsset = Tether(_hardAsset);
         gauge = ICurveXChainLiquidityGauge(_gauge);
-        decimalsWeth = IBasicToken(_weth).decimals();
+        decimalsHardAsset = IBasicToken(_hardAsset).decimals();
         decimalsRef = IBasicToken(_oeth).decimals();
 
         _setGovernor(address(0));
@@ -140,8 +140,6 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
-     * @param _rewardTokenAddresses Address of CRV
-     * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the Curve pool.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV
@@ -151,7 +149,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         pTokens[0] = address(curvePool);
 
         address[] memory _assets = new address[](1);
-        _assets[0] = address(weth);
+        _assets[0] = address(hardAsset);
 
         InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, pTokens);
 
@@ -166,19 +164,19 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
 
     /**
-     * @notice Deposit WETH into the Curve pool
-     * @param _weth Address of Wrapped ETH (WETH) contract.
-     * @param _amount Amount of WETH to deposit.
+     * @notice Deposit hard asset into the Curve pool
+     * @param _hardAsset Address of hard asset contract.
+     * @param _amount Amount of hard asset to deposit.
      */
-    function deposit(address _weth, uint256 _amount) external override onlyVault nonReentrant {
-        _deposit(_weth, _amount);
+    function deposit(address _hardAsset, uint256 _amount) external override onlyVault nonReentrant {
+        _deposit(_hardAsset, _amount);
     }
 
-    function _deposit(address _weth, uint256 _wethAmount) internal {
-        require(_wethAmount > 0, "Must deposit something");
-        require(_weth == address(weth), "Can only deposit WETH");
+    function _deposit(address _hardAsset, uint256 _hardAssetAmount) internal {
+        require(_hardAssetAmount > 0, "Must deposit something");
+        require(_hardAsset == address(hardAsset), "Can only deposit hard asset");
 
-        emit Deposit(_weth, address(lpToken), _wethAmount);
+        emit Deposit(_hardAsset, address(lpToken), _hardAssetAmount);
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balances = curvePool.get_balances();
@@ -186,22 +184,22 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                (balances[wethCoinIndex].scaleBy(decimalsRef, decimalsWeth)).toInt256()
-                    + (_wethAmount.scaleBy(decimalsRef, decimalsWeth)).toInt256() - balances[oethCoinIndex].toInt256()
+                (balances[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
+                    + (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)).toInt256() - balances[oethCoinIndex].toInt256()
             )
         );
 
         /* Add so much OETH so that the pool ends up being balanced. And at minimum
-         * add as much OETH as WETH and at maximum twice as much OETH.
+         * add as much OETH as hard asset and at maximum twice as much OETH.
          */
-        oethToAdd = Math.max(oethToAdd, (_wethAmount.scaleBy(decimalsRef, decimalsWeth)));
-        oethToAdd = Math.min(oethToAdd, (_wethAmount.scaleBy(decimalsRef, decimalsWeth)) * 2);
+        oethToAdd = Math.max(oethToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)));
+        oethToAdd = Math.min(oethToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) * 2);
 
-        /* Mint OETH with a strategy that attempts to contribute to stability of OETH/WETH pool. Try
+        /* Mint OETH with a strategy that attempts to contribute to stability of OETH/hardAsset pool. Try
          * to mint so much OETH that after deployment of liquidity pool ends up being balanced.
          *
          * To manage unpredictability minimal OETH minted will always be at least equal or greater
-         * to WETH amount deployed. And never larger than twice the WETH amount deployed even if
+         * to hardAsset amount deployed. And never larger than twice the hardAsset amount deployed even if
          * it would have a further beneficial effect on pool stability.
          */
         IVault(vaultAddress).mintForStrategy(oethToAdd);
@@ -209,11 +207,11 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         emit Deposit(address(oeth), address(lpToken), oethToAdd);
 
         uint256[] memory _amounts = new uint256[](2);
-        _amounts[wethCoinIndex] = _wethAmount;
+        _amounts[hardAssetCoinIndex] = _hardAssetAmount;
         _amounts[oethCoinIndex] = oethToAdd;
 
         uint256 valueInLpTokens =
-            ((_wethAmount.scaleBy(decimalsRef, decimalsWeth)) + oethToAdd).divPrecisely(curvePool.get_virtual_price());
+            ((_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) + oethToAdd).divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(uint256(1e18) - maxSlippage);
 
         // Do the deposit to the Curve pool
@@ -228,12 +226,12 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit the strategy's entire balance of WETH into the Curve pool
+     * @notice Deposit the strategy's entire balance of hardAsset into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
-        uint256 balance = weth.balanceOf(address(this));
+        uint256 balance = hardAsset.balanceOf(address(this));
         if (balance > 0) {
-            _deposit(address(weth), balance);
+            _deposit(address(hardAsset), balance);
         }
     }
 
@@ -244,27 +242,27 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
 
     /**
-     * @notice Withdraw ETH and OETH from the Curve pool, burn the OETH,
-     * convert the ETH to WETH and transfer to the recipient.
+     * @notice Withdraw hardAsset and OETH from the Curve pool, burn the OETH,
+     * transfer hardAsset to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
-     * @param _weth Address of the Wrapped ETH (WETH) contract.
-     * @param _amount Amount of WETH to withdraw.
+     * @param _hardAsset Address of the hardAsset contract.
+     * @param _amount Amount of hardAsset to withdraw.
      */
-    function withdraw(address _recipient, address _weth, uint256 _amount) external override onlyVault nonReentrant {
+    function withdraw(address _recipient, address _hardAsset, uint256 _amount) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
-        require(_weth == address(weth), "Can only withdraw WETH");
+        require(_hardAsset == address(hardAsset), "Can only withdraw hard asset");
 
-        emit Withdrawal(_weth, address(lpToken), _amount);
+        emit Withdrawal(_hardAsset, address(lpToken), _amount);
 
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
         _lpWithdraw(requiredLpTokens);
 
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
-         * in that the strategy receives enough WETH on balanced removal
+         * in that the strategy receives enough hardAsset on balanced removal
          */
         uint256[] memory _minWithdrawalAmounts = new uint256[](2);
-        _minWithdrawalAmounts[wethCoinIndex] = _amount;
+        _minWithdrawalAmounts[hardAssetCoinIndex] = _amount;
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
@@ -274,16 +272,16 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
 
-        // Transfer WETH to the recipient
-        require(weth.transfer(_recipient, _amount), "Transfer of WETH not successful");
+        // Transfer hardAsset to the recipient
+        hardAsset.transfer(_recipient, _amount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
     }
 
-    function calcTokenToBurn(uint256 _wethAmount) internal view returns (uint256 lpToBurn) {
+    function calcTokenToBurn(uint256 _hardAssetAmount) internal view returns (uint256 lpToBurn) {
         /* The rate between coins in the pool determines the rate at which pool returns
-         * tokens when doing balanced removal (remove_liquidity call). And by knowing how much WETH
+         * tokens when doing balanced removal (remove_liquidity call). And by knowing how much hardAsset
          * we want we can determine how much of OETH we receive by removing liquidity.
          *
          * Because we are doing balanced removal we should be making profit when removing liquidity in a
@@ -295,22 +293,22 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        uint256 poolWETHBalance = curvePool.balances(wethCoinIndex).scaleBy(decimalsRef, decimalsWeth);
+        uint256 poolHardAssetBalance = curvePool.balances(hardAssetCoinIndex).scaleBy(decimalsRef, decimalsHardAsset);
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
          * and again by 36 places when we are done with it.
          */
-        uint256 k = (1e36 * lpToken.totalSupply()) / poolWETHBalance;
+        uint256 k = (1e36 * lpToken.totalSupply()) / poolHardAssetBalance;
         // prettier-ignore
         // slither-disable-next-line divide-before-multiply
-        uint256 diff = (_wethAmount + 1) * k;
+        uint256 diff = (_hardAssetAmount + 1) * k;
         lpToBurn = diff / 1e36;
     }
 
     /**
-     * @notice Remove all ETH and OETH from the Curve pool, burn the OETH,
-     * convert the ETH to WETH and transfer to the Vault contract.
+     * @notice Remove all hardAsset and OETH from the Curve pool, burn the OETH,
+     * transfer hardAsset to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 gaugeTokens = gauge.balanceOf(address(this));
@@ -327,13 +325,13 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 oethToBurn = oeth.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethToBurn);
 
-        // Get the strategy contract's WETH balance.
+        // Get the strategy contract's hardAsset balance.
         // This includes all that was removed from the Curve pool and
         // any ether that was sitting in the strategy contract before the removal.
-        uint256 ethBalance = weth.balanceOf(address(this));
-        require(weth.transfer(vaultAddress, ethBalance), "Transfer of WETH not successful");
+        uint256 ethBalance = hardAsset.balanceOf(address(this));
+        hardAsset.transfer(vaultAddress, ethBalance);
 
-        emit Withdrawal(address(weth), address(lpToken), ethBalance);
+        emit Withdrawal(address(hardAsset), address(lpToken), ethBalance);
         emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
 
@@ -398,57 +396,56 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice One-sided remove of ETH from the Curve pool, convert to WETH
-     * and transfer to the vault.
-     * This is used when the Curve pool does not have enough OTokens and too many ETH.
+     * @notice One-sided remove of hardAsset from the Curve pool and transfer to the vault.
+     * This is used when the Curve pool does not have enough OTokens and too many hardAsset.
      * The OToken/Asset, eg OETH/ETH, price with decrease.
      * The amount of assets in the vault increases.
      * The total supply of OTokens does not change.
      * The asset value of the strategy reduces.
      * The asset value of the vault should be close to the same.
-     * @param _lpTokens The amount of Curve pool LP tokens to be burned for ETH.
-     * @dev Curve pool LP tokens is used rather than WETH assets as Curve does not
+     * @param _lpTokens The amount of Curve pool LP tokens to be burned for hardAsset.
+     * @dev Curve pool LP tokens is used rather than hardAsset assets as Curve does not
      * have a way to accurately calculate the amount of LP tokens for a required
-     * amount of ETH. Curve's `calc_token_amount` functioun does not include fees.
+     * amount of hardAsset. Curve's `calc_token_amount` functioun does not include fees.
      * A 3rd party libary can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of Curve pool LP tokens required off-chain.
      */
     function removeOnlyAssets(uint256 _lpTokens) external onlyStrategist nonReentrant improvePoolBalance {
-        // Withdraw Curve pool LP tokens from Curve gauge and remove ETH from the Curve pool
-        uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, wethCoinIndex);
+        // Withdraw Curve pool LP tokens from Curve gauge and remove hardAsset from the Curve pool
+        uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, hardAssetCoinIndex);
 
-        // Transfer WETH to the vault
-        require(weth.transfer(vaultAddress, ethAmount), "Transfer of WETH not successful");
+        // Transfer hardAsset to the vault
+        hardAsset.transfer(vaultAddress, ethAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit Withdrawal(address(weth), address(lpToken), ethAmount);
+        emit Withdrawal(address(hardAsset), address(lpToken), ethAmount);
     }
 
     /**
      * @dev Remove Curve pool LP tokens from the Convex pool and
-     * do a one-sided remove of ETH or OETH from the Curve pool.
+     * do a one-sided remove of hardAsset or OETH from the Curve pool.
      * @param _lpTokens The amount of Curve pool LP tokens to be removed from the Convex pool.
      * @param coinIndex The index of the coin to be removed from the Curve pool. 0 = ETH, 1 = OETH.
-     * @return coinsRemoved The amount of ETH or OETH removed from the Curve pool.
+     * @return coinsRemoved The amount of hardAsset or OETH removed from the Curve pool.
      */
     function _withdrawAndRemoveFromPool(uint256 _lpTokens, uint128 coinIndex) internal returns (uint256 coinsRemoved) {
         // Withdraw Curve pool LP tokens from Curve gauge
         _lpWithdraw(_lpTokens);
 
-        // Convert Curve pool LP tokens to ETH value
+        // Convert Curve pool LP tokens to hardAsset value
         uint256 valueInEth = _lpTokens.mulTruncate(curvePool.get_virtual_price());
 
-        if (coinIndex == wethCoinIndex) {
-            valueInEth = valueInEth.scaleBy(decimalsWeth, decimalsRef);
+        if (coinIndex == hardAssetCoinIndex) {
+            valueInEth = valueInEth.scaleBy(decimalsHardAsset, decimalsRef);
         }
 
-        // Apply slippage to ETH value
+        // Apply slippage to hardAsset value
         uint256 minAmount = valueInEth.mulTruncate(uint256(1e18) - maxSlippage);
 
-        // Remove just the ETH from the Curve pool
+        // Remove just the hardAsset from the Curve pool
         coinsRemoved = curvePool.remove_liquidity_one_coin(_lpTokens, int128(coinIndex), minAmount, address(this));
     }
 
@@ -496,10 +493,10 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset) external view override returns (uint256 balance) {
-        require(_asset == address(weth), "Unsupported asset");
+        require(_asset == address(hardAsset), "Unsupported asset");
 
-        // WETH balance needed here for the balance check that happens from vault during depositing.
-        balance = weth.balanceOf(address(this)).scaleBy(decimalsRef, decimalsWeth);
+        // hardAsset balance needed here for the balance check that happens from vault during depositing.
+        balance = hardAsset.balanceOf(address(this)).scaleBy(decimalsRef, decimalsHardAsset);
         uint256 lpTokens = gauge.balanceOf(address(this));
         if (lpTokens > 0) {
             balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
@@ -511,7 +508,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == address(weth);
+        return _asset == address(hardAsset);
     }
 
     /**
@@ -557,9 +554,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // slither-disable-next-line unused-return
         oeth.approve(platformAddress, type(uint256).max);
 
-        // Approve Curve pool for WETH (required for adding liquidity)
+        // Approve Curve pool for hardAsset (required for adding liquidity)
         // slither-disable-next-line unused-return
-        weth.approve(platformAddress, type(uint256).max);
+        hardAsset.approve(platformAddress, type(uint256).max);
 
         // Approve Curve gauge contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Curve gauge.
