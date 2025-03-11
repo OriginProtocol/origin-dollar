@@ -35,9 +35,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     Tether public immutable hardAsset;
 
     /**
-     * @notice Address of the OETH token contract.
+     * @notice Address of the OTOKEN token contract.
      */
-    IERC20 public immutable oeth;
+    IERC20 public immutable oToken;
 
     /**
      * @notice Address of the LP (Liquidity Provider) token contract.
@@ -55,7 +55,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     ICurveXChainLiquidityGauge public immutable gauge;
 
     // Ordered list of pool assets
-    uint128 public immutable oethCoinIndex;
+    uint128 public immutable otokenCoinIndex;
     uint128 public immutable hardAssetCoinIndex;
 
     uint8 public immutable decimalsRef;
@@ -87,27 +87,27 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     modifier improvePoolBalance() {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
-        // diff = ETH balance - OETH balance
+        // diff = hardAsset balance - OTOKEN balance
         int256 diffBefore = (balancesBefore[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
-            - balancesBefore[oethCoinIndex].toInt256();
+            - balancesBefore[otokenCoinIndex].toInt256();
 
         _;
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
-        // diff = ETH balance - OETH balance
+        // diff = hardAsset balance - OTOKEN balance
         int256 diffAfter = (balancesAfter[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
-            - balancesAfter[oethCoinIndex].toInt256();
+            - balancesAfter[otokenCoinIndex].toInt256();
 
         if (diffBefore == 0) {
             require(diffAfter == 0, "Position balance is worsened");
         } else if (diffBefore < 0) {
-            // If the pool was originally imbalanced in favor of OETH, then
+            // If the pool was originally imbalanced in favor of OTOKEN, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
         } else if (diffBefore > 0) {
-            // If the pool was originally imbalanced in favor of ETH, then
+            // If the pool was originally imbalanced in favor of hardAsset, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
             require(diffAfter < diffBefore, "Assets balance worse");
@@ -116,22 +116,22 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        address _oeth,
+        address _otoken,
         address _hardAsset,
         address _gauge,
-        uint128 _oethCoinIndex,
+        uint128 _otokenCoinIndex,
         uint128 _hardAssetCoinIndex
     ) InitializableAbstractStrategy(_baseConfig) {
-        oethCoinIndex = _oethCoinIndex;
+        otokenCoinIndex = _otokenCoinIndex;
         hardAssetCoinIndex = _hardAssetCoinIndex;
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
 
-        oeth = IERC20(_oeth);
+        oToken = IERC20(_otoken);
         hardAsset = Tether(_hardAsset);
         gauge = ICurveXChainLiquidityGauge(_gauge);
         decimalsHardAsset = IBasicToken(_hardAsset).decimals();
-        decimalsRef = IBasicToken(_oeth).decimals();
+        decimalsRef = IBasicToken(_otoken).decimals();
 
         _setGovernor(address(0));
     }
@@ -181,37 +181,37 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balances = curvePool.get_balances();
         // safe to cast since min value is at least 0
-        uint256 oethToAdd = uint256(
+        uint256 otokenToAdd = uint256(
             _max(
                 0,
                 (balances[hardAssetCoinIndex].scaleBy(decimalsRef, decimalsHardAsset)).toInt256()
-                    + (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)).toInt256() - balances[oethCoinIndex].toInt256()
+                    + (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)).toInt256() - balances[otokenCoinIndex].toInt256()
             )
         );
 
-        /* Add so much OETH so that the pool ends up being balanced. And at minimum
-         * add as much OETH as hard asset and at maximum twice as much OETH.
+        /* Add so much OTOKEN so that the pool ends up being balanced. And at minimum
+         * add as much OTOKEN as hard asset and at maximum twice as much OTOKEN.
          */
-        oethToAdd = Math.max(oethToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)));
-        oethToAdd = Math.min(oethToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) * 2);
+        otokenToAdd = Math.max(otokenToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)));
+        otokenToAdd = Math.min(otokenToAdd, (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) * 2);
 
-        /* Mint OETH with a strategy that attempts to contribute to stability of OETH/hardAsset pool. Try
-         * to mint so much OETH that after deployment of liquidity pool ends up being balanced.
+        /* Mint OTOKEN with a strategy that attempts to contribute to stability of OTOKEN/hardAsset pool. Try
+         * to mint so much OTOKEN that after deployment of liquidity pool ends up being balanced.
          *
-         * To manage unpredictability minimal OETH minted will always be at least equal or greater
+         * To manage unpredictability minimal OTOKEN minted will always be at least equal or greater
          * to hardAsset amount deployed. And never larger than twice the hardAsset amount deployed even if
          * it would have a further beneficial effect on pool stability.
          */
-        IVault(vaultAddress).mintForStrategy(oethToAdd);
+        IVault(vaultAddress).mintForStrategy(otokenToAdd);
 
-        emit Deposit(address(oeth), address(lpToken), oethToAdd);
+        emit Deposit(address(oToken), address(lpToken), otokenToAdd);
 
         uint256[] memory _amounts = new uint256[](2);
         _amounts[hardAssetCoinIndex] = _hardAssetAmount;
-        _amounts[oethCoinIndex] = oethToAdd;
+        _amounts[otokenCoinIndex] = otokenToAdd;
 
         uint256 valueInLpTokens =
-            ((_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) + oethToAdd).divPrecisely(curvePool.get_virtual_price());
+            ((_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) + otokenToAdd).divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(uint256(1e18) - maxSlippage);
 
         // Do the deposit to the Curve pool
@@ -242,7 +242,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
 
     /**
-     * @notice Withdraw hardAsset and OETH from the Curve pool, burn the OETH,
+     * @notice Withdraw hardAsset and OTOKEN from the Curve pool, burn the OTOKEN,
      * transfer hardAsset to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _hardAsset Address of the hardAsset contract.
@@ -266,11 +266,11 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
-        // Burn all the removed OETH and any that was left in the strategy
-        uint256 oethToBurn = oeth.balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(oethToBurn);
+        // Burn all the removed OTOKEN and any that was left in the strategy
+        uint256 otokenToBurn = oToken.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(otokenToBurn);
 
-        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
+        emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
 
         // Transfer hardAsset to the recipient
         hardAsset.transfer(_recipient, _amount);
@@ -282,7 +282,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     function calcTokenToBurn(uint256 _hardAssetAmount) internal view returns (uint256 lpToBurn) {
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much hardAsset
-         * we want we can determine how much of OETH we receive by removing liquidity.
+         * we want we can determine how much of OTOKEN we receive by removing liquidity.
          *
          * Because we are doing balanced removal we should be making profit when removing liquidity in a
          * pool tilted to either side.
@@ -307,7 +307,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Remove all hardAsset and OETH from the Curve pool, burn the OETH,
+     * @notice Remove all hardAsset and OTOKEN from the Curve pool, burn the OTOKEN,
      * transfer hardAsset to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
@@ -321,18 +321,18 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(lpToken.balanceOf(address(this)), minWithdrawAmounts);
 
-        // Burn all OETH
-        uint256 oethToBurn = oeth.balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(oethToBurn);
+        // Burn all OTOKEN
+        uint256 otokenToBurn = oToken.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(otokenToBurn);
 
         // Get the strategy contract's hardAsset balance.
         // This includes all that was removed from the Curve pool and
-        // any ether that was sitting in the strategy contract before the removal.
-        uint256 ethBalance = hardAsset.balanceOf(address(this));
-        hardAsset.transfer(vaultAddress, ethBalance);
+        // any hardAsset that was sitting in the strategy contract before the removal.
+        uint256 hardAssetBalance = hardAsset.balanceOf(address(this));
+        hardAsset.transfer(vaultAddress, hardAssetBalance);
 
-        emit Withdrawal(address(hardAsset), address(lpToken), ethBalance);
-        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
+        emit Withdrawal(address(hardAsset), address(lpToken), hardAssetBalance);
+        emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
     }
 
     /**
@@ -343,8 +343,8 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Mint OTokens and one-sided add to the Curve pool.
-     * This is used when the Curve pool does not have enough OTokens and too many ETH.
-     * The OToken/Asset, eg OETH/ETH, price with increase.
+     * This is used when the Curve pool does not have enough OTokens and too many hardAsset.
+     * The OToken/Asset, eg OTOKEN/hardAsset, price with increase.
      * The amount of assets in the vault is unchanged.
      * The total supply of OTokens is increased.
      * The asset value of the strategy and vault is increased.
@@ -354,9 +354,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[oethCoinIndex] = _oTokens;
+        amounts[otokenCoinIndex] = _oTokens;
 
-        // Convert OETH to Curve pool LP tokens
+        // Convert OTOKEN to Curve pool LP tokens
         uint256 valueInLpTokens = (_oTokens).divPrecisely(curvePool.get_virtual_price());
         // Apply slippage to LP tokens
         uint256 minMintAmount = valueInLpTokens.mulTruncate(uint256(1e18) - maxSlippage);
@@ -371,34 +371,34 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit Deposit(address(oeth), address(lpToken), _oTokens);
+        emit Deposit(address(oToken), address(lpToken), _oTokens);
     }
 
     /**
      * @notice One-sided remove of OTokens from the Curve pool which are then burned.
-     * This is used when the Curve pool has too many OTokens and not enough ETH.
+     * This is used when the Curve pool has too many OTokens and not enough hardAsset.
      * The amount of assets in the vault is unchanged.
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of Curve pool LP tokens to be burned for OTokens.
      */
     function removeAndBurnOTokens(uint256 _lpTokens) external onlyStrategist nonReentrant improvePoolBalance {
-        // Withdraw Curve pool LP tokens from Convex and remove OTokens from the Curve pool
-        uint256 oethToBurn = _withdrawAndRemoveFromPool(_lpTokens, oethCoinIndex);
+        // Withdraw Curve pool LP tokens from gauge and remove OTokens from the Curve pool
+        uint256 otokenToBurn = _withdrawAndRemoveFromPool(_lpTokens, otokenCoinIndex);
 
         // The vault burns the OTokens from this strategy
-        IVault(vaultAddress).burnForStrategy(oethToBurn);
+        IVault(vaultAddress).burnForStrategy(otokenToBurn);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
+        emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
     }
 
     /**
      * @notice One-sided remove of hardAsset from the Curve pool and transfer to the vault.
      * This is used when the Curve pool does not have enough OTokens and too many hardAsset.
-     * The OToken/Asset, eg OETH/ETH, price with decrease.
+     * The OToken/Asset, eg OTOKEN/hardAsset, price with decrease.
      * The amount of assets in the vault increases.
      * The total supply of OTokens does not change.
      * The asset value of the strategy reduces.
@@ -413,23 +413,23 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
     function removeOnlyAssets(uint256 _lpTokens) external onlyStrategist nonReentrant improvePoolBalance {
         // Withdraw Curve pool LP tokens from Curve gauge and remove hardAsset from the Curve pool
-        uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, hardAssetCoinIndex);
+        uint256 hardAssetAmount = _withdrawAndRemoveFromPool(_lpTokens, hardAssetCoinIndex);
 
         // Transfer hardAsset to the vault
-        hardAsset.transfer(vaultAddress, ethAmount);
+        hardAsset.transfer(vaultAddress, hardAssetAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit Withdrawal(address(hardAsset), address(lpToken), ethAmount);
+        emit Withdrawal(address(hardAsset), address(lpToken), hardAssetAmount);
     }
 
     /**
-     * @dev Remove Curve pool LP tokens from the Convex pool and
-     * do a one-sided remove of hardAsset or OETH from the Curve pool.
-     * @param _lpTokens The amount of Curve pool LP tokens to be removed from the Convex pool.
-     * @param coinIndex The index of the coin to be removed from the Curve pool. 0 = ETH, 1 = OETH.
-     * @return coinsRemoved The amount of hardAsset or OETH removed from the Curve pool.
+     * @dev Remove Curve pool LP tokens from the gauge and
+     * do a one-sided remove of hardAsset or OTOKEN from the Curve pool.
+     * @param _lpTokens The amount of Curve pool LP tokens to be removed from the gauge 
+     * @param coinIndex The index of the coin to be removed from the Curve pool. 0 = hardAsset, 1 = OTOKEN.
+     * @return coinsRemoved The amount of hardAsset or OTOKEN removed from the Curve pool.
      */
     function _withdrawAndRemoveFromPool(uint256 _lpTokens, uint128 coinIndex) internal returns (uint256 coinsRemoved) {
         // Withdraw Curve pool LP tokens from Curve gauge
@@ -459,9 +459,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
     function _solvencyAssert() internal view {
         uint256 _totalVaultValue = IVault(vaultAddress).totalValue();
-        uint256 _totalOethbSupply = oeth.totalSupply();
+        uint256 _totalOtokenSupply = oToken.totalSupply();
 
-        if (_totalVaultValue.divPrecisely(_totalOethbSupply) < SOLVENCY_THRESHOLD) {
+        if (_totalVaultValue.divPrecisely(_totalOtokenSupply) < SOLVENCY_THRESHOLD) {
             revert("Protocol insolvent");
         }
     }
@@ -550,9 +550,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     function _abstractSetPToken(address _asset, address _pToken) internal override {}
 
     function _approveBase() internal {
-        // Approve Curve pool for OETH (required for adding liquidity)
+        // Approve Curve pool for OTOKEN (required for adding liquidity)
         // slither-disable-next-line unused-return
-        oeth.approve(platformAddress, type(uint256).max);
+        oToken.approve(platformAddress, type(uint256).max);
 
         // Approve Curve pool for hardAsset (required for adding liquidity)
         // slither-disable-next-line unused-return
