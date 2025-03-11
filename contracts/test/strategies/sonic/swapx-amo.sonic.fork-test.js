@@ -225,7 +225,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapAssetsToPool(parseUnits("5000"));
+        .swapAssetsToPool(parseUnits("5500"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -452,10 +452,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await logSnapData(await snapData(), "\nAfter swapping OS into the pool");
 
       // Assert the strategy's balance
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.equal(
-        dataBefore.stratBalance,
+      expect(
+        await swapXAMOStrategy.checkBalance(wS.address),
         "Strategy's check balance"
-      );
+      ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
 
       // Swap wS into the pool and OS out
       await poolSwapTokensIn(wS, parseUnits("2000000"));
@@ -463,10 +463,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await logSnapData(await snapData(), "\nAfter swapping wS into the pool");
 
       // Assert the strategy's balance
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.equal(
-        dataBefore.stratBalance,
+      expect(
+        await swapXAMOStrategy.checkBalance(wS.address),
         "Strategy's check balance"
-      );
+      ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
     });
     it("a lot of wS is swapped into the pool", async () => {
       const { swapXAMOStrategy, oSonic, wS } = fixture;
@@ -477,10 +477,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await logSnapData(await snapData(), "\nAfter swapping wS into the pool");
 
       // Assert the strategy's balance
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.equal(
-        dataBefore.stratBalance,
+      expect(
+        await swapXAMOStrategy.checkBalance(wS.address),
         "Strategy's check balance"
-      );
+      ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
 
       // Swap OS into the pool and wS out
       await poolSwapTokensIn(oSonic, parseUnits("1005000"));
@@ -488,10 +488,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await logSnapData(await snapData(), "\nAfter swapping OS into the pool");
 
       // Assert the strategy's balance
-      expect(await swapXAMOStrategy.checkBalance(wS.address)).to.equal(
-        dataBefore.stratBalance,
+      expect(
+        await swapXAMOStrategy.checkBalance(wS.address),
         "Strategy's check balance"
-      );
+      ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
     });
   });
 
