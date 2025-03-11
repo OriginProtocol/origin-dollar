@@ -118,10 +118,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStr
 sol2uml .. -s -d 0 -b SonicStakingStrategy -o SonicStakingStrategySquashed.svg
 sol2uml storage .. -c SonicStakingStrategy -o SonicStakingStrategyStorage.svg --hideExpand __gap,______gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicCurveAMOStrategy -o SonicCurveAMOStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b SonicCurveAMOStrategy -o SonicCurveAMOStrategySquashed.svg
-sol2uml storage .. -c SonicCurveAMOStrategy -o SonicCurveAMOStrategyStorage.svg --hideExpand __gap,______gap,_reserved
-
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicSwapXAMOStrategy -o SonicSwapXAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b SonicSwapXAMOStrategy -o SonicSwapXAMOStrategySquashed.svg
 sol2uml storage .. -c SonicSwapXAMOStrategy -o SonicSwapXAMOStrategyStorage.svg --hideExpand __gap,______gap,_reserved

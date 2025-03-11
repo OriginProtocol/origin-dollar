@@ -44,7 +44,7 @@ object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
 }
 
 object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
-    rewards: CRV, SWPx
+    rewards: SWPx
 }
 
 ' Oracle
@@ -57,21 +57,6 @@ object "SonicStakingStrategy" as stakeStrat <<Origin>><<Proxy>> #$originColor {
 
 object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
     asset: S
-}
-
-object "Curve AMO Strategy" as curveAmoStrat <<Origin>><<Proxy>> #$originColor {
-    asset: wS
-    reward: CRV
-}
-
-object "Curve OS/wS\nPool" as curvePool <<Curve>> {
-    assets: OS, wS
-    lp: OSwS
-}
-
-object "Curve OS/wS\nGauge" as curveGauge <<Curve>> {
-    asset: OSwS
-    lp: OSwS-gauge
 }
 
 object "SwapX AMO Strategy" as swapXAmoStrat <<Origin>><<Proxy>> #$originColor {
@@ -100,15 +85,10 @@ os <.> vault
 vault <.> drip
 vault <...> stakeStrat
 stakeStrat ..> sfc
-vault <...> curveAmoStrat
 vault .> router
 
 vault <.. harv 
 drip <.. harv 
-
-harv <..> curveAmoStrat
-curveAmoStrat ..> curvePool
-curveAmoStrat ..> curveGauge
 
 harv <..> swapXAmoStrat
 swapXAmoStrat ..> swapXPool
