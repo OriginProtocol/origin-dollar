@@ -4,15 +4,17 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { oethUnits } = require("../../test/helpers");
 
 module.exports = deployOnSonic(
   {
-    deployName: "014_swapx_amo",
+    deployName: "014_curve_amo",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    // Deploy Sonic SwapX AMO Strategy proxy
+
+    // Get exiting contracts
     const cOSonicProxy = await ethers.getContract("OSonicProxy");
     const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
     const cOSonicVaultAdmin = await ethers.getContractAt(
@@ -24,65 +26,73 @@ module.exports = deployOnSonic(
       "OETHHarvesterSimple",
       cHarvesterProxy.address
     );
-    const dSonicSwapXAMOStrategyProxy = await deployWithConfirmation(
-      "SonicSwapXAMOStrategyProxy",
+
+    // Deploy Sonic Curve AMO Strategy proxy
+    const dSonicCurveAMOStrategyProxy = await deployWithConfirmation(
+      "SonicCurveAMOStrategyProxy",
       []
     );
-    const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
-      "SonicSwapXAMOStrategyProxy"
+
+    const cSonicCurveAMOStrategyProxy = await ethers.getContract(
+      "SonicCurveAMOStrategyProxy"
     );
 
-    // Deploy Sonic SwapX AMO Strategy implementation
-    const dSonicSwapXAMOStrategy = await deployWithConfirmation(
-      "SonicSwapXAMOStrategy",
+    // Deploy Sonic Curve AMO Strategy implementation
+    const dSonicCurveAMOStrategy = await deployWithConfirmation(
+      "SonicCurveAMOStrategy",
       [
-        [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
+        [addresses.sonic.WS_OS.pool, cOSonicVaultProxy.address],
         cOSonicProxy.address,
         addresses.sonic.wS,
-        addresses.sonic.SwapXWSOS.gauge,
+        addresses.sonic.WS_OS.gauge,
+        addresses.sonic.childLiquidityGaugeFactory,
+        0, // The OToken (OS for Sonic) is coin 0 of the Curve OS/wS pool
+        1, // The WETH token (wS for Sonic) is coin 1 of the Curve OS/wS pool
       ]
     );
-    const cSonicSwapXAMOStrategy = await ethers.getContractAt(
-      "SonicSwapXAMOStrategy",
-      dSonicSwapXAMOStrategyProxy.address
+    const cSonicCurveAMOStrategy = await ethers.getContractAt(
+      "SonicCurveAMOStrategy",
+      dSonicCurveAMOStrategyProxy.address
     );
+
     // Initialize Sonic Curve AMO Strategy implementation
-    const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
-      "initialize(address[])",
-      [[addresses.sonic.SWPx]]
+    const initData = cSonicCurveAMOStrategy.interface.encodeFunctionData(
+      "initialize(address[],uint256)",
+      [[addresses.sonic.CRV], oethUnits("0.002")]
     );
     await withConfirmation(
       // prettier-ignore
-      cSonicSwapXAMOStrategyProxy
+      cSonicCurveAMOStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
-          dSonicSwapXAMOStrategy.address,
+          dSonicCurveAMOStrategy.address,
           addresses.sonic.timelock,
           initData
         )
     );
+
     return {
       actions: [
-        // 1. Approve new strategy on the Vault
+        // 3. Approve strategy on vault
         {
           contract: cOSonicVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cSonicSwapXAMOStrategyProxy.address],
+          args: [cSonicCurveAMOStrategyProxy.address],
         },
-        // 2. Add strategy to mint whitelist
+        // 4. Add strategy to mint whitelist
         {
           contract: cOSonicVaultAdmin,
           signature: "addStrategyToMintWhitelist(address)",
-          args: [cSonicSwapXAMOStrategyProxy.address],
+          args: [cSonicCurveAMOStrategyProxy.address],
         },
-        // 3. Enable for SwapX AMO after it has been deployed
+        // 5. Enable for Curve AMO after it has been deployed
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cSonicSwapXAMOStrategyProxy.address, true],
+          args: [cSonicCurveAMOStrategyProxy.address, true],
         },
-        // 4. Set the Harvester on the SwapX AMO strategy
+        // 6. Set the Harvester on the Curve AMO strategy
         {
-          contract: cSonicSwapXAMOStrategy,
+          contract: cSonicCurveAMOStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
