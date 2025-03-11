@@ -44,7 +44,7 @@ object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
 }
 
 object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
-    rewards: CRV
+    rewards: CRV, SWPx
 }
 
 ' Oracle
