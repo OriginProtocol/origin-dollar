@@ -1,5 +1,5 @@
 const { createFixtureLoader } = require("../../_fixture");
-const { defaultSonicFixture } = require("../../_fixture-sonic");
+const { swapXAMOFixture } = require("../../_fixture-sonic");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
 const addresses = require("../../../utils/addresses");
@@ -10,8 +10,12 @@ const { advanceTime } = require("../../helpers");
 const { shouldBehaveLikeGovernable } = require("../../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../../behaviour/strategy");
+const { parseUnits } = require("ethers/lib/utils");
 
-const sonicFixture = createFixtureLoader(defaultSonicFixture);
+const sonicFixture = createFixtureLoader(swapXAMOFixture, {
+  // Mint a little so any shortfall of wS in the Vault can be covered
+  wsMintAmount: 10,
+});
 
 describe("Sonic Fork Test: Curve AMO strategy", function () {
   let fixture, vault, curveAMOStrategy, os, ws, nick, clement, rafael, timelock;
@@ -226,7 +230,7 @@ describe("Sonic Fork Test: Curve AMO strategy", function () {
     it("Should mintAndAddOToken", async () => {
       await unbalancePool({
         balancedBefore: true,
-        wsAmount: defaultDeposit,
+        wsAmount: parseUnits("6", 18),
       });
 
       await curveAMOStrategy
