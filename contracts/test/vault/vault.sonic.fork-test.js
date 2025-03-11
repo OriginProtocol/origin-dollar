@@ -120,7 +120,7 @@ describe("ForkTest: Sonic Vault", function () {
       // Clear any wS out of the Vault first
       await oSonicVault.allocate();
 
-      const mintAmount = parseUnits("20000");
+      const mintAmount = parseUnits("5000000");
       const tx = await oSonicVault
         .connect(nick)
         .mint(wS.address, mintAmount, 0);
