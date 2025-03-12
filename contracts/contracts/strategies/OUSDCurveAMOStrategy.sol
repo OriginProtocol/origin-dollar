@@ -16,6 +16,7 @@ import { Tether } from "../interfaces/Tether.sol";
 import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
 import { ICurveXChainLiquidityGauge } from "../interfaces/ICurveXChainLiquidityGauge.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
+import { ICurveMinter } from "../interfaces/ICurveMinter.sol";
 
 contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -53,6 +54,11 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      * @notice Address of the Curve X-Chain Liquidity Gauge contract.
      */
     ICurveXChainLiquidityGauge public immutable gauge;
+
+    /**
+     * @notice Address of the Curve Minter contract.
+     */
+    ICurveMinter public immutable minter;
 
     // Ordered list of pool assets
     uint128 public immutable otokenCoinIndex;
@@ -130,6 +136,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         address _otoken,
         address _hardAsset,
         address _gauge,
+        address _minter,
         uint128 _otokenCoinIndex,
         uint128 _hardAssetCoinIndex
     ) InitializableAbstractStrategy(_baseConfig) {
@@ -137,6 +144,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         hardAssetCoinIndex = _hardAssetCoinIndex;
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
+        minter = ICurveMinter(_minter);
 
         oToken = IERC20(_otoken);
         hardAsset = Tether(_hardAsset);
@@ -575,6 +583,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         onlyHarvester
         nonReentrant
     {
+        // Collect CRV rewards from inflation
+        minter.mint(address(gauge));
+
         // Collect extra gauge rewards (outside of CRV)
         gauge.claim_rewards();
 
@@ -603,7 +614,8 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         balance = hardAsset.balanceOf(address(this));
         uint256 lpTokens = gauge.balanceOf(address(this));
         if (lpTokens > 0) {
-            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
+            balance += ((lpTokens * curvePool.get_virtual_price()) / 1e18)
+                .scaleBy(decimalsHardAsset, decimalsRef);
         }
     }
 

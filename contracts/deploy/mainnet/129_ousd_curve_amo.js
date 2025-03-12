@@ -23,7 +23,6 @@ module.exports = deploymentWithGovernanceProposal(
     const cOracleRouter = await ethers.getContract("OracleRouter");
     await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
 
-
     // Deploy Base Curve AMO proxy
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
     const cOUSDVaultProxy = await ethers.getContract("VaultProxy");
@@ -48,6 +47,7 @@ module.exports = deploymentWithGovernanceProposal(
       cOUSDProxy.address,
       addresses.mainnet.USDT,
       addresses.mainnet.CurveOUSDUSDTGauge,
+      addresses.mainnet.CRVMinter,
       0,
       1,
     ]);
