@@ -541,6 +541,86 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
+  describe("with an insolvent vault", () => {
+    const loadFixture = createFixtureLoader(swapXAMOFixture, {
+      wsMintAmount: 50000000,
+      depositToStrategy: false,
+    });
+    beforeEach(async () => {
+      fixture = await loadFixture();
+
+      const { oSonicVault, oSonicVaultSigner, swapXAMOStrategy, wS } = fixture;
+
+      // Deposit a little to the strategy
+      const littleAmount = parseUnits("100");
+      await wS
+        .connect(oSonicVaultSigner)
+        .transfer(swapXAMOStrategy.address, littleAmount);
+      await swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .deposit(wS.address, littleAmount);
+
+      const totalAssets = await oSonicVault.totalValue();
+      // Calculate a 0.21% (21 basis points) loss
+      const lossAmount = totalAssets.mul(21).div(10000);
+      await wS.connect(oSonicVaultSigner).transfer(addresses.dead, lossAmount);
+      expect(
+        await wS.balanceOf(oSonicVault.address),
+        "Must have enough wS in vault to make insolvent"
+      ).to.gte(lossAmount);
+    });
+    it("Should fail to deposit", async () => {
+      const { oSonicVaultSigner, swapXAMOStrategy, wS } = fixture;
+
+      // Vault calls deposit on the strategy
+      const depositAmount = parseUnits("10");
+      await wS
+        .connect(oSonicVaultSigner)
+        .transfer(swapXAMOStrategy.address, depositAmount);
+      const tx = swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .deposit(wS.address, depositAmount);
+
+      await expect(tx).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Should fail to withdraw", async () => {
+      const { oSonicVault, oSonicVaultSigner, swapXAMOStrategy, wS } = fixture;
+
+      // Vault withdraws from the strategy
+      const tx = swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .withdraw(oSonicVault.address, wS.address, parseUnits("10"));
+
+      await expect(tx).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Should withdraw all", async () => {
+      const { oSonicVaultSigner, swapXAMOStrategy } = fixture;
+
+      // Vault withdraw alls from the strategy
+      const tx = swapXAMOStrategy.connect(oSonicVaultSigner).withdrawAll();
+
+      await expect(tx).to.not.revertedWith("Protocol insolvent");
+    });
+    it("Should fail to swap assets to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapAssetsToPool(parseUnits("10"));
+
+      await expect(tx).to.be.revertedWith("Protocol insolvent");
+    });
+    it("Should fail to swap OS to the pool", async () => {
+      const { swapXAMOStrategy, strategist } = fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(strategist)
+        .swapOTokensToPool(parseUnits("10"));
+
+      await expect(tx).to.be.revertedWith("Protocol insolvent");
+    });
+  });
+
   const poolSwapTokensIn = async (tokenIn, amountIn) => {
     const { clement, swapXPool, wS } = fixture;
     const amountOut = await swapXPool.getAmountOut(amountIn, tokenIn.address);

@@ -160,8 +160,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   for (const user of [rafael, nick, clement]) {
     // Mint some Sonic Wrapped S
-    await hhHelpers.setBalance(user.address, oethUnits("100000000"));
-    await wS.connect(user).deposit({ value: oethUnits("10000000") });
+    await hhHelpers.setBalance(user.address, oethUnits("100000100"));
+    await wS.connect(user).deposit({ value: oethUnits("100000000") });
 
     // Set allowance on the vault
     await wS.connect(user).approve(oSonicVault.address, oethUnits("100000000"));
