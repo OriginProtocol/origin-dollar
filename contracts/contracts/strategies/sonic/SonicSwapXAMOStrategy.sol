@@ -582,8 +582,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // Safety check that we are dealing with the correct pool tokens
         require(
-            (_tokenIn == ws || _tokenIn == os) &&
-                (_tokenOut == ws || _tokenOut == os),
+            (_tokenIn == ws && _tokenOut == os) ||
+                (_tokenIn == os && _tokenOut == ws),
             "Unsupported swap"
         );
 
@@ -602,11 +602,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @dev Calculate the value of a LP position in a SwapX stable pool
     /// if the pool was balanced.
     /// @param lpTokens Amount of LP tokens in the SwapX pool
-    /// @return value The wS value of the LP tokens in the pool
+    /// @return value The wS value of the LP tokens when the pool is balanced
     function _lpValue(uint256 lpTokens) internal view returns (uint256 value) {
         // Get total supply of LP tokens
         uint256 totalSupply = IPair(pool).totalSupply();
-        require(totalSupply > 0, "No liquidity in pool");
+        if (totalSupply == 0) return 0;
 
         // Get the current reserves of the pool
         (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
