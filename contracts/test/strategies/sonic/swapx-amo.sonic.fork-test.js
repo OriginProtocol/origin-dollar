@@ -947,6 +947,11 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultWSBalance: wsWithdrawAmount,
       stratGaugeBalance: dataBefore.gaugeSupply.mul(-1),
     });
+
+    expect(
+      wsWithdrawAmount.add(osBurnAmount),
+      "wS withdraw and OS burnt >= strategy balance"
+    ).to.gte(dataBefore.stratBalance);
   }
 
   async function assertWithdrawPartial(wsWithdrawAmount) {
