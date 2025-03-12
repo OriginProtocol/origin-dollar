@@ -660,10 +660,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      */
     function _solvencyAssert() internal view {
         uint256 _totalVaultValue = IVault(vaultAddress).totalValue();
-        uint256 _totalOSSupply = IERC20(os).totalSupply();
+        uint256 _totalSupply = IERC20(os).totalSupply();
 
         if (
-            _totalVaultValue.divPrecisely(_totalOSSupply) < SOLVENCY_THRESHOLD
+            _totalSupply > 0 &&
+            _totalVaultValue.divPrecisely(_totalSupply) < SOLVENCY_THRESHOLD
         ) {
             revert("Protocol insolvent");
         }
