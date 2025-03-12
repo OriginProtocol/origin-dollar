@@ -18,7 +18,6 @@ describe("Curve AMO OUSD strategy", function () {
     ousd,
     usdt,
     nick,
-    clement,
     rafael,
     governor,
     timelock;
@@ -36,7 +35,7 @@ describe("Curve AMO OUSD strategy", function () {
 
   let defaultDepositor;
 
-  const defaultDeposit = oethUnits("500");
+  let defaultDeposit = oethUnits("10000");
 
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
@@ -47,13 +46,12 @@ describe("Curve AMO OUSD strategy", function () {
     usdt = fixture.usdt;
     nick = fixture.daniel;
     rafael = fixture.franck;
-    clement = fixture.clement;
-    governor = fixture.governor;
     timelock = fixture.timelock;
     curvePool = fixture.curvePoolOusdUsdt;
     curveGauge = fixture.curveGaugeOusdUsdt;
     crv = fixture.crv;
     harvester = fixture.harvester;
+    governor = await ethers.getSigner(addresses.mainnet.Timelock);
 
     defaultDepositor = rafael;
 
@@ -212,7 +210,7 @@ describe("Curve AMO OUSD strategy", function () {
         curveAMOStrategy.address
       );
 
-      const amountToWithdraw = defaultDeposit.div(5); // 1000 OUSD
+      const amountToWithdraw = defaultDeposit.mul(999).div(1000); // 1000 OUSD
       await curveAMOStrategy
         .connect(impersonatedVaultSigner)
         .withdraw(ousdVault.address, usdt.address, amountToWithdraw.div(1e12));
@@ -386,17 +384,17 @@ describe("Curve AMO OUSD strategy", function () {
       expect(await crv.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
-    it("Should deposit when pool is heavily unbalanced with OETH", async () => {
+    it("Should deposit when pool is heavily unbalanced with OUSD", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      await unbalancePool({ ousdAmount: defaultDeposit.mul(1000) });
+      await unbalancePool({ ousdAmount: defaultDeposit.mul(10) });
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
       expect(
         await curveAMOStrategy.checkBalance(usdt.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      ).to.approxEqualTolerance(defaultDeposit.mul(2).div(1e12));
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
@@ -407,20 +405,21 @@ describe("Curve AMO OUSD strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      await unbalancePool({ usdtAmount: defaultDeposit.mul(1000) });
+      await unbalancePool({ usdtAmount: defaultDeposit.mul(10).div(1e12) });
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
       expect(
         await curveAMOStrategy.checkBalance(usdt.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      ).to.approxEqualTolerance(defaultDeposit.mul(2).div(1e12));
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
       ).to.approxEqualTolerance(defaultDeposit.mul(2));
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
-    it("Should withdraw all when pool is heavily unbalanced with OETH", async () => {
+    it("Should withdraw all when pool is heavily unbalanced with OUSD", async () => {
+      defaultDeposit = oethUnits("500");
       await balancePool();
       await mintAndDepositToStrategy();
 
@@ -447,10 +446,11 @@ describe("Curve AMO OUSD strategy", function () {
     });
 
     it("Should withdraw all when pool is heavily unbalanced with usdt", async () => {
+      defaultDeposit = oethUnits("500");
       await balancePool();
       await mintAndDepositToStrategy();
 
-      await unbalancePool({ usdtAmount: defaultDeposit.mul(1000) });
+      await unbalancePool({ usdtAmount: defaultDeposit.mul(1000).div(1e12) });
       const checkBalanceAMO = await curveAMOStrategy.checkBalance(usdt.address);
       const balanceVault = await usdt.balanceOf(ousdVault.address);
 
@@ -490,12 +490,12 @@ describe("Curve AMO OUSD strategy", function () {
           .deposit(usdt.address, 0)
       ).to.be.revertedWith("Must deposit something");
     });
-    it("Deposit: Can only deposit usdt", async () => {
+    it("Deposit: Can only deposit hard asset", async () => {
       await expect(
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
           .deposit(ousd.address, defaultDeposit)
-      ).to.be.revertedWith("Can only deposit usdt");
+      ).to.be.revertedWith("Can only deposit hard asset");
     });
     it("Deposit: Caller is not the Vault", async () => {
       await expect(
@@ -525,12 +525,12 @@ describe("Curve AMO OUSD strategy", function () {
           .withdraw(ousdVault.address, usdt.address, 0)
       ).to.be.revertedWith("Must withdraw something");
     });
-    it("Withdraw: Can only withdraw usdt", async () => {
+    it("Withdraw: Can only withdraw hard asset", async () => {
       await expect(
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
           .withdraw(ousdVault.address, ousd.address, defaultDeposit)
-      ).to.be.revertedWith("Can only withdraw usdt");
+      ).to.be.revertedWith("Can only withdraw hard asset");
     });
     it("Withdraw: Caller is not the vault", async () => {
       await expect(
@@ -548,7 +548,9 @@ describe("Curve AMO OUSD strategy", function () {
     });
     it("Withdraw: Protocol is insolvent", async () => {
       await balancePool();
-      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      await mintAndDepositToStrategy({
+        amount: defaultDeposit.mul(2).div(1e12),
+      });
 
       // Make protocol insolvent by minting a lot of OETH and send them
       // Otherwise they will be burned and the protocol will not be insolvent.
@@ -563,13 +565,13 @@ describe("Curve AMO OUSD strategy", function () {
       await expect(
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
-          .withdraw(ousdVault.address, usdt.address, defaultDeposit)
+          .withdraw(ousdVault.address, usdt.address, defaultDeposit.div(1e12))
       ).to.be.revertedWith("Protocol insolvent");
     });
     it("Mint OToken: Asset overshot peg", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
-      await unbalancePool({ usdtAmount: defaultDeposit }); // +5 usdt in the pool
+      await unbalancePool({ usdtAmount: defaultDeposit.div(1e12) }); // +5 usdt in the pool
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -600,8 +602,10 @@ describe("Curve AMO OUSD strategy", function () {
     });
     it("Burn OToken: Asset balance worse", async () => {
       await balancePool();
-      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
-      await unbalancePool({ usdtAmount: defaultDeposit.mul(2) }); // +10 usdt in the pool
+      await mintAndDepositToStrategy({
+        amount: defaultDeposit.mul(2).div(1e12),
+      });
+      await unbalancePool({ usdtAmount: defaultDeposit.mul(2).div(1e12) }); // +10 usdt in the pool
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -632,8 +636,10 @@ describe("Curve AMO OUSD strategy", function () {
     });
     it("Remove only assets: Asset overshot peg", async () => {
       await balancePool();
-      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
-      await unbalancePool({ usdtAmount: defaultDeposit.mul(2) }); // +10 usdt in the pool
+      await mintAndDepositToStrategy({
+        amount: defaultDeposit.mul(2).div(1e12),
+      });
+      await unbalancePool({ usdtAmount: defaultDeposit.mul(2).div(1e12) }); // +10 usdt in the pool
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -642,7 +648,9 @@ describe("Curve AMO OUSD strategy", function () {
     });
     it("Remove only assets: OTokens balance worse", async () => {
       await balancePool();
-      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      await mintAndDepositToStrategy({
+        amount: defaultDeposit.mul(2).div(1e12),
+      });
       await unbalancePool({ ousdAmount: defaultDeposit.mul(2) }); // +10 OETH in the pool
       await expect(
         curveAMOStrategy
@@ -652,7 +660,9 @@ describe("Curve AMO OUSD strategy", function () {
     });
     it("Remove only assets: Protocol insolvent", async () => {
       await balancePool();
-      await mintAndDepositToStrategy({ amount: defaultDeposit.mul(2) });
+      await mintAndDepositToStrategy({
+        amount: defaultDeposit.mul(2).div(1e12),
+      });
       // prettier-ignore
       await ousdVault
         .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
@@ -678,18 +688,15 @@ describe("Curve AMO OUSD strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
-    anna: rafael,
-    josh: nick,
-    matt: clement,
-    dai: crv,
+    strategist: rafael,
+    governor: governor,
     strategy: curveAMOStrategy,
   }));
 
   shouldBehaveLikeHarvestable(() => ({
     ...fixture,
-    anna: rafael,
     strategy: curveAMOStrategy,
-    harvester: harvester,
+    governor: governor,
     oeth: ousd,
   }));
 
@@ -697,26 +704,13 @@ describe("Curve AMO OUSD strategy", function () {
     ...fixture,
     // Contracts
     strategy: curveAMOStrategy,
+    curveAMOStrategy: curveAMOStrategy,
     vault: ousdVault,
     assets: [usdt],
     timelock: timelock,
     governor: governor,
     strategist: rafael,
     harvester: harvester,
-    // As we don't have this on base fixture, we use CRV
-    usdt: crv,
-    usdc: crv,
-    dai: crv,
-    reth: crv,
-    stETH: crv,
-    frxETH: crv,
-    cvx: crv,
-    comp: crv,
-    bal: crv,
-    // Users
-    anna: rafael,
-    matt: clement,
-    josh: nick,
   }));
 
   const mintAndDepositToStrategy = async ({
