@@ -42,7 +42,7 @@ module.exports = deployOnSonic(
 
     const cDripperProxy = await ethers.getContract("OSonicDripperProxy");
 
-    const initSonicStakingStrategy = cHarvester.interface.encodeFunctionData(
+    const initHarvester = cHarvester.interface.encodeFunctionData(
       "initialize(address,address,address)",
       [addresses.sonic.timelock, strategistAddr, cDripperProxy.address]
     );
@@ -54,7 +54,7 @@ module.exports = deployOnSonic(
             .connect(sDeployer)["initialize(address,address,bytes)"](
               dHarvester.address,
               addresses.sonic.timelock,
-              initSonicStakingStrategy
+              initHarvester
             )
         );
 
