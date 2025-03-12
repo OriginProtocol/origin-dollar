@@ -341,7 +341,7 @@ describe("OETH Vault", function () {
 
       await mockVault.supportAsset(frxETH.address);
 
-      const mockGovernor = await impersonateAndFund(addresses.dead);
+      const mockGovernor = await impersonateAndFund(addresses.zero);
       const tx = mockVault.connect(mockGovernor).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
