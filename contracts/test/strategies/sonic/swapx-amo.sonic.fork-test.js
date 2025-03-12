@@ -60,8 +60,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         nick,
         oSonicVaultSigner,
         swapXAMOStrategy,
-        wS,
-        oSonic,
         swapXPool,
       } = fixture;
 
@@ -73,8 +71,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const tx = await swapXAMOStrategy
         .connect(timelock)
         .safeApproveAllTokens();
-      await expect(tx).to.emit(wS, "Approval");
-      await expect(tx).to.emit(oSonic, "Approval");
       await expect(tx).to.emit(swapXPool, "Approval");
 
       for (const signer of [strategist, nick, oSonicVaultSigner]) {

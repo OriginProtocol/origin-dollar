@@ -702,12 +702,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     {}
 
     function _approveBase() internal {
-        // Approve pool for OS and wS (required for adding liquidity)
-        // slither-disable-next-line unused-return
-        IERC20(os).approve(platformAddress, type(uint256).max);
-        // slither-disable-next-line unused-return
-        IERC20(ws).approve(platformAddress, type(uint256).max);
-
         // Approve SwapX gauge contract to transfer SwapX pool LP tokens
         // This is needed for deposits of SwapX pool LP tokens into the gauge.
         // slither-disable-next-line unused-return
