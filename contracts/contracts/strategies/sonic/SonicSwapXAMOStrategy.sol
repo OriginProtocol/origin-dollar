@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title SwapX Automated Market Maker (AMO) Strategy
+ * @title SwapX Algorithmic Market Maker (AMO) Strategy
  * @notice AMO strategy for the SwapX OS/wS stable pool
  * @author Origin Protocol Inc
  */
