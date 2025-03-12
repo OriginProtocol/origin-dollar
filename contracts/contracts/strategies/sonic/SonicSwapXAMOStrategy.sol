@@ -46,8 +46,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
     event SwapOTokensToPool(
         uint256 osMinted,
-        uint256 wsLiquidity,
-        uint256 osLiquidity,
+        uint256 wsDepositAmount,
+        uint256 osDepositAmount,
         uint256 lpTokens
     );
     event SwapAssetsToPool(
@@ -209,13 +209,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         require(_wS == ws, "Unsupported asset");
 
         // Calculate the required amount of OS to mint based on the wS amount.
-        uint256 osLiquidity = _calcTokensToMint(_wsAmount);
+        uint256 osDepositAmount = _calcTokensToMint(_wsAmount);
 
         // Mint the required OS tokens to this strategy
-        IVault(vaultAddress).mintForStrategy(osLiquidity);
+        IVault(vaultAddress).mintForStrategy(osDepositAmount);
 
         // Add wS and OS liquidity to the pool and stake in gauge
-        _depositToPoolAndGauge(_wsAmount, osLiquidity);
+        _depositToPoolAndGauge(_wsAmount, osDepositAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -223,7 +223,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Emit event for the deposited wS tokens
         emit Deposit(_wS, pool, _wsAmount);
         // Emit event for the minted OS tokens
-        emit Deposit(os, pool, osLiquidity);
+        emit Deposit(os, pool, osDepositAmount);
     }
 
     /**
@@ -396,20 +396,28 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // 3. Add wS and OS back to the pool in proportion to the pool's reserves
 
         // The wS is from the swap and any wS that was sitting in the strategy
-        uint256 wsLiquidity = IERC20(ws).balanceOf(address(this));
+        uint256 wsDepositAmount = IERC20(ws).balanceOf(address(this));
         // Calculate the required amount of OS to mint based on the wS amount.
-        uint256 osLiquidity = _calcTokensToMint(wsLiquidity);
+        uint256 osDepositAmount = _calcTokensToMint(wsDepositAmount);
 
         // Mint more OS to this strategy so they can then be added to the pool
-        IVault(vaultAddress).mintForStrategy(osLiquidity);
+        IVault(vaultAddress).mintForStrategy(osDepositAmount);
 
         // Add wS and OS liquidity to the pool and stake in gauge
-        uint256 lpTokens = _depositToPoolAndGauge(wsLiquidity, osLiquidity);
+        uint256 lpTokens = _depositToPoolAndGauge(
+            wsDepositAmount,
+            osDepositAmount
+        );
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        emit SwapOTokensToPool(osToMint, wsLiquidity, osLiquidity, lpTokens);
+        emit SwapOTokensToPool(
+            osToMint,
+            wsDepositAmount,
+            osDepositAmount,
+            lpTokens
+        );
     }
 
     /***************************************
