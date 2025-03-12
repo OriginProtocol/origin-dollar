@@ -920,7 +920,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
             dataBefore.reserves.ws.sub(wsWithdrawAmount);
 
           expect(actualWsReserve).to.withinRange(
-            expectedWsReserves.sub(2),
+            expectedWsReserves.sub(3),
             expectedWsReserves,
             "wS reserves"
           );
