@@ -64,7 +64,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     uint128 public immutable otokenCoinIndex;
     uint128 public immutable hardAssetCoinIndex;
 
-    uint8 public immutable decimalsRef;
+    uint8 public immutable decimalsOToken;
     uint8 public immutable decimalsHardAsset;
 
     /**
@@ -99,7 +99,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // diff = hardAsset balance - OTOKEN balance
         int256 diffBefore = (
             balancesBefore[hardAssetCoinIndex].scaleBy(
-                decimalsRef,
+                decimalsOToken,
                 decimalsHardAsset
             )
         ).toInt256() - balancesBefore[otokenCoinIndex].toInt256();
@@ -111,7 +111,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // diff = hardAsset balance - OTOKEN balance
         int256 diffAfter = (
             balancesAfter[hardAssetCoinIndex].scaleBy(
-                decimalsRef,
+                decimalsOToken,
                 decimalsHardAsset
             )
         ).toInt256() - balancesAfter[otokenCoinIndex].toInt256();
@@ -150,7 +150,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         hardAsset = Tether(_hardAsset);
         gauge = ICurveXChainLiquidityGauge(_gauge);
         decimalsHardAsset = IBasicToken(_hardAsset).decimals();
-        decimalsRef = IBasicToken(_otoken).decimals();
+        decimalsOToken = IBasicToken(_otoken).decimals();
 
         _setGovernor(address(0));
     }
@@ -217,12 +217,16 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
                 0,
                 (
                     balances[hardAssetCoinIndex].scaleBy(
-                        decimalsRef,
+                        decimalsOToken,
                         decimalsHardAsset
                     )
                 ).toInt256() +
-                    (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset))
-                        .toInt256() -
+                    (
+                        _hardAssetAmount.scaleBy(
+                            decimalsOToken,
+                            decimalsHardAsset
+                        )
+                    ).toInt256() -
                     balances[otokenCoinIndex].toInt256()
             )
         );
@@ -232,11 +236,11 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
          */
         otokenToAdd = Math.max(
             otokenToAdd,
-            (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset))
+            (_hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset))
         );
         otokenToAdd = Math.min(
             otokenToAdd,
-            (_hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)) * 2
+            (_hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset)) * 2
         );
 
         /* Mint OTOKEN with a strategy that attempts to contribute to stability of OTOKEN/hardAsset pool. Try
@@ -255,7 +259,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         _amounts[otokenCoinIndex] = otokenToAdd;
 
         uint256 valueInLpTokens = ((
-            _hardAssetAmount.scaleBy(decimalsRef, decimalsHardAsset)
+            _hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset)
         ) + otokenToAdd).divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - maxSlippage
@@ -288,7 +292,6 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      *
      */
 
-
     /**
      * @notice Withdraw hardAsset and OTOKEN from the Curve pool, burn the OTOKEN,
      * transfer hardAsset to the recipient.
@@ -309,7 +312,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_hardAsset, address(lpToken), _amount);
 
-        uint256 requiredLpTokens = calcTokenToBurn(_amount) * 1e12;
+        uint256 requiredLpTokens = calcTokenToBurn(
+            _amount.scaleBy(decimalsOToken, decimalsHardAsset)
+        );
 
         _lpWithdraw(requiredLpTokens);
 
@@ -354,7 +359,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         uint256 poolHardAssetBalance = curvePool
             .balances(hardAssetCoinIndex)
-            .scaleBy(decimalsRef, decimalsHardAsset);
+            .scaleBy(decimalsOToken, decimalsHardAsset);
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
@@ -533,7 +538,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         if (coinIndex == hardAssetCoinIndex) {
-            valueInEth = valueInEth.scaleBy(decimalsHardAsset, decimalsRef);
+            valueInEth = valueInEth.scaleBy(decimalsHardAsset, decimalsOToken);
         }
 
         // Apply slippage to hardAsset value
@@ -615,7 +620,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         uint256 lpTokens = gauge.balanceOf(address(this));
         if (lpTokens > 0) {
             balance += ((lpTokens * curvePool.get_virtual_price()) / 1e18)
-                .scaleBy(decimalsHardAsset, decimalsRef);
+                .scaleBy(decimalsHardAsset, decimalsOToken);
         }
     }
 
