@@ -432,7 +432,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @return balance    Total value in wS.
      */
     function checkBalance(address _asset)
-        public
+        external
         view
         override
         returns (uint256 balance)
