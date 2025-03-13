@@ -282,6 +282,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant skimPool {
         require(_wsAmount > 0, "Must withdraw something");
         require(_asset == ws, "Unsupported asset");
+        // This strategy can't be set as a default strategy for wS in the Vault.
+        // This means the recipient must always be the Vault.
+        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
         // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
         uint256 lpTokens = _calcTokensToBurn(_wsAmount);
