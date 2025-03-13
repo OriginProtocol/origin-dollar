@@ -217,6 +217,79 @@ const deployPoolBoosterFactorySwapxSingle = async (
   return await ethers.getContract("PoolBoosterFactorySwapxSingle_v1");
 };
 
+const filterAndParseRewardAddedEvents = async (tx) => {
+  // keccak256("RewardAdded(address,uint256,uint256)")
+  const rewardAddedTopic =
+    "0x6a6f77044107a33658235d41bedbbaf2fe9ccdceb313143c947a5e76e1ec8474";
+
+  const { events } = await tx.wait();
+  return events
+    .filter((e) => e.topics[0] == rewardAddedTopic)
+    .map((e) => {
+      const decoded = ethers.utils.defaultAbiCoder.decode(
+        ["address", "uint256", "uint256"],
+        e.data
+      );
+      return {
+        rewardToken: decoded[0],
+        amount: decoded[1],
+        startTimestamp: decoded[2],
+      };
+    });
+};
+
+const filterAndParseNotifyRewardEvents = async (tx) => {
+  // keccak256("NotifyReward(address,address,uint256,uint256)")
+  const notifyRewardTopic =
+    "0x52977ea98a2220a03ee9ba5cb003ada08d394ea10155483c95dc2dc77a7eb24b";
+
+  const { events } = await tx.wait();
+  return events
+    .filter((e) => e.topics[0] == notifyRewardTopic)
+    .map((e) => {
+      const decoded = ethers.utils.defaultAbiCoder.decode(
+        ["uint256", "uint256"],
+        e.data
+      );
+
+      const briber = ethers.utils.defaultAbiCoder.decode(
+        ["address"],
+        e.topics[1]
+      )[0];
+
+      const rewardToken = ethers.utils.defaultAbiCoder.decode(
+        ["address"],
+        e.topics[2]
+      )[0];
+
+      return {
+        briber,
+        rewardToken,
+        amount: decoded[0],
+        period: decoded[1],
+      };
+    });
+};
+
+const getPoolBoosterContractFromPoolAddress = async (factory, poolAddress) => {
+  const poolBoosterEntry = await factory.poolBoosterFromPool(poolAddress);
+  const poolBoosterType = poolBoosterEntry.boosterType;
+
+  if (poolBoosterType == 0) {
+    return await ethers.getContractAt(
+      "PoolBoosterSwapxDouble",
+      poolBoosterEntry.boosterAddress
+    );
+  } else if (poolBoosterType == 1) {
+    return await ethers.getContractAt(
+      "PoolBoosterSwapxSingle",
+      poolBoosterEntry.boosterAddress
+    );
+  } else {
+    throw new Error(`Unrecognised pool booster type: ${poolBoosterType}`);
+  }
+};
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -227,4 +300,8 @@ module.exports = {
   defaultSonicFixture,
   MINTER_ROLE,
   BURNER_ROLE,
+
+  filterAndParseRewardAddedEvents,
+  filterAndParseNotifyRewardEvents,
+  getPoolBoosterContractFromPoolAddress,
 };
