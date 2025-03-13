@@ -481,6 +481,27 @@ describe("OETH Vault", function () {
         "SafeCast: value doesn't fit in an int256"
       );
     });
+
+    it("Governor should remove strategy from mint whitelist", async () => {
+      const { oethVault, governor, daniel } = fixture;
+
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
+
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be.true;
+
+      const tx = await oethVault
+        .connect(governor)
+        .removeStrategyFromMintWhitelist(daniel.address);
+
+      expect(tx)
+        .to.emit(oethVault, "StrategyRemovedFromMintWhitelist")
+        .withArgs(daniel.address);
+
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be.false;
+    });
   });
 
   describe("Allocate", () => {
