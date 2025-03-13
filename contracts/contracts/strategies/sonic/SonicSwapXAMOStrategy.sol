@@ -190,9 +190,14 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Deposit Wrapped S (wS) into the SwapX pool
-     * @param _asset Address of Wrapped S (wS) contract.
-     * @param _amount Amount of Wrapped S (wS) to deposit.
+     * @notice Deposit an amount of Wrapped S (wS) into the SwapX pool.
+     * Mint OS in proportion to the pool's wS and OS reserves,
+     * transfer Wrapped S (wS) and OS to the pool,
+     * mint the pool's LP token and deposit in the gauge.
+     * @dev This tx must be wrapped by the VaultValueChecker.
+     * To minimize loses, the pool should be rebalanced before depositing.
+     * @param _asset Address of Wrapped S (wS) token.
+     * @param _amount Amount of Wrapped S (wS) tokens to deposit.
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -208,7 +213,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit the strategy's entire balance of Wrapped S (wS) into the pool
+     * @notice Deposit all the strategy's Wrapped S (wS) tokens into the SwapX pool.
+     * Mint OS in proportion to the pool's wS and OS reserves,
+     * transfer Wrapped S (wS) and OS to the pool,
+     * mint the pool's LP token and deposit in the gauge.
+     * @dev This tx must be wrapped by the VaultValueChecker.
+     * To minimize loses, the pool should be rebalanced before depositing.
      */
     function depositAll() external override onlyVault nonReentrant skimPool {
         uint256 balance = IERC20(ws).balanceOf(address(this));
@@ -243,6 +253,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Withdraw wS and OS from the SwapX pool, burn the OS,
      * and transfer the wS to the recipient.
+     * @dev This tx must be wrapped by the VaultValueChecker.
+     * To minimize loses, the pool should be rebalanced before the withdraw.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _asset Address of the Wrapped S (wS) contract.
      * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
@@ -278,7 +290,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _solvencyAssert();
 
         // Emit event for the withdrawn wS tokens
-        emit Withdrawal(_asset, pool, _wsAmount);
+        emit Withdrawal(ws, pool, _wsAmount);
         // Emit event for the burnt OS tokens
         emit Withdrawal(os, pool, osToBurn);
     }
@@ -288,7 +300,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * remove all wS and OS from the SwapX pool,
      * burn all the OS tokens,
      * and transfer all the wS to the Vault contract.
-     * @dev There is no solvency check here as withdrawAll can be called to
+     * @dev This tx must be wrapped by the VaultValueChecker.
+     * To minimize loses, the pool should be rebalanced before the withdraw.
+     * There is no solvency check here as withdrawAll can be called to
      * quickly secure assets to the Vault in emergencies.
      */
     function withdrawAll()
