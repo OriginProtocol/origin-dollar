@@ -3,6 +3,9 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
+const {
+  deploySonicSwapXAMOStrategyImplementation,
+} = require("../deployActions");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
@@ -59,48 +62,20 @@ module.exports = deployOnSonic(
         );
 
     // Deploy Sonic SwapX AMO Strategy proxy
-    const cOSonicProxy = await ethers.getContract("OSonicProxy");
     const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
     const cOSonicVaultAdmin = await ethers.getContractAt(
       "OSonicVaultAdmin",
       cOSonicVaultProxy.address
     );
-    const dSonicSwapXAMOStrategyProxy = await deployWithConfirmation(
-      "SonicSwapXAMOStrategyProxy",
-      []
-    );
+    await deployWithConfirmation("SonicSwapXAMOStrategyProxy", []);
     const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
       "SonicSwapXAMOStrategyProxy"
     );
 
     // Deploy Sonic SwapX AMO Strategy implementation
-    const dSonicSwapXAMOStrategy = await deployWithConfirmation(
-      "SonicSwapXAMOStrategy",
-      [
-        [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
-        cOSonicProxy.address,
-        addresses.sonic.wS,
-        addresses.sonic.SwapXWSOS.gauge,
-      ]
-    );
-    const cSonicSwapXAMOStrategy = await ethers.getContractAt(
-      "SonicSwapXAMOStrategy",
-      dSonicSwapXAMOStrategyProxy.address
-    );
-    // Initialize Sonic Curve AMO Strategy implementation
-    const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
-      "initialize(address[])",
-      [[addresses.sonic.SWPx]]
-    );
-    await withConfirmation(
-      // prettier-ignore
-      cSonicSwapXAMOStrategyProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dSonicSwapXAMOStrategy.address,
-          addresses.sonic.timelock,
-          initData
-        )
-    );
+    const cSonicSwapXAMOStrategy =
+      await deploySonicSwapXAMOStrategyImplementation();
+
     return {
       actions: [
         // 1. Upgrade Vault proxy to new VaultCore
