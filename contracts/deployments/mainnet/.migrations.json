@@ -112,5 +112,6 @@
   "121_pool_booster_curve": 1737965774,
   "122_delegate_yield_curve_pool": 1739200325,
   "123_simple_harvester_v2": 1739168735,
-  "124_remove_ousd_aave_strat": 1739880781
+  "124_remove_ousd_aave_strat": 1739880781,
+  "125_update_amo_mint_threshold": 1741748000
 }
