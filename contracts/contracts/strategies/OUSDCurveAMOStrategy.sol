@@ -180,11 +180,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         _setMaxSlippage(_maxSlippage);
     }
 
-    /**
-     *
-     *                 Deposit
-     *
-     */
+    /***************************************
+                    Deposit
+    ****************************************/
 
     /**
      * @notice Deposit hard asset into the Curve pool
@@ -286,11 +284,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /**
-     *
-     *                 Withdraw
-     *
-     */
+    /***************************************
+                    Withdraw
+    ****************************************/
 
     /**
      * @notice Withdraw hardAsset and OTOKEN from the Curve pool, burn the OTOKEN,
@@ -404,11 +400,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
     }
 
-    /**
-     *
-     *         Curve pool Rebalancing
-     *
-     */
+    /***************************************
+            Curve pool Rebalancing
+    ****************************************/
 
     /**
      * @notice Mint OTokens and one-sided add to the Curve pool.
@@ -573,11 +567,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /**
-     *
-     *             Assets and Rewards
-     *
-     */
+    /***************************************
+                Assets and Rewards
+    ****************************************/
 
     /**
      * @notice Collect accumulated CRV (and other) rewards and send to the Harvester.
@@ -632,11 +624,9 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         return _asset == address(hardAsset);
     }
 
-    /**
-     *
-     *                 Approvals
-     *
-     */
+    /***************************************
+                    Approvals
+    ****************************************/
 
     /**
      * @notice Sets the maximum slippage allowed for any swap/liquidity operation
