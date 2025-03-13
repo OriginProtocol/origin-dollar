@@ -60,10 +60,15 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      */
     ICurveMinter public immutable minter;
 
-    // Ordered list of pool assets
+    /**
+     * @notice Index of the OTOKEN and hardAsset in the Curve pool.
+     */
     uint128 public immutable otokenCoinIndex;
     uint128 public immutable hardAssetCoinIndex;
 
+    /**
+     * @notice Decimals of the OTOKEN and hardAsset.
+     */
     uint8 public immutable decimalsOToken;
     uint8 public immutable decimalsHardAsset;
 
