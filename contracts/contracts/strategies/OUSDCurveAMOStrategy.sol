@@ -14,7 +14,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { Tether } from "../interfaces/Tether.sol";
 import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
-import { ICurveXChainLiquidityGauge } from "../interfaces/ICurveXChainLiquidityGauge.sol";
+import { ICurveLiquidityGaugeV6 } from "../interfaces/ICurveLiquidityGaugeV6.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { ICurveMinter } from "../interfaces/ICurveMinter.sol";
 
@@ -53,7 +53,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Address of the Curve X-Chain Liquidity Gauge contract.
      */
-    ICurveXChainLiquidityGauge public immutable gauge;
+    ICurveLiquidityGaugeV6 public immutable gauge;
 
     /**
      * @notice Address of the Curve Minter contract.
@@ -99,7 +99,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
      * Withdrawals are proportional so doesn't change the pools asset balance.
      */
     modifier improvePoolBalance() {
-        // Get the asset and OToken balances in the Curve pool
+        // Get the hard asset and OToken balances in the Curve pool
         uint256[] memory balancesBefore = curvePool.get_balances();
         // diff = hardAsset balance - OTOKEN balance
         int256 diffBefore = (
@@ -111,7 +111,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         _;
 
-        // Get the asset and OToken balances in the Curve pool
+        // Get the hard asset and OToken balances in the Curve pool
         uint256[] memory balancesAfter = curvePool.get_balances();
         // diff = hardAsset balance - OTOKEN balance
         int256 diffAfter = (
@@ -153,7 +153,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         oToken = IERC20(_otoken);
         hardAsset = Tether(_hardAsset);
-        gauge = ICurveXChainLiquidityGauge(_gauge);
+        gauge = ICurveLiquidityGaugeV6(_gauge);
         decimalsHardAsset = IBasicToken(_hardAsset).decimals();
         decimalsOToken = IBasicToken(_otoken).decimals();
 
@@ -211,6 +211,10 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         emit Deposit(_hardAsset, address(lpToken), _hardAssetAmount);
+        uint256 scaledHardAssetAmount = _hardAssetAmount.scaleBy(
+            decimalsOToken,
+            decimalsHardAsset
+        );
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balances = curvePool.get_balances();
@@ -224,12 +228,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
                         decimalsHardAsset
                     )
                 ).toInt256() +
-                    (
-                        _hardAssetAmount.scaleBy(
-                            decimalsOToken,
-                            decimalsHardAsset
-                        )
-                    ).toInt256() -
+                    scaledHardAssetAmount.toInt256() -
                     balances[otokenCoinIndex].toInt256()
             )
         );
@@ -237,14 +236,8 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         /* Add so much OTOKEN so that the pool ends up being balanced. And at minimum
          * add as much OTOKEN as hard asset and at maximum twice as much OTOKEN.
          */
-        otokenToAdd = Math.max(
-            otokenToAdd,
-            (_hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset))
-        );
-        otokenToAdd = Math.min(
-            otokenToAdd,
-            (_hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset)) * 2
-        );
+        otokenToAdd = Math.max(otokenToAdd, scaledHardAssetAmount);
+        otokenToAdd = Math.min(otokenToAdd, scaledHardAssetAmount * 2);
 
         /* Mint OTOKEN with a strategy that attempts to contribute to stability of OTOKEN/hardAsset pool. Try
          * to mint so much OTOKEN that after deployment of liquidity pool ends up being balanced.
@@ -261,9 +254,8 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         _amounts[hardAssetCoinIndex] = _hardAssetAmount;
         _amounts[otokenCoinIndex] = otokenToAdd;
 
-        uint256 valueInLpTokens = ((
-            _hardAssetAmount.scaleBy(decimalsOToken, decimalsHardAsset)
-        ) + otokenToAdd).divPrecisely(curvePool.get_virtual_price());
+        uint256 valueInLpTokens = (scaledHardAssetAmount + otokenToAdd)
+            .divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - maxSlippage
         );
