@@ -271,7 +271,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * and transfer the wS to the recipient.
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before the withdraw.
-     * @param _recipient Address to receive withdrawn asset which is normally the Vault.
+     * @param _recipient Address of the Vault.
      * @param _asset Address of the Wrapped S (wS) contract.
      * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
      */
