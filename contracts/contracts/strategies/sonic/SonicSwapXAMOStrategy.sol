@@ -163,7 +163,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as SwapX strategies don't fit
      * well within that abstraction.
-     * @param _rewardTokenAddresses Address of SWPx token
+     * @param _rewardTokenAddresses Array containing SWPx token address
      */
     function initialize(address[] calldata _rewardTokenAddresses)
         external
@@ -204,7 +204,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         require(_asset == ws, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
 
-        _deposit(_asset, _amount);
+        _deposit(_amount);
     }
 
     /**
@@ -213,11 +213,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     function depositAll() external override onlyVault nonReentrant skimPool {
         uint256 balance = IERC20(ws).balanceOf(address(this));
         if (balance > 0) {
-            _deposit(ws, balance);
+            _deposit(balance);
         }
     }
 
-    function _deposit(address _wS, uint256 _wsAmount) internal {
+    function _deposit(uint256 _wsAmount) internal {
         // Calculate the required amount of OS to mint based on the wS amount.
         uint256 osDepositAmount = _calcTokensToMint(_wsAmount);
 
@@ -231,7 +231,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _solvencyAssert();
 
         // Emit event for the deposited wS tokens
-        emit Deposit(_wS, pool, _wsAmount);
+        emit Deposit(ws, pool, _wsAmount);
         // Emit event for the minted OS tokens
         emit Deposit(os, pool, osDepositAmount);
     }
