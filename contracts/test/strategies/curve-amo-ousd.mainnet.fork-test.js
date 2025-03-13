@@ -12,9 +12,8 @@ const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { loadDefaultFixture } = require("../_fixture");
 
 describe("Curve AMO OUSD strategy", function () {
-
   this.timeout(0);
-  
+
   let fixture,
     ousdVault,
     curveAMOStrategy,
