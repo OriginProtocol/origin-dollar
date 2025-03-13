@@ -177,6 +177,25 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       await expect(tx).to.be.revertedWith("Unsupported asset");
     });
+    it("Should fail to withdraw zero wS", async () => {
+      const { swapXAMOStrategy, oSonicVaultSigner, oSonicVault, wS } = fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .withdraw(oSonicVault.address, wS.address, 0);
+
+      await expect(tx).to.be.revertedWith("Must withdraw something");
+    });
+    it("Should fail to withdraw OS", async () => {
+      const { swapXAMOStrategy, oSonicVaultSigner, oSonic, oSonicVault } =
+        fixture;
+
+      const tx = swapXAMOStrategy
+        .connect(oSonicVaultSigner)
+        .withdraw(oSonicVault.address, oSonic.address, parseUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Unsupported asset");
+    });
     it("Vault should be able to withdraw all from empty strategy", async () => {
       const { swapXAMOStrategy, oSonicVaultSigner } = fixture;
       await assertWithdrawAll();
