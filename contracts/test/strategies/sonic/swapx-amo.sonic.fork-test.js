@@ -1024,6 +1024,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultWSBalance: wsDepositAmount.mul(-1),
       gaugeSupply: lpMintAmount,
     });
+
+    expect(
+      await swapXPool.balanceOf(swapXAMOStrategy.address),
+      "Strategy's pool LP balance"
+    ).to.equal(0);
+    expect(
+      await oSonic.balanceOf(swapXAMOStrategy.address),
+      "Strategy's OS balance"
+    ).to.equal(0);
   }
 
   async function assertWithdrawAll() {
@@ -1067,6 +1076,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wsWithdrawAmount.add(osBurnAmount),
       "wS withdraw and OS burnt >= strategy balance"
     ).to.gte(dataBefore.stratBalance);
+
+    expect(
+      await swapXPool.balanceOf(swapXAMOStrategy.address),
+      "Strategy's pool LP balance"
+    ).to.equal(0);
+    expect(
+      await oSonic.balanceOf(swapXAMOStrategy.address),
+      "Strategy's OS balance"
+    ).to.equal(0);
   }
 
   async function assertWithdrawPartial(wsWithdrawAmount) {
@@ -1130,10 +1148,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultWSBalance: wsWithdrawAmount,
       gaugeSupply: lpBurnAmount.mul(-1),
     });
+
+    expect(
+      await swapXPool.balanceOf(swapXAMOStrategy.address),
+      "Strategy's pool LP balance"
+    ).to.equal(0);
+    expect(
+      await oSonic.balanceOf(swapXAMOStrategy.address),
+      "Strategy's OS balance"
+    ).to.equal(0);
   }
 
   async function assertSwapAssetsToPool(wsAmount) {
-    const { swapXAMOStrategy, swapXPool, strategist, wS } = fixture;
+    const { oSonic, swapXAMOStrategy, swapXPool, strategist, wS } = fixture;
 
     const dataBefore = await snapData();
     await logSnapData(dataBefore, "Before swapping assets to the pool");
@@ -1181,10 +1208,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       },
       fixture
     );
+
+    expect(
+      await swapXPool.balanceOf(swapXAMOStrategy.address),
+      "Strategy's pool LP balance"
+    ).to.equal(0);
+    expect(
+      await oSonic.balanceOf(swapXAMOStrategy.address),
+      "Strategy's OS balance"
+    ).to.equal(0);
   }
 
   async function assertSwapOTokensToPool(osAmount) {
-    const { swapXAMOStrategy, strategist } = fixture;
+    const { oSonic, swapXPool, swapXAMOStrategy, strategist } = fixture;
 
     const dataBefore = await snapData();
 
@@ -1209,6 +1245,15 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       },
       fixture
     );
+
+    expect(
+      await swapXPool.balanceOf(swapXAMOStrategy.address),
+      "Strategy's pool LP balance"
+    ).to.equal(0);
+    expect(
+      await oSonic.balanceOf(swapXAMOStrategy.address),
+      "Strategy's OS balance"
+    ).to.equal(0);
   }
 
   // Calculate the minted OS amount for a deposit
