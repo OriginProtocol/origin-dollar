@@ -27,6 +27,9 @@ vault_admin = load_contract('vault_admin', OETHB_VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', OETHB_VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', OETHB_VAULT_VALUE_CHECKER)
 
+curve_amo_strat = load_contract('oeth_meta_strat', OETHB_CURVE_AMO_STRATEGY)
+curve_pool = load_contract('curve_pool_base', CURVE_POOL_BASE)
+
 woeth_strat = load_contract('woeth_strategy', OETHB_WOETH_STRATEGY)
 
 dripper = load_contract('oethb_dripper', OETHB_DRIPPER)
