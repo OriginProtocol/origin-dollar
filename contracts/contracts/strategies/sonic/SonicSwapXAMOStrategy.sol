@@ -522,9 +522,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 lpTokens)
     {
-        /* The rate between coins in the pool determines the rate at which pool returns
-         * tokens when doing balanced removal (remove_liquidity call). And by knowing how much wS
-         * we want we can determine how much of OS we receive by removing liquidity.
+        /* The SwapX pool proportionally returns the reserve tokens when removing liquidity.
+         * First, calculate the proportion of required wS tokens against the pools wS reserves.
+         * That same proportion is used to calculate the required amount of pool LP tokens.
+         * For example, if the required wS tokens is 10% of the pool's wS reserves,
+         * then 10% of the pool's LP supply needs to be burned.
          *
          * Because we are doing balanced removal we should be making profit when removing liquidity in a
          * pool tilted to either side.
