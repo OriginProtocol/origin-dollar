@@ -238,37 +238,44 @@ const filterAndParseRewardAddedEvents = async (tx) => {
     });
 };
 
-const filterAndParseNotifyRewardEvents = async (tx) => {
+const filterAndParseNotifyRewardEvents = async (tx, gaugeAddress) => {
   // keccak256("NotifyReward(address,address,uint256,uint256)")
   const notifyRewardTopic =
     "0x52977ea98a2220a03ee9ba5cb003ada08d394ea10155483c95dc2dc77a7eb24b";
 
   const { events } = await tx.wait();
-  return events
-    .filter((e) => e.topics[0] == notifyRewardTopic)
-    .map((e) => {
-      const decoded = ethers.utils.defaultAbiCoder.decode(
-        ["uint256", "uint256"],
-        e.data
-      );
 
-      const briber = ethers.utils.defaultAbiCoder.decode(
-        ["address"],
-        e.topics[1]
-      )[0];
+  return (
+    events
+      // gauge address filter is required because FeeDistributor contract in Shadow emits
+      // the event with the same signature
+      .filter(
+        (e) => e.topics[0] == notifyRewardTopic && e.address == gaugeAddress
+      )
+      .map((e) => {
+        const decoded = ethers.utils.defaultAbiCoder.decode(
+          ["uint256", "uint256"],
+          e.data
+        );
 
-      const rewardToken = ethers.utils.defaultAbiCoder.decode(
-        ["address"],
-        e.topics[2]
-      )[0];
+        const briber = ethers.utils.defaultAbiCoder.decode(
+          ["address"],
+          e.topics[1]
+        )[0];
 
-      return {
-        briber,
-        rewardToken,
-        amount: decoded[0],
-        period: decoded[1],
-      };
-    });
+        const rewardToken = ethers.utils.defaultAbiCoder.decode(
+          ["address"],
+          e.topics[2]
+        )[0];
+
+        return {
+          briber,
+          rewardToken,
+          amount: decoded[0],
+          period: decoded[1],
+        };
+      })
+  );
 };
 
 const getPoolBoosterContractFromPoolAddress = async (factory, poolAddress) => {

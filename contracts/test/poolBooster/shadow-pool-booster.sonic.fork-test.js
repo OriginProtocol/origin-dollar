@@ -10,7 +10,7 @@ const { oethUnits } = require("../helpers");
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
 const S_WETH_POOL_ADDRESS = "0xb6d9b069f6b96a507243d501d1a23b3fccfc85d3";
-const S_WETH_GAUGE_V2_ADDRESS = "0xf5c7598c953e49755576cda6b2b2a9daaf89a837";
+const S_WETH_GAUGE_V2_ADDRESS = "0xF5C7598C953E49755576CDA6b2B2A9dAaf89a837";
 
 describe("ForkTest: Shadow Pool Booster (for S/WETH pool)", function () {
   let fixture;
@@ -51,13 +51,15 @@ describe("ForkTest: Shadow Pool Booster (for S/WETH pool)", function () {
     expect(poolBooster.address).to.equal(computedAddress);
 
     await oSonic.connect(nick).transfer(poolBooster.address, oethUnits("10"));
-
     const bribeBalance = await oSonic.balanceOf(poolBooster.address);
     const tx = await poolBooster.bribe();
     const balanceAfter = await oSonic.balanceOf(poolBooster.address);
 
     // extract the emitted RewardAdded events
-    const notifyRewardEvents = await filterAndParseNotifyRewardEvents(tx);
+    const notifyRewardEvents = await filterAndParseNotifyRewardEvents(
+      tx,
+      S_WETH_GAUGE_V2_ADDRESS
+    );
 
     expect(notifyRewardEvents.length).to.equal(1);
     expect(notifyRewardEvents[0].briber).to.equal(poolBooster.address);
