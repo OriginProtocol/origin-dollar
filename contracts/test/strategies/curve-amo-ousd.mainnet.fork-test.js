@@ -76,8 +76,6 @@ describe("Curve AMO OUSD strategy", function () {
     await curveAMOStrategy
       .connect(impersonatedAMOGovernor)
       .setHarvesterAddress(harvester.address);
-
-    //await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
   });
 
   describe("Initial paramaters", () => {
@@ -686,32 +684,37 @@ describe("Curve AMO OUSD strategy", function () {
     });
   });
 
-  shouldBehaveLikeGovernable(() => ({
-    ...fixture,
-    strategist: rafael,
-    governor: governor,
-    strategy: curveAMOStrategy,
-  }));
+  describe("Behaviour", () => {
+    it("Should behave like a Strategy", async () => {
+      balancePool();
+      shouldBehaveLikeStrategy(() => ({
+        ...fixture,
+        // Contracts
+        strategy: curveAMOStrategy,
+        curveAMOStrategy: curveAMOStrategy,
+        vault: ousdVault,
+        assets: [usdt],
+        timelock: timelock,
+        governor: governor,
+        strategist: rafael,
+        harvester: harvester,
+      }));
+    });
 
-  shouldBehaveLikeHarvestable(() => ({
-    ...fixture,
-    strategy: curveAMOStrategy,
-    governor: governor,
-    oeth: ousd,
-  }));
+    shouldBehaveLikeGovernable(() => ({
+      ...fixture,
+      strategist: rafael,
+      governor: governor,
+      strategy: curveAMOStrategy,
+    }));
 
-  shouldBehaveLikeStrategy(() => ({
-    ...fixture,
-    // Contracts
-    strategy: curveAMOStrategy,
-    curveAMOStrategy: curveAMOStrategy,
-    vault: ousdVault,
-    assets: [usdt],
-    timelock: timelock,
-    governor: governor,
-    strategist: rafael,
-    harvester: harvester,
-  }));
+    shouldBehaveLikeHarvestable(() => ({
+      ...fixture,
+      strategy: curveAMOStrategy,
+      governor: governor,
+      oeth: ousd,
+    }));
+  });
 
   const mintAndDepositToStrategy = async ({
     userOverride,
