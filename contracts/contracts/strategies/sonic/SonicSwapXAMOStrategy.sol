@@ -201,13 +201,23 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
         skimPool
     {
+        require(_asset == ws, "Unsupported asset");
+        require(_amount > 0, "Must deposit something");
+
         _deposit(_asset, _amount);
     }
 
-    function _deposit(address _wS, uint256 _wsAmount) internal {
-        require(_wsAmount > 0, "Must deposit something");
-        require(_wS == ws, "Unsupported asset");
+    /**
+     * @notice Deposit the strategy's entire balance of Wrapped S (wS) into the pool
+     */
+    function depositAll() external override onlyVault nonReentrant skimPool {
+        uint256 balance = IERC20(ws).balanceOf(address(this));
+        if (balance > 0) {
+            _deposit(ws, balance);
+        }
+    }
 
+    function _deposit(address _wS, uint256 _wsAmount) internal {
         // Calculate the required amount of OS to mint based on the wS amount.
         uint256 osDepositAmount = _calcTokensToMint(_wsAmount);
 
@@ -224,16 +234,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         emit Deposit(_wS, pool, _wsAmount);
         // Emit event for the minted OS tokens
         emit Deposit(os, pool, osDepositAmount);
-    }
-
-    /**
-     * @notice Deposit the strategy's entire balance of Wrapped S (wS) into the pool
-     */
-    function depositAll() external override onlyVault nonReentrant skimPool {
-        uint256 balance = IERC20(ws).balanceOf(address(this));
-        if (balance > 0) {
-            _deposit(ws, balance);
-        }
     }
 
     /***************************************
