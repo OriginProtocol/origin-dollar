@@ -197,9 +197,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
      * @param _asset Address of Wrapped S (wS) token.
-     * @param _amount Amount of Wrapped S (wS) tokens to deposit.
+     * @param _wsAmount Amount of Wrapped S (wS) tokens to deposit.
      */
-    function deposit(address _asset, uint256 _amount)
+    function deposit(address _asset, uint256 _wsAmount)
         external
         override
         onlyVault
@@ -207,9 +207,14 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         skimPool
     {
         require(_asset == ws, "Unsupported asset");
-        require(_amount > 0, "Must deposit something");
+        require(_wsAmount > 0, "Must deposit something");
 
-        _deposit(_amount);
+        (uint256 osDepositAmount, ) = _deposit(_wsAmount);
+
+        // Emit event for the deposited wS tokens
+        emit Deposit(ws, pool, _wsAmount);
+        // Emit event for the minted OS tokens
+        emit Deposit(os, pool, osDepositAmount);
     }
 
     /**
@@ -221,29 +226,40 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * To minimize loses, the pool should be rebalanced before depositing.
      */
     function depositAll() external override onlyVault nonReentrant skimPool {
-        uint256 balance = IERC20(ws).balanceOf(address(this));
-        if (balance > 0) {
-            _deposit(balance);
+        uint256 wsBalance = IERC20(ws).balanceOf(address(this));
+        if (wsBalance > 0) {
+            (uint256 osDepositAmount, ) = _deposit(wsBalance);
+
+            // Emit event for the deposited wS tokens
+            emit Deposit(ws, pool, wsBalance);
+            // Emit event for the minted OS tokens
+            emit Deposit(os, pool, osDepositAmount);
         }
     }
 
-    function _deposit(uint256 _wsAmount) internal {
+    /**
+     * @dev Mint OS in proportion to the pool's wS and OS reserves,
+     * transfer Wrapped S (wS) and OS to the pool,
+     * mint the pool's LP token and deposit in the gauge.
+     * @param _wsAmount Amount of Wrapped S (wS) tokens to deposit.
+     * @return osDepositAmount Amount of OS tokens minted and deposited into the pool.
+     * @return lpTokens Amount of SwapX pool LP tokens minted and deposited into the gauge.
+     */
+    function _deposit(uint256 _wsAmount)
+        internal
+        returns (uint256 osDepositAmount, uint256 lpTokens)
+    {
         // Calculate the required amount of OS to mint based on the wS amount.
-        uint256 osDepositAmount = _calcTokensToMint(_wsAmount);
+        osDepositAmount = _calcTokensToMint(_wsAmount);
 
         // Mint the required OS tokens to this strategy
         IVault(vaultAddress).mintForStrategy(osDepositAmount);
 
         // Add wS and OS liquidity to the pool and stake in gauge
-        _depositToPoolAndGauge(_wsAmount, osDepositAmount);
+        lpTokens = _depositToPoolAndGauge(_wsAmount, osDepositAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
-
-        // Emit event for the deposited wS tokens
-        emit Deposit(ws, pool, _wsAmount);
-        // Emit event for the minted OS tokens
-        emit Deposit(os, pool, osDepositAmount);
     }
 
     /***************************************
@@ -375,6 +391,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Ensure solvency of the vault
         _solvencyAssert();
 
+        // Emit event for the burnt OS tokens
+        emit Withdrawal(os, pool, osToBurn);
+        // Emit event for the swap
         emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
     }
 
@@ -407,25 +426,15 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // 2. Swap OS for wS against the pool
         _swapExactTokensForTokens(_osAmount, os, ws);
 
-        // 3. Add wS and OS back to the pool in proportion to the pool's reserves
-
         // The wS is from the swap and any wS that was sitting in the strategy
         uint256 wsDepositAmount = IERC20(ws).balanceOf(address(this));
-        // Calculate the required amount of OS to mint based on the wS amount.
-        uint256 osDepositAmount = _calcTokensToMint(wsDepositAmount);
 
-        // Mint more OS to this strategy so they can then be added to the pool
-        IVault(vaultAddress).mintForStrategy(osDepositAmount);
+        // 3. Add wS and OS back to the pool in proportion to the pool's reserves
+        (uint256 osDepositAmount, uint256 lpTokens) = _deposit(wsDepositAmount);
 
-        // Add wS and OS liquidity to the pool and stake in gauge
-        uint256 lpTokens = _depositToPoolAndGauge(
-            wsDepositAmount,
-            osDepositAmount
-        );
-
-        // Ensure solvency of the vault
-        _solvencyAssert();
-
+        // Emit event for the minted OS tokens
+        emit Deposit(os, pool, osToMint + osDepositAmount);
+        // Emit event for the swap
         emit SwapOTokensToPool(
             osToMint,
             wsDepositAmount,
