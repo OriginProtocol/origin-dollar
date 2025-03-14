@@ -10,5 +10,7 @@ interface Tether {
         uint256 value
     ) external;
 
-    function balanceOf(address) external returns (uint256);
+    function balanceOf(address) external view returns (uint256);
+
+    function approve(address _spender, uint256 _value) external;
 }
