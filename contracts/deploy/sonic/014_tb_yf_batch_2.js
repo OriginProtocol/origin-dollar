@@ -23,7 +23,7 @@ module.exports = deployOnSonic(
       "PoolBoosterFactorySwapxSingle"
     );
 
-    const SALT = ethers.BigNumber.from("1741943714"); // epoch as Friday 28th Feb 2025 4PM UTC
+    const SALT = ethers.BigNumber.from("1741943714");
 
     // ---------------------------------------------------------------------------------------------------------
     // ---
