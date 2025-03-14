@@ -15,6 +15,7 @@ const { parseUnits } = require("ethers/lib/utils");
  * - valueAssets: optional array of assets that work for checkBalance and withdraw. defaults to assets
  * - vault: Vault or OETHVault contract
  * - harvester: Harvester or OETHHarvester contract
+ * - checkWithdrawAmounts: Check the amounts in the withdrawAll events. defaults to true
  * @example
     shouldBehaveLikeStrategy(() => ({
       ...fixture,
@@ -23,6 +24,7 @@ const { parseUnits } = require("ethers/lib/utils");
       valueAssets: [fixture.frxETH],
       harvester: fixture.oethHarvester,
       vault: fixture.oethVault,
+      checkWithdrawAmounts: true,
     }));
  */
 const shouldBehaveLikeStrategy = (context) => {
@@ -72,6 +74,11 @@ const shouldBehaveLikeStrategy = (context) => {
       }
     });
     describe("with no assets in the strategy", () => {
+      beforeEach(async () => {
+        const { strategy, governor } = context();
+
+        await strategy.connect(governor).withdrawAll();
+      });
       it("Should check asset balances", async () => {
         const { assets, josh, strategy } = context();
 
@@ -213,12 +220,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to call withdraw all by vault", async () => {
-        const { strategy, vault, curveAMOStrategy } = await context();
-
-        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
-        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
-        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
-          return;
+        const { strategy, vault } = await context();
 
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -227,12 +229,8 @@ const shouldBehaveLikeStrategy = (context) => {
         await expect(tx).to.not.emit(strategy, "Withdrawal");
       });
       it("Should be able to call withdraw all by governor", async () => {
-        const { strategy, governor, curveAMOStrategy } = await context();
+        const { strategy, governor } = await context();
 
-        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
-        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
-        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
-          return;
         const tx = await strategy.connect(governor).withdrawAll();
 
         await expect(tx).to.not.emit(strategy, "Withdrawal");
@@ -318,7 +316,7 @@ const shouldBehaveLikeStrategy = (context) => {
           vault,
           fraxEthStrategy,
           sfrxETH,
-          curveAMOStrategy,
+          checkWithdrawAmounts,
         } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -341,12 +339,23 @@ const shouldBehaveLikeStrategy = (context) => {
               withdrawAmount.mul(3)
             );
           } else if (
-            curveAMOStrategy != undefined &&
-            curveAMOStrategy == strategy
+            checkWithdrawAmounts != undefined &&
+            checkWithdrawAmounts == false
           ) {
-            // Didn't managed to get this work with args.
-            await expect(tx).to.emit(strategy, "Withdrawal");
-            await expect(tx).to.emit(asset, "Transfer");
+            await expect(tx).to.emit(strategy, "Withdrawal").withNamedArgs({
+              _asset: asset.address,
+              _pToken: platformAddress,
+            });
+
+            // the transfer does not have to come from the strategy. It can come directly from the platform
+            // Need to handle WETH which has different named args in the Transfer event
+            const erc20Asset = await ethers.getContractAt(
+              "IERC20",
+              asset.address
+            );
+            await expect(tx)
+              .to.emit(erc20Asset, "Transfer")
+              .withNamedArgs({ from: strategy.address, to: vault.address });
           } else {
             await expect(tx)
               .to.emit(strategy, "Withdrawal")

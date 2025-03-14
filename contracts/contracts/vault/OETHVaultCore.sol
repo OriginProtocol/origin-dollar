@@ -26,6 +26,9 @@ contract OETHVaultCore is VaultCore {
 
     constructor(address _weth) {
         weth = _weth;
+
+        // prevent implementation contract to be governed
+        _setGovernor(address(0));
     }
 
     /**
@@ -42,6 +45,48 @@ contract OETHVaultCore is VaultCore {
         }
 
         require(allAssets[wethAssetIndex] == weth, "Invalid WETH Asset Index");
+    }
+
+    // @inheritdoc VaultCore
+    function mintForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Mint(msg.sender, amount);
+
+        // Mint matching amount of OTokens
+        oUSD.mint(msg.sender, amount);
+    }
+
+    // @inheritdoc VaultCore
+    function burnForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Redeem(msg.sender, amount);
+
+        // Burn OTokens
+        oUSD.burn(msg.sender, amount);
     }
 
     // @inheritdoc VaultCore

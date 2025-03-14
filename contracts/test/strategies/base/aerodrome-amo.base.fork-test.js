@@ -18,7 +18,7 @@ const baseFixture = createFixtureLoader(defaultBaseFixture);
 const { setERC20TokenBalance } = require("../../_fund");
 const futureEpoch = 1924064072;
 
-describe("ForkTest: Aerodrome AMO Strategy empty pool setup (Base)", async function () {
+describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async function () {
   let fixture,
     oethbVault,
     oethb,
