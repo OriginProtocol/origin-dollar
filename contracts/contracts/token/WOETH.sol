@@ -57,7 +57,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * @notice Enable OETH rebasing for this contract
      */
     function initialize() external onlyGovernor initializer {
-        OETH(address(asset())).rebaseOptIn();
+        OETH(asset()).rebaseOptIn();
 
         initialize2();
     }
@@ -103,7 +103,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        require(asset_ != address(asset()), "Cannot collect core asset");
+        require(asset_ != asset(), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
