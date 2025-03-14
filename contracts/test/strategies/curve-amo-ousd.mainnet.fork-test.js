@@ -373,13 +373,27 @@ describe("Curve AMO OUSD strategy", function () {
         checkpoint: false,
       });
 
+      // First checkpoint to update the gauge
+      await curveGauge
+        .connect(impersonatedCurveStrategy)
+        .user_checkpoint(curveAMOStrategy.address);
+      // Then check if the strategy has any crv to collect
+      const integrate_fraction = await curveGauge.integrate_fraction(
+        curveAMOStrategy.address
+      );
+      const alreadyMinted = await fixture.crvMinter.minted(
+        curveAMOStrategy.address,
+        curveGauge.address
+      );
+
       const balanceCRVHarvesterBefore = await crv.balanceOf(harvester.address);
       await curveAMOStrategy
         .connect(impersonatedHarvester)
         .collectRewardTokens();
       const balanceCRVHarvesterAfter = await crv.balanceOf(harvester.address);
 
-      expect(balanceCRVHarvesterAfter).to.be.gt(balanceCRVHarvesterBefore);
+      if (integrate_fraction - alreadyMinted > 0)
+        expect(balanceCRVHarvesterAfter).to.be.gt(balanceCRVHarvesterBefore);
       expect(await crv.balanceOf(curveGauge.address)).to.equal(0);
       expect(await crv.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
