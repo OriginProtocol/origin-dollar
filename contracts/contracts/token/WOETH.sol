@@ -6,66 +6,71 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 /**
- * @title OETH Token Contract
- * @author Origin Protocol Inc
+ * @title Wapped Token Contract
+ * @author Origin Protocol
  *
- * @dev An important capability of this contract is that it isn't susceptible to changes of the
- * exchange rate of WOETH/OETH if/when someone sends the underlying asset (OETH) to the contract.
- * If OETH weren't rebasing this could be achieved by solely tracking the ERC20 transfers of the OETH
- * token on mint, deposit, redeem, withdraw. The issue is that OETH is rebasing and OETH balances
- * will change when the token rebases. For that reason we are tracking the WOETH contract credits and
- * credits per token in those 4 actions. That way WOETH can keep an accurate track of the OETH balance
- * ignoring any unexpected transfers of OETH to this contract.
+ * @dev An ERC4626 contract that wraps a rebasing token
+ *     and allows it to be treated as a non-rebasing value accrual token.
+ *     This contract distributes yield slowly over 23 hours which prevents
+ *     donation attacks against lending platforms.
+ *     It is designed to work only with up-only rebasing tokens.
+ *     The asset token must not make reenterable external calls on transfers.
  */
 
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
-    uint256 public oethCreditsHighres;
-    bool private _oethCreditsInitialized;
+    using SafeCast for uint256;
+
+    uint256 public trackedAssets;
+    uint128 public yieldAssets;
+    uint64 public yieldEnd;
+    bool private _initialized2;
     uint256[48] private __gap;
 
+    IVault public immutable vault;
+    uint256 public constant YIELD_TIME = 1 days - 1 hours;
+
+    event YiedPeriodStarted(
+        uint256 trackedAssets,
+        uint256 yieldAssets,
+        uint256 yieldEnd
+    );
+
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
-    constructor(ERC20 underlying_)
+    constructor(address underlying_, address vault_)
         ERC20("", "")
-        ERC4626(underlying_)
+        ERC4626(IERC20Metadata(underlying_))
         Governable()
-    {}
+    {
+        vault = IVault(vault_);
+    }
 
     /**
      * @notice Enable OETH rebasing for this contract
      */
     function initialize() external onlyGovernor initializer {
-        OETH(address(asset())).rebaseOptIn();
+        OETH(asset()).rebaseOptIn();
 
         initialize2();
     }
 
     /**
-     * @notice secondary initializer that newly deployed contracts will execute as part
-     *         of primary initialize function and the existing contracts will have it called
-     *         as a governance operation.
+     * @notice Upgrade contract to support yield periods.
+     *     Called automatically on new contracts via initialize()
      */
     function initialize2() public onlyGovernor {
-        require(!_oethCreditsInitialized, "Initialize2 already called");
+        require(!_initialized2, "Initialize2 already called");
+        _initialized2 = true;
 
-        _oethCreditsInitialized = true;
-        /*
-         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
-         * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
-         * finicky since it reports Highres version of credits and creditsPerToken
-         * when the account is a fresh one. That doesn't have an effect on mainnet since
-         * WOETH has already seen transactions. But it is rather annoying in unit test
-         * environment.
-         */
-        oethCreditsHighres = _getOETHCredits();
+        trackedAssets = IERC20(asset()).balanceOf(address(this));
     }
 
     function name()
@@ -90,7 +95,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /**
      * @notice Transfer token to governor. Intended for recovering tokens stuck in
-     *      contract, i.e. mistaken sends. Cannot transfer OETH
+     *      contract, i.e. mistaken sends. Cannot transfer the core asset
      * @param asset_ Address for the asset
      * @param amount_ Amount of the asset to transfer
      */
@@ -98,95 +103,110 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        //@dev TODO: we could implement a feature where if anyone sends OETH directly to
-        // the contract, that we can let the governor transfer the excess of the token.
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        require(asset_ != asset(), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /** @dev See {IERC4262-totalAssets} */
+    /* @notice Start the next yield period, if one is not active.
+     *     New yield will not start until time has moved forward.
+     */
+    function scheduleYield() public {
+        // If we are currently in a yield period, do not alter rate
+        if (block.timestamp < yieldEnd) {
+            return;
+        }
+
+        // Read current assets
+        uint256 _computedAssets = totalAssets();
+        uint256 _actualAssets = IERC20(asset()).balanceOf(address(this));
+
+        // Compute next yield period values
+        if (_actualAssets <= _computedAssets) {
+            yieldAssets = 0;
+            trackedAssets = _actualAssets;
+        } else if (_actualAssets > _computedAssets) {
+            uint256 _newYield = _actualAssets - _computedAssets;
+            uint256 _maxYield = (_computedAssets * 5) / 100; // Maximum of 5% increase in assets per day
+            _newYield = _min(_min(_newYield, _maxYield), type(uint128).max);
+            yieldAssets = _newYield.toUint128();
+            trackedAssets = _computedAssets + yieldAssets;
+        }
+        // raw cast is deliberate, since this will not perma revert
+        yieldEnd = uint64(block.timestamp + YIELD_TIME);
+        emit YiedPeriodStarted(trackedAssets, yieldAssets, yieldEnd);
+    }
+
+    /**
+     * @notice Returns the assets currently backing the total supply.
+     *    Does not include future yield held that will stream per block.
+     * @return totalAssets()
+     */
     function totalAssets() public view override returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
-
-        return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
+        uint256 _end = yieldEnd;
+        if (block.timestamp >= _end) {
+            return trackedAssets;
+        } else if (block.timestamp <= _end - YIELD_TIME) {
+            return trackedAssets - yieldAssets;
+        }
+        uint256 elapsed = (block.timestamp + YIELD_TIME) - _end;
+        uint256 _unlockedYield = (yieldAssets * elapsed) / YIELD_TIME;
+        return trackedAssets + _unlockedYield - yieldAssets;
     }
 
-    function _getOETHCredits()
-        internal
-        view
-        returns (uint256 oethCreditsHighres)
-    {
-        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
-    }
-
-    /** @dev See {IERC4262-deposit} */
     function deposit(uint256 oethAmount, address receiver)
         public
         override
         returns (uint256 woethAmount)
     {
-        if (oethAmount == 0) return 0;
-
-        /**
-         * Initially we attempted to do the credits calculation within this contract and try
-         * to mimic OUSD's implementation. This way 1 external call less would be required. Due
-         * to a different way OUSD is calculating credits:
-         *  - always rounds credits up
-         *  - operates on final user balances before converting to credits
-         *  - doesn't perform additive / subtractive calculation with credits once they are converted
-         *    from balances
-         *
-         * We've decided that it is safer to read the credits diff directly from the OUSD contract
-         * and not face the risk of a compounding error in oethCreditsHighres that could result in
-         * inaccurate `convertToShares` & `convertToAssets` which consequently would result in faulty
-         * `previewMint` & `previewRedeem`. High enough error can result in different conversion rates
-         * which a flash loan entering via `deposit` and exiting via `redeem` (or entering via `mint`
-         * and exiting via `withdraw`) could take advantage of.
-         */
-        uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        trackedAssets += oethAmount;
+        vault.rebase();
+        scheduleYield();
     }
 
-    /** @dev See {IERC4262-mint} */
     function mint(uint256 woethAmount, address receiver)
         public
         override
         returns (uint256 oethAmount)
     {
-        if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        trackedAssets += oethAmount;
+        vault.rebase();
+        scheduleYield();
     }
 
-    /** @dev See {IERC4262-withdraw} */
     function withdraw(
         uint256 oethAmount,
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
-        if (oethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
+        vault.rebase();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        trackedAssets -= oethAmount;
+        scheduleYield();
     }
 
-    /** @dev See {IERC4262-redeem} */
     function redeem(
         uint256 woethAmount,
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
-        if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
+        vault.rebase();
         oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        trackedAssets -= oethAmount;
+        scheduleYield();
+    }
+
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal override {
+        super._transfer(sender, recipient, amount);
+        scheduleYield();
+    }
+
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }
