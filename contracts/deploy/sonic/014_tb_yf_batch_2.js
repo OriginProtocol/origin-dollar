@@ -47,8 +47,8 @@ module.exports = deployOnSonic(
     return {
       actions: [
         {
-          // Protocol: HOG
-          // From: HogGenesisRewardPool --> To: Safe Contract
+          // Protocol: SwapX
+          // From: GEMSx/OS
           contract: cOSonic,
           signature: "undelegateYield(address)",
           args: [
@@ -56,8 +56,8 @@ module.exports = deployOnSonic(
           ],
         },
         {
-          // Protocol: HOG
-          // From: HogGenesisRewardPool --> To: Safe Contract
+          // Protocol: SwapX
+          // From: SWPX/OS
           contract: cOSonic,
           signature: "undelegateYield(address)",
           args: [
