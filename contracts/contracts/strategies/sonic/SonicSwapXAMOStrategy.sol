@@ -560,17 +560,17 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @dev Deposit Wrapped S (wS) and OS liquidity to the SwapX pool
      * and stake the pool's LP token in the gauge.
      * @param _wsAmount Amount of Wrapped S (wS) to deposit.
-     * @param osAmount Amount of OS to deposit.
+     * @param _osAmount Amount of OS to deposit.
      * @return lpTokens Amount of SwapX pool LP tokens minted.
      */
-    function _depositToPoolAndGauge(uint256 _wsAmount, uint256 osAmount)
+    function _depositToPoolAndGauge(uint256 _wsAmount, uint256 _osAmount)
         internal
         returns (uint256 lpTokens)
     {
         // Transfer wS to the pool
         IERC20(ws).safeTransfer(pool, _wsAmount);
         // Transfer OS to the pool
-        IERC20(os).safeTransfer(pool, osAmount);
+        IERC20(os).safeTransfer(pool, _osAmount);
 
         // Mint LP tokens from the pool
         lpTokens = IPair(pool).mint(address(this));
@@ -581,19 +581,19 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Withdraw pool LP tokens from the gauge and remove wS and OS from the pool.
-     * @param lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
+     * @param _lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
      */
-    function _withdrawFromGaugeAndPool(uint256 lpTokens) internal {
+    function _withdrawFromGaugeAndPool(uint256 _lpTokens) internal {
         require(
-            IGauge(gauge).balanceOf(address(this)) >= lpTokens,
+            IGauge(gauge).balanceOf(address(this)) >= _lpTokens,
             "Not enough LP tokens in gauge"
         );
 
         // Withdraw pool LP tokens from the gauge
-        IGauge(gauge).withdraw(lpTokens);
+        IGauge(gauge).withdraw(_lpTokens);
 
         // Transfer the pool LP tokens to the pool
-        IERC20(pool).safeTransfer(pool, lpTokens);
+        IERC20(pool).safeTransfer(pool, _lpTokens);
 
         // Burn the LP tokens and transfer the wS and OS back to the strategy
         IPair(pool).burn(address(this));
@@ -637,9 +637,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
     /// @dev Calculate the value of a LP position in a SwapX stable pool
     /// if the pool was balanced.
-    /// @param lpTokens Amount of LP tokens in the SwapX pool
+    /// @param _lpTokens Amount of LP tokens in the SwapX pool
     /// @return value The wS value of the LP tokens when the pool is balanced
-    function _lpValue(uint256 lpTokens) internal view returns (uint256 value) {
+    function _lpValue(uint256 _lpTokens) internal view returns (uint256 value) {
         // Get total supply of LP tokens
         uint256 totalSupply = IPair(pool).totalSupply();
         if (totalSupply == 0) return 0;
@@ -663,7 +663,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 totalValueOfPool = 2 * z;
 
         // lp value = lp tokens * value of pool  / total supply
-        value = (lpTokens * totalValueOfPool) / totalSupply;
+        value = (_lpTokens * totalValueOfPool) / totalSupply;
     }
 
     /**
@@ -671,17 +671,17 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * This assumed both x and y tokens are to 18 decimals which is checked in the constructor.
      * invariant: k = x^3 * y + x * y^3
      * @dev This implementation is copied from SwapX's Pair contract.
-     * @param x The amount of Wrapped S (wS) tokens in the pool
-     * @param y The amount of the OS tokens in the pool
+     * @param _x The amount of Wrapped S (wS) tokens in the pool
+     * @param _y The amount of the OS tokens in the pool
      * @return k The invariant of the SwapX stable pool
      */
-    function _invariant(uint256 x, uint256 y)
+    function _invariant(uint256 _x, uint256 _y)
         internal
         pure
         returns (uint256 k)
     {
-        uint256 _a = (x * y) / PRECISION;
-        uint256 _b = ((x * x) / PRECISION + (y * y) / PRECISION);
+        uint256 _a = (_x * _y) / PRECISION;
+        uint256 _b = ((_x * _x) / PRECISION + (_y * _y) / PRECISION);
         // slither-disable-next-line divide-before-multiply
         k = (_a * _b) / PRECISION;
     }
