@@ -11,9 +11,10 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 /**
- * @title OETH Token Contract
+ * @title Wapped Token Contract
  * @author Origin Protocol
  *
  * @dev An ERC4626 contract that wraps a rebasing token
@@ -34,6 +35,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     bool private _initialized2;
     uint256[48] private __gap;
 
+    IVault public immutable vault;
     uint256 public constant YIELD_TIME = 1 days - 1 hours;
 
     event YiedPeriodStarted(
@@ -43,11 +45,13 @@ contract WOETH is ERC4626, Governable, Initializable {
     );
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
-    constructor(ERC20 underlying_)
+    constructor(address underlying_, address vault_)
         ERC20("", "")
-        ERC4626(underlying_)
+        ERC4626(IERC20Metadata(underlying_))
         Governable()
-    {}
+    {
+        vault = IVault(vault_);
+    }
 
     /**
      * @notice Enable OETH rebasing for this contract
@@ -107,7 +111,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      *     New yield will not start until time has moved forward.
      */
     function scheduleYield() public {
-        // If we are currently in a yield period, keep everything the same
+        // If we are currently in a yield period, do not alter rate
         if (block.timestamp < yieldEnd) {
             return;
         }
@@ -156,6 +160,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         woethAmount = super.deposit(oethAmount, receiver);
         trackedAssets += oethAmount;
+        vault.rebase();
         scheduleYield();
     }
 
@@ -166,6 +171,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         oethAmount = super.mint(woethAmount, receiver);
         trackedAssets += oethAmount;
+        vault.rebase();
         scheduleYield();
     }
 
@@ -174,6 +180,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 woethAmount) {
+        vault.rebase();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         trackedAssets -= oethAmount;
         scheduleYield();
@@ -184,6 +191,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address receiver,
         address owner
     ) public override returns (uint256 oethAmount) {
+        vault.rebase();
         oethAmount = super.redeem(woethAmount, receiver, owner);
         trackedAssets -= oethAmount;
         scheduleYield();

@@ -1215,7 +1215,6 @@ const deployOUSDCore = async () => {
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
-
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -1499,10 +1498,10 @@ const deployWOusd = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const ousd = await ethers.getContract("OUSDProxy");
+  const ousdVault = await ethers.getContract("VaultProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
-    "Wrapped OUSD IMPL",
-    "WOUSD IMPL",
+    ousdVault.address,
   ]);
   await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -1521,9 +1520,12 @@ const deployWOeth = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const oeth = await ethers.getContract("OETHProxy");
+  const oethVault = await ethers.getContract("OETHVaultProxy");
   const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
     oeth.address,
+    oethVault.address,
   ]);
+
   await deployWithConfirmation("WOETHProxy");
   const woethProxy = await ethers.getContract("WOETHProxy");
   const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
