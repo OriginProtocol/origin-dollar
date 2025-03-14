@@ -328,15 +328,24 @@ def run_simulations_amo(strategy_name):
     #             {"from": harness.STRATEGIST},
     #         )
 
-    #         pool_balances = harness.pool_balances()
-    #         stat["pool_before_ws"] = pool_balances['ws']
-    #         stat["pool_before_os"] = pool_balances['os']
+    #         pb = list(harness.pool_balances().values())
+    #         stat["pre_pool_0"] = pb[0]
+    #         stat["pre_pool_1"] = pb[1]
+    #         stat["before_pool_0"] = pb[0]
+    #         stat["before_pool_1"] = pb[1]
+    #         stat["pre_vault"] = harness.vault_core.totalValue()
+    #         stat["before_vault"] = harness.vault_core.totalValue()
+    #         stat["before_otoken"] = harness.otoken.totalSupply()
     #         stat["pool_before_check_balance"] = harness.strat.checkBalance(ws)
+
+
     #         harness.tilt_pool(tilt)
 
-    #         pool_balances = harness.pool_balances()
-    #         stat["pool_after_ws"] = pool_balances['ws']
-    #         stat["pool_after_os"] = pool_balances['os']
+    #         pb = list(harness.pool_balances().values())
+    #         stat["after_pool_0"] = pb[0]
+    #         stat["after_pool_1"] = pb[1]
+    #         stat["after_vault"] = harness.vault_core.totalValue()
+    #         stat["after_otoken"] = harness.otoken.totalSupply()
     #         stat["pool_after_check_balance"] = harness.strat.checkBalance(ws)
 
     #         check_balance_stats.append(stat)
@@ -503,7 +512,7 @@ def run_report(strategy_name):
     # deposit_base = _load_data(workspace + "/deposit_stats.csv")
     # withdraw_base = _load_data(workspace + "/withdraw_stats.csv")
     # withdrawall_base = _load_data(workspace + "/withdrawall_stats.csv")
-    # checkbalance_base = pd.read_csv(workspace + "/check_balance_stats.csv")
+    checkbalance_base = _load_data(workspace + "/check_balance_stats.csv")
 
     sections = []
     
@@ -511,13 +520,14 @@ def run_report(strategy_name):
     # df = checkbalance_base.sort_values('action_mix')
     # plt.title("Check balance difference")
     # plt.axhline(0, c="black", linewidth=0.4)
+    # print(df["pool_after_check_balance"] -  df["pool_before_check_balance"])
     # plt.plot(
     #     df["action_mix"] * 100,
-    #     df["pool_after_check_balance"],
+    #     abs(df["pool_after_check_balance"] -  df["pool_before_check_balance"]),
     # )
     # #plt.ylim(bottom=0)
     # plt.xlabel("Pool tilt [-100 OS heavy, 100 WS heavy]")
-    # plt.ylabel("Check balance after pool tilt")
+    # plt.ylabel("Check balance after pool tilt [WEI]")
     # plt.legend()
     # plt.savefig(workspace + "checkBalance.svg")
     # plt.close()
