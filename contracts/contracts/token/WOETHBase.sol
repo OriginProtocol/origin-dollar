@@ -2,15 +2,16 @@
 pragma solidity ^0.8.0;
 
 import { WOETH } from "./WOETH.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @title OETH Token Contract
+ * @title Wapped Token Contract
  * @author Origin Protocol Inc
  */
 
 contract WOETHBase is WOETH {
-    constructor(ERC20 underlying_) WOETH(underlying_) {}
+    constructor(address underlying_, address vault_)
+        WOETH(underlying_, vault_)
+    {}
 
     function name() public view virtual override returns (string memory) {
         return "Wrapped Super OETH";

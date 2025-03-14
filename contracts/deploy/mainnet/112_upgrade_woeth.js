@@ -12,6 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ deployWithConfirmation, ethers }) => {
     const cOETHProxy = await ethers.getContract("OETHProxy");
     const cWOETHProxy = await ethers.getContract("WOETHProxy");
+    const cVaultProxy = await ethers.getContract("OETHVaultProxy");
 
     const dWOETHImpl = await deployWithConfirmation("WOETH", [
       cOETHProxy.address,
