@@ -389,10 +389,15 @@ contract VaultAdmin is VaultStorage {
      */
     function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
+
+        // 1e13 for 18 decimals. And 10 for 6 decimals
+        uint256 maxDustBalance = uint256(1e13).scaleBy(
+            assets[_asset].decimals,
+            18
+        );
+
         require(
-            // TODO: Temporary change since Morpho has liquidity issues.
-            // Revert before merging
-            IVault(address(this)).checkBalance(_asset) <= 1e20,
+            IVault(address(this)).checkBalance(_asset) <= maxDustBalance,
             "Vault still holds asset"
         );
 
