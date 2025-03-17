@@ -69,6 +69,7 @@ module.exports = deploymentWithGovernanceProposal(
         },
         DAI,
         USDS,
+        timelockAddr,
       ]
     );
 
@@ -77,12 +78,7 @@ module.exports = deploymentWithGovernanceProposal(
       dMigrationStrategy.address
     );
 
-    // 3. Transfer governance to timelock and initialize the contract
-    await withConfirmation(
-      migrationStrategy.connect(sDeployer).initialize(timelockAddr)
-    );
-
-    // 4. Deploy SSR Strategy
+    // 3. Deploy SSR Strategy
     const dMakerSSRStrategyProxy = await deployWithConfirmation(
       "MakerSSRStrategyProxy"
     );
@@ -98,7 +94,7 @@ module.exports = deploymentWithGovernanceProposal(
       dMakerSSRStrategyProxy.address
     );
 
-    // 5. Initialize the SSR Strategy
+    // 4. Initialize the SSR Strategy
     const initData = cMakerSSRStrategy.interface.encodeFunctionData(
       "initialize()",
       []
