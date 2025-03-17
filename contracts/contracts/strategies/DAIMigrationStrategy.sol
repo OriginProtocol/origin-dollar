@@ -92,6 +92,7 @@ contract DAIMigrationStrategy is InitializableAbstractStrategy {
         require(_asset == usds, "Unsupported asset");
         require(_amount > 0, "Must withdraw something");
         require(_recipient == vaultAddress, "Only the vault can withdraw");
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(usds).transfer(_recipient, _amount);
     }
 
