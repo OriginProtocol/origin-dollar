@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits, daiUnits, isFork } = require("../helpers");
+const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
 describe("WOETH", function () {
@@ -33,6 +33,17 @@ describe("WOETH", function () {
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
+
+    // if the yield changes wouldn't be compounding the loop would need
+    // to perform 400 iterations (0.25% * 400 = 100%). Due to the
+    // compounding effect 277 are enough.
+    for (let i = 0; i < 277; i++) {
+      await woeth.increaseYieldLimit();
+      await advanceTime(86400 - 3600);
+    }
+    await expect(woeth).to.have.a.totalSupply("50");
+    await expect(woeth).to.have.a.balanceOf("100", oeth);
+    expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
 
     // josh account starts each test with 100 OETH
   });
