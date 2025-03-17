@@ -47,7 +47,7 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
+const { defaultAbiCoder, parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");

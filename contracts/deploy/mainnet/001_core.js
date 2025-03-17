@@ -4,7 +4,7 @@ const {
   deployOracles,
   deployCore,
   deployCurveMetapoolMocks,
-  deployCurveLUSDMetapoolMocks,
+  // deployCurveLUSDMetapoolMocks,
   deployCompoundStrategy,
   deployAaveStrategy,
   deployThreePoolStrategy,
