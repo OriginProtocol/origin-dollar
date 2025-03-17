@@ -17,27 +17,22 @@ contract DAIMigrationStrategy is InitializableAbstractStrategy {
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _dai,
-        address _usds
-    ) InitializableAbstractStrategy(_baseConfig) {
+        address _usds,
+        address _governorAddr
+    ) initializer InitializableAbstractStrategy(_baseConfig) {
         dai = _dai;
         usds = _usds;
-    }
 
-    function initialize(address _governorAddr)
-        external
-        onlyGovernor
-        initializer
-    {
         _setGovernor(_governorAddr);
 
         address[] memory rewardTokens = new address[](0);
         address[] memory assets = new address[](2);
         address[] memory pTokens = new address[](2);
 
-        assets[0] = address(dai);
-        assets[1] = address(usds);
-        pTokens[0] = address(dai);
-        pTokens[1] = address(usds);
+        assets[0] = address(_dai);
+        assets[1] = address(_usds);
+        pTokens[0] = address(_dai);
+        pTokens[1] = address(_usds);
 
         InitializableAbstractStrategy._initialize(
             rewardTokens,
@@ -92,6 +87,7 @@ contract DAIMigrationStrategy is InitializableAbstractStrategy {
         require(_asset == usds, "Unsupported asset");
         require(_amount > 0, "Must withdraw something");
         require(_recipient == vaultAddress, "Only the vault can withdraw");
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(usds).transfer(_recipient, _amount);
     }
 

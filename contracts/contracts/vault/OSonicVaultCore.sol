@@ -15,7 +15,7 @@ contract OSonicVaultCore is OETHVaultCore {
      * @notice Instant redeem is not supported on Sonic.
      * Use the asynchronous `requestWithdrawal` a `claimWithdrawal` instead.
      */
-    function redeem(uint256, uint256) external override {
+    function _redeem(uint256, uint256) internal override {
         revert("unsupported function");
     }
 }
