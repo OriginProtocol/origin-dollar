@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const { createFixtureLoader, defaultFixture } = require("../_fixture");
 const {
-  daiUnits,
+  usdsUnits,
   ousdUnits,
   usdcUnits,
   usdtUnits,
@@ -145,22 +145,22 @@ describe("Flipper", function () {
 
       it("Supports withdraw all", async () => {
         const fixture = await loadFixture();
-        const { governor, dai, ousd, usdt, usdc, flipper } = fixture;
+        const { governor, usds, ousd, usdt, usdc, flipper } = fixture;
 
         // Make each token have a different , ousdUnits("13") to be able to catch
         // if the contract uses the balance of the wrong contract.
-        await flipper.connect(governor).withdraw(dai.address, daiUnits("11"));
+        await flipper.connect(governor).withdraw(usds.address, usdsUnits("11"));
         await flipper.connect(governor).withdraw(ousd.address, ousdUnits("12"));
         await flipper.connect(governor).withdraw(usdc.address, usdcUnits("13"));
         await flipper.connect(governor).withdraw(usdt.address, usdtUnits("14"));
 
         await flipper.connect(governor).withdrawAll();
-        await expect(flipper).balanceOf("0", dai);
+        await expect(flipper).balanceOf("0", usds);
         await expect(flipper).balanceOf("0", ousd);
         await expect(flipper).balanceOf("0", usdc);
         await expect(flipper).balanceOf("0", usdt);
 
-        await expect(governor).balanceOf("51000", dai);
+        await expect(governor).balanceOf("51000", usds);
         await expect(governor).balanceOf("50000", ousd);
         await expect(governor).balanceOf("51000", usdc);
         await expect(governor).balanceOf("51000", usdt);
@@ -191,20 +191,20 @@ describe("Flipper", function () {
 
 async function loadedFlipper() {
   const fixture = await defaultFixture();
-  const { ousd, dai, usdc, usdt, flipper, vault, matt } = fixture;
+  const { ousd, usds, usdc, usdt, flipper, vault, matt } = fixture;
 
-  await dai.connect(matt).mint(daiUnits("50100"));
+  await usds.connect(matt).mint(usdsUnits("50100"));
   await usdc.connect(matt).mint(usdcUnits("100000"));
   await usdt.connect(matt).mint(usdtUnits("50000"));
   await usdc.connect(matt).approve(vault.address, usdcUnits("990000"));
   await vault.connect(matt).mint(usdc.address, usdcUnits("50000"), 0);
 
-  await dai.connect(matt).transfer(flipper.address, daiUnits("50000"));
+  await usds.connect(matt).transfer(flipper.address, usdsUnits("50000"));
   await ousd.connect(matt).transfer(flipper.address, ousdUnits("50000"));
   await usdc.connect(matt).transfer(flipper.address, usdcUnits("50000"));
   await usdt.connect(matt).transfer(flipper.address, usdtUnits("50000"));
 
-  await dai.connect(matt).approve(flipper.address, daiUnits("990000"));
+  await usds.connect(matt).approve(flipper.address, usdsUnits("990000"));
   await ousd.connect(matt).approve(flipper.address, ousdUnits("990000"));
   await usdc.connect(matt).approve(flipper.address, usdcUnits("990000"));
   await usdt.connect(matt).approve(flipper.address, usdtUnits("990000"));
@@ -213,7 +213,7 @@ async function loadedFlipper() {
 }
 
 function withEachCoinIt(title, fn) {
-  const stablecoins = ["DAI", "USDC", "USDT"];
+  const stablecoins = ["USDS", "USDC", "USDT"];
   for (const name of stablecoins) {
     it(`${name} ${title}`, async () => {
       const fixture = await loadFixture();

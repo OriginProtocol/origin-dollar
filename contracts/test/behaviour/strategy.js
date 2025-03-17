@@ -44,7 +44,7 @@ const shouldBehaveLikeStrategy = (context) => {
         strategy,
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -56,7 +56,7 @@ const shouldBehaveLikeStrategy = (context) => {
       const randomAssets = [
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -368,8 +368,8 @@ const shouldBehaveLikeStrategy = (context) => {
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
       const { governor, crv, strategy } = context();
-      const governorDaiBalanceBefore = await crv.balanceOf(governor.address);
-      const strategyDaiBalanceBefore = await crv.balanceOf(strategy.address);
+      const governorCRVBalanceBefore = await crv.balanceOf(governor.address);
+      const strategyCRVBalanceBefore = await crv.balanceOf(strategy.address);
 
       // Anna accidentally sends CRV to strategy
       const recoveryAmount = parseUnits("2");
@@ -385,10 +385,10 @@ const shouldBehaveLikeStrategy = (context) => {
         .withArgs(strategy.address, governor.address, recoveryAmount);
 
       await expect(governor).has.a.balanceOf(
-        governorDaiBalanceBefore.add(recoveryAmount),
+        governorCRVBalanceBefore.add(recoveryAmount),
         crv
       );
-      await expect(strategy).has.a.balanceOf(strategyDaiBalanceBefore, crv);
+      await expect(strategy).has.a.balanceOf(strategyCRVBalanceBefore, crv);
     });
     it("Should not transfer supported assets from strategy", async () => {
       const { assets, governor, strategy } = context();

@@ -124,9 +124,9 @@ describe.skip("ForkTest: OUSD Vault", function () {
       expect(await vault.swapper()).to.equal(swapper.address);
     });
     it("assets should have allowed slippage", async () => {
-      const { vault, dai, usdc, usdt } = fixture;
+      const { vault, usds, usdc, usdt } = fixture;
 
-      const assets = [dai, usdc, usdt];
+      const assets = [usds, usdc, usdt];
       const expectedDecimals = [18, 6, 6];
       const expectedConversions = [0, 0, 0];
       const expectedSlippage = [25, 25, 25];
@@ -155,13 +155,13 @@ describe.skip("ForkTest: OUSD Vault", function () {
 
     const tests = [
       {
-        from: "DAI",
+        from: "USDS",
         to: "USDT",
         fromAmount: 1000000,
         minToAssetAmount: 990000,
       },
       {
-        from: "DAI",
+        from: "USDS",
         to: "USDC",
         fromAmount: 1000000,
         minToAssetAmount: 999900,
@@ -169,7 +169,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         from: "USDT",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 1000000,
         minToAssetAmount: 998000,
       },
@@ -181,7 +181,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         from: "USDC",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 1000000,
         minToAssetAmount: 999900,
         slippage: 0.05, // Max 1Inch slippage
@@ -223,7 +223,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
     const tests = [
       {
         error: "",
-        from: "DAI",
+        from: "USDS",
         to: "USDC",
         fromAmount: 100,
         minToAssetAmount: 105,
@@ -237,14 +237,14 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         error: "To asset is not supported",
-        from: "DAI",
+        from: "USDS",
         to: "WETH",
         fromAmount: 20,
         minToAssetAmount: 1,
       },
       {
-        error: "Dai/insufficient-balance",
-        from: "DAI",
+        error: "Usds/insufficient-balance",
+        from: "USDS",
         to: "USDC",
         fromAmount: 30000000,
         minToAssetAmount: 29000000,
@@ -259,7 +259,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       {
         error: "ERC20: transfer amount exceeds balance",
         from: "USDC",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 30000000,
         minToAssetAmount: 29900000,
       },

@@ -4,7 +4,7 @@ const { utils } = require("ethers");
 const { loadDefaultFixture } = require("../_fixture");
 const { advanceBlocks, isFork } = require("../helpers");
 
-describe("Liquidity Reward", function () {
+describe.skip("Liquidity Reward", function () {
   if (isFork) {
     this.timeout(0);
   }

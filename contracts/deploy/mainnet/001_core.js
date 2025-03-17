@@ -9,10 +9,10 @@ const {
   deployAaveStrategy,
   deployThreePoolStrategy,
   deployConvexStrategy,
-  deployConvexOUSDMetaStrategy,
-  deployConvexLUSDMetaStrategy,
+  // deployConvexOUSDMetaStrategy,
+  // deployConvexLUSDMetaStrategy,
   deployNativeStakingSSVStrategy,
-  deployFraxEthStrategy,
+  // deployFraxEthStrategy,
   deployDrippers,
   deployHarvesters,
   configureVault,
@@ -32,15 +32,15 @@ const main = async () => {
   await deployOracles();
   await deployCore();
   await deployCurveMetapoolMocks();
-  await deployCurveLUSDMetapoolMocks();
+  // await deployCurveLUSDMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
-  await deployConvexOUSDMetaStrategy();
-  await deployConvexLUSDMetaStrategy();
+  // await deployConvexOUSDMetaStrategy();
+  // await deployConvexLUSDMetaStrategy();
   await deployNativeStakingSSVStrategy();
-  await deployFraxEthStrategy();
+  // await deployFraxEthStrategy();
   const [ousdDripper, oethDripper] = await deployDrippers();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(
     ousdDripper,

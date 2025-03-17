@@ -5,7 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "128_deploy_flipper",
     reduceQueueTime: true,
-    // forceSkip: true,
+    forceSkip: true,
     deployerIsProposer: false,
     proposalId: "",
   },

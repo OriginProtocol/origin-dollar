@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     deployerIsProposer: false,
     proposalId: "",
-    // TODO: Temporary hack to test it on CI
+    // TODO: Temporary hack to make it work on CI.
+    // Causes memory issues on CI otherwise.
     simulateDirectlyOnTimelock: isFork,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation, ethers }) => {
@@ -34,11 +35,29 @@ module.exports = deploymentWithGovernanceProposal(
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
     // 1. Deploy OracleRouter
-    await deployWithConfirmation("OracleRouter");
-    const cOracleRouter = await ethers.getContract("OracleRouter");
-    await withConfirmation(
-      cOracleRouter.connect(sDeployer).cacheDecimals(USDS)
+    const dOracleRouter = await deployWithConfirmation("OracleRouter");
+    const cOracleRouter = await ethers.getContractAt(
+      "OracleRouter",
+      dOracleRouter.address
     );
+
+    const assetsToCache = [
+      USDS,
+      DAI,
+      addresses.mainnet.USDT,
+      addresses.mainnet.USDC,
+      addresses.mainnet.COMP,
+      addresses.mainnet.Aave,
+      addresses.mainnet.CRV,
+      addresses.mainnet.CVX,
+    ];
+
+    for (const asset of assetsToCache) {
+      console.log(`Caching decimals for ${asset}`);
+      await withConfirmation(
+        cOracleRouter.connect(sDeployer).cacheDecimals(asset)
+      );
+    }
 
     // 2. Deploy Migration Strategy
     const dMigrationStrategy = await deployWithConfirmation(
@@ -93,6 +112,7 @@ module.exports = deploymentWithGovernanceProposal(
         await getTxOpts()
       )
     );
+    console.log(`Initialized SSR Strategy Proxy`);
 
     if (isFork) {
       // Withdraw the dust DAI from Morpho Aave V2

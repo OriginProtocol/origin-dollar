@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { units, daiUnits, usdtUnits } = require("../helpers");
+const { units, usdsUnits, usdtUnits } = require("../helpers");
 const {
   createFixtureLoader,
   oethCollateralSwapFixture,
@@ -70,11 +70,11 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should not allow Governor to set slippage for unsupported assets", async () => {
-      const { governor, oethVault, dai } = fixture;
+      const { governor, oethVault, usds } = fixture;
 
       const tx = oethVault
         .connect(governor)
-        .setOracleSlippage(dai.address, 123);
+        .setOracleSlippage(usds.address, 123);
       await expect(tx).to.be.revertedWith("Asset not supported");
     });
 
@@ -297,27 +297,27 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should revert if fromAsset is not supported", async () => {
-      const { weth, dai, oethVault, strategist } = fixture;
+      const { weth, usds, oethVault, strategist } = fixture;
       const fromAmount = utils.parseEther("100");
       const toAmount = utils.parseEther("100");
 
       // Call swap method
       const tx = oethVault
         .connect(strategist)
-        .swapCollateral(dai.address, weth.address, fromAmount, toAmount, []);
+        .swapCollateral(usds.address, weth.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Collateral swap not supported");
     });
 
     it("Should revert if toAsset is not supported", async () => {
-      const { stETH, dai, oethVault, strategist } = fixture;
+      const { stETH, usds, oethVault, strategist } = fixture;
       const fromAmount = utils.parseEther("100");
       const toAmount = utils.parseEther("100");
 
       // Call swap method
       const tx = oethVault
         .connect(strategist)
-        .swapCollateral(stETH.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(stETH.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Collateral swap not supported");
     });
@@ -364,12 +364,12 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should allow Governor to set slippage for assets", async () => {
-      const { dai, governor, vault } = fixture;
+      const { usds, governor, vault } = fixture;
 
-      const tx = vault.connect(governor).setOracleSlippage(dai.address, 123);
+      const tx = vault.connect(governor).setOracleSlippage(usds.address, 123);
       await expect(tx)
         .to.emit(vault, "SwapSlippageChanged")
-        .withArgs(dai.address, 123);
+        .withArgs(usds.address, 123);
     });
 
     it("Should not allow Governor to set slippage for unsupported assets", async () => {
@@ -380,18 +380,18 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should not allow anyone else to set slippage for assets", async () => {
-      const { dai, strategist, josh, vault } = fixture;
+      const { usds, strategist, josh, vault } = fixture;
 
       for (const user of [strategist, josh]) {
-        const tx = vault.connect(user).setOracleSlippage(dai.address, 123);
+        const tx = vault.connect(user).setOracleSlippage(usds.address, 123);
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });
 
     it("Should not allow Governor to set slippage above 10%", async () => {
-      const { dai, governor, vault } = fixture;
+      const { usds, governor, vault } = fixture;
 
-      const tx = vault.connect(governor).setOracleSlippage(dai.address, 1100);
+      const tx = vault.connect(governor).setOracleSlippage(usds.address, 1100);
       await expect(tx).to.be.revertedWith("Slippage too high");
     });
 
@@ -460,10 +460,10 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should allow to swap tokens", async () => {
-      const { dai, usdc, usdt, vault, strategist } = fixture;
+      const { usds, usdc, usdt, vault, strategist } = fixture;
 
-      for (const fromAsset of [dai, usdc, usdt]) {
-        for (const toAsset of [dai, usdc, usdt]) {
+      for (const fromAsset of [usds, usdc, usdt]) {
+        for (const toAsset of [usds, usdc, usdt]) {
           if (fromAsset.address === toAsset.address) continue;
           const fromAmount = await units("20", fromAsset);
           const toAmount = await units("21", toAsset);
@@ -491,38 +491,38 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should revert swap if received less tokens than strategist desired", async () => {
-      const { dai, usdt, vault, strategist, mockSwapper } = fixture;
+      const { usds, usdt, vault, strategist, mockSwapper } = fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper.connect(strategist).setNextOutAmount(daiUnits("18"));
+      await mockSwapper.connect(strategist).setNextOutAmount(usdsUnits("18"));
 
       const fromAmount = usdtUnits("20");
-      const toAmount = daiUnits("20");
+      const toAmount = usdsUnits("20");
 
       // Call swap method
       const tx = vault
         .connect(strategist)
-        .swapCollateral(usdt.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(usdt.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Strategist slippage limit");
     });
 
     it("Should revert swap if received less tokens than Oracle slippage", async () => {
-      const { dai, usdt, vault, strategist } = fixture;
+      const { usds, usdt, vault, strategist } = fixture;
 
       const fromAmount = usdtUnits("20");
-      const toAmount = daiUnits("16");
+      const toAmount = usdsUnits("16");
 
       // Call swap method
       const tx = vault
         .connect(strategist)
-        .swapCollateral(usdt.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(usdt.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Oracle slippage limit exceeded");
     });
 
     it("Should revert swap if value is under supply", async () => {
-      const { dai, usdt, oeth, vault, governor, strategist, mockSwapper } =
+      const { usds, usdt, oeth, vault, governor, strategist, mockSwapper } =
         fixture;
 
       // Mock to return lower than slippage next time
@@ -530,11 +530,11 @@ describe("1Inch Swapper", () => {
         .connect(strategist)
         .setNextOutAmount(utils.parseEther("180"));
       // increase the allowed Oracle slippage per asset to 9.99%
-      await vault.connect(governor).setOracleSlippage(dai.address, 999);
+      await vault.connect(governor).setOracleSlippage(usds.address, 999);
       await vault.connect(governor).setOracleSlippage(usdt.address, 999);
 
       const fromAmount = usdtUnits("200");
-      const toAmount = daiUnits("170");
+      const toAmount = usdsUnits("170");
 
       log(`total supply: ${await oeth.totalSupply()}`);
       log(`total value : ${await vault.totalValue()}`);
@@ -542,7 +542,7 @@ describe("1Inch Swapper", () => {
       // Call swap method
       const tx = vault
         .connect(strategist)
-        .swapCollateral(usdt.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(usdt.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Allowed value < supply");
 
@@ -551,17 +551,17 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should allow swap if value is under supply by less than the allowed percentage", async () => {
-      const { dai, usdt, oeth, vault, governor, strategist, mockSwapper } =
+      const { usds, usdt, oeth, vault, governor, strategist, mockSwapper } =
         fixture;
 
       // Mock to return lower than slippage next time
-      await mockSwapper.connect(strategist).setNextOutAmount(daiUnits("19"));
+      await mockSwapper.connect(strategist).setNextOutAmount(usdsUnits("19"));
       // increase the allowed Oracle slippage per asset to 9.99%
-      await vault.connect(governor).setOracleSlippage(dai.address, 999);
+      await vault.connect(governor).setOracleSlippage(usds.address, 999);
       await vault.connect(governor).setOracleSlippage(usdt.address, 999);
 
       const fromAmount = usdtUnits("20");
-      const toAmount = daiUnits("17");
+      const toAmount = usdsUnits("17");
 
       log(`total supply: ${await oeth.totalSupply()}`);
       log(`total value : ${await vault.totalValue()}`);
@@ -569,7 +569,7 @@ describe("1Inch Swapper", () => {
       // Call swap method
       const tx = await vault
         .connect(strategist)
-        .swapCollateral(usdt.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(usdt.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.emit(vault, "Swapped");
 
@@ -578,59 +578,59 @@ describe("1Inch Swapper", () => {
     });
 
     it("Should revert if fromAsset is not supported", async () => {
-      const { dai, weth, vault, strategist } = fixture;
+      const { usds, weth, vault, strategist } = fixture;
       const fromAmount = utils.parseEther("100");
-      const toAmount = daiUnits("100");
+      const toAmount = usdsUnits("100");
 
       // Call swap method
       const tx = vault
         .connect(strategist)
-        .swapCollateral(weth.address, dai.address, fromAmount, toAmount, []);
+        .swapCollateral(weth.address, usds.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("From asset is not supported");
     });
 
     it("Should revert if toAsset is not supported", async () => {
-      const { weth, dai, vault, strategist } = fixture;
-      const fromAmount = daiUnits("100");
+      const { weth, usds, vault, strategist } = fixture;
+      const fromAmount = usdsUnits("100");
       const toAmount = utils.parseEther("100");
 
       // Call swap method
       const tx = vault
         .connect(strategist)
-        .swapCollateral(dai.address, weth.address, fromAmount, toAmount, []);
+        .swapCollateral(usds.address, weth.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("To asset is not supported");
     });
 
     it("Should swap if capital is paused", async () => {
-      const { dai, usdt, vault, strategist } = fixture;
-      const fromAmount = daiUnits("100");
+      const { usds, usdt, vault, strategist } = fixture;
+      const fromAmount = usdsUnits("100");
       const toAmount = usdtUnits("100");
 
       // Fund Vault with some assets
       const vaultSigner = await impersonateAndFund(vault.address);
-      await dai.connect(vaultSigner).mint(fromAmount);
+      await usds.connect(vaultSigner).mint(fromAmount);
 
       await vault.connect(strategist).pauseCapital();
 
       // Call swap method
       const tx = await vault
         .connect(strategist)
-        .swapCollateral(dai.address, usdt.address, fromAmount, toAmount, []);
+        .swapCollateral(usds.address, usdt.address, fromAmount, toAmount, []);
 
       expect(tx).to.emit(vault, "Swapped");
     });
 
     it("Should revert if not called by Governor or Strategist", async () => {
-      const { dai, usdt, vault, josh } = fixture;
-      const fromAmount = daiUnits("100");
+      const { usds, usdt, vault, josh } = fixture;
+      const fromAmount = usdsUnits("100");
       const toAmount = usdtUnits("100");
 
       // Call swap method
       const tx = vault
         .connect(josh)
-        .swapCollateral(dai.address, usdt.address, fromAmount, toAmount, []);
+        .swapCollateral(usds.address, usdt.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith(
         "Caller is not the Strategist or Governor"

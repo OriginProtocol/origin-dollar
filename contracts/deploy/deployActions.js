@@ -19,7 +19,7 @@ const {
 const log = require("../utils/logger")("deploy:core");
 
 /**
- * Deploy AAVE Strategy which only supports DAI.
+ * Deploy AAVE Strategy which only supports USDC.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  * the strategy.
  */
@@ -51,8 +51,8 @@ const deployAaveStrategy = async () => {
     "initialize(address[],address[],address[],address,address)",
     [
       [assetAddresses.AAVE_TOKEN],
-      [assetAddresses.DAI],
-      [assetAddresses.aDAI],
+      [assetAddresses.USDC],
+      [assetAddresses.aUSDC],
       cAaveIncentivesController.address,
       assetAddresses.STKAAVE,
     ]
@@ -72,7 +72,7 @@ const deployAaveStrategy = async () => {
 };
 
 /**
- * Deploy Compound Strategy which only supports DAI.
+ * Deploy Compound Strategy which only supports USDS.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  * the strategy.
  */
@@ -98,7 +98,7 @@ const deployCompoundStrategy = async () => {
 
   const initData = cCompoundStrategy.interface.encodeFunctionData(
     "initialize(address[],address[],address[])",
-    [[assetAddresses.COMP], [assetAddresses.DAI], [assetAddresses.cDAI]]
+    [[assetAddresses.COMP], [assetAddresses.USDS], [assetAddresses.cUSDS]]
   );
 
   await withConfirmation(
@@ -113,7 +113,7 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
+ * Deploys a 3pool Strategy which supports USDC, USDT and USDS.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  */
 const deployThreePoolStrategy = async () => {
@@ -152,7 +152,7 @@ const deployThreePoolStrategy = async () => {
     cThreePoolStrategy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address[],address[],address[],address,address)"
-    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
+    ]([assetAddresses.CRV], [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
   );
   log("Initialized ThreePoolStrategy");
 
@@ -176,7 +176,7 @@ const deployThreePoolStrategy = async () => {
 };
 
 /**
- * Deploys a Convex Strategy which supports USDC, USDT and DAI.
+ * Deploys a Convex Strategy which supports USDC, USDT and USDS.
  */
 const deployConvexStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -216,7 +216,7 @@ const deployConvexStrategy = async () => {
       "initialize(address[],address[],address[],address,address,uint256)"
     ](
       [assetAddresses.CRV, assetAddresses.CVX],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
@@ -293,7 +293,7 @@ const deployConvexLUSDMetaStrategy = async () => {
       "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
     ](
       [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
@@ -375,7 +375,7 @@ const deployConvexOUSDMetaStrategy = async () => {
       "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
     ](
       [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
@@ -428,9 +428,9 @@ const configureVault = async () => {
   );
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, 0)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDS, 0)
   );
-  log("Added DAI asset to Vault");
+  log("Added USDS asset to Vault");
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
   );
@@ -653,50 +653,50 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract(
-    "ConvexOUSDMetaStrategyProxy"
-  );
-  const metaStrategy = await ethers.getContractAt(
-    "ConvexOUSDMetaStrategy",
-    OUSDmetaStrategyProxy.address
-  );
-  await withConfirmation(
-    metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // const OUSDmetaStrategyProxy = await ethers.getContract(
+  //   "ConvexOUSDMetaStrategyProxy"
+  // );
+  // const metaStrategy = await ethers.getContractAt(
+  //   "ConvexOUSDMetaStrategy",
+  //   OUSDmetaStrategyProxy.address
+  // );
+  // await withConfirmation(
+  //   metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  // );
 
-  const LUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexLUSDMetaStrategyProxy"
-  );
-  const LUSDMetaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    LUSDMetaStrategyProxy.address
-  );
-  await withConfirmation(
-    LUSDMetaStrategy.connect(sGovernor).setHarvesterAddress(
-      harvesterProxy.address
-    )
-  );
+  // const LUSDMetaStrategyProxy = await ethers.getContract(
+  //   "ConvexLUSDMetaStrategyProxy"
+  // );
+  // const LUSDMetaStrategy = await ethers.getContractAt(
+  //   "ConvexGeneralizedMetaStrategy",
+  //   LUSDMetaStrategyProxy.address
+  // );
+  // await withConfirmation(
+  //   LUSDMetaStrategy.connect(sGovernor).setHarvesterAddress(
+  //     harvesterProxy.address
+  //   )
+  // );
 
-  const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
-  const threePool = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    threePoolProxy.address
-  );
-  await withConfirmation(
-    threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
+  // const threePool = await ethers.getContractAt(
+  //   "ThreePoolStrategy",
+  //   threePoolProxy.address
+  // );
+  // await withConfirmation(
+  //   threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  // );
 
   // OETH Strategies
-  const fraxEthStrategyProxy = await ethers.getContract("FraxETHStrategyProxy");
-  const fraxEthStrategy = await ethers.getContractAt(
-    "FraxETHStrategy",
-    fraxEthStrategyProxy.address
-  );
-  await withConfirmation(
-    fraxEthStrategy
-      .connect(sGovernor)
-      .setHarvesterAddress(oethHarvesterProxy.address)
-  );
+  // const fraxEthStrategyProxy = await ethers.getContract("FraxETHStrategyProxy");
+  // const fraxEthStrategy = await ethers.getContractAt(
+  //   "FraxETHStrategy",
+  //   fraxEthStrategyProxy.address
+  // );
+  // await withConfirmation(
+  //   fraxEthStrategy
+  //     .connect(sGovernor)
+  //     .setHarvesterAddress(oethHarvesterProxy.address)
+  // );
 
   const nativeStakingSSVStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
@@ -1060,9 +1060,9 @@ const deployOracles = async () => {
   const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
   const oracleFeeds = [
-    [assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD],
-    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
+    [assetAddresses.USDS, oracleAddresses.chainlink.USDS_USD],
     [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD],
+    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
     [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
     [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
     [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
@@ -1324,7 +1324,7 @@ const deployFlipper = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
 
   await deployWithConfirmation("Flipper", [
-    assetAddresses.DAI,
+    assetAddresses.USDS,
     ousd.address,
     assetAddresses.USDC,
     assetAddresses.USDT,
@@ -1344,7 +1344,7 @@ const deployUniswapV3Pool = async () => {
 
   await MockUniswapV3Factory.createPool(
     assetAddresses.USDT,
-    assetAddresses.DAI,
+    assetAddresses.USDS,
     500
   );
 
@@ -1566,7 +1566,7 @@ const deployOUSDSwapper = async () => {
   cSwapper
     .connect(sDeployer)
     .approveAssets([
-      assetAddresses.DAI,
+      assetAddresses.USDS,
       assetAddresses.USDC,
       assetAddresses.USDT,
     ]);
@@ -1574,7 +1574,7 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setSwapper(mockSwapper.address);
   await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
 
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDS, 50);
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };

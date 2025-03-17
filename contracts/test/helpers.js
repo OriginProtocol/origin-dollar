@@ -243,11 +243,11 @@ function tusdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
-function daiUnits(amount) {
+function usdsUnits(amount) {
   return parseUnits(amount, 18);
 }
 
-function daiUnitsFormat(amount) {
+function usdsUnitsFormat(amount) {
   return formatUnits(amount, 18);
 }
 
@@ -364,6 +364,7 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
     USDC: 6,
     USDT: 6,
     DAI: 6,
+    USDS: 18,
     COMP: 6,
     CVX: 6,
     CRV: 6,
@@ -393,6 +394,8 @@ const getOracleAddresses = async (deployments) => {
       chainlink: {
         ETH_USD: addresses.mainnet.chainlinkETH_USD,
         DAI_USD: addresses.mainnet.chainlinkDAI_USD,
+        // Use same Oracle as DAI for USDS
+        USDS_USD: addresses.mainnet.chainlinkDAI_USD,
         USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
         USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
         COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
@@ -414,6 +417,8 @@ const getOracleAddresses = async (deployments) => {
       chainlink: {
         ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
+        USDS_USD: (await deployments.get("MockChainlinkOracleFeedUSDS"))
+          .address,
         USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
           .address,
         USDT_USD: (await deployments.get("MockChainlinkOracleFeedUSDT"))
@@ -453,7 +458,7 @@ const getAssetAddresses = async (deployments) => {
       USDC: addresses.mainnet.USDC,
       TUSD: addresses.mainnet.TUSD,
       DAI: addresses.mainnet.DAI,
-      cDAI: addresses.mainnet.cDAI,
+      USDS: addresses.mainnet.USDS,
       cUSDC: addresses.mainnet.cUSDC,
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
@@ -470,6 +475,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       aWETH: addresses.mainnet.aWETH,
+      cDAI: addresses.mainnet.cDAI,
       AAVE: addresses.mainnet.Aave,
       AAVE_TOKEN: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
@@ -505,10 +511,11 @@ const getAssetAddresses = async (deployments) => {
       USDT: (await deployments.get("MockUSDT")).address,
       USDC: (await deployments.get("MockUSDC")).address,
       TUSD: (await deployments.get("MockTUSD")).address,
-      DAI: (await deployments.get("MockDAI")).address,
-      cDAI: (await deployments.get("MockCDAI")).address,
+      USDS: (await deployments.get("MockUSDS")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
+      cDAI: (await deployments.get("MockCDAI")).address,
+      cUSDS: (await deployments.get("MockCUSDS")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
@@ -550,37 +557,37 @@ const getAssetAddresses = async (deployments) => {
         .address,
     };
 
-    try {
-      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
-       * metapool is not yet deployed. Just return without metapool info if it is not
-       * yet available.
-       */
-      addressMap.ThreePoolOUSDMetapool = (
-        await deployments.get("MockCurveMetapool")
-      ).address;
-      // token is implemented by the same contract as the metapool
-      addressMap.metapoolToken = (
-        await deployments.get("MockCurveMetapool")
-      ).address;
-    } catch (e) {
-      // do nothing
-    }
+    // try {
+    //   /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+    //    * metapool is not yet deployed. Just return without metapool info if it is not
+    //    * yet available.
+    //    */
+    //   addressMap.ThreePoolOUSDMetapool = (
+    //     await deployments.get("MockCurveMetapool")
+    //   ).address;
+    //   // token is implemented by the same contract as the metapool
+    //   addressMap.metapoolToken = (
+    //     await deployments.get("MockCurveMetapool")
+    //   ).address;
+    // } catch (e) {
+    //   // do nothing
+    // }
 
-    try {
-      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
-       * metapool is not yet deployed. Just return without metapool info if it is not
-       * yet available.
-       */
-      addressMap.ThreePoolLUSDMetapool = (
-        await deployments.get("MockCurveLUSDMetapool")
-      ).address;
-      // token is implemented by the same contract as the metapool
-      addressMap.LUSDMetapoolToken = (
-        await deployments.get("MockCurveLUSDMetapool")
-      ).address;
-    } catch (e) {
-      // do nothing
-    }
+    // try {
+    //   /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+    //    * metapool is not yet deployed. Just return without metapool info if it is not
+    //    * yet available.
+    //    */
+    //   addressMap.ThreePoolLUSDMetapool = (
+    //     await deployments.get("MockCurveLUSDMetapool")
+    //   ).address;
+    //   // token is implemented by the same contract as the metapool
+    //   addressMap.LUSDMetapoolToken = (
+    //     await deployments.get("MockCurveLUSDMetapool")
+    //   ).address;
+    // } catch (e) {
+    //   // do nothing
+    // }
 
     return addressMap;
   }
@@ -816,7 +823,7 @@ module.exports = {
   usdtUnits,
   usdcUnits,
   tusdUnits,
-  daiUnits,
+  usdsUnits,
   ognUnits,
   ethUnits,
   fraxUnits,
@@ -825,10 +832,10 @@ module.exports = {
   cUsdcUnits,
   frxETHUnits,
   units,
-  daiUnitsFormat,
   ousdUnitsFormat,
   usdcUnitsFormat,
   usdtUnitsFormat,
+  usdsUnitsFormat,
   humanBalance,
   expectApproxSupply,
   advanceTime,

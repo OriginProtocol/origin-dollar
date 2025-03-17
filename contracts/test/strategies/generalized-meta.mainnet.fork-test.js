@@ -42,9 +42,9 @@ metastrategies.forEach((config) => {
 
     describe.skip("", () => {
       describe("Mint", function () {
-        it("Should NOT stake DAI in Curve gauge via metapool", async function () {
-          const { anna, dai } = fixture;
-          await mintTest(fixture, anna, dai, "432000");
+        it("Should NOT stake USDS in Curve gauge via metapool", async function () {
+          const { anna, usds } = fixture;
+          await mintTest(fixture, anna, usds, "432000");
         });
 
         it("Should stake USDT in Curve gauge via metapool", async function () {
@@ -198,7 +198,7 @@ metastrategies.forEach((config) => {
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, dai, rewardPool } = fixture;
+  const { vault, ousd, usds, rewardPool } = fixture;
   // pre-allocate just in case vault was holding some funds
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
@@ -236,8 +236,8 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   if ((await vault.vaultBuffer()).toString() == "1000000000000000000") {
     // If Vault Buffer is 100%, shouldn't deposit anything to strategy
     expect(rewardPoolBalanceDiff).to.equal("0");
-  } else if (asset.address === dai.address) {
-    // Should not have staked when minted with DAI
+  } else if (asset.address === usds.address) {
+    // Should not have staked when minted with USDS
     expect(rewardPoolBalanceDiff).to.equal("0");
   } else {
     // Should have staked the LP tokens for USDT and USDC

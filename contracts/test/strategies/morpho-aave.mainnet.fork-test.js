@@ -10,7 +10,8 @@ const {
 const { createFixtureLoader, morphoAaveFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("ForkTest: Morpho Aave Strategy", function () {
+// Strategy to be removed
+describe.skip("ForkTest: Morpho Aave Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -34,14 +35,14 @@ describe("ForkTest: Morpho Aave Strategy", function () {
     });
 
     it("Should deploy DAI in Morpho Aave", async function () {
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
+      const { anna, usds } = fixture;
+      await mintTest(fixture, anna, usds, "110000");
     });
   });
 
   describe("Redeem", function () {
     it("Should redeem from Morpho", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+      const { vault, ousd, usdt, usdc, usds, anna } = fixture;
 
       await vault.connect(anna).rebase();
 
@@ -50,7 +51,7 @@ describe("ForkTest: Morpho Aave Strategy", function () {
       const redeemAmount = ousdUnits("30000");
 
       // Mint with all three assets
-      for (const asset of [usdt, usdc, dai]) {
+      for (const asset of [usdt, usdc, usds]) {
         await vault
           .connect(anna)
           .mint(asset.address, await units("15000", asset), 0);
@@ -80,9 +81,9 @@ describe("ForkTest: Morpho Aave Strategy", function () {
   });
 
   describe("Withdraw", function () {
-    it("Should be able to withdraw from DAI strategy", async function () {
-      const { domen, dai } = fixture;
-      await withdrawTest(fixture, domen, dai, undefined);
+    it("Should be able to withdraw from USDS strategy", async function () {
+      const { domen, usds } = fixture;
+      await withdrawTest(fixture, domen, usds, undefined);
     });
 
     it("Should be able to withdraw from USDT strategy", async function () {

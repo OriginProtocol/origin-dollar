@@ -160,7 +160,10 @@ liquidityReward.id = deployName;
 liquidityReward.dependencies = ["core"];
 liquidityReward.tags = ["unit_tests"];
 
-// Liquidity mining will get deployed to Mainnet at a later date.
-liquidityReward.skip = () => isMainnet || isFork;
+// // Liquidity mining will get deployed to Mainnet at a later date.
+// liquidityReward.skip = () => isMainnet || isFork;
+
+// We no longer need this
+liquidityReward.skip = () => true;
 
 module.exports = liquidityReward;
