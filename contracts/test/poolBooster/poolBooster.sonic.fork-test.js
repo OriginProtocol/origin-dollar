@@ -1,5 +1,9 @@
 const { createFixtureLoader } = require("../_fixture");
-const { defaultSonicFixture } = require("../_fixture-sonic");
+const {
+  defaultSonicFixture,
+  filterAndParseRewardAddedEvents,
+  getPoolBoosterContractFromPoolAddress,
+} = require("../_fixture-sonic");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { deployWithConfirmation } = require("../../utils/deploy.js");
@@ -677,47 +681,4 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid central registry address");
     });
   });
-
-  const filterAndParseRewardAddedEvents = async (tx) => {
-    // keccak256("RewardAdded(address,uint256,uint256)")
-    const rewardAddedTopic =
-      "0x6a6f77044107a33658235d41bedbbaf2fe9ccdceb313143c947a5e76e1ec8474";
-
-    const { events } = await tx.wait();
-    return events
-      .filter((e) => e.topics[0] == rewardAddedTopic)
-      .map((e) => {
-        const decoded = ethers.utils.defaultAbiCoder.decode(
-          ["address", "uint256", "uint256"],
-          e.data
-        );
-        return {
-          rewardToken: decoded[0],
-          amount: decoded[1],
-          startTimestamp: decoded[2],
-        };
-      });
-  };
-
-  const getPoolBoosterContractFromPoolAddress = async (
-    factory,
-    poolAddress
-  ) => {
-    const poolBoosterEntry = await factory.poolBoosterFromPool(poolAddress);
-    const poolBoosterType = poolBoosterEntry.boosterType;
-
-    if (poolBoosterType == 0) {
-      return await ethers.getContractAt(
-        "PoolBoosterSwapxDouble",
-        poolBoosterEntry.boosterAddress
-      );
-    } else if (poolBoosterType == 1) {
-      return await ethers.getContractAt(
-        "PoolBoosterSwapxSingle",
-        poolBoosterEntry.boosterAddress
-      );
-    } else {
-      throw new Error(`Unrecognised pool booster type: ${poolBoosterType}`);
-    }
-  };
 });
