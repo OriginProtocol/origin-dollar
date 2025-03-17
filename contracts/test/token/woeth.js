@@ -16,6 +16,7 @@ describe("WOETH", function () {
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
+    weth = fixture.weth;
     oeth = fixture.oeth;
     woeth = fixture.woeth;
     oethVault = fixture.oethVault;
@@ -47,9 +48,12 @@ describe("WOETH", function () {
     expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
   });
 
-  const increaseOETHSupplyAndRebase = async (wethAmount) => {
+  const increaseOETHVault = async (wethAmount) => {
     await weth.connect(josh).deposit({ value: wethAmount });
     await weth.connect(josh).transfer(oethVault.address, wethAmount);
+  };
+  const increaseOETHSupplyAndRebase = async (wethAmount) => {
+    await increaseOETHVault(wethAmount);
     await oethVault.connect(josh).rebase();
   };
 
@@ -314,6 +318,73 @@ describe("WOETH", function () {
       await expect(await woeth.totalAssets()).to.equal(
         startingAssets.add(toDistribute)
       );
+    });
+  });
+
+  describe("No double yield", function () {
+    beforeEach(async () => {
+      // OETH has pending yield
+      increaseOETHVault("125");
+    });
+
+    const userAssets = async () => {
+      const oethValue = await oeth.balanceOf(josh.address);
+      const woethShares = await woeth.balanceOf(josh.address);
+      const woethValue = await woeth.previewRedeem(woethShares);
+      return oethValue.add(woethValue);
+    };
+
+    const zeroJoshOeth = async () => {
+      const toEmpty = await oeth.balanceOf(josh.address);
+      await oeth.connect(josh).transfer(matt.address, toEmpty);
+    };
+
+    it("should not allow extra yield when redeeming", async () => {
+      await zeroJoshOeth();
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .redeem(oethUnits("10"), josh.address, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when withdrawing", async () => {
+      await zeroJoshOeth();
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .withdraw(oethUnits("10"), josh.address, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when minting", async () => {
+      const userBefore = await userAssets();
+
+      const mintAmount = await woeth.previewDeposit(
+        await oeth.balanceOf(josh.address)
+      );
+      await woeth.connect(josh).mint(mintAmount, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when depositing", async () => {
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .deposit(await oeth.balanceOf(josh.address), josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
     });
   });
 
