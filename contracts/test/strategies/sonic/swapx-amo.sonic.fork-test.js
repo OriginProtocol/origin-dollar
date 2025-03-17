@@ -365,6 +365,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Strategist should swap a little assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3"));
     });
+    it("Strategist should swap enough wS to get the pool close to balanced", async () => {
+      const { swapXPool } = fixture;
+      const { _reserve0: wsReserves, _reserve1: osReserves } =
+        await swapXPool.getReserves();
+      // 87% of the extra OS gets pretty close to balanced
+      const osAmount = osReserves.sub(wsReserves).mul(87).div(100);
+      const wsAmount = osAmount.mul(wsReserves).div(osReserves);
+      log(`OS amount: ${formatUnits(osAmount)}`);
+      log(`wS amount: ${formatUnits(wsAmount)}`);
+
+      // const wsAmount = parseUnits("500");
+      await assertSwapAssetsToPool(wsAmount);
+    });
     it("Strategist should swap a lot of assets to the pool", async () => {
       await assertSwapAssetsToPool(parseUnits("3000"));
     });
@@ -425,9 +438,14 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertSwapAssetsToPool(parseUnits("3"));
     });
     it("Strategist should swap enough wS to get the pool close to balanced", async () => {
-      // just under half the extra OS amount
-      const osAmount = parseUnits("247");
-      await assertSwapAssetsToPool(osAmount);
+      const { swapXPool } = fixture;
+      const { _reserve0: wsReserves, _reserve1: osReserves } =
+        await swapXPool.getReserves();
+      // 50% of the extra OS in the pool gets close to balanced
+      const osAmount = osReserves.sub(wsReserves).mul(50).div(100);
+      const wsAmount = osAmount.mul(wsReserves).div(osReserves);
+
+      await assertSwapAssetsToPool(wsAmount);
     });
     it("Strategist should fail to add too much wS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -486,9 +504,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertSwapOTokensToPool(osAmount, fixture);
     });
     it("Strategist should get the pool close to balanced", async () => {
-      // just under half the extra wS amount
-      const osAmount = parseUnits("9000");
-      await assertSwapOTokensToPool(osAmount, fixture);
+      const { swapXPool } = fixture;
+      const { _reserve0: wsReserves, _reserve1: osReserves } =
+        await swapXPool.getReserves();
+      // 47% of the extra wS in the pool gets pretty close to balanced
+      const osAmount = wsReserves.sub(osReserves).mul(47).div(100);
+
+      await assertSwapOTokensToPool(osAmount);
     });
     it("Strategist should fail to add so much OS that is overshoots", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -536,8 +558,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await assertSwapOTokensToPool(osAmount, fixture);
     });
     it("Strategist should get the pool close to balanced", async () => {
-      // just under half the extra wS amount
-      const osAmount = parseUnits("99");
+      const { swapXPool } = fixture;
+
+      const { _reserve0: wsReserves, _reserve1: osReserves } =
+        await swapXPool.getReserves();
+      // 50% of the extra wS in the pool gets pretty close to balanced
+      const osAmount = wsReserves.sub(osReserves).mul(50).div(100);
+
       await assertSwapOTokensToPool(osAmount, fixture);
     });
     it("Strategist should fail to add zero OS to the pool", async () => {
@@ -820,6 +847,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const poolSupply = await swapXPool.totalSupply();
     const { _reserve0: wsReserves, _reserve1: osReserves } =
       await swapXPool.getReserves();
+    const reserves = { ws: wsReserves, os: osReserves };
+    const k = calcInvariant(reserves);
     const stratGaugeBalance = await swapXGauge.balanceOf(
       swapXAMOStrategy.address
     );
@@ -837,6 +866,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       gaugeSupply,
       vaultWSBalance,
       stratWSBalance,
+      k,
     };
   };
 
@@ -846,6 +876,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       ws: data.reserves.ws.mul(10000).div(totalReserves),
       os: data.reserves.os.mul(10000).div(totalReserves),
     };
+    const gaugePercentage = data.gaugeSupply.eq(0)
+      ? 0
+      : data.stratGaugeBalance.mul(10000).div(data.gaugeSupply);
     if (message) {
       log(message);
     }
@@ -865,7 +898,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         2
       )}%`
     );
-    log(`strat gauge balance : ${formatUnits(data.stratGaugeBalance)}`);
+    log(`Invariant K         : ${formatUnits(data.k)}`);
+    log(
+      `strat gauge balance : ${formatUnits(
+        data.stratGaugeBalance
+      )} ${formatUnits(gaugePercentage, 2)}%`
+    );
     log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
     log(`vault wS balance    : ${formatUnits(data.vaultWSBalance)}`);
     log(`strat wS balance    : ${formatUnits(data.stratWSBalance)}`);
@@ -1223,6 +1261,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const { oSonic, swapXPool, swapXAMOStrategy, strategist } = fixture;
 
     const dataBefore = await snapData();
+    await logSnapData(dataBefore, "Before swapping OTokens to the pool");
 
     // Mint OS and swap into the pool, then mint more OS to add with the wS swapped out
     const tx = await swapXAMOStrategy
@@ -1234,6 +1273,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       .emit(swapXAMOStrategy, "SwapOTokensToPool")
       .withNamedArgs({ osMinted: osAmount });
 
+    await logSnapData(await snapData(), "\nAfter swapping OTokens to the pool");
     await logProfit(dataBefore);
 
     await assertChangedData(
