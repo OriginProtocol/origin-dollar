@@ -1,6 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
-const { impersonateAndFund } = require("../../utils/signers");
 const { isFork } = require("../../utils/hardhat-helpers");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -90,43 +89,36 @@ module.exports = deploymentWithGovernanceProposal(
       )
     );
 
-    if (isFork) {
-      // Withdraw the dust DAI from Morpho Aave V2
-      const cMorphoAaveStrategyProxy = await ethers.getContract(
-        "MorphoAaveStrategyProxy"
-      );
-      const cMorphoAaveStrategy = await ethers.getContractAt(
-        "MorphoAaveStrategy",
-        cMorphoAaveStrategyProxy.address
-      );
-
-      const daiBalance = await cMorphoAaveStrategy.checkBalance(DAI);
-      console.log(`DAI balance in Morpho Aave V2: ${daiBalance}`);
-
-      // TODO: Temporary change since Morpho has liquidity issues.
-      const dTempVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
-      const timelock = await impersonateAndFund(addresses.mainnet.Timelock);
-      await withConfirmation(
-        cVault.connect(timelock).setAdminImpl(dTempVaultAdmin.address)
-      );
-
-      // TODO: Uncomment this once Morpho has enough liquidity
-      // const strategist = await impersonateAndFund(multichainStrategistAddr);
-      // console.log(`Withdrawing DAI from Morpho Aave V2`);
-      // await cVault
-      //   .connect(strategist)
-      //   .withdrawFromStrategy(
-      //     cMorphoAaveStrategyProxy.address,
-      //     [DAI],
-      //     [daiBalance]
-      //   );
-      // console.log("Withdrew DAI from Morpho Aave V2");
-    }
+    // Withdraw the dust DAI from Morpho Aave V2
+    const cMorphoAaveStrategyProxy = await ethers.getContract(
+      "MorphoAaveStrategyProxy"
+    );
+    const dTempMorphoAaveStrategy = await deployWithConfirmation(
+      "TempMorphoAaveStrategy",
+      [
+        {
+          platformAddress: "0x777777c9898D384F785Ee44Acfe945efDFf5f3E0",
+          vaultAddress: cVaultProxy.address,
+        },
+      ]
+    );
 
     return {
       name: "Replace DAI with USDS",
       actions: [
+        {
+          // Upgrade Morpho Aave V2 strategy to TempMorphoAaveStrategy
+          contract: cMorphoAaveStrategyProxy,
+          signature: "upgradeTo(address)",
+          args: [dTempMorphoAaveStrategy.address],
+        },
+        {
+          // Remove Morpho Aave V2 Strategy
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cMorphoAaveStrategyProxy.address],
+        },
+
         {
           // Upgrade VaultAdmin implementation
           // For some reason, removeAsset fails without upgrading
@@ -230,6 +222,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cDSRStrategyProxy.address, false],
+        },
+        {
+          // Remove Morpho Aave Strategy from the Harvester
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cMorphoAaveStrategyProxy.address, false],
         },
 
         {

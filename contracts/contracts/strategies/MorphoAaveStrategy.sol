@@ -176,7 +176,13 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = _checkBalance(assetsMapped[i]);
             if (balance > 0) {
@@ -202,6 +208,7 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
     function _checkBalance(address _asset)
         internal
         view
+        virtual
         returns (uint256 balance)
     {
         address pToken = address(_getPTokenFor(_asset));
