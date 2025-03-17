@@ -1,8 +1,10 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits, daiUnits, isFork } = require("../helpers");
+const { oethUnits, daiUnits, isFork, advanceTime } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
+const { impersonateAndFund } = require("../../utils/signers");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("WOETH", function () {
   if (isFork) {
@@ -10,9 +12,11 @@ describe("WOETH", function () {
   }
 
   let oeth, weth, woeth, oethVault, dai, matt, josh, governor;
+  const WOETH_YIELD_TIME = 60 * 60 * 23;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
+    weth = fixture.weth;
     oeth = fixture.oeth;
     woeth = fixture.woeth;
     oethVault = fixture.oethVault;
@@ -30,16 +34,26 @@ describe("WOETH", function () {
     // Josh wraps 50 OETH to WOETH
     await oeth.connect(josh).approve(woeth.address, oethUnits("1000"));
     await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
+    await expect(woeth).to.have.a.totalSupply("50");
+    await expect(woeth).to.have.a.balanceOf("50", oeth);
 
     // rebase OETH balances in wallets by 2x
     await increaseOETHSupplyAndRebase(await oeth.totalSupply());
-
-    // josh account starts each test with 100 OETH
+    for (let i = 0; i < 21; i++) {
+      await woeth.scheduleYield();
+      await advanceTime(100000);
+    }
+    await expect(woeth).to.have.a.totalSupply("50");
+    await expect(woeth).to.have.a.balanceOf("100", oeth);
+    expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
   });
 
-  const increaseOETHSupplyAndRebase = async (wethAmount) => {
+  const increaseOETHVault = async (wethAmount) => {
     await weth.connect(josh).deposit({ value: wethAmount });
     await weth.connect(josh).transfer(oethVault.address, wethAmount);
+  };
+  const increaseOETHSupplyAndRebase = async (wethAmount) => {
+    await increaseOETHVault(wethAmount);
     await oethVault.connect(josh).rebase();
   };
 
@@ -59,12 +73,67 @@ describe("WOETH", function () {
   });
 
   describe("Funds in, Funds out", async () => {
+    it("Mint should trigger a yield start ", async () => {
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      const tx = await woeth.connect(josh).mint(oethUnits("1"), josh.address);
+
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Deposit should trigger a yield start ", async () => {
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      const tx = await woeth
+        .connect(josh)
+        .deposit(oethUnits("1"), josh.address);
+
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Withdraw should trigger a yield start ", async () => {
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+
+      const tx = await woeth
+        .connect(josh)
+        .withdraw(oethUnits("1"), josh.address, josh.address);
+
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
+    });
+
+    it("Redeem should trigger a yield start ", async () => {
+      // donate OETH to WOETH as yield
+      await oeth.connect(josh).transfer(woeth.address, oethUnits("1"));
+
+      // advance time for a day so any active yield emission is stopped
+      await advanceTime(60 * 60 * 24);
+
+      const tx = await woeth
+        .connect(josh)
+        .redeem(oethUnits("1"), josh.address, josh.address);
+
+      await expect(tx).to.emit(woeth, "YiedPeriodStarted");
+    });
+
     it("should deposit at the correct ratio", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
+      await expect(woeth).to.have.a.balanceOf("100", oeth);
+      expect(await woeth.totalAssets()).to.equal(oethUnits("100"));
       await woeth.connect(josh).deposit(oethUnits("50"), josh.address);
+      await expect(woeth).to.have.a.totalSupply("75");
+      await expect(woeth).to.have.a.balanceOf("150", oeth);
       await expect(josh).to.have.a.balanceOf("75", woeth);
       await expect(josh).to.have.a.balanceOf("50", oeth);
-      await expect(woeth).to.have.a.totalSupply("75");
     });
 
     it("should withdraw at the correct ratio", async () => {
@@ -141,6 +210,30 @@ describe("WOETH", function () {
         .connect(josh)
         .withdraw(oethUnits("0"), josh.address, josh.address);
     });
+
+    it("should reduce tracked assets in case of loss of OETH funds", async () => {
+      // no active yield emissions
+      await advanceTime(100000);
+      const totalAssetsBefore = await woeth.totalAssets();
+      const woethSigner = await impersonateAndFund(woeth.address);
+
+      // make the WOETH lose OETH underlying capital. This could happen if
+      // negative rebases would be possible
+      await oeth.connect(woethSigner).transfer(josh.address, oethUnits("50"));
+
+      await woeth.scheduleYield();
+      const timestamp = await time.latest();
+
+      const totalAssetsAfter = await woeth.totalAssets();
+
+      await expect(totalAssetsBefore).to.equal(oethUnits("100"));
+      await expect(totalAssetsAfter).to.equal(oethUnits("50"));
+      await expect(await woeth.trackedAssets()).to.equal(oethUnits("50"));
+      await expect(await woeth.yieldAssets()).to.equal(0);
+      await expect(await woeth.yieldEnd()).to.equal(
+        timestamp + WOETH_YIELD_TIME
+      );
+    });
   });
 
   describe("Collects Rebase", async () => {
@@ -155,7 +248,7 @@ describe("WOETH", function () {
       await expect(woeth).to.have.a.totalSupply("50");
     });
 
-    it("should not increase exchange rate when OETH is transferred to the contract", async () => {
+    it("should not instantly increase exchange rate when OETH is transferred to the contract", async () => {
       await expect(woeth).to.have.a.totalSupply("50");
       await expect(woeth).to.have.approxBalanceOf("100", oeth);
       await expect(josh).to.have.a.balanceOf("50", woeth);
@@ -173,6 +266,125 @@ describe("WOETH", function () {
       await expect(woeth).to.have.approxBalanceOf("50", oeth);
       await expect(await woeth.totalAssets()).to.equal("0");
       await expect(woeth).to.have.a.totalSupply("0");
+    });
+
+    it("should distributed yield over time", async () => {
+      let startingAssets = oethUnits("100");
+      // Ten yield per s
+      const toDistribute = 10 * 23 * 60 * 60 + 25;
+      // OETH has 400 total supply. WOETH has 100 OETH
+      // So yield is multiped by 4
+      await expect(woeth).to.have.a.balanceOf("100", oeth);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets);
+      await increaseOETHSupplyAndRebase(4 * toDistribute + 3);
+
+      await woeth.scheduleYield();
+
+      await expect(await oeth.balanceOf(woeth.address)).to.equal(
+        startingAssets.add(toDistribute)
+      );
+      await expect(await woeth.yieldAssets()).to.equal(toDistribute);
+
+      // Should not change the same block
+      await expect(await woeth.totalAssets()).to.equal(startingAssets);
+      // Next second, we should collect the second's yield, and any remaining rounding error
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(startingAssets.add(10));
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(2 * 10)
+      );
+
+      // Sudden donation here will not change yield schedule
+      await increaseOETHSupplyAndRebase(100000000000);
+      await woeth.scheduleYield();
+
+      // Yield continues. Previous donation commands advanced time 4 seconds
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(6 * 10)
+      );
+      // One block before the end. minus 10 and rounding error
+      await advanceTime(23 * 60 * 60 - 7);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute).sub(11)
+      );
+      // End, should be exact
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute)
+      );
+      // After end, no change
+      await advanceTime(1);
+      await expect(await woeth.totalAssets()).to.equal(
+        startingAssets.add(toDistribute)
+      );
+    });
+  });
+
+  describe("No double yield", function () {
+    beforeEach(async () => {
+      // OETH has pending yield
+      increaseOETHVault("125");
+    });
+
+    const userAssets = async () => {
+      const oethValue = await oeth.balanceOf(josh.address);
+      const woethShares = await woeth.balanceOf(josh.address);
+      const woethValue = await woeth.previewRedeem(woethShares);
+      return oethValue.add(woethValue);
+    };
+
+    const zeroJoshOeth = async () => {
+      const toEmpty = await oeth.balanceOf(josh.address);
+      await oeth.connect(josh).transfer(matt.address, toEmpty);
+    };
+
+    it("should not allow extra yield when redeeming", async () => {
+      await zeroJoshOeth();
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .redeem(oethUnits("10"), josh.address, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when withdrawing", async () => {
+      await zeroJoshOeth();
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .withdraw(oethUnits("10"), josh.address, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when minting", async () => {
+      const userBefore = await userAssets();
+
+      const mintAmount = await woeth.previewDeposit(
+        await oeth.balanceOf(josh.address)
+      );
+      await woeth.connect(josh).mint(mintAmount, josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
+    });
+    it("should not allow extra yield when depositing", async () => {
+      const userBefore = await userAssets();
+
+      await woeth
+        .connect(josh)
+        .deposit(await oeth.balanceOf(josh.address), josh.address);
+      await oethVault.rebase();
+
+      const userAfter = await userAssets();
+      expect(userAfter).to.eq(userBefore);
     });
   });
 
@@ -196,7 +408,7 @@ describe("WOETH", function () {
     it("should not allow a governor to collect OETH", async () => {
       await expect(
         woeth.connect(governor).transferToken(oeth.address, oethUnits("2"))
-      ).to.be.revertedWith("Cannot collect OETH");
+      ).to.be.revertedWith("Cannot collect core asset");
     });
     it("should not allow a non governor to recover tokens ", async () => {
       await expect(
