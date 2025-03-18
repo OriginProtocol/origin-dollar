@@ -245,7 +245,7 @@ describe("ForkTest: Vault", function () {
     it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
-        "0xe7fD05515A51509Ca373a42E81ae63A40AA4384b"
+        "0x36CFB852d3b84afB3909BCf4ea0dbe8C82eE1C3c"
       );
     });
 
@@ -379,7 +379,6 @@ describe("ForkTest: Vault", function () {
       const { vault, usds } = fixture;
 
       expect([
-        // TODO: Update SSR strategy for USDS after deployment
         "0x5Bd9AF9c2506D29B6d79cB878284A270190EaEAa", // Maker SSR Strategy
       ]).to.include(await vault.assetDefaultStrategies(usds.address));
     });
