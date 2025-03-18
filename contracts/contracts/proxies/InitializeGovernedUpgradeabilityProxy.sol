@@ -21,7 +21,6 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
 
     constructor() {
         _setGovernor(msg.sender);
-        emit GovernorshipTransferred(address(0), msg.sender);
     }
 
     /**

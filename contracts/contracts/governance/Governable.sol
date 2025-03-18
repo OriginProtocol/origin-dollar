@@ -85,6 +85,8 @@ abstract contract Governable {
     }
 
     function _setGovernor(address newGovernor) internal {
+        emit GovernorshipTransferred(_governor(), newGovernor);
+
         bytes32 position = governorPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -162,7 +164,6 @@ abstract contract Governable {
      */
     function _changeGovernor(address _newGovernor) internal {
         require(_newGovernor != address(0), "New Governor is address(0)");
-        emit GovernorshipTransferred(_governor(), _newGovernor);
         _setGovernor(_newGovernor);
     }
 }
