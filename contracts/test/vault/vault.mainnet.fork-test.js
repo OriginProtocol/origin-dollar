@@ -375,7 +375,7 @@ describe("ForkTest: Vault", function () {
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
-    it.skip("Should have correct default strategy set for USDS", async () => {
+    it("Should have correct default strategy set for USDS", async () => {
       const { vault, usds } = fixture;
 
       expect([
