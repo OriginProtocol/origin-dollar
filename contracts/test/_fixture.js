@@ -738,8 +738,6 @@ const defaultFixture = deployments.createFixture(async () => {
     metapoolToken,
     morpho,
     morphoCompoundStrategy,
-    // fraxEthStrategy,
-    frxEthRedeemStrategy,
     lidoWithdrawalStrategy,
     balancerREthStrategy,
     makerSSRStrategy,
@@ -860,22 +858,6 @@ const defaultFixture = deployments.createFixture(async () => {
     oethMorphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       oethMorphoAaveStrategyProxy.address
-    );
-
-    // const fraxEthStrategyProxy = await ethers.getContract(
-    //   "FraxETHStrategyProxy"
-    // );
-    // fraxEthStrategy = await ethers.getContractAt(
-    //   "FraxETHStrategy",
-    //   fraxEthStrategyProxy.address
-    // );
-
-    const frxEthRedeemStrategyProxy = await ethers.getContract(
-      "FrxEthRedeemStrategyProxy"
-    );
-    frxEthRedeemStrategy = await ethers.getContractAt(
-      "FrxEthRedeemStrategy",
-      frxEthRedeemStrategyProxy.address
     );
 
     const lidoWithdrawalStrategyProxy = await ethers.getContract(
@@ -1099,8 +1081,8 @@ const defaultFixture = deployments.createFixture(async () => {
     oethOracleRouter,
     // Assets
     usdt,
-    // dai,
     usds,
+    sUSDS,
     tusd,
     usdc,
     ogn,
@@ -1172,11 +1154,8 @@ const defaultFixture = deployments.createFixture(async () => {
     oethVaultValueChecker,
     frxETH,
     sfrxETH,
-    sUSDS,
-    // fraxEthStrategy,
     nativeStakingSSVStrategy,
     nativeStakingFeeAccumulator,
-    frxEthRedeemStrategy,
     lidoWithdrawalStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -2342,24 +2321,6 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
- * Configure a Vault hold frxEth to be redeemed by the frxEthRedeemStrategy
- */
-async function frxEthRedeemStrategyFixture() {
-  const fixture = await oethDefaultFixture();
-
-  // Give weth and fraxETH to the vault
-
-  await fixture.frxETH
-    .connect(fixture.daniel)
-    .transfer(fixture.oethVault.address, parseUnits("2000"));
-  await fixture.weth
-    .connect(fixture.daniel)
-    .transfer(fixture.oethVault.address, parseUnits("2000"));
-
-  return fixture;
-}
-
-/**
  * Configure a Vault hold stEth to be withdrawn by the LidoWithdrawalStrategy
  */
 async function lidoWithdrawalStrategyFixture() {
@@ -2799,7 +2760,6 @@ module.exports = {
   rebornFixture,
   balancerREthFixture,
   fraxETHStrategyFixture,
-  frxEthRedeemStrategyFixture,
   lidoWithdrawalStrategyFixture,
   nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
