@@ -8,9 +8,9 @@ module.exports = deploymentWithGovernanceProposal(
     reduceQueueTime: true,
     // forceSkip: true,
     deployerIsProposer: false,
-    proposalId: "",
-    // TODO: Temporary hack to make it work on CI.
-    // Causes memory issues on CI otherwise.
+    proposalId:
+      "114954970394844320178182896169894131762293708671906355250905818532387580494958",
+    // TODO: Temporary hack to test it on CI
     simulateDirectlyOnTimelock: isFork,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation, ethers }) => {
@@ -110,7 +110,16 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`Initialized SSR Strategy Proxy`);
 
     return {
-      name: "Replace DAI with USDS",
+      name: `Migrate DAI to USDS
+
+This governance proposal, once executed, will migrate all the Vault's DAI holdings to USDS.
+
+It adds a temporary strategy to migrate DAI to USDS using the DAI-USDS Migration Contract from Maker/Sky.
+
+It also adds a new strategy for USDS, the Sky Saving Rate (SSR) Strategy, which is a 4626 Vault that earns yield by compounding USDS in the Sky protocol.
+
+Post this governance proposal, DAI cannot be used to mint OUSD on the Vault. Any redeems will include a basket of USDT, USDC and USDS, and not DAI.
+`,
       actions: [
         {
           // Upgrade VaultAdmin implementation
