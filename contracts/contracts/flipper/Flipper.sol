@@ -7,7 +7,7 @@ import "../interfaces/Tether.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-// Contract to exchange USDT, USDC, USDS from and to OUSD.
+// Contract to exchange usdt, usdc, dai from and to ousd.
 //   - 1 to 1. No slippage
 //   - Optimized for low gas usage
 //   - No guarantee of availability
@@ -18,7 +18,7 @@ contract Flipper is Governable {
     uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
 
     // Settable coin addresses allow easy testing and use of mock currencies.
-    IERC20 immutable usds;
+    IERC20 immutable dai;
     address immutable ousd;
     IERC20 immutable usdc;
     Tether immutable usdt;
@@ -27,16 +27,16 @@ contract Flipper is Governable {
     // Dev constructor
     // ---------------------
     constructor(
-        address _usds,
+        address _dai,
         address _ousd,
         address _usdc,
         address _usdt
     ) {
-        require(address(_usds) != address(0));
+        require(address(_dai) != address(0));
         require(address(_ousd) != address(0));
         require(address(_usdc) != address(0));
         require(address(_usdt) != address(0));
-        usds = IERC20(_usds);
+        dai = IERC20(_dai);
         ousd = _ousd;
         usdc = IERC20(_usdc);
         usdt = Tether(_usdt);
@@ -46,13 +46,13 @@ contract Flipper is Governable {
     // Trading functions
     // -----------------
 
-    /// @notice Purchase OUSD with USDS
+    /// @notice Purchase OUSD with Dai
     /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
-    function buyOusdWithUsds(uint256 amount) external {
+    function buyOusdWithDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(
-            usds.transferFrom(msg.sender, address(this), amount),
-            "USDS transfer failed"
+            dai.transferFrom(msg.sender, address(this), amount),
+            "DAI transfer failed"
         );
         require(
             IERC20(ousd).transfer(msg.sender, amount),
@@ -60,11 +60,11 @@ contract Flipper is Governable {
         );
     }
 
-    /// @notice Sell OUSD for USDS
+    /// @notice Sell OUSD for Dai
     /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
-    function sellOusdForUsds(uint256 amount) external {
+    function sellOusdForDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(usds.transfer(msg.sender, amount), "USDS transfer failed");
+        require(dai.transfer(msg.sender, amount), "DAI transfer failed");
         require(
             IERC20(ousd).transferFrom(msg.sender, address(this), amount),
             "OUSD transfer failed"
@@ -150,7 +150,7 @@ contract Flipper is Governable {
     /// @dev Contract will not perform any swaps until liquidity is provided
     /// again by transferring assets to the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
-        IERC20(usds).safeTransfer(_governor(), usds.balanceOf(address(this)));
+        IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
         IERC20(ousd).safeTransfer(
             _governor(),
             IERC20(ousd).balanceOf(address(this))
