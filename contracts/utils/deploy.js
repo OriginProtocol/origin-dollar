@@ -260,6 +260,7 @@ const executeGovernanceProposalOnFork = async ({
   reduceQueueTime,
   executeGasLimit = null,
   existingProposal = false,
+  executionRetries,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -426,9 +427,20 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
-  await governorSix.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn, {
-    gasLimit: executeGasLimit,
-  });
+  while (executionRetries > -1) {
+    executionRetries = executionRetries - 1;
+    try {
+      await governorSix
+        .connect(sMultisig5of8)
+        ["execute(uint256)"](proposalIdBn, {
+          gasLimit: executeGasLimit,
+        });
+    } catch (e) {
+      console.error(e);
+      // Wait for 3 seconds before retrying
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+  }
 
   const newProposalState = await getProposalState(proposalIdBn);
   if (newProposalState === "Executed") {
@@ -670,7 +682,8 @@ const handlePossiblyActiveGovernanceProposal = async (
   deployName,
   governorSix,
   reduceQueueTime,
-  executeGasLimit
+  executeGasLimit,
+  executionRetries
 ) => {
   if (isFork && proposalId) {
     let proposalState;
@@ -709,6 +722,7 @@ const handlePossiblyActiveGovernanceProposal = async (
         reduceQueueTime,
         executeGasLimit,
         existingProposal: true,
+        executionRetries,
       });
 
       // proposal executed skip deployment
@@ -1088,6 +1102,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     skipSimulation = false, // Skips simulating execution of proposal on fork
     // Simulates the actions by impersonating the timelock, helpful when debugging failing actions
     simulateDirectlyOnTimelock = false,
+    executionRetries = 0,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -1114,7 +1129,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
         deployName,
         governorSix,
         reduceQueueTime,
-        executeGasLimit
+        executeGasLimit,
+        executionRetries
       )
     ) {
       return;
