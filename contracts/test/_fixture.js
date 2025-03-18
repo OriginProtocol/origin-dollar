@@ -443,7 +443,9 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     );
 
   // matt burn remaining OUSD
-  await vault.connect(matt).redeem(ousd.balanceOf(matt.address), ousdUnits("0"));
+  await vault
+    .connect(matt)
+    .redeem(ousd.balanceOf(matt.address), ousdUnits("0"));
 
   return {
     // StdRebasing account type:
