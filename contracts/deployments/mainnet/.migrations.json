@@ -113,5 +113,6 @@
   "122_delegate_yield_curve_pool": 1739200325,
   "123_simple_harvester_v2": 1739168735,
   "124_remove_ousd_aave_strat": 1739880781,
-  "125_update_amo_mint_threshold": 1741748000
+  "125_update_amo_mint_threshold": 1741748000,
+  "127_replace_dai_with_usds": 1742311150
 }
