@@ -665,19 +665,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_minimumUnitAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "redeemAll",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "redeemFeeBps",
       "outputs": [
