@@ -250,11 +250,6 @@ contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[44] private __gap;
 
-    constructor() Governable() {
-        // Nobody owns the implementation
-        _setGovernor(address(0));
-    }
-
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation

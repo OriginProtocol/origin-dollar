@@ -82,9 +82,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _config The platform and OToken vault addresses
      */
     constructor(BaseStrategyConfig memory _config) {
-        // Nobody owns the implementation
-        _setGovernor(address(0));
-
         platformAddress = _config.platformAddress;
         vaultAddress = _config.vaultAddress;
     }
