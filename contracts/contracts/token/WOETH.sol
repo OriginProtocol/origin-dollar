@@ -219,15 +219,6 @@ contract WOETH is ERC4626, Governable, Initializable {
         increaseYieldLimit();
     }
 
-    function _transfer(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) internal override {
-        super._transfer(sender, recipient, amount);
-        increaseYieldLimit();
-    }
-
     /**
      * @dev This function safeguards rapid increases in WOETH -> OETH exchange ratio.
      * Such an increase can be a result of a donation attack to the Vault contract.
