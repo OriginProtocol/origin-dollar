@@ -18,7 +18,6 @@ const {
   configureVault,
   configureOETHVault,
   configureStrategies,
-  deployFlipper,
   deployBuyback,
   deployUniswapV3Pool,
   deployVaultValueChecker,
@@ -49,7 +48,6 @@ const main = async () => {
   await configureVault();
   await configureOETHVault(false);
   await configureStrategies(harvesterProxy, oethHarvesterProxy);
-  await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
   await deployVaultValueChecker();

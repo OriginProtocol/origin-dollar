@@ -7,11 +7,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OETHBuyback -o OETHBuybackHierarchy.svg
 sol2uml .. -s -d 0 -b OETHBuyback -o OETHBuybackSquashed.svg
 sol2uml storage .. -c OETHBuyback -o OETHBuybackStorage.svg
 
-# contracts/flipper
-sol2uml .. -v -hv -hf -he -hs -hl -b Flipper -o FlipperHierarchy.svg
-sol2uml .. -s -d 0 -b Flipper -o FlipperSquashed.svg
-sol2uml storage .. -c Flipper -o FlipperStorage.svg
-
 # contracts/harvest
 sol2uml .. -v -hv -hf -he -hs -hl -b Dripper -o DripperHierarchy.svg
 sol2uml .. -s -d 0 -b Dripper -o DripperSquashed.svg

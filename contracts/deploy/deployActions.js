@@ -1316,24 +1316,6 @@ const deployCurveLUSDMetapoolMocks = async () => {
   await mockBooster.setPool(lusdMetapoolLPCRVPid, LUSDMetapoolToken.address);
 };
 
-// Deploy the Flipper trading contract
-const deployFlipper = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await hre.getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const ousd = await ethers.getContract("OUSDProxy");
-
-  await deployWithConfirmation("Flipper", [
-    assetAddresses.USDS,
-    ousd.address,
-    assetAddresses.USDC,
-    assetAddresses.USDT,
-  ]);
-  const flipper = await ethers.getContract("Flipper");
-  await withConfirmation(flipper.transferGovernance(governorAddr));
-  await withConfirmation(flipper.connect(sGovernor).claimGovernance());
-};
-
 // create Uniswap V3 OUSD - USDT pool
 const deployUniswapV3Pool = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
@@ -1627,7 +1609,6 @@ module.exports = {
   configureVault,
   configureOETHVault,
   configureStrategies,
-  deployFlipper,
   deployBuyback,
   deployUniswapV3Pool,
   deployVaultValueChecker,

@@ -15,10 +15,6 @@ object "WOUSD" as wousd <<Origin>><<Proxy>> #DeepSkyBlue {
     name: Wrapped OUSD
 }
 
-object "Flipper" as flipper <<Origin>> #DeepSkyBlue {
-    assets: DAI, USDC, USDT
-}
-
 object "OUSD" as ousd <<Origin>><<Proxy>> #DeepSkyBlue {
     symbol: OUSD
     name: Origin Dollar
@@ -100,8 +96,6 @@ vault <. drip
 
 checker ..> ousd
 checker ..> vault
-
-flipper ..> ousd
 
 vault <.. harv 
 

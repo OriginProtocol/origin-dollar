@@ -752,7 +752,6 @@ const defaultFixture = deployments.createFixture(async () => {
     aaveAddressProvider,
     // uniswapPairOUSD_USDT,
     // liquidityRewardOUSD_USDT,
-    flipper,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -998,8 +997,6 @@ const defaultFixture = deployments.createFixture(async () => {
       "MockChainlinkOracleFeedETH"
     );
 
-    flipper = await ethers.getContract("Flipper");
-
     // const LUSDMetaStrategyProxy = await ethers.getContract(
     //   "ConvexLUSDMetaStrategyProxy"
     // );
@@ -1156,7 +1153,6 @@ const defaultFixture = deployments.createFixture(async () => {
     stkAave,
     // uniswapPairOUSD_USDT,
     // liquidityRewardOUSD_USDT,
-    flipper,
     wousd,
     morphoSteakhouseUSDCStrategy,
     morphoSteakHouseUSDCVault,
