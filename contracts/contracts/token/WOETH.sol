@@ -85,13 +85,7 @@ contract WOETH is ERC4626, Governable, Initializable {
          * WOETH has already seen transactions. But it is rather annoying in unit test
          * environment.
          */
-        oethCreditsHighres = _getOETHCredits();
-        creditsPerTokenLimit = OETH(asset())
-            .rebasingCreditsPerTokenHighres()
-            .mulTruncate(1e18 - MAX_YIELD_INCREASE)
-            .toUint128();
-        cptLimitEndTime = (block.timestamp + YIELD_INCREASE_CADENCE)
-            .toUint128();
+        increaseYieldLimit();
     }
 
     function name()
