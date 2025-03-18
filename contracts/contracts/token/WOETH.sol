@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -28,9 +29,28 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
+
     uint256 public oethCreditsHighres;
     bool private _oethCreditsInitialized;
-    uint256[48] private __gap;
+    uint128 public creditsPerTokenLimit;
+    uint128 public cptLimitEndTime;
+    uint256[47] private __gap;
+
+    uint256 public constant YIELD_INCREASE_CADENCE = 1 days - 1 hours;
+    /* This is the limit by which the yield of OETH is allowed to propagate to WOETH in a
+     * single YIELD_INCREASE_CADENCE. This prevents rapid increase of WOETH value by
+     * limiting a maximum instant jump in price. The 0.25% limit equates to 91% yearly
+     * maximum yield.
+     *
+     * If OETH has a daily yield that is larger than 91% the effective yield will spill over
+     * to WOETH in the next yield increase cadence.
+     *
+     * If the daily yield equating to 91% YOY yield isn't surpassed then the OETH rebases
+     * are in sync with WOETH. Resulting in no economical gain from wrapping OETH to WOETH
+     * and back to try to game the yield distribution.
+     */
+    uint256 public constant MAX_YIELD_INCREASE = 25e23; // 0.25%
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(ERC20 underlying_)
@@ -66,6 +86,7 @@ contract WOETH is ERC4626, Governable, Initializable {
          * environment.
          */
         oethCreditsHighres = _getOETHCredits();
+        increaseYieldLimit();
     }
 
     function name()
@@ -100,7 +121,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     {
         //@dev TODO: we could implement a feature where if anyone sends OETH directly to
         // the contract, that we can let the governor transfer the excess of the token.
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        require(asset_ != address(asset()), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
@@ -108,6 +129,11 @@ contract WOETH is ERC4626, Governable, Initializable {
     function totalAssets() public view override returns (uint256) {
         uint256 creditsPerTokenHighres = OETH(asset())
             .rebasingCreditsPerTokenHighres();
+
+        creditsPerTokenHighres = _max(
+            creditsPerTokenLimit,
+            creditsPerTokenHighres
+        );
 
         return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
     }
@@ -149,6 +175,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.deposit(oethAmount, receiver);
         oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        increaseYieldLimit();
     }
 
     /** @dev See {IERC4262-mint} */
@@ -162,6 +189,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.mint(woethAmount, receiver);
         oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        increaseYieldLimit();
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -175,6 +203,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 creditsBefore = _getOETHCredits();
         woethAmount = super.withdraw(oethAmount, receiver, owner);
         oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        increaseYieldLimit();
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -188,5 +217,35 @@ contract WOETH is ERC4626, Governable, Initializable {
         uint256 creditsBefore = _getOETHCredits();
         oethAmount = super.redeem(woethAmount, receiver, owner);
         oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        increaseYieldLimit();
+    }
+
+    /**
+     * @dev This function safeguards rapid increases in WOETH -> OETH exchange ratio.
+     * Such an increase can be a result of a donation attack to the Vault contract.
+     */
+    function increaseYieldLimit() public {
+        // not yet time to increase the limit
+        if (block.timestamp < cptLimitEndTime) {
+            return;
+        }
+
+        uint256 maxExternalLimit = OETH(asset())
+            .rebasingCreditsPerTokenHighres()
+            .mulTruncateScale(1e27 - MAX_YIELD_INCREASE, 1e27);
+        uint256 maxInternalLimit = uint256(creditsPerTokenLimit).mulTruncateScale(
+            1e27 - MAX_YIELD_INCREASE, 1e27
+        );
+
+        // OUSD rebases positively by decreasing the value of credits per
+        // token. That is why _max will return the smaller rebase.
+        creditsPerTokenLimit = _max(maxInternalLimit, maxExternalLimit)
+            .toUint128();
+        cptLimitEndTime = (block.timestamp + YIELD_INCREASE_CADENCE)
+            .toUint128();
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? b : a;
     }
 }
