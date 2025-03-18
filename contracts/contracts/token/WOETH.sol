@@ -50,7 +50,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * are in sync with WOETH. Resulting in no economical gain from wrapping OETH to WOETH
      * and back to try to game the yield distribution.
      */
-    uint256 public constant MAX_YIELD_INCREASE = 25e14; // 0.25%
+    uint256 public constant MAX_YIELD_INCREASE = 25e23; // 0.25%
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(ERC20 underlying_)
@@ -240,9 +240,9 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         uint256 maxExternalLimit = OETH(asset())
             .rebasingCreditsPerTokenHighres()
-            .mulTruncate(1e18 - MAX_YIELD_INCREASE);
-        uint256 maxInternalLimit = uint256(creditsPerTokenLimit).mulTruncate(
-            1e18 - MAX_YIELD_INCREASE
+            .mulTruncateScale(1e27 - MAX_YIELD_INCREASE, 1e27);
+        uint256 maxInternalLimit = uint256(creditsPerTokenLimit).mulTruncateScale(
+            1e27 - MAX_YIELD_INCREASE, 1e27
         );
 
         // OUSD rebases positively by decreasing the value of credits per
