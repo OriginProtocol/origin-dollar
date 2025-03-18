@@ -330,18 +330,6 @@ async function redeem({ amount, min, symbol }, hre) {
   await logTxDetails(tx, "redeem");
 }
 
-async function redeemAll({ min, symbol }, hre) {
-  const signer = await getSigner();
-
-  const { vault } = await getContracts(hre, symbol);
-
-  const minUnits = parseUnits(min.toString());
-
-  log(`About to redeem all ${symbol} tokens`);
-  const tx = await vault.connect(signer).redeemAll(minUnits);
-  await logTxDetails(tx, "redeemAll");
-}
-
 async function resolveStrategyAddress(strategy, hre) {
   let strategyAddr = strategy;
   if (!strategy.match(ethereumAddress)) {
@@ -494,7 +482,6 @@ module.exports = {
   mint,
   rebase,
   redeem,
-  redeemAll,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
