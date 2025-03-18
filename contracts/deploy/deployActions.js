@@ -1012,7 +1012,7 @@ const deployNativeStakingSSVStrategy = async () => {
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -1043,12 +1043,6 @@ const deployOracles = async () => {
   log("Deployed OracleRouter");
 
   const assetAddresses = await getAssetAddresses(deployments);
-  await deployWithConfirmation("AuraWETHPriceFeed", [
-    assetAddresses.auraWeightedOraclePool,
-    governorAddr,
-  ]);
-  const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
-  log("Deployed AuraWETHPriceFeed");
 
   // Register feeds
   // Not needed in production
@@ -1078,7 +1072,6 @@ const deployOracles = async () => {
       assetAddresses.NonStandardToken,
       oracleAddresses.chainlink.NonStandardToken_USD,
     ],
-    [assetAddresses.AURA, auraWethPriceFeed.address],
     [assetAddresses.BAL, oracleAddresses.chainlink.BAL_ETH],
   ];
 
@@ -1087,7 +1080,6 @@ const deployOracles = async () => {
       oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
     );
   }
-  log("Initialized AuraWETHPriceFeed");
 };
 
 const deployOETHCore = async () => {
@@ -1206,8 +1198,6 @@ const deployOUSDCore = async () => {
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
-  await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");

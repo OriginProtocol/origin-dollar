@@ -209,105 +209,6 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
 };
 
 /**
- * Execute a proposal on local test network (including on Fork).
- *
- * @param {Array<Object>} proposalArgs
- * @param {string} description
- * @param {opts} Options
- *   governorAddr: address of the governor contract to send the proposal to
- *   guardianAddr: address of the guardian (aka the governor's admin) to use for sending the queue and execute tx
- *   reduceQueueTime: reduce queue proposal time to 60 seconds
- * @returns {Promise<void>}
- */
-const executeProposal = async (proposalArgs, description, opts = {}) => {
-  if (isMainnet) {
-    throw new Error("executeProposal only works on local test network");
-  }
-
-  const namedAccounts = await hre.getNamedAccounts();
-  const deployerAddr = namedAccounts.deployerAddr;
-  const guardianAddr = opts.guardianAddr || namedAccounts.guardianAddr;
-
-  const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
-  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
-
-  if (isFork) {
-    await impersonateGuardian(opts.guardianAddr);
-  }
-
-  let governorContract;
-  if (opts.governorAddr) {
-    governorContract = await ethers.getContractAt(
-      "Governor",
-      opts.governorAddr
-    );
-  } else {
-    governorContract = await ethers.getContract("Governor");
-  }
-  const admin = await governorContract.admin();
-  log(
-    `Using governor contract at ${governorContract.address} with admin ${admin}`
-  );
-
-  // only works on hardhat network that supports `hardhat_setStorageAt`
-  if (opts.reduceQueueTime) {
-    log(`Reducing required queue time to 60 seconds`);
-    /* contracts/timelock/Timelock.sol storage slot layout:
-     * slot[0] address admin
-     * slot[1] address pendingAdmin
-     * slot[2] uint256 delay
-     */
-    await setStorageAt(
-      governorContract.address,
-      "0x2",
-      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
-    );
-  } else {
-    log(`Setting queue time back to 172800 seconds`);
-
-    /* contracts/timelock/Timelock.sol storage slot layout:
-     * slot[0] address admin
-     * slot[1] address pendingAdmin
-     * slot[2] uint256 delay
-     */
-    await setStorageAt(
-      governorContract.address,
-      "0x2",
-      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
-    );
-  }
-
-  const txOpts = await getTxOpts();
-
-  log(`Submitting proposal for ${description}`);
-  await withConfirmation(
-    governorContract
-      .connect(sDeployer)
-      .propose(...proposalArgs, description, txOpts)
-  );
-  const proposalId = await governorContract.proposalCount();
-  log(`Submitted proposal ${proposalId}`);
-
-  await withConfirmation(
-    governorContract.connect(sGuardian).queue(proposalId, txOpts)
-  );
-  log(`Proposal ${proposalId} queued`);
-
-  if (opts.reduceQueueTime) {
-    log("Advancing time by 61 seconds for TimeLock delay.");
-    await advanceTime(61);
-  } else {
-    log("Advancing time by 3 days for TimeLock delay.");
-    await advanceTime(259200);
-  }
-
-  await withConfirmation(
-    governorContract.connect(sGuardian).execute(proposalId, txOpts)
-  );
-  log("Proposal executed");
-};
-
-/**
  * Given a proposal Id, enqueues and executes it. Only for usage on Fork.
  * @param {Number} proposalId
  * @returns {Promise<void>}
@@ -539,45 +440,12 @@ const executeGovernanceProposalOnFork = async ({
   }
 };
 
-/**
- * Sends a proposal to the governor contract.
- * @param {Array<Object>} proposalArgs
- * @param {string} description
- * @returns {Promise<void>}
- */
-const sendProposal = async (proposalArgs, description, opts = {}) => {
-  if (!isMainnet && !isFork) {
-    throw new Error("sendProposal only works on Mainnet and Fork networks");
-  }
+const sendProposal = async () => {
+  throw new Error("Deprecated method");
+};
 
-  const { deployerAddr } = await hre.getNamedAccounts();
-  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
-
-  let governor;
-  if (opts.governorAddr) {
-    governor = await ethers.getContractAt("Governor", opts.governorAddr);
-    log(`Using governor contract at ${opts.governorAddr}`);
-  } else {
-    governor = await ethers.getContract("Governor");
-  }
-
-  log(`Submitting proposal for ${description} to governor ${governor.address}`);
-  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
-  await withConfirmation(
-    governor
-      .connect(sDeployer)
-      .propose(...proposalArgs, description, await getTxOpts())
-  );
-
-  const proposalId = (await governor.proposalCount()).toString();
-  log(`Submitted proposal ${proposalId}`);
-
-  log(
-    `Next step: call the following methods on the governor at ${governor.address} via multi-sig`
-  );
-  log(`   queue(${proposalId})`);
-  log(`   execute(${proposalId})`);
-  log("Done");
+const executeProposal = async () => {
+  throw new Error("Deprecated method");
 };
 
 /**
@@ -1758,9 +1626,9 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
-  executeProposal,
   executeProposalOnFork,
   sendProposal,
+  executeProposal,
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,

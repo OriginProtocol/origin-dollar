@@ -572,7 +572,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
-  const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
@@ -1095,7 +1094,6 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedUSDS,
     chainlinkOracleFeedOGNETH,
     chainlinkOracleFeedETH,
-    governorContract,
     compoundStrategy,
     oracleRouter,
     oethOracleRouter,

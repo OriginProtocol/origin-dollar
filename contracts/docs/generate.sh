@@ -38,10 +38,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
 sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
-sol2uml .. -s -d 0 -b AuraWETHPriceFeed -o AuraWETHPriceFeedSquashed.svg
-sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg
-
 sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
 sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
 sol2uml storage .. -c MixOracle -o MixOracleStorage.svg
@@ -109,11 +105,6 @@ sol2uml storage .. -c SonicStakingStrategy -o SonicStakingStrategyStorage.svg --
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
 sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
 sol2uml storage .. -c Swapper1InchV5 -o Swapper1InchV5Storage.svg
-
-# contracts/timelock
-sol2uml .. -v -hv -hf -he -hs -hl -b Timelock -o TimelockHierarchy.svg
-sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
-sol2uml storage .. -c Timelock -o TimelockStorage.svg
 
 # contracts/token
 sol2uml .. -v -hv -hf -he -hs -hl -hi  -b OUSD -o OUSDHierarchy.svg

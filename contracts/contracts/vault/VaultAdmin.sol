@@ -391,8 +391,7 @@ contract VaultAdmin is VaultStorage {
         require(assets[_asset].isSupported, "Asset not supported");
 
         // 1e13 for 18 decimals. And 10 for 6 decimals
-        // TODO: Temporary change since Morpho has liquidity issues.
-        uint256 maxDustBalance = uint256(1e20).scaleBy(
+        uint256 maxDustBalance = uint256(1e13).scaleBy(
             assets[_asset].decimals,
             18
         );
