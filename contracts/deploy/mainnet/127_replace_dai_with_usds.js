@@ -90,7 +90,16 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      name: "Replace DAI with USDS",
+      name: `Migrate DAI to USDS
+
+This governance proposal, once executed, will migrate all the Vault's DAI holdings to USDS.
+
+It adds a temporary strategy to migrate DAI to USDS using the DAI-USDS Migration Contract from Maker/Sky.
+
+It also adds a new strategy for USDS, the Sky Saving Rate (SSR) Strategy, which is a 4626 Vault that earns yield by compounding USDS in the Sky protocol.
+
+Post this governance proposal, DAI cannot be used to mint OUSD on the Vault. Any redeems will include a basket of USDT, USDC and USDS, and not DAI.
+`,
       actions: [
         {
           // Upgrade VaultAdmin implementation
