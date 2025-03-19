@@ -490,7 +490,8 @@ describe("OETH Vault", function () {
         .connect(governor)
         .addStrategyToMintWhitelist(daniel.address);
 
-      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be.true;
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
+        .true;
 
       const tx = await oethVault
         .connect(governor)
@@ -500,7 +501,8 @@ describe("OETH Vault", function () {
         .to.emit(oethVault, "StrategyRemovedFromMintWhitelist")
         .withArgs(daniel.address);
 
-      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be.false;
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
+        .false;
     });
   });
 
