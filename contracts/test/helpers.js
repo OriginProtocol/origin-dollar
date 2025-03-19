@@ -36,17 +36,17 @@ chai.Assertion.addMethod(
     if (expected.gte(BigNumber.from(0))) {
       chai
         .expect(actual, message)
-        .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+        .gte(expected.mul(1000000 - maxTolerancePct * 10000).div(1000000));
       chai
         .expect(actual, message)
-        .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+        .lte(expected.mul(1000000 + maxTolerancePct * 10000).div(1000000));
     } else {
       chai
         .expect(actual, message)
-        .gte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+        .gte(expected.mul(1000000 + maxTolerancePct * 10000).div(1000000));
       chai
         .expect(actual, message)
-        .lte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+        .lte(expected.mul(1000000 - maxTolerancePct * 10000).div(1000000));
     }
   }
 );

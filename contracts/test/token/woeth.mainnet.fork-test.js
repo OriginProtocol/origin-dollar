@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
 
 const { simpleOETHFixture, createFixtureLoader } = require("./../_fixture");
 const { hardhatSetBalance } = require("../_fund");
@@ -233,11 +234,12 @@ describe("ForkTest: wOETH", function () {
       );
     });
     it("should redeem at the correct ratio after rebase", async () => {
-      const { weth, oethVault, woeth, domen, josh } = fixture;
+      const { weth, oeth, oethVault, woeth, domen, josh } = fixture;
 
       // Mint some WOETH
       const initialDeposit = oethUnits("50");
       await woeth.connect(domen).deposit(initialDeposit, domen.address);
+      const initialOethBalance = await oeth.balanceOf(domen.address);
 
       const totalAssetsBefore = await woeth.totalAssets();
       // Rebase
@@ -247,6 +249,7 @@ describe("ForkTest: wOETH", function () {
       await oethVault.rebase();
 
       const totalAssetsAfter = await woeth.totalAssets();
+      const oethBalanceAfter = await oeth.balanceOf(domen.address);
       expect(totalAssetsAfter > totalAssetsBefore).to.be.true;
 
       // Then unwrap some WOETH
@@ -261,6 +264,18 @@ describe("ForkTest: wOETH", function () {
       const txReceipt = await txResponse.wait();
       const burnedShares = txReceipt.events[2].args.shares; // 0. transfer oeth, 1. transfer woeth, 2. redeem
       const assetTransfered = txReceipt.events[2].args.assets; // 0. transfer oeth, 1. transfer woeth, 2. redeem
+
+      // 1e18 denominated
+      const oethRateIncrease = oethBalanceAfter
+        .sub(initialOethBalance)
+        .mul(BigNumber.from("1000000000000000000"))
+        .div(initialOethBalance);
+      const woethRateIncrease = assetTransfered
+        .sub(initialDeposit)
+        .mul(BigNumber.from("1000000000000000000"))
+        .div(initialDeposit);
+
+      await expect(oethRateIncrease).to.approxEqualTolerance(woethRateIncrease, 0.0001);
 
       await expect(assetTransfered > initialDeposit);
       await expect(burnedShares).to.be.approxEqual(
