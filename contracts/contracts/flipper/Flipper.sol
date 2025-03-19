@@ -40,6 +40,8 @@ contract Flipper is Governable {
         ousd = _ousd;
         usdc = IERC20(_usdc);
         usdt = Tether(_usdt);
+
+        _setGovernor(msg.sender);
     }
 
     // -----------------

@@ -50,7 +50,6 @@ const {
   mint,
   rebase,
   redeem,
-  redeemAll,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
@@ -386,24 +385,6 @@ subtask("redeem", "Redeem OTokens for collateral assets from the Vault")
   )
   .setAction(redeem);
 task("redeem").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .addOptionalParam(
-    "min",
-    "Minimum amount of collateral to receive",
-    0,
-    types.float
-  )
-  .setAction(redeemAll);
-task("redeemAll").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
