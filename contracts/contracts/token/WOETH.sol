@@ -30,8 +30,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
-
+    // 1e27 denominated
     uint128 public _oethInitialTokensPerCredit;
+    // 1e18 denominated
     uint128 public _woethInitialExchangeRate;
     bool private _oethExchangeRateInitialized;
     uint256[48] private __gap;
@@ -60,8 +61,8 @@ contract WOETH is ERC4626, Governable, Initializable {
     function initialize2() public onlyGovernor {
         require(!_oethExchangeRateInitialized, "Initialize2 already called");
         _oethExchangeRateInitialized = true;
-
-        _oethInitialTokensPerCredit = (1e27 /
+        // 1e27 denominated
+        _oethInitialTokensPerCredit = (1e54 /
             OETH(address(asset())).rebasingCreditsPerTokenHighres())
             .toUint128();
         if (totalSupply() == 0) {
@@ -113,11 +114,13 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        uint256 oethTokensPerCredit = 1e27 /
+        // 1e27 denominated
+        uint256 oethTokensPerCredit = 1e54 /
             OETH(asset()).rebasingCreditsPerTokenHighres();
-        // denominated in 1e18
+        // (1e27 - 1e27) * 1e18 / 1e27 =  1e18 denominated
         uint256 oethRateIncrease = ((oethTokensPerCredit -
             _oethInitialTokensPerCredit) * 1e18) / _oethInitialTokensPerCredit;
+        // 1e18 * (1e18 + 1e18 denominated rate) / 1e18 = 1e18 denominated
         uint256 woethExchangeRate = (_woethInitialExchangeRate *
             (1e18 + oethRateIncrease)) / 1e18;
 
