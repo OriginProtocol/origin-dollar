@@ -390,6 +390,9 @@ contract VaultCore is VaultInitializer {
     function _rebase() internal whenNotRebasePaused returns (uint256) {
         uint256 ousdSupply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        uint256 rebasing = ousdSupply - nonRebasing;
+
         if (ousdSupply == 0) {
             return vaultValue;
         }
@@ -397,8 +400,6 @@ contract VaultCore is VaultInitializer {
         // Only allowing the vault to rebase out at a certain maximum
         // rate of change. This prevents donation rates.
         // The limits increase per block, up to a certain max cap.
-        uint256 nonRebasing = oUSD.nonRebasingSupply();
-        uint256 rebasing = ousdSupply - nonRebasing;
         uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
         uint256 timeCap = rebasing +
             (((block.timestamp - lastRebase) * MAX_REBASE_PER_SECOND) / 1e18);
