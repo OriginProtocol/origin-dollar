@@ -402,12 +402,13 @@ contract VaultCore is VaultInitializer {
         uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
         uint256 timeCap = rebasing +
             (((block.timestamp - lastRebase) * MAX_REBASE_PER_SECOND) / 1e18);
-        uint256 newValue = nonRebasing + _min(_min(rebasing, timeCap), hardCap);
+        uint256 newSupply = nonRebasing +
+            _min(_min(rebasing, timeCap), hardCap);
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (newValue > ousdSupply)) {
-            uint256 yield = newValue - ousdSupply;
+        if (_trusteeAddress != address(0) && (newSupply > ousdSupply)) {
+            uint256 yield = newSupply - ousdSupply;
             uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
@@ -418,11 +419,11 @@ contract VaultCore is VaultInitializer {
 
         // Only ratchet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (newValue > ousdSupply) {
-            oUSD.changeSupply(newValue);
+        if (newSupply > ousdSupply) {
+            oUSD.changeSupply(newSupply);
             lastRebase = block.timestamp;
         }
-        return newValue;
+        return newSupply;
     }
 
     /**
