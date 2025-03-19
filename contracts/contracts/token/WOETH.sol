@@ -61,14 +61,18 @@ contract WOETH is ERC4626, Governable, Initializable {
         require(!_oethExchangeRateInitialized, "Initialize2 already called");
         _oethExchangeRateInitialized = true;
 
-        _oethInitialTokensPerCredit = (1e27 / OETH(address(asset())).rebasingCreditsPerTokenHighres()).toUint128();
+        _oethInitialTokensPerCredit = (1e27 /
+            OETH(address(asset())).rebasingCreditsPerTokenHighres())
+            .toUint128();
         if (totalSupply() == 0) {
             _woethInitialExchangeRate = 1e18;
         } else {
-            uint256 oethBalance = OETH(address(asset())).balanceOf(address(this));
-            _woethInitialExchangeRate = (oethBalance * 1e18 / totalSupply()).toUint128();
+            uint256 oethBalance = OETH(address(asset())).balanceOf(
+                address(this)
+            );
+            _woethInitialExchangeRate = ((oethBalance * 1e18) / totalSupply())
+                .toUint128();
         }
-
     }
 
     function name()
@@ -109,10 +113,14 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        uint256 oethTokensPerCredit = 1e27 / OETH(asset()).rebasingCreditsPerTokenHighres();
-        uint256 oethRateIncrease = (oethTokensPerCredit - _oethInitialTokensPerCredit) * 1e18 / _oethInitialTokensPerCredit;
-        uint256 woethExchangeRate = _woethInitialExchangeRate * (1e18 + oethRateIncrease) / 1e18;
+        uint256 oethTokensPerCredit = 1e27 /
+            OETH(asset()).rebasingCreditsPerTokenHighres();
+        // denominated in 1e18
+        uint256 oethRateIncrease = ((oethTokensPerCredit -
+            _oethInitialTokensPerCredit) * 1e18) / _oethInitialTokensPerCredit;
+        uint256 woethExchangeRate = (_woethInitialExchangeRate *
+            (1e18 + oethRateIncrease)) / 1e18;
 
-        return totalSupply() * woethExchangeRate / 1e18;
+        return (totalSupply() * woethExchangeRate) / 1e18;
     }
 }
