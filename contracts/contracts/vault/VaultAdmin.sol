@@ -177,6 +177,24 @@ contract VaultAdmin is VaultStorage {
         emit WithdrawalClaimDelayUpdated(_delay);
     }
 
+    /**
+     * @notice Set a yield streaming max rate. This spreads yield over
+     * time if it is above the max rate.
+     * @param yearlyApr in 1e18 notation. 3 * 1e18 = 3% APR
+     */
+    function setRebaseRateMax(uint256 yearlyApr)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        // Change the rate
+        uint256 newPerSecond = yearlyApr / 100 / 365 days;
+        require(newPerSecond < MAX_REBASE_PER_SECOND, "Rate too high");
+        rebasePerSecondMax = newPerSecond;
+        emit RebasePerSecondMaxChanged(newPerSecond);
+    }
+
     /***************************************
                     Swaps
     ****************************************/

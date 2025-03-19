@@ -25,9 +25,6 @@ contract VaultCore is VaultInitializer {
     using StableMath for uint256;
     /// @dev max signed int
     uint256 internal constant MAX_INT = uint256(type(int256).max);
-    uint256 internal constant MAX_REBASE = 1.03 ether;
-    uint256 internal constant MAX_REBASE_PER_SECOND =
-        uint256(0.03 ether) / 1 days;
 
     /**
      * @dev Verifies that the rebasing is not paused.
