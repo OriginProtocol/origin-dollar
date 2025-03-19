@@ -407,24 +407,10 @@ const executeGovernanceProposalOnFork = async ({
   }
 
   while (executionRetries > -1) {
-    log(`PROPOSAL STATE >>>> ${await getProposalState(proposalIdBn)}`);
-
-    const actions = await governorSix.getActions(proposalIdBn);
-    log(`ACTIONS >>>> ${JSON.stringify(actions, null, 2)}`);
-
-    // const encodedCalldata = actions[2].map((sign, idx) => {
-    //   const functionSignature = keccak256(sign).slice(0, 10);
-    //   const argCalldata = actions[3][idx];
-
-    //   return `${functionSignature}${argCalldata.slice(2)}`;
-    // })
-
-    // const timelockHash = timelock.hashOperationBatch(
-    //   actions[0],
-    //   actions[1],
-    //   encodedCalldata,
-    //   "0x"
-    // );
+    // Don't ask me why but this seems to force hardhat to
+    // update state and cause the random failures to stop
+    await getProposalState(proposalIdBn);
+    await governorSix.getActions(proposalIdBn);
 
     executionRetries = executionRetries - 1;
     try {
