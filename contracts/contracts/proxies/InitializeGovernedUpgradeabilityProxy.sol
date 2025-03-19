@@ -19,6 +19,10 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      */
     event Upgraded(address indexed implementation);
 
+    constructor() {
+        _setGovernor(msg.sender);
+    }
+
     /**
      * @dev Contract initializer with Governor enforcement
      * @param _logic Address of the initial implementation.
