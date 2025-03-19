@@ -181,7 +181,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     // Withdraw all
-    await vault.connect(anna).redeemAll(0);
+    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
 
     // 100 USDC and 350 USDS in contract
     // (1000-100) + 100/450 * 250 USDC
@@ -213,7 +213,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.an.approxBalanceOf("250.00", ousd);
 
     // Withdraw all
-    await vault.connect(anna).redeemAll(0);
+    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
 
     // OUSD to Withdraw	250
     // Total Vault Coins	450
@@ -262,7 +262,7 @@ describe("Vault Redeem", function () {
 
     // Withdraw all
     await ousd.connect(anna).approve(vault.address, ousdUnits("500"));
-    await vault.connect(anna).redeemAll(0);
+    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
 
     // OUSD to Withdraw	250
     // Total Vault Coins	450
@@ -379,7 +379,7 @@ describe("Vault Redeem", function () {
     }
   });
 
-  it("Should correctly handle redeem without a rebase and then redeemAll", async function () {
+  it("Should correctly handle redeem without a rebase and then full redeem", async function () {
     const { ousd, vault, usdc, anna } = fixture;
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("3000.0"));
@@ -392,44 +392,9 @@ describe("Vault Redeem", function () {
     //redeem without rebasing (not over threshold)
     await vault.connect(anna).redeem(ousdUnits("200.00"), 0);
     //redeem with rebasing (over threshold)
-    await vault.connect(anna).redeemAll(0);
+    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
 
     await expect(anna).has.a.balanceOf("0.00", ousd);
-  });
-
-  it("Should have redeemAll result in zero balance", async () => {
-    const { ousd, vault, usdc, usds, anna, governor, josh, matt } = fixture;
-
-    await expect(anna).has.a.balanceOf("1000", usdc);
-    await expect(anna).has.a.balanceOf("1000", usds);
-
-    // Mint 1000 OUSD tokens using USDC
-    await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"), 0);
-    await expect(anna).has.balanceOf("1000", ousd);
-
-    await vault.connect(governor).setRedeemFeeBps("500");
-    await setOracleTokenPriceUsd("USDC", "1.005");
-    await setOracleTokenPriceUsd("USDS", "1");
-    await vault.connect(governor).rebase();
-
-    await vault.connect(anna).redeemAll(0);
-
-    usds.connect(josh).approve(vault.address, usdsUnits("50"));
-    vault.connect(josh).mint(usds.address, usdsUnits("50"), 0);
-    usds.connect(matt).approve(vault.address, usdsUnits("100"));
-    vault.connect(matt).mint(usds.address, usdsUnits("100"), 0);
-
-    let newBalance = await usdc.balanceOf(await anna.getAddress());
-    let newDaiBalance = await usds.balanceOf(await anna.getAddress());
-    await usdc.connect(anna).approve(vault.address, newBalance);
-    await vault.connect(anna).mint(usdc.address, newBalance, 0);
-    await usds.connect(anna).approve(vault.address, newDaiBalance);
-    await vault.connect(anna).mint(usds.address, newDaiBalance, 0);
-    await vault.connect(anna).redeemAll(0);
-    // FIXME - this is failing as a balance of 1 is being returned instead of 0
-    // Tracking issue https://github.com/OriginProtocol/origin-dollar/issues/1495
-    // await expect(anna).has.a.balanceOf("0.00", ousd);
   });
 
   it("Should respect minimum unit amount argument in redeem", async () => {
@@ -444,21 +409,6 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(
       vault.connect(anna).redeem(ousdUnits("50.0"), ousdUnits("51"))
-    ).to.be.revertedWith("Redeem amount lower than minimum");
-  });
-
-  it("Should respect minimum unit amount argument in redeemAll", async () => {
-    const { ousd, vault, usdc, anna, usds } = fixture;
-
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await expect(anna).has.a.balanceOf("1000.00", usds);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("50.00", ousd);
-    await vault.connect(anna).redeemAll(ousdUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(
-      vault.connect(anna).redeemAll(ousdUnits("51"))
     ).to.be.revertedWith("Redeem amount lower than minimum");
   });
 
