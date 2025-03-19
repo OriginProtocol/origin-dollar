@@ -115,44 +115,4 @@ contract WOETH is ERC4626, Governable, Initializable {
 
         return totalSupply() * woethExchangeRate / 1e18;
     }
-
-    /** @dev See {IERC4262-deposit} */
-    function deposit(uint256 oethAmount, address receiver)
-        public
-        override
-        returns (uint256 woethAmount)
-    {
-        if (oethAmount == 0) return 0;
-        super.deposit(oethAmount, receiver);
-    }
-
-    /** @dev See {IERC4262-mint} */
-    function mint(uint256 woethAmount, address receiver)
-        public
-        override
-        returns (uint256 oethAmount)
-    {
-        if (woethAmount == 0) return 0;
-        super.mint(woethAmount, receiver);
-    }
-
-    /** @dev See {IERC4262-withdraw} */
-    function withdraw(
-        uint256 oethAmount,
-        address receiver,
-        address owner
-    ) public override returns (uint256 woethAmount) {
-        if (oethAmount == 0) return 0;
-        super.withdraw(oethAmount, receiver, owner);
-    }
-
-    /** @dev See {IERC4262-redeem} */
-    function redeem(
-        uint256 woethAmount,
-        address receiver,
-        address owner
-    ) public override returns (uint256 oethAmount) {
-        if (woethAmount == 0) return 0;
-        super.redeem(woethAmount, receiver, owner);
-    }
 }
