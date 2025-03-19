@@ -22,9 +22,7 @@ const {
   getBlockTimestamp,
   isArbitrumOne,
   isBase,
-  isBaseFork,
   isSonic,
-  isSonicFork,
   isCI,
   isTest,
 } = require("../test/helpers.js");
@@ -37,7 +35,6 @@ const {
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
 const {
-  proposeArgs,
   proposeGovernanceArgs,
   accountCanCreateProposal,
 } = require("../utils/governor");
@@ -68,10 +65,6 @@ function log(msg, deployResult = null) {
     }
     console.log("INFO:", msg);
   }
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const deployWithConfirmation = async (
@@ -166,12 +159,6 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
-  if (isSonicFork) {
-    // Skip proxy check on sonic for now
-    console.log("Skipping proxy check on Sonic for now");
-    return;
-  }
-
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
@@ -180,6 +167,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
       addresses.mainnet.Timelock.toLowerCase(),
       addresses.mainnet.OldTimelock.toLowerCase(),
       addresses.base.timelock.toLowerCase(),
+      addresses.sonic.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
@@ -450,14 +438,6 @@ const executeGovernanceProposalOnFork = async ({
       `Something is wrong! Proposal id: ${proposalIdBn.toString()} in ${newProposalState} state`
     );
   }
-};
-
-const sendProposal = async () => {
-  throw new Error("Deprecated method");
-};
-
-const executeProposal = async () => {
-  throw new Error("Deprecated method");
 };
 
 /**
@@ -929,144 +909,6 @@ async function buildAndWriteGnosisJson(
   }
 }
 
-async function handleTransitionGovernance(propDesc, propArgs) {
-  const { timelockAddr } = await getNamedAccounts();
-
-  const timelock = await ethers.getContractAt(
-    "ITimelockController",
-    timelockAddr
-  );
-  const payloads = propArgs[2].map((sig, i) => {
-    return `${keccak256(toUtf8Bytes(sig)).slice(0, 10)}${propArgs[3][i].slice(
-      2
-    )}`;
-  });
-  const args = [
-    propArgs[0], // Targets
-    propArgs[1], // Values
-    payloads, // Calldata
-    "0x0000000000000000000000000000000000000000000000000000000000000000", // Predecessor
-    keccak256(toUtf8Bytes(propDesc)), // Salt
-  ];
-
-  const opHash = await timelock.hashOperationBatch(...args);
-
-  console.log("Proposal Hash", opHash);
-
-  if (await timelock.isOperationDone(opHash)) {
-    // Already executed
-    return;
-  }
-
-  const isScheduled = await timelock.isOperation(opHash);
-  const reduceTime = !isScheduled;
-  const delay = await timelock.getMinDelay();
-
-  const guardian = !isFork
-    ? undefined
-    : await impersonateAndFund(
-        isBaseFork
-          ? addresses.base.governor
-          : isSonicFork
-          ? addresses.sonic.admin
-          : addresses.mainnet.Guardian
-      );
-
-  if (!isScheduled) {
-    // Needs to be scheduled
-
-    const contractMethod = constructContractMethod(
-      timelock,
-      "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)"
-    );
-
-    // construct contractInputsValues
-    const contractInputsValues = {
-      targets: JSON.stringify(args[0]),
-      values: JSON.stringify(args[1].map((arg) => arg.toString())),
-      payloads: JSON.stringify(payloads),
-      predecessor: args[3],
-      salt: args[4],
-      delay: delay.toString(),
-    };
-
-    await buildAndWriteGnosisJson(
-      addresses.mainnet.Guardian,
-      [timelock.address],
-      [contractMethod],
-      [contractInputsValues],
-      "scheduleBatch"
-    );
-
-    if (isFork && guardian) {
-      if (reduceTime) {
-        log(`Reducing required queue time to 60 seconds`);
-        /* contracts/timelock/Timelock.sol storage slot layout:
-         * slot[0] address admin
-         * slot[1] address pendingAdmin
-         * slot[2] uint256 delay
-         */
-        await setStorageAt(
-          timelock.address,
-          "0x2",
-          "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
-        );
-      }
-
-      log(`Scheduling batch on Timelock...`);
-      await timelock.connect(guardian).scheduleBatch(...args, 60);
-    }
-  }
-
-  if (isFork && guardian && !(await timelock.isOperationReady(opHash))) {
-    log(`Preparing to execute...`);
-    await advanceTime((await timelock.getMinDelay()) + 10);
-    await advanceBlocks(2);
-  }
-
-  // Write execution data
-  const executionContractMethod = constructContractMethod(
-    timelock,
-    "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)"
-  );
-
-  // construct contractInputsValues
-  const executionContractInputsValues = {
-    targets: JSON.stringify(propArgs[0]),
-    values: JSON.stringify(propArgs[1].map((arg) => arg.toString())),
-    payloads: JSON.stringify(payloads),
-    predecessor: args[3],
-    salt: args[4],
-  };
-
-  await buildAndWriteGnosisJson(
-    addresses.mainnet.Guardian,
-    [timelock.address],
-    [executionContractMethod],
-    [executionContractInputsValues],
-    "executeBatch"
-  );
-
-  if (isFork && guardian) {
-    log(`Executing batch on Timelock...`);
-    await timelock.connect(guardian).executeBatch(...args);
-
-    if (reduceTime) {
-      log(`Setting queue time back to 172800 seconds`);
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      await setStorageAt(
-        timelock.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
-      );
-    }
-  }
-}
-
 async function simulateWithTimelockImpersonation(proposal) {
   log("Simulating the proposal directly on the timelock...");
   const { timelockAddr } = await getNamedAccounts();
@@ -1267,162 +1109,6 @@ function deploymentWithGovernanceProposal(opts, fn) {
         /* running on fork, and proposal not yet submitted. This is usually during development
          * before kicking off deploy.
          */
-        return Boolean(migrations[deployName]);
-      } else {
-        return onlyOnFork ? true : !isMainnet || isSmokeTest;
-      }
-    };
-  }
-  return main;
-}
-
-/**
- * Shortcut to create a deployment for hardhat to use
- * @param {Object} options for deployment
- * @param {Promise<Object>} fn to deploy contracts and return needed proposals
- * @returns {Object} main object used by hardhat
- */
-function deploymentWithProposal(opts, fn) {
-  /* When `reduceQueueTime` is set to true the Timelock delay is overridden to
-   * 60 seconds and blockchain also advances only minimally when passing proposals.
-   *
-   * This is required because in some cases we need minimal chain advancement e.g.
-   * when Oracle data would become stale too quickly.
-   */
-  const {
-    deployName,
-    dependencies,
-    forceDeploy,
-    forceSkip,
-    onlyOnFork,
-    proposalId,
-    reduceQueueTime,
-  } = opts;
-  const runDeployment = async (hre) => {
-    const oracleAddresses = await getOracleAddresses(hre.deployments);
-    const assetAddresses = await getAssetAddresses(hre.deployments);
-    const tools = {
-      oracleAddresses,
-      assetAddresses,
-      deployWithConfirmation,
-      ethers,
-      getTxOpts,
-      withConfirmation,
-    };
-    const { governorAddr } = await getNamedAccounts();
-    const governor = await ethers.getContractAt("Governor", governorAddr);
-
-    // proposal has either been already executed on forked node or just been executed
-    // no use of running the deploy script to create another
-    if (
-      await handlePossiblyActiveProposal(
-        proposalId,
-        deployName,
-        governor,
-        reduceQueueTime
-      )
-    ) {
-      return;
-    }
-
-    await sanityCheckOgvGovernance();
-    const proposal = await fn(tools);
-    if (proposal.actions.length == 0) {
-      return; // No governance proposal
-    }
-    const propDescription = proposal.name;
-    const propArgs = await proposeArgs(proposal.actions);
-    const propOpts = proposal.opts || {};
-
-    if (isMainnet) {
-      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log("Sending proposal to governor...");
-      await sendProposal(propArgs, propDescription, propOpts);
-      log("Proposal sent.");
-    } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending and executing proposal...");
-      propOpts.reduceQueueTime = reduceQueueTime;
-      await executeProposal(propArgs, propDescription, propOpts);
-      log("Proposal executed.");
-    } else {
-      const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-      for (const action of proposal.actions) {
-        const { contract, signature, args } = action;
-
-        log(`Sending governance action ${signature} to ${contract.address}`);
-        await withConfirmation(
-          contract.connect(sGovernor)[signature](...args, await getTxOpts())
-        );
-        console.log(`... ${signature} completed`);
-      }
-    }
-  };
-
-  const main = async (hre) => {
-    console.log(`Running ${deployName} deployment...`);
-    if (!hre) {
-      hre = require("hardhat");
-    }
-    await runDeployment(hre);
-    console.log(`${deployName} deploy done.`);
-    return true;
-  };
-
-  main.id = deployName;
-  main.dependencies = dependencies;
-  if (forceSkip) {
-    main.skip = () => true;
-  } else if (forceDeploy) {
-    main.skip = () => false;
-  } else {
-    const networkName = isForkTest ? "hardhat" : "localhost";
-    const migrations = isFork
-      ? require(`./../deployments/${networkName}/.migrations.json`)
-      : {};
-
-    // Skip if proposal is older than 14 days
-    const olderProposal =
-      Date.now() / 1000 - migrations[deployName] >= 60 * 60 * 24 * 14;
-
-    /** Just for context of fork env change the id of the deployment script. This is required
-     * in circumstances when:
-     * - the deployment script has already been run on the mainnet
-     * - proposal has been either "Queued" or is still "New"
-     * - all the deployment artifacts and migration information is already present in the repo
-     *
-     * Problem: as part of normal deployment procedure we want to be able to simulate the
-     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
-     * since deployment artifacts are already present and migration file has already been updated
-     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
-     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
-     *
-     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
-     * as a workaround so that Hardhat executes it. If proposal has already been executed the
-     * `runDeployment` function will exit without applying the deployment.
-     *
-     * And we can not package this inside of `skip` function since without this workaround it
-     * doesn't even get evaluated.
-     */
-    if (isFork && proposalId && !olderProposal) {
-      main.id = `${deployName}_force`;
-    }
-
-    main.skip = async () => {
-      if (olderProposal) {
-        return true;
-      }
-
-      // running on fork with a proposalId already available
-      if (isFork && proposalId) {
-        return false;
-        /* running on fork, and proposal not yet submitted. This is usually during development
-         * before kicking off deploy.
-         */
-      } else if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
         return onlyOnFork ? true : !isMainnet || isSmokeTest;
@@ -1638,21 +1324,16 @@ async function createPoolBoosterSonic({
 
 module.exports = {
   log,
-  sleep,
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
   executeProposalOnFork,
-  sendProposal,
-  executeProposal,
-  deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
 
   constructContractMethod,
   buildGnosisSafeJson,
 
-  handleTransitionGovernance,
   encodeSaltForCreateX,
   createPoolBoosterSonic,
 };

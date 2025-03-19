@@ -1,6 +1,4 @@
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const { sleep } = require("../utils/time.js");
 
 async function execute(taskArguments, hre) {
   const { isMainnet, isFork } = require("../test/helpers");

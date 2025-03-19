@@ -258,13 +258,6 @@ contract NativeStakingFeeAccumulator3Proxy is
 }
 
 /**
- * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
- */
-contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {

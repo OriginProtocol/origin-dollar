@@ -740,22 +740,17 @@ const defaultFixture = deployments.createFixture(async () => {
     metapoolToken,
     morpho,
     morphoCompoundStrategy,
-    lidoWithdrawalStrategy,
     balancerREthStrategy,
     makerSSRStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
-    // LUSDMetapoolToken,
     threePoolGauge,
     aaveAddressProvider,
-    // uniswapPairOUSD_USDT,
-    // liquidityRewardOUSD_USDT,
     cvx,
     cvxBooster,
     cvxRewardPool,
     depositContractUtils,
-    // LUSDMetaStrategy,
     oethDripper,
     oethZapper,
     swapper,
@@ -860,14 +855,6 @@ const defaultFixture = deployments.createFixture(async () => {
     oethMorphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       oethMorphoAaveStrategyProxy.address
-    );
-
-    const lidoWithdrawalStrategyProxy = await ethers.getContract(
-      "LidoWithdrawalStrategyProxy"
-    );
-    lidoWithdrawalStrategy = await ethers.getContractAt(
-      "LidoWithdrawalStrategy",
-      lidoWithdrawalStrategyProxy.address
     );
 
     const balancerRethStrategyProxy = await ethers.getContract(
@@ -1158,7 +1145,6 @@ const defaultFixture = deployments.createFixture(async () => {
     sfrxETH,
     nativeStakingSSVStrategy,
     nativeStakingFeeAccumulator,
-    lidoWithdrawalStrategy,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
     convexEthMetaStrategy,
@@ -2323,29 +2309,6 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
- * Configure a Vault hold stEth to be withdrawn by the LidoWithdrawalStrategy
- */
-async function lidoWithdrawalStrategyFixture() {
-  const fixture = await oethDefaultFixture();
-
-  // Give weth and stETH to the vault
-
-  await fixture.stETH
-    .connect(fixture.daniel)
-    .transfer(fixture.oethVault.address, parseUnits("2002"));
-  await fixture.weth
-    .connect(fixture.daniel)
-    .transfer(fixture.oethVault.address, parseUnits("2003"));
-
-  fixture.lidoWithdrawalQueue = await ethers.getContractAt(
-    "IStETHWithdrawal",
-    addresses.mainnet.LidoWithdrawalQueue
-  );
-
-  return fixture;
-}
-
-/**
  * Configure a compound fixture with a false vault for testing
  */
 async function compoundFixture() {
@@ -2762,7 +2725,6 @@ module.exports = {
   rebornFixture,
   balancerREthFixture,
   fraxETHStrategyFixture,
-  lidoWithdrawalStrategyFixture,
   nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,

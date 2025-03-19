@@ -10,6 +10,8 @@
  */
 const { getDeployScripts, getFilesInFolder } = require("../utils/fileSystem");
 
+const { sleep } = require("../utils/time.js");
+
 let lastKeyPressedRegister = null;
 process.stdin.on("keypress", (str, key) => {
   lastKeyPressedRegister = key;
@@ -39,10 +41,6 @@ async function getAllTests() {
   });
 
   return tests;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function smokeTestCheck(taskArguments) {
