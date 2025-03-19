@@ -335,14 +335,15 @@ describe("OETH Vault", function () {
 
     it("Fail to cacheWETHAssetIndex if WETH is not a supported asset", async () => {
       const { frxETH, weth } = fixture;
+      const { deployerAddr } = await hre.getNamedAccounts();
+      const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
       await deployWithConfirmation("MockOETHVault", [weth.address]);
       const mockVault = await hre.ethers.getContract("MockOETHVault");
 
       await mockVault.supportAsset(frxETH.address);
 
-      const mockGovernor = await impersonateAndFund(addresses.zero);
-      const tx = mockVault.connect(mockGovernor).cacheWETHAssetIndex();
+      const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
       await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
     });
 
