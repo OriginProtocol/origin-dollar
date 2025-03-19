@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "127_remove_ousd_morpho_aave",
+    deployName: "128_remove_ousd_morpho_aave",
     forceDeploy: false,
     reduceQueueTime: true,
     proposalId:
