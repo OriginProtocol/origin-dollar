@@ -592,14 +592,6 @@ const defaultFixture = deployments.createFixture(async () => {
     convexStrategyProxy.address
   );
 
-  // const OUSDmetaStrategyProxy = await ethers.getContract(
-  //   "ConvexOUSDMetaStrategyProxy"
-  // );
-  // const OUSDmetaStrategy = await ethers.getContractAt(
-  //   "ConvexOUSDMetaStrategy",
-  //   OUSDmetaStrategyProxy.address
-  // );
-
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",

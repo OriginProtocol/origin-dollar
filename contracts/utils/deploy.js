@@ -413,12 +413,16 @@ const executeGovernanceProposalOnFork = async ({
       await governorSix
         .connect(sMultisig5of8)
         ["execute(uint256)"](proposalIdBn, {
-          gasLimit: executeGasLimit,
+          gasLimit: executeGasLimit || undefined,
         });
     } catch (e) {
       console.error(e);
-      // Wait for 3 seconds before retrying
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      if (executionRetries === -1) {
+        throw e;
+      } else {
+        // Wait for 3 seconds before retrying
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
     }
   }
 
