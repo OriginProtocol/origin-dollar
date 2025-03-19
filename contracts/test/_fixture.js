@@ -587,13 +587,6 @@ const defaultFixture = deployments.createFixture(async () => {
     compoundStrategyProxy.address
   );
 
-  const threePoolStrategyProxy = await ethers.getContract(
-    "ThreePoolStrategyProxy"
-  );
-  const threePoolStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    threePoolStrategyProxy.address
-  );
   const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
   const convexStrategy = await ethers.getContractAt(
     "ConvexStrategy",
@@ -1092,7 +1085,6 @@ const defaultFixture = deployments.createFixture(async () => {
     ausdc,
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
-    // ThreePool
     crv,
     crvMinter,
     threePool,
@@ -1101,11 +1093,7 @@ const defaultFixture = deployments.createFixture(async () => {
     metapoolToken,
     morpho,
     morphoLens,
-    // LUSDMetapoolToken,
-    threePoolStrategy,
     convexStrategy,
-    // OUSDmetaStrategy,
-    // LUSDMetaStrategy,
     makerSSRStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
@@ -1369,38 +1357,6 @@ async function compoundVaultFixture() {
       fixture.compoundStrategy.address
     );
 
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the 3Pool strategy.
- */
-async function threepoolVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.threePoolStrategy.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.threePoolStrategy.address, true);
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.threePoolStrategy.address
-    );
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.threePoolStrategy.address
-    );
   return fixture;
 }
 
@@ -2356,39 +2312,6 @@ async function compoundFixture() {
 }
 
 /**
- * Configure a threepool fixture with the governor as vault for testing
- */
-async function threepoolFixture() {
-  const fixture = await defaultFixture();
-
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deploy } = deployments;
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  await deploy("StandaloneThreePool", {
-    from: governorAddr,
-    contract: "ThreePoolStrategy",
-    args: [
-      [
-        assetAddresses.ThreePool,
-        governorAddr, // Using Governor in place of Vault here
-      ],
-    ],
-  });
-
-  fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
-
-  // Set governor as vault
-  await fixture.tpStandalone.connect(sGovernor)[
-    // eslint-disable-next-line
-    "initialize(address[],address[],address[],address,address)"
-  ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter);
-
-  return fixture;
-}
-
-/**
  * Configure a hacked Vault
  */
 async function hackedVaultFixture() {
@@ -2707,8 +2630,6 @@ module.exports = {
   mockVaultFixture,
   compoundFixture,
   compoundVaultFixture,
-  threepoolFixture,
-  threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,

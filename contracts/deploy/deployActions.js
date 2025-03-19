@@ -113,69 +113,6 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- * Deploys a 3pool Strategy which supports USDC, USDT and USDS.
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- */
-const deployThreePoolStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-
-  await deployWithConfirmation("ThreePoolStrategyProxy");
-  const cThreePoolStrategyProxy = await ethers.getContract(
-    "ThreePoolStrategyProxy"
-  );
-
-  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
-    [assetAddresses.ThreePool, cVaultProxy.address],
-  ]);
-  const cThreePoolStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cThreePoolStrategyProxy.address
-  );
-
-  await withConfirmation(
-    cThreePoolStrategyProxy["initialize(address,address,bytes)"](
-      dThreePoolStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ThreePoolStrategyProxy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],address,address)"
-    ]([assetAddresses.CRV], [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
-  );
-  log("Initialized ThreePoolStrategy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`ThreePoolStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cThreePoolStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ThreePoolStrategy");
-  }
-
-  return cThreePoolStrategy;
-};
-
-/**
  * Deploys a Convex Strategy which supports USDC, USDT and USDS.
  */
 const deployConvexStrategy = async () => {
@@ -652,51 +589,6 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
   await withConfirmation(
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
-
-  // const OUSDmetaStrategyProxy = await ethers.getContract(
-  //   "ConvexOUSDMetaStrategyProxy"
-  // );
-  // const metaStrategy = await ethers.getContractAt(
-  //   "ConvexOUSDMetaStrategy",
-  //   OUSDmetaStrategyProxy.address
-  // );
-  // await withConfirmation(
-  //   metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  // );
-
-  // const LUSDMetaStrategyProxy = await ethers.getContract(
-  //   "ConvexLUSDMetaStrategyProxy"
-  // );
-  // const LUSDMetaStrategy = await ethers.getContractAt(
-  //   "ConvexGeneralizedMetaStrategy",
-  //   LUSDMetaStrategyProxy.address
-  // );
-  // await withConfirmation(
-  //   LUSDMetaStrategy.connect(sGovernor).setHarvesterAddress(
-  //     harvesterProxy.address
-  //   )
-  // );
-
-  // const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
-  // const threePool = await ethers.getContractAt(
-  //   "ThreePoolStrategy",
-  //   threePoolProxy.address
-  // );
-  // await withConfirmation(
-  //   threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  // );
-
-  // OETH Strategies
-  // const fraxEthStrategyProxy = await ethers.getContract("FraxETHStrategyProxy");
-  // const fraxEthStrategy = await ethers.getContractAt(
-  //   "FraxETHStrategy",
-  //   fraxEthStrategyProxy.address
-  // );
-  // await withConfirmation(
-  //   fraxEthStrategy
-  //     .connect(sGovernor)
-  //     .setHarvesterAddress(oethHarvesterProxy.address)
-  // );
 
   const nativeStakingSSVStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
@@ -1583,7 +1475,6 @@ module.exports = {
   deployCurveLUSDMetapoolMocks,
   deployCompoundStrategy,
   deployAaveStrategy,
-  deployThreePoolStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
   deployConvexLUSDMetaStrategy,
