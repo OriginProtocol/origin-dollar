@@ -5,9 +5,6 @@
 const hre = require("hardhat");
 const { BigNumber } = require("ethers");
 
-const fs = require("fs");
-const path = require("path");
-
 const {
   advanceTime,
   advanceBlocks,
@@ -23,7 +20,6 @@ const {
   isArbitrumOne,
   isBase,
   isSonic,
-  isCI,
   isTest,
 } = require("../test/helpers.js");
 
@@ -46,11 +42,7 @@ const {
   setStorageAt,
   getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const {
-  keccak256,
-  defaultAbiCoder,
-  toUtf8Bytes,
-} = require("ethers/lib/utils.js");
+const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
 
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -721,62 +713,6 @@ const handlePossiblyActiveGovernanceProposal = async (
   return false;
 };
 
-/**
- * When in forked/fork test environment we want special handling of possibly active proposals:
- * - if node is forked below the proposal block number deploy the migration file
- * - if node is forked after the proposal block number check the status of proposal:
- *   - if proposal executed skip deployment
- *   - if proposal New / Queued execute it and skip deployment
- *
- * @returns bool -> when true the hardhat deployment is skipped
- */
-const handlePossiblyActiveProposal = async (
-  proposalId,
-  deployName,
-  governor,
-  reduceQueueTime
-) => {
-  if (isFork && proposalId) {
-    const proposalCount = Number((await governor.proposalCount()).toString());
-    // proposal has not yet been submitted on the forked node (with current block height)
-    if (proposalCount < proposalId) {
-      // execute the whole deployment normally
-      console.log(
-        `Proposal ${deployName} not yet submitted at this block height. Continue deploy.`
-      );
-      return false;
-    }
-
-    const proposalState = ["New", "Queue", "Expired", "Executed"][
-      await governor.state(proposalId)
-    ];
-
-    if (["New", "Queue"].includes(proposalState)) {
-      console.log(
-        `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
-      );
-
-      await configureGovernanceContractDurations(reduceQueueTime);
-
-      // skip queue if proposal is already queued
-      await executeProposalOnFork({
-        proposalId,
-        skipQueue: proposalState === "Queue",
-      });
-
-      // proposal executed skip deployment
-      return true;
-    } else if (proposalState === "Executed") {
-      console.log(`Proposal ${deployName} already executed. Nothing to do.`);
-      // proposal has already been executed skip deployment
-      return true;
-    }
-  }
-
-  // run deployment
-  return false;
-};
-
 async function getGovernorSix() {
   const { governorSixAddr } = await getNamedAccounts();
 
@@ -821,25 +757,6 @@ async function getTimelock() {
   return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
 }
 
-async function useTransitionGovernance() {
-  const { timelockAddr } = await getNamedAccounts();
-
-  const timelock = await ethers.getContractAt(
-    "ITimelockController",
-    timelockAddr
-  );
-
-  const PROPOSER_ROLE =
-    "0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1"; // keccak256("PROPOSER_ROLE");
-
-  const guardianHasAccess = await timelock.hasRole(
-    PROPOSER_ROLE,
-    addresses.mainnet.Guardian
-  );
-
-  return guardianHasAccess;
-}
-
 function constructContractMethod(contract, functionSignature) {
   const functionFragment = contract.interface.getFunction(functionSignature);
 
@@ -881,32 +798,6 @@ async function buildGnosisSafeJson(
   };
 
   return json;
-}
-
-async function buildAndWriteGnosisJson(
-  safeAddress,
-  targets,
-  contractMethods,
-  contractInputsValues,
-  name
-) {
-  const json = await buildGnosisSafeJson(
-    safeAddress,
-    targets,
-    contractMethods,
-    contractInputsValues
-  );
-  const fileName = path.join(
-    __dirname,
-    "..",
-    Date.now().toString() + `-${name}-gov-tx.json`
-  );
-
-  if (!isCI) {
-    fs.writeFileSync(fileName, JSON.stringify(json, undefined, 2));
-
-    console.log("Wrote Gnosis Safe JSON to ", fileName);
-  }
 }
 
 async function simulateWithTimelockImpersonation(proposal) {
