@@ -311,15 +311,8 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw all assets", async () => {
-        const {
-          assets,
-          valueAssets,
-          strategy,
-          vault,
-          fraxEthStrategy,
-          sfrxETH,
-          curveAMOStrategy,
-        } = await context();
+        const { assets, valueAssets, strategy, vault, curveAMOStrategy } =
+          await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -330,20 +323,7 @@ const shouldBehaveLikeStrategy = (context) => {
           const withdrawAmount = await units("10000", asset);
 
           // Its not nice having strategy specific logic here but it'll have to do for now
-          if (strategy == fraxEthStrategy) {
-            await expect(tx)
-              .to.emit(strategy, "Withdrawal")
-              .withArgs(asset.address, platformAddress, withdrawAmount.mul(3));
-            await expect(tx).to.emit(asset, "Transfer").withArgs(
-              // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
-              sfrxETH.address,
-              vault.address,
-              withdrawAmount.mul(3)
-            );
-          } else if (
-            curveAMOStrategy != undefined &&
-            curveAMOStrategy == strategy
-          ) {
+          if (curveAMOStrategy != undefined && curveAMOStrategy == strategy) {
             // Didn't managed to get this work with args.
             await expect(tx).to.emit(strategy, "Withdrawal");
             await expect(tx).to.emit(asset, "Transfer");

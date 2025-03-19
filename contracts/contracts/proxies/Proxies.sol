@@ -74,13 +74,6 @@ contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ConvexLUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
- */
-contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
  */
 contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -123,13 +116,6 @@ contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
- */
-contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
  */
 contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -165,13 +151,6 @@ contract OETHBalancerMetaPoolrEthStrategyProxy is
 contract OETHBalancerMetaPoolwstEthStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
-
-}
-
-/**
- * @notice FluxStrategyProxy delegates calls to a CompoundStrategy implementation
- */
-contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 

@@ -261,11 +261,6 @@ addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
 addresses.mainnet.AuraWeightedOraclePool =
   "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
-// Flux Strategy
-addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
-addresses.mainnet.fUSDC = "0x465a5a630482f3abD6d3b84B39B29b07214d19e5";
-addresses.mainnet.fUSDT = "0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7";
-
 // Frax Oracle for frxETH/ETH
 addresses.mainnet.FrxEthFraxOracle =
   "0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df";

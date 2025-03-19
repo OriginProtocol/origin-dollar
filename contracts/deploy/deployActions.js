@@ -11,10 +11,7 @@ const {
   isTest,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
-const {
-  metapoolLPCRVPid,
-  lusdMetapoolLPCRVPid,
-} = require("../utils/constants");
+const { metapoolLPCRVPid } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -182,88 +179,6 @@ const deployConvexStrategy = async () => {
     log("Claimed governance for ConvexStrategy");
   }
   return cConvexStrategy;
-};
-
-/**
- * Deploys a Convex Generalized Meta Strategy with LUSD token configuration
- */
-const deployConvexLUSDMetaStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-
-  await deployWithConfirmation("ConvexLUSDMetaStrategyProxy");
-  const cConvexLUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexLUSDMetaStrategyProxy"
-  );
-
-  const dConvexLUSDMetaStrategy = await deployWithConfirmation(
-    "ConvexGeneralizedMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
-  );
-  const cConvexLUSDMetaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    cConvexLUSDMetaStrategyProxy.address
-  );
-
-  await withConfirmation(
-    cConvexLUSDMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexLUSDMetaStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ConvexLUSDMetaStrategyProxy");
-
-  // Initialize Strategies
-  const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
-
-  const LUSD = await ethers.getContract("MockLUSD");
-  await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
-    ](
-      [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      [
-        mockBooster.address, // _cvxDepositorAddress,
-        assetAddresses.ThreePoolLUSDMetapool, // metapool address,
-        LUSD.address, // LUSD
-        mockRewardPool.address, // _cvxRewardStakerAddress,
-        assetAddresses.LUSDMetapoolToken, // metapoolLpToken
-        lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
-      ]
-    )
-  );
-  log("Initialized ConvexLUSDMetaStrategy");
-
-  await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`ConvexLUSDMetaStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cConvexLUSDMetaStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ConvexLUSDMetaStrategy");
-  }
-  return cConvexLUSDMetaStrategy;
 };
 
 /**
@@ -691,48 +606,6 @@ const deployDrippers = async () => {
   const oethDripper = await deployOETHDripper();
 
   return [ousdDripper, oethDripper];
-};
-
-/**
- * Deploy FraxETHStrategy
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- * the strategy.
- */
-const deployFraxEthStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
-
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-  log("Deploy FraxETHStrategyProxy");
-  const dFraxETHStrategyProxy = await deployWithConfirmation(
-    "FraxETHStrategyProxy"
-  );
-  const cFraxETHStrategyProxy = await ethers.getContract(
-    "FraxETHStrategyProxy"
-  );
-  log("Deploy FraxETHStrategy");
-  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy", [
-    [assetAddresses.sfrxETH, cOETHVaultProxy.address],
-    assetAddresses.frxETH,
-  ]);
-  const cFraxETHStrategy = await ethers.getContractAt(
-    "FraxETHStrategy",
-    dFraxETHStrategyProxy.address
-  );
-  log("Initialize FraxETHStrategyProxy");
-  const initData = cFraxETHStrategy.interface.encodeFunctionData(
-    "initialize()",
-    []
-  );
-  await withConfirmation(
-    cFraxETHStrategyProxy["initialize(address,address,bytes)"](
-      dFraxETHStrategy.address,
-      governorAddr,
-      initData
-    )
-  );
-  return cFraxETHStrategy;
 };
 
 /**
@@ -1181,23 +1054,6 @@ const deployCurveMetapoolMocks = async () => {
   await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
 };
 
-// deploy curve metapool mocks
-const deployCurveLUSDMetapoolMocks = async () => {
-  const { deployerAddr } = await hre.getNamedAccounts();
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  const LUSD = await ethers.getContract("MockLUSD");
-
-  await hre.deployments.deploy("MockCurveLUSDMetapool", {
-    from: deployerAddr,
-    args: [[LUSD.address, assetAddresses.ThreePoolToken]],
-  });
-
-  const LUSDMetapoolToken = await ethers.getContract("MockCurveLUSDMetapool");
-  const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(lusdMetapoolLPCRVPid, LUSDMetapoolToken.address);
-};
-
 // create Uniswap V3 OUSD - USDT pool
 const deployUniswapV3Pool = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
@@ -1472,14 +1328,11 @@ module.exports = {
   deployOETHCore,
   deployOUSDCore,
   deployCurveMetapoolMocks,
-  deployCurveLUSDMetapoolMocks,
   deployCompoundStrategy,
   deployAaveStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
-  deployConvexLUSDMetaStrategy,
   deployNativeStakingSSVStrategy,
-  deployFraxEthStrategy,
   deployDrippers,
   deployOETHDripper,
   deployOUSDDripper,

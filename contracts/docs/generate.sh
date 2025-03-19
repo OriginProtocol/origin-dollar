@@ -65,14 +65,6 @@ sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.s
 # Failed to find user defined type "IERC20" in attribute "metapoolMainToken" of type "1""
 # sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b FluxStrategy -o FluxStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
-sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
-
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
-sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
-
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
 sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap

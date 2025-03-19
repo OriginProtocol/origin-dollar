@@ -7,7 +7,6 @@ require("./_global-hooks");
 
 const { hotDeployOption } = require("./_hot-deploy.js");
 const addresses = require("../utils/addresses");
-const { setFraxOraclePrice } = require("../utils/frax");
 const { resolveContract } = require("../utils/resolvers");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 
@@ -712,11 +711,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTVault,
-    LUSD,
-    fdai,
-    fusdt,
-    ssv,
-    fusdc;
+    ssv;
 
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
@@ -751,7 +746,6 @@ const defaultFixture = deployments.createFixture(async () => {
     swapper1Inch,
     mock1InchSwapRouter,
     convexEthMetaStrategy,
-    fluxStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
 
@@ -766,7 +760,6 @@ const defaultFixture = deployments.createFixture(async () => {
     crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
     cvx = await ethers.getContractAt(erc20Abi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
-    LUSD = await ethers.getContractAt(erc20Abi, addresses.mainnet.LUSD);
     aave = await ethers.getContractAt(erc20Abi, addresses.mainnet.Aave);
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
@@ -793,9 +786,6 @@ const defaultFixture = deployments.createFixture(async () => {
       metamorphoAbi,
       addresses.mainnet.MorphoGauntletPrimeUSDTVault
     );
-    fdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.fDAI);
-    fusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDC);
-    fusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDT);
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
     ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
@@ -876,12 +866,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     swapper = await ethers.getContract("Swapper1InchV5");
 
-    const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
-    fluxStrategy = await ethers.getContractAt(
-      "CompoundStrategy",
-      fluxStrategyProxy.address
-    );
-
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
   } else {
@@ -891,7 +875,6 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc = await ethers.getContract("MockUSDC");
     weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
-    LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
     reth = await ethers.getContract("MockRETH");
     frxETH = await ethers.getContract("MockfrxETH");
@@ -914,7 +897,6 @@ const defaultFixture = deployments.createFixture(async () => {
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     metapoolToken = await ethers.getContract("MockCurveMetapool");
-    // LUSDMetapoolToken = await ethers.getContract("MockCurveLUSDMetapool");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
     cvxRewardPool = await ethers.getContract("MockRewardPool");
@@ -932,14 +914,6 @@ const defaultFixture = deployments.createFixture(async () => {
     aaveIncentivesController = await ethers.getContract(
       "MockAaveIncentivesController"
     );
-
-    // uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
-    // liquidityRewardOUSD_USDT = await ethers.getContractAt(
-    //   "LiquidityReward",
-    //   (
-    //     await ethers.getContract("LiquidityRewardOUSD_USDTProxy")
-    //   ).address
-    // );
 
     chainlinkOracleFeedDAI = await ethers.getContract(
       "MockChainlinkOracleFeedDAI"
@@ -959,22 +933,6 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedETH = await ethers.getContract(
       "MockChainlinkOracleFeedETH"
     );
-
-    // const LUSDMetaStrategyProxy = await ethers.getContract(
-    //   "ConvexLUSDMetaStrategyProxy"
-    // );
-    // LUSDMetaStrategy = await ethers.getContractAt(
-    //   "ConvexGeneralizedMetaStrategy",
-    //   LUSDMetaStrategyProxy.address
-    // );
-
-    // const fraxEthStrategyProxy = await ethers.getContract(
-    //   "FraxETHStrategyProxy"
-    // );
-    // fraxEthStrategy = await ethers.getContractAt(
-    //   "FraxETHStrategy",
-    //   fraxEthStrategyProxy.address
-    // );
 
     swapper = await ethers.getContract("MockSwapper");
     mockSwapper = await ethers.getContract("MockSwapper");
@@ -1069,7 +1027,6 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc,
     ogn,
     ssv,
-    LUSD,
     weth,
     ogv,
     reth,
@@ -1120,12 +1077,6 @@ const defaultFixture = deployments.createFixture(async () => {
     curvePoolBooster,
     simpleOETHHarvester,
     oethFixedRateDripper,
-
-    // Flux strategy
-    fluxStrategy,
-    fdai,
-    fusdc,
-    fusdt,
 
     // OETH
     oethVaultValueChecker,
@@ -1851,40 +1802,6 @@ async function oethMorphoAaveFixture() {
 }
 
 /**
- * FraxETHStrategy fixture
- */
-async function fraxETHStrategyFixture() {
-  const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "fraxETHStrategyFixture", {
-    isOethFixture: true,
-  });
-
-  if (isFork) {
-    const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
-
-    // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
-    await setFraxOraclePrice(parseUnits("0.999", 18));
-  } else {
-    const { governorAddr } = await getNamedAccounts();
-    const { oethVault, frxETH, fraxEthStrategy } = fixture;
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-    // Approve Strategy
-    await oethVault.connect(sGovernor).approveStrategy(fraxEthStrategy.address);
-
-    // Set as default
-    await oethVault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
-  }
-
-  return fixture;
-}
-
-/**
  * NativeStakingSSVStrategy fixture
  */
 async function nativeStakingSSVStrategyFixture() {
@@ -2060,41 +1977,6 @@ async function resetAllowance(
 ) {
   await tokenContract.connect(signer).approve(toAddress, "0");
   await tokenContract.connect(signer).approve(toAddress, allowance);
-}
-
-/**
- * Configure a Vault with only the LUSD Generalized Meta strategy.
- */
-async function convexLUSDMetaVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  // Add Convex Meta strategy
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.LUSDMetaStrategy.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.LUSDMetaStrategy.address, true);
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.LUSDMetaStrategy.address
-    );
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.LUSDMetaStrategy.address
-    );
-
-  return fixture;
 }
 
 /**
@@ -2397,31 +2279,6 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function fluxStrategyFixture() {
-  const fixture = await defaultFixture();
-
-  const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
-
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
-
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
-
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
-
-  // Withdraw all from strategies and deposit it to Flux
-  await vault.connect(timelock).withdrawAllFromStrategies();
-
-  await vault.connect(timelock).rebase();
-
-  return fixture;
-}
-
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
@@ -2634,7 +2491,6 @@ module.exports = {
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
-  convexLUSDMetaVaultFixture,
   makerSSRFixture,
   morphoSteakhouseUSDCFixture,
   morphoGauntletPrimeUSDCFixture,
@@ -2645,13 +2501,11 @@ module.exports = {
   hackedVaultFixture,
   rebornFixture,
   balancerREthFixture,
-  fraxETHStrategyFixture,
   nativeStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
-  fluxStrategyFixture,
   buybackFixture,
   harvesterFixture,
   nodeSnapshot,
