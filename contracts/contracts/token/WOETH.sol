@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -28,8 +29,11 @@ import { OETH } from "./OETH.sol";
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    uint256 public oethCreditsHighres;
-    bool private _oethCreditsInitialized;
+    using SafeCast for uint256;
+
+    uint128 public _oethInitialTokensPerCredit;
+    uint128 public _woethInitialExchangeRate;
+    bool private _oethExchangeRateInitialized;
     uint256[48] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
@@ -54,18 +58,17 @@ contract WOETH is ERC4626, Governable, Initializable {
      *         as a governance operation.
      */
     function initialize2() public onlyGovernor {
-        require(!_oethCreditsInitialized, "Initialize2 already called");
+        require(!_oethExchangeRateInitialized, "Initialize2 already called");
+        _oethExchangeRateInitialized = true;
 
-        _oethCreditsInitialized = true;
-        /*
-         * This contract is using creditsBalanceOfHighres rather than creditsBalanceOf since this
-         * ensures better accuracy when rounding. Also creditsBalanceOf can be a little
-         * finicky since it reports Highres version of credits and creditsPerToken
-         * when the account is a fresh one. That doesn't have an effect on mainnet since
-         * WOETH has already seen transactions. But it is rather annoying in unit test
-         * environment.
-         */
-        oethCreditsHighres = _getOETHCredits();
+        _oethInitialTokensPerCredit = (1e27 / OETH(address(asset())).rebasingCreditsPerTokenHighres()).toUint128();
+        if (totalSupply() == 0) {
+            _woethInitialExchangeRate = 1e18;
+        } else {
+            uint256 oethBalance = OETH(address(asset())).balanceOf(address(this));
+            _woethInitialExchangeRate = (oethBalance * 1e18 / totalSupply()).toUint128();
+        }
+
     }
 
     function name()
@@ -106,20 +109,11 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        uint256 creditsPerTokenHighres = OETH(asset())
-            .rebasingCreditsPerTokenHighres();
+        uint256 oethTokensPerCredit = 1e27 / OETH(asset()).rebasingCreditsPerTokenHighres();
+        uint256 oethRateIncrease = (oethTokensPerCredit - _oethInitialTokensPerCredit) * 1e18 / _oethInitialTokensPerCredit;
+        uint256 woethExchangeRate = _woethInitialExchangeRate * (1e18 + oethRateIncrease) / 1e18;
 
-        return (oethCreditsHighres).divPrecisely(creditsPerTokenHighres);
-    }
-
-    function _getOETHCredits()
-        internal
-        view
-        returns (uint256 oethCreditsHighres)
-    {
-        (oethCreditsHighres, , ) = OETH(asset()).creditsBalanceOfHighres(
-            address(this)
-        );
+        return totalSupply() * woethExchangeRate / 1e18;
     }
 
     /** @dev See {IERC4262-deposit} */
@@ -129,26 +123,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 woethAmount)
     {
         if (oethAmount == 0) return 0;
-
-        /**
-         * Initially we attempted to do the credits calculation within this contract and try
-         * to mimic OUSD's implementation. This way 1 external call less would be required. Due
-         * to a different way OUSD is calculating credits:
-         *  - always rounds credits up
-         *  - operates on final user balances before converting to credits
-         *  - doesn't perform additive / subtractive calculation with credits once they are converted
-         *    from balances
-         *
-         * We've decided that it is safer to read the credits diff directly from the OUSD contract
-         * and not face the risk of a compounding error in oethCreditsHighres that could result in
-         * inaccurate `convertToShares` & `convertToAssets` which consequently would result in faulty
-         * `previewMint` & `previewRedeem`. High enough error can result in different conversion rates
-         * which a flash loan entering via `deposit` and exiting via `redeem` (or entering via `mint`
-         * and exiting via `withdraw`) could take advantage of.
-         */
-        uint256 creditsBefore = _getOETHCredits();
-        woethAmount = super.deposit(oethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        super.deposit(oethAmount, receiver);
     }
 
     /** @dev See {IERC4262-mint} */
@@ -158,10 +133,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         returns (uint256 oethAmount)
     {
         if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
-        oethAmount = super.mint(woethAmount, receiver);
-        oethCreditsHighres += _getOETHCredits() - creditsBefore;
+        super.mint(woethAmount, receiver);
     }
 
     /** @dev See {IERC4262-withdraw} */
@@ -171,10 +143,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 woethAmount) {
         if (oethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
-        woethAmount = super.withdraw(oethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        super.withdraw(oethAmount, receiver, owner);
     }
 
     /** @dev See {IERC4262-redeem} */
@@ -184,9 +153,6 @@ contract WOETH is ERC4626, Governable, Initializable {
         address owner
     ) public override returns (uint256 oethAmount) {
         if (woethAmount == 0) return 0;
-
-        uint256 creditsBefore = _getOETHCredits();
-        oethAmount = super.redeem(woethAmount, receiver, owner);
-        oethCreditsHighres -= creditsBefore - _getOETHCredits();
+        super.redeem(woethAmount, receiver, owner);
     }
 }
