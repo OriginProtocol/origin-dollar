@@ -404,8 +404,8 @@ contract VaultCore is VaultInitializer {
         uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
         uint256 timeCap = rebasing +
             ((rebasing * elapsed * MAX_REBASE_PER_SECOND) / 1e36);
-        uint256 newSupply = nonRebasing +
-            _min(_min(rebasing, timeCap), hardCap);
+        uint256 cap = nonRebasing + _min(hardCap, timeCap);
+        uint256 newSupply = _min(vaultValue, cap);
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
