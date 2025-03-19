@@ -26,9 +26,6 @@ contract OETHVaultCore is VaultCore {
 
     constructor(address _weth) {
         weth = _weth;
-
-        // prevent implementation contract to be governed
-        _setGovernor(address(0));
     }
 
     /**
