@@ -275,8 +275,8 @@ describe("ForkTest: wOETH", function () {
         .mul(BigNumber.from("1000000000000000000"))
         .div(initialDeposit);
 
-      // approx equal with 0.01 ‰ (bp) tolerance
-      await expect(oethRateIncrease).to.approxEqualTolerance(woethRateIncrease, 0.0001);
+
+      await expect(oethRateIncrease).to.equal(woethRateIncrease);
 
       await expect(assetTransfered > initialDeposit);
       await expect(burnedShares).to.be.approxEqual(

@@ -32,7 +32,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     using SafeCast for uint256;
     // 1e27 denominated
     uint128 public _oethInitialTokensPerCredit;
-    // 1e18 denominated
+    // 1e27 denominated
     uint128 public _woethInitialExchangeRate;
     bool private _oethExchangeRateInitialized;
     uint256[48] private __gap;
@@ -66,12 +66,12 @@ contract WOETH is ERC4626, Governable, Initializable {
             OETH(address(asset())).rebasingCreditsPerTokenHighres())
             .toUint128();
         if (totalSupply() == 0) {
-            _woethInitialExchangeRate = 1e18;
+            _woethInitialExchangeRate = 1e27;
         } else {
             uint256 oethBalance = OETH(address(asset())).balanceOf(
                 address(this)
             );
-            _woethInitialExchangeRate = ((oethBalance * 1e18) / totalSupply())
+            _woethInitialExchangeRate = ((oethBalance * 1e27) / totalSupply())
                 .toUint128();
         }
     }
@@ -117,13 +117,13 @@ contract WOETH is ERC4626, Governable, Initializable {
         // 1e27 denominated
         uint256 oethTokensPerCredit = 1e54 /
             OETH(asset()).rebasingCreditsPerTokenHighres();
-        // (1e27 - 1e27) * 1e18 / 1e27 =  1e18 denominated
+        // (1e27 - 1e27) * 1e27 / 1e27 =  1e27 denominated
         uint256 oethRateIncrease = ((oethTokensPerCredit -
-            _oethInitialTokensPerCredit) * 1e18) / _oethInitialTokensPerCredit;
-        // 1e18 * (1e18 + 1e18 denominated rate) / 1e18 = 1e18 denominated
+            _oethInitialTokensPerCredit) * 1e27) / _oethInitialTokensPerCredit;
+        // 1e27 * (1e27 + 1e27 denominated rate) / 1e27 = 1e27 denominated
         uint256 woethExchangeRate = (_woethInitialExchangeRate *
-            (1e18 + oethRateIncrease)) / 1e18;
+            (1e27 + oethRateIncrease)) / 1e27;
 
-        return (totalSupply() * woethExchangeRate) / 1e18;
+        return (totalSupply() * woethExchangeRate) / 1e27;
     }
 }
