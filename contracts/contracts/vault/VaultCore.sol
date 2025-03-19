@@ -392,6 +392,7 @@ contract VaultCore is VaultInitializer {
         uint256 vaultValue = _totalValue();
         uint256 nonRebasing = oUSD.nonRebasingSupply();
         uint256 rebasing = ousdSupply - nonRebasing;
+        uint256 elapsed = block.timestamp - lastRebase;
 
         if (ousdSupply == 0) {
             return vaultValue;
@@ -402,7 +403,7 @@ contract VaultCore is VaultInitializer {
         // The limits increase per block, up to a certain max cap.
         uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
         uint256 timeCap = rebasing +
-            (((block.timestamp - lastRebase) * MAX_REBASE_PER_SECOND) / 1e18);
+            ((rebasing * elapsed * MAX_REBASE_PER_SECOND) / 1e36);
         uint256 newSupply = nonRebasing +
             _min(_min(rebasing, timeCap), hardCap);
 
