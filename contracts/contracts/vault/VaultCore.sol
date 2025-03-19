@@ -25,6 +25,9 @@ contract VaultCore is VaultInitializer {
     using StableMath for uint256;
     /// @dev max signed int
     uint256 internal constant MAX_INT = uint256(type(int256).max);
+    uint256 internal constant MAX_REBASE = 1.03 ether;
+    uint256 internal constant MAX_REBASE_PER_SECOND =
+        uint256(0.03 ether) / 1 days;
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -391,10 +394,20 @@ contract VaultCore is VaultInitializer {
             return vaultValue;
         }
 
+        // Only allowing the vault to rebase out at a certain maximum
+        // rate of change. This prevents donation rates.
+        // The limits increase per block, up to a certain max cap.
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        uint256 rebasing = ousdSupply - nonRebasing;
+        uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
+        uint256 timeCap = rebasing +
+            (((block.timestamp - lastRebase) * MAX_REBASE_PER_SECOND) / 1e18);
+        uint256 newValue = nonRebasing + _min(_min(rebasing, timeCap), hardCap);
+
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue - ousdSupply;
+        if (_trusteeAddress != address(0) && (newValue > ousdSupply)) {
+            uint256 yield = newValue - ousdSupply;
             uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
@@ -405,10 +418,11 @@ contract VaultCore is VaultInitializer {
 
         // Only ratchet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
+        if (newValue > ousdSupply) {
+            oUSD.changeSupply(newValue);
+            lastRebase = block.timestamp;
         }
-        return vaultValue;
+        return newValue;
     }
 
     /**
@@ -853,5 +867,9 @@ contract VaultCore is VaultInitializer {
     function abs(int256 x) private pure returns (uint256) {
         require(x < int256(MAX_INT), "Amount too high");
         return x >= 0 ? uint256(x) : uint256(-x);
+    }
+
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }

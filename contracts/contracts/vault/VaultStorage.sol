@@ -247,8 +247,12 @@ contract VaultStorage is Initializable, Governable {
     uint256 public withdrawalClaimDelay;
     // slither-disable-end constable-states
 
+    /// @notice Time the value last rebased yield
+    // slither-disable-next-line uninitialized-state
+    uint256 public lastRebase;
+
     // For future use
-    uint256[44] private __gap;
+    uint256[43] private __gap;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
