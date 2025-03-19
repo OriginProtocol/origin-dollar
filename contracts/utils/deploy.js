@@ -246,8 +246,7 @@ const executeGovernanceProposalOnFork = async ({
 
   // Get the guardian of the governor and impersonate it.
   const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
+  const sMultisig5of8 = await impersonateGuardian(multisig5of8);
 
   const governorSix = await getGovernorSix();
   const timelock = await getTimelock();
@@ -350,7 +349,7 @@ const executeGovernanceProposalOnFork = async ({
   if (proposalState === "Succeeded") {
     await governorSix.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
     log("Proposal queued");
-    let newState = await getProposalState(proposalIdBn);
+    const newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
         `Proposal state should now be "Queued" but is ${newState}`
