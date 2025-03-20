@@ -200,7 +200,6 @@ class SwapxOsWS:
         self.amo_base = ws
 
     def setup(self):
-        print(ws.address)
         ws.approve(self.vault_core, 1e70, {"from": SONIC_WS_WHALE})
         ws.approve(self.pool, 1e70, {"from": SONIC_WS_WHALE})
         os.approve(self.pool, 1e70, {"from": SONIC_WS_WHALE})
@@ -308,49 +307,52 @@ def run_simulations_amo(strategy_name):
         pass
 
 
-    # # Test CheckBalance
-    # print("Test Check Balance")
-    # check_balance_stats = []
+    # Test CheckBalance
+    print("Test Check Balance")
+    check_balance_stats = []
 
-    # for tilt in np.linspace(-1, 1, 41):
-    #     with TemporaryFork():
-    #         stat = {}
-    #         stat["action"] = "checkBalance"
-    #         stat["action_mix"] = tilt
+    for tilt in np.linspace(-1, 1, 41):
+        with TemporaryFork():
+            stat = {}
+            stat["action"] = "checkBalance"
+            stat["action_mix"] = tilt
 
-    #         deposit_amount = harness.base_size * 0.5 * int(1e18)
-    #         ws.transfer(vault_admin, deposit_amount * 2, {"from": SONIC_WS_WHALE})
+            deposit_amount = harness.base_size * 0.5 * int(1e18)
+            ws.transfer(vault_admin, deposit_amount * 2, {"from": SONIC_WS_WHALE})
 
-    #         harness.vault_admin.depositToStrategy(
-    #             harness.strat,
-    #             [harness.amo_base],
-    #             [deposit_amount],
-    #             {"from": harness.STRATEGIST},
-    #         )
+            print("deposit to strategy")
+            harness.vault_admin.depositToStrategy(
+                harness.strat,
+                [harness.amo_base],
+                #[deposit_amount / 5],
+                # deposit a smaller amount for an extreme tilt
+                [deposit_amount / 50],
+                {"from": harness.STRATEGIST},
+            )
 
-    #         pb = list(harness.pool_balances().values())
-    #         stat["pre_pool_0"] = pb[0]
-    #         stat["pre_pool_1"] = pb[1]
-    #         stat["before_pool_0"] = pb[0]
-    #         stat["before_pool_1"] = pb[1]
-    #         stat["pre_vault"] = harness.vault_core.totalValue()
-    #         stat["before_vault"] = harness.vault_core.totalValue()
-    #         stat["before_otoken"] = harness.otoken.totalSupply()
-    #         stat["pool_before_check_balance"] = harness.strat.checkBalance(ws)
+            pb = list(harness.pool_balances().values())
+            stat["pre_pool_0"] = pb[0]
+            stat["pre_pool_1"] = pb[1]
+            stat["before_pool_0"] = pb[0]
+            stat["before_pool_1"] = pb[1]
+            stat["pre_vault"] = harness.vault_core.totalValue()
+            stat["before_vault"] = harness.vault_core.totalValue()
+            stat["before_otoken"] = harness.otoken.totalSupply()
+            stat["pool_before_check_balance"] = harness.strat.checkBalance(ws)
 
 
-    #         harness.tilt_pool(tilt)
+            harness.tilt_pool(tilt)
 
-    #         pb = list(harness.pool_balances().values())
-    #         stat["after_pool_0"] = pb[0]
-    #         stat["after_pool_1"] = pb[1]
-    #         stat["after_vault"] = harness.vault_core.totalValue()
-    #         stat["after_otoken"] = harness.otoken.totalSupply()
-    #         stat["pool_after_check_balance"] = harness.strat.checkBalance(ws)
+            pb = list(harness.pool_balances().values())
+            stat["after_pool_0"] = pb[0]
+            stat["after_pool_1"] = pb[1]
+            stat["after_vault"] = harness.vault_core.totalValue()
+            stat["after_otoken"] = harness.otoken.totalSupply()
+            stat["pool_after_check_balance"] = harness.strat.checkBalance(ws)
 
-    #         check_balance_stats.append(stat)
+            check_balance_stats.append(stat)
 
-    # pd.DataFrame.from_records(check_balance_stats).to_csv(workspace + "check_balance_stats.csv")
+    pd.DataFrame.from_records(check_balance_stats).to_csv(workspace + "check_balance_stats.csv")
 
     # Test Deposits
     # print("# Test Deposits")
@@ -516,22 +518,21 @@ def run_report(strategy_name):
 
     sections = []
     
-    # # Check balance Section
-    # df = checkbalance_base.sort_values('action_mix')
-    # plt.title("Check balance difference")
-    # plt.axhline(0, c="black", linewidth=0.4)
-    # print(df["pool_after_check_balance"] -  df["pool_before_check_balance"])
-    # plt.plot(
-    #     df["action_mix"] * 100,
-    #     abs(df["pool_after_check_balance"] -  df["pool_before_check_balance"]),
-    # )
-    # #plt.ylim(bottom=0)
-    # plt.xlabel("Pool tilt [-100 OS heavy, 100 WS heavy]")
-    # plt.ylabel("Check balance after pool tilt [WEI]")
-    # plt.legend()
-    # plt.savefig(workspace + "checkBalance.svg")
-    # plt.close()
-    # sections.append('<h2>Check Balance</h2><img src="checkBalance.svg">')
+    # Check balance Section
+    df = checkbalance_base.sort_values('action_mix')
+    plt.title("Check balance difference")
+    plt.axhline(0, c="black", linewidth=0.4)
+    plt.plot(
+        df["action_mix"] * 100,
+        abs(df["pool_after_check_balance"] -  df["pool_before_check_balance"]),
+    )
+    #plt.ylim(bottom=0)
+    plt.xlabel("Pool tilt [-100 OS heavy, 100 WS heavy]")
+    plt.ylabel("Check balance after pool tilt [WEI]")
+    plt.legend()
+    plt.savefig(workspace + "checkBalance.svg")
+    plt.close()
+    sections.append('<h2>Check Balance</h2><img src="checkBalance.svg">')
 
     # # Deposit Section
     # df = deposit_base.sort_values('action_mix')
