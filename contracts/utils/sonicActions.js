@@ -1,5 +1,5 @@
 const { ethers } = require("ethers");
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const sonicStakingStrategyAbi = require("../abi/sonic_staking_strategy.json");
 const erc20Abi = require("../abi/erc20.json");
@@ -33,11 +33,13 @@ async function undelegateValidator({ id, amount, signer }) {
       .sub(queue.queued)
       .add(pendingWithdrawals);
 
+    log(`Available balance: ${formatUnits(available, 18)} wS`);
+
     // Threshold is negative 1000 wS
     const threshold = parseUnits("1000", 18).mul(-1);
     if (available.gt(threshold)) {
       log(
-        `No need to undelgate as available balance ${ethers.utils.formatUnits(
+        `No need to undelgate as available balance ${formatUnits(
           available,
           18
         )} wS is above threshold.`
@@ -53,7 +55,11 @@ async function undelegateValidator({ id, amount, signer }) {
 
   const validatorId = id || (await sonicStakingStrategy.defaultValidatorId());
 
-  log(`About to undelegate ${amount} S from validator ${validatorId}`);
+  log(
+    `About to undelegate ${formatUnits(
+      amountBN
+    )} S from validator ${validatorId}`
+  );
   const tx = await sonicStakingStrategy
     .connect(signer)
     .undelegate(validatorId, amountBN);
