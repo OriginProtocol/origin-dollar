@@ -4,8 +4,7 @@ const { resolveContract } = require("../../utils/resolvers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "125_update_amo_mint_threshold",
-    forceSkip: true,
+    deployName: "126_update_amo_mint_threshold",
     forceDeploy: false,
     reduceQueueTime: true,
     proposalId:

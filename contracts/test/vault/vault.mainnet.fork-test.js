@@ -334,8 +334,6 @@ describe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
-        // TODO: Change after SSR strategy is deployed
         "0x5Bd9AF9c2506D29B6d79cB878284A270190EaEAa", // Maker SSR Strategy
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
         "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
@@ -361,7 +359,6 @@ describe("ForkTest: Vault", function () {
       const { vault, usdt } = fixture;
 
       expect([
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
         "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
@@ -370,7 +367,6 @@ describe("ForkTest: Vault", function () {
       const { vault, usdc } = fixture;
 
       expect([
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
