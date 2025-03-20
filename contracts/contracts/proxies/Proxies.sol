@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
@@ -39,13 +39,6 @@ contract AaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ThreePoolStrategyProxy delegates calls to a ThreePoolStrategy implementation
- */
-contract ThreePoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice ConvexStrategyProxy delegates calls to a ConvexStrategy implementation
  */
 contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -77,13 +70,6 @@ contract MorphoCompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice ConvexOUSDMetaStrategyProxy delegates calls to a ConvexOUSDMetaStrategy implementation
  */
 contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice ConvexLUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
- */
-contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
@@ -130,13 +116,6 @@ contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
- */
-contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
  */
 contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -176,23 +155,9 @@ contract OETHBalancerMetaPoolwstEthStrategyProxy is
 }
 
 /**
- * @notice FluxStrategyProxy delegates calls to a CompoundStrategy implementation
- */
-contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice MakerDsrStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice FrxEthRedeemStrategyProxy delegates calls to a FrxEthRedeemStrategy implementation
- */
-contract FrxEthRedeemStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
@@ -265,13 +230,6 @@ contract NativeStakingFeeAccumulator3Proxy is
 }
 
 /**
- * @notice LidoWithdrawalStrategyProxy delegates calls to a LidoWithdrawalStrategy implementation
- */
-contract LidoWithdrawalStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -337,5 +295,12 @@ contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 contract PoolBoostCentralRegistryProxy is
     InitializeGovernedUpgradeabilityProxy
 {
+
+}
+
+/**
+ * @notice MakerSSRStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

@@ -22,5 +22,6 @@ module.exports = {
   rules: {
     "no-constant-condition": ["error", { checkLoops: false }],
     "no-only-tests/no-only-tests": "error",
+    "no-unused-vars": [2, { vars: "all", args: "after-used" }],
   },
 };

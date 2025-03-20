@@ -373,25 +373,23 @@ module.exports = {
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_STRATEGIST
             : isSonicFork
             ? SONIC_STRATEGIST
-            : MAINNET_STRATEGIST
+            : // Base and Eth use Multichain Strategist
+              MULTICHAIN_STRATEGIST
           : 0,
       hardhat:
         process.env.FORK === "true"
           ? isHoleskyFork
             ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_STRATEGIST
             : isSonicFork
             ? SONIC_STRATEGIST
-            : MAINNET_STRATEGIST
+            : // Base and Eth use Multichain Strategist
+              MULTICHAIN_STRATEGIST
           : 0,
-      mainnet: MAINNET_STRATEGIST,
+      mainnet: MULTICHAIN_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
-      base: BASE_STRATEGIST,
+      base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
     },
     multichainStrategistAddr: {
