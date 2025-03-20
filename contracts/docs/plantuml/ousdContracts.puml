@@ -15,10 +15,6 @@ object "WOUSD" as wousd <<Origin>><<Proxy>> #DeepSkyBlue {
     name: Wrapped OUSD
 }
 
-object "Flipper" as flipper <<Origin>> #DeepSkyBlue {
-    assets: DAI, USDC, USDT
-}
-
 object "OUSD" as ousd <<Origin>><<Proxy>> #DeepSkyBlue {
     symbol: OUSD
     name: Origin Dollar
@@ -59,31 +55,20 @@ object "ConvexAMOStrategy" as amoStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     Convex pool: cvxOUSD3CRV-f
     rewards: CRV, CVX
 }
-' object "ConvexLUSDMetaStrategy" as cxvLusdStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     Curve Metapool: LUSD3CRV-f
-'     Convex pool: cvxLUSD3CRV-f
-'     rewards: CRV, CVX
-' }
 ' object "MorphoCompoundStrategy" as morphCompStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 '     asset: DAI, USDC, USDT
 '     Compound tokens: cDAI, cUSDC, cUSDT
     ' rewards: COMP
 ' }
-object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: DAI, USDC, USDT
-    Aave tokens: aDAI, aUSDC, aUSDT
+' object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+'     asset: DAI, USDC, USDT
+'     Aave tokens: aDAI, aUSDC, aUSDT
     ' rewards: AAVE
-}
+' }
 
-object "FluxStrategy" as fluxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: DAI, USDC, USDT
-    Flux tokens: fDAI, fUSDC, fUSDT
-}
-
-object "MakerDsrStrategy" as dsrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: DAI
-    vault: sDAI
+object "MakerSSRStrategy" as dsrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDS
+    vault: sUSDS
 }
 
 ' Oracle
@@ -92,6 +77,7 @@ pairs:
     USDT/USD
     USDC/USD
     DAI/USD
+    USDS/USD
     CRV/USD
     CVX/USD 
 }
@@ -100,8 +86,6 @@ vault <. drip
 
 checker ..> ousd
 checker ..> vault
-
-flipper ..> ousd
 
 vault <.. harv 
 
@@ -113,19 +97,11 @@ buy .> ousd
 
 ' Strategies
 vault <...> aaveStrat
-' vault <...> compStrat
-' vault <...> cvxStrat
 vault <...> amoStrat
-' vault <...> cxvLusdStrat
-' vault <...> morphCompStrat
-vault <...> morphAaveStrat
-vault <...> fluxStrat
-vault <...> dsrStrat
+vault <...> ssrStrat
 
 drip <.. harv
-' harv <..> cvxStrat
 harv <..> amoStrat
-' harv <..> cxvLusdStrat
 
 
 @enduml
