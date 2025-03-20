@@ -381,6 +381,7 @@ addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
 addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
 addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
+addresses.sonic.SonicStakingStrategy = "0x596B0401479f6DfE1cAF8c12838311FeE742B95c"
 
 // SwapX on Sonic
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";

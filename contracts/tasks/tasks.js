@@ -105,8 +105,8 @@ const {
   setDefaultValidator,
   snapSonicStaking,
   undelegateValidator,
-  withdrawFromSFC,
 } = require("../utils/sonic");
+const { withdrawFromSFC } = require("../utils/sonicActions");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
@@ -1785,14 +1785,11 @@ task("sonicUndelegate").setAction(async (_, __, runSuper) => {
 subtask(
   "sonicWithdraw",
   "Withdraw native S from a previously undelegated validator"
-)
-  .addParam(
-    "withdrawId",
-    "withdrawId in the Undelegated event emitted from the undelegate tx.",
-    undefined,
-    types.int
-  )
-  .setAction(withdrawFromSFC);
+).setAction(async () => {
+  const signer = await getSigner();
+
+  await withdrawFromSFC({ signer });
+});
 task("sonicWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
