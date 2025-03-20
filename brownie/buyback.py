@@ -40,7 +40,8 @@ def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1
     buyback_token_label = "OGN" if buyback_token == OGN else "CVX"
 
     # Temporary hack since large OGN swaps fail on 1inch fusion as of now
-    protocols = "UNISWAP,UNISWAP_V3" if buyback_token == OGN else ""
+    # protocols = "UNISWAP,UNISWAP_V3" if buyback_token == OGN else ""
+    protocols = ""
 
     # Get price of the token pair and compute amount without slippage
     quote_no_slippage = int((amount * get_1inch_price(otoken_address, buyback_token)) / (10**decimalsMap[buyback_token]))
@@ -96,6 +97,8 @@ def build_1inch_buyback_tx(otoken_address, buyback_token, amount, max_slippage=1
 
     else: 
         raise Exception("Unrecognized 1Inch swap selector {}".format(selector))
+    
+    print(buyback.address, amount, min_expected, data)
 
     if buyback_token == OGN:
         return buyback.swapForOGN(

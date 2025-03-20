@@ -412,8 +412,8 @@ describe("OETH Vault", function () {
     });
 
     it("Fail to remove asset if asset is not supported", async () => {
-      const { oethVault, dai, governor } = fixture;
-      const tx = oethVault.connect(governor).removeAsset(dai.address);
+      const { oethVault, usds, governor } = fixture;
+      const tx = oethVault.connect(governor).removeAsset(usds.address);
 
       await expect(tx).to.be.revertedWith("Asset not supported");
     });

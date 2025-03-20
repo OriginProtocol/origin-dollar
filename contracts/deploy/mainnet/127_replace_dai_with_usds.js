@@ -8,9 +8,11 @@ module.exports = deploymentWithGovernanceProposal(
     reduceQueueTime: true,
     // forceSkip: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "114954970394844320178182896169894131762293708671906355250905818532387580494958",
     // TODO: Temporary hack to test it on CI
     simulateDirectlyOnTimelock: isFork,
+    // executionRetries: 2,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation, ethers }) => {
     const DAI = addresses.mainnet.DAI;
@@ -33,11 +35,29 @@ module.exports = deploymentWithGovernanceProposal(
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
     // 1. Deploy OracleRouter
-    await deployWithConfirmation("OracleRouter");
-    const cOracleRouter = await ethers.getContract("OracleRouter");
-    await withConfirmation(
-      cOracleRouter.connect(sDeployer).cacheDecimals(USDS)
+    const dOracleRouter = await deployWithConfirmation("OracleRouter");
+    const cOracleRouter = await ethers.getContractAt(
+      "OracleRouter",
+      dOracleRouter.address
     );
+
+    const assetsToCache = [
+      USDS,
+      DAI,
+      addresses.mainnet.USDT,
+      addresses.mainnet.USDC,
+      addresses.mainnet.COMP,
+      addresses.mainnet.Aave,
+      addresses.mainnet.CRV,
+      addresses.mainnet.CVX,
+    ];
+
+    for (const asset of assetsToCache) {
+      console.log(`Caching decimals for ${asset}`);
+      await withConfirmation(
+        cOracleRouter.connect(sDeployer).cacheDecimals(asset)
+      );
+    }
 
     // 2. Deploy Migration Strategy
     const dMigrationStrategy = await deployWithConfirmation(
@@ -88,6 +108,7 @@ module.exports = deploymentWithGovernanceProposal(
         await getTxOpts()
       )
     );
+    console.log(`Initialized SSR Strategy Proxy`);
 
     return {
       name: `Migrate DAI to USDS

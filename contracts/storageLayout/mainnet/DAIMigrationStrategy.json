@@ -96,30 +96,6 @@
       "type": "t_array(t_int256)98_storage",
       "contract": "InitializableAbstractStrategy",
       "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
-    },
-    {
-      "label": "_deprecate_shareToken",
-      "offset": 0,
-      "slot": "157",
-      "type": "t_address",
-      "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:15"
-    },
-    {
-      "label": "_deprecate_assetToken",
-      "offset": 0,
-      "slot": "158",
-      "type": "t_address",
-      "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:18"
-    },
-    {
-      "label": "__gap",
-      "offset": 0,
-      "slot": "159",
-      "type": "t_array(t_uint256)50_storage",
-      "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:24"
     }
   ],
   "types": {

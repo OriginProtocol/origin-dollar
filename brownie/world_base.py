@@ -12,6 +12,7 @@ base_old_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
 base_strategist = brownie.accounts.at(OETHB_MULTICHAIN_STRATEGIST, force=True)
 from_old_strategist = {'from':OETHB_STRATEGIST}
 from_strategist = {'from':OETHB_MULTICHAIN_STRATEGIST}
+from_treasury = { 'from': OETHB_TREASURY }
 
 aero_router = load_contract('aerodrome_swap_router', AERODROME_SWAP_ROUTER_BASE)
 aero_router2 = load_contract('aerodrome_v2_router', AERODROME_ROUTER2_BASE)
