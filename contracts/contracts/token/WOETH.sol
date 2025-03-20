@@ -123,7 +123,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         // 1e27 * (1e27 + 1e27 denominated rate) / 1e27 = 1e27 denominated
         uint256 woethExchangeRate = (_woethInitialExchangeRate *
             (1e27 + oethRateIncrease)) / 1e27;
-
+        // 1e18 * 1e27 / 1e27 = 1e18
         return (totalSupply() * woethExchangeRate) / 1e27;
     }
 }
