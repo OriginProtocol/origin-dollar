@@ -1,10 +1,64 @@
 const { ethers } = require("ethers");
+const { parseUnits } = require("ethers/lib/utils");
 
 const sonicStakingStrategyAbi = require("../abi/sonic_staking_strategy.json");
+const erc20Abi = require("../abi/erc20.json");
+const vaultAbi = require("../abi/vault.json");
 const addresses = require("../utils/addresses");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:sonic");
+
+async function undelegateValidator({ id, amount, signer }) {
+  const sonicStakingStrategy = new ethers.Contract(
+    addresses.sonic.SonicStakingStrategy,
+    sonicStakingStrategyAbi,
+    signer
+  );
+  const ws = new ethers.Contract(addresses.sonic.wS, erc20Abi, signer);
+  const vault = new ethers.Contract(
+    addresses.sonic.OSonicVaultProxy,
+    vaultAbi,
+    signer
+  );
+
+  let amountBN;
+  if (amount == undefined) {
+    const wsBalance = await ws.balanceOf(addresses.sonic.OSonicVaultProxy);
+    const queue = await vault.withdrawalQueueMetadata();
+    const pendingWithdrawals = await sonicStakingStrategy.pendingWithdrawals();
+
+    const available = wsBalance
+      .add(queue.claimed)
+      .sub(queue.queued)
+      .add(pendingWithdrawals);
+
+    // Threshold is negative 1000 wS
+    const threshold = parseUnits("1000", 18).mul(-1);
+    if (available.gt(threshold)) {
+      log(
+        `No need to undelgate as available balance ${ethers.utils.formatUnits(
+          available,
+          18
+        )} wS is above threshold.`
+      );
+      return;
+    }
+    // Convert back to a positive amount
+    amountBN = available.mul(-1);
+  } else {
+    // Use amount passed in from Hardhat task
+    amountBN = parseUnits(amount.toString(), 18);
+  }
+
+  const validatorId = id || (await sonicStakingStrategy.defaultValidatorId());
+
+  log(`About to undelegate ${amount} S from validator ${validatorId}`);
+  const tx = await sonicStakingStrategy
+    .connect(signer)
+    .undelegate(validatorId, amountBN);
+  await logTxDetails(tx, "undelegate");
+}
 
 async function withdrawFromSFC({ signer }) {
   const sonicStakingStrategy = new ethers.Contract(
@@ -48,5 +102,6 @@ async function withdrawFromSFC({ signer }) {
 }
 
 module.exports = {
+  undelegateValidator,
   withdrawFromSFC,
 };

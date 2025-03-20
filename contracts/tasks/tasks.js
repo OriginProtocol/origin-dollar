@@ -101,12 +101,11 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
+const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
-  setDefaultValidator,
-  snapSonicStaking,
   undelegateValidator,
-} = require("../utils/sonic");
-const { withdrawFromSFC } = require("../utils/sonicActions");
+  withdrawFromSFC,
+} = require("../utils/sonicActions");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
@@ -1775,9 +1774,23 @@ task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
-  .addParam("id", "Validator identifier. eg 18", undefined, types.int)
-  .addParam("amount", "Amount of liquidity to remove", undefined, types.float)
-  .setAction(undelegateValidator);
+  .addOptionalParam(
+    "id",
+    "Validator identifier. 15, 16, 17 or 18",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of liquidity to remove",
+    undefined,
+    types.float
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await undelegateValidator({ ...taskArgs, signer });
+  });
 task("sonicUndelegate").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
