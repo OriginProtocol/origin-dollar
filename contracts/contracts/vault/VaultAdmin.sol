@@ -13,12 +13,14 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -191,7 +193,7 @@ contract VaultAdmin is VaultStorage {
         // Change the rate
         uint256 newPerSecond = yearlyApr / 100 / 365 days;
         require(newPerSecond < MAX_REBASE_PER_SECOND, "Rate too high");
-        rebasePerSecondMax = newPerSecond;
+        rebasePerSecondMax = newPerSecond.toUint64();
         emit RebasePerSecondMaxChanged(newPerSecond);
     }
 

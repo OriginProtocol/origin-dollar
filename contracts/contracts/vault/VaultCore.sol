@@ -387,42 +387,86 @@ contract VaultCore is VaultInitializer {
     function _rebase() internal whenNotRebasePaused returns (uint256) {
         uint256 ousdSupply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
-        uint256 nonRebasing = oUSD.nonRebasingSupply();
-        uint256 rebasing = ousdSupply - nonRebasing;
-        uint256 elapsed = block.timestamp - lastRebase;
-
+        // If no supply yet, do not rebase
         if (ousdSupply == 0) {
             return vaultValue;
         }
 
-        // Only allowing the vault to rebase out at a certain maximum
-        // rate of change. This prevents donation rates.
-        // The limits increase per block, up to a certain max cap.
-        uint256 hardCap = (rebasing * MAX_REBASE) / 1e18;
-        uint256 timeCap = rebasing +
-            ((rebasing * elapsed * MAX_REBASE_PER_SECOND) / 1e36);
-        uint256 cap = nonRebasing + _min(hardCap, timeCap);
-        uint256 newSupply = _min(vaultValue, cap);
-
-        // Yield fee collection
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (newSupply > ousdSupply)) {
-            uint256 yield = newSupply - ousdSupply;
-            uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
-            require(yield > fee, "Fee must not be greater than yield");
-            if (fee > 0) {
-                oUSD.mint(_trusteeAddress, fee);
-            }
-            emit YieldDistribution(_trusteeAddress, yield, fee);
+        // Calculate yield and new supply
+        uint256 yield = _nextYield(ousdSupply, vaultValue);
+        uint256 newSupply = ousdSupply + yield;
+        // Only rebase upwards and if we have enough backing funds
+        if (newSupply <= ousdSupply || newSupply > vaultValue) {
+            return vaultValue;
         }
+        yield = newSupply - ousdSupply; // recalc since newSupply may have changed
+
+        // Fee collection on yield
+        address _trusteeAddress = trusteeAddress; // gas savings
+        uint256 fee = 0;
+        if (_trusteeAddress != address(0)) {
+            fee = (yield * trusteeFeeBps) / 1e4;
+        }
+        if (fee > 0) {
+            require(fee < yield, "Fee must not be greater than yield");
+            oUSD.mint(_trusteeAddress, fee);
+        }
+        emit YieldDistribution(_trusteeAddress, yield, fee);
 
         // Only ratchet OToken supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (newSupply > ousdSupply) {
+        // Final check uses latest totalSupply
+        if (newSupply > oUSD.totalSupply()) {
             oUSD.changeSupply(newSupply);
-            lastRebase = block.timestamp;
+            lastRebase = uint64(block.timestamp); // Intentional cast
         }
-        return newSupply;
+        return vaultValue;
+    }
+
+    /**
+     * @notice Calculates the amount that would rebase to users at at next rebase.
+     */
+    function nextYield() external view returns (uint256 yield) {
+        yield = _nextYield(oUSD.totalSupply(), _totalValue());
+        if (trusteeAddress != address(0)) {
+            yield -= (yield * trusteeFeeBps) / 1e4;
+        }
+        return yield;
+    }
+
+    function _nextYield(uint256 supply, uint256 vaultValue)
+        internal
+        view
+        returns (uint256 yield)
+    {
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        uint256 rebasing = supply - nonRebasing;
+        uint256 elapsed = block.timestamp - lastRebase;
+
+        if (
+            elapsed == 0 || // Yield only once per block.
+            rebasing == 0 || // No yield if there are no rebasing tokens to give it to.
+            supply > vaultValue || // No yield if we do have yield to give.
+            block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
+        ) {
+            return 0;
+        }
+
+        // Start with the full difference available
+        yield = vaultValue - supply;
+
+        // Cap by automatic yield setting
+        yield = _min(yield, (yield * elapsed) / dripDuration);
+
+        // Cap on max drip rate
+        yield = _min(
+            yield,
+            (rebasing * elapsed * MAX_REBASE_PER_SECOND) / 1e36
+        );
+
+        // Cap on max for a single rebase.
+        yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
+
+        return yield;
     }
 
     /**

@@ -250,13 +250,17 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Time the value last rebased yield
     // slither-disable-next-line uninitialized-state
-    uint256 public lastRebase;
+    uint64 public lastRebase;
+
+    /// @notice Automatic rebase yield calculations. Set to 1 to disable
+    // slither-disable-next-line uninitialized-state
+    uint64 public dripDuration;
 
     /// @notice max rebase percentage per second
     ///   Can be used to set maximun yield of the protocol,
     ///   spreading out yield over time
     // slither-disable-next-line uninitialized-state
-    uint256 public rebasePerSecondMax;
+    uint64 public rebasePerSecondMax;
 
     // For future use
     uint256[42] private __gap;
