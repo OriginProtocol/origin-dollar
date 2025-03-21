@@ -572,7 +572,7 @@ describe("Curve AMO OUSD strategy", function () {
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
           .withdraw(ousdVault.address, usdt.address, oethUnits("1000000"))
-      ).to.be.revertedWith("");
+      ).to.be.revertedWith("Insufficient LP tokens");
     });
     it("Withdraw: Protocol is insolvent", async () => {
       await balancePool();

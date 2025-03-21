@@ -592,6 +592,7 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     function _lpWithdraw(uint256 _lpAmount) internal {
+        require(gauge.balanceOf(address(this)) >= _lpAmount, "Insufficient LP tokens");
         // withdraw lp tokens from the gauge without claiming rewards
         gauge.withdraw(_lpAmount);
     }
