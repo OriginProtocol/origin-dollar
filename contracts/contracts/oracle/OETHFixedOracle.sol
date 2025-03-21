@@ -6,7 +6,7 @@ import { OETHOracleRouter } from "./OETHOracleRouter.sol";
 // @notice Oracle Router that returns 1e18 for all prices
 // used solely for deployment to testnets
 contract OETHFixedOracle is OETHOracleRouter {
-    constructor(address _auraPriceFeed) OETHOracleRouter(_auraPriceFeed) {}
+    constructor() OETHOracleRouter() {}
 
     /**
      * @dev The price feed contract to use for a particular asset along with
