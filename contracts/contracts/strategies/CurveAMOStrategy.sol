@@ -161,8 +161,6 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
             curvePool.coins(otokenCoinIndex) == _otoken,
             "Invalid coin indexes"
         );
-
-        _setGovernor(address(0));
     }
 
     /**
