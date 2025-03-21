@@ -283,13 +283,6 @@ contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHBaseCurveAMOProxy delegates calls to a OETHBaseCurveAMO implementation
- */
-contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice PoolBoostCentralRegistryProxy delegates calls to the PoolBoostCentralRegistry implementation
  */
 contract PoolBoostCentralRegistryProxy is
