@@ -29,7 +29,6 @@ describe("ForkTest: OETH Vault", function () {
         oethVault,
         oethDripper,
         convexEthMetaStrategy,
-        fraxEthStrategy,
         oeth,
         woeth,
         oethHarvester,
@@ -39,7 +38,6 @@ describe("ForkTest: OETH Vault", function () {
         oethVault,
         oethDripper,
         convexEthMetaStrategy,
-        fraxEthStrategy,
         oeth,
         woeth,
         oethHarvester,
@@ -250,7 +248,7 @@ describe("ForkTest: OETH Vault", function () {
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
 
-    it("should not do full redeem by OETH whale", async () => {
+    it.skip("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);

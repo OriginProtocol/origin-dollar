@@ -98,15 +98,6 @@ describe("OETHb Vault", function () {
     });
 
     describe("Disabled functions", function () {
-      it("Should not support redeemAll", async () => {
-        const { oethbVault, nick } = fixture;
-
-        const tx = oethbVault.connect(nick).redeemAll(1);
-        await expect(tx).to.be.revertedWith(
-          "Caller is not the Strategist or Governor"
-        );
-      });
-
       it("Should not support redeem", async () => {
         const { oethbVault, nick } = fixture;
 

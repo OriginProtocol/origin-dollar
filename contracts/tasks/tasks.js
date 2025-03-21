@@ -50,7 +50,6 @@ const {
   mint,
   rebase,
   redeem,
-  redeemAll,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
@@ -102,12 +101,11 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
+const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
-  setDefaultValidator,
-  snapSonicStaking,
   undelegateValidator,
   withdrawFromSFC,
-} = require("../utils/sonic");
+} = require("../utils/sonicActions");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
@@ -386,24 +384,6 @@ subtask("redeem", "Redeem OTokens for collateral assets from the Vault")
   )
   .setAction(redeem);
 task("redeem").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .addOptionalParam(
-    "min",
-    "Minimum amount of collateral to receive",
-    0,
-    types.float
-  )
-  .setAction(redeemAll);
-task("redeemAll").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1794,9 +1774,23 @@ task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
-  .addParam("id", "Validator identifier. eg 18", undefined, types.int)
-  .addParam("amount", "Amount of liquidity to remove", undefined, types.float)
-  .setAction(undelegateValidator);
+  .addOptionalParam(
+    "id",
+    "Validator identifier. 15, 16, 17 or 18",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of liquidity to remove",
+    undefined,
+    types.float
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await undelegateValidator({ ...taskArgs, signer });
+  });
 task("sonicUndelegate").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1804,14 +1798,11 @@ task("sonicUndelegate").setAction(async (_, __, runSuper) => {
 subtask(
   "sonicWithdraw",
   "Withdraw native S from a previously undelegated validator"
-)
-  .addParam(
-    "withdrawId",
-    "withdrawId in the Undelegated event emitted from the undelegate tx.",
-    undefined,
-    types.int
-  )
-  .setAction(withdrawFromSFC);
+).setAction(async () => {
+  const signer = await getSigner();
+
+  await withdrawFromSFC({ signer });
+});
 task("sonicWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

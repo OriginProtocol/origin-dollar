@@ -283,18 +283,6 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn all OTokens.
-     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
-     */
-    function redeemAll(uint256 _minimumUnitAmount)
-        external
-        whenNotCapitalPaused
-        nonReentrant
-    {
-        _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
-    }
-
-    /**
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external virtual whenNotCapitalPaused nonReentrant {

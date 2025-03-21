@@ -30,8 +30,7 @@ addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
-addresses.mainnet.USDS = "0xdc035d45d973e3ec169d2276ddab16f1e407384f";
-addresses.mainnet.sUSDS = "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd";
+addresses.mainnet.USDS = "0xdC035D45d973E3EC169d2276DDab16f1e407384F";
 // AAVE
 addresses.mainnet.AAVE_ADDRESS_PROVIDER =
   "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
@@ -64,6 +63,8 @@ addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
 
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
+// Maker USDS Savings Rate
+addresses.mainnet.sUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
@@ -260,11 +261,6 @@ addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
 addresses.mainnet.AuraWeightedOraclePool =
   "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
-// Flux Strategy
-addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
-addresses.mainnet.fUSDC = "0x465a5a630482f3abD6d3b84B39B29b07214d19e5";
-addresses.mainnet.fUSDT = "0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7";
-
 // Frax Oracle for frxETH/ETH
 addresses.mainnet.FrxEthFraxOracle =
   "0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df";
@@ -387,6 +383,8 @@ addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
 addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
 addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
+addresses.sonic.SonicStakingStrategy =
+  "0x596B0401479f6DfE1cAF8c12838311FeE742B95c";
 
 // SwapX on Sonic
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";

@@ -1,6 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
-const { impersonateAndFund } = require("../../utils/signers");
 const { isFork } = require("../../utils/hardhat-helpers");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -9,9 +8,11 @@ module.exports = deploymentWithGovernanceProposal(
     reduceQueueTime: true,
     // forceSkip: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "114954970394844320178182896169894131762293708671906355250905818532387580494958",
     // TODO: Temporary hack to test it on CI
     simulateDirectlyOnTimelock: isFork,
+    // executionRetries: 2,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation, ethers }) => {
     const DAI = addresses.mainnet.DAI;
@@ -34,11 +35,29 @@ module.exports = deploymentWithGovernanceProposal(
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
     // 1. Deploy OracleRouter
-    await deployWithConfirmation("OracleRouter");
-    const cOracleRouter = await ethers.getContract("OracleRouter");
-    await withConfirmation(
-      cOracleRouter.connect(sDeployer).cacheDecimals(USDS)
+    const dOracleRouter = await deployWithConfirmation("OracleRouter");
+    const cOracleRouter = await ethers.getContractAt(
+      "OracleRouter",
+      dOracleRouter.address
     );
+
+    const assetsToCache = [
+      USDS,
+      DAI,
+      addresses.mainnet.USDT,
+      addresses.mainnet.USDC,
+      addresses.mainnet.COMP,
+      addresses.mainnet.Aave,
+      addresses.mainnet.CRV,
+      addresses.mainnet.CVX,
+    ];
+
+    for (const asset of assetsToCache) {
+      console.log(`Caching decimals for ${asset}`);
+      await withConfirmation(
+        cOracleRouter.connect(sDeployer).cacheDecimals(asset)
+      );
+    }
 
     // 2. Deploy Migration Strategy
     const dMigrationStrategy = await deployWithConfirmation(
@@ -89,47 +108,22 @@ module.exports = deploymentWithGovernanceProposal(
         await getTxOpts()
       )
     );
-
-    if (isFork) {
-      // Withdraw the dust DAI from Morpho Aave V2
-      const cMorphoAaveStrategyProxy = await ethers.getContract(
-        "MorphoAaveStrategyProxy"
-      );
-      const cMorphoAaveStrategy = await ethers.getContractAt(
-        "MorphoAaveStrategy",
-        cMorphoAaveStrategyProxy.address
-      );
-
-      const daiBalance = await cMorphoAaveStrategy.checkBalance(DAI);
-      console.log(`DAI balance in Morpho Aave V2: ${daiBalance}`);
-
-      // TODO: Temporary change since Morpho has liquidity issues.
-      const dTempVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
-      const timelock = await impersonateAndFund(addresses.mainnet.Timelock);
-      await withConfirmation(
-        cVault.connect(timelock).setAdminImpl(dTempVaultAdmin.address)
-      );
-
-      // TODO: Uncomment this once Morpho has enough liquidity
-      // const strategist = await impersonateAndFund(multichainStrategistAddr);
-      // console.log(`Withdrawing DAI from Morpho Aave V2`);
-      // await cVault
-      //   .connect(strategist)
-      //   .withdrawFromStrategy(
-      //     cMorphoAaveStrategyProxy.address,
-      //     [DAI],
-      //     [daiBalance]
-      //   );
-      // console.log("Withdrew DAI from Morpho Aave V2");
-    }
+    console.log(`Initialized SSR Strategy Proxy`);
 
     return {
-      name: "Replace DAI with USDS",
+      name: `Migrate DAI to USDS
+
+This governance proposal, once executed, will migrate all the Vault's DAI holdings to USDS.
+
+It adds a temporary strategy to migrate DAI to USDS using the DAI-USDS Migration Contract from Maker/Sky.
+
+It also adds a new strategy for USDS, the Sky Saving Rate (SSR) Strategy, which is a 4626 Vault that earns yield by compounding USDS in the Sky protocol.
+
+Post this governance proposal, DAI cannot be used to mint OUSD on the Vault. Any redeems will include a basket of USDT, USDC and USDS, and not DAI.
+`,
       actions: [
         {
           // Upgrade VaultAdmin implementation
-          // For some reason, removeAsset fails without upgrading
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],

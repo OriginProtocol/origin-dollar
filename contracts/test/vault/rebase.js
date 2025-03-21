@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
-  daiUnits,
+  usdsUnits,
   usdcUnits,
   usdtUnits,
   tusdUnits,
@@ -78,11 +78,11 @@ describe("Vault rebase", () => {
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.30");
+      await setOracleTokenPriceUsd("USDS", "1.30");
 
       await vault.rebase();
       await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.00");
+      await setOracleTokenPriceUsd("USDS", "1.00");
       await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
@@ -93,10 +93,10 @@ describe("Vault rebase", () => {
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.30");
+      await setOracleTokenPriceUsd("USDS", "1.30");
       await vault.rebase();
       await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("DAI", "1.00");
+      await setOracleTokenPriceUsd("USDS", "1.00");
       await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
@@ -111,12 +111,12 @@ describe("Vault rebase", () => {
       await vault.rebase();
       await expect(matt).has.a.balanceOf("300.00", ousd);
 
-      await setOracleTokenPriceUsd("DAI", "1.30");
+      await setOracleTokenPriceUsd("USDS", "1.30");
       await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
       await expect(matt).has.an.approxBalanceOf("300.00", ousd);
 
-      await setOracleTokenPriceUsd("DAI", "1.00");
+      await setOracleTokenPriceUsd("USDS", "1.00");
       await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(
         ousdUnits("400.0"),
@@ -168,32 +168,24 @@ describe("Vault rebase", () => {
     });
 
     it("Should not allocate unallocated assets when no Strategy configured", async () => {
-      const { anna, governor, dai, usdc, usdt, tusd, vault } = fixture;
+      const { anna, governor, usds, usdc, usdt, tusd, vault } = fixture;
 
-      await dai.connect(anna).transfer(vault.address, daiUnits("100"));
+      await usds.connect(anna).transfer(vault.address, usdsUnits("100"));
       await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
       await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
-      await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
+      await tusd.connect(anna).mintTo(vault.address, tusdUnits("400"));
 
-      await expect(await vault.getStrategyCount()).to.equal(0);
+      expect(await vault.getStrategyCount()).to.equal(0);
       await vault.connect(governor).allocate();
 
       // All assets should still remain in Vault
 
-      // Note defaultFixture sets up with 200 DAI already in the Strategy
+      // Note defaultFixture sets up with 200 USDS already in the Strategy
       // 200 + 100 = 300
-      await expect(await dai.balanceOf(vault.address)).to.equal(
-        daiUnits("300")
-      );
-      await expect(await usdc.balanceOf(vault.address)).to.equal(
-        usdcUnits("200")
-      );
-      await expect(await usdt.balanceOf(vault.address)).to.equal(
-        usdtUnits("300")
-      );
-      await expect(await tusd.balanceOf(vault.address)).to.equal(
-        tusdUnits("400")
-      );
+      expect(await usds.balanceOf(vault.address)).to.equal(usdsUnits("300"));
+      expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("200"));
+      expect(await usdt.balanceOf(vault.address)).to.equal(usdtUnits("300"));
+      expect(await tusd.balanceOf(vault.address)).to.equal(tusdUnits("400"));
     });
 
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {

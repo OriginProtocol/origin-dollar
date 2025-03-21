@@ -166,8 +166,6 @@ interface IVault {
 
     function burnForStrategy(uint256 _amount) external;
 
-    function redeemAll(uint256 _minimumUnitAmount) external;
-
     function allocate() external;
 
     function rebase() external;

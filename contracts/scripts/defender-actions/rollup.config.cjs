@@ -76,5 +76,23 @@ module.exports = [
       inlineDynamicImports: true,
       format: "cjs",
     },
-  }
+  },
+  {
+    ...commonConfig,
+    input: "sonicRequestWithdrawal.js",
+    output: {
+      file: "dist/sonicRequestWithdrawal/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "sonicClaimWithdrawals.js",
+    output: {
+      file: "dist/sonicClaimWithdrawals/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];
