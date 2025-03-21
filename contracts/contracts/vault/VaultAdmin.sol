@@ -13,12 +13,14 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -175,6 +177,24 @@ contract VaultAdmin is VaultStorage {
         );
         withdrawalClaimDelay = _delay;
         emit WithdrawalClaimDelayUpdated(_delay);
+    }
+
+    /**
+     * @notice Set a yield streaming max rate. This spreads yield over
+     * time if it is above the max rate.
+     * @param yearlyApr in 1e18 notation. 3 * 1e18 = 3% APR
+     */
+    function setRebaseRateMax(uint256 yearlyApr)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        // Change the rate
+        uint256 newPerSecond = yearlyApr / 100 / 365 days;
+        require(newPerSecond < MAX_REBASE_PER_SECOND, "Rate too high");
+        rebasePerSecondMax = newPerSecond.toUint64();
+        emit RebasePerSecondMaxChanged(newPerSecond);
     }
 
     /***************************************
