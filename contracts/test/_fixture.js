@@ -683,10 +683,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ? await ethers.getContract("OUSDCurveAMOProxy")
     : undefined;
   const OUSDCurveAMO = isFork
-    ? await ethers.getContractAt(
-        "OUSDCurveAMOStrategy",
-        OUSDCurveAMOProxy.address
-      )
+    ? await ethers.getContractAt("CurveAMOStrategy", OUSDCurveAMOProxy.address)
     : undefined;
 
   const curvePoolOusdUsdt = await ethers.getContractAt(

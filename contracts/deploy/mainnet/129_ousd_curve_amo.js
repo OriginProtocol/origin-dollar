@@ -42,7 +42,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // Deploy Base Curve AMO implementation
-    const dOUSDCurveAMO = await deployWithConfirmation("OUSDCurveAMOStrategy", [
+    const dOUSDCurveAMO = await deployWithConfirmation("CurveAMOStrategy", [
       [addresses.mainnet.CurveOUSDUSDTPool, cOUSDVaultProxy.address],
       cOUSDProxy.address,
       addresses.mainnet.USDT,
@@ -51,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
       0,
       1,
     ]);
-    const cOUSDCurveAMOImpl = await ethers.getContract("OUSDCurveAMOStrategy");
+    const cOUSDCurveAMOImpl = await ethers.getContract("CurveAMOStrategy");
 
     // Initialize Base Curve AMO implementation
     const initData = cOUSDCurveAMOImpl.interface.encodeFunctionData(

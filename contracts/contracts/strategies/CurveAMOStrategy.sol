@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Automated Market Maker (AMO) Strategy
- * @notice AMO strategy for the Curve OUSD/USDT pool
+ * @notice AMO strategy for a Curve pool using an OToken.
  * @author Origin Protocol Inc
  */
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -18,7 +18,7 @@ import { ICurveLiquidityGaugeV6 } from "../interfaces/ICurveLiquidityGaugeV6.sol
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { ICurveMinter } from "../interfaces/ICurveMinter.sol";
 
-contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
+contract CurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeCast for uint256;
     using SafeERC20 for IERC20;

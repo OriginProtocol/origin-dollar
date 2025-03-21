@@ -299,7 +299,7 @@ contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OUSDCurveAMOProxy delegates calls to a OUSDCurveAMOStrategy implementation
+ * @notice OUSDCurveAMOProxy delegates calls to a CurveAMOStrategy implementation
  */
 contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
