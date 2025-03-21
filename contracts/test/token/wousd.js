@@ -1,21 +1,21 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { ousdUnits, daiUnits, isFork } = require("../helpers");
+const { ousdUnits, usdsUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {
   if (isFork) {
     this.timeout(0);
   }
 
-  let ousd, wousd, vault, dai, matt, josh, governor;
+  let ousd, wousd, vault, usds, matt, josh, governor;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     vault = fixture.vault;
-    dai = fixture.dai;
+    usds = fixture.usds;
     matt = fixture.matt;
     josh = fixture.josh;
     governor = fixture.governor;
@@ -59,7 +59,7 @@ describe("WOUSD", function () {
   describe("Collects Rebase", async () => {
     it("should increase with an OUSD rebase", async () => {
       await expect(wousd).to.have.approxBalanceOf("100", ousd);
-      await dai.connect(josh).transfer(vault.address, daiUnits("100"));
+      await usds.connect(josh).transfer(vault.address, usdsUnits("100"));
       await vault.rebase();
       await expect(wousd).to.have.approxBalanceOf("150", ousd);
     });
@@ -75,12 +75,12 @@ describe("WOUSD", function () {
 
   describe("Token recovery", async () => {
     it("should allow a governor to recover tokens", async () => {
-      await dai.connect(matt).transfer(wousd.address, daiUnits("2"));
-      await expect(wousd).to.have.a.balanceOf("2", dai);
-      await expect(governor).to.have.a.balanceOf("1000", dai);
-      await wousd.connect(governor).transferToken(dai.address, daiUnits("2"));
-      await expect(wousd).to.have.a.balanceOf("0", dai);
-      await expect(governor).to.have.a.balanceOf("1002", dai);
+      await usds.connect(matt).transfer(wousd.address, usdsUnits("2"));
+      await expect(wousd).to.have.a.balanceOf("2", usds);
+      await expect(governor).to.have.a.balanceOf("1000", usds);
+      await wousd.connect(governor).transferToken(usds.address, usdsUnits("2"));
+      await expect(wousd).to.have.a.balanceOf("0", usds);
+      await expect(governor).to.have.a.balanceOf("1002", usds);
     });
     it("should not allow a governor to collect OUSD", async () => {
       await expect(

@@ -1,6 +1,4 @@
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const { sleep } = require("../utils/time.js");
 
 async function execute(taskArguments, hre) {
   const { isMainnet, isFork } = require("../test/helpers");
@@ -108,7 +106,6 @@ async function governors() {
   const cBuyback = await ethers.getContract("Buyback");
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
   const cCompensationClaim = await ethers.getContract("CompensationClaims");
-  const cFlipper = await ethers.getContract("Flipper");
 
   console.log("Governor addresses:");
   console.log("===================");
@@ -126,7 +123,6 @@ async function governors() {
   console.log("Buyback:                ", await cBuyback.governor());
   console.log("OGNSTakingProxy:        ", await cOGNStakingProxy.governor());
   console.log("CompensationClaim:      ", await cCompensationClaim.governor());
-  console.log("Flipper:                ", await cFlipper.governor());
 }
 
 module.exports = {

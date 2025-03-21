@@ -26,6 +26,7 @@ const balancesContractSlotCache = {
   [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
   [addresses.mainnet.ThreePoolToken.toLowerCase()]: [3, true],
   [addresses.mainnet.DAI.toLowerCase()]: [2, false],
+  [addresses.mainnet.USDS.toLowerCase()]: [2, false],
   [addresses.mainnet.USDC.toLowerCase()]: [9, false],
   [addresses.mainnet.USDT.toLowerCase()]: [2, false],
   [addresses.mainnet.TUSD.toLowerCase()]: [14, false],

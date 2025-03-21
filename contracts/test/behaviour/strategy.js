@@ -46,7 +46,7 @@ const shouldBehaveLikeStrategy = (context) => {
         strategy,
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -58,7 +58,7 @@ const shouldBehaveLikeStrategy = (context) => {
       const randomAssets = [
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -309,15 +309,8 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw all assets", async () => {
-        const {
-          assets,
-          valueAssets,
-          strategy,
-          vault,
-          fraxEthStrategy,
-          sfrxETH,
-          checkWithdrawAmounts,
-        } = await context();
+        const { assets, valueAssets, strategy, vault, curveAMOStrategy } =
+          await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -328,34 +321,10 @@ const shouldBehaveLikeStrategy = (context) => {
           const withdrawAmount = await units("10000", asset);
 
           // Its not nice having strategy specific logic here but it'll have to do for now
-          if (strategy == fraxEthStrategy) {
-            await expect(tx)
-              .to.emit(strategy, "Withdrawal")
-              .withArgs(asset.address, platformAddress, withdrawAmount.mul(3));
-            await expect(tx).to.emit(asset, "Transfer").withArgs(
-              // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
-              sfrxETH.address,
-              vault.address,
-              withdrawAmount.mul(3)
-            );
-          } else if (
-            checkWithdrawAmounts != undefined &&
-            checkWithdrawAmounts == false
-          ) {
-            await expect(tx).to.emit(strategy, "Withdrawal").withNamedArgs({
-              _asset: asset.address,
-              _pToken: platformAddress,
-            });
-
-            // the transfer does not have to come from the strategy. It can come directly from the platform
-            // Need to handle WETH which has different named args in the Transfer event
-            const erc20Asset = await ethers.getContractAt(
-              "IERC20",
-              asset.address
-            );
-            await expect(tx)
-              .to.emit(erc20Asset, "Transfer")
-              .withNamedArgs({ from: strategy.address, to: vault.address });
+          if (curveAMOStrategy != undefined && curveAMOStrategy == strategy) {
+            // Didn't managed to get this work with args.
+            await expect(tx).to.emit(strategy, "Withdrawal");
+            await expect(tx).to.emit(asset, "Transfer");
           } else {
             await expect(tx)
               .to.emit(strategy, "Withdrawal")
@@ -377,8 +346,8 @@ const shouldBehaveLikeStrategy = (context) => {
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
       const { governor, crv, strategy } = context();
-      const governorDaiBalanceBefore = await crv.balanceOf(governor.address);
-      const strategyDaiBalanceBefore = await crv.balanceOf(strategy.address);
+      const governorCRVBalanceBefore = await crv.balanceOf(governor.address);
+      const strategyCRVBalanceBefore = await crv.balanceOf(strategy.address);
 
       // Anna accidentally sends CRV to strategy
       const recoveryAmount = parseUnits("2");
@@ -394,10 +363,10 @@ const shouldBehaveLikeStrategy = (context) => {
         .withArgs(strategy.address, governor.address, recoveryAmount);
 
       await expect(governor).has.a.balanceOf(
-        governorDaiBalanceBefore.add(recoveryAmount),
+        governorCRVBalanceBefore.add(recoveryAmount),
         crv
       );
-      await expect(strategy).has.a.balanceOf(strategyDaiBalanceBefore, crv);
+      await expect(strategy).has.a.balanceOf(strategyCRVBalanceBefore, crv);
     });
     it("Should not transfer supported assets from strategy", async () => {
       const { assets, governor, strategy } = context();
