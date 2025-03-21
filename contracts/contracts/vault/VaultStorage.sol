@@ -262,8 +262,12 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line uninitialized-state
     uint64 public rebasePerSecondMax;
 
+    /// @notice ema over past rebases, duration uses dripDuration
+    // slither-disable-next-line uninitialized-state
+    uint64 public rebasePerSecondEma;
+
     // For future use
-    uint256[42] private __gap;
+    uint256[43] private __gap;
 
     uint256 internal constant MAX_REBASE = 1.02 ether;
     uint256 internal constant MAX_REBASE_PER_SECOND =
