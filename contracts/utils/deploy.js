@@ -240,7 +240,7 @@ const executeGovernanceProposalOnFork = async ({
   reduceQueueTime,
   executeGasLimit = null,
   existingProposal = false,
-  executionRetries,
+  executionRetries = 0,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -406,6 +406,9 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
+  // Just making sure that there's always a valid number
+  executionRetries = parseInt(executionRetries) || 0;
+
   while (executionRetries > -1) {
     // Don't ask me why but this seems to force hardhat to
     // update state and cause the random failures to stop
@@ -421,7 +424,7 @@ const executeGovernanceProposalOnFork = async ({
         });
     } catch (e) {
       console.error(e);
-      if (executionRetries === -1) {
+      if (executionRetries <= -1) {
         throw e;
       } else {
         // Wait for 3 seconds before retrying
