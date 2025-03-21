@@ -38,7 +38,7 @@ contract PoolBoosterMetropolis is IPoolBooster {
 
     function bribe() external override {
         uint256 balance = osToken.balanceOf(address(this));
-        // balance too small, do no bribes 
+        // balance too small, do no bribes
         // To be fetched from rewardFactory
         if (balance < MIN_BRIBE_AMOUNT) {
             return;

@@ -97,7 +97,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
-    poolBoosterMetropolis;
+    poolBoosterFactoryMetropolis;
   if (isFork) {
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
@@ -124,7 +124,9 @@ const defaultSonicFixture = deployments.createFixture(async () => {
       governor
     );
 
-    poolBoosterMetropolis = await ethers.getContract("PoolBoosterMetropolis");
+    poolBoosterFactoryMetropolis = await ethers.getContract(
+      "PoolBoosterFactoryMetropolis"
+    );
   }
 
   // Sonic's wrapped S token
@@ -172,7 +174,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
-    poolBoosterMetropolis,
+    poolBoosterFactoryMetropolis,
 
     // Wrapped S
     wS,

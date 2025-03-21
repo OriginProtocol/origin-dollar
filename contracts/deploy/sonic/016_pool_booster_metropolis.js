@@ -1,8 +1,6 @@
 const { deployOnSonic } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
-const {
-  deployWithConfirmation,
-} = require("../../utils/deploy.js");
+const { deployWithConfirmation } = require("../../utils/deploy.js");
 // const { oethUnits } = require("../../test/helpers");
 
 // 0x03A9896A464C515d13f2679df337bF95bc891fdA: Voter
@@ -13,30 +11,72 @@ module.exports = deployOnSonic(
     deployName: "016_pool_booster_metropolis",
   },
   async ({ ethers }) => {
-    //const { deployerAddr } = await getNamedAccounts();
-    //const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+    // ---------------------------------------------------------------------------------------------------------
+    // ---
+    // --- Contracts
+    // ---
+    // ---------------------------------------------------------------------------------------------------------
     const cOSonic = await ethers.getContractAt(
       "OSonic",
       addresses.sonic.OSonicProxy
     );
 
-    const dPoolBoosterMetropolis = await deployWithConfirmation(
-      "PoolBoosterMetropolis",
+    const cPoolBoostCentralRegistryProxy = await ethers.getContract(
+      "PoolBoostCentralRegistryProxy"
+    );
+
+    // ---------------------------------------------------------------------------------------------------------
+    // ---
+    // --- Upgrade PoolBoosterCentralRegistry
+    // ---
+    // ---------------------------------------------------------------------------------------------------------
+    const dPoolBoosterCentralRegistry = await deployWithConfirmation(
+      "PoolBoostCentralRegistry",
+      []
+    );
+    console.log(
+      `Deployed new Pool Boost Central Registry to ${dPoolBoosterCentralRegistry.address}`
+    );
+
+    const cPoolBoostCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      cPoolBoostCentralRegistryProxy.address
+    );
+
+    // ---------------------------------------------------------------------------------------------------------
+    // ---
+    // --- Deploy PoolBoosterFactoryMetropolis
+    // ---
+    // ---------------------------------------------------------------------------------------------------------
+    const dPoolBoosterFactoryMetropolis = await deployWithConfirmation(
+      "PoolBoosterFactoryMetropolis",
       [
         cOSonic.address,
-        "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3",
-        "0x3987a13d675c66570bc28c955685a9bca2dcf26e",
-        "0x03A9896A464C515d13f2679df337bF95bc891fdA",
+        addresses.sonic.timelock,
+        cPoolBoostCentralRegistryProxy.address,
+        "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3", // Rewarder Factory
+        "0x03A9896A464C515d13f2679df337bF95bc891fdA", // Voter
       ]
     );
-    await ethers.getContractAt(
-      "PoolBoosterMetropolis",
-      dPoolBoosterMetropolis.address
+    console.log(
+      `Pool Booster Factory Metropolis deployed to ${dPoolBoosterFactoryMetropolis.address}`
     );
 
     return {
-      actions: [],
+      name: "Upgrade PoolBoosterCentralRegistry and deploy PoolBoosterFactoryMetropolis",
+      actions: [
+        {
+          contract: cPoolBoostCentralRegistryProxy,
+          signature: "upgradeTo(address)",
+          args: [dPoolBoosterCentralRegistry.address],
+        },
+        {
+          // set the factory as an approved one
+          contract: cPoolBoostCentralRegistry,
+          signature: "approveFactory(address)",
+          args: [dPoolBoosterFactoryMetropolis.address],
+        },
+      ],
     };
   }
 );
