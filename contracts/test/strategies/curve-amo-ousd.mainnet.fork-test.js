@@ -118,6 +118,8 @@ describe("Curve AMO OUSD strategy", function () {
         ethers.utils.getAddress(addresses.mainnet.CRV)
       );
       expect(await curveAMOStrategy.maxSlippage()).to.equal(oethUnits("0.002"));
+      expect(await curveAMOStrategy.otokenCoinIndex()).to.equal(0);
+      expect(await curveAMOStrategy.hardAssetCoinIndex()).to.equal(1);
     });
 
     it("Should deposit to strategy", async () => {

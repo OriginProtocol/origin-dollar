@@ -48,8 +48,6 @@ module.exports = deploymentWithGovernanceProposal(
       addresses.mainnet.USDT,
       addresses.mainnet.CurveOUSDUSDTGauge,
       addresses.mainnet.CRVMinter,
-      0,
-      1,
     ]);
     const cOUSDCurveAMOImpl = await ethers.getContract("CurveAMOStrategy");
 

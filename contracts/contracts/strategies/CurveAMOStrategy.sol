@@ -142,12 +142,8 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
         address _otoken,
         address _hardAsset,
         address _gauge,
-        address _minter,
-        uint128 _otokenCoinIndex,
-        uint128 _hardAssetCoinIndex
+        address _minter
     ) InitializableAbstractStrategy(_baseConfig) {
-        otokenCoinIndex = _otokenCoinIndex;
-        hardAssetCoinIndex = _hardAssetCoinIndex;
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
         minter = ICurveMinter(_minter);
@@ -157,6 +153,14 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
         gauge = ICurveLiquidityGaugeV6(_gauge);
         decimalsHardAsset = IBasicToken(_hardAsset).decimals();
         decimalsOToken = IBasicToken(_otoken).decimals();
+
+        (hardAssetCoinIndex, otokenCoinIndex) = curvePool.coins(0) == _hardAsset
+            ? (0, 1)
+            : (1, 0);
+        require(
+            curvePool.coins(otokenCoinIndex) == _otoken,
+            "Invalid coin indexes"
+        );
 
         _setGovernor(address(0));
     }
