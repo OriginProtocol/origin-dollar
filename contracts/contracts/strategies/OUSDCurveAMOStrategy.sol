@@ -8,11 +8,11 @@ pragma solidity ^0.8.0;
  */
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
-import { Tether } from "../interfaces/Tether.sol";
 import { ICurveStableSwapNG } from "../interfaces/ICurveStableSwapNG.sol";
 import { ICurveLiquidityGaugeV6 } from "../interfaces/ICurveLiquidityGaugeV6.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
@@ -21,6 +21,7 @@ import { ICurveMinter } from "../interfaces/ICurveMinter.sol";
 contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
 
     /**
      * @dev a threshold under which the contract no longer allows for the protocol to manually rebalance.
@@ -33,7 +34,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Address of the hard asset (weth, usdt, usdc).
      */
-    Tether public immutable hardAsset;
+    IERC20 public immutable hardAsset;
 
     /**
      * @notice Address of the OTOKEN token contract.
@@ -152,7 +153,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         minter = ICurveMinter(_minter);
 
         oToken = IERC20(_otoken);
-        hardAsset = Tether(_hardAsset);
+        hardAsset = IERC20(_hardAsset);
         gauge = ICurveLiquidityGaugeV6(_gauge);
         decimalsHardAsset = IBasicToken(_hardAsset).decimals();
         decimalsOToken = IBasicToken(_otoken).decimals();
@@ -326,7 +327,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
 
         // Transfer hardAsset to the recipient
-        hardAsset.transfer(_recipient, _amount);
+        hardAsset.safeTransfer(_recipient, _amount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -391,7 +392,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         // This includes all that was removed from the Curve pool and
         // any hardAsset that was sitting in the strategy contract before the removal.
         uint256 hardAssetBalance = hardAsset.balanceOf(address(this));
-        hardAsset.transfer(vaultAddress, hardAssetBalance);
+        hardAsset.safeTransfer(vaultAddress, hardAssetBalance);
 
         emit Withdrawal(address(hardAsset), address(lpToken), hardAssetBalance);
         emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
@@ -501,7 +502,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
         );
 
         // Transfer hardAsset to the vault
-        hardAsset.transfer(vaultAddress, hardAssetAmount);
+        hardAsset.safeTransfer(vaultAddress, hardAssetAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -672,7 +673,7 @@ contract OUSDCurveAMOStrategy is InitializableAbstractStrategy {
 
         // Approve Curve pool for hardAsset (required for adding liquidity)
         // slither-disable-next-line unused-return
-        hardAsset.approve(platformAddress, type(uint256).max);
+        hardAsset.safeApprove(platformAddress, type(uint256).max);
 
         // Approve Curve gauge contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Curve gauge.
