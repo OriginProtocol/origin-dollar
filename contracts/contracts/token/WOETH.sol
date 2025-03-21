@@ -30,10 +30,9 @@ contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
-    // 1e27 denominated
-    uint128 public _oethInitialTokensPerCredit;
-    // 1e27 denominated
-    uint128 public _woethInitialExchangeRate;
+    /* This is a 1e27 adjustement 
+     */
+    uint256 public _adjuster;
     bool private _oethExchangeRateInitialized;
     uint256[48] private __gap;
 
@@ -61,18 +60,12 @@ contract WOETH is ERC4626, Governable, Initializable {
     function initialize2() public onlyGovernor {
         require(!_oethExchangeRateInitialized, "Initialize2 already called");
         _oethExchangeRateInitialized = true;
-        // 1e27 denominated
-        _oethInitialTokensPerCredit = (1e54 /
-            OETH(address(asset())).rebasingCreditsPerTokenHighres())
-            .toUint128();
+
         if (totalSupply() == 0) {
-            _woethInitialExchangeRate = 1e27;
+            _adjuster = 1e27;
         } else {
-            uint256 oethBalance = OETH(address(asset())).balanceOf(
-                address(this)
-            );
-            _woethInitialExchangeRate = ((oethBalance * 1e27) / totalSupply())
-                .toUint128();
+            _adjuster = OETH(asset()).rebasingCreditsPerTokenHighres() *
+                ERC20(asset()).balanceOf(address(this)) / totalSupply();
         }
     }
 
@@ -114,16 +107,7 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        // 1e27 denominated
-        uint256 oethTokensPerCredit = 1e54 /
-            OETH(asset()).rebasingCreditsPerTokenHighres();
-        // (1e27 - 1e27) * 1e27 / 1e27 =  1e27 denominated
-        uint256 oethRateIncrease = ((oethTokensPerCredit -
-            _oethInitialTokensPerCredit) * 1e27) / _oethInitialTokensPerCredit;
-        // 1e27 * (1e27 + 1e27 denominated rate) / 1e27 = 1e27 denominated
-        uint256 woethExchangeRate = (_woethInitialExchangeRate *
-            (1e27 + oethRateIncrease)) / 1e27;
-        // 1e18 * 1e27 / 1e27 = 1e18
-        return (totalSupply() * woethExchangeRate) / 1e27;
+        return totalSupply() *
+            _adjuster / OETH(asset()).rebasingCreditsPerTokenHighres();
     }
 }
