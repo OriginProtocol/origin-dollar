@@ -1322,6 +1322,48 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deploySonicSwapXAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy = await deployWithConfirmation(
+    "SonicSwapXAMOStrategy",
+    [
+      [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
+      cOSonicProxy.address,
+      addresses.sonic.wS,
+      addresses.sonic.SwapXWSOS.gauge,
+    ]
+  );
+  const cSonicSwapXAMOStrategy = await ethers.getContractAt(
+    "SonicSwapXAMOStrategy",
+    cSonicSwapXAMOStrategyProxy.address
+  );
+  // Initialize Sonic Curve AMO Strategy implementation
+  const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[])",
+    [[addresses.sonic.SWPx]]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cSonicSwapXAMOStrategyProxy
+          .connect(sDeployer)["initialize(address,address,bytes)"](
+            dSonicSwapXAMOStrategy.address,
+            addresses.sonic.timelock,
+            initData
+          )
+  );
+
+  return cSonicSwapXAMOStrategy;
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1352,4 +1394,5 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deploySonicSwapXAMOStrategyImplementation,
 };

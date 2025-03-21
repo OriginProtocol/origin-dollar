@@ -685,7 +685,7 @@ task("curvePool").setAction(async (_, __, runSuper) => {
 });
 
 // Curve Pools
-subtask("amoStrat", "Dumps the current state of a AMO strategy")
+subtask("amoStrat", "Dumps the current state of an AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
   .addOptionalParam(
     "block",
@@ -704,6 +704,12 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     "true will output to the console. false will use debug logs.",
     true,
     types.boolean
+  )
+  .addOptionalParam(
+    "amm",
+    "Type of pool. eg curve, balancer or swapx",
+    "curve",
+    types.string
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
