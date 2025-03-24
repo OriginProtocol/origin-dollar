@@ -6,7 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
-addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
+addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -178,7 +178,7 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0x000000009dF57105d76B059178989E01356e4b45";
+  "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
