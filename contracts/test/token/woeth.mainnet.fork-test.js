@@ -275,7 +275,7 @@ describe("ForkTest: wOETH", function () {
         .mul(BigNumber.from("1000000000000000000"))
         .div(initialDeposit);
 
-
+      // 1-2 wei rounding error might be needed in the future here
       await expect(oethRateIncrease).to.equal(woethRateIncrease);
 
       await expect(assetTransfered > initialDeposit);
