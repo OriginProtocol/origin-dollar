@@ -33,7 +33,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     /* This is a 1e27 adjustment constant that expresses the difference in exchange rate between
      * OETH's rebase since inception (expressed with rebasingCreditsPerToken) and OWETH to OETH
      * conversion.
-     * 
+     *
      * If WOETH and OETH are deployed at the same time, the value of _adjuster is a neutral 1e27
      */
     uint256 public _adjuster;
@@ -68,8 +68,10 @@ contract WOETH is ERC4626, Governable, Initializable {
         if (totalSupply() == 0) {
             _adjuster = 1e27;
         } else {
-            _adjuster = OETH(asset()).rebasingCreditsPerTokenHighres() *
-                ERC20(asset()).balanceOf(address(this)) / totalSupply();
+            _adjuster =
+                (OETH(asset()).rebasingCreditsPerTokenHighres() *
+                    ERC20(asset()).balanceOf(address(this))) /
+                totalSupply();
         }
     }
 
@@ -111,7 +113,8 @@ contract WOETH is ERC4626, Governable, Initializable {
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        return totalSupply() *
-            _adjuster / OETH(asset()).rebasingCreditsPerTokenHighres();
+        return
+            (totalSupply() * _adjuster) /
+            OETH(asset()).rebasingCreditsPerTokenHighres();
     }
 }
