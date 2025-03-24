@@ -84,7 +84,7 @@ describe("ForkTest: CurvePoolBooster", function () {
       addresses.mainnet.CurveOUSDUSDTGauge
     );
     expect(await curvePoolBooster.campaignRemoteManager()).to.equal(
-      "0x000000009dF57105d76B059178989E01356e4b45"
+      "0x000000009dF57105d76B059178989E01356e4b45e4b45"
     );
     expect(await curvePoolBooster.rewardToken()).to.equal(
       addresses.mainnet.OUSDProxy
@@ -97,7 +97,7 @@ describe("ForkTest: CurvePoolBooster", function () {
       addresses.mainnet.Timelock
     );
     expect(await curvePoolBooster.votemarket()).to.equal(
-      "0x5e5C922a5Eeab508486eB906ebE7bDFFB05"
+      "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5"
     );
   });
 
@@ -382,7 +382,7 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   it("Should set Campaign Remote Manager", async () => {
     expect(await curvePoolBooster.campaignRemoteManager()).to.equal(
-      "0x000000009dF57105d76B059178989E01356"
+      "0x000000009dF57105d76B059178989E01356e4b45"
     );
 
     await curvePoolBooster.connect(sGov).setCampaignRemoteManager(josh.address);
@@ -400,7 +400,7 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   it("Should set Votemarket address", async () => {
     expect(await curvePoolBooster.votemarket()).to.equal(
-      "0x5e5C922a5Eeab508486eB906ebE7bDFFB05"
+      "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5"
     );
 
     await curvePoolBooster.connect(sGov).setVotemarket(josh.address);
