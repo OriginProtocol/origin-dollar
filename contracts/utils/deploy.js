@@ -406,6 +406,9 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
+  // Ensure executionRetries is always a number
+  executionRetries = parseInt(executionRetries) || 0;
+
   while (executionRetries > -1) {
     // Don't ask me why but this seems to force hardhat to
     // update state and cause the random failures to stop
