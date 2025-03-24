@@ -291,7 +291,7 @@ describe("ForkTest: wOETH", function () {
 describe("ForkTest: wOETH redeem balances", function () {
   // manually test these values locally with the fork set to 22116006
   it.skip("upgrade of WOETH shouldn't change WOETH balances, or redemption amounts", async () => {
-    const { woeth, oeth } = await simpleOETHFixture();;
+    const { woeth } = await simpleOETHFixture();
 
     // the values pulled from the mainnet at block number 22116006 before 112_upgrade_woeth
     // written down is the account's WOETH balance, and how much OETH one would receive
@@ -299,30 +299,34 @@ describe("ForkTest: wOETH redeem balances", function () {
     // affect both of the numbers.
     const accountBalances = {
       "0xdCa0A2341ed5438E06B9982243808A76B9ADD6d0": {
-         woethBalance: BigNumber.from("16231824385055731314284"),
-         oethRedeemAmount: BigNumber.from("18229274520877989755302")
+        woethBalance: BigNumber.from("16231824385055731314284"),
+        oethRedeemAmount: BigNumber.from("18229274520877989755302"),
       },
       "0xC460B0b6c9b578A4Cb93F99A691e16dB96Ee5833": {
-         woethBalance: BigNumber.from("575896531839923556165"),
-         oethRedeemAmount: BigNumber.from("646765004690227456060")
+        woethBalance: BigNumber.from("575896531839923556165"),
+        oethRedeemAmount: BigNumber.from("646765004690227456060"),
       },
       "0x8a9D46d28003673Cd4FE7a56EcFCFA2BE6372e64": {
-         woethBalance: BigNumber.from("182355401624955452064"),
-         oethRedeemAmount: BigNumber.from("204795628496744585951")
+        woethBalance: BigNumber.from("182355401624955452064"),
+        oethRedeemAmount: BigNumber.from("204795628496744585951"),
       },
       "0x66ceac5EE8F093059C4BC9628C06e63076505B15": {
-         woethBalance: BigNumber.from("934212489717768182"),
-         oethRedeemAmount: BigNumber.from("1049174481679166505")
+        woethBalance: BigNumber.from("934212489717768182"),
+        oethRedeemAmount: BigNumber.from("1049174481679166505"),
       },
       "0xc407d71801610E5023f2caC3F691FAa09959E5e9": {
-         woethBalance: BigNumber.from("1824215988713080"),
-         oethRedeemAmount: BigNumber.from("2048699718205546")
-      }
+        woethBalance: BigNumber.from("1824215988713080"),
+        oethRedeemAmount: BigNumber.from("2048699718205546"),
+      },
     };
 
     for (const account of Object.keys(accountBalances)) {
-      expect(accountBalances[account].woethBalance).to.equal(await woeth.balanceOf(account));
-      const previewRedeemAmount = await woeth.previewRedeem(accountBalances[account].woethBalance);
+      expect(accountBalances[account].woethBalance).to.equal(
+        await woeth.balanceOf(account)
+      );
+      const previewRedeemAmount = await woeth.previewRedeem(
+        accountBalances[account].woethBalance
+      );
 
       // allow 1 WEI difference for rounding errors
       expect(accountBalances[account].oethRedeemAmount)
