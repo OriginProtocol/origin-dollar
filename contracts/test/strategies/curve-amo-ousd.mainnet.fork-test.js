@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers/lib/utils");
 
 const { usdtUnits, ousdUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
@@ -84,12 +84,12 @@ describe("Curve AMO OUSD strategy", function () {
       .setHarvesterAddress(harvester.address);
 
     // Seed the pool
-    await setERC20TokenBalance(nick.address, usdt, "3000000", hre);
+    await setERC20TokenBalance(nick.address, usdt, "5000000", hre);
     await usdt.connect(nick).approve(ousdVault.address, usdtUnits("0"));
-    await usdt.connect(nick).approve(ousdVault.address, usdtUnits("3000000"));
+    await usdt.connect(nick).approve(ousdVault.address, usdtUnits("5000000"));
     await ousdVault.connect(nick).mint(usdt.address, usdtUnits("2000000"), 0);
-    await ousd.connect(nick).approve(curvePool.address, ousdUnits("1000000"));
-    await usdt.connect(nick).approve(curvePool.address, usdtUnits("10000000"));
+    await ousd.connect(nick).approve(curvePool.address, ousdUnits("2000000"));
+    await usdt.connect(nick).approve(curvePool.address, usdtUnits("2000000"));
     // prettier-ignore
     await curvePool
       .connect(nick)["add_liquidity(uint256[],uint256)"]([ousdUnits("10000"), usdtUnits("10000")], 0);
@@ -218,8 +218,9 @@ describe("Curve AMO OUSD strategy", function () {
 
       const user = defaultDepositor;
       const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
-      const attackerUsdtAmount = usdtUnits("100000");
-      const depositUsdtAmount = usdtUnits("10000");
+      const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
+      const attackerUsdtAmount = usdtUnits("150000"); // 150k USDT
+      const depositUsdtAmount = usdtUnits("10000"); // 10k USDT
 
       const dataBeforeAttack = await snapData();
       logSnapData(
@@ -234,6 +235,12 @@ describe("Curve AMO OUSD strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, attackerUsdtAmount], 0);
+      const attackerLpTokens = await curvePool.balanceOf(nick.address);
+      log(
+        `Attacker has ${formatUnits(
+          attackerLpTokens
+        )} Curve pool LP tokens after adding USDT`
+      );
 
       const dataBeforeDeposit = await snapData();
       logSnapData(
@@ -251,7 +258,7 @@ describe("Curve AMO OUSD strategy", function () {
       const dataAfterDeposit = await snapData();
       logSnapData(
         dataAfterDeposit,
-        `\nBefore attacked removes ${formatUnits(
+        `\nAfter deposit and before attacker removes ${formatUnits(
           attackerUsdtAmount,
           6
         )} USDT from the pool`
@@ -261,26 +268,44 @@ describe("Curve AMO OUSD strategy", function () {
       // Attacked removes their USDT from the pool
       // prettier-ignore
       await curvePool
-        .connect(nick)["remove_liquidity_imbalance(uint256[],uint256)"](
-          [0, attackerUsdtAmount],
-          parseUnits("10000000", 18)
-        );
+        .connect(nick)["remove_liquidity(uint256,uint256[])"](attackerLpTokens, [0, 0]);
 
       const dataAfterRemoveUsdt = await snapData();
       logSnapData(
         dataAfterRemoveUsdt,
-        "\nAfter attacker removes USDT from the pool"
+        "\nAfter attacker removes liquidity from the pool"
       );
-      const profit = await logProfit(dataBeforeAttack);
-      expect(profit).to.be.gt(0);
+      const profitAfterAttack = await logProfit(dataBeforeAttack);
+      expect(profitAfterAttack).to.be.gt(0);
 
       const attackerUsdtBalanceAfter = await usdt.balanceOf(user.address);
+      const attackerOusdBalanceAfter = await ousd.balanceOf(user.address);
       log(
         `Attacker's profit ${formatUnits(
           attackerUsdtBalanceAfter.sub(attackerUsdtBalanceBefore),
           6
-        )} USDT`
+        )} USDT and ${formatUnits(
+          attackerOusdBalanceAfter.sub(attackerOusdBalanceBefore)
+        )} OUSD`
       );
+      const attackerLpTokensAfter = await curvePool.balanceOf(nick.address);
+      log(
+        `Attacker has ${formatUnits(
+          attackerLpTokensAfter
+        )} Curve pool LP tokens`
+      );
+
+      // Remove all funds from the Curve AMO strategy
+      await ousdVault
+        .connect(impersonatedAMOGovernor)
+        .withdrawAllFromStrategy(curveAMOStrategy.address);
+      const dataAfterStratWithdrawAll = await snapData();
+      logSnapData(
+        dataAfterStratWithdrawAll,
+        "\nAfter withdraw all from strategy"
+      );
+      const finalProfit = await logProfit(dataBeforeAttack);
+      expect(finalProfit).to.be.gte(0);
     });
 
     it("Should protect against an attacker front-running a deposit by adding a lot of OUSD to the pool", async () => {
@@ -289,8 +314,9 @@ describe("Curve AMO OUSD strategy", function () {
 
       const user = defaultDepositor;
       const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
-      const attackerOusdAmount = ousdUnits("100000");
-      const depositUsdtAmount = usdtUnits("10000");
+      const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
+      const attackerOusdAmount = ousdUnits("1500000"); // 150k OUSD
+      const depositUsdtAmount = usdtUnits("10000"); // 10k USDT
 
       const dataBeforeAttack = await snapData();
       logSnapData(
@@ -304,6 +330,7 @@ describe("Curve AMO OUSD strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([attackerOusdAmount, 0], 0);
+      const attackerLpTokens = await curvePool.balanceOf(nick.address);
 
       const dataBeforeDeposit = await snapData();
       logSnapData(
@@ -330,26 +357,44 @@ describe("Curve AMO OUSD strategy", function () {
       // Attacked removes their OUSD from the pool
       // prettier-ignore
       await curvePool
-        .connect(nick)["remove_liquidity_imbalance(uint256[],uint256)"](
-          [attackerOusdAmount, 0],
-          parseUnits("10000000", 18)
-        );
+        .connect(nick)["remove_liquidity(uint256,uint256[])"](attackerLpTokens, [0, 0]);
 
       const dataAfterRemoveUsdt = await snapData();
       logSnapData(
         dataAfterRemoveUsdt,
-        "\nAfter attacker removes OUSD from the pool"
+        "\nAfter attacker removes liquidity from the pool"
       );
       const profit = await logProfit(dataBeforeAttack);
       expect(profit).to.be.gt(0);
 
       const attackerUsdtBalanceAfter = await usdt.balanceOf(user.address);
+      const attackerOusdBalanceAfter = await ousd.balanceOf(user.address);
       log(
         `Attacker's profit ${formatUnits(
           attackerUsdtBalanceAfter.sub(attackerUsdtBalanceBefore),
           6
-        )} USDT`
+        )} USDT and ${formatUnits(
+          attackerOusdBalanceAfter.sub(attackerOusdBalanceBefore)
+        )} OUSD`
       );
+
+      // Rebase to lock in the profits
+      await ousdVault.rebase();
+      const dataAfterRebase = await snapData();
+      logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
+      await logProfit(dataBeforeAttack);
+
+      // Remove all funds from the Curve AMO strategy
+      await ousdVault
+        .connect(impersonatedAMOGovernor)
+        .withdrawAllFromStrategy(curveAMOStrategy.address);
+      const dataAfterStratWithdrawAll = await snapData();
+      logSnapData(
+        dataAfterStratWithdrawAll,
+        "\nAfter withdraw all from strategy"
+      );
+      const finalProfit = await logProfit(dataBeforeAttack);
+      expect(finalProfit).to.be.gte(0);
     });
 
     it("Should withdraw from strategy", async () => {
@@ -1060,6 +1105,11 @@ describe("Curve AMO OUSD strategy", function () {
     log(`Strategy balance    : ${formatUnits(data.stratBalance, 6)}`);
     log(`OUSD supply         : ${formatUnits(data.ousdSupply)}`);
     log(`Vault assets        : ${formatUnits(data.vaultAssets)}`);
+    log(
+      `Solvency            : ${formatUnits(
+        data.vaultAssets.sub(data.ousdSupply)
+      )}`
+    );
     log(`pool supply         : ${formatUnits(data.poolSupply)}`);
     log(
       `reserves OUSD       : ${formatUnits(data.reserves.ousd)} ${formatUnits(
@@ -1090,7 +1140,7 @@ describe("Curve AMO OUSD strategy", function () {
     const vaultAssetsAfter = await ousdVault.totalValue();
     const profit = vaultAssetsAfter
       .sub(dataBefore.vaultAssets)
-      .add(dataBefore.ousdSupply.sub(ousdSupplyAfter));
+      .sub(ousdSupplyAfter.sub(dataBefore.ousdSupply));
 
     log(
       `Change strat balance: ${formatUnits(
