@@ -215,11 +215,12 @@ describe("Curve AMO OUSD strategy", function () {
     it("Should protect against attacker front-running a deposit by adding a lot of USDT to the pool", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
+      await ousdVault.rebase();
 
       const user = defaultDepositor;
       const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
       const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
-      const attackerUsdtAmount = usdtUnits("1500000"); // 150k USDT
+      const attackerUsdtAmount = usdtUnits("1500000"); // 1.5M USDT
       const depositUsdtAmount = usdtUnits("10000"); // 10k USDT
 
       const dataBeforeAttack = await snapData();
@@ -247,6 +248,7 @@ describe("Curve AMO OUSD strategy", function () {
         dataBeforeDeposit,
         `\nBefore strategist deposits ${formatUnits(depositUsdtAmount, 6)} USDT`
       );
+      await logProfit(dataBeforeAttack);
 
       await usdt
         .connect(impersonatedVaultSigner)
@@ -1174,6 +1176,11 @@ describe("Curve AMO OUSD strategy", function () {
     log(
       `Change OUSD supply  : ${formatUnits(
         ousdSupplyAfter.sub(dataBefore.ousdSupply)
+      )}`
+    );
+    log(
+      `Change rebase supply: ${formatUnits(
+        ousdRebasingSupplyAfter.sub(dataBefore.ousdRebasingSupply)
       )}`
     );
     log(`Profit              : ${formatUnits(profit)}`);
