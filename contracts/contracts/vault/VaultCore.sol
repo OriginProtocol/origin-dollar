@@ -385,7 +385,7 @@ contract VaultCore is VaultInitializer {
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 ousdSupply = oUSD.totalSupply();
+        uint256 supply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
         uint256 nonRebasing = oUSD.nonRebasingSupply();
         // If no supply yet, do not rebase
@@ -394,14 +394,12 @@ contract VaultCore is VaultInitializer {
         }
 
         // Calculate yield and new supply
-        (uint256 yield, uint256 newTarget) = _nextYield(
-            ousdSupply,
-            vaultValue,
-            nonRebasing
-        );
-        uint256 newSupply = ousdSupply + yield;
+        uint256 yield = 0;
+        uint256 newTarget = 0;
+        (yield, newTarget) = _nextYield(supply, vaultValue, nonRebasing);
+        uint256 newSupply = supply + yield;
         // Only rebase upwards and if we have enough backing funds
-        if (newSupply <= ousdSupply || newSupply > vaultValue) {
+        if (newSupply <= supply || newSupply > vaultValue) {
             return vaultValue;
         }
 
@@ -457,9 +455,6 @@ contract VaultCore is VaultInitializer {
         ) {
             return (0, targetRate);
         }
-
-        // Start with the full difference available
-        uint256 availableYield = vaultValue - supply;
 
         // Cap via automatic drip duration control
         uint256 _dripDuration = dripDuration;
