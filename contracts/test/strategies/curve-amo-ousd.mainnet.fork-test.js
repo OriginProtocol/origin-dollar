@@ -1032,7 +1032,7 @@ describe("Curve AMO OUSD strategy", function () {
         await setERC20TokenBalance(
           nick.address,
           usdt,
-          (ousdAmount.div(1e12) + balance).mul(2),
+          ousdAmount.div(1e12).add(balance).mul(2),
           hre
         );
       }
