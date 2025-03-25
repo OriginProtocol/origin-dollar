@@ -1,5 +1,7 @@
 const { expect } = require("chai");
-const { oethUnits, usdtUnits } = require("../helpers");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
+
+const { usdtUnits, ousdUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
@@ -10,6 +12,8 @@ const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const { loadDefaultFixture } = require("../_fixture");
+
+const log = require("../../utils/logger")("test:fork:ousd:curve:amo");
 
 describe("Curve AMO OUSD strategy", function () {
   this.timeout(0);
@@ -37,7 +41,7 @@ describe("Curve AMO OUSD strategy", function () {
 
   let defaultDepositor;
 
-  let defaultDeposit = oethUnits("10000");
+  let defaultDeposit = ousdUnits("10000");
 
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
@@ -73,23 +77,22 @@ describe("Curve AMO OUSD strategy", function () {
     // Set vaultBuffer to 100%
     await ousdVault
       .connect(impersonatedTimelock)
-      .setVaultBuffer(oethUnits("1"));
+      .setVaultBuffer(ousdUnits("1"));
 
     await curveAMOStrategy
       .connect(impersonatedAMOGovernor)
       .setHarvesterAddress(harvester.address);
 
     // Seed the pool
-    await setERC20TokenBalance(nick.address, usdt, "1000000", hre);
+    await setERC20TokenBalance(nick.address, usdt, "3000000", hre);
     await usdt.connect(nick).approve(ousdVault.address, usdtUnits("0"));
-    await usdt.connect(nick).approve(ousdVault.address, usdtUnits("10000"));
-    await ousdVault.connect(nick).mint(usdt.address, usdtUnits("10000"), 0);
-    await ousd.connect(nick).approve(curvePool.address, oethUnits("10000"));
-    await usdt.connect(nick).approve(curvePool.address, usdtUnits("10000"));
-    const ousdBalance = await ousd.balanceOf(nick.address);
+    await usdt.connect(nick).approve(ousdVault.address, usdtUnits("3000000"));
+    await ousdVault.connect(nick).mint(usdt.address, usdtUnits("2000000"), 0);
+    await ousd.connect(nick).approve(curvePool.address, ousdUnits("1000000"));
+    await usdt.connect(nick).approve(curvePool.address, usdtUnits("10000000"));
     // prettier-ignore
     await curvePool
-      .connect(nick)["add_liquidity(uint256[],uint256)"]([ousdBalance, usdtUnits("10000")], 0);
+      .connect(nick)["add_liquidity(uint256[],uint256)"]([ousdUnits("10000"), usdtUnits("10000")], 0);
   });
 
   describe("Initial paramaters", () => {
@@ -117,7 +120,7 @@ describe("Curve AMO OUSD strategy", function () {
       expect(await curveAMOStrategy.rewardTokenAddresses(0)).to.equal(
         ethers.utils.getAddress(addresses.mainnet.CRV)
       );
-      expect(await curveAMOStrategy.maxSlippage()).to.equal(oethUnits("0.002"));
+      expect(await curveAMOStrategy.maxSlippage()).to.equal(ousdUnits("0.002"));
       expect(await curveAMOStrategy.otokenCoinIndex()).to.equal(0);
       expect(await curveAMOStrategy.hardAssetCoinIndex()).to.equal(1);
     });
@@ -209,6 +212,162 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.eq(0);
     });
 
+    it("Should protect against attacker front-running a deposit by adding a lot of USDT to the pool", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      const user = defaultDepositor;
+      const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
+      const attackerUsdtAmount = usdtUnits("100000");
+      const depositUsdtAmount = usdtUnits("10000");
+
+      // // Put some USDT in the strategy
+      // await usdt
+      //   .connect(impersonatedVaultSigner)
+      //   .transfer(curveAMOStrategy.address, depositUsdtAmount);
+      // await curveAMOStrategy
+      //   .connect(impersonatedVaultSigner)
+      //   .deposit(usdt.address, depositUsdtAmount);
+
+      const dataBeforeAttack = await snapData();
+      logSnapData(
+        dataBeforeAttack,
+        `\nBefore attacker adds ${formatUnits(
+          attackerUsdtAmount,
+          6
+        )} USDT to the pool`
+      );
+
+      // Attacker adds a lot of USDT into the pool
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["add_liquidity(uint256[],uint256)"]([0, attackerUsdtAmount], 0);
+
+      const dataBeforeDeposit = await snapData();
+      logSnapData(
+        dataBeforeDeposit,
+        `\nBefore strategist deposits ${formatUnits(depositUsdtAmount, 6)} USDT`
+      );
+
+      await usdt
+        .connect(impersonatedVaultSigner)
+        .transfer(curveAMOStrategy.address, depositUsdtAmount);
+      await curveAMOStrategy
+        .connect(impersonatedVaultSigner)
+        .deposit(usdt.address, depositUsdtAmount);
+
+      const dataAfterDeposit = await snapData();
+      logSnapData(
+        dataAfterDeposit,
+        `\nBefore attacked removes ${formatUnits(
+          attackerUsdtAmount,
+          6
+        )} USDT from the pool`
+      );
+      await logProfit(dataBeforeAttack);
+
+      // Attacked removes their USDT from the pool
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["remove_liquidity_imbalance(uint256[],uint256)"](
+          [0, attackerUsdtAmount],
+          parseUnits("10000000", 18)
+        );
+
+      const dataAfterRemoveUsdt = await snapData();
+      logSnapData(
+        dataAfterRemoveUsdt,
+        "\nAfter attacker removes USDT from the pool"
+      );
+      const profit = await logProfit(dataBeforeAttack);
+      expect(profit).to.be.gt(0);
+
+      const attackerUsdtBalanceAfter = await usdt.balanceOf(user.address);
+      log(
+        `Attacker's profit ${formatUnits(
+          attackerUsdtBalanceAfter.sub(attackerUsdtBalanceBefore),
+          6
+        )} USDT`
+      );
+    });
+
+    it("Should protect against an attacker front-running a deposit by adding a lot of OUSD to the pool", async () => {
+      await balancePool();
+      await mintAndDepositToStrategy();
+
+      const user = defaultDepositor;
+      const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
+      const attackerOusdAmount = ousdUnits("100000");
+      const depositUsdtAmount = usdtUnits("10000");
+
+      // // Put some USDT in the strategy
+      // await usdt
+      //   .connect(impersonatedVaultSigner)
+      //   .transfer(curveAMOStrategy.address, depositUsdtAmount);
+      // await curveAMOStrategy
+      //   .connect(impersonatedVaultSigner)
+      //   .deposit(usdt.address, depositUsdtAmount);
+
+      const dataBeforeAttack = await snapData();
+      logSnapData(
+        dataBeforeAttack,
+        `\nBefore attacker adds ${formatUnits(
+          attackerOusdAmount
+        )} OUSD to the pool`
+      );
+
+      // Attacker adds a lot of OUSD into the pool
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["add_liquidity(uint256[],uint256)"]([attackerOusdAmount, 0], 0);
+
+      const dataBeforeDeposit = await snapData();
+      logSnapData(
+        dataBeforeDeposit,
+        `\nBefore strategist deposits ${formatUnits(depositUsdtAmount, 6)} USDT`
+      );
+
+      await usdt
+        .connect(impersonatedVaultSigner)
+        .transfer(curveAMOStrategy.address, depositUsdtAmount);
+      await curveAMOStrategy
+        .connect(impersonatedVaultSigner)
+        .deposit(usdt.address, depositUsdtAmount);
+
+      const dataAfterDeposit = await snapData();
+      logSnapData(
+        dataAfterDeposit,
+        `\nBefore attacked removes ${formatUnits(
+          attackerOusdAmount
+        )} OUSD from the pool`
+      );
+      await logProfit(dataBeforeAttack);
+
+      // Attacked removes their OUSD from the pool
+      // prettier-ignore
+      await curvePool
+        .connect(nick)["remove_liquidity_imbalance(uint256[],uint256)"](
+          [attackerOusdAmount, 0],
+          parseUnits("10000000", 18)
+        );
+
+      const dataAfterRemoveUsdt = await snapData();
+      logSnapData(
+        dataAfterRemoveUsdt,
+        "\nAfter attacker removes OUSD from the pool"
+      );
+      const profit = await logProfit(dataBeforeAttack);
+      expect(profit).to.be.gt(0);
+
+      const attackerUsdtBalanceAfter = await usdt.balanceOf(user.address);
+      log(
+        `Attacker's profit ${formatUnits(
+          attackerUsdtBalanceAfter.sub(attackerUsdtBalanceBefore),
+          6
+        )} USDT`
+      );
+    });
+
     it("Should withdraw from strategy", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
@@ -241,7 +400,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(amountToWithdraw.mul(2));
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
     });
 
@@ -261,7 +420,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(0);
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
       expect(await usdt.balanceOf(ousdVault.address)).to.approxEqualTolerance(
         balanceVault.add(defaultDeposit.div(1e12))
@@ -297,7 +456,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(defaultDeposit);
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
     });
 
@@ -336,7 +495,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(defaultDeposit);
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
     });
 
@@ -382,7 +541,7 @@ describe("Curve AMO OUSD strategy", function () {
     it("Should collectRewardTokens", async () => {
       await mintAndDepositToStrategy();
       await simulateCRVInflation({
-        amount: oethUnits("0"),
+        amount: ousdUnits("0"),
         timejump: 60,
         checkpoint: false,
       });
@@ -447,7 +606,7 @@ describe("Curve AMO OUSD strategy", function () {
     });
 
     it("Should withdraw all when pool is heavily unbalanced with OUSD", async () => {
-      defaultDeposit = oethUnits("500");
+      defaultDeposit = ousdUnits("500");
       await balancePool();
       await mintAndDepositToStrategy();
 
@@ -466,7 +625,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(0);
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
       expect(await usdt.balanceOf(ousdVault.address)).to.approxEqualTolerance(
         balanceVault.add(checkBalanceAMO)
@@ -474,7 +633,7 @@ describe("Curve AMO OUSD strategy", function () {
     });
 
     it("Should withdraw all when pool is heavily unbalanced with usdt", async () => {
-      defaultDeposit = oethUnits("500");
+      defaultDeposit = ousdUnits("500");
       await balancePool();
       await mintAndDepositToStrategy();
 
@@ -492,7 +651,7 @@ describe("Curve AMO OUSD strategy", function () {
       ).to.approxEqualTolerance(0);
       expect(await ousd.balanceOf(curveAMOStrategy.address)).to.equal(0);
       expect(await usdt.balanceOf(curveAMOStrategy.address)).to.equal(
-        oethUnits("0")
+        ousdUnits("0")
       );
       expect(await usdt.balanceOf(ousdVault.address)).to.approxEqualTolerance(
         balanceVault.add(checkBalanceAMO)
@@ -502,10 +661,10 @@ describe("Curve AMO OUSD strategy", function () {
     it("Should set max slippage", async () => {
       await curveAMOStrategy
         .connect(impersonatedAMOGovernor)
-        .setMaxSlippage(oethUnits("0.01456"));
+        .setMaxSlippage(ousdUnits("0.01456"));
 
       expect(await curveAMOStrategy.maxSlippage()).to.equal(
-        oethUnits("0.01456")
+        ousdUnits("0.01456")
       );
     });
   });
@@ -540,7 +699,7 @@ describe("Curve AMO OUSD strategy", function () {
       // This is a cheat.
       // prettier-ignore
       await ousdVault
-        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
 
       await expect(
         mintAndDepositToStrategy({ returnTransaction: true })
@@ -571,7 +730,7 @@ describe("Curve AMO OUSD strategy", function () {
       await expect(
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
-          .withdraw(ousdVault.address, usdt.address, oethUnits("1000000"))
+          .withdraw(ousdVault.address, usdt.address, ousdUnits("1000000"))
       ).to.be.revertedWith("Insufficient LP tokens");
     });
     it("Withdraw: Protocol is insolvent", async () => {
@@ -585,10 +744,10 @@ describe("Curve AMO OUSD strategy", function () {
       // This is a cheat.
       // prettier-ignore
       await ousdVault
-        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
       await ousd
         .connect(impersonatedCurveStrategy)
-        .transfer(ousdVault.address, oethUnits("1000000"));
+        .transfer(ousdVault.address, ousdUnits("1000000"));
 
       await expect(
         curveAMOStrategy
@@ -621,7 +780,7 @@ describe("Curve AMO OUSD strategy", function () {
       await mintAndDepositToStrategy();
       // prettier-ignore
       await ousdVault
-        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -655,7 +814,7 @@ describe("Curve AMO OUSD strategy", function () {
       await mintAndDepositToStrategy();
       // prettier-ignore
       await ousdVault
-        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -693,7 +852,7 @@ describe("Curve AMO OUSD strategy", function () {
       });
       // prettier-ignore
       await ousdVault
-        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](oethUnits("1000000"));
+        .connect(impersonatedCurveStrategy)["mintForStrategy(uint256)"](ousdUnits("1000000"));
       await expect(
         curveAMOStrategy
           .connect(impersonatedStrategist)
@@ -709,7 +868,7 @@ describe("Curve AMO OUSD strategy", function () {
       await expect(
         curveAMOStrategy
           .connect(impersonatedAMOGovernor)
-          .setMaxSlippage(oethUnits("0.51"))
+          .setMaxSlippage(ousdUnits("0.51"))
       ).to.be.revertedWith("Slippage must be less than 100%");
     });
   });
@@ -824,7 +983,7 @@ describe("Curve AMO OUSD strategy", function () {
     }
 
     if (usdtAmount) {
-      const balance = usdt.balanceOf(nick.address);
+      const balance = await usdt.balanceOf(nick.address);
       if (balance < usdtAmount) {
         await setERC20TokenBalance(
           nick.address,
@@ -839,7 +998,7 @@ describe("Curve AMO OUSD strategy", function () {
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, usdtAmount], 0);
     } else {
-      const balance = usdt.balanceOf(nick.address);
+      const balance = await usdt.balanceOf(nick.address);
       if (balance < ousdAmount.div(1e12)) {
         await setERC20TokenBalance(
           nick.address,
@@ -870,5 +1029,103 @@ describe("Curve AMO OUSD strategy", function () {
     if (checkpoint) {
       // Checkpoint to update the gauge
     }
+  };
+
+  const snapData = async () => {
+    const stratBalance = await curveAMOStrategy.checkBalance(usdt.address);
+    const ousdSupply = await ousd.totalSupply();
+    const vaultAssets = await ousdVault.totalValue();
+    const poolSupply = await curvePool.totalSupply();
+    const [poolOusdBalance, poolUsdtBalance] = await curvePool.get_balances();
+    const reserves = { ousd: poolOusdBalance, usdt: poolUsdtBalance };
+    const virtualPrice = await curvePool.get_virtual_price();
+    const stratGaugeBalance = await curveGauge.balanceOf(
+      curveAMOStrategy.address
+    );
+    const gaugeSupply = await curveGauge.totalSupply();
+    const vaultUsdtBalance = await usdt.balanceOf(ousdVault.address);
+    const stratUsdtBalance = await usdt.balanceOf(curveAMOStrategy.address);
+
+    return {
+      stratBalance,
+      ousdSupply,
+      vaultAssets,
+      poolSupply,
+      reserves,
+      virtualPrice,
+      stratGaugeBalance,
+      gaugeSupply,
+      vaultUsdtBalance,
+      stratUsdtBalance,
+    };
+  };
+
+  const logSnapData = async (data, message) => {
+    const scaledUsdtReserves = data.reserves.usdt.mul("1000000000000");
+    const totalReserves = data.reserves.ousd.add(scaledUsdtReserves);
+    const reserversPercentage = {
+      ousd: data.reserves.ousd.mul(10000).div(totalReserves),
+      usdt: scaledUsdtReserves.mul(10000).div(totalReserves),
+    };
+    const gaugePercentage = data.gaugeSupply.eq(0)
+      ? 0
+      : data.stratGaugeBalance.mul(10000).div(data.gaugeSupply);
+    if (message) {
+      log(message);
+    }
+    log(`Strategy balance    : ${formatUnits(data.stratBalance, 6)}`);
+    log(`OUSD supply         : ${formatUnits(data.ousdSupply)}`);
+    log(`Vault assets        : ${formatUnits(data.vaultAssets)}`);
+    log(`pool supply         : ${formatUnits(data.poolSupply)}`);
+    log(
+      `reserves OUSD       : ${formatUnits(data.reserves.ousd)} ${formatUnits(
+        reserversPercentage.ousd,
+        2
+      )}%`
+    );
+    log(
+      `reserves USDT       : ${formatUnits(
+        data.reserves.usdt,
+        6
+      )} ${formatUnits(reserversPercentage.usdt, 2)}%`
+    );
+    log(`Virtual price       : ${formatUnits(data.virtualPrice)}`);
+    log(
+      `strat gauge balance : ${formatUnits(
+        data.stratGaugeBalance
+      )} ${formatUnits(gaugePercentage, 2)}%`
+    );
+    log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
+    log(`vault OUSD balance    : ${formatUnits(data.vaultOusdBalance)}`);
+    log(`strat USDT balance    : ${formatUnits(data.stratUsdtBalance, 6)}`);
+  };
+
+  const logProfit = async (dataBefore) => {
+    const stratBalanceAfter = await curveAMOStrategy.checkBalance(usdt.address);
+    const ousdSupplyAfter = await ousd.totalSupply();
+    const vaultAssetsAfter = await ousdVault.totalValue();
+    const profit = vaultAssetsAfter
+      .sub(dataBefore.vaultAssets)
+      .add(dataBefore.ousdSupply.sub(ousdSupplyAfter));
+
+    log(
+      `Change strat balance: ${formatUnits(
+        stratBalanceAfter.sub(dataBefore.stratBalance),
+        6
+      )}`
+    );
+    log(
+      `Change vault assets : ${formatUnits(
+        vaultAssetsAfter.sub(dataBefore.vaultAssets)
+      )}`
+    );
+    log(
+      `Change OUSD supply  : ${formatUnits(
+        ousdSupplyAfter.sub(dataBefore.ousdSupply)
+      )}`
+    );
+    log(`Profit              : ${formatUnits(profit)}`);
+
+    return profit;
   };
 });
