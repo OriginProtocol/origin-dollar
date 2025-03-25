@@ -11,8 +11,10 @@ const {
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
   isCI,
+  decimalsFor,
 } = require("./../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
+const { formatUnits } = require("ethers/lib/utils");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -175,6 +177,29 @@ describe("ForkTest: Vault", function () {
         .connect(josh)
         .balanceOf(josh.getAddress());
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
+    });
+
+    it("Should calculate and return redeem outputs", async () => {
+      const { vault } = fixture;
+      const outputs = await vault.calculateRedeemOutputs(ousdUnits("100"));
+      expect(outputs).to.have.length(3);
+      const assets = await vault.getAllAssets();
+
+      const values = await Promise.all(
+        outputs.map(async (output, index) => {
+          const asset = await ethers.getContractAt(
+            "MintableERC20",
+            assets[index]
+          );
+          return parseFloat(
+            formatUnits(output.toString(), await decimalsFor(asset))
+          );
+        })
+      );
+
+      expect(
+        ousdUnits((values[0] + values[1] + values[2]).toString())
+      ).to.approxEqualTolerance(ousdUnits("100"), 0.5);
     });
 
     it("should withdraw from and deposit to strategy", async () => {
