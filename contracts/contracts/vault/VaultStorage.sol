@@ -57,6 +57,7 @@ contract VaultStorage is Initializable, Governable {
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event DripperChanged(address indexed _dripper);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
+    event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,

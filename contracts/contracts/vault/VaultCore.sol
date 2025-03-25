@@ -404,7 +404,6 @@ contract VaultCore is VaultInitializer {
         if (newSupply <= ousdSupply || newSupply > vaultValue) {
             return vaultValue;
         }
-        yield = newSupply - ousdSupply; // recalc since newSupply may have changed
 
         // Fee collection on yield
         address _trusteeAddress = trusteeAddress; // gas savings
@@ -430,14 +429,14 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Calculates the amount that would rebase to users at at next rebase.
+     * @notice Calculates the amount that would rebase at at next rebase.
+     * This is before any fees.
+     * @return yield amount of expected yield
      */
-    function nextYield() external view returns (uint256) {
-        (uint256 yield, ) = _nextYield(
-            oUSD.totalSupply(),
-            _totalValue(),
-            oUSD.nonRebasingSupply()
-        );
+    function nextYield() external view returns (uint256 yield) {
+        uint256 _totalSupply = oUSD.totalSupply();
+        uint256 _nonRebasing = oUSD.nonRebasingSupply();
+        (yield, ) = _nextYield(_totalSupply, _totalValue(), _nonRebasing);
         return yield;
     }
 

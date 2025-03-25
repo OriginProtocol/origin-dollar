@@ -197,6 +197,20 @@ contract VaultAdmin is VaultStorage {
         emit RebasePerSecondMaxChanged(newPerSecond);
     }
 
+    /**
+     * @notice Set the drip duration perioud
+     * @param _dripDuration Time in seconds to target a constant yield rate
+     */
+    function setDripDuration(uint256 _dripDuration)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        dripDuration = _dripDuration.toUint64();
+        emit DripDurationChanged(_dripDuration);
+    }
+
     /***************************************
                     Swaps
     ****************************************/
