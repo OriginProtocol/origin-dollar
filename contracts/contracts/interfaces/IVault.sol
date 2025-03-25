@@ -270,4 +270,19 @@ interface IVault {
     function withdrawalClaimDelay() external view returns (uint256);
 
     function setWithdrawalClaimDelay(uint256 newDelay) external;
+
+    function lastRebase() external view returns (uint64);
+
+    function dripDuration() external view returns (uint64);
+
+    function setDripDuration(uint256 _dripDuration) external;
+
+    function rebasePerSecondMax() external view returns (uint64);
+
+    function setRebaseRateMax(uint256 yearlyApr) external;
+
+    function rebasePerSecondTarget() external view returns (uint64);
+    
+
+    // slither-disable-end constable-states
 }

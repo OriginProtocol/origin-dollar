@@ -389,7 +389,7 @@ contract VaultCore is VaultInitializer {
         uint256 vaultValue = _totalValue();
         uint256 nonRebasing = oUSD.nonRebasingSupply();
         // If no supply yet, do not rebase
-        if (ousdSupply == 0) {
+        if (supply == 0) {
             return vaultValue;
         }
 
@@ -450,7 +450,7 @@ contract VaultCore is VaultInitializer {
         if (
             elapsed == 0 || // Yield only once per block.
             rebasing == 0 || // No yield if there are no rebasing tokens to give it to.
-            supply > vaultValue || // No yield if we do have yield to give.
+            supply > vaultValue || // No yield if we do not have yield to give.
             block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
         ) {
             return (0, targetRate);
@@ -459,7 +459,7 @@ contract VaultCore is VaultInitializer {
         // Start with the full difference available
         uint256 yield = vaultValue - supply;
 
-        // Cap via automatic drip duration control
+        // Cap via optional automatic duration smoothing
         uint256 _dripDuration = dripDuration;
         if (_dripDuration > 1) {
             // If we are able to sustain an increased drip rate for the
@@ -468,14 +468,14 @@ contract VaultCore is VaultInitializer {
             // If we cannot sustain the target rate any more,
             // then rebase what we can, and reduce the target
             targetRate = _min(targetRate, (yield * 1e18) / _dripDuration);
-
+            // drip at the new target rate
             yield = _min(yield, (targetRate * elapsed) / 1e18);
         }
 
-        // Cap, per second
+        // Cap per second
         yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e36);
 
-        // Cap, hard max per rebase
+        // Cap at a hard max per rebase, to avoid long durations resulting in huge rebases
         yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
 
         return (yield, targetRate);

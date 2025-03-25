@@ -1,3 +1,4 @@
+const { parseUnits } = require("ethers/lib/utils.js");
 const addresses = require("../../utils/addresses");
 const { deployOnSonic } = require("../../utils/deploy-l2.js");
 
@@ -44,6 +45,18 @@ module.exports = deployOnSonic(
           contract: cOSonicVault,
           signature: "setAdminImpl(address)",
           args: [dOSonicVaultAdmin.address],
+        },
+        // 3. Default to a half day dripper
+        {
+          contract: cOSonicVault,
+          signature: "setDripDuration(uint256)",
+          args: [12 * 60 * 60],
+        },
+        // 4. Default to a 20% APR rebase rate cap
+        {
+          contract: cOSonicVault,
+          signature: "setRebaseRateMax(uint256)",
+          args: [parseUnits("20", 18)],
         },
       ],
     };
