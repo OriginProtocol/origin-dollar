@@ -44,21 +44,8 @@ module.exports = deployOnSonic(
     // ---
     // ---------------------------------------------------------------------------------------------------------
     return {
-      name: "SwapX YF: Treasury boost for Stout.Fi and PoolBooster for OS/PENDLE",
-      actions: [
-        {
-          // Plateform: SwapX
-          // Protocol: Stout.Fi
-          // From STTX/OS --> To: Gnosis Safe
-          contract: cOSonic,
-          signature: "delegateYield(address,address)",
-          args: [
-            "0x23d638084e3085ff8989745bb2e4ca8fc8591c66",
-            "0x12684d18BDBA8e31936f40aBcE1175366874114f",
-          ],
-        },
-        ...actionsDouble,
-      ],
+      name: "SwapX YF: PoolBooster for OS/PENDLE",
+      actions: [...actionsDouble],
     };
   }
 );
