@@ -299,12 +299,13 @@ describe("Curve AMO OUSD strategy", function () {
 
       // Rebase to lock in the profits
       await ousdVault.rebase();
+
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
       await logProfit(dataBeforeAttack);
 
       // Remove all funds from the Curve AMO strategy
-      await ousdVault
+      const tx = await ousdVault
         .connect(impersonatedAMOGovernor)
         .withdrawAllFromStrategy(curveAMOStrategy.address);
       const dataAfterStratWithdrawAll = await snapData();
@@ -312,8 +313,15 @@ describe("Curve AMO OUSD strategy", function () {
         dataAfterStratWithdrawAll,
         "\nAfter withdraw all from strategy"
       );
-      const finalProfit = await logProfit(dataBeforeAttack);
+      const finalProfit = await logProfit(dataAfterRebase);
       expect(finalProfit).to.be.gte(0);
+
+      // Get the OUSD burnt from the Vault's Redeem event
+      const receipt = await tx.wait();
+      const ousdWithdrawEvent = receipt.events.find(
+        (e) => e.event === "Redeem" && e.address === ousdVault.address
+      );
+      log(`OUSD burnt          : ${formatUnits(ousdWithdrawEvent.args[1])}`);
     });
 
     it("Should protect against an attacker front-running a deposit by adding a lot of OUSD to the pool", async () => {
@@ -401,7 +409,7 @@ describe("Curve AMO OUSD strategy", function () {
         dataAfterStratWithdrawAll,
         "\nAfter withdraw all from strategy"
       );
-      const finalProfit = await logProfit(dataBeforeAttack);
+      const finalProfit = await logProfit(dataAfterRebase);
       expect(finalProfit).to.be.gte(0);
     });
 
