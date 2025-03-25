@@ -46,11 +46,11 @@ module.exports = deployOnSonic(
           signature: "setAdminImpl(address)",
           args: [dOSonicVaultAdmin.address],
         },
-        // 3. Default to a half day dripper
+        // 3. Default to a short dripper, since currently we are running zero dripper.
         {
           contract: cOSonicVault,
           signature: "setDripDuration(uint256)",
-          args: [12 * 60 * 60],
+          args: [4 * 60 * 60],
         },
         // 4. Default to a 20% APR rebase rate cap
         {

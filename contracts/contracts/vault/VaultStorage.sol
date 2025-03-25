@@ -270,7 +270,7 @@ contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[43] private __gap;
 
-    uint256 internal constant MAX_REBASE = 1.02 ether;
+    uint256 internal constant MAX_REBASE = 0.02 ether;
     uint256 internal constant MAX_REBASE_PER_SECOND =
         uint256(0.05 ether) / 1 days;
 

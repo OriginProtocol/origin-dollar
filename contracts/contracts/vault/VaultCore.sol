@@ -431,7 +431,7 @@ contract VaultCore is VaultInitializer {
      * This is before any fees.
      * @return yield amount of expected yield
      */
-    function nextYield() external view returns (uint256 yield) {
+    function previewYield() external view returns (uint256 yield) {
         uint256 _totalSupply = oUSD.totalSupply();
         uint256 _nonRebasing = oUSD.nonRebasingSupply();
         (yield, ) = _nextYield(_totalSupply, _totalValue(), _nonRebasing);
@@ -462,18 +462,18 @@ contract VaultCore is VaultInitializer {
         // Cap via optional automatic duration smoothing
         uint256 _dripDuration = dripDuration;
         if (_dripDuration > 1) {
-            // If we are able to sustain an increased drip rate for the
-            // whole duration, then increase the target drip rate
-            targetRate = _max(targetRate, (yield * 6e17) / _dripDuration);
+            // If we are able to sustain an increased drip rate for a
+            // longer duration, then increase the target drip rate
+            targetRate = _max(targetRate, yield / (_dripDuration * 2));
             // If we cannot sustain the target rate any more,
             // then rebase what we can, and reduce the target
-            targetRate = _min(targetRate, (yield * 1e18) / _dripDuration);
+            targetRate = _min(targetRate, yield / _dripDuration);
             // drip at the new target rate
-            yield = _min(yield, (targetRate * elapsed) / 1e18);
+            yield = _min(yield, targetRate * elapsed);
         }
 
-        // Cap per second
-        yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e36);
+        // Cap per second. elapsed is not 1e18 denominated
+        yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e18);
 
         // Cap at a hard max per rebase, to avoid long durations resulting in huge rebases
         yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);

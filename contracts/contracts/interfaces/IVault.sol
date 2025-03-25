@@ -282,7 +282,8 @@ interface IVault {
     function setRebaseRateMax(uint256 yearlyApr) external;
 
     function rebasePerSecondTarget() external view returns (uint64);
-    
+
+    function previewYield() external view returns (uint256 yield);
 
     // slither-disable-end constable-states
 }
