@@ -219,7 +219,7 @@ describe("Curve AMO OUSD strategy", function () {
       const user = defaultDepositor;
       const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
       const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
-      const attackerUsdtAmount = usdtUnits("150000"); // 150k USDT
+      const attackerUsdtAmount = usdtUnits("1500000"); // 150k USDT
       const depositUsdtAmount = usdtUnits("10000"); // 10k USDT
 
       const dataBeforeAttack = await snapData();
@@ -294,6 +294,12 @@ describe("Curve AMO OUSD strategy", function () {
           attackerLpTokensAfter
         )} Curve pool LP tokens`
       );
+
+      // Rebase to lock in the profits
+      await ousdVault.rebase();
+      const dataAfterRebase = await snapData();
+      logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
+      await logProfit(dataBeforeAttack);
 
       // Remove all funds from the Curve AMO strategy
       await ousdVault
@@ -1032,7 +1038,7 @@ describe("Curve AMO OUSD strategy", function () {
         await setERC20TokenBalance(
           nick.address,
           usdt,
-          (ousdAmount.div(1e12) + balance).mul(2),
+          ousdAmount.div(1e12).add(balance).mul(2),
           hre
         );
       }
@@ -1063,6 +1069,8 @@ describe("Curve AMO OUSD strategy", function () {
   const snapData = async () => {
     const stratBalance = await curveAMOStrategy.checkBalance(usdt.address);
     const ousdSupply = await ousd.totalSupply();
+    const ousdNonRebasingSupply = await ousd.nonRebasingSupply();
+    const ousdRebasingSupply = ousdSupply.sub(ousdNonRebasingSupply);
     const vaultAssets = await ousdVault.totalValue();
     const poolSupply = await curvePool.totalSupply();
     const [poolOusdBalance, poolUsdtBalance] = await curvePool.get_balances();
@@ -1078,6 +1086,8 @@ describe("Curve AMO OUSD strategy", function () {
     return {
       stratBalance,
       ousdSupply,
+      ousdNonRebasingSupply,
+      ousdRebasingSupply,
       vaultAssets,
       poolSupply,
       reserves,
@@ -1104,43 +1114,51 @@ describe("Curve AMO OUSD strategy", function () {
     }
     log(`Strategy balance    : ${formatUnits(data.stratBalance, 6)}`);
     log(`OUSD supply         : ${formatUnits(data.ousdSupply)}`);
+    log(`OUSD rebasing supply: ${formatUnits(data.ousdRebasingSupply)}`);
     log(`Vault assets        : ${formatUnits(data.vaultAssets)}`);
     log(
       `Solvency            : ${formatUnits(
         data.vaultAssets.sub(data.ousdSupply)
       )}`
     );
-    log(`pool supply         : ${formatUnits(data.poolSupply)}`);
+    log(`Pool supply         : ${formatUnits(data.poolSupply)}`);
     log(
-      `reserves OUSD       : ${formatUnits(data.reserves.ousd)} ${formatUnits(
+      `Reserves OUSD       : ${formatUnits(data.reserves.ousd)} ${formatUnits(
         reserversPercentage.ousd,
         2
       )}%`
     );
     log(
-      `reserves USDT       : ${formatUnits(
+      `Reserves USDT       : ${formatUnits(
         data.reserves.usdt,
         6
       )} ${formatUnits(reserversPercentage.usdt, 2)}%`
     );
     log(`Virtual price       : ${formatUnits(data.virtualPrice)}`);
     log(
-      `strat gauge balance : ${formatUnits(
+      `Strat gauge balance : ${formatUnits(
         data.stratGaugeBalance
       )} ${formatUnits(gaugePercentage, 2)}%`
     );
-    log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
-    log(`vault OUSD balance    : ${formatUnits(data.vaultOusdBalance)}`);
-    log(`strat USDT balance    : ${formatUnits(data.stratUsdtBalance, 6)}`);
+    log(`Gauge supply        : ${formatUnits(data.gaugeSupply)}`);
+    log(`Vault OUSD balance    : ${formatUnits(data.vaultOusdBalance)}`);
+    log(`Strat USDT balance    : ${formatUnits(data.stratUsdtBalance, 6)}`);
   };
 
   const logProfit = async (dataBefore) => {
     const stratBalanceAfter = await curveAMOStrategy.checkBalance(usdt.address);
     const ousdSupplyAfter = await ousd.totalSupply();
+    const ousdNonRebasingSupplyAfter = await ousd.nonRebasingSupply();
+    const ousdRebasingSupplyAfter = ousdSupplyAfter.sub(
+      ousdNonRebasingSupplyAfter
+    );
     const vaultAssetsAfter = await ousdVault.totalValue();
     const profit = vaultAssetsAfter
       .sub(dataBefore.vaultAssets)
       .sub(ousdSupplyAfter.sub(dataBefore.ousdSupply));
+    const rebasingProfit = vaultAssetsAfter
+      .sub(dataBefore.vaultAssets)
+      .sub(ousdRebasingSupplyAfter.sub(dataBefore.ousdRebasingSupply));
 
     log(
       `Change strat balance: ${formatUnits(
@@ -1159,6 +1177,7 @@ describe("Curve AMO OUSD strategy", function () {
       )}`
     );
     log(`Profit              : ${formatUnits(profit)}`);
+    log(`Rebasing profit     : ${formatUnits(rebasingProfit)}`);
 
     return profit;
   };
