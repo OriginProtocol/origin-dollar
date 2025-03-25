@@ -221,14 +221,6 @@ describe("Curve AMO OUSD strategy", function () {
       const attackerUsdtAmount = usdtUnits("100000");
       const depositUsdtAmount = usdtUnits("10000");
 
-      // // Put some USDT in the strategy
-      // await usdt
-      //   .connect(impersonatedVaultSigner)
-      //   .transfer(curveAMOStrategy.address, depositUsdtAmount);
-      // await curveAMOStrategy
-      //   .connect(impersonatedVaultSigner)
-      //   .deposit(usdt.address, depositUsdtAmount);
-
       const dataBeforeAttack = await snapData();
       logSnapData(
         dataBeforeAttack,
@@ -299,14 +291,6 @@ describe("Curve AMO OUSD strategy", function () {
       const attackerUsdtBalanceBefore = await usdt.balanceOf(user.address);
       const attackerOusdAmount = ousdUnits("100000");
       const depositUsdtAmount = usdtUnits("10000");
-
-      // // Put some USDT in the strategy
-      // await usdt
-      //   .connect(impersonatedVaultSigner)
-      //   .transfer(curveAMOStrategy.address, depositUsdtAmount);
-      // await curveAMOStrategy
-      //   .connect(impersonatedVaultSigner)
-      //   .deposit(usdt.address, depositUsdtAmount);
 
       const dataBeforeAttack = await snapData();
       logSnapData(
