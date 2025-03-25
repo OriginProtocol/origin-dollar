@@ -387,13 +387,18 @@ contract VaultCore is VaultInitializer {
     function _rebase() internal whenNotRebasePaused returns (uint256) {
         uint256 ousdSupply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
         // If no supply yet, do not rebase
         if (ousdSupply == 0) {
             return vaultValue;
         }
 
         // Calculate yield and new supply
-        uint256 yield = _nextYield(ousdSupply, vaultValue);
+        (uint256 yield, uint256 newTarget) = _nextYield(
+            ousdSupply,
+            vaultValue,
+            nonRebasing
+        );
         uint256 newSupply = ousdSupply + yield;
         // Only rebase upwards and if we have enough backing funds
         if (newSupply <= ousdSupply || newSupply > vaultValue) {
@@ -415,8 +420,10 @@ contract VaultCore is VaultInitializer {
 
         // Only ratchet OToken supply upwards
         // Final check uses latest totalSupply
-        if (newSupply > oUSD.totalSupply()) {
+        uint256 preSupply = oUSD.totalSupply();
+        if (newSupply > preSupply) {
             oUSD.changeSupply(newSupply);
+            rebasePerSecondTarget = uint64(_min(newTarget, type(uint64).max));
             lastRebase = uint64(block.timestamp); // Intentional cast
         }
         return vaultValue;
@@ -425,22 +432,23 @@ contract VaultCore is VaultInitializer {
     /**
      * @notice Calculates the amount that would rebase to users at at next rebase.
      */
-    function nextYield() external view returns (uint256 yield) {
-        yield = _nextYield(oUSD.totalSupply(), _totalValue());
-        if (trusteeAddress != address(0)) {
-            yield -= (yield * trusteeFeeBps) / 1e4;
-        }
+    function nextYield() external view returns (uint256) {
+        (uint256 yield, ) = _nextYield(
+            oUSD.totalSupply(),
+            _totalValue(),
+            oUSD.nonRebasingSupply()
+        );
         return yield;
     }
 
-    function _nextYield(uint256 supply, uint256 vaultValue)
-        internal
-        view
-        returns (uint256 yield)
-    {
-        uint256 nonRebasing = oUSD.nonRebasingSupply();
+    function _nextYield(
+        uint256 supply,
+        uint256 vaultValue,
+        uint256 nonRebasing
+    ) internal view returns (uint256 yield, uint256 targetRate) {
         uint256 rebasing = supply - nonRebasing;
         uint256 elapsed = block.timestamp - lastRebase;
+        targetRate = rebasePerSecondTarget;
 
         if (
             elapsed == 0 || // Yield only once per block.
@@ -448,25 +456,32 @@ contract VaultCore is VaultInitializer {
             supply > vaultValue || // No yield if we do have yield to give.
             block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
         ) {
-            return 0;
+            return (0, targetRate);
         }
 
         // Start with the full difference available
-        yield = vaultValue - supply;
+        uint256 availableYield = vaultValue - supply;
 
-        // Cap by automatic yield setting
-        yield = _min(yield, (yield * elapsed) / dripDuration);
+        // Cap via automatic drip duration control
+        uint256 _dripDuration = dripDuration;
+        if (_dripDuration > 1) {
+            // If we are able to sustain an increased drip rate for the
+            // whole duration, then increase the target drip rate
+            targetRate = _max(targetRate, (yield * 6e17) / _dripDuration);
+            // If we cannot sustain the target rate any more,
+            // then rebase what we can, and reduce the target
+            targetRate = _min(targetRate, (yield * 1e18) / _dripDuration);
 
-        // Cap on max drip rate
-        yield = _min(
-            yield,
-            (rebasing * elapsed * MAX_REBASE_PER_SECOND) / 1e36
-        );
+            yield = _min(yield, (targetRate * elapsed) / 1e18);
+        }
 
-        // Cap on max for a single rebase.
+        // Cap, per second
+        yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e36);
+
+        // Cap, hard max per rebase
         yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
 
-        return yield;
+        return (yield, targetRate);
     }
 
     /**
@@ -915,5 +930,9 @@ contract VaultCore is VaultInitializer {
 
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
     }
 }
