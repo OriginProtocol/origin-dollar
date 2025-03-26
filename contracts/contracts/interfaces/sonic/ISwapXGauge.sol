@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IGauge {
+    function owner() external view returns (address);
+
     function TOKEN() external view returns (address);
 
     function DISTRIBUTION() external view returns (address);
@@ -53,4 +55,12 @@ interface IGauge {
     function withdrawAllAndHarvest() external;
 
     function withdrawExcess(address token, uint256 amount) external;
+
+    function emergency() external returns (bool);
+
+    function emergencyWithdraw() external;
+
+    function activateEmergencyMode() external;
+
+    function stopEmergencyMode() external;
 }

@@ -159,6 +159,17 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
     });
+    it("Vault should be able to withdraw all in SwapX Emergency", async () => {
+      const { swapXAMOStrategy, swapXGauge, oSonicVaultSigner } = fixture;
+
+      const gaugeOwner = await swapXGauge.owner();
+      const ownerSigner = await impersonateAndFund(gaugeOwner);
+      await swapXGauge.connect(ownerSigner).activateEmergencyMode();
+      await assertWithdrawAll();
+
+      // Try again when the strategy is empty
+      await swapXAMOStrategy.connect(oSonicVaultSigner).withdrawAll();
+    });
     it("Should fail to deposit zero wS", async () => {
       const { swapXAMOStrategy, oSonicVaultSigner, wS } = fixture;
 
