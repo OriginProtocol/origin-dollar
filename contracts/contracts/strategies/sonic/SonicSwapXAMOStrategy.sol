@@ -336,8 +336,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         // Can not withdraw zero LP tokens from the gauge
         if (lpTokens == 0) return;
 
-        // Withdraw pool LP tokens from the gauge and remove assets from from the pool
-        _withdrawFromGaugeAndPool(lpTokens);
+        if (IGauge(gauge).emergency()) {
+            // The gauge is in emergency mode
+            _emergencyWithdrawFromGaugeAndPool();
+        } else {
+            // Withdraw pool LP tokens from the gauge and remove assets from from the pool
+            _withdrawFromGaugeAndPool(lpTokens);
+        }
 
         // Burn all OS in this strategy contract
         uint256 osToBurn = IERC20(os).balanceOf(address(this));
@@ -591,6 +596,24 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // Withdraw pool LP tokens from the gauge
         IGauge(gauge).withdraw(_lpTokens);
+
+        // Transfer the pool LP tokens to the pool
+        IERC20(pool).safeTransfer(pool, _lpTokens);
+
+        // Burn the LP tokens and transfer the wS and OS back to the strategy
+        IPair(pool).burn(address(this));
+    }
+
+    /**
+     * @dev Withdraw all pool LP tokens from the gauge when it's in emergency mode
+     * and remove wS and OS from the pool.
+     */
+    function _emergencyWithdrawFromGaugeAndPool() internal {
+        // Withdraw all pool LP tokens from the gauge
+        IGauge(gauge).emergencyWithdraw();
+
+        // Get the pool LP tokens in strategy
+        uint256 _lpTokens = IERC20(pool).balanceOf(address(this));
 
         // Transfer the pool LP tokens to the pool
         IERC20(pool).safeTransfer(pool, _lpTokens);
