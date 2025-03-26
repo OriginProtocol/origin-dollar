@@ -169,6 +169,8 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
+     * @param _rewardTokenAddresses Address of CRV
+     * @param _maxSlippage Maximum slippage allowed for adding/removing liquidity from the Curve pool.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV
