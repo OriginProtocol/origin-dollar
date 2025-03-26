@@ -221,8 +221,8 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balances = curvePool.get_balances();
-        
-        // Calcul the difference between the hardAsset and OTOKEN balance 
+
+        // Calculate the difference between the hardAsset and OTOKEN balance
         // in the Curve pool + the amount of hardAsset to be deposited
         int256 otokenToAdd = balances[hardAssetCoinIndex]
             .scaleBy(decimalsOToken, decimalsHardAsset)
@@ -488,10 +488,10 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
      * @param _lpTokens The amount of Curve pool LP tokens to be burned for hardAsset.
      * @dev Curve pool LP tokens is used rather than hardAsset assets as Curve does not
      * have a way to accurately calculate the amount of LP tokens for a required
-     * amount of hardAsset. Curve's `calc_token_amount` functioun does not include fees.
-     * A 3rd party libary can be used that takes into account the fees, but this
+     * amount of hardAsset. Curve's `calc_token_amount` function does not include fees.
+     * A 3rd party library can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
-     * caclulate the amount of Curve pool LP tokens required off-chain.
+     * calculate the amount of Curve pool LP tokens required off-chain.
      */
     function removeOnlyAssets(uint256 _lpTokens)
         external
@@ -592,7 +592,10 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     function _lpWithdraw(uint256 _lpAmount) internal {
-        require(gauge.balanceOf(address(this)) >= _lpAmount, "Insufficient LP tokens");
+        require(
+            gauge.balanceOf(address(this)) >= _lpAmount,
+            "Insufficient LP tokens"
+        );
         // withdraw lp tokens from the gauge without claiming rewards
         gauge.withdraw(_lpAmount);
     }
