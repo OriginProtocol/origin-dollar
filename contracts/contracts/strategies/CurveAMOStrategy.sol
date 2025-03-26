@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for a Curve pool using an OToken.
  * @author Origin Protocol Inc
  */
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -18,7 +19,6 @@ import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { ICurveMinter } from "../interfaces/ICurveMinter.sol";
 
 contract CurveAMOStrategy is InitializableAbstractStrategy {
-    using SafeCast for int256;
     using SafeCast for uint256;
     using SafeERC20 for IERC20;
     using StableMath for uint256;
@@ -222,22 +222,26 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
 
         // Get the asset and OToken balances in the Curve pool
         uint256[] memory balances = curvePool.get_balances();
-
-        // Calculate the difference between the hardAsset and OTOKEN balance
-        // in the Curve pool + the amount of hardAsset to be deposited
-        int256 otokenToAdd = balances[hardAssetCoinIndex]
-            .scaleBy(decimalsOToken, decimalsHardAsset)
-            .toInt256() +
-            scaledHardAssetAmount.toInt256() -
-            balances[otokenCoinIndex].toInt256();
+        // safe to cast since min value is at least 0
+        uint256 otokenToAdd = uint256(
+            _max(
+                0,
+                (
+                    balances[hardAssetCoinIndex].scaleBy(
+                        decimalsOToken,
+                        decimalsHardAsset
+                    )
+                ).toInt256() +
+                    scaledHardAssetAmount.toInt256() -
+                    balances[otokenCoinIndex].toInt256()
+            )
+        );
 
         /* Add so much OTOKEN so that the pool ends up being balanced. And at minimum
          * add as much OTOKEN as hard asset and at maximum twice as much OTOKEN.
-         * Even if the `otokenToAdd` is negative at first calculation it will be
-         * positive due to the `max()` and `scaledHardAssetAmount` is always positive.
          */
-        otokenToAdd = _max(otokenToAdd, scaledHardAssetAmount.toInt256());
-        otokenToAdd = _min(otokenToAdd, (scaledHardAssetAmount * 2).toInt256());
+        otokenToAdd = Math.max(otokenToAdd, scaledHardAssetAmount);
+        otokenToAdd = Math.min(otokenToAdd, scaledHardAssetAmount * 2);
 
         /* Mint OTOKEN with a strategy that attempts to contribute to stability of OTOKEN/hardAsset pool. Try
          * to mint so much OTOKEN that after deployment of liquidity pool ends up being balanced.
@@ -246,22 +250,16 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
          * to hardAsset amount deployed. And never larger than twice the hardAsset amount deployed even if
          * it would have a further beneficial effect on pool stability.
          */
-        IVault(vaultAddress).mintForStrategy(otokenToAdd.toUint256());
+        IVault(vaultAddress).mintForStrategy(otokenToAdd);
 
-        emit Deposit(
-            address(oToken),
-            address(lpToken),
-            otokenToAdd.toUint256()
-        );
+        emit Deposit(address(oToken), address(lpToken), otokenToAdd);
 
         uint256[] memory _amounts = new uint256[](2);
         _amounts[hardAssetCoinIndex] = _hardAssetAmount;
-        _amounts[otokenCoinIndex] = otokenToAdd.toUint256();
+        _amounts[otokenCoinIndex] = otokenToAdd;
 
-        uint256 valueInLpTokens = (scaledHardAssetAmount +
-            otokenToAdd.toUint256()).divPrecisely(
-                curvePool.get_virtual_price()
-            );
+        uint256 valueInLpTokens = (scaledHardAssetAmount + otokenToAdd)
+            .divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - maxSlippage
         );
@@ -697,12 +695,5 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
      */
     function _max(int256 a, int256 b) internal pure returns (int256) {
         return a >= b ? a : b;
-    }
-
-    /**
-     * @dev Returns the smallest of two numbers int256 version
-     */
-    function _min(int256 a, int256 b) internal pure returns (int256) {
-        return a <= b ? a : b;
     }
 }
