@@ -208,10 +208,7 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
 
     function _deposit(address _hardAsset, uint256 _hardAssetAmount) internal {
         require(_hardAssetAmount > 0, "Must deposit something");
-        require(
-            _hardAsset == address(hardAsset),
-            "Can only deposit hard asset"
-        );
+        require(_hardAsset == address(hardAsset), "Unsupported asset");
 
         emit Deposit(_hardAsset, address(lpToken), _hardAssetAmount);
         uint256 scaledHardAssetAmount = _hardAssetAmount.scaleBy(

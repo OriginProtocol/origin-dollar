@@ -722,12 +722,12 @@ describe("Curve AMO OUSD strategy", function () {
           .deposit(usdt.address, 0)
       ).to.be.revertedWith("Must deposit something");
     });
-    it("Deposit: Can only deposit hard asset", async () => {
+    it("Deposit: Unsupported asset", async () => {
       await expect(
         curveAMOStrategy
           .connect(impersonatedVaultSigner)
           .deposit(ousd.address, defaultDeposit)
-      ).to.be.revertedWith("Can only deposit hard asset");
+      ).to.be.revertedWith("Unsupported asset");
     });
     it("Deposit: Caller is not the Vault", async () => {
       await expect(
