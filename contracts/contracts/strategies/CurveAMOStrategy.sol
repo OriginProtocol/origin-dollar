@@ -162,6 +162,7 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
                 curvePool.coins(hardAssetCoinIndex) == _hardAsset,
             "Invalid coin indexes"
         );
+        require(gauge.lp_token() == address(curvePool), "Invalid pool");
     }
 
     /**
