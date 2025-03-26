@@ -292,12 +292,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
       expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
     });
-    it("Attacker front-run deposit", async () => {
+    it("Attacker front-run deposit within range", async () => {
       const { clement, oSonic, oSonicVaultSigner, swapXAMOStrategy, wS } =
         fixture;
 
       const attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-      const wsAmountIn = parseUnits("5000");
+      const wsAmountIn = parseUnits("1180");
 
       const dataBeforeSwap = await snapData();
       logSnapData(
@@ -364,8 +364,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit wS to AMO strategy", async function () {
-      await assertDeposit(parseUnits("5000"));
+    it("Vault should fail to deposit wS to AMO strategy", async function () {
+      await assertFailedDeposit(parseUnits("5000"), "price out of range");
     });
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
@@ -497,8 +497,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit wS to AMO strategy", async function () {
-      await assertDeposit(parseUnits("6000"));
+    it("Vault should failt to deposit wS to strategy", async function () {
+      await assertFailedDeposit(parseUnits("6000"), "price out of range");
     });
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
@@ -859,6 +859,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const { _reserve0: wsReserves, _reserve1: osReserves } =
       await swapXPool.getReserves();
     const reserves = { ws: wsReserves, os: osReserves };
+    // Amount of wS bought from selling 1 OS
+    const wsAmount = await swapXPool.getAmountOut(
+      parseUnits("1"),
+      oSonic.address
+    );
+    // OS/wS price = wS / OS
+    const sellPrice = wsAmount;
+
+    // Amount of wS sold from buying 1 OS
+    const osAmount = await swapXPool.getAmountOut(parseUnits("1"), wS.address);
+    // OS/wS price = wS / OS
+    const buyPrice = parseUnits("1", 36).div(osAmount);
+
     const k = calcInvariant(reserves);
     const stratGaugeBalance = await swapXGauge.balanceOf(
       swapXAMOStrategy.address
@@ -873,6 +886,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultAssets,
       poolSupply,
       reserves: { ws: wsReserves, os: osReserves },
+      buyPrice,
+      sellPrice,
       stratGaugeBalance,
       gaugeSupply,
       vaultWSBalance,
@@ -909,6 +924,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         2
       )}%`
     );
+    log(`buy price           : ${formatUnits(data.buyPrice)} OS/wS`);
+    log(`sell price          : ${formatUnits(data.sellPrice)} OS/wS`);
     log(`Invariant K         : ${formatUnits(data.k)}`);
     log(
       `strat gauge balance : ${formatUnits(
@@ -1082,6 +1099,25 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await oSonic.balanceOf(swapXAMOStrategy.address),
       "Strategy's OS balance"
     ).to.equal(0);
+  }
+
+  async function assertFailedDeposit(wsDepositAmount, errorMessage) {
+    const { wS, oSonicVaultSigner, swapXAMOStrategy } = fixture;
+
+    const dataBefore = await snapData();
+    await logSnapData(dataBefore, "\nBefore depositing wS to strategy");
+
+    // Vault transfers wS to strategy
+    await wS
+      .connect(oSonicVaultSigner)
+      .transfer(swapXAMOStrategy.address, wsDepositAmount);
+
+    // Vault calls deposit on the strategy
+    const tx = swapXAMOStrategy
+      .connect(oSonicVaultSigner)
+      .deposit(wS.address, wsDepositAmount);
+
+    await expect(tx, "deposit to strategy").to.be.revertedWith(errorMessage);
   }
 
   async function assertWithdrawAll() {

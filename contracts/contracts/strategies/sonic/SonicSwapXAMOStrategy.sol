@@ -44,6 +44,10 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @notice Address of the SwapX Gauge contract.
     address public immutable gauge;
 
+    /// @notice The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted.
+    /// This is a min and max so a 50 basis point deviation (0.005e18) allows a price range from 0.995 to 1.005.
+    uint256 maxDepeg;
+
     event SwapOTokensToPool(
         uint256 osMinted,
         uint256 wsDepositAmount,
@@ -72,6 +76,18 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      */
     modifier skimPool() {
         IPair(pool).skim(address(this));
+        _;
+    }
+
+    modifier nearBalancedPool() {
+        // Get the OS/wS price from the pool. That's the amount of OS received for 1 wS.
+        uint256 sellPrice = IPair(pool).getAmountOut(1e18, os);
+        uint256 buyPrice = 1e36 / IPair(pool).getAmountOut(1e18, ws);
+        uint256 pegPrice = 1e18;
+        require(
+            sellPrice >= pegPrice - maxDepeg && buyPrice <= pegPrice + maxDepeg,
+            "price out of range"
+        );
         _;
     }
 
@@ -164,12 +180,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as SwapX strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Array containing SWPx token address
+     * @param _maxDepeg The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted.
      */
-    function initialize(address[] calldata _rewardTokenAddresses)
-        external
-        onlyGovernor
-        initializer
-    {
+    function initialize(
+        address[] calldata _rewardTokenAddresses,
+        uint256 _maxDepeg
+    ) external onlyGovernor initializer {
         address[] memory pTokens = new address[](1);
         pTokens[0] = pool;
 
@@ -181,6 +197,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
             _assets,
             pTokens
         );
+
+        maxDepeg = _maxDepeg;
 
         _approveBase();
     }
@@ -205,6 +223,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
         skimPool
+        nearBalancedPool
     {
         require(_asset == ws, "Unsupported asset");
         require(_wsAmount > 0, "Must deposit something");
@@ -225,7 +244,14 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
      */
-    function depositAll() external override onlyVault nonReentrant skimPool {
+    function depositAll()
+        external
+        override
+        onlyVault
+        nonReentrant
+        skimPool
+        nearBalancedPool
+    {
         uint256 wsBalance = IERC20(ws).balanceOf(address(this));
         if (wsBalance > 0) {
             (uint256 osDepositAmount, ) = _deposit(wsBalance);
