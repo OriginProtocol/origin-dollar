@@ -470,6 +470,12 @@ describe("Curve AMO OUSD strategy", function () {
       expect(await usdt.balanceOf(ousdVault.address)).to.approxEqualTolerance(
         balanceVault.add(defaultDeposit.div(1e12))
       );
+
+      // Add a second withdrawAll to test that withrawAll can be
+      // called when strategy is empty
+      expect(
+        await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll()
+      ).to.not.be.reverted;
     });
 
     it("Should mintAndAddOToken", async () => {
