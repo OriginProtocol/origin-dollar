@@ -382,12 +382,14 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
         // Withdraws are proportional to assets held by 3Pool
         uint256[] memory minWithdrawAmounts = new uint256[](2);
 
+        // Check balance of LP tokens in the strategy, if 0 return
+        uint256 lpBalance = lpToken.balanceOf(address(this));
+
         // Remove liquidity
         // slither-disable-next-line unused-return
-        curvePool.remove_liquidity(
-            lpToken.balanceOf(address(this)),
-            minWithdrawAmounts
-        );
+        if (lpBalance > 0) {
+            curvePool.remove_liquidity(lpBalance, minWithdrawAmounts);
+        }
 
         // Burn all OTOKEN
         uint256 otokenToBurn = oToken.balanceOf(address(this));
