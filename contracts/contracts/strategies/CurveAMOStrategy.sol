@@ -158,7 +158,8 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
             ? (0, 1)
             : (1, 0);
         require(
-            curvePool.coins(otokenCoinIndex) == _otoken,
+            curvePool.coins(otokenCoinIndex) == _otoken &&
+                curvePool.coins(hardAssetCoinIndex) == _hardAsset,
             "Invalid coin indexes"
         );
     }
