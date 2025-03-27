@@ -6,7 +6,7 @@ module.exports = deployOnSonic(
   {
     deployName: "012_dripper_no_donate",
   },
-  async ({ deployWithConfirmation, withConfirmation }) => {
+  async ({ deployWithConfirmation }) => {
     // Contract addresses to use
     const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
     const cWS = await ethers.getContractAt("IWrappedSonic", addresses.sonic.wS);
