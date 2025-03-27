@@ -39,6 +39,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         addresses.sonic.timelock
       );
       expect(await swapXAMOStrategy.supportsAsset(addresses.sonic.wS)).to.true;
+      expect(await swapXAMOStrategy.maxDepeg()).to.equal(parseUnits("0.01"));
     });
     it("Should be able to check balance", async () => {
       const { wS, nick, swapXAMOStrategy } = fixture;
@@ -75,6 +76,35 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       for (const signer of [strategist, nick, oSonicVaultSigner]) {
         const tx = swapXAMOStrategy.connect(signer).safeApproveAllTokens();
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Only Governor can set the max depeg", async () => {
+      const {
+        timelock,
+        strategist,
+        nick,
+        oSonicVaultSigner,
+        swapXAMOStrategy,
+      } = fixture;
+
+      expect(await swapXAMOStrategy.connect(timelock).isGovernor()).to.equal(
+        true
+      );
+
+      // Timelock can update
+      const newMaxDepeg = parseUnits("0.02");
+      const tx = await swapXAMOStrategy
+        .connect(timelock)
+        .setMaxDepeg(newMaxDepeg);
+      await expect(tx)
+        .to.emit(swapXAMOStrategy, "MaxDepegUpdated")
+        .withArgs(newMaxDepeg);
+
+      expect(await swapXAMOStrategy.maxDepeg()).to.equal(newMaxDepeg);
+
+      for (const signer of [strategist, nick, oSonicVaultSigner]) {
+        const tx = swapXAMOStrategy.connect(signer).setMaxDepeg(newMaxDepeg);
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });

@@ -49,7 +49,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// eg 0.01e18 or 1e16 is 1% which is 100 basis points.
     /// This is the amount below and above peg so a 50 basis point deviation (0.005e18)
     /// allows a price range from 0.995 to 1.005.
-    uint256 maxDepeg;
+    uint256 public maxDepeg;
 
     event SwapOTokensToPool(
         uint256 osMinted,
@@ -62,6 +62,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 lpTokens,
         uint256 osBurnt
     );
+    event MaxDepegUpdated(uint256 maxDepeg);
 
     /**
      * @dev Verifies that the caller is the Strategist of the Vault.
@@ -765,6 +766,21 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
+    }
+
+    /***************************************
+                    Setters
+    ****************************************/
+
+    /**
+     * @notice Set the maximum deviation from the OS/wS peg (1e18) before deposits are reverted.
+     * @param _maxDepeg the OS/wS price from peg (1e18) in 18 decimals.
+     * eg 0.01e18 or 1e16 is 1% which is 100 basis points.
+     */
+    function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
+        maxDepeg = _maxDepeg;
+
+        emit MaxDepegUpdated(_maxDepeg);
     }
 
     /***************************************
