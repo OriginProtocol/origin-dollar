@@ -79,11 +79,22 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         _;
     }
 
+    /**
+     * @dev Checks the pool is balanced enough to allow deposits.
+     */
     modifier nearBalancedPool() {
-        // Get the OS/wS price from the pool. That's the amount of OS received for 1 wS.
+        // OS/wS price = wS / OS
+        // Get the OS/wS price for selling 1 OS for wS
+        // As OS is 1, the wS amount is the OS/wS price
         uint256 sellPrice = IPair(pool).getAmountOut(1e18, os);
-        uint256 buyPrice = 1e36 / IPair(pool).getAmountOut(1e18, ws);
+
+        // Get the amount of OS received from selling 1 wS. This is buying OS.
+        uint256 osAmount = IPair(pool).getAmountOut(1e18, ws);
+        // Convert to a OS/wS price = wS / OS
+        uint256 buyPrice = 1e36 / osAmount;
+
         uint256 pegPrice = 1e18;
+
         require(
             sellPrice >= pegPrice - maxDepeg && buyPrice <= pegPrice + maxDepeg,
             "price out of range"
