@@ -44,8 +44,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @notice Address of the SwapX Gauge contract.
     address public immutable gauge;
 
-    /// @notice The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted.
-    /// This is a min and max so a 50 basis point deviation (0.005e18) allows a price range from 0.995 to 1.005.
+    /// @notice The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted scaled to 18 decimals.
+    /// eg 0.01e18 or 1e16 is 1% which is 100 basis points.
+    /// This is the amount below and above peg so a 50 basis point deviation (0.005e18) allows a price range from 0.995 to 1.005.
     uint256 maxDepeg;
 
     event SwapOTokensToPool(
@@ -225,6 +226,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * mint the pool's LP token and deposit in the gauge.
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
+     * The pool's OS/wS price must be within the maxDepeg range.
      * @param _asset Address of Wrapped S (wS) token.
      * @param _wsAmount Amount of Wrapped S (wS) tokens to deposit.
      */
@@ -254,6 +256,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * mint the pool's LP token and deposit in the gauge.
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
+     * The pool's OS/wS price must be within the maxDepeg range.
      */
     function depositAll()
         external
@@ -306,8 +309,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Withdraw wS and OS from the SwapX pool, burn the OS,
      * and transfer the wS to the recipient.
-     * @dev This tx must be wrapped by the VaultValueChecker.
-     * To minimize loses, the pool should be rebalanced before the withdraw.
      * @param _recipient Address of the Vault.
      * @param _asset Address of the Wrapped S (wS) contract.
      * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
@@ -356,9 +357,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * remove all wS and OS from the SwapX pool,
      * burn all the OS tokens,
      * and transfer all the wS to the Vault contract.
-     * @dev This tx must be wrapped by the VaultValueChecker.
-     * To minimize loses, the pool should be rebalanced before the withdraw.
-     * There is no solvency check here as withdrawAll can be called to
+     * @dev There is no solvency check here as withdrawAll can be called to
      * quickly secure assets to the Vault in emergencies.
      */
     function withdrawAll()
