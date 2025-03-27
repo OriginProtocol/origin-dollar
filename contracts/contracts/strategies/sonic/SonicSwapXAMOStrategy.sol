@@ -459,7 +459,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // 1. Mint OS so it can be swapped into the pool
 
-        // There shouldn't be any OS in the strategy but just in case
+        // There can be OS in the strategy from skimming the pool
         uint256 osInStrategy = IERC20(os).balanceOf(address(this));
         require(_osAmount >= osInStrategy, "Too much OS in strategy");
         uint256 osToMint = _osAmount - osInStrategy;
