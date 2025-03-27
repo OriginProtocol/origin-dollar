@@ -44,9 +44,11 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @notice Address of the SwapX Gauge contract.
     address public immutable gauge;
 
-    /// @notice The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted scaled to 18 decimals.
+    /// @notice The max amount the OS/wS price can deviate from peg (1e18)
+    /// before deposits are reverted scaled to 18 decimals.
     /// eg 0.01e18 or 1e16 is 1% which is 100 basis points.
-    /// This is the amount below and above peg so a 50 basis point deviation (0.005e18) allows a price range from 0.995 to 1.005.
+    /// This is the amount below and above peg so a 50 basis point deviation (0.005e18)
+    /// allows a price range from 0.995 to 1.005.
     uint256 maxDepeg;
 
     event SwapOTokensToPool(
