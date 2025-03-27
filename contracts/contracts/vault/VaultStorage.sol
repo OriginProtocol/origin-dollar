@@ -258,7 +258,7 @@ contract VaultStorage is Initializable, Governable {
     uint64 public dripDuration;
 
     /// @notice max rebase percentage per second
-    ///   Can be used to set maximun yield of the protocol,
+    ///   Can be used to set maximum yield of the protocol,
     ///   spreading out yield over time
     // slither-disable-next-line uninitialized-state
     uint64 public rebasePerSecondMax;

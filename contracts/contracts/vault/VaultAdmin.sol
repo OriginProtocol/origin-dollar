@@ -198,7 +198,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set the drip duration perioud
+     * @notice Set the drip duration period
      * @param _dripDuration Time in seconds to target a constant yield rate
      */
     function setDripDuration(uint256 _dripDuration)
@@ -429,7 +429,7 @@ contract VaultAdmin is VaultStorage {
         );
 
         uint256 assetsCount = allAssets.length;
-        uint256 assetIndex = assetsCount; // initialize at invaid index
+        uint256 assetIndex = assetsCount; // initialize at invalid index
         for (uint256 i = 0; i < assetsCount; ++i) {
             if (allAssets[i] == _asset) {
                 assetIndex = i;
