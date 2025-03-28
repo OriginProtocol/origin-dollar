@@ -39,6 +39,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         addresses.sonic.timelock
       );
       expect(await swapXAMOStrategy.supportsAsset(addresses.sonic.wS)).to.true;
+      expect(await swapXAMOStrategy.maxDepeg()).to.equal(parseUnits("0.01"));
     });
     it("Should be able to check balance", async () => {
       const { wS, nick, swapXAMOStrategy } = fixture;
@@ -75,6 +76,35 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       for (const signer of [strategist, nick, oSonicVaultSigner]) {
         const tx = swapXAMOStrategy.connect(signer).safeApproveAllTokens();
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Only Governor can set the max depeg", async () => {
+      const {
+        timelock,
+        strategist,
+        nick,
+        oSonicVaultSigner,
+        swapXAMOStrategy,
+      } = fixture;
+
+      expect(await swapXAMOStrategy.connect(timelock).isGovernor()).to.equal(
+        true
+      );
+
+      // Timelock can update
+      const newMaxDepeg = parseUnits("0.02");
+      const tx = await swapXAMOStrategy
+        .connect(timelock)
+        .setMaxDepeg(newMaxDepeg);
+      await expect(tx)
+        .to.emit(swapXAMOStrategy, "MaxDepegUpdated")
+        .withArgs(newMaxDepeg);
+
+      expect(await swapXAMOStrategy.maxDepeg()).to.equal(newMaxDepeg);
+
+      for (const signer of [strategist, nick, oSonicVaultSigner]) {
+        const tx = swapXAMOStrategy.connect(signer).setMaxDepeg(newMaxDepeg);
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });
@@ -292,12 +322,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
       expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
     });
-    it("Attacker front-run deposit", async () => {
+    it("Attacker front-run deposit within range", async () => {
       const { clement, oSonic, oSonicVaultSigner, swapXAMOStrategy, wS } =
         fixture;
 
       const attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-      const wsAmountIn = parseUnits("5000");
+      const wsAmountIn = parseUnits("1180");
 
       const dataBeforeSwap = await snapData();
       logSnapData(
@@ -308,7 +338,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
 
       // Attacker swaps a lot of wS for OS in the pool
-      // This drops the pool's price of wS
+      // This drops the pool's wS/OS price and increases the OS/wS price
       const osAmountOut = await poolSwapTokensIn(wS, wsAmountIn);
 
       const depositAmount = parseUnits("1000");
@@ -329,13 +359,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const dataAfterDeposit = await snapData();
       logSnapData(
         dataAfterDeposit,
-        `\nBefore attacked swaps ${formatUnits(
+        `\nBefore attacker swaps ${formatUnits(
           osAmountOut
-        )} OS into the pool for wS`
+        )} OS back into the pool for wS`
       );
       await logProfit(dataBeforeSwap);
 
-      // Attacked swaps the OS back for wS
+      // Attacker swaps the OS back for wS
       await poolSwapTokensIn(oSonic, osAmountOut);
 
       const dataAfterFinalSwap = await snapData();
@@ -352,6 +382,182 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         )} wS`
       );
     });
+    describe("When attacker front-run by adding a lot of wS to the pool", () => {
+      let attackerWsBalanceBefore;
+      let dataBeforeSwap;
+      let osAmountOut;
+      beforeEach(async () => {
+        const { clement, wS } = fixture;
+
+        attackerWsBalanceBefore = await wS.balanceOf(clement.address);
+        const wsAmountIn = parseUnits("5000");
+
+        dataBeforeSwap = await snapData();
+        logSnapData(
+          dataBeforeSwap,
+          `\nBefore attacker swaps ${formatUnits(
+            wsAmountIn
+          )} wS into the pool for OS`
+        );
+
+        // Attacker swaps a lot of wS for OS in the pool
+        // This drops the pool's wS/OS price and increases the OS/wS price
+        osAmountOut = await poolSwapTokensIn(wS, wsAmountIn);
+      });
+      it("Strategist fails to deposit to strategy", async () => {
+        await assertFailedDeposit(parseUnits("5000"), "price out of range");
+      });
+      it("Strategist fails to deposit all to strategy", async () => {
+        await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+      });
+      it("Strategist should withdraw from strategy with a profit", async () => {
+        const {
+          clement,
+          oSonic,
+          oSonicVault,
+          oSonicVaultSigner,
+          swapXAMOStrategy,
+          wS,
+        } = fixture;
+        const withdrawAmount = parseUnits("4000");
+
+        const dataBeforeWithdraw = await snapData();
+        logSnapData(
+          dataBeforeWithdraw,
+          `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} wS`
+        );
+
+        const tx = await swapXAMOStrategy
+          .connect(oSonicVaultSigner)
+          .withdraw(oSonicVault.address, wS.address, withdrawAmount);
+
+        const dataAfterWithdraw = await snapData();
+        logSnapData(
+          dataAfterWithdraw,
+          `\nAfter withdraw and before attacker swaps ${formatUnits(
+            osAmountOut
+          )} OS back into the pool for wS`
+        );
+        await logProfit(dataBeforeSwap);
+
+        // Get how much OS was burnt
+        const receipt = await tx.wait();
+        const redeemEvent = receipt.events.find(
+          (e) => e.event === "Withdrawal" && e.args._asset === oSonic.address
+        );
+        log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
+
+        // Attacker swaps the OS back for wS
+        await poolSwapTokensIn(oSonic, osAmountOut);
+
+        const dataAfterFinalSwap = await snapData();
+        logSnapData(
+          dataAfterFinalSwap,
+          "\nAfter attacker swaps OS into the pool for wS"
+        );
+        const profit = await logProfit(dataBeforeSwap);
+        expect(profit, "vault profit").to.gt(0);
+
+        const attackerWsBalanceAfter = await wS.balanceOf(clement.address);
+        log(
+          `Attacker's profit/loss ${formatUnits(
+            attackerWsBalanceAfter.sub(attackerWsBalanceBefore)
+          )} wS`
+        );
+      });
+    });
+    describe("When attacker front-run by adding a lot of OS to the pool", () => {
+      const attackerBalanceBefore = {};
+      let dataBeforeSwap;
+      let wsAmountOut;
+      beforeEach(async () => {
+        const { clement, oSonic, oSonicVault, wS } = fixture;
+
+        const osAmountIn = parseUnits("5000");
+        // Mint OS using wS
+        await oSonicVault.connect(clement).mint(wS.address, osAmountIn, 0);
+
+        attackerBalanceBefore.os = await oSonic.balanceOf(clement.address);
+        attackerBalanceBefore.ws = await wS.balanceOf(clement.address);
+
+        dataBeforeSwap = await snapData();
+        logSnapData(
+          dataBeforeSwap,
+          `\nBefore attacker swaps ${formatUnits(
+            osAmountIn
+          )} OS into the pool for wS`
+        );
+
+        // Attacker swaps a lot of OS for wS in the pool
+        // This increases the pool's wS/OS price and decreases the OS/wS price
+        wsAmountOut = await poolSwapTokensIn(oSonic, osAmountIn);
+      });
+      it("Strategist fails to deposit to strategy", async () => {
+        await assertFailedDeposit(parseUnits("5000"), "price out of range");
+      });
+      it("Strategist fails to deposit all to strategy", async () => {
+        await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+      });
+      it("Strategist should withdraw from strategy with a profit", async () => {
+        const {
+          clement,
+          oSonic,
+          oSonicVault,
+          oSonicVaultSigner,
+          swapXAMOStrategy,
+          wS,
+        } = fixture;
+        const withdrawAmount = parseUnits("2000");
+
+        const dataBeforeWithdraw = await snapData();
+        logSnapData(
+          dataBeforeWithdraw,
+          `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} wS`
+        );
+
+        const tx = await swapXAMOStrategy
+          .connect(oSonicVaultSigner)
+          .withdraw(oSonicVault.address, wS.address, withdrawAmount);
+
+        const dataAfterWithdraw = await snapData();
+        logSnapData(
+          dataAfterWithdraw,
+          `\nAfter withdraw and before attacker swaps ${formatUnits(
+            wsAmountOut
+          )} wS back into the pool for OS`
+        );
+        await logProfit(dataBeforeSwap);
+
+        // Get how much OS was burnt
+        const receipt = await tx.wait();
+        const redeemEvent = receipt.events.find(
+          (e) => e.event === "Withdrawal" && e.args._asset === oSonic.address
+        );
+        log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
+
+        // Attacker swaps the wS back for OS
+        await poolSwapTokensIn(wS, wsAmountOut);
+
+        const dataAfterFinalSwap = await snapData();
+        logSnapData(
+          dataAfterFinalSwap,
+          "\nAfter attacker swaps wS into the pool for OS"
+        );
+        const profit = await logProfit(dataBeforeSwap);
+        expect(profit, "vault profit").to.gt(0);
+
+        const attackerBalanceAfter = {};
+        attackerBalanceAfter.os = await oSonic.balanceOf(clement.address);
+        attackerBalanceAfter.ws = await wS.balanceOf(clement.address);
+        log(
+          `Attacker's profit/loss ${formatUnits(
+            attackerBalanceAfter.os.sub(attackerBalanceBefore.os)
+          )} OS and ${formatUnits(
+            attackerBalanceAfter.ws.sub(attackerBalanceBefore.ws)
+          )} wS`
+        );
+      });
+    });
   });
 
   describe("with a lot more OS in the pool", () => {
@@ -364,8 +570,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit wS to AMO strategy", async function () {
-      await assertDeposit(parseUnits("5000"));
+    it("Vault should fail to deposit wS to AMO strategy", async function () {
+      await assertFailedDeposit(parseUnits("5000"), "price out of range");
     });
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
@@ -395,15 +601,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Strategist should swap most of the wS owned by the strategy", async () => {
       // TODO calculate how much wS should be swapped to get the pool balanced
       await assertSwapAssetsToPool(parseUnits("4400"));
-    });
-    it("Strategist should fail to swap all wS owned by the strategy", async () => {
-      const { swapXAMOStrategy, strategist } = fixture;
-
-      const tx = swapXAMOStrategy
-        .connect(strategist)
-        .swapAssetsToPool(parseUnits("5500"));
-
-      await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
     it("Strategist should fail to add more wS than owned by the strategy", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
@@ -497,8 +694,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit wS to AMO strategy", async function () {
-      await assertDeposit(parseUnits("6000"));
+    it("Vault should failt to deposit wS to strategy", async function () {
+      await assertFailedDeposit(parseUnits("6000"), "price out of range");
     });
     it("Vault should be able to withdraw all", async () => {
       await assertWithdrawAll();
@@ -802,8 +999,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const b = x.mul(x).div(precision).add(y.mul(y).div(precision));
     const k = a.mul(b).div(precision);
 
-    log(`Invariant: ${formatUnits(k)}`);
-
     return k;
   };
 
@@ -859,6 +1054,19 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const { _reserve0: wsReserves, _reserve1: osReserves } =
       await swapXPool.getReserves();
     const reserves = { ws: wsReserves, os: osReserves };
+    // Amount of wS bought from selling 1 OS
+    const wsAmount = await swapXPool.getAmountOut(
+      parseUnits("1"),
+      oSonic.address
+    );
+    // OS/wS price = wS / OS
+    const sellPrice = wsAmount;
+
+    // Amount of wS sold from buying 1 OS
+    const osAmount = await swapXPool.getAmountOut(parseUnits("1"), wS.address);
+    // OS/wS price = wS / OS
+    const buyPrice = parseUnits("1", 36).div(osAmount);
+
     const k = calcInvariant(reserves);
     const stratGaugeBalance = await swapXGauge.balanceOf(
       swapXAMOStrategy.address
@@ -873,6 +1081,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       vaultAssets,
       poolSupply,
       reserves: { ws: wsReserves, os: osReserves },
+      buyPrice,
+      sellPrice,
       stratGaugeBalance,
       gaugeSupply,
       vaultWSBalance,
@@ -909,6 +1119,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         2
       )}%`
     );
+    log(`buy price           : ${formatUnits(data.buyPrice)} OS/wS`);
+    log(`sell price          : ${formatUnits(data.sellPrice)} OS/wS`);
     log(`Invariant K         : ${formatUnits(data.k)}`);
     log(
       `strat gauge balance : ${formatUnits(
@@ -917,7 +1129,6 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     );
     log(`gauge supply        : ${formatUnits(data.gaugeSupply)}`);
     log(`vault wS balance    : ${formatUnits(data.vaultWSBalance)}`);
-    log(`strat wS balance    : ${formatUnits(data.stratWSBalance)}`);
   };
 
   const logProfit = async (dataBefore) => {
@@ -1082,6 +1293,42 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       await oSonic.balanceOf(swapXAMOStrategy.address),
       "Strategy's OS balance"
     ).to.equal(0);
+  }
+
+  async function assertFailedDeposit(wsDepositAmount, errorMessage) {
+    const { wS, oSonicVaultSigner, swapXAMOStrategy } = fixture;
+
+    const dataBefore = await snapData();
+    await logSnapData(dataBefore, "\nBefore depositing wS to strategy");
+
+    // Vault transfers wS to strategy
+    await wS
+      .connect(oSonicVaultSigner)
+      .transfer(swapXAMOStrategy.address, wsDepositAmount);
+
+    // Vault calls deposit on the strategy
+    const tx = swapXAMOStrategy
+      .connect(oSonicVaultSigner)
+      .deposit(wS.address, wsDepositAmount);
+
+    await expect(tx, "deposit to strategy").to.be.revertedWith(errorMessage);
+  }
+
+  async function assertFailedDepositAll(wsDepositAmount, errorMessage) {
+    const { wS, oSonicVaultSigner, swapXAMOStrategy } = fixture;
+
+    const dataBefore = await snapData();
+    await logSnapData(dataBefore, "\nBefore depositing all wS to strategy");
+
+    // Vault transfers wS to strategy
+    await wS
+      .connect(oSonicVaultSigner)
+      .transfer(swapXAMOStrategy.address, wsDepositAmount);
+
+    // Vault calls depositAll on the strategy
+    const tx = swapXAMOStrategy.connect(oSonicVaultSigner).depositAll();
+
+    await expect(tx, "depositAll to strategy").to.be.revertedWith(errorMessage);
   }
 
   async function assertWithdrawAll() {

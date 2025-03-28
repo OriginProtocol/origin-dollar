@@ -44,6 +44,13 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /// @notice Address of the SwapX Gauge contract.
     address public immutable gauge;
 
+    /// @notice The max amount the OS/wS price can deviate from peg (1e18)
+    /// before deposits are reverted scaled to 18 decimals.
+    /// eg 0.01e18 or 1e16 is 1% which is 100 basis points.
+    /// This is the amount below and above peg so a 50 basis point deviation (0.005e18)
+    /// allows a price range from 0.995 to 1.005.
+    uint256 public maxDepeg;
+
     event SwapOTokensToPool(
         uint256 osMinted,
         uint256 wsDepositAmount,
@@ -55,6 +62,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 lpTokens,
         uint256 osBurnt
     );
+    event MaxDepegUpdated(uint256 maxDepeg);
 
     /**
      * @dev Verifies that the caller is the Strategist of the Vault.
@@ -72,6 +80,29 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      */
     modifier skimPool() {
         IPair(pool).skim(address(this));
+        _;
+    }
+
+    /**
+     * @dev Checks the pool is balanced enough to allow deposits.
+     */
+    modifier nearBalancedPool() {
+        // OS/wS price = wS / OS
+        // Get the OS/wS price for selling 1 OS for wS
+        // As OS is 1, the wS amount is the OS/wS price
+        uint256 sellPrice = IPair(pool).getAmountOut(1e18, os);
+
+        // Get the amount of OS received from selling 1 wS. This is buying OS.
+        uint256 osAmount = IPair(pool).getAmountOut(1e18, ws);
+        // Convert to a OS/wS price = wS / OS
+        uint256 buyPrice = 1e36 / osAmount;
+
+        uint256 pegPrice = 1e18;
+
+        require(
+            sellPrice >= pegPrice - maxDepeg && buyPrice <= pegPrice + maxDepeg,
+            "price out of range"
+        );
         _;
     }
 
@@ -164,12 +195,12 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as SwapX strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Array containing SWPx token address
+     * @param _maxDepeg The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted.
      */
-    function initialize(address[] calldata _rewardTokenAddresses)
-        external
-        onlyGovernor
-        initializer
-    {
+    function initialize(
+        address[] calldata _rewardTokenAddresses,
+        uint256 _maxDepeg
+    ) external onlyGovernor initializer {
         address[] memory pTokens = new address[](1);
         pTokens[0] = pool;
 
@@ -181,6 +212,8 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
             _assets,
             pTokens
         );
+
+        maxDepeg = _maxDepeg;
 
         _approveBase();
     }
@@ -196,6 +229,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * mint the pool's LP token and deposit in the gauge.
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
+     * The pool's OS/wS price must be within the maxDepeg range.
      * @param _asset Address of Wrapped S (wS) token.
      * @param _wsAmount Amount of Wrapped S (wS) tokens to deposit.
      */
@@ -205,6 +239,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
         skimPool
+        nearBalancedPool
     {
         require(_asset == ws, "Unsupported asset");
         require(_wsAmount > 0, "Must deposit something");
@@ -227,8 +262,16 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * mint the pool's LP token and deposit in the gauge.
      * @dev This tx must be wrapped by the VaultValueChecker.
      * To minimize loses, the pool should be rebalanced before depositing.
+     * The pool's OS/wS price must be within the maxDepeg range.
      */
-    function depositAll() external override onlyVault nonReentrant skimPool {
+    function depositAll()
+        external
+        override
+        onlyVault
+        nonReentrant
+        skimPool
+        nearBalancedPool
+    {
         uint256 wsBalance = IERC20(ws).balanceOf(address(this));
         if (wsBalance > 0) {
             (uint256 osDepositAmount, ) = _deposit(wsBalance);
@@ -272,8 +315,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
     /**
      * @notice Withdraw wS and OS from the SwapX pool, burn the OS,
      * and transfer the wS to the recipient.
-     * @dev This tx must be wrapped by the VaultValueChecker.
-     * To minimize loses, the pool should be rebalanced before the withdraw.
      * @param _recipient Address of the Vault.
      * @param _asset Address of the Wrapped S (wS) contract.
      * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
@@ -322,9 +363,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
      * remove all wS and OS from the SwapX pool,
      * burn all the OS tokens,
      * and transfer all the wS to the Vault contract.
-     * @dev This tx must be wrapped by the VaultValueChecker.
-     * To minimize loses, the pool should be rebalanced before the withdraw.
-     * There is no solvency check here as withdrawAll can be called to
+     * @dev There is no solvency check here as withdrawAll can be called to
      * quickly secure assets to the Vault in emergencies.
      */
     function withdrawAll()
@@ -426,7 +465,7 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // 1. Mint OS so it can be swapped into the pool
 
-        // There shouldn't be any OS in the strategy but just in case
+        // There can be OS in the strategy from skimming the pool
         uint256 osInStrategy = IERC20(os).balanceOf(address(this));
         require(_osAmount >= osInStrategy, "Too much OS in strategy");
         uint256 osToMint = _osAmount - osInStrategy;
@@ -733,6 +772,21 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
+    }
+
+    /***************************************
+                    Setters
+    ****************************************/
+
+    /**
+     * @notice Set the maximum deviation from the OS/wS peg (1e18) before deposits are reverted.
+     * @param _maxDepeg the OS/wS price from peg (1e18) in 18 decimals.
+     * eg 0.01e18 or 1e16 is 1% which is 100 basis points.
+     */
+    function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
+        maxDepeg = _maxDepeg;
+
+        emit MaxDepegUpdated(_maxDepeg);
     }
 
     /***************************************

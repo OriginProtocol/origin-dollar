@@ -12,6 +12,7 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -1347,9 +1348,10 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
     cSonicSwapXAMOStrategyProxy.address
   );
   // Initialize Sonic Curve AMO Strategy implementation
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
   const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
-    "initialize(address[])",
-    [[addresses.sonic.SWPx]]
+    "initialize(address[],uint256)",
+    [[addresses.sonic.SWPx], depositPriceRange]
   );
   await withConfirmation(
     // prettier-ignore
