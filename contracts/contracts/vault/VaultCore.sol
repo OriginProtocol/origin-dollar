@@ -462,8 +462,8 @@ contract VaultCore is VaultInitializer {
         // Cap via optional automatic duration smoothing
         uint256 _dripDuration = dripDuration;
         if (_dripDuration > 1) {
-            // If we are able to sustain an increased drip rate for a
-            // longer duration, then increase the target drip rate
+            // If we are able to sustain an increased drip rate for
+            // double the duration, then increase the target drip rate
             targetRate = _max(targetRate, yield / (_dripDuration * 2));
             // If we cannot sustain the target rate any more,
             // then rebase what we can, and reduce the target
