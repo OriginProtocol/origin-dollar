@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -60,8 +60,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     IChildLiquidityGaugeFactory public immutable gaugeFactory;
 
     // Ordered list of pool assets
-    uint128 public constant oethCoinIndex = 1;
-    uint128 public constant wethCoinIndex = 0;
+    uint128 public immutable oethCoinIndex;
+    uint128 public immutable wethCoinIndex;
 
     /**
      * @notice Maximum slippage allowed for adding/removing liquidity from the Curve pool.
@@ -124,8 +124,13 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
         address _oeth,
         address _weth,
         address _gauge,
-        address _gaugeFactory
+        address _gaugeFactory,
+        uint128 _oethCoinIndex,
+        uint128 _wethCoinIndex
     ) InitializableAbstractStrategy(_baseConfig) {
+        oethCoinIndex = _oethCoinIndex;
+        wethCoinIndex = _wethCoinIndex;
+
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveStableSwapNG(_baseConfig.platformAddress);
 
@@ -335,6 +340,8 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 gaugeTokens = gauge.balanceOf(address(this));
+        // Can not withdraw zero LP tokens from the gauge
+        if (gaugeTokens == 0) return;
         _lpWithdraw(gaugeTokens);
 
         // Withdraws are proportional to assets held by 3Pool
