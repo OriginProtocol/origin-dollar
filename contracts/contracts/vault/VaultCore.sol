@@ -457,7 +457,7 @@ contract VaultCore is VaultInitializer {
         }
 
         // Start with the full difference available
-        uint256 yield = vaultValue - supply;
+        yield = vaultValue - supply;
 
         // Cap via optional automatic duration smoothing
         uint256 _dripDuration = dripDuration;
