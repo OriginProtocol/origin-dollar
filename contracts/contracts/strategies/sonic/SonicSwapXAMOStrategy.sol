@@ -211,6 +211,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         (uint256 osDepositAmount, ) = _deposit(_wsAmount);
 
+        // Ensure solvency of the vault
+        _solvencyAssert();
+
         // Emit event for the deposited wS tokens
         emit Deposit(ws, pool, _wsAmount);
         // Emit event for the minted OS tokens
@@ -229,6 +232,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
         uint256 wsBalance = IERC20(ws).balanceOf(address(this));
         if (wsBalance > 0) {
             (uint256 osDepositAmount, ) = _deposit(wsBalance);
+
+            // Ensure solvency of the vault
+            _solvencyAssert();
 
             // Emit event for the deposited wS tokens
             emit Deposit(ws, pool, wsBalance);
@@ -257,9 +263,6 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // Add wS and OS liquidity to the pool and stake in gauge
         lpTokens = _depositToPoolAndGauge(_wsAmount, osDepositAmount);
-
-        // Ensure solvency of the vault
-        _solvencyAssert();
     }
 
     /***************************************
@@ -439,6 +442,9 @@ contract SonicSwapXAMOStrategy is InitializableAbstractStrategy {
 
         // 3. Add wS and OS back to the pool in proportion to the pool's reserves
         (uint256 osDepositAmount, uint256 lpTokens) = _deposit(wsDepositAmount);
+
+        // Ensure solvency of the vault
+        _solvencyAssert();
 
         // Emit event for the minted OS tokens
         emit Deposit(os, pool, osToMint + osDepositAmount);
