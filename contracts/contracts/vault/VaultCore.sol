@@ -385,30 +385,100 @@ contract VaultCore is VaultInitializer {
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 ousdSupply = oUSD.totalSupply();
+        uint256 supply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
-        if (ousdSupply == 0) {
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        // If no supply yet, do not rebase
+        if (supply == 0) {
             return vaultValue;
         }
 
-        // Yield fee collection
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue - ousdSupply;
-            uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
-            require(yield > fee, "Fee must not be greater than yield");
-            if (fee > 0) {
-                oUSD.mint(_trusteeAddress, fee);
-            }
-            emit YieldDistribution(_trusteeAddress, yield, fee);
+        // Calculate yield and new supply
+        uint256 yield = 0;
+        uint256 newTarget = 0;
+        (yield, newTarget) = _nextYield(supply, vaultValue, nonRebasing);
+        uint256 newSupply = supply + yield;
+        // Only rebase upwards and if we have enough backing funds
+        if (newSupply <= supply || newSupply > vaultValue) {
+            return vaultValue;
         }
 
+        // Fee collection on yield
+        address _trusteeAddress = trusteeAddress; // gas savings
+        uint256 fee = 0;
+        if (_trusteeAddress != address(0)) {
+            fee = (yield * trusteeFeeBps) / 1e4;
+            if (fee > 0) {
+                require(fee < yield, "Fee must not be greater than yield");
+                oUSD.mint(_trusteeAddress, fee);
+            }
+        }
+        emit YieldDistribution(_trusteeAddress, yield, fee);
+
         // Only ratchet OToken supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
+        // Final check uses latest totalSupply
+        uint256 preSupply = oUSD.totalSupply();
+        if (newSupply > preSupply) {
+            oUSD.changeSupply(newSupply);
+            rebasePerSecondTarget = uint64(_min(newTarget, type(uint64).max));
+            lastRebase = uint64(block.timestamp); // Intentional cast
         }
         return vaultValue;
+    }
+
+    /**
+     * @notice Calculates the amount that would rebase at at next rebase.
+     * This is before any fees.
+     * @return yield amount of expected yield
+     */
+    function previewYield() external view returns (uint256 yield) {
+        uint256 _totalSupply = oUSD.totalSupply();
+        uint256 _nonRebasing = oUSD.nonRebasingSupply();
+        (yield, ) = _nextYield(_totalSupply, _totalValue(), _nonRebasing);
+        return yield;
+    }
+
+    function _nextYield(
+        uint256 supply,
+        uint256 vaultValue,
+        uint256 nonRebasing
+    ) internal view returns (uint256 yield, uint256 targetRate) {
+        uint256 rebasing = supply - nonRebasing;
+        uint256 elapsed = block.timestamp - lastRebase;
+        targetRate = rebasePerSecondTarget;
+
+        if (
+            elapsed == 0 || // Yield only once per block.
+            rebasing == 0 || // No yield if there are no rebasing tokens to give it to.
+            supply > vaultValue || // No yield if we do not have yield to give.
+            block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
+        ) {
+            return (0, targetRate);
+        }
+
+        // Start with the full difference available
+        yield = vaultValue - supply;
+
+        // Cap via optional automatic duration smoothing
+        uint256 _dripDuration = dripDuration;
+        if (_dripDuration > 1) {
+            // If we are able to sustain an increased drip rate for
+            // double the duration, then increase the target drip rate
+            targetRate = _max(targetRate, yield / (_dripDuration * 2));
+            // If we cannot sustain the target rate any more,
+            // then rebase what we can, and reduce the target
+            targetRate = _min(targetRate, yield / _dripDuration);
+            // drip at the new target rate
+            yield = _min(yield, targetRate * elapsed);
+        }
+
+        // Cap per second. elapsed is not 1e18 denominated
+        yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e18);
+
+        // Cap at a hard max per rebase, to avoid long durations resulting in huge rebases
+        yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
+
+        return (yield, targetRate);
     }
 
     /**
@@ -853,5 +923,13 @@ contract VaultCore is VaultInitializer {
     function abs(int256 x) private pure returns (uint256) {
         require(x < int256(MAX_INT), "Amount too high");
         return x >= 0 ? uint256(x) : uint256(-x);
+    }
+
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
     }
 }

@@ -56,6 +56,8 @@ contract VaultStorage is Initializable, Governable {
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event DripperChanged(address indexed _dripper);
+    event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
+    event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -247,8 +249,30 @@ contract VaultStorage is Initializable, Governable {
     uint256 public withdrawalClaimDelay;
     // slither-disable-end constable-states
 
+    /// @notice Time the value last rebased yield
+    // slither-disable-next-line uninitialized-state
+    uint64 public lastRebase;
+
+    /// @notice Automatic rebase yield calculations. In seconds. Set to 1 to disable.
+    // slither-disable-next-line uninitialized-state
+    uint64 public dripDuration;
+
+    /// @notice max rebase percentage per second
+    ///   Can be used to set maximum yield of the protocol,
+    ///   spreading out yield over time
+    // slither-disable-next-line uninitialized-state
+    uint64 public rebasePerSecondMax;
+
+    /// @notice ema over past rebases, duration is dripDuration. Only an approximation.
+    // slither-disable-next-line uninitialized-state
+    uint64 public rebasePerSecondTarget;
+
     // For future use
-    uint256[44] private __gap;
+    uint256[43] private __gap;
+
+    uint256 internal constant MAX_REBASE = 0.02 ether;
+    uint256 internal constant MAX_REBASE_PER_SECOND =
+        uint256(0.05 ether) / 1 days;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
