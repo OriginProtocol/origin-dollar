@@ -35,7 +35,7 @@ The rebase limit operates like a bucket based rate limiter. Every second more li
 
 The hard max rebase cap and the over time cap are both needed. Without the hard cap, someone could just wait until there had been a long enough period between rebases, and then make a large donation that would use the by now very large bucket. Without the slope cap, someone could just call rebase repeatedly, and repeatedly rebase out the yield.
 
-The limit bucket does not work off absolute value amounts, but rather off allowed change percentages. This means that a change in supply does not alter the rates when expressed as percentage of growth over time.  Otherwise, someone redeeming tokens with a fixed dollar amount yield, would increase the effective rate of yeild, thus bypassing the caps.
+The limit bucket does not work off absolute value amounts, but rather off allowed change percentages. This means that a change in supply does not alter the rates when expressed as percentage of growth over time.  Otherwise, someone redeeming tokens with a fixed dollar amount yield, would increase the effective rate of yield, thus bypassing the caps.
 
 When setting the rate limit, the limit should be set appropriately higher than what is desired for end users to experience, since this rate limiting is done before fees are taken out and the fees are taken out of what is distributed to end users.
 
