@@ -408,10 +408,10 @@ contract VaultCore is VaultInitializer {
         uint256 fee = 0;
         if (_trusteeAddress != address(0)) {
             fee = (yield * trusteeFeeBps) / 1e4;
-        }
-        if (fee > 0) {
-            require(fee < yield, "Fee must not be greater than yield");
-            oUSD.mint(_trusteeAddress, fee);
+            if (fee > 0) {
+                require(fee < yield, "Fee must not be greater than yield");
+                oUSD.mint(_trusteeAddress, fee);
+            }
         }
         emit YieldDistribution(_trusteeAddress, yield, fee);
 
