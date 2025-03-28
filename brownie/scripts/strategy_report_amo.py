@@ -195,7 +195,10 @@ class SwapxOsWS:
         self.vault_core = vault_core
         self.vault_admin = vault_admin
         self.otoken = os
-        self.base_size = int(5_000_000)
+        # for check balance tests use 5 million base
+        #self.base_size = int(5_000_000)
+        # for deposit tests use 500 base
+        self.base_size = int(500)
         self.STRATEGIST = vault_core.strategistAddr()
         self.amo_base = ws
 
@@ -354,15 +357,20 @@ def run_simulations_amo(strategy_name):
 
     pd.DataFrame.from_records(check_balance_stats).to_csv(workspace + "check_balance_stats.csv")
 
-    # Test Deposits
+    # # Test Deposits
     # print("# Test Deposits")
     # deposit_stats = []
-    # for initial_tilt in np.linspace(-1, 1, 41):
+
+    # vault_core.mint(ws, harness.base_size * 1e18, 0, {"from": SONIC_WS_WHALE})
+    # for initial_tilt in np.linspace(-0.1, 0.32, 41):
     #         with TemporaryFork():
     #             stat = {}
 
     #             stat["action"] = "deposit"
     #             stat["action_mix"] = initial_tilt
+
+    #             # mint some OS in case vault doesn't have enough WS liquidity
+    #             # vault_core.mint(ws, 5 * 10**24, 0, {"from": SONIC_WS_WHALE})
 
     #             harness.vault_admin.depositToStrategy(
     #                 harness.strat,
