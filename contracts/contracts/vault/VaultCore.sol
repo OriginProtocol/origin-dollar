@@ -387,7 +387,6 @@ contract VaultCore is VaultInitializer {
     function _rebase() internal whenNotRebasePaused returns (uint256) {
         uint256 supply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
-        uint256 nonRebasing = oUSD.nonRebasingSupply();
         // If no supply yet, do not rebase
         if (supply == 0) {
             return vaultValue;
@@ -396,7 +395,7 @@ contract VaultCore is VaultInitializer {
         // Calculate yield and new supply
         uint256 yield = 0;
         uint256 newTarget = 0;
-        (yield, newTarget) = _nextYield(supply, vaultValue, nonRebasing);
+        (yield, newTarget) = _nextYield(supply, vaultValue);
         uint256 newSupply = supply + yield;
         // Only rebase upwards and if we have enough backing funds
         if (newSupply <= supply || newSupply > vaultValue) {
@@ -433,16 +432,15 @@ contract VaultCore is VaultInitializer {
      */
     function previewYield() external view returns (uint256 yield) {
         uint256 _totalSupply = oUSD.totalSupply();
-        uint256 _nonRebasing = oUSD.nonRebasingSupply();
-        (yield, ) = _nextYield(_totalSupply, _totalValue(), _nonRebasing);
+        (yield, ) = _nextYield(_totalSupply, _totalValue());
         return yield;
     }
 
     function _nextYield(
         uint256 supply,
-        uint256 vaultValue,
-        uint256 nonRebasing
+        uint256 vaultValue
     ) internal view returns (uint256 yield, uint256 targetRate) {
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
         uint256 rebasing = supply - nonRebasing;
         uint256 elapsed = block.timestamp - lastRebase;
         targetRate = rebasePerSecondTarget;
