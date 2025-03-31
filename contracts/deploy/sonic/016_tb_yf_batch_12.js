@@ -98,7 +98,7 @@ module.exports = deployOnSonic(
         },
         {
           // Protocol: ROME
-          // From: ROME/OS --> To: FSSN treasury
+          // From: FSSN/OS --> To: FSSN treasury
           contract: cOSonic,
           signature: "delegateYield(address,address)",
           args: [
