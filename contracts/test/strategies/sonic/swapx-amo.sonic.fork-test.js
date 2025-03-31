@@ -176,7 +176,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
   describe("with the strategy having OS and wS in a balanced pool", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 5000,
+      wsMintAmount: 100000,
       depositToStrategy: true,
       balancePool: true,
     });
@@ -322,12 +322,12 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
       expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
     });
-    it("Attacker front-run deposit within range", async () => {
+    it("Attacker front-run deposit within range by adding wS to the pool", async () => {
       const { clement, oSonic, oSonicVaultSigner, swapXAMOStrategy, wS } =
         fixture;
 
       const attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-      const wsAmountIn = parseUnits("1180");
+      const wsAmountIn = parseUnits("22000");
 
       const dataBeforeSwap = await snapData();
       logSnapData(
@@ -341,14 +341,17 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // This drops the pool's wS/OS price and increases the OS/wS price
       const osAmountOut = await poolSwapTokensIn(wS, wsAmountIn);
 
-      const depositAmount = parseUnits("1000");
+      const depositAmount = parseUnits("200000");
 
       const dataBeforeDeposit = await snapData();
       logSnapData(
         dataBeforeDeposit,
-        `\nBefore strategist deposits ${formatUnits(depositAmount)} wS`
+        `\nAfter attacker tilted pool and before strategist deposits ${formatUnits(
+          depositAmount
+        )} wS`
       );
 
+      // Vault deposits wS to the strategy
       await wS
         .connect(oSonicVaultSigner)
         .transfer(swapXAMOStrategy.address, depositAmount);
@@ -359,7 +362,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const dataAfterDeposit = await snapData();
       logSnapData(
         dataAfterDeposit,
-        `\nBefore attacker swaps ${formatUnits(
+        `\nAfter deposit of ${formatUnits(
+          depositAmount
+        )} wS to strategy and before attacker swaps ${formatUnits(
           osAmountOut
         )} OS back into the pool for wS`
       );
@@ -371,7 +376,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const dataAfterFinalSwap = await snapData();
       logSnapData(
         dataAfterFinalSwap,
-        "\nAfter attacker swaps OS into the pool for wS"
+        `\nAfter attacker swaps ${formatUnits(
+          osAmountOut
+        )} OS back into the pool for wS`
       );
       await logProfit(dataBeforeSwap);
 
@@ -390,7 +397,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         const { clement, wS } = fixture;
 
         attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-        const wsAmountIn = parseUnits("5000");
+        const wsAmountIn = parseUnits("30000");
 
         dataBeforeSwap = await snapData();
         logSnapData(
@@ -473,7 +480,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       beforeEach(async () => {
         const { clement, oSonic, oSonicVault, wS } = fixture;
 
-        const osAmountIn = parseUnits("5000");
+        const osAmountIn = parseUnits("30000");
         // Mint OS using wS
         await oSonicVault.connect(clement).mint(wS.address, osAmountIn, 0);
 
