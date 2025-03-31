@@ -468,6 +468,30 @@ addresses.sonic.SwapX.OsHedgy.pool =
   "0x1695d6bd8d8adc8b87c6204be34d34d19a3fe1d6";
 addresses.sonic.SwapX.OsHedgy.yf_treasury =
   "0x4c884677427a975d1b99286e99188c82d71223c8";
+addresses.sonic.SwapX.OsGoglz = {};
+addresses.sonic.SwapX.OsGoglz.pool =
+  "0x414bd8652882d0f127691e151c589b4518d949bf";
+addresses.sonic.SwapX.OsGoglz.gaugeOS =
+  "0xa1327b983Abe83C19878a403348E27e11b75b26c";
+addresses.sonic.SwapX.OsGoglz.extBribeOS =
+  "0x6A356c322d46691926ea1d32DF03faaCCdA73157";
+addresses.sonic.SwapX.OsGoglz.gaugeOther =
+  "0x85145A1040a9DD06bcbf286752d8Ed2427d16e1d";
+addresses.sonic.SwapX.OsGoglz.extBribeOther =
+  "0x150622EA1097A6b57c6CdD7a701B5Bbbf55f95AD";
+addresses.sonic.SwapX.OsOGN = {};
+addresses.sonic.SwapX.OsOGN.pool = "0x39EB1Bc6657048f7132DD97aB3ceDaAfd2bD1236";
+addresses.sonic.SwapX.OsOGN.gaugeOS =
+  "0x4203A4Bc70f02aFBAf89328506A384054B4136E9";
+addresses.sonic.SwapX.OsOGN.extBribeOS =
+  "0xd856F3B9390896f54D641308F65206A11aba10dd";
+addresses.sonic.SwapX.OsSWPx = {};
+addresses.sonic.SwapX.OsSWPx.pool =
+  "0x9cb484fad38d953bc79e2a39bbc93655256f0b16";
+addresses.sonic.SwapX.OsSWPx.gaugeOS =
+  "0x9cb484fad38d953bc79e2a39bbc93655256f0b16";
+addresses.sonic.SwapX.OsSWPx.extBribeOS =
+  "0x248E5277B4873B4b73b4BB977b9f795a9C9b15De";
 
 // Sonic Shadow
 addresses.sonic.Shadow = {};
