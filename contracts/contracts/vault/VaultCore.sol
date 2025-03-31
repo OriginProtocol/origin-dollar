@@ -431,8 +431,7 @@ contract VaultCore is VaultInitializer {
      * @return yield amount of expected yield
      */
     function previewYield() external view returns (uint256 yield) {
-        uint256 _totalSupply = oUSD.totalSupply();
-        (yield, ) = _nextYield(_totalSupply, _totalValue());
+        (yield, ) = _nextYield(oUSD.totalSupply(), _totalValue());
         return yield;
     }
 
