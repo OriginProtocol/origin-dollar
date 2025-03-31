@@ -394,8 +394,8 @@ contract VaultCore is VaultInitializer {
 
         // Calculate yield and new supply
         uint256 yield = 0;
-        uint256 newTarget = 0;
-        (yield, newTarget) = _nextYield(supply, vaultValue);
+        uint256 targetRate = 0;
+        (yield, targetRate) = _nextYield(supply, vaultValue);
         uint256 newSupply = supply + yield;
         // Only rebase upwards and if we have enough backing funds
         if (newSupply <= supply || newSupply > vaultValue) {
@@ -419,7 +419,7 @@ contract VaultCore is VaultInitializer {
         uint256 preSupply = oUSD.totalSupply();
         if (newSupply > preSupply) {
             oUSD.changeSupply(newSupply);
-            rebasePerSecondTarget = uint64(_min(newTarget, type(uint64).max));
+            rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
             lastRebase = uint64(block.timestamp); // Intentional cast
         }
         return vaultValue;
