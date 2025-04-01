@@ -10,7 +10,9 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  */
 
 contract WOETHBase is WOETH {
-    constructor(ERC20 underlying_) WOETH(underlying_) {}
+    constructor(ERC20 underlying_)
+        WOETH(underlying_, "Wrapped Super OETH", "wsuperOETHb")
+    {}
 
     function name() public view virtual override returns (string memory) {
         return "Wrapped Super OETH";

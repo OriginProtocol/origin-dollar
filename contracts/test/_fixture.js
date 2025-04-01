@@ -78,9 +78,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  const cWOETHProxy = await ethers.getContract("WOETHProxy");
-  const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
-
   const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const oethHarvester = await ethers.getContractAt(
     "OETHHarvester",
@@ -202,7 +199,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     // OETH
     oethVault,
     oeth,
-    woeth,
     nativeStakingSSVStrategy,
     oethDripper,
     oethFixedRateDripper,
@@ -232,12 +228,12 @@ const getVaultAndTokenConracts = async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  let mockNonRebasing, mockNonRebasingTwo;
+  let woeth, woethProxy, mockNonRebasing, mockNonRebasingTwo;
 
-  const woethProxy = await ethers.getContract("WOETHProxy");
-  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
-
-  if (!isFork) {
+  if (isFork) {
+    woethProxy = await ethers.getContract("WOETHProxy");
+    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+  } else {
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
     await mockNonRebasing.setOUSD(ousd.address);
@@ -977,7 +973,7 @@ const defaultFixture = deployments.createFixture(async () => {
   if (!isFork) {
     await fundAccounts();
 
-    // Matt and Josh each have $100 OUSD & 100 OETH
+    // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await usds
         .connect(user)

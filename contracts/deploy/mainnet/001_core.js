@@ -17,7 +17,6 @@ const {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
-  deployWOeth,
   deployOETHSwapper,
   deployOUSDSwapper,
 } = require("../deployActions");
@@ -43,7 +42,6 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultValueChecker();
   await deployWOusd();
-  await deployWOeth();
   await deployOETHSwapper();
   await deployOUSDSwapper();
   console.log("001_core deploy done.");
