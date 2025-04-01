@@ -192,7 +192,7 @@ contract VaultAdmin is VaultStorage {
         IVault(address(this)).rebase();
         // Change the rate
         uint256 newPerSecond = yearlyApr / 100 / 365 days;
-        require(newPerSecond < MAX_REBASE_PER_SECOND, "Rate too high");
+        require(newPerSecond <= MAX_REBASE_PER_SECOND, "Rate too high");
         rebasePerSecondMax = newPerSecond.toUint64();
         emit RebasePerSecondMaxChanged(newPerSecond);
     }
