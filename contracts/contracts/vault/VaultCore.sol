@@ -393,9 +393,7 @@ contract VaultCore is VaultInitializer {
         }
 
         // Calculate yield and new supply
-        uint256 yield = 0;
-        uint256 targetRate = 0;
-        (yield, targetRate) = _nextYield(supply, vaultValue);
+        (uint256 yield, uint256 targetRate) = _nextYield(supply, vaultValue);
         uint256 newSupply = supply + yield;
         // Only rebase upwards and if we have enough backing funds
         if (newSupply <= supply || newSupply > vaultValue) {
