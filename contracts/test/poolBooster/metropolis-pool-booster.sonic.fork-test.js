@@ -2,11 +2,18 @@ const { createFixtureLoader } = require("../_fixture");
 const { defaultSonicFixture } = require("../_fixture-sonic");
 const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
 describe("ForkTest: Metropolis Pool Booster", function () {
-  let fixture, poolBoosterFactoryMetropolis, nick, wS, oSonicVault, oSonic, governor;
+  let fixture,
+    poolBoosterFactoryMetropolis,
+    nick,
+    wS,
+    oSonicVault,
+    oSonic,
+    governor;
   beforeEach(async () => {
     fixture = await sonicFixture();
     nick = fixture.nick;
@@ -23,25 +30,23 @@ describe("ForkTest: Metropolis Pool Booster", function () {
   });
 
   it("Should deploy a Pool Booster for a Metropolis pool", async () => {
-    await createPB("0x3987a13d675c66570bc28c955685a9bca2dcf26e", "1");
+    await createPB(addresses.sonic.Metropolis.Pools.OsMoon, "1");
     expect(await poolBoosterFactoryMetropolis.poolBoosterLength()).to.equal(1);
   });
 
   it("Should bribe 2 times in a row", async () => {
     const poolBoosterMetropolis = await createPB(
-      "0x3987a13d675c66570bc28c955685a9bca2dcf26e",
+      addresses.sonic.Metropolis.Pools.OsMoon,
       "1"
     );
     // Give 10 OS to the pool booster
     await oSonic
       .connect(nick)
       .transfer(poolBoosterMetropolis.address, oethUnits("10"));
-    expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
-      oethUnits("10")
-    );
 
     // Bribe the pool booster
-    await poolBoosterMetropolis.bribe();
+    let tx = await poolBoosterMetropolis.bribe();
+    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("10")]);
     expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
       oethUnits("0")
     );
@@ -49,15 +54,41 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     // Give 10 OS to the pool booster
     await oSonic
       .connect(nick)
-      .transfer(poolBoosterMetropolis.address, oethUnits("10"));
+      .transfer(poolBoosterMetropolis.address, oethUnits("50"));
+
+    // Bribe the pool booster
+    tx = await poolBoosterMetropolis.bribe();
+    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("50")]);
     expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
-      oethUnits("10")
+      oethUnits("0")
     );
+  });
+
+  it("Should not bribe if amount is too small", async () => {
+    const poolBoosterMetropolis = await createPB(
+      addresses.sonic.Metropolis.Pools.OsMoon,
+      "1"
+    );
+    // First test to ensure that amount is lower than immutable MIN_BRIBE_AMOUNT.
+    // Give 100 OS to the pool booster
+    await oSonic.connect(nick).transfer(poolBoosterMetropolis.address, "100"); // 100 wei of OS
 
     // Bribe the pool booster
     await poolBoosterMetropolis.bribe();
     expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
-      oethUnits("0")
+      "100"
+    );
+
+    // Second test to ensure that amount is lower than minBribeAmount required from rewardFactory.
+    // Give 1e12 OS to the pool booster
+    await oSonic
+      .connect(nick)
+      .transfer(poolBoosterMetropolis.address, "1000000000000"); // 1e12 wei of OS
+
+    // Bribe the pool booster
+    await poolBoosterMetropolis.bribe();
+    expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
+      "1000000000100"
     );
   });
 

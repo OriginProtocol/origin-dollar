@@ -1,7 +1,6 @@
 const { deployOnSonic } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
 const { deployWithConfirmation } = require("../../utils/deploy.js");
-// const { oethUnits } = require("../../test/helpers");
 
 // 0x03A9896A464C515d13f2679df337bF95bc891fdA: Voter
 // 0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3: Rewarder Factory
@@ -54,8 +53,8 @@ module.exports = deployOnSonic(
         cOSonic.address,
         addresses.sonic.timelock,
         cPoolBoostCentralRegistryProxy.address,
-        "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3", // Rewarder Factory
-        "0x03A9896A464C515d13f2679df337bF95bc891fdA", // Voter
+        addresses.sonic.Metropolis.RewarderFactory, // Rewarder Factory
+        addresses.sonic.Metropolis.Voter, // Voter
       ]
     );
     console.log(
