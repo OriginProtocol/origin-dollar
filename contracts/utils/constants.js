@@ -5,7 +5,6 @@ const MAX_UINT256 = BigNumber.from(
 );
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
-const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
 
 // stETH/WETH
@@ -33,7 +32,6 @@ const p2pApiEncodedKey =
 module.exports = {
   threeCRVPid,
   metapoolLPCRVPid,
-  lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
   aura_stETH_WETH_PID,

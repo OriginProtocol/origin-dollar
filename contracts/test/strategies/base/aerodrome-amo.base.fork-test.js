@@ -854,7 +854,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
           [amount]
         );
 
-      await expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
+      expect(await weth.balanceOf(aerodromeAmoStrategy.address)).to.equal(
         oethUnits("0")
       );
 
