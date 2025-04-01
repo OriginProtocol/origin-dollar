@@ -268,7 +268,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     it("Should mintAndAddOToken", async () => {
       await unbalancePool({
         balancedBefore: true,
-        wethbAmount: defaultDeposit,
+        wethbAmount: defaultDeposit.mul(2),
       });
 
       const checkBalanceBefore = await curveAMOStrategy.checkBalance(
@@ -718,7 +718,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     anna: rafael,
     josh: nick,
     matt: clement,
-    dai: crv,
+    usds: crv,
     strategy: curveAMOStrategy,
   }));
 
@@ -744,7 +744,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     // As we don't have this on base fixture, we use CRV
     usdt: crv,
     usdc: crv,
-    dai: crv,
+    usds: crv,
     weth: weth,
     reth: crv,
     stETH: crv,

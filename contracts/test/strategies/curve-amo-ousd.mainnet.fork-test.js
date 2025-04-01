@@ -232,6 +232,7 @@ describe("Curve AMO OUSD strategy", function () {
         )} USDT to the pool`
       );
 
+      await usdt.connect(nick).approve(curvePool.address, attackerUsdtAmount);
       // Attacker adds a lot of USDT into the pool
       // prettier-ignore
       await curvePool
