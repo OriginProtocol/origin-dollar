@@ -16,10 +16,15 @@ const {
   isSonicFork,
   isSonicForkTest,
   isSonicUnitTest,
+  isPlume,
+  isPlumeFork,
+  isPlumeForkTest,
+  isPlumeUnitTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
+  plumeProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -67,6 +72,10 @@ const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
 
 const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
+const PLUME_DEPLOYER = MAINNET_DEPLOYER;
+const PLUME_GOVERNOR = MAINNET_DEPLOYER;
+const PLUME_STRATEGIST = MAINNET_DEPLOYER;
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -95,6 +104,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/sonic";
 } else if (isArbitrum || isArbitrumFork || isArbForkTest) {
   paths.deploy = "deploy/arbitrumOne";
+} else if (isPlume || isPlumeFork || isPlumeForkTest || isPlumeUnitTest) {
+  paths.deploy = "deploy/plume";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -133,6 +144,8 @@ module.exports = {
         ? { tags: ["base"] }
         : isSonicFork
         ? { tags: ["sonic"] }
+        : isPlumeFork
+        ? { tags: ["plume"] }
         : {}),
       ...(isForkTest
         ? {
@@ -161,6 +174,8 @@ module.exports = {
         ? { tags: ["base"] }
         : isSonicFork
         ? { tags: ["sonic"] }
+        : isPlumeFork
+        ? { tags: ["plume"] }
         : {}),
     },
     mainnet: {
@@ -215,6 +230,17 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    plume: {
+      url: plumeProviderUrl,
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      chainId: 98867,
+      tags: ["plume"],
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -242,6 +268,8 @@ module.exports = {
             ? BASE_DEPLOYER
             : isSonicFork
             ? SONIC_DEPLOYER
+            : isPlumeFork
+            ? PLUME_DEPLOYER
             : MAINNET_DEPLOYER
           : 0,
       mainnet: MAINNET_DEPLOYER,
@@ -261,6 +289,8 @@ module.exports = {
             ? BASE_GOVERNOR
             : isSonicFork
             ? SONIC_ADMIN
+            : isPlumeFork
+            ? PLUME_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       hardhat:
@@ -271,12 +301,15 @@ module.exports = {
             ? BASE_GOVERNOR
             : isSonicFork
             ? SONIC_ADMIN
+            : isPlumeFork
+            ? PLUME_GOVERNOR
             : MAINNET_GOVERNOR
           : 1,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
+      plume: PLUME_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -346,6 +379,8 @@ module.exports = {
           ? BASE_GOVERNOR
           : process.env.FORK_NETWORK_NAME === "sonic"
           ? SONIC_ADMIN
+          : process.env.FORK_NETWORK_NAME === "plume"
+          ? PLUME_STRATEGIST
           : process.env.FORK == "true"
           ? MAINNET_MULTISIG
           : 1,
@@ -354,12 +389,15 @@ module.exports = {
           ? BASE_GOVERNOR
           : process.env.FORK_NETWORK_NAME === "sonic"
           ? SONIC_ADMIN
+          : process.env.FORK_NETWORK_NAME === "plume"
+          ? PLUME_STRATEGIST
           : process.env.FORK == "true"
           ? MAINNET_MULTISIG
           : 1,
       mainnet: MAINNET_MULTISIG,
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
+      plume: PLUME_STRATEGIST,
     },
     adjusterAddr: {
       default: 0,
@@ -375,6 +413,8 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isSonicFork
             ? SONIC_STRATEGIST
+            : isPlumeFork
+            ? PLUME_STRATEGIST
             : // Base and Eth use Multichain Strategist
               MULTICHAIN_STRATEGIST
           : 0,
@@ -384,6 +424,8 @@ module.exports = {
             ? HOLESKY_DEPLOYER
             : isSonicFork
             ? SONIC_STRATEGIST
+            : isPlumeFork
+            ? PLUME_STRATEGIST
             : // Base and Eth use Multichain Strategist
               MULTICHAIN_STRATEGIST
           : 0,
@@ -391,6 +433,7 @@ module.exports = {
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
+      plume: PLUME_STRATEGIST,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
@@ -407,6 +450,7 @@ module.exports = {
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
       sonic: process.env.SONICSCAN_API_KEY,
+      // TODO: Add plume here
     },
     customChains: [
       {

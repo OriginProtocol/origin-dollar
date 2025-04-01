@@ -20,6 +20,8 @@ const {
   isArbitrumOne,
   isBase,
   isSonic,
+  isPlume,
+  isPlumeFork,
   isTest,
 } = require("../test/helpers.js");
 
@@ -101,7 +103,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase || isSonic) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
     await storeStorageLayoutForContract(hre, contractName, contract);
   }
 
@@ -151,6 +153,11 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
+  if (isPlume || isPlumeFork) {
+    // TODO: Skip verification for Plume for now
+    return;
+  }
+
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();

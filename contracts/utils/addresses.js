@@ -506,4 +506,7 @@ addresses.holesky.validatorRegistrator =
 // Address of the Holesky defender relayer
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
+addresses.plume = {};
+addresses.plume.WETH = "0x1738E5247c85f96c9D35FE55800557C5479b7063";
+
 module.exports = addresses;
