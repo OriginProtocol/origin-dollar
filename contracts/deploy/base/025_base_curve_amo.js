@@ -40,6 +40,8 @@ module.exports = deployOnBase(
         addresses.base.WETH,
         addresses.base.OETHb_WETH.gauge,
         addresses.base.childLiquidityGaugeFactory,
+        1, // SuperOETH is coin 1 of the Curve WETH/SuperOETH pool
+        0, // WETH is coin 0 of the Curve WETH/SuperOETH pool
       ]
     );
     const cOETHBaseCurveAMO = await ethers.getContractAt(
