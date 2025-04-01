@@ -39,8 +39,10 @@ contract PoolBoosterMetropolis is IPoolBooster {
     function bribe() external override {
         uint256 balance = osToken.balanceOf(address(this));
         // balance too small, do no bribes
-        // To be fetched from rewardFactory
-        if (balance < MIN_BRIBE_AMOUNT) {
+        (, uint256 minBribeAmount) = rewardFactory.getWhitelistedTokenInfo(
+            address(osToken)
+        );
+        if (balance < MIN_BRIBE_AMOUNT || balance < minBribeAmount) {
             return;
         }
 
@@ -65,6 +67,11 @@ interface IRewarderFactory {
     function createBribeRewarder(address token, address pool)
         external
         returns (address rewarder);
+
+    function getWhitelistedTokenInfo(address token)
+        external
+        view
+        returns (bool isWhitelisted, uint256 minBribeAmount);
 }
 
 interface IRewarder {
