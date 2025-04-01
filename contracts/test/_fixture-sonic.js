@@ -17,10 +17,6 @@ const BURNER_ROLE =
 
 let snapshotId;
 const defaultSonicFixture = deployments.createFixture(async () => {
-  // Impersonate governor
-  const governor = await impersonateAndFund(addresses.sonic.timelock);
-  governor.address = addresses.sonic.timelock;
-
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -30,13 +26,26 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     return;
   }
 
-  let deployerAddr;
+  const { deployerAddr, strategistAddr, timelockAddr, governorAddr } =
+    await getNamedAccounts();
+
   if (isFork) {
     // Fund deployer account
-    const namedAccounts = await getNamedAccounts();
-    deployerAddr = namedAccounts.deployerAddr;
     await impersonateAndFund(deployerAddr);
   }
+
+  // Impersonate governor
+  const governorAddress = isFork ? addresses.sonic.timelock : governorAddr;
+  const governor = await impersonateAndFund(governorAddress);
+  governor.address = governorAddress;
+
+  // Impersonate strategist
+  const strategist = await impersonateAndFund(strategistAddr);
+  strategist.address = strategistAddr;
+
+  // Impersonate strategist
+  const timelock = await impersonateAndFund(timelockAddr);
+  timelock.address = timelockAddr;
 
   log(
     `Before deployments with param "${
@@ -64,6 +73,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     "IVault",
     oSonicVaultProxy.address
   );
+
+  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
   // Sonic staking strategy
   const sonicStakingStrategyProxy = await ethers.getContract(
@@ -125,17 +136,6 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
 
   const [minter, burner, rafael, nick, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  const { strategistAddr, timelockAddr } = await getNamedAccounts();
-
-  // Impersonate strategist
-  const strategist = await impersonateAndFund(strategistAddr);
-  strategist.address = strategistAddr;
-
-  // Impersonate strategist
-  const timelock = await impersonateAndFund(timelockAddr);
-  timelock.address = timelockAddr;
-
-  const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
   let validatorRegistrator;
   if (isFork) {
@@ -153,7 +153,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     await wS.connect(user).deposit({ value: oethUnits("10000000") });
 
     // Set allowance on the vault
-    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000"));
+    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000000"));
   }
 
   return {
@@ -217,6 +217,86 @@ const deployPoolBoosterFactorySwapxSingle = async (
   return await ethers.getContract("PoolBoosterFactorySwapxSingle_v1");
 };
 
+const filterAndParseRewardAddedEvents = async (tx) => {
+  // keccak256("RewardAdded(address,uint256,uint256)")
+  const rewardAddedTopic =
+    "0x6a6f77044107a33658235d41bedbbaf2fe9ccdceb313143c947a5e76e1ec8474";
+
+  const { events } = await tx.wait();
+  return events
+    .filter((e) => e.topics[0] == rewardAddedTopic)
+    .map((e) => {
+      const decoded = ethers.utils.defaultAbiCoder.decode(
+        ["address", "uint256", "uint256"],
+        e.data
+      );
+      return {
+        rewardToken: decoded[0],
+        amount: decoded[1],
+        startTimestamp: decoded[2],
+      };
+    });
+};
+
+const filterAndParseNotifyRewardEvents = async (tx, gaugeAddress) => {
+  // keccak256("NotifyReward(address,address,uint256,uint256)")
+  const notifyRewardTopic =
+    "0x52977ea98a2220a03ee9ba5cb003ada08d394ea10155483c95dc2dc77a7eb24b";
+
+  const { events } = await tx.wait();
+
+  return (
+    events
+      // gauge address filter is required because FeeDistributor contract in Shadow emits
+      // the event with the same signature
+      .filter(
+        (e) => e.topics[0] == notifyRewardTopic && e.address == gaugeAddress
+      )
+      .map((e) => {
+        const decoded = ethers.utils.defaultAbiCoder.decode(
+          ["uint256", "uint256"],
+          e.data
+        );
+
+        const briber = ethers.utils.defaultAbiCoder.decode(
+          ["address"],
+          e.topics[1]
+        )[0];
+
+        const rewardToken = ethers.utils.defaultAbiCoder.decode(
+          ["address"],
+          e.topics[2]
+        )[0];
+
+        return {
+          briber,
+          rewardToken,
+          amount: decoded[0],
+          period: decoded[1],
+        };
+      })
+  );
+};
+
+const getPoolBoosterContractFromPoolAddress = async (factory, poolAddress) => {
+  const poolBoosterEntry = await factory.poolBoosterFromPool(poolAddress);
+  const poolBoosterType = poolBoosterEntry.boosterType;
+
+  if (poolBoosterType == 0) {
+    return await ethers.getContractAt(
+      "PoolBoosterSwapxDouble",
+      poolBoosterEntry.boosterAddress
+    );
+  } else if (poolBoosterType == 1) {
+    return await ethers.getContractAt(
+      "PoolBoosterSwapxSingle",
+      poolBoosterEntry.boosterAddress
+    );
+  } else {
+    throw new Error(`Unrecognised pool booster type: ${poolBoosterType}`);
+  }
+};
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -227,4 +307,8 @@ module.exports = {
   defaultSonicFixture,
   MINTER_ROLE,
   BURNER_ROLE,
+
+  filterAndParseRewardAddedEvents,
+  filterAndParseNotifyRewardEvents,
+  getPoolBoosterContractFromPoolAddress,
 };

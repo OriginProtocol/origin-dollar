@@ -7,11 +7,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OETHBuyback -o OETHBuybackHierarchy.svg
 sol2uml .. -s -d 0 -b OETHBuyback -o OETHBuybackSquashed.svg
 sol2uml storage .. -c OETHBuyback -o OETHBuybackStorage.svg
 
-# contracts/flipper
-sol2uml .. -v -hv -hf -he -hs -hl -b Flipper -o FlipperHierarchy.svg
-sol2uml .. -s -d 0 -b Flipper -o FlipperSquashed.svg
-sol2uml storage .. -c Flipper -o FlipperStorage.svg
-
 # contracts/harvest
 sol2uml .. -v -hv -hf -he -hs -hl -b Dripper -o DripperHierarchy.svg
 sol2uml .. -s -d 0 -b Dripper -o DripperSquashed.svg
@@ -43,10 +38,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OracleRouter -o OracleRouterHierarchy.svg
 sol2uml .. -s -d 0 -b OracleRouter -o OracleRouterSquashed.svg
 sol2uml storage .. -c OracleRouter -o OracleRouterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b AuraWETHPriceFeed -o AuraWETHPriceFeedHierarchy.svg
-sol2uml .. -s -d 0 -b AuraWETHPriceFeed -o AuraWETHPriceFeedSquashed.svg
-sol2uml storage .. -c AuraWETHPriceFeed -o AuraWETHPriceFeedStorage.svg
-
 sol2uml .. -v -hv -hf -he -hs -hl -b MixOracle -o MixOracleHierarchy.svg
 sol2uml .. -s -d 0 -b MixOracle -o MixOracleSquashed.svg
 sol2uml storage .. -c MixOracle -o MixOracleStorage.svg
@@ -73,14 +64,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexOUSDMetaStrategy -o ConvexOUSDMet
 sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
 # Failed to find user defined type "IERC20" in attribute "metapoolMainToken" of type "1""
 # sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg
-
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b FluxStrategy -o FluxStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
-sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
-
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
-sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
@@ -114,11 +97,6 @@ sol2uml storage .. -c SonicStakingStrategy -o SonicStakingStrategyStorage.svg --
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
 sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
 sol2uml storage .. -c Swapper1InchV5 -o Swapper1InchV5Storage.svg
-
-# contracts/timelock
-sol2uml .. -v -hv -hf -he -hs -hl -b Timelock -o TimelockHierarchy.svg
-sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
-sol2uml storage .. -c Timelock -o TimelockStorage.svg
 
 # contracts/token
 sol2uml .. -v -hv -hf -he -hs -hl -hi  -b OUSD -o OUSDHierarchy.svg

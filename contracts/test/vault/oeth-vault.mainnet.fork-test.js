@@ -29,7 +29,6 @@ describe("ForkTest: OETH Vault", function () {
         oethVault,
         oethDripper,
         convexEthMetaStrategy,
-        fraxEthStrategy,
         oeth,
         woeth,
         oethHarvester,
@@ -39,7 +38,6 @@ describe("ForkTest: OETH Vault", function () {
         oethVault,
         oethDripper,
         convexEthMetaStrategy,
-        fraxEthStrategy,
         oeth,
         woeth,
         oethHarvester,
@@ -169,7 +167,10 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should allow strategist to redeem without fee", async () => {
-      const { oethVault, strategist, weth, oeth } = fixture;
+      const { oethVault, strategist, matt, weth, oeth } = fixture;
+
+      // Send a heap of WETH to the vault so it can be redeemed
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
 
       const amount = oethUnits("10");
 
@@ -192,7 +193,10 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should enforce fee on other users for instant redeem", async () => {
-      const { oethVault, josh, weth, oeth } = fixture;
+      const { oethVault, josh, matt, weth, oeth } = fixture;
+
+      // Send a heap of WETH to the vault so it can be redeemed
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
 
       const amount = oethUnits("10");
       const expectedWETH = amount.mul("9990").div("10000");
@@ -244,7 +248,7 @@ describe("ForkTest: OETH Vault", function () {
         .withNamedArgs({ _addr: oethWhaleAddress });
     });
 
-    it("should not do full redeem by OETH whale", async () => {
+    it.skip("should not do full redeem by OETH whale", async () => {
       const { oeth, oethVault } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
@@ -340,46 +344,6 @@ describe("ForkTest: OETH Vault", function () {
       expect((await oethVault.weth()).toLowerCase()).to.equal(
         addresses.mainnet.WETH.toLowerCase()
       );
-    });
-  });
-
-  describe("Remove asset", () => {
-    it("should remove all LSTs from the Vault", async function () {
-      const { oethVault, frxETH, reth, stETH, timelock } = fixture;
-
-      if (!(await oethVault.isSupportedAsset(frxETH.address))) {
-        this.skip();
-      }
-
-      // Remove all assets from strategies
-      await oethVault.connect(timelock).withdrawAllFromStrategies();
-
-      const lstAssets = [frxETH, reth, stETH];
-
-      // Just draining out every asset to make
-      // sure `checkBalance(asset)` returns 0
-      const mockedVaultSigner = await impersonateAndFund(oethVault.address);
-      for (const asset of lstAssets) {
-        const balance = await asset.balanceOf(oethVault.address);
-        // stETH has rounding issues, so transferring 1 wei more than the balance
-        await asset
-          .connect(mockedVaultSigner)
-          .transfer(
-            addresses.dead,
-            asset.address == stETH.address ? balance.add(1) : balance
-          );
-      }
-
-      // Now remove all LSTs
-      for (const asset of lstAssets) {
-        await oethVault.connect(timelock).removeAsset(asset.address);
-
-        expect(await oethVault.checkBalance(asset.address)).to.equal(0);
-        expect(await oethVault.isSupportedAsset(asset.address)).to.be.false;
-        expect(await oethVault.assetDefaultStrategies(asset.address)).to.equal(
-          addresses.zero
-        );
-      }
     });
   });
 

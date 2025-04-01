@@ -28,27 +28,27 @@ describe.skip("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", func
       await mintTest(fixture, matt, usdc, "120000");
     });
 
-    it("Should stake DAI in Curve gauge via metapool", async function () {
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
+    it("Should stake USDS in Curve gauge via metapool", async function () {
+      const { anna, usds } = fixture;
+      await mintTest(fixture, anna, usds, "110000");
     });
   });
 
   describe("Redeem", function () {
     it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+      const { vault, ousd, usdt, usdc, usds, anna, OUSDmetaStrategy } = fixture;
 
       await vault.connect(anna).allocate();
 
       const supplyBeforeMint = await ousd.totalSupply();
       const strategyBalanceBeforeMint = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await OUSDmetaStrategy.checkBalance(usds.address)
       ).mul(3);
 
       const amount = "10000";
 
       // Mint with all three assets
-      for (const asset of [usdt, usdc, dai]) {
+      for (const asset of [usdt, usdc, usds]) {
         await vault
           .connect(anna)
           .mint(asset.address, await units(amount, asset), 0);
@@ -58,13 +58,13 @@ describe.skip("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD", func
 
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await OUSDmetaStrategy.checkBalance(usds.address)
       ).mul(3);
       const strategyBalanceChange = strategyBalance.sub(
         strategyBalanceBeforeMint
       );
 
-      // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + dai) = 60k
+      // min 1x 3crv + 1x printed OUSD: (10k + 10k + 10k) * (usdt + usdc + usds) = 60k
       expect(strategyBalanceChange).to.be.gte(ousdUnits("59500"));
 
       // Total supply should be up by at least (10k x 2) + (10k x 2) + (10k x 2) = 60k

@@ -159,7 +159,6 @@ contract VaultCore is VaultInitializer {
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
         external
-        virtual
         whenNotCapitalPaused
         nonReentrant
     {
@@ -281,18 +280,6 @@ contract VaultCore is VaultInitializer {
 
         // Burn OTokens
         oUSD.burn(msg.sender, _amount);
-    }
-
-    /**
-     * @notice Withdraw a supported asset and burn all OTokens.
-     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
-     */
-    function redeemAll(uint256 _minimumUnitAmount)
-        external
-        whenNotCapitalPaused
-        nonReentrant
-    {
-        _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
     /**

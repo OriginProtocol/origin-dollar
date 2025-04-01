@@ -38,6 +38,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockUSDT",
     "MockTUSD",
     "MockUSDC",
+    "MockUSDS",
     "MockDAI",
     "MockNonStandardToken",
     "MockOGV",
@@ -76,6 +77,15 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockCDAI", {
     args: [
       (await ethers.getContract("MockDAI")).address,
+      (await ethers.getContract("MockComptroller")).address,
+    ],
+    contract: "MockCToken",
+    from: deployerAddr,
+  });
+
+  await deploy("MockCUSDS", {
+    args: [
+      (await ethers.getContract("MockUSDS")).address,
       (await ethers.getContract("MockComptroller")).address,
     ],
     contract: "MockCToken",
@@ -141,15 +151,16 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
-  const dai = await ethers.getContract("MockDAI");
+  const usds = await ethers.getContract("MockUSDS");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
+  const dai = await ethers.getContract("MockDAI");
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
   const lendingPool = await ethers.getContract("MockAave");
   await deploy("MockADAI", {
-    args: [lendingPool.address, "Mock Aave Dai", "aDAI", dai.address],
+    args: [lendingPool.address, "Mock Aave DAI", "aDAI", dai.address],
     contract: "MockAToken",
     from: deployerAddr,
   });
@@ -183,6 +194,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 8).toString(), 8], // 1 DAI = 1 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedUSDS", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 USDS = 1 USD, 8 digits decimal.
   });
   await deploy("MockChainlinkOracleFeedUSDT", {
     from: deployerAddr,
@@ -302,13 +318,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("MockCurvePool", {
     from: deployerAddr,
-    args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
+    args: [[usds.address, usdc.address, usdt.address], threePoolToken.address],
   });
-
-  await deploy("MockLUSD", {
-    from: deployerAddr,
-  });
-
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,
