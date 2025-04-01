@@ -414,8 +414,7 @@ contract VaultCore is VaultInitializer {
 
         // Only ratchet OToken supply upwards
         // Final check uses latest totalSupply
-        uint256 preSupply = oUSD.totalSupply();
-        if (newSupply > preSupply) {
+        if (newSupply > oUSD.totalSupply()) {
             oUSD.changeSupply(newSupply);
             rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
             lastRebase = uint64(block.timestamp); // Intentional cast
