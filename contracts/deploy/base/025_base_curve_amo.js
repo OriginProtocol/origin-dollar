@@ -72,7 +72,7 @@ module.exports = deployOnBase(
           signature: "approveStrategy(address)",
           args: [cOETHBaseCurveAMOProxy.address],
         },
-        // Add strategyb to mint whitelist
+        // Add strategy to mint whitelist
         {
           contract: cOETHbVaultAdmin,
           signature: "addStrategyToMintWhitelist(address)",
