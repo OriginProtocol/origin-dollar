@@ -84,7 +84,7 @@ describe("ForkTest: CurvePoolBooster", function () {
       addresses.mainnet.CurveOUSDUSDTGauge
     );
     expect(await curvePoolBooster.campaignRemoteManager()).to.equal(
-      "0x000000009dF57105d76B059178989E01356e4b45e4b45"
+      "0x000000009dF57105d76B059178989E01356e4b45"
     );
     expect(await curvePoolBooster.rewardToken()).to.equal(
       addresses.mainnet.OUSDProxy
