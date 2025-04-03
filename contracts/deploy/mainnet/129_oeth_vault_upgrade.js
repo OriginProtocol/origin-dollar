@@ -33,7 +33,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade OETH Vault",
+      name: "Upgrade OETH Vault to support multiple AMOs",
       actions: [
         // 1. Upgrade the OETH Vault proxy to the new core vault implementation
         {
