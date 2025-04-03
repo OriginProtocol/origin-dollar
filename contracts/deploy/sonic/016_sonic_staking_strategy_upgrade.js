@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses.js");
 
 module.exports = deployOnSonic(
   {
-    deployName: "011_sonic_staking_strategy_upgrade",
+    deployName: "016_sonic_staking_strategy_upgrade",
     forceSkip: false,
   },
   async ({ ethers }) => {
