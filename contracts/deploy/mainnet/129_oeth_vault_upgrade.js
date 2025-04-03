@@ -8,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "",
+    proposalId:
+      "88718652422371169609565969051527989757314494318421619545684851109270814057874",
   },
   async ({ deployWithConfirmation }) => {
     // Deployer Actions
@@ -33,7 +34,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade OETH Vault",
+      name: "Upgrade OETH Vault to support multiple AMOs",
       actions: [
         // 1. Upgrade the OETH Vault proxy to the new core vault implementation
         {
