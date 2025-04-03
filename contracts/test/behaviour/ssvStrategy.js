@@ -337,7 +337,6 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         );
 
       const receipt = await tx.wait();
-      console.log(receipt.events);
       const { chainId } = await ethers.provider.getNetwork();
       const validatorAddedEvent = ssvNetwork.interface.parseLog(
         receipt.events[chainId === 1 ? 3 : 2]

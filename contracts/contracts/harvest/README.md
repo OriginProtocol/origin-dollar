@@ -2,6 +2,8 @@
 
 ## Dripper
 
+Used by OUSD on Mainnet.
+
 ### Hierarchy
 
 ![Dripper Hierarchy](../../docs/DripperHierarchy.svg)
@@ -14,21 +16,25 @@
 
 ![Dripper Storage](../../docs/DripperStorage.svg)
 
-## OETH Dripper
+## Fixed Rate Dripper
+
+Used on Mainnet for OETH, Base and Sonic.
 
 ### Hierarchy
 
-![OETH Dripper Hierarchy](../../docs/OETHDripperHierarchy.svg)
+![Fixed Rate Dripper Hierarchy](../../docs/OETHFixedRateDripperHierarchy.svg)
 
 ### Squashed
 
-![OETH Dripper Squashed](../../docs/OETHDripperSquashed.svg)
+![Fixed Rate Dripper Squashed](../../docs/OETHFixedRateDripperSquashed.svg)
 
 ### Storage
 
-![OETH Dripper Storage](../../docs/OETHDripperStorage.svg)
+![Fixed Rate Dripper Storage](../../docs/OETHFixedRateDripperStorage.svg)
 
 ## Harvester
+
+Used on Mainnet for OUSD.
 
 ### Hierarchy
 
@@ -42,16 +48,46 @@
 
 ![Harvester Storage](../../docs/HarvesterStorage.svg)
 
-## OETH Harvester
+## OETH Simple Harvester
+
+Used on Mainnet for OETH.
 
 ### Hierarchy
 
-![OETH Harvester Hierarchy](../../docs/OETHHarvesterHierarchy.svg)
+![OETH Simple Harvester Hierarchy](../../docs/OETHHarvesterSimpleHierarchy.svg)
 
 ### Squashed
 
-![OETH Harvester Squashed](../../docs/OETHHarvesterSquashed.svg)
+![OETH Simple Harvester Squashed](../../docs/OETHHarvesterSimpleSquashed.svg)
 
 ### Storage
 
-![OETH Harvester Storage](../../docs/OETHHarvesterStorage.svg)
+![OETH Simple Harvester Storage](../../docs/OETHHarvesterSimpleStorage.svg)
+
+## Base Harvester
+
+### Hierarchy
+
+![OETH Base Harvester Hierarchy](../../docs/OETHBaseHarvesterHierarchy.svg)
+
+### Squashed
+
+![OETH Base Harvester Squashed](../../docs/OETHBaseHarvesterSquashed.svg)
+
+### Storage
+
+![OETH Base Harvester Storage](../../docs/OETHBaseHarvesterStorage.svg)
+
+## Sonic Harvester
+
+### Hierarchy
+
+![Sonic Harvester Hierarchy](../../docs/OSonicHarvesterHierarchy.svg)
+
+### Squashed
+
+![Sonic Harvester Squashed](../../docs/OSonicHarvesterSquashed.svg)
+
+### Storage
+
+![Sonic Harvester Storage](../../docs/OSonicHarvesterStorage.svg)

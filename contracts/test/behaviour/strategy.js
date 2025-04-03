@@ -15,6 +15,7 @@ const { parseUnits } = require("ethers/lib/utils");
  * - valueAssets: optional array of assets that work for checkBalance and withdraw. defaults to assets
  * - vault: Vault or OETHVault contract
  * - harvester: Harvester or OETHHarvester contract
+ * - checkWithdrawAmounts: Check the amounts in the withdrawAll events. defaults to true
  * @example
     shouldBehaveLikeStrategy(() => ({
       ...fixture,
@@ -23,6 +24,7 @@ const { parseUnits } = require("ethers/lib/utils");
       valueAssets: [fixture.frxETH],
       harvester: fixture.oethHarvester,
       vault: fixture.oethVault,
+      checkWithdrawAmounts: true,
     }));
  */
 const shouldBehaveLikeStrategy = (context) => {
@@ -44,7 +46,7 @@ const shouldBehaveLikeStrategy = (context) => {
         strategy,
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -56,7 +58,7 @@ const shouldBehaveLikeStrategy = (context) => {
       const randomAssets = [
         usdt,
         usdc,
-        dai,
+        usds,
         weth,
         reth,
         stETH,
@@ -72,6 +74,11 @@ const shouldBehaveLikeStrategy = (context) => {
       }
     });
     describe("with no assets in the strategy", () => {
+      beforeEach(async () => {
+        const { strategy, governor } = context();
+
+        await strategy.connect(governor).withdrawAll();
+      });
       it("Should check asset balances", async () => {
         const { assets, josh, strategy } = context();
 
@@ -213,12 +220,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to call withdraw all by vault", async () => {
-        const { strategy, vault, curveAMOStrategy } = await context();
-
-        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
-        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
-        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
-          return;
+        const { strategy, vault } = await context();
 
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -227,12 +229,8 @@ const shouldBehaveLikeStrategy = (context) => {
         await expect(tx).to.not.emit(strategy, "Withdrawal");
       });
       it("Should be able to call withdraw all by governor", async () => {
-        const { strategy, governor, curveAMOStrategy } = await context();
+        const { strategy, governor } = await context();
 
-        // If strategy is Curve Base AMO, withdrawAll cannot work if there are no assets in the strategy.
-        // As it will try to remove 0 LPs from the gauge, which is not permitted by Curve gauge.
-        if (curveAMOStrategy != undefined && curveAMOStrategy == strategy)
-          return;
         const tx = await strategy.connect(governor).withdrawAll();
 
         await expect(tx).to.not.emit(strategy, "Withdrawal");
@@ -311,15 +309,8 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw all assets", async () => {
-        const {
-          assets,
-          valueAssets,
-          strategy,
-          vault,
-          fraxEthStrategy,
-          sfrxETH,
-          curveAMOStrategy,
-        } = await context();
+        const { assets, valueAssets, strategy, vault, curveAMOStrategy } =
+          await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
@@ -330,20 +321,7 @@ const shouldBehaveLikeStrategy = (context) => {
           const withdrawAmount = await units("10000", asset);
 
           // Its not nice having strategy specific logic here but it'll have to do for now
-          if (strategy == fraxEthStrategy) {
-            await expect(tx)
-              .to.emit(strategy, "Withdrawal")
-              .withArgs(asset.address, platformAddress, withdrawAmount.mul(3));
-            await expect(tx).to.emit(asset, "Transfer").withArgs(
-              // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
-              sfrxETH.address,
-              vault.address,
-              withdrawAmount.mul(3)
-            );
-          } else if (
-            curveAMOStrategy != undefined &&
-            curveAMOStrategy == strategy
-          ) {
+          if (curveAMOStrategy != undefined && curveAMOStrategy == strategy) {
             // Didn't managed to get this work with args.
             await expect(tx).to.emit(strategy, "Withdrawal");
             await expect(tx).to.emit(asset, "Transfer");
@@ -368,8 +346,8 @@ const shouldBehaveLikeStrategy = (context) => {
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
       const { governor, crv, strategy } = context();
-      const governorDaiBalanceBefore = await crv.balanceOf(governor.address);
-      const strategyDaiBalanceBefore = await crv.balanceOf(strategy.address);
+      const governorCRVBalanceBefore = await crv.balanceOf(governor.address);
+      const strategyCRVBalanceBefore = await crv.balanceOf(strategy.address);
 
       // Anna accidentally sends CRV to strategy
       const recoveryAmount = parseUnits("2");
@@ -385,10 +363,10 @@ const shouldBehaveLikeStrategy = (context) => {
         .withArgs(strategy.address, governor.address, recoveryAmount);
 
       await expect(governor).has.a.balanceOf(
-        governorDaiBalanceBefore.add(recoveryAmount),
+        governorCRVBalanceBefore.add(recoveryAmount),
         crv
       );
-      await expect(strategy).has.a.balanceOf(strategyDaiBalanceBefore, crv);
+      await expect(strategy).has.a.balanceOf(strategyCRVBalanceBefore, crv);
     });
     it("Should not transfer supported assets from strategy", async () => {
       const { assets, governor, strategy } = context();
