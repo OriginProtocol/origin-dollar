@@ -1322,6 +1322,22 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deployPlumeRoosterAMOStrategyImplementation = async () => {
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+
+  await deployWithConfirmation("RoosterAMOStrategy", [
+    /* Used first by the 002_rooster_amo_ deploy file
+     */
+    [addresses.zero, cOETHpVaultProxy.address], // platformAddress, VaultAddress
+    addresses.plume.WETH, // weth address
+    cOETHpProxy.address, // OETHp address
+    
+  ]);
+
+  return await ethers.getContract("RoosterAMOStrategy");
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1352,4 +1368,5 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deployPlumeRoosterAMOStrategyImplementation
 };
