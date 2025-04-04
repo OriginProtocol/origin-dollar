@@ -12,6 +12,7 @@ const { decimalsFor, units } = require("../utils/units");
  */
 chai.Assertion.addMethod("withinRange", function (min, max, message) {
   const actual = this._obj;
+  min = BigNumber.from(min);
 
   chai.expect(actual, message).gte(min);
   chai.expect(actual, message).lte(max);
