@@ -419,10 +419,12 @@ contract VaultCore is VaultInitializer {
         return yield;
     }
 
-    function _nextYield(
-        uint256 supply,
-        uint256 vaultValue
-    ) internal view returns (uint256 yield, uint256 targetRate) {
+    function _nextYield(uint256 supply, uint256 vaultValue)
+        internal
+        view
+        virtual
+        returns (uint256 yield, uint256 targetRate)
+    {
         uint256 nonRebasing = oUSD.nonRebasingSupply();
         uint256 rebasing = supply - nonRebasing;
         uint256 elapsed = block.timestamp - lastRebase;
