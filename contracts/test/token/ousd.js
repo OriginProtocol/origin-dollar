@@ -1,5 +1,10 @@
 const { expect } = require("chai");
-const { loadDefaultFixture, loadTokenTransferFixture } = require("../_fixture");
+const {
+  loadDefaultFixture,
+  loadTokenTransferFixture,
+  createFixtureLoader,
+  instantRebaseVaultFixture,
+} = require("../_fixture");
 const { utils, BigNumber } = require("ethers");
 
 const { usdsUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
@@ -11,8 +16,10 @@ describe("Token", function () {
     this.timeout(0);
   }
   let fixture;
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
+
   beforeEach(async () => {
-    fixture = await loadDefaultFixture();
+    fixture = await loadFixture();
   });
 
   it("Should return the token name and symbol", async () => {

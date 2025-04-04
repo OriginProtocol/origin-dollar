@@ -1028,6 +1028,12 @@ const deployOUSDCore = async () => {
     cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
+
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .setRebaseRateMax(ethers.utils.parseUnits("200", 18))
+  );
 };
 
 /**
