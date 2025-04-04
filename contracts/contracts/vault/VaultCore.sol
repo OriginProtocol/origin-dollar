@@ -387,6 +387,9 @@ contract VaultCore is VaultInitializer {
             return vaultValue;
         }
 
+        rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
+        lastRebase = uint64(block.timestamp); // Intentional cast
+
         // Fee collection on yield
         address _trusteeAddress = trusteeAddress; // gas savings
         uint256 fee = 0;
@@ -403,8 +406,6 @@ contract VaultCore is VaultInitializer {
         // Final check uses latest totalSupply
         if (newSupply > oUSD.totalSupply()) {
             oUSD.changeSupply(newSupply);
-            rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
-            lastRebase = uint64(block.timestamp); // Intentional cast
         }
         return vaultValue;
     }
