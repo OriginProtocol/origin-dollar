@@ -236,7 +236,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      chainId: 98867,
+      chainId: 98864,
       tags: ["plume"],
       live: true,
       saveDeployments: true,

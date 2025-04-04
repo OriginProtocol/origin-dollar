@@ -132,7 +132,7 @@ const getHardhatNetworkProperties = () => {
     chainId = 146;
   } else if (isPlumeFork && isFork) {
     // TODO: Plume Network ID
-    chainId = 98867;
+    chainId = 98864;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -163,7 +163,7 @@ const networkMap = {
   1337: "hardhat",
   8453: "base",
   146: "sonic",
-  98867: "plume",
+  98864: "plume",
 };
 
 module.exports = {
