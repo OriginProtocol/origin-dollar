@@ -593,8 +593,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const { swapXPool } = fixture;
       const { _reserve0: wsReserves, _reserve1: osReserves } =
         await swapXPool.getReserves();
-      // 10% of the extra OS
-      const osAmount = osReserves.sub(wsReserves).mul(10).div(100);
+      // 5% of the extra OS
+      const osAmount = osReserves.sub(wsReserves).mul(5).div(100);
       const wsAmount = osAmount.mul(wsReserves).div(osReserves);
       log(`OS amount: ${formatUnits(osAmount)}`);
       log(`wS amount: ${formatUnits(wsAmount)}`);
@@ -634,7 +634,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wsMintAmount: 20000,
       depositToStrategy: true,
       balancePool: true,
-      poolAddOSAmount: 500,
+      poolAddOSAmount: 5000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -664,10 +664,13 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     it("Strategist should fail to add too much wS to the pool", async () => {
       const { swapXAMOStrategy, strategist } = fixture;
 
-      // try swapping half the extra OS in the pool
+      const dataBefore = await snapData();
+      await logSnapData(dataBefore, "Before swapping assets to the pool");
+
+      // try the extra OS in the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapAssetsToPool(parseUnits("250"));
+        .swapAssetsToPool(parseUnits("5000"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -1465,7 +1468,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     const { oSonic, swapXAMOStrategy, swapXPool, strategist, wS } = fixture;
 
     const dataBefore = await snapData();
-    await logSnapData(dataBefore, "Before swapping assets to the pool");
+    await logSnapData(
+      dataBefore,
+      `Before swapping ${formatUnits(wsAmount)} wS into the pool`
+    );
 
     const { lpBurnAmount: expectedLpBurnAmount, osBurnAmount: osBurnAmount1 } =
       await calcOSWithdrawAmount(wsAmount);
