@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  instantRebaseVaultFixture,
+} = require("../_fixture");
 const { ousdUnits, usdsUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {
@@ -9,9 +12,10 @@ describe("WOUSD", function () {
   }
 
   let ousd, wousd, vault, usds, matt, josh, governor;
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
 
   beforeEach(async () => {
-    const fixture = await loadDefaultFixture();
+    const fixture = await loadFixture();
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     vault = fixture.vault;
