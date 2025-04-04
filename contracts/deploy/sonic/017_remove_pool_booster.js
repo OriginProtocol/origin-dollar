@@ -9,7 +9,7 @@ module.exports = deployOnSonic(
     );
 
     return {
-      name: "Remove 3 pool booster from Pool Booster Factory SwapxSingle",
+      name: "Remove 2 pool boosters from Pool Booster Factory SwapxSingle",
       actions: [
         {
           // Protocol: THC
@@ -17,13 +17,6 @@ module.exports = deployOnSonic(
           contract: cPoolBoosterFactorySwapxSingle,
           signature: "removePoolBooster(address)",
           args: ["0xcAc8E01CeeC490F82276A350f395Ab12F089BBe5"],
-        },
-        {
-          // Protocol: GEMSx
-          // GEMsx/OS SwapX Pool booster
-          contract: cPoolBoosterFactorySwapxSingle,
-          signature: "removePoolBooster(address)",
-          args: ["0x1ea8Db4053f806636250bb2BFa6B1E0c4923c209"],
         },
         {
           // Protocol: SWAPx
