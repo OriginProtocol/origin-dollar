@@ -2230,7 +2230,6 @@ async function hackedVaultFixture() {
 async function instantRebaseVaultFixture() {
   const fixture = await defaultFixture();
 
-  const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);

@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const {
-  loadDefaultFixture,
   loadTokenTransferFixture,
   createFixtureLoader,
   instantRebaseVaultFixture,
