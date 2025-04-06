@@ -29,7 +29,7 @@
       "label": "assets",
       "offset": 0,
       "slot": "51",
-      "type": "t_mapping(t_address,t_struct(Asset)59150_storage)",
+      "type": "t_mapping(t_address,t_struct(Asset)60752_storage)",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:92"
     },
@@ -45,7 +45,7 @@
       "label": "strategies",
       "offset": 0,
       "slot": "53",
-      "type": "t_mapping(t_address,t_struct(Strategy)59165_storage)",
+      "type": "t_mapping(t_address,t_struct(Strategy)60767_storage)",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:104"
     },
@@ -117,7 +117,7 @@
       "label": "oUSD",
       "offset": 0,
       "slot": "60",
-      "type": "t_contract(OUSD)49809",
+      "type": "t_contract(OUSD)51174",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:127"
     },
@@ -213,7 +213,7 @@
       "label": "swapConfig",
       "offset": 0,
       "slot": "72",
-      "type": "t_struct(SwapConfig)59269_storage",
+      "type": "t_struct(SwapConfig)60871_storage",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:193"
     },
@@ -237,7 +237,7 @@
       "label": "withdrawalQueueMetadata",
       "offset": 0,
       "slot": "75",
-      "type": "t_struct(WithdrawalQueueMetadata)59296_storage",
+      "type": "t_struct(WithdrawalQueueMetadata)60898_storage",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:226"
     },
@@ -245,7 +245,7 @@
       "label": "withdrawalRequests",
       "offset": 0,
       "slot": "77",
-      "type": "t_mapping(t_uint256,t_struct(WithdrawalRequest)59311_storage)",
+      "type": "t_mapping(t_uint256,t_struct(WithdrawalRequest)60913_storage)",
       "contract": "VaultStorage",
       "src": "contracts/vault/VaultStorage.sol:240"
     },
@@ -303,11 +303,11 @@
       "label": "bool",
       "numberOfBytes": "1"
     },
-    "t_contract(OUSD)49809": {
+    "t_contract(OUSD)51174": {
       "label": "contract OUSD",
       "numberOfBytes": "20"
     },
-    "t_enum(UnitConversion)59140": {
+    "t_enum(UnitConversion)60742": {
       "label": "enum VaultStorage.UnitConversion",
       "members": [
         "DECIMALS",
@@ -327,19 +327,19 @@
       "label": "mapping(address => bool)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_struct(Asset)59150_storage)": {
+    "t_mapping(t_address,t_struct(Asset)60752_storage)": {
       "label": "mapping(address => struct VaultStorage.Asset)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_struct(Strategy)59165_storage)": {
+    "t_mapping(t_address,t_struct(Strategy)60767_storage)": {
       "label": "mapping(address => struct VaultStorage.Strategy)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_uint256,t_struct(WithdrawalRequest)59311_storage)": {
+    "t_mapping(t_uint256,t_struct(WithdrawalRequest)60913_storage)": {
       "label": "mapping(uint256 => struct VaultStorage.WithdrawalRequest)",
       "numberOfBytes": "32"
     },
-    "t_struct(Asset)59150_storage": {
+    "t_struct(Asset)60752_storage": {
       "label": "struct VaultStorage.Asset",
       "members": [
         {
@@ -350,7 +350,7 @@
         },
         {
           "label": "unitConversion",
-          "type": "t_enum(UnitConversion)59140",
+          "type": "t_enum(UnitConversion)60742",
           "offset": 1,
           "slot": "0"
         },
@@ -369,7 +369,7 @@
       ],
       "numberOfBytes": "32"
     },
-    "t_struct(Strategy)59165_storage": {
+    "t_struct(Strategy)60767_storage": {
       "label": "struct VaultStorage.Strategy",
       "members": [
         {
@@ -387,7 +387,7 @@
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(SwapConfig)59269_storage": {
+    "t_struct(SwapConfig)60871_storage": {
       "label": "struct VaultStorage.SwapConfig",
       "members": [
         {
@@ -405,7 +405,7 @@
       ],
       "numberOfBytes": "32"
     },
-    "t_struct(WithdrawalQueueMetadata)59296_storage": {
+    "t_struct(WithdrawalQueueMetadata)60898_storage": {
       "label": "struct VaultStorage.WithdrawalQueueMetadata",
       "members": [
         {
@@ -435,7 +435,7 @@
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(WithdrawalRequest)59311_storage": {
+    "t_struct(WithdrawalRequest)60913_storage": {
       "label": "struct VaultStorage.WithdrawalRequest",
       "members": [
         {

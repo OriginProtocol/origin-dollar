@@ -12,6 +12,7 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -1322,6 +1323,49 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deploySonicSwapXAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy = await deployWithConfirmation(
+    "SonicSwapXAMOStrategy",
+    [
+      [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
+      cOSonicProxy.address,
+      addresses.sonic.wS,
+      addresses.sonic.SwapXWSOS.gauge,
+    ]
+  );
+  const cSonicSwapXAMOStrategy = await ethers.getContractAt(
+    "SonicSwapXAMOStrategy",
+    cSonicSwapXAMOStrategyProxy.address
+  );
+  // Initialize Sonic Curve AMO Strategy implementation
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.sonic.SWPx], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cSonicSwapXAMOStrategyProxy
+          .connect(sDeployer)["initialize(address,address,bytes)"](
+            dSonicSwapXAMOStrategy.address,
+            addresses.sonic.timelock,
+            initData
+          )
+  );
+
+  return cSonicSwapXAMOStrategy;
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1352,4 +1396,5 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deploySonicSwapXAMOStrategyImplementation,
 };

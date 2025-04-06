@@ -20,7 +20,7 @@ end box
 box Mainnet
 participant "Strategist" as mainStrategist <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as mainVault <<Origin>> #DeepSkyBlue
-participant "Wrapper OETH" as woeth <<Origin>><<OWETH>> #DeepSkyBlue
+participant "Wrapper OETH" as woeth <<Origin>><<WOETH>> #DeepSkyBlue
 end box
 
 ' Deposit ETH via Zapper
@@ -80,10 +80,10 @@ note left : user claims WETH
 end
 
 
-group Strategist moves WETH to Mainnet
+group Strategist moves WETH from Base to Mainnet
 
 strategist -> mainStrategist : WETH
-note left : Bridge WETH to Mainnet
+note left : Bridge WETH to\nMainnet using Stargate
 
 mainStrategist -> mainVault : WETH
 note left : mint OETH using WETH
@@ -109,6 +109,33 @@ strategist -> aeroPool : SuperOETH
 note left : swap SuperOETH for WETH\nusing Aerodrome Pool
 aeroPool -> strategist : WETH
 end
+end
+
+
+group Strategist moves WETH from Mainnet to Base
+
+strategist -> vault : WETH
+note left : mint SuperOETH\nusing WETH
+vault o-> strategist : SuperOETH
+
+strategist ->x woethStrat : SuperOETH
+note left : withdraw bridged WOETH
+woethStrat -> strategist : WOETH
+
+strategist -> mainStrategist : WOETH
+note left : bridge WOETH to\nMainnet using CCIP
+
+mainStrategist -> woeth : WOETH
+note left : unwrap WOETH for OETH
+woeth -> mainStrategist : OETH
+
+mainStrategist ->x mainVault : OETH
+note left : redeem OETH for WETH
+mainVault -> mainStrategist : WETH
+
+mainStrategist -> strategist : WETH
+note left : bridge WETH to Base\nusing Superbridge
+
 end
 
 ' Collect and Rebase

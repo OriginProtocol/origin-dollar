@@ -84,7 +84,8 @@ async function withdrawFromSFC({ signer }) {
   while (withdrawId >= 0) {
     const request = await sonicStakingStrategy.withdrawals(withdrawId);
 
-    if (request.undelegateAmount == 0) {
+    if (request.undelegatedAmount.eq(0)) {
+      log(`Request ${withdrawId} has already been withdrawn`);
       break;
     } else if (request.timestamp < fourteenDaysAgo) {
       log(`Request ${withdrawId} can be withdrawn`);
