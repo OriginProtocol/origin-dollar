@@ -10,6 +10,7 @@ const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers.js");
+const merklDistributorAbi = require("./abi/merklDistributor.json");
 
 const log = require("../utils/logger")("test:fixtures-sonic");
 
@@ -100,7 +101,9 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     zapper,
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
-    poolBoosterCentralRegistry;
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory;
+  let merklDistributor;
   if (isFork) {
     // Harvester
     const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
@@ -132,6 +135,15 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle(
       poolBoosterCentralRegistry,
       governor
+    );
+
+    poolBoosterMerklFactory = await ethers.getContract(
+      "PoolBoosterFactoryMerkl"
+    );
+
+    merklDistributor = await ethers.getContractAt(
+      merklDistributorAbi,
+      addresses.sonic.MerklDistributor
     );
   }
 
@@ -179,6 +191,10 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+
+    // Merkl distributor
+    merklDistributor,
 
     // Wrapped S
     wS,

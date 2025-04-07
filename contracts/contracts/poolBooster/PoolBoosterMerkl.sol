@@ -29,39 +29,52 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     /// @notice if balance under this amount the bribe action is skipped
     uint256 public constant MIN_BRIBE_AMOUNT = 1e10;
     /// @notice Campaign duration in seconds
-    uint32 public constant DURATION = 1 days;
+    uint32 public immutable DURATION; // -> should be immutable
     /// @notice Campaign type
     uint32 public immutable CAMPAIGN_TYPE;
     /// @notice Merkl hash to sign (for signature verification)
     bytes32 public immutable HASH_TO_SIGN;
+    bytes public campaignData;
 
     constructor(
         address _rewardToken,
         address _merklDistributor,
+        uint32 _duration,
         uint32 _campaignType,
-        bytes32 _hashToSign
+        bytes32 _hashToSign,
+        bytes memory _campaignData
     ) {
-        CAMPAIGN_TYPE = _campaignType;
         require(_rewardToken != address(0), "Invalid rewardToken address");
         require(
             _merklDistributor != address(0),
             "Invalid merklDistributor address"
         );
+        require(_hashToSign != bytes32(0), "Invalid hashToSign address");
+        require(_campaignData.length > 0, "Invalid campaignData");
+        require(_duration > 1 hours, "Invalid duration");
+
+        CAMPAIGN_TYPE = _campaignType;
+        DURATION = _duration;
+        HASH_TO_SIGN = _hashToSign;
+
         merklDistributor = IMerklDistributor(_merklDistributor);
         rewardToken = IERC20(_rewardToken);
-        HASH_TO_SIGN = _hashToSign;
+        campaignData = _campaignData;
     }
 
     /// @notice Create a campaign on the Merkl distributor
     function bribe() external override {
-        uint256 balance = rewardToken.balanceOf(address(this));
+        // Ensure token is approved for the Merkl distributor
+        uint256 minAmount = merklDistributor.rewardTokenMinAmounts(
+            address(rewardToken)
+        );
+        require(minAmount > 0, "Invalid minAmount for the reward token");
 
-        // balance too small, do no bribes
+        // if balance too small or below threshhold, do no bribes
+        uint256 balance = rewardToken.balanceOf(address(this));
         if (
             balance < MIN_BRIBE_AMOUNT ||
-            (balance * 1 hours <
-                merklDistributor.rewardTokenMinAmounts(address(rewardToken)) *
-                    DURATION)
+            (balance * 1 hours < minAmount * DURATION)
         ) {
             return;
         }
@@ -79,7 +92,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
                 campaignType: CAMPAIGN_TYPE,
                 startTimestamp: getTomorrowRoundedTimestamp(),
                 duration: DURATION,
-                campaignData: ""
+                campaignData: campaignData
             }),
             bytes("")
         );

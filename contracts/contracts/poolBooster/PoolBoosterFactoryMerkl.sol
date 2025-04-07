@@ -26,9 +26,11 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         address _oSonic,
         address _governor,
         address _centralRegistry,
-        address _merklDistributor
+        address _merklDistributor,
+        bytes32 _merklHashToSign
     ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {
         _setMerklDistributor(_merklDistributor);
+        _setMerklHashToSign(_merklHashToSign);
     }
 
     /**
@@ -36,6 +38,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
      * @param _campaignType The type of campaign to create. This is used to determine the type of
      *        bribe contract to create. The type is defined in the MerklDistributor contract.
      * @param _ammPoolAddress address of the AMM pool where the yield originates from
+     * @param _campaignDuration The duration of the campaign in seconds
+     * @param campaignData The data to be used for the campaign. This is used to determine the type of
+     *        bribe contract to create. The type is defined in the MerklDistributor contract.
+     *        This should be fetched from the Merkl UI.
      * @param _salt A unique number that affects the address of the pool booster created. Note: this number
      *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
      *        and pre-computed address to match
@@ -43,6 +49,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     function createPoolBoosterMerkl(
         uint32 _campaignType,
         address _ammPoolAddress,
+        uint32 _campaignDuration,
+        bytes calldata campaignData,
         uint256 _salt
     ) external onlyGovernor {
         require(
@@ -50,6 +58,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             "Invalid ammPoolAddress address"
         );
         require(_salt > 0, "Invalid salt");
+        require(_campaignDuration > 1 hours, "Invalid campaign duration");
+        require(campaignData.length > 0, "Invalid campaign data");
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
@@ -57,8 +67,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                 abi.encode(
                     oSonic,
                     merklDistributor,
+                    _campaignDuration,
                     _campaignType,
-                    merklHashToSign
+                    merklHashToSign,
+                    campaignData
                 )
             ),
             _salt
@@ -83,6 +95,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     function computePoolBoosterAddress(
         uint32 _campaignType,
         address _ammPoolAddress,
+        uint32 _campaignDuration,
+        bytes calldata campaignData,
         uint256 _salt
     ) external view returns (address) {
         require(
@@ -90,6 +104,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             "Invalid ammPoolAddress address"
         );
         require(_salt > 0, "Invalid salt");
+        require(_campaignDuration > 1 hours, "Invalid campaign duration");
+        require(campaignData.length > 0, "Invalid campaign data");
 
         return
             _computeAddress(
@@ -98,8 +114,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                     abi.encode(
                         oSonic,
                         merklDistributor,
+                        _campaignDuration,
                         _campaignType,
-                        merklHashToSign
+                        merklHashToSign,
+                        campaignData
                     )
                 ),
                 _salt
