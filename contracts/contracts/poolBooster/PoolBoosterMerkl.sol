@@ -32,9 +32,8 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     uint32 public constant DURATION = 1 days;
     /// @notice Campaign type
     uint32 public immutable CAMPAIGN_TYPE;
-
     /// @notice Merkl hash to sign (for signature verification)
-    bytes32 public hashToSign;
+    bytes32 public immutable HASH_TO_SIGN;
 
     constructor(
         address _rewardToken,
@@ -50,7 +49,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         );
         merklDistributor = IMerklDistributor(_merklDistributor);
         rewardToken = IERC20(_rewardToken);
-        hashToSign = _hashToSign;
+        HASH_TO_SIGN = _hashToSign;
     }
 
     /// @notice Create a campaign on the Merkl distributor
@@ -97,7 +96,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     {
         // Check if the signature is valid for the given hash
         // bytes4(keccak256("isValidSignature(bytes32,bytes)")) == 0x1626ba7e
-        return (hash == hashToSign ? bytes4(0x1626ba7e) : bytes4(0x00000000));
+        return (hash == HASH_TO_SIGN ? bytes4(0x1626ba7e) : bytes4(0x00000000));
     }
 
     /// @notice Returns the current timestamp rounded to the next day
