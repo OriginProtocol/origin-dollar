@@ -7,7 +7,7 @@ const { deployWithConfirmation } = require("../../utils/deploy.js");
 // 0x161A72027D83DA46329ed64A4EDfd0B717b7f8a7: Rewarder Implem
 module.exports = deployOnSonic(
   {
-    deployName: "016_pool_booster_metropolis",
+    deployName: "017_pool_booster_metropolis",
   },
   async ({ ethers }) => {
     // ---------------------------------------------------------------------------------------------------------
