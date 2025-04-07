@@ -507,7 +507,22 @@ addresses.holesky.validatorRegistrator =
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume = {};
+// all these are testnet values
 addresses.plume.WETH = "0x1738E5247c85f96c9D35FE55800557C5479b7063";
-//need to add other addresses
+addresses.plume.MaverickV2Factory = "0xb3981D569633Cc6D63C800d159EDE0d0fA5723de";
+addresses.plume.MaverickV2PoolLens = "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
+addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
+addresses.plume.MaverickV2Router = "0x1Aa9f3F98D62f65a010ad1283cC0F4c9cDAd40fF";
+addresses.plume.MaverickV2Position = "0xeaB0C344C6bf49901fb0a0D5BcA2417a0548b8a3";
+addresses.plume.MaverickV2LiquidityManager = "0x36bECaBdde2a63DCCFBe1235F55A85381ed007BC";
+
+// all these are Mainnet values
+// addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
+// addresses.plume.MaverickV2Factory = "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
+// addresses.plume.MaverickV2PoolLens = "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
+// addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
+// addresses.plume.MaverickV2Router = "0x35e44dc4702Fd51744001E248B49CBf9fcc51f0C";
+// addresses.plume.MaverickV2Position = "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
+// addresses.plume.MaverickV2LiquidityManager = "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
 
 module.exports = addresses;

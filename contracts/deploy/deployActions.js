@@ -1332,7 +1332,8 @@ const deployPlumeRoosterAMOStrategyImplementation = async () => {
     [addresses.zero, cOETHpVaultProxy.address], // platformAddress, VaultAddress
     addresses.plume.WETH, // weth address
     cOETHpProxy.address, // OETHp address
-    
+    addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
+    // todo, // superOETHp/WPLUME pool
   ]);
 
   return await ethers.getContract("RoosterAMOStrategy");
