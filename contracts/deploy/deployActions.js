@@ -1322,7 +1322,7 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
-const deployPlumeRoosterAMOStrategyImplementation = async () => {
+const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
   const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
   const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
 
@@ -1333,10 +1333,65 @@ const deployPlumeRoosterAMOStrategyImplementation = async () => {
     addresses.plume.WETH, // weth address
     cOETHpProxy.address, // OETHp address
     addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
-    // todo, // superOETHp/WPLUME pool
+    poolAddress // superOETHp/WPLUME pool
   ]);
 
   return await ethers.getContract("RoosterAMOStrategy");
+};
+
+const deployOSWETHRoosterAmoPool = async () => {
+  const {
+    maverickV2LiquidityManager,
+    maverickV2PoolLens,
+    cOETHp
+  } = await getPlumeContracts();
+
+  const oethAddressBN = ethers.BigNumber.from(cOETHp.address);
+  const wethAddressBN = ethers.BigNumber.from(addresses.plume.WETH);
+  const OETHisAddressA = oethAddressBN.lt(wethAddressBN);
+
+  const tx = await maverickV2LiquidityManager.createPool(
+    1, //fee
+    30, //tickSpacing
+    300, //lookback
+    OETHisAddressA ? cOETHp.address : addresses.plume.WETH, //tokenA
+    OETHisAddressA ? addresses.plume.WETH : cOETHp.address, //tokenB
+    0, //activeTick
+    // 1-15 number to represent the active kinds 
+    // 0b0001 = static; 
+    // 0b0010 = right; 
+    // 0b0100 = left; 
+    // 0b1000 = both. e.g. a pool with all 4 modes will have kinds = b1111 = 15
+    1, //kinds
+  );
+  const result = await tx.wait()
+  const poolCreated = result.events.find(event => event.event === 'PoolCreated');
+
+  //event PoolCreated(IMaverickV2Pool poolAddress, uint8 protocolFeeRatio, uint256 feeAIn, uint256 feeBIn, uint256 tickSpacing, uint256 lookback, int32 activeTick, IERC20 tokenA, IERC20 tokenB, uint8 kinds, address accessor);
+  const dataDecoded = ethers.utils.defaultAbiCoder.decode(
+    ['address', 'uint8', 'uint256', 'uint256', 'uint256', 'uint256', 'int32', 'address', 'address', 'uint8', 'address'],
+    result.events[0].data
+  );
+  return dataDecoded[0]
+};
+
+const getPlumeContracts = async () => {
+  const maverickV2LiquidityManager = await ethers.getContractAt(
+    "IMaverickV2LiquidityManager",
+    addresses.plume.MaverickV2LiquidityManager
+  );
+  const maverickV2PoolLens = await ethers.getContractAt(
+    "IMaverickV2PoolLens",
+    addresses.plume.MaverickV2PoolLens
+  );
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHp = await ethers.getContractAt("OETHPlume", cOETHpProxy.address);
+
+  return {
+    maverickV2LiquidityManager,
+    maverickV2PoolLens,
+    cOETHp
+  };
 };
 
 module.exports = {
@@ -1369,5 +1424,7 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
-  deployPlumeRoosterAMOStrategyImplementation
+  deployPlumeRoosterAMOStrategyImplementation,
+  deployOSWETHRoosterAmoPool,
+  getPlumeContracts
 };
