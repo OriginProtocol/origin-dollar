@@ -7,6 +7,8 @@ pragma solidity ^0.8.0;
  * @custom:security-contact security@fantom.foundation
  */
 interface ISFC {
+    error StakeIsFullySlashed();
+
     event CreatedValidator(
         uint256 indexed validatorID,
         address indexed auth,

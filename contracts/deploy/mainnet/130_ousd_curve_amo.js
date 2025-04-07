@@ -9,7 +9,7 @@ const { oethUnits } = require("../../test/helpers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "129_ousd_curve_amo",
+    deployName: "130_ousd_curve_amo",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,

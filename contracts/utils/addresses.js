@@ -6,7 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
-addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
+addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -178,7 +178,7 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0x000000009dF57105d76B059178989E01356e4b45";
+  "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
@@ -387,6 +387,9 @@ addresses.sonic.SonicStakingStrategy =
   "0x596B0401479f6DfE1cAF8c12838311FeE742B95c";
 
 // SwapX on Sonic
+addresses.sonic.SWPx = "0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70";
+addresses.sonic.SwapXOwner = "0xAdB5A1518713095C39dBcA08Da6656af7249Dd20";
+addresses.sonic.SwapXVoter = "0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2";
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 addresses.sonic.SwapXOsUSDCe = {};
@@ -404,6 +407,10 @@ addresses.sonic.SwapXOsUSDCe.extBribeUSDC =
 addresses.sonic.SwapXOsGEMSx = {};
 addresses.sonic.SwapXOsGEMSx.pool =
   "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
+
+addresses.sonic.SwapXWSOS = {};
+addresses.sonic.SwapXWSOS.pool = "0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0";
+addresses.sonic.SwapXWSOS.gauge = "0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709";
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
@@ -489,9 +496,10 @@ addresses.sonic.Metropolis.Pools.OsMoon =
   "0xc0aac9bb9fb72a77e3bc8bee46d3e227c84a54c0";
 
 // Sonic Curve
+addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
 addresses.sonic.WS_OS = {};
-addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
-addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.WS_OS.pool = "0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9";
+addresses.sonic.WS_OS.gauge = "0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207";
 addresses.sonic.childLiquidityGaugeFactory =
   "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
 
