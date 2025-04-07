@@ -100,7 +100,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     zapper,
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
-    poolBoosterCentralRegistry;
+    poolBoosterCentralRegistry,
+    poolBoosterFactoryMetropolis;
   if (isFork) {
     // Harvester
     const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
@@ -132,6 +133,10 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle(
       poolBoosterCentralRegistry,
       governor
+    );
+
+    poolBoosterFactoryMetropolis = await ethers.getContract(
+      "PoolBoosterFactoryMetropolis"
     );
   }
 
@@ -179,6 +184,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
+    poolBoosterFactoryMetropolis,
 
     // Wrapped S
     wS,

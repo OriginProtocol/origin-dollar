@@ -484,6 +484,17 @@ addresses.sonic.Shadow.OsEco.pool =
 addresses.sonic.Shadow.OsEco.yf_treasury =
   "0x4b9919603170c77936d8ec2c08b604844e861699";
 
+// Sonic Metropolis
+addresses.sonic.Metropolis = {};
+addresses.sonic.Metropolis.Voter = "0x03A9896A464C515d13f2679df337bF95bc891fdA";
+addresses.sonic.Metropolis.RewarderFactory =
+  "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3";
+addresses.sonic.Metropolis.Pools = {};
+addresses.sonic.Metropolis.Pools.OsWOs =
+  "0x3987a13d675c66570bc28c955685a9bca2dcf26e";
+addresses.sonic.Metropolis.Pools.OsMoon =
+  "0xc0aac9bb9fb72a77e3bc8bee46d3e227c84a54c0";
+
 // Sonic Curve
 addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
 addresses.sonic.WS_OS = {};
