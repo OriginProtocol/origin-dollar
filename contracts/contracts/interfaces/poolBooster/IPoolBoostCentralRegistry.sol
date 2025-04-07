@@ -17,7 +17,9 @@ interface IPoolBoostCentralRegistry {
         // Supports bribing a single contract per pool. Appropriate for Classic Stable &
         // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)
         // needs bribing
-        SwapXSingleBooster
+        SwapXSingleBooster,
+        // Supports creating a Merkl campaign.
+        MerklBooster
     }
 
     struct PoolBoosterEntry {
