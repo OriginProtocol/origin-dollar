@@ -399,8 +399,14 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
         uint256 hardAssetBalance = hardAsset.balanceOf(address(this));
         hardAsset.safeTransfer(vaultAddress, hardAssetBalance);
 
-        emit Withdrawal(address(hardAsset), address(lpToken), hardAssetBalance);
-        emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
+        if (hardAssetBalance > 0)
+            emit Withdrawal(
+                address(hardAsset),
+                address(lpToken),
+                hardAssetBalance
+            );
+        if (otokenToBurn > 0)
+            emit Withdrawal(address(oToken), address(lpToken), otokenToBurn);
     }
 
     /***************************************

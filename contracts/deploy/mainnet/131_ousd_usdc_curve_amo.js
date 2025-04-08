@@ -9,7 +9,7 @@ const { oethUnits } = require("../../test/helpers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "130_ousd_curve_amo",
+    deployName: "131_ousd_usdc_curve_amo",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -22,6 +22,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cOracleRouter = await ethers.getContract("OracleRouter");
     await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.USDC);
 
     // Deploy Base Curve AMO proxy
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -43,10 +44,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy Base Curve AMO implementation
     const dOUSDCurveAMO = await deployWithConfirmation("CurveAMOStrategy", [
-      [addresses.mainnet.CurveOUSDUSDTPool, cOUSDVaultProxy.address],
+      [addresses.mainnet.curve.OUSD_USDC.pool, cOUSDVaultProxy.address],
       cOUSDProxy.address,
-      addresses.mainnet.USDT,
-      addresses.mainnet.CurveOUSDUSDTGauge,
+      addresses.mainnet.USDC,
+      addresses.mainnet.curve.OUSD_USDC.gauge,
       addresses.mainnet.CRVMinter,
     ]);
     const cOUSDCurveAMOImpl = await ethers.getContract("CurveAMOStrategy");
@@ -78,7 +79,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [cOUSDCurveAMOProxy.address],
         },
-        // Add strategyb to mint whitelist
+        // Add strategy to mint whitelist
         {
           contract: cOUSDVaultAdmin,
           signature: "setOusdMetaStrategy(address)",

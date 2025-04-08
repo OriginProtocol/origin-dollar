@@ -686,13 +686,13 @@ const defaultFixture = deployments.createFixture(async () => {
     ? await ethers.getContractAt("CurveAMOStrategy", OUSDCurveAMOProxy.address)
     : undefined;
 
-  const curvePoolOusdUsdt = await ethers.getContractAt(
+  const curvePoolOusdUsdc = await ethers.getContractAt(
     curveStableSwapNGAbi,
-    addresses.mainnet.CurveOUSDUSDTPool
+    addresses.mainnet.curve.OUSD_USDC.pool
   );
-  const curveGaugeOusdUsdt = await ethers.getContractAt(
+  const curveGaugeOusdUsdc = await ethers.getContractAt(
     curveXChainLiquidityGaugeAbi,
-    addresses.mainnet.CurveOUSDUSDTGauge
+    addresses.mainnet.curve.OUSD_USDC.gauge
   );
 
   let usdt,
@@ -1088,8 +1088,8 @@ const defaultFixture = deployments.createFixture(async () => {
     simpleOETHHarvester,
     oethFixedRateDripper,
     OUSDCurveAMO,
-    curvePoolOusdUsdt,
-    curveGaugeOusdUsdt,
+    curvePoolOusdUsdc,
+    curveGaugeOusdUsdc,
 
     // OETH
     oethVaultValueChecker,
