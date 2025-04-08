@@ -29,13 +29,13 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     /// @notice if balance under this amount the bribe action is skipped
     uint256 public constant MIN_BRIBE_AMOUNT = 1e10;
     /// @notice Campaign duration in seconds
-    uint32 public immutable DURATION; // -> should be immutable
+    uint32 public immutable duration; // -> should be immutable
     /// @notice Campaign type
-    uint32 public immutable CAMPAIGN_TYPE;
+    uint32 public immutable campaignType;
     /// @notice Merkl hash to sign (for signature verification)
-    bytes32 public immutable HASH_TO_SIGN;
+    bytes32 public immutable hashToSign;
     /// @notice Owner of the campaign
-    address public immutable CREATOR;
+    address public immutable creator;
     /// @notice Campaign data
     bytes public campaignData;
 
@@ -57,10 +57,10 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         require(_campaignData.length > 0, "Invalid campaignData");
         require(_duration > 1 hours, "Invalid duration");
 
-        CAMPAIGN_TYPE = _campaignType;
-        DURATION = _duration;
-        HASH_TO_SIGN = _hashToSign;
-        CREATOR = _creator;
+        campaignType = _campaignType;
+        duration = _duration;
+        hashToSign = _hashToSign;
+        creator = _creator;
 
         merklDistributor = IMerklDistributor(_merklDistributor);
         rewardToken = IERC20(_rewardToken);
@@ -79,7 +79,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         uint256 balance = rewardToken.balanceOf(address(this));
         if (
             balance < MIN_BRIBE_AMOUNT ||
-            (balance * 1 hours < minAmount * DURATION)
+            (balance * 1 hours < minAmount * duration)
         ) {
             return;
         }
@@ -91,12 +91,12 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         merklDistributor.signAndCreateCampaign(
             IMerklDistributor.CampaignParameters({
                 campaignId: bytes32(0),
-                creator: CREATOR,
+                creator: creator,
                 rewardToken: address(rewardToken),
                 amount: balance,
-                campaignType: CAMPAIGN_TYPE,
+                campaignType: campaignType,
                 startTimestamp: getTomorrowRoundedTimestamp(),
-                duration: DURATION,
+                duration: duration,
                 campaignData: campaignData
             }),
             bytes("")
@@ -114,7 +114,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     {
         // Check if the signature is valid for the given hash
         // bytes4(keccak256("isValidSignature(bytes32,bytes)")) == 0x1626ba7e
-        return (hash == HASH_TO_SIGN ? bytes4(0x1626ba7e) : bytes4(0x00000000));
+        return (hash == hashToSign ? bytes4(0x1626ba7e) : bytes4(0x00000000));
     }
 
     /// @notice Returns the current timestamp rounded to the next day
