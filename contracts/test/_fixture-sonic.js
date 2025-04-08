@@ -52,8 +52,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   timelock.address = timelockAddr;
 
   log(
-    `Before deployments with param "${
-      isFork ? ["sonic"] : ["sonic_unit_tests"]
+    `Before deployments with param "${isFork ? ["sonic"] : ["sonic_unit_tests"]
     }"`
   );
 
@@ -102,7 +101,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
-    poolBoosterMerklFactory;
+    poolBoosterMerklFactory,
+    poolBoosterFactoryMetropolis;
   let merklDistributor;
   if (isFork) {
     // Harvester
@@ -144,6 +144,10 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     merklDistributor = await ethers.getContractAt(
       merklDistributorAbi,
       addresses.sonic.MerklDistributor
+    );
+
+    poolBoosterFactoryMetropolis = await ethers.getContract(
+      "PoolBoosterFactoryMetropolis"
     );
   }
 
@@ -191,6 +195,7 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
+    poolBoosterFactoryMetropolis,
     poolBoosterMerklFactory,
 
     // Merkl distributor
