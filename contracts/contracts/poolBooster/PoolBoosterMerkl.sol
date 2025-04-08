@@ -34,6 +34,9 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     uint32 public immutable CAMPAIGN_TYPE;
     /// @notice Merkl hash to sign (for signature verification)
     bytes32 public immutable HASH_TO_SIGN;
+    /// @notice Owner of the campaign
+    address public immutable CREATOR;
+    /// @notice Campaign data
     bytes public campaignData;
 
     constructor(
@@ -42,6 +45,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         uint32 _duration,
         uint32 _campaignType,
         bytes32 _hashToSign,
+        address _creator,
         bytes memory _campaignData
     ) {
         require(_rewardToken != address(0), "Invalid rewardToken address");
@@ -56,6 +60,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         CAMPAIGN_TYPE = _campaignType;
         DURATION = _duration;
         HASH_TO_SIGN = _hashToSign;
+        CREATOR = _creator;
 
         merklDistributor = IMerklDistributor(_merklDistributor);
         rewardToken = IERC20(_rewardToken);
@@ -86,7 +91,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         merklDistributor.signAndCreateCampaign(
             IMerklDistributor.CampaignParameters({
                 campaignId: bytes32(0),
-                creator: address(this),
+                creator: CREATOR,
                 rewardToken: address(rewardToken),
                 amount: balance,
                 campaignType: CAMPAIGN_TYPE,

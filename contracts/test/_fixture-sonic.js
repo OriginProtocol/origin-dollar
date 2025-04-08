@@ -52,7 +52,8 @@ const defaultSonicFixture = deployments.createFixture(async () => {
   timelock.address = timelockAddr;
 
   log(
-    `Before deployments with param "${isFork ? ["sonic"] : ["sonic_unit_tests"]
+    `Before deployments with param "${
+      isFork ? ["sonic"] : ["sonic_unit_tests"]
     }"`
   );
 

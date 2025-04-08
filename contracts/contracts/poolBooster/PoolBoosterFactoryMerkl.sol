@@ -70,6 +70,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                     _campaignDuration,
                     _campaignType,
                     merklHashToSign,
+                    governor(),
                     campaignData
                 )
             ),
@@ -117,6 +118,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                         _campaignDuration,
                         _campaignType,
                         merklHashToSign,
+                        governor(),
                         campaignData
                     )
                 ),
