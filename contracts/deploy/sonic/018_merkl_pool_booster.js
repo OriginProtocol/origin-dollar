@@ -4,7 +4,7 @@ const { deployWithConfirmation } = require("../../utils/deploy.js");
 
 module.exports = deployOnSonic(
   {
-    deployName: "017_merkl_pool_booster",
+    deployName: "018_merkl_pool_booster",
   },
   async ({ ethers }) => {
     // ---------------------------------------------------------------------------------------------------------
@@ -44,6 +44,8 @@ module.exports = deployOnSonic(
     // --- Deploy PoolBoosterFactoryMerkl
     // ---
     // ---------------------------------------------------------------------------------------------------------
+    const hashToSign =
+      "0x97bd015d4e48fc7d8e7db116ba2d83567597ea6eb64e0694c6fccccd5a4b1841";
     const dPoolBoosterFactoryMerkl = await deployWithConfirmation(
       "PoolBoosterFactoryMerkl",
       [
@@ -51,7 +53,7 @@ module.exports = deployOnSonic(
         addresses.sonic.timelock,
         cPoolBoostCentralRegistryProxy.address,
         addresses.sonic.MerklDistributor,
-        "0x97bd015d4e48fc7d8e7db116ba2d83567597ea6eb64e0694c6fccccd5a4b1841",
+        hashToSign,
       ]
     );
     const cPoolBoosterMerklFactory = await ethers.getContract(
