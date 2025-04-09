@@ -69,7 +69,7 @@ contract WOETH is ERC4626, Governable, Initializable {
             _adjuster = 1e27;
         } else {
             _adjuster =
-                (OETH(asset()).rebasingCreditsPerTokenHighres() *
+                (rebasingCreditsPerTokenHighres() *
                     ERC20(asset()).balanceOf(address(this))) /
                 totalSupply();
         }
@@ -111,10 +111,25 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
+    /**
+     * @dev See {IERC4262-convertToShares}
+     */
+    function convertToShares(uint256 assets) public view virtual override returns (uint256 shares) {
+        return (assets * rebasingCreditsPerTokenHighres()) / _adjuster;
+    }
+
+    /** @dev See {IERC4262-convertToAssets} */
+    function convertToAssets(uint256 shares) public view virtual override returns (uint256 assets) {
+        return (shares * _adjuster) / rebasingCreditsPerTokenHighres();
+    }
+
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
         return
-            (totalSupply() * _adjuster) /
-            OETH(asset()).rebasingCreditsPerTokenHighres();
+            (totalSupply() * _adjuster) / rebasingCreditsPerTokenHighres();
+    }
+
+    function rebasingCreditsPerTokenHighres() internal view returns (uint256) {
+        return OETH(asset()).rebasingCreditsPerTokenHighres();
     }
 }
