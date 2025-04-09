@@ -17,7 +17,7 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOracleRouter = await ethers.getContract("OracleRouter");
@@ -68,7 +68,10 @@ module.exports = deploymentWithGovernanceProposal(
         )
     );
 
-    console.log("Vault Admin: ", cOUSDVaultAdmin.address);
+    const cOUSDCurveAMO = await ethers.getContractAt(
+      "CurveAMOStrategy",
+      cOUSDCurveAMOProxy.address
+    );
 
     return {
       name: "Add Curve AMO Strategy to OUSD Vault",
@@ -84,6 +87,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOUSDVaultAdmin,
           signature: "setOusdMetaStrategy(address)",
           args: [cOUSDCurveAMOProxy.address],
+        },
+        // Set strategist as harvester
+        {
+          contract: cOUSDCurveAMO,
+          signature: "setHarvesterAddress(address)",
+          args: [strategistAddr],
         },
       ],
     };
