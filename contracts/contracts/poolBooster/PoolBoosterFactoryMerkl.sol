@@ -21,6 +21,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
      * @param _governor address governor
      * @param _centralRegistry address of the central registry
      * @param _merklDistributor address of the Merkl distributor
+     * @param _merklHashToSign bytes32 of the Merkl hash to sign
      */
     constructor(
         address _oSonic,
