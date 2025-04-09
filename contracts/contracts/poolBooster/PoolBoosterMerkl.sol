@@ -73,7 +73,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         uint256 minAmount = merklDistributor.rewardTokenMinAmounts(
             address(rewardToken)
         );
-        require(minAmount > 0, "Invalid minAmount for the reward token");
+        require(minAmount > 0, "Min reward amount must be > 0");
 
         // if balance too small or below threshhold, do no bribes
         uint256 balance = rewardToken.balanceOf(address(this));
