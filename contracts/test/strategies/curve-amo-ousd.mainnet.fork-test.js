@@ -56,7 +56,7 @@ describe("Curve AMO OUSD strategy", function () {
     curvePool = fixture.curvePoolOusdUsdc;
     curveGauge = fixture.curveGaugeOusdUsdc;
     crv = fixture.crv;
-    harvester = fixture.harvester;
+    harvester = fixture.strategist;
     governor = await ethers.getSigner(addresses.mainnet.Timelock);
 
     defaultDepositor = rafael;
@@ -78,10 +78,6 @@ describe("Curve AMO OUSD strategy", function () {
     await ousdVault
       .connect(impersonatedTimelock)
       .setVaultBuffer(ousdUnits("1"));
-
-    await curveAMOStrategy
-      .connect(impersonatedAMOGovernor)
-      .setHarvesterAddress(harvester.address);
 
     // Seed the pool
     await setERC20TokenBalance(nick.address, usdc, "5000000", hre);
@@ -935,7 +931,7 @@ describe("Curve AMO OUSD strategy", function () {
     timelock: timelock,
     governor: governor,
     strategist: rafael,
-    harvester: fixture.strategist,
+    harvester: harvester,
 
     beforeEach: async () => {
       await balancePool();
@@ -954,6 +950,8 @@ describe("Curve AMO OUSD strategy", function () {
     strategy: curveAMOStrategy,
     governor: governor,
     oeth: ousd,
+    harvester: harvester,
+    strategist: rafael,
   }));
 
   const mintAndDepositToStrategy = async ({
