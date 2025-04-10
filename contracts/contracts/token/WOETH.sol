@@ -37,8 +37,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      * If WOETH and OETH are deployed at the same time, the value of _adjuster is a neutral 1e27
      */
     uint256 public _adjuster;
-    bool private _oethExchangeRateInitialized;
-    uint256[48] private __gap;
+    uint256[49] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
     constructor(ERC20 underlying_)
@@ -62,8 +61,7 @@ contract WOETH is ERC4626, Governable, Initializable {
      *         as a governance operation.
      */
     function initialize2() public onlyGovernor {
-        require(!_oethExchangeRateInitialized, "Initialize2 already called");
-        _oethExchangeRateInitialized = true;
+        require(_adjuster == 0, "Initialize2 already called");
 
         if (totalSupply() == 0) {
             _adjuster = 1e27;
