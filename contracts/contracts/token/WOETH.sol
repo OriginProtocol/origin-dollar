@@ -12,7 +12,7 @@ import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
 
 /**
- * @title OETH Token Contract
+ * @title Wrapped OETH Token Contract
  * @author Origin Protocol Inc
  *
  * @dev An important capability of this contract is that it isn't susceptible to changes of the
