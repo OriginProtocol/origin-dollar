@@ -75,7 +75,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         );
         require(minAmount > 0, "Min reward amount must be > 0");
 
-        // if balance too small or below threshhold, do no bribes
+        // if balance too small or below threshold, do no bribes
         uint256 balance = rewardToken.balanceOf(address(this));
         if (
             balance < MIN_BRIBE_AMOUNT ||
