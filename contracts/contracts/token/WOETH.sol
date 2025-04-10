@@ -19,9 +19,15 @@ import { OETH } from "./OETH.sol";
  * exchange rate of WOETH/OETH if/when someone sends the underlying asset (OETH) to the contract.
  * If OETH weren't rebasing this could be achieved by solely tracking the ERC20 transfers of the OETH
  * token on mint, deposit, redeem, withdraw. The issue is that OETH is rebasing and OETH balances
- * will change when the token rebases. For that reason we are tracking the WOETH contract credits and
- * credits per token in those 4 actions. That way WOETH can keep an accurate track of the OETH balance
- * ignoring any unexpected transfers of OETH to this contract.
+ * will change when the token rebases.
+ * For that reason the contract logic checks the actual underlying OETH token balance only once
+ * (either on a fresh contract creation or upgrade) and considering the WOETH supply and 
+ * rebasingCreditsPerToken calculates the _adjuster. Once the adjuster is calculated any donations
+ * to the contract are ignored. The totalSupply (instead of querying OETH balance) works off of
+ * adjuster the current WOETH supply and rebasingCreditsPerToken. This makes WOETH value accrual
+ * completely follow OETH's value accrual.
+ * WOETH is safe to use in lending markets as the VualtCore's _rebase contains safeguards preventing 
+ * any sudden large rebases.
  */
 
 contract WOETH is ERC4626, Governable, Initializable {
