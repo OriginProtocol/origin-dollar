@@ -105,7 +105,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /** @dev See {IERC4262-convertToShares} */
+    /// @inheritdoc ERC4626
     function convertToShares(uint256 assets)
         public
         view
@@ -116,7 +116,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (assets * rebasingCreditsPerTokenHighres()) / _adjuster;
     }
 
-    /** @dev See {IERC4262-convertToAssets} */
+    /// @inheritdoc ERC4626
     function convertToAssets(uint256 shares)
         public
         view
@@ -127,7 +127,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         return (shares * _adjuster) / rebasingCreditsPerTokenHighres();
     }
 
-    /** @dev See {IERC4262-totalAssets} */
+    /// @inheritdoc ERC4626
     function totalAssets() public view override returns (uint256) {
         return (totalSupply() * _adjuster) / rebasingCreditsPerTokenHighres();
     }
