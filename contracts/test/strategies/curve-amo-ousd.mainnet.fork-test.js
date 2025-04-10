@@ -935,7 +935,7 @@ describe("Curve AMO OUSD strategy", function () {
     timelock: timelock,
     governor: governor,
     strategist: rafael,
-    harvester: harvester,
+    harvester: fixture.strategist,
 
     beforeEach: async () => {
       await balancePool();
