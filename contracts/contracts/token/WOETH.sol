@@ -111,9 +111,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
-    /**
-     * @dev See {IERC4262-convertToShares}
-     */
+    /** @dev See {IERC4262-convertToShares} */
     function convertToShares(uint256 assets) public view virtual override returns (uint256 shares) {
         return (assets * rebasingCreditsPerTokenHighres()) / _adjuster;
     }
