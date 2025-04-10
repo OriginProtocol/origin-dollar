@@ -29,6 +29,12 @@ const { parseUnits } = require("ethers/lib/utils");
  */
 const shouldBehaveLikeStrategy = (context) => {
   describe("Strategy behaviour", () => {
+    if (context.beforeEach) {
+      beforeEach(async () => {
+        await context.beforeEach();
+      });
+    }
+
     it("Should have vault configured", async () => {
       const { strategy, vault } = await context();
       expect(await strategy.vaultAddress()).to.equal(vault.address);

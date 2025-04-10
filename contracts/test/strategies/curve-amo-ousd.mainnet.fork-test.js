@@ -926,21 +926,22 @@ describe("Curve AMO OUSD strategy", function () {
   });
 
   describe("Behaviour", () => {
-    it("Should behave like a Strategy", async () => {
-      await balancePool();
-      shouldBehaveLikeStrategy(() => ({
-        ...fixture,
-        // Contracts
-        strategy: curveAMOStrategy,
-        curveAMOStrategy: curveAMOStrategy,
-        vault: ousdVault,
-        assets: [usdc],
-        timelock: timelock,
-        governor: governor,
-        strategist: rafael,
-        harvester: harvester,
-      }));
-    });
+    shouldBehaveLikeStrategy(() => ({
+      ...fixture,
+      // Contracts
+      strategy: curveAMOStrategy,
+      curveAMOStrategy: curveAMOStrategy,
+      vault: ousdVault,
+      assets: [usdc],
+      timelock: timelock,
+      governor: governor,
+      strategist: rafael,
+      harvester: harvester,
+
+      beforeEach: async () => {
+        await balancePool();
+      },
+    }));
 
     shouldBehaveLikeGovernable(() => ({
       ...fixture,
