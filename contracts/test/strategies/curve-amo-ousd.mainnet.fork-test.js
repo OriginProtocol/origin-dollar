@@ -925,38 +925,36 @@ describe("Curve AMO OUSD strategy", function () {
     });
   });
 
-  describe("Behaviour", () => {
-    shouldBehaveLikeStrategy(() => ({
-      ...fixture,
-      // Contracts
-      strategy: curveAMOStrategy,
-      curveAMOStrategy: curveAMOStrategy,
-      vault: ousdVault,
-      assets: [usdc],
-      timelock: timelock,
-      governor: governor,
-      strategist: rafael,
-      harvester: harvester,
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    // Contracts
+    strategy: curveAMOStrategy,
+    curveAMOStrategy: curveAMOStrategy,
+    vault: ousdVault,
+    assets: [usdc],
+    timelock: timelock,
+    governor: governor,
+    strategist: rafael,
+    harvester: harvester,
 
-      beforeEach: async () => {
-        await balancePool();
-      },
-    }));
+    beforeEach: async () => {
+      await balancePool();
+    },
+  }));
 
-    shouldBehaveLikeGovernable(() => ({
-      ...fixture,
-      strategist: rafael,
-      governor: governor,
-      strategy: curveAMOStrategy,
-    }));
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategist: rafael,
+    governor: governor,
+    strategy: curveAMOStrategy,
+  }));
 
-    shouldBehaveLikeHarvestable(() => ({
-      ...fixture,
-      strategy: curveAMOStrategy,
-      governor: governor,
-      oeth: ousd,
-    }));
-  });
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    strategy: curveAMOStrategy,
+    governor: governor,
+    oeth: ousd,
+  }));
 
   const mintAndDepositToStrategy = async ({
     userOverride,
