@@ -95,7 +95,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
                 rewardToken: address(rewardToken),
                 amount: balance,
                 campaignType: campaignType,
-                startTimestamp: getTomorrowRoundedTimestamp(),
+                startTimestamp: getNextPeriodStartTime(),
                 duration: duration,
                 campaignData: campaignData
             }),
@@ -118,9 +118,9 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         return (hash == hashToSign ? bytes4(0x1626ba7e) : bytes4(0x00000000));
     }
 
-    /// @notice Returns the current timestamp rounded to the next day
-    function getTomorrowRoundedTimestamp() public view returns (uint32) {
-        // Calculate the timestamp for the start of tomorrow (next midnight)
-        return uint32((block.timestamp / 1 days + 1) * 1 days);
+    /// @notice Returns the timestamp for the start of the next period based on the configured duration
+    function getNextPeriodStartTime() public view returns (uint32) {
+        // Calculate the timestamp for the next period boundary
+        return uint32((block.timestamp / duration + 1) * duration);
     }
 }
