@@ -16,6 +16,10 @@ import { StableMath } from "../../utils/StableMath.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IMaverickV2Pool } from "../../interfaces/plume/IMaverickV2Pool.sol";
 import { IMaverickV2LiquidityManager } from "../../interfaces/plume/IMaverickV2LiquidityManager.sol";
+import { IMaverickV2PoolLens } from "../../interfaces/plume/IMaverickV2PoolLens.sol";
+import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
+
+import "hardhat/console.sol";
 
 contract RoosterAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -34,7 +38,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             Storage slot members
     ****************************************/
 
-    /// @notice tokenId of the liquidity position
+    /// @notice NFT tokenId of the liquidity position
     uint256 public tokenId;
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
@@ -71,6 +75,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     // ICLGauge public immutable clGauge;
     /// @notice the Liquidity manager used to add liquidity to the mPool
     IMaverickV2LiquidityManager public immutable liquidityManager;
+    /// @notice the Maverick V2 pool lens
+    IMaverickV2PoolLens public immutable poolLens;
+
     // /// @notice helper contract for liquidity and ticker math
     // ISugarHelper public immutable helper;
 
@@ -110,6 +117,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address _wethAddress,
         address _oethpAddress,
         address _liquidityManager,
+        address _poolLens,
         address _mPool
     ) initializer InitializableAbstractStrategy(_stratConfig) {
         require(
@@ -120,20 +128,31 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress,
             "Only OETHb supported as tokenB"
         );
+        require(_liquidityManager != address(0),
+            "LiquidityManager zero address not allowed"
+        );
+        require(_poolLens != address(0),
+            "PoolLens zero address not allowed"
+        );
 
         uint256 _tickSpacing = IMaverickV2Pool(_mPool).tickSpacing();
         // when we generalize AMO we might support other tick spacings
-        require(_tickSpacing == 15, "Unsupported tickSpacing");
+        // require(_tickSpacing == 15, "Unsupported tickSpacing");
 
         WETH = _wethAddress;
         OETHp = _oethpAddress;
         liquidityManager = IMaverickV2LiquidityManager(
             _liquidityManager
         );
+        poolLens = IMaverickV2PoolLens(_poolLens);
         mPool = IMaverickV2Pool(_mPool);
-        
+
+        require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
+        require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
+
         // prevent implementation contract to be governed
         _setGovernor(address(0));
+
     }
 
     /**
@@ -156,7 +175,106 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                   Configuration 
     ****************************************/
 
-    // TODO config contracts
+    /**
+     * @notice Donate initial liquidity to the pool that can not be withdrawn
+     */
+    function donateLiquidity() external onlyGovernor nonReentrant {
+        int32[] memory ticks = new int32[](1);
+        uint128[] memory relativeLiquidityAmounts = new uint128[](1);
+        ticks[0] = 0;
+        // all liquidity into one tick
+        relativeLiquidityAmounts[0] = 1e18;
+
+        uint256 maxAmountA = 1e18;
+        uint256 slippageFactor = 0.01e18;
+        IMaverickV2PoolLens.AddParamsSpecification memory addSpec = IMaverickV2PoolLens.AddParamsSpecification({
+            slippageFactorD18: slippageFactor,
+            numberOfPriceBreaksPerSide: 0,
+            targetAmount: maxAmountA,
+            targetIsA: true
+        });
+
+        int32 activeTick = mPool.getState().activeTick;
+        console.log("activeTick");
+        console.log(activeTick == 0); // true
+
+        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/maverickv2poollens#getaddliquidityparams
+        (,,,IMaverickV2Pool.AddLiquidityParams[] memory addParams, ) = poolLens.getAddLiquidityParams(IMaverickV2PoolLens.AddParamsViewInputs({
+            pool: mPool,
+            kind: 0, // static kind
+            ticks: ticks,
+            relativeLiquidityAmounts: relativeLiquidityAmounts,
+            addSpec: addSpec
+        }));
+
+        console.log("addParams.length");
+        console.log(addParams.length);
+        liquidityManager.donateLiquidity(mPool, addParams[0]);
+    }
+
+    /**
+     * @notice Mint the initial NFT position
+     */
+    function mintInitialPosition() external onlyGovernor nonReentrant {
+        require(tokenId == 0, "NFT already minted");
+
+        console.log("POol tick spacing");
+        console.log(mPool.tickSpacing());
+        (uint256 sqrtLowerTickPrice, uint256 sqrtUpperTickPrice) = TickMath.tickSqrtPrices(
+            mPool.tickSpacing(), // 30
+            -1 // active tick upon pool deployment
+        );
+        // sqrt price is price of B in terms of A
+        (uint256 sqrtPrice, uint256 liquidity) = TickMath.getTickSqrtPriceAndL(
+            200, // reserveA - WETH
+            1000, // reserveB - OETHb
+            sqrtLowerTickPrice,
+            sqrtUpperTickPrice
+        );
+
+        console.log("Square root prices tick 0");
+        console.log(sqrtLowerTickPrice);
+        console.log(sqrtUpperTickPrice);
+        console.log(sqrtPrice);
+        console.log(liquidity);
+        IVault(vaultAddress).mintForStrategy(1e18 * 2);
+        console.log("WETH & OETHp balances");
+        console.log(IERC20(WETH).balanceOf(address(this)));
+        console.log(IERC20(OETHp).balanceOf(address(this)));
+
+        int32[] memory ticks = new int32[](1);
+        uint128[] memory relativeLiquidityAmounts = new uint128[](1);
+        ticks[0] = -1;
+        // all liquidity into one tick
+        relativeLiquidityAmounts[0] = 1e18;
+
+        uint256 maxAmountA = 1e18;
+        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/interfaces/imaverickv2poollens#addparamsspecification
+        IMaverickV2PoolLens.AddParamsSpecification memory addSpec = IMaverickV2PoolLens.AddParamsSpecification({
+            slippageFactorD18: 0.01e18,
+            numberOfPriceBreaksPerSide: 0,
+            targetAmount: maxAmountA,
+            targetIsA: false
+        });
+
+        int32 activeTick = mPool.getState().activeTick;
+        console.log("activeTick");
+        console.log(activeTick == -1); // true
+
+        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/maverickv2poollens#getaddliquidityparams
+        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs, , , ) = poolLens.getAddLiquidityParams(IMaverickV2PoolLens.AddParamsViewInputs({
+            pool: mPool,
+            kind: 0, // static kind
+            ticks: ticks,
+            relativeLiquidityAmounts: relativeLiquidityAmounts,
+            addSpec: addSpec
+        }));
+        console.log("getAddLiquidityParams called");
+
+        (uint256 amountA, uint256 amountB, , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(mPool, packedSqrtPriceBreaks, packedArgs);
+        // Store the tokenId
+        tokenId = _tokenId;
+    }
 
     /***************************************
                 Periphery utils
@@ -242,6 +360,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         onlyGovernor
         nonReentrant
     {
+        IERC20(WETH).approve(address(liquidityManager), type(uint256).max);
+        IERC20(OETHp).approve(address(liquidityManager), type(uint256).max);
     }
 
     /***************************************

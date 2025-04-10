@@ -507,6 +507,8 @@ addresses.holesky.validatorRegistrator =
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume = {};
+// TODO: change this once we know the address
+addresses.plume.governor = "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
 // all these are testnet values
 addresses.plume.WETH = "0x1738E5247c85f96c9D35FE55800557C5479b7063";
 addresses.plume.MaverickV2Factory = "0xb3981D569633Cc6D63C800d159EDE0d0fA5723de";

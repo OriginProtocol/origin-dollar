@@ -304,3 +304,10 @@ contract PoolBoostCentralRegistryProxy is
 contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice RoosterAMOStrategyProxy delegates calls to a RoosterAMOStrategy implementation
+ */
+contract RoosterAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

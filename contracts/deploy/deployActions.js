@@ -1333,6 +1333,7 @@ const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
     addresses.plume.WETH, // weth address
     cOETHpProxy.address, // OETHp address
     addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
+    addresses.plume.MaverickV2PoolLens, // pool lens
     poolAddress // superOETHp/WPLUME pool
   ]);
 
@@ -1346,23 +1347,25 @@ const deployOSWETHRoosterAmoPool = async () => {
     cOETHp
   } = await getPlumeContracts();
 
-  const oethAddressBN = ethers.BigNumber.from(cOETHp.address);
-  const wethAddressBN = ethers.BigNumber.from(addresses.plume.WETH);
-  const OETHisAddressA = oethAddressBN.lt(wethAddressBN);
+  // const oethAddressBN = ethers.BigNumber.from(cOETHp.address);
+  // const wethAddressBN = ethers.BigNumber.from(addresses.plume.WETH);
+  // const OETHisAddressA = oethAddressBN.lt(wethAddressBN);
 
   const tx = await maverickV2LiquidityManager.createPool(
-    1, //fee
-    30, //tickSpacing
-    300, //lookback
-    OETHisAddressA ? cOETHp.address : addresses.plume.WETH, //tokenA
-    OETHisAddressA ? addresses.plume.WETH : cOETHp.address, //tokenB
-    0, //activeTick
+    1, // fee
+    30, // tickSpacing
+    300, // lookback
+    //OETHisAddressA ? cOETHp.address : addresses.plume.WETH, // tokenA
+    //OETHisAddressA ? addresses.plume.WETH : cOETHp.address, // tokenB
+    addresses.plume.WETH, // tokenA
+    cOETHp.address, // tokenB
+    -1, // activeTick
     // 1-15 number to represent the active kinds 
     // 0b0001 = static; 
     // 0b0010 = right; 
     // 0b0100 = left; 
     // 0b1000 = both. e.g. a pool with all 4 modes will have kinds = b1111 = 15
-    1, //kinds
+    1, // static kind
   );
   const result = await tx.wait()
   const poolCreated = result.events.find(event => event.event === 'PoolCreated');
@@ -1372,6 +1375,7 @@ const deployOSWETHRoosterAmoPool = async () => {
     ['address', 'uint8', 'uint256', 'uint256', 'uint256', 'uint256', 'int32', 'address', 'address', 'uint8', 'address'],
     result.events[0].data
   );
+  // return pool address
   return dataDecoded[0]
 };
 
