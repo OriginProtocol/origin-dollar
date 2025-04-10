@@ -9,7 +9,7 @@ const { oethUnits } = require("../../test/helpers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "130_ousd_curve_amo",
+    deployName: "131_ousd_usdc_curve_amo",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -17,11 +17,12 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOracleRouter = await ethers.getContract("OracleRouter");
     await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.USDC);
 
     // Deploy Base Curve AMO proxy
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -43,10 +44,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy Base Curve AMO implementation
     const dOUSDCurveAMO = await deployWithConfirmation("CurveAMOStrategy", [
-      [addresses.mainnet.CurveOUSDUSDTPool, cOUSDVaultProxy.address],
+      [addresses.mainnet.curve.OUSD_USDC.pool, cOUSDVaultProxy.address],
       cOUSDProxy.address,
-      addresses.mainnet.USDT,
-      addresses.mainnet.CurveOUSDUSDTGauge,
+      addresses.mainnet.USDC,
+      addresses.mainnet.curve.OUSD_USDC.gauge,
       addresses.mainnet.CRVMinter,
     ]);
     const cOUSDCurveAMOImpl = await ethers.getContract("CurveAMOStrategy");
@@ -67,7 +68,10 @@ module.exports = deploymentWithGovernanceProposal(
         )
     );
 
-    console.log("Vault Admin: ", cOUSDVaultAdmin.address);
+    const cOUSDCurveAMO = await ethers.getContractAt(
+      "CurveAMOStrategy",
+      cOUSDCurveAMOProxy.address
+    );
 
     return {
       name: "Add Curve AMO Strategy to OUSD Vault",
@@ -78,11 +82,17 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [cOUSDCurveAMOProxy.address],
         },
-        // Add strategyb to mint whitelist
+        // Add strategy to mint whitelist
         {
           contract: cOUSDVaultAdmin,
           signature: "setOusdMetaStrategy(address)",
           args: [cOUSDCurveAMOProxy.address],
+        },
+        // Set strategist as harvester
+        {
+          contract: cOUSDCurveAMO,
+          signature: "setHarvesterAddress(address)",
+          args: [strategistAddr],
         },
       ],
     };
