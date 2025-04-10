@@ -31,7 +31,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     using StableMath for uint256;
     using SafeCast for uint256;
     /* This is a 1e27 adjustment constant that expresses the difference in exchange rate between
-     * OETH's rebase since inception (expressed with rebasingCreditsPerToken) and OWETH to OETH
+     * OETH's rebase since inception (expressed with rebasingCreditsPerToken) and WOETH to OETH
      * conversion.
      *
      * If WOETH and OETH are deployed at the same time, the value of _adjuster is a neutral 1e27
