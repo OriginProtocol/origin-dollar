@@ -6,9 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { OETH } from "./OETH.sol";
@@ -28,8 +26,6 @@ import { OETH } from "./OETH.sol";
 
 contract WOETH is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
-    using SafeCast for uint256;
     /* This is a 1e27 adjustment constant that expresses the difference in exchange rate between
      * OETH's rebase since inception (expressed with rebasingCreditsPerToken) and WOETH to OETH
      * conversion.
