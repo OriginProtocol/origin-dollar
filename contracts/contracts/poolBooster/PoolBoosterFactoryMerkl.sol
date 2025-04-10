@@ -16,6 +16,9 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// @notice address of the Merkl hash to sign
     bytes32 public merklHashToSign;
 
+    event MerklHashToSignUpdated(bytes32 newHash);
+    event MerklDistributorUpdated(address newDistributor);
+
     /**
      * @param _oSonic address of the OSonic token
      * @param _governor address governor
@@ -144,6 +147,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             "Invalid merklDistributor address"
         );
         merklDistributor = _merklDistributor;
+        emit MerklDistributorUpdated(_merklDistributor);
     }
 
     /**
@@ -160,5 +164,6 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     function _setMerklHashToSign(bytes32 _merklHashToSign) internal {
         require(_merklHashToSign != bytes32(0), "Invalid merklHashToSign");
         merklHashToSign = _merklHashToSign;
+        emit MerklHashToSignUpdated(_merklHashToSign);
     }
 }
