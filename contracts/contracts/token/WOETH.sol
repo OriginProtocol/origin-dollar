@@ -45,7 +45,6 @@ contract WOETH is ERC4626, Governable, Initializable {
     constructor(ERC20 underlying_)
         ERC20("", "")
         ERC4626(underlying_)
-        Governable()
     {}
 
     /**
