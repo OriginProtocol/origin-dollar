@@ -81,7 +81,9 @@ describe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(addresses.mainnet.CurveOUSDAMOStrategy);
+      expect(await vault.ousdMetaStrategy()).to.equal(
+        addresses.mainnet.CurveOUSDAMOStrategy
+      );
     });
 
     it("Should have supported assets", async () => {
