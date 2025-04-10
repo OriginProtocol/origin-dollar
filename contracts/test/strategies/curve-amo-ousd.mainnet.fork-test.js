@@ -927,7 +927,7 @@ describe("Curve AMO OUSD strategy", function () {
 
   describe("Behaviour", () => {
     it("Should behave like a Strategy", async () => {
-      balancePool();
+      await balancePool();
       shouldBehaveLikeStrategy(() => ({
         ...fixture,
         // Contracts
