@@ -56,7 +56,7 @@ describe("Curve AMO OUSD strategy", function () {
     curvePool = fixture.curvePoolOusdUsdc;
     curveGauge = fixture.curveGaugeOusdUsdc;
     crv = fixture.crv;
-    harvester = fixture.harvester;
+    harvester = fixture.strategist;
     governor = await ethers.getSigner(addresses.mainnet.Timelock);
 
     defaultDepositor = rafael;
@@ -78,10 +78,6 @@ describe("Curve AMO OUSD strategy", function () {
     await ousdVault
       .connect(impersonatedTimelock)
       .setVaultBuffer(ousdUnits("1"));
-
-    await curveAMOStrategy
-      .connect(impersonatedAMOGovernor)
-      .setHarvesterAddress(harvester.address);
 
     // Seed the pool
     await setERC20TokenBalance(nick.address, usdc, "5000000", hre);
@@ -925,37 +921,38 @@ describe("Curve AMO OUSD strategy", function () {
     });
   });
 
-  describe("Behaviour", () => {
-    it("Should behave like a Strategy", async () => {
-      balancePool();
-      shouldBehaveLikeStrategy(() => ({
-        ...fixture,
-        // Contracts
-        strategy: curveAMOStrategy,
-        curveAMOStrategy: curveAMOStrategy,
-        vault: ousdVault,
-        assets: [usdc],
-        timelock: timelock,
-        governor: governor,
-        strategist: rafael,
-        harvester: harvester,
-      }));
-    });
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    // Contracts
+    strategy: curveAMOStrategy,
+    curveAMOStrategy: curveAMOStrategy,
+    vault: ousdVault,
+    assets: [usdc],
+    timelock: timelock,
+    governor: governor,
+    strategist: rafael,
+    harvester: harvester,
 
-    shouldBehaveLikeGovernable(() => ({
-      ...fixture,
-      strategist: rafael,
-      governor: governor,
-      strategy: curveAMOStrategy,
-    }));
+    beforeEach: async () => {
+      await balancePool();
+    },
+  }));
 
-    shouldBehaveLikeHarvestable(() => ({
-      ...fixture,
-      strategy: curveAMOStrategy,
-      governor: governor,
-      oeth: ousd,
-    }));
-  });
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategist: rafael,
+    governor: governor,
+    strategy: curveAMOStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    strategy: curveAMOStrategy,
+    governor: governor,
+    oeth: ousd,
+    harvester: harvester,
+    strategist: rafael,
+  }));
 
   const mintAndDepositToStrategy = async ({
     userOverride,

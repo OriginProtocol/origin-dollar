@@ -791,7 +791,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     const balanceWETH = balances[0];
     const balanceOETH = balances[1];
 
-    if (balanceWETH > balanceOETH) {
+    if (balanceWETH.gt(balanceOETH)) {
       const amount = balanceWETH.sub(balanceOETH);
       const balance = weth.balanceOf(nick.address);
       if (balance < amount) {
@@ -807,7 +807,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, amount], 0);
-    } else if (balanceWETH < balanceOETH) {
+    } else if (balanceWETH.lt(balanceOETH)) {
       const amount = balanceOETH.sub(balanceWETH);
       const balance = weth.balanceOf(nick.address);
       if (balance < amount) {

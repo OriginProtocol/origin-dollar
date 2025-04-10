@@ -24,9 +24,9 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     governor = fixture.governor;
 
     // mint some OS to Nick
-    oSonicVault
+    await oSonicVault
       .connect(nick)
-      .mint(wS.address, oethUnits("1000"), oethUnits("0"));
+      .mint(wS.address, oethUnits("1000000"), oethUnits("0"));
   });
 
   it("Should deploy a Pool Booster for a Metropolis pool", async () => {
@@ -42,11 +42,11 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     // Give 10 OS to the pool booster
     await oSonic
       .connect(nick)
-      .transfer(poolBoosterMetropolis.address, oethUnits("10"));
+      .transfer(poolBoosterMetropolis.address, oethUnits("100000"));
 
     // Bribe the pool booster
     let tx = await poolBoosterMetropolis.bribe();
-    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("10")]);
+    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("100000")]);
     expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
       oethUnits("0")
     );
@@ -54,11 +54,11 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     // Give 10 OS to the pool booster
     await oSonic
       .connect(nick)
-      .transfer(poolBoosterMetropolis.address, oethUnits("50"));
+      .transfer(poolBoosterMetropolis.address, oethUnits("500000"));
 
     // Bribe the pool booster
     tx = await poolBoosterMetropolis.bribe();
-    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("50")]);
+    await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("500000")]);
     expect(await oSonic.balanceOf(poolBoosterMetropolis.address)).to.equal(
       oethUnits("0")
     );
