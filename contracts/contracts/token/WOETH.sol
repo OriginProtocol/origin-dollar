@@ -21,12 +21,12 @@ import { OETH } from "./OETH.sol";
  * token on mint, deposit, redeem, withdraw. The issue is that OETH is rebasing and OETH balances
  * will change when the token rebases.
  * For that reason the contract logic checks the actual underlying OETH token balance only once
- * (either on a fresh contract creation or upgrade) and considering the WOETH supply and 
+ * (either on a fresh contract creation or upgrade) and considering the WOETH supply and
  * rebasingCreditsPerToken calculates the _adjuster. Once the adjuster is calculated any donations
  * to the contract are ignored. The totalSupply (instead of querying OETH balance) works off of
  * adjuster the current WOETH supply and rebasingCreditsPerToken. This makes WOETH value accrual
  * completely follow OETH's value accrual.
- * WOETH is safe to use in lending markets as the VualtCore's _rebase contains safeguards preventing 
+ * WOETH is safe to use in lending markets as the VualtCore's _rebase contains safeguards preventing
  * any sudden large rebases.
  */
 
@@ -42,10 +42,7 @@ contract WOETH is ERC4626, Governable, Initializable {
     uint256[49] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
-    constructor(ERC20 underlying_)
-        ERC20("", "")
-        ERC4626(underlying_)
-    {}
+    constructor(ERC20 underlying_) ERC20("", "") ERC4626(underlying_) {}
 
     /**
      * @notice Enable OETH rebasing for this contract
@@ -104,24 +101,35 @@ contract WOETH is ERC4626, Governable, Initializable {
         external
         onlyGovernor
     {
-        require(asset_ != address(asset()), "Cannot collect OETH");
+        require(asset_ != address(asset()), "Cannot collect core asset");
         IERC20(asset_).safeTransfer(governor(), amount_);
     }
 
     /** @dev See {IERC4262-convertToShares} */
-    function convertToShares(uint256 assets) public view virtual override returns (uint256 shares) {
+    function convertToShares(uint256 assets)
+        public
+        view
+        virtual
+        override
+        returns (uint256 shares)
+    {
         return (assets * rebasingCreditsPerTokenHighres()) / _adjuster;
     }
 
     /** @dev See {IERC4262-convertToAssets} */
-    function convertToAssets(uint256 shares) public view virtual override returns (uint256 assets) {
+    function convertToAssets(uint256 shares)
+        public
+        view
+        virtual
+        override
+        returns (uint256 assets)
+    {
         return (shares * _adjuster) / rebasingCreditsPerTokenHighres();
     }
 
     /** @dev See {IERC4262-totalAssets} */
     function totalAssets() public view override returns (uint256) {
-        return
-            (totalSupply() * _adjuster) / rebasingCreditsPerTokenHighres();
+        return (totalSupply() * _adjuster) / rebasingCreditsPerTokenHighres();
     }
 
     function rebasingCreditsPerTokenHighres() internal view returns (uint256) {
