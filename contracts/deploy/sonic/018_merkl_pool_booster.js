@@ -44,11 +44,6 @@ module.exports = deployOnSonic(
     // --- Deploy PoolBoosterFactoryMerkl
     // ---
     // ---------------------------------------------------------------------------------------------------------
-    // The Merkl hash to sign
-    // This comes from the `DistributionCreator` contract at
-    // https://sonicscan.org/address/0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd#readProxyContract#F28
-    const hashToSign =
-      "0x97bd015d4e48fc7d8e7db116ba2d83567597ea6eb64e0694c6fccccd5a4b1841";
     const dPoolBoosterFactoryMerkl = await deployWithConfirmation(
       "PoolBoosterFactoryMerkl",
       [
@@ -56,7 +51,6 @@ module.exports = deployOnSonic(
         addresses.sonic.timelock,
         cPoolBoostCentralRegistryProxy.address,
         addresses.sonic.MerklDistributor,
-        hashToSign,
       ]
     );
     const cPoolBoosterMerklFactory = await ethers.getContract(

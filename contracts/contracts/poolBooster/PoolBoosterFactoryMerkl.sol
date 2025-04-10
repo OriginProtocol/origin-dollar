@@ -13,10 +13,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
 
     /// @notice address of the Merkl distributor
     address public merklDistributor;
-    /// @notice address of the Merkl hash to sign
-    bytes32 public merklHashToSign;
 
-    event MerklHashToSignUpdated(bytes32 newHash);
+    /// @notice event emitted when the Merkl distributor is updated
     event MerklDistributorUpdated(address newDistributor);
 
     /**
@@ -24,17 +22,14 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
      * @param _governor address governor
      * @param _centralRegistry address of the central registry
      * @param _merklDistributor address of the Merkl distributor
-     * @param _merklHashToSign bytes32 of the Merkl hash to sign
      */
     constructor(
         address _oSonic,
         address _governor,
         address _centralRegistry,
-        address _merklDistributor,
-        bytes32 _merklHashToSign
+        address _merklDistributor
     ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {
         _setMerklDistributor(_merklDistributor);
-        _setMerklHashToSign(_merklHashToSign);
     }
 
     /**
@@ -73,7 +68,6 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                     merklDistributor,
                     _campaignDuration,
                     _campaignType,
-                    merklHashToSign,
                     governor(),
                     campaignData
                 )
@@ -121,7 +115,6 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                         merklDistributor,
                         _campaignDuration,
                         _campaignType,
-                        merklHashToSign,
                         governor(),
                         campaignData
                     )
@@ -148,22 +141,5 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         );
         merklDistributor = _merklDistributor;
         emit MerklDistributorUpdated(_merklDistributor);
-    }
-
-    /**
-     * @dev Set the Merkl hash to sign
-     * @param _merklHashToSign The Merkl hash to sign
-     */
-    function setMerklHashToSign(bytes32 _merklHashToSign)
-        external
-        onlyGovernor
-    {
-        _setMerklHashToSign(_merklHashToSign);
-    }
-
-    function _setMerklHashToSign(bytes32 _merklHashToSign) internal {
-        require(_merklHashToSign != bytes32(0), "Invalid merklHashToSign");
-        merklHashToSign = _merklHashToSign;
-        emit MerklHashToSignUpdated(_merklHashToSign);
     }
 }

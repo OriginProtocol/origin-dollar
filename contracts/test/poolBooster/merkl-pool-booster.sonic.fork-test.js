@@ -42,18 +42,12 @@ describe("ForkTest: Merkl Pool Booster", function () {
     expect(await poolBoosterMerklFactory.merklDistributor()).to.equal(
       addresses.sonic.MerklDistributor
     );
-    expect(await poolBoosterMerklFactory.merklHashToSign()).to.equal(
-      "0x97bd015d4e48fc7d8e7db116ba2d83567597ea6eb64e0694c6fccccd5a4b1841"
-    );
   });
 
   it("Should deploy a Pool Booster for a Merkl pool", async () => {
     const pb = await createPB("1");
     expect(await poolBoosterMerklFactory.poolBoosterLength()).to.equal(1);
     expect(await pb.campaignType()).to.equal(DEFAULT_CAMPAIGN_ID);
-    expect(await pb.hashToSign()).to.equal(
-      "0x97bd015d4e48fc7d8e7db116ba2d83567597ea6eb64e0694c6fccccd5a4b1841"
-    );
     expect(await pb.campaignData()).to.equal(DEFAULT_CAMPAIGN_DATA);
   });
 

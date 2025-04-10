@@ -32,8 +32,6 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     uint32 public immutable duration; // -> should be immutable
     /// @notice Campaign type
     uint32 public immutable campaignType;
-    /// @notice Merkl hash to sign (for signature verification)
-    bytes32 public immutable hashToSign;
     /// @notice Owner of the campaign
     address public immutable creator;
     /// @notice Campaign data
@@ -44,7 +42,6 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         address _merklDistributor,
         uint32 _duration,
         uint32 _campaignType,
-        bytes32 _hashToSign,
         address _creator,
         bytes memory _campaignData
     ) {
@@ -53,13 +50,11 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
             _merklDistributor != address(0),
             "Invalid merklDistributor address"
         );
-        require(_hashToSign != bytes32(0), "Invalid hashToSign address");
         require(_campaignData.length > 0, "Invalid campaignData");
         require(_duration > 1 hours, "Invalid duration");
 
         campaignType = _campaignType;
         duration = _duration;
-        hashToSign = _hashToSign;
         creator = _creator;
 
         merklDistributor = IMerklDistributor(_merklDistributor);
@@ -105,17 +100,15 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
     }
 
     /// @notice Used to sign a campaign on the Merkl distributor
-    /// @param hash Hash of the data to be signed
-    function isValidSignature(bytes32 hash, bytes memory)
+    function isValidSignature(bytes32, bytes memory)
         external
         view
         override
         returns (bytes4 magicValue)
     {
-        // Check if the signature is valid for the given hash
         require(msg.sender == address(merklDistributor), "Invalid sender");
         // bytes4(keccak256("isValidSignature(bytes32,bytes)")) == 0x1626ba7e
-        return (hash == hashToSign ? bytes4(0x1626ba7e) : bytes4(0x00000000));
+        return bytes4(0x1626ba7e);
     }
 
     /// @notice Returns the timestamp for the start of the next period based on the configured duration
