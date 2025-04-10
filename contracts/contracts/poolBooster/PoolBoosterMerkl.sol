@@ -113,6 +113,7 @@ contract PoolBoosterMerkl is IPoolBooster, IERC1271 {
         returns (bytes4 magicValue)
     {
         // Check if the signature is valid for the given hash
+        require(msg.sender == address(merklDistributor), "Invalid sender");
         // bytes4(keccak256("isValidSignature(bytes32,bytes)")) == 0x1626ba7e
         return (hash == hashToSign ? bytes4(0x1626ba7e) : bytes4(0x00000000));
     }
