@@ -1163,9 +1163,10 @@ async function createPoolBoosterSonic({
   pools,
   salt,
   split = null,
-  type = "Single", // "Single" or "Double"
+  type = "Single", // "Single" - "Double" - "Metropolis"
   signatureSingle = "createPoolBoosterSwapxSingle(address,address,uint256)",
   signatureDouble = "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
+  signatureMetropolis = "createPoolBoosterMetropolis(address,uint256)",
 }) {
   const poolBoosterCreationArgs = {};
   const poolBoosterComputedAddresses = {};
@@ -1176,20 +1177,37 @@ async function createPoolBoosterSonic({
   await Promise.all(
     pools.map(async (pool) => {
       const current = getAddress(pool);
-      if (!current?.extBribeOS || !current?.pool) {
-        throw new Error(`Missing required properties for pool: ${pool}`);
+      if (type === "Single" && (!current?.extBribeOS || !current?.pool)) {
+        throw new Error(
+          `Missing required properties for Single pool: ${pool}. Need pool and extBribeOS.`
+        );
+      } else if (
+        type === "Double" &&
+        (!current?.extBribeOS || !current?.extBribeOther || !current?.pool)
+      ) {
+        throw new Error(
+          `Missing required properties for Double pool: ${pool}. Need pool, extBribeOS, and extBribeOther.`
+        );
+      } else if (type === "Metropolis" && !current?.pool) {
+        throw new Error(
+          `Missing required properties for Metropolis pool: ${pool}. Need pool.`
+        );
       }
 
-      const args =
-        type === "Single"
-          ? [current.extBribeOS, current.pool, salt]
-          : [
-              current.extBribeOS,
-              current.extBribeOther,
-              current.pool,
-              split,
-              salt,
-            ];
+      let args;
+      if (type === "Single") {
+        args = [current.extBribeOS, current.pool, salt];
+      } else if (type === "Double") {
+        args = [
+          current.extBribeOS,
+          current.extBribeOther,
+          current.pool,
+          split,
+          salt,
+        ];
+      } else if (type === "Metropolis") {
+        args = [current.pool, salt];
+      }
 
       if (args.some((arg) => arg === undefined)) {
         throw new Error(`Undefined argument found for pool: ${pool}`);
@@ -1216,7 +1234,14 @@ async function createPoolBoosterSonic({
       );
     }
 
-    const signature = type === "Single" ? signatureSingle : signatureDouble;
+    let signature;
+    if (type === "Single") {
+      signature = signatureSingle;
+    } else if (type === "Double") {
+      signature = signatureDouble;
+    } else if (type === "Metropolis") {
+      signature = signatureMetropolis;
+    }
 
     return [
       {
