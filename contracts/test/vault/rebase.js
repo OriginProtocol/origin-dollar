@@ -129,17 +129,17 @@ describe("Vault rebase", () => {
       const { ousd, vault, matt, usdc, josh } = fixture;
 
       // Transfer USDC into the Vault to simulate yield
-      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("2"));
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(josh).has.an.approxBalanceOf("100.00", ousd);
       await vault.rebase();
       await expect(matt).has.an.approxBalanceOf(
-        "200.00",
+        "101.00",
         ousd,
         "Matt has wrong balance"
       );
       await expect(josh).has.an.approxBalanceOf(
-        "200.00",
+        "101.00",
         ousd,
         "Josh has wrong balance"
       );
@@ -151,7 +151,7 @@ describe("Vault rebase", () => {
       await expect(matt).has.an.approxBalanceOf("100.00", ousd);
       await expect(josh).has.an.approxBalanceOf("100.00", ousd);
 
-      // Give contract 100 OUSD from Josh
+      // Give contract 100 OUSD from Josh, making it non-rebasing
       await ousd
         .connect(josh)
         .transfer(mockNonRebasing.address, ousdUnits("100"));
@@ -160,10 +160,11 @@ describe("Vault rebase", () => {
       await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
 
       // Transfer USDC into the Vault to simulate yield
-      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("2"));
       await vault.rebase();
 
-      await expect(matt).has.an.approxBalanceOf("300.00", ousd);
+      // The remaining rebasing account should get all the yield
+      await expect(matt).has.an.approxBalanceOf("102.00", ousd);
       await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
     });
 
@@ -220,10 +221,10 @@ describe("Vault rebase", () => {
 
   describe("Vault yield accrual to OGN", async () => {
     [
-      { _yield: "1000", basis: 100, expectedFee: "10" },
-      { _yield: "1000", basis: 5000, expectedFee: "500" },
-      { _yield: "1523", basis: 900, expectedFee: "137.07" },
-      { _yield: "0.000001", basis: 10, expectedFee: "0.00000001" },
+      { _yield: "1", basis: 100, expectedFee: "0.01" },
+      { _yield: "1", basis: 5000, expectedFee: "0.5" },
+      { _yield: "1.523", basis: 900, expectedFee: "0.13707" },
+      { _yield: "0.000001", basis: 10, expectedFee: "0.000000001" },
       { _yield: "0", basis: 1000, expectedFee: "0" },
     ].forEach((options) => {
       const { _yield, basis, expectedFee } = options;
@@ -234,20 +235,19 @@ describe("Vault rebase", () => {
 
         // Setup trustee trustee on vault
         await vault.connect(governor).setTrusteeAddress(trustee.address);
-        await vault.connect(governor).setTrusteeFeeBps(900);
+        await vault.connect(governor).setTrusteeFeeBps(basis);
         await expect(trustee).has.a.balanceOf("0", ousd);
 
         // Create yield for the vault
-        await usdt.connect(matt).mint(usdcUnits("1523"));
-        await usdt.connect(matt).transfer(vault.address, usdcUnits("1523"));
+        await usdt.connect(matt).mint(usdcUnits(_yield));
+        await usdt.connect(matt).transfer(vault.address, usdcUnits(_yield));
         // Do rebase
         const supplyBefore = await ousd.totalSupply();
         await vault.rebase();
         // OUSD supply increases correctly
-        await expectApproxSupply(ousd, supplyBefore.add(ousdUnits("1523")));
+        await expectApproxSupply(ousd, supplyBefore.add(ousdUnits(_yield)));
         // ogntrustee address increases correctly
-        // 1523 * 0.09 = 137.07
-        await expect(trustee).has.a.balanceOf("137.07", ousd);
+        await expect(trustee).has.a.balanceOf(expectedFee, ousd);
       });
     });
   });

@@ -22,10 +22,10 @@ describe("Vault mock with rebase", async () => {
 
   it("Should increase users balance on rebase after increased Vault value", async () => {
     // Total OUSD supply is 200, mock an increase
-    await mockVault.setTotalValue(utils.parseUnits("220", 18));
+    await mockVault.setTotalValue(utils.parseUnits("202", 18));
     await mockVault.rebase();
-    await expect(matt).has.an.approxBalanceOf("110.00", ousd);
-    await expect(josh).has.an.approxBalanceOf("110.00", ousd);
+    await expect(matt).has.an.approxBalanceOf("101.00", ousd);
+    await expect(josh).has.an.approxBalanceOf("101.00", ousd);
   });
 
   it("Should not decrease users balance on rebase after decreased Vault value", async () => {
