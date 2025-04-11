@@ -16,5 +16,6 @@ describe("ForkTest: Wrapped Origin Sonic Token", function () {
     expect(await wOSonic.decimals()).to.equal(18);
     expect(await wOSonic.symbol()).to.equal("wOS");
     expect(await wOSonic.name()).to.equal("Wrapped OS");
+    expect(await wOSonic.adjuster()).to.be.gt(0);
   });
 });
