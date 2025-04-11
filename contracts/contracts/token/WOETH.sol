@@ -36,9 +36,9 @@ contract WOETH is ERC4626, Governable, Initializable {
      * OETH's rebase since inception (expressed with rebasingCreditsPerToken) and WOETH to OETH
      * conversion.
      *
-     * If WOETH and OETH are deployed at the same time, the value of _adjuster is a neutral 1e27
+     * If WOETH and OETH are deployed at the same time, the value of adjuster is a neutral 1e27
      */
-    uint256 public _adjuster;
+    uint256 public adjuster;
     uint256[49] private __gap;
 
     // no need to set ERC20 name and symbol since they are overridden in WOETH & WOETHBase
@@ -59,12 +59,12 @@ contract WOETH is ERC4626, Governable, Initializable {
      *         as a governance operation.
      */
     function initialize2() public onlyGovernor {
-        require(_adjuster == 0, "Initialize2 already called");
+        require(adjuster == 0, "Initialize2 already called");
 
         if (totalSupply() == 0) {
-            _adjuster = 1e27;
+            adjuster = 1e27;
         } else {
-            _adjuster =
+            adjuster =
                 (rebasingCreditsPerTokenHighres() *
                     ERC20(asset()).balanceOf(address(this))) /
                 totalSupply();
@@ -113,7 +113,7 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 shares)
     {
-        return (assets * rebasingCreditsPerTokenHighres()) / _adjuster;
+        return (assets * rebasingCreditsPerTokenHighres()) / adjuster;
     }
 
     /// @inheritdoc ERC4626
@@ -124,12 +124,12 @@ contract WOETH is ERC4626, Governable, Initializable {
         override
         returns (uint256 assets)
     {
-        return (shares * _adjuster) / rebasingCreditsPerTokenHighres();
+        return (shares * adjuster) / rebasingCreditsPerTokenHighres();
     }
 
     /// @inheritdoc ERC4626
     function totalAssets() public view override returns (uint256) {
-        return (totalSupply() * _adjuster) / rebasingCreditsPerTokenHighres();
+        return (totalSupply() * adjuster) / rebasingCreditsPerTokenHighres();
     }
 
     function rebasingCreditsPerTokenHighres() internal view returns (uint256) {
