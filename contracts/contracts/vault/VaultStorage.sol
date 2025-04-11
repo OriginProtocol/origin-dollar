@@ -233,10 +233,10 @@ contract VaultStorage is Initializable, Governable {
     ///     When set to 0 async withdrawals are disabled.
     uint256 public withdrawalClaimDelay;
 
-    /// @notice Time the value last rebased yield
+    /// @notice Time in seconds that the vault last rebased yield.
     uint64 public lastRebase;
 
-    /// @notice Automatic rebase yield calculations. In seconds. Set to 1 to disable.
+    /// @notice Automatic rebase yield calculations. In seconds. Set to 0 or 1 to disable.
     uint64 public dripDuration;
 
     /// @notice max rebase percentage per second
