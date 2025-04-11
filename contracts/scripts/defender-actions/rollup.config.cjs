@@ -79,6 +79,15 @@ module.exports = [
   },
   {
     ...commonConfig,
+    input: "managePassThrough.js",
+    output: {
+      file: "dist/managePassThrough/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
     input: "sonicRequestWithdrawal.js",
     output: {
       file: "dist/sonicRequestWithdrawal/index.js",
