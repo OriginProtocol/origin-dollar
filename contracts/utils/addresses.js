@@ -309,6 +309,14 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
+addresses.mainnet.passthrough = {};
+addresses.mainnet.passthrough.curve = {};
+addresses.mainnet.passthrough.curve.OUSD_3POOL = "0x261Fe804ff1F7909c27106dE7030d5A33E72E1bD";
+addresses.mainnet.passthrough.uniswap = {};
+addresses.mainnet.passthrough.uniswap.OUSD_USDT = "0xF29c14dD91e3755ddc1BADc92db549007293F67b";
+addresses.mainnet.passthrough.uniswap.OETH_OGN = "0x2D3007d07aF522988A0Bf3C57Ee1074fA1B27CF1";
+addresses.mainnet.passthrough.uniswap.OETH_WETH = "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
