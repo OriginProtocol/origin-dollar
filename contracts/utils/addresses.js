@@ -160,6 +160,8 @@ addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
+addresses.mainnet.CurveOUSDAMOStrategy =
+  "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
 addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
 addresses.mainnet.CurveOUSDUSDTPool =
@@ -516,6 +518,9 @@ addresses.sonic.WS_OS.pool = "0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9";
 addresses.sonic.WS_OS.gauge = "0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207";
 addresses.sonic.childLiquidityGaugeFactory =
   "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
+
+// Sonic Merkl
+addresses.sonic.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
