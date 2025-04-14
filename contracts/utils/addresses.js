@@ -160,6 +160,8 @@ addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
+addresses.mainnet.CurveOUSDAMOStrategy =
+  "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
 addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
 addresses.mainnet.CurveOUSDUSDTPool =
