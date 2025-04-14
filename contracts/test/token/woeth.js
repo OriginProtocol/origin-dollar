@@ -40,7 +40,7 @@ describe("WOETH", function () {
   const increaseOETHSupplyAndRebase = async (wethAmount) => {
     await weth.connect(josh).deposit({ value: wethAmount });
     await weth.connect(josh).transfer(oethVault.address, wethAmount);
-    await oethVault.connect(josh).rebase();
+    await oethVault.rebase();
   };
 
   describe("General functionality", async () => {
