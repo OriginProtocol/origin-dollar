@@ -1,0 +1,23 @@
+@startuml
+
+title "Merkl Pool Booster"
+
+' actor "5/8 Admin" as admin
+' actor "Timelock" as timelock
+actor "Anyone" as user
+' participant "Merkl\nPool Booster\nFactory" as pbf <<Origin>>
+participant "Merkl\nPool Booster" as pb <<Origin>>
+participant "Distribution\nCreator" as dist <<Merkl>>
+
+user -> pb : bribe()
+activate pb
+pb -> dist : signAndCreateCampaign(\ncampaign data,\nsignature)
+note left : signature is empty
+activate dist
+dist -> pb : isValidSignature(\nhash,\nsignature)
+activate pb
+return 0x1626ba7e
+return
+return
+
+@enduml
