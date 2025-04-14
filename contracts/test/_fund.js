@@ -26,6 +26,7 @@ const balancesContractSlotCache = {
   [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
   [addresses.mainnet.ThreePoolToken.toLowerCase()]: [3, true],
   [addresses.mainnet.DAI.toLowerCase()]: [2, false],
+  [addresses.mainnet.USDS.toLowerCase()]: [2, false],
   [addresses.mainnet.USDC.toLowerCase()]: [9, false],
   [addresses.mainnet.USDT.toLowerCase()]: [2, false],
   [addresses.mainnet.TUSD.toLowerCase()]: [14, false],
@@ -44,9 +45,9 @@ const balancesContractSlotCache = {
 const findBalancesSlot = async (tokenAddress) => {
   tokenAddress = tokenAddress.toLowerCase();
   if (balancesContractSlotCache[tokenAddress]) {
-    // console.log(
-    //   `Found balance slot ${balancesContractSlotCache[tokenAddress]} for ${tokenAddress} in cache`
-    // );
+    log(
+      `Found balance slot ${balancesContractSlotCache[tokenAddress]} for ${tokenAddress} in cache`
+    );
     return balancesContractSlotCache[tokenAddress];
   }
 
@@ -133,7 +134,7 @@ const setTokenBalance = async (
     const [balanceSlot, isVyper] = await findBalancesSlot(
       tokenContract.address
     );
-    log(`Found balance slot ${balanceSlot} for ${tokenContract.address}`);
+    // log(`Found balance slot ${balanceSlot} for ${tokenContract.address}`);
     // key, slot
     index = solidityKeccak256(
       ["uint256", "uint256"],

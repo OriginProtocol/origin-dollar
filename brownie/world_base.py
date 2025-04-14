@@ -5,12 +5,14 @@ aero = load_contract('ERC20', AERO_BASE)
 usdc = load_contract('ERC20', USDC_BASE)
 oethb = load_contract('ousd', OETHB)
 woeth = load_contract('ERC20', BRIDGED_WOETH_BASE)
+woeth_base = load_contract('wrapped_ousd', WOETH_BASE)
 veaero = load_contract('veaero', VEAERO_BASE)
 
 base_old_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
 base_strategist = brownie.accounts.at(OETHB_MULTICHAIN_STRATEGIST, force=True)
 from_old_strategist = {'from':OETHB_STRATEGIST}
 from_strategist = {'from':OETHB_MULTICHAIN_STRATEGIST}
+from_treasury = { 'from': OETHB_TREASURY }
 
 aero_router = load_contract('aerodrome_swap_router', AERODROME_SWAP_ROUTER_BASE)
 aero_router2 = load_contract('aerodrome_v2_router', AERODROME_ROUTER2_BASE)

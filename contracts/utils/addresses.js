@@ -6,7 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
-addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
+addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -23,13 +23,14 @@ addresses.mainnet.BinanceAll =
 addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc,0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 addresses.mainnet.oethWhaleAddress =
-  "0xa5cA4da1a315751A7B6890F8E0b78c1C38085ad2";
+  "0xA7c82885072BADcF3D0277641d55762e65318654";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
+addresses.mainnet.USDS = "0xdC035D45d973E3EC169d2276DDab16f1e407384F";
 // AAVE
 addresses.mainnet.AAVE_ADDRESS_PROVIDER =
   "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
@@ -49,7 +50,7 @@ addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 // Curve
-addresses.mainnet.CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+addresses.mainnet.CRV = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 addresses.mainnet.CRVMinter = "0xd061D61a4d941c39E5453435B6345Dc261C2fcE0";
 addresses.mainnet.ThreePool = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
 addresses.mainnet.ThreePoolToken = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
@@ -62,6 +63,8 @@ addresses.mainnet.CVXLocker = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
 
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
+// Maker USDS Savings Rate
+addresses.mainnet.sUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
@@ -175,7 +178,7 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0x000000009dF57105d76B059178989E01356e4b45";
+  "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
@@ -258,11 +261,6 @@ addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
 addresses.mainnet.AuraWeightedOraclePool =
   "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
-// Flux Strategy
-addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
-addresses.mainnet.fUSDC = "0x465a5a630482f3abD6d3b84B39B29b07214d19e5";
-addresses.mainnet.fUSDT = "0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7";
-
 // Frax Oracle for frxETH/ETH
 addresses.mainnet.FrxEthFraxOracle =
   "0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df";
@@ -278,6 +276,12 @@ addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 addresses.mainnet.CurveOUSDUSDTPool =
   "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
+addresses.mainnet.curve = {};
+addresses.mainnet.curve.OUSD_USDC = {};
+addresses.mainnet.curve.OUSD_USDC.pool =
+  "0x6d18E1a7faeB1F0467A77C0d293872ab685426dc";
+addresses.mainnet.curve.OUSD_USDC.gauge =
+  "0x1eF8B6Ea6434e722C916314caF8Bf16C81cAF2f9";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -300,6 +304,10 @@ addresses.mainnet.validatorRegistrator =
 // Lido Withdrawal Queue
 addresses.mainnet.LidoWithdrawalQueue =
   "0x889edC2eDab5f40e902b864aD4d7AdE8E412F9B1";
+
+// DAI > USDS Migration Contract
+addresses.mainnet.DaiUsdsMigrationContract =
+  "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
@@ -381,8 +389,13 @@ addresses.sonic.timelock = "0x31a91336414d3B955E494E7d485a6B06b55FC8fB";
 addresses.sonic.OSonicProxy = "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794";
 addresses.sonic.WOSonicProxy = "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1";
 addresses.sonic.OSonicVaultProxy = "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186";
+addresses.sonic.SonicStakingStrategy =
+  "0x596B0401479f6DfE1cAF8c12838311FeE742B95c";
 
 // SwapX on Sonic
+addresses.sonic.SWPx = "0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70";
+addresses.sonic.SwapXOwner = "0xAdB5A1518713095C39dBcA08Da6656af7249Dd20";
+addresses.sonic.SwapXVoter = "0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2";
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 addresses.sonic.SwapXOsUSDCe = {};
@@ -401,13 +414,68 @@ addresses.sonic.SwapXOsGEMSx = {};
 addresses.sonic.SwapXOsGEMSx.pool =
   "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
 
+addresses.sonic.SwapXWSOS = {};
+addresses.sonic.SwapXWSOS.pool = "0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0";
+addresses.sonic.SwapXWSOS.gauge = "0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709";
+
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
 addresses.sonic.SwapXOsGEMSxMultisigBooster =
   "0xE2c01Cc951E8322992673Fa2302054375636F7DE";
 
-addresses.sonic.SwapX = {};
+addresses.sonic.Equalizer = {};
+addresses.sonic.Equalizer.WsOs = {};
+addresses.sonic.Equalizer.WsOs.pool =
+  "0x99ff9d3E8B26Fea85a7a103D9e576EfdC38fB530";
+addresses.sonic.Equalizer.WsOs.extBribeOS =
+  "0x2726Be050f22B9aFF2b582758aeEa504cDa6fA62";
+addresses.sonic.Equalizer.ThcOs = {};
+addresses.sonic.Equalizer.ThcOs.pool =
+  "0xd6f5d565410c536e3e9C4FCf05560518C2C56440";
+addresses.sonic.Equalizer.ThcOs.extBribeOS =
+  "0x9e566ce25A90A07125b7c697ca8f01bbC41Cb3B3";
 
+addresses.sonic.SwapX = {};
+addresses.sonic.SwapX.OsSfrxUSD = {};
+addresses.sonic.SwapX.OsSfrxUSD.pool =
+  "0x9255F31eF9B35d085cED6fE29F9E077EB1f513C6";
+addresses.sonic.SwapX.OsSfrxUSD.gaugeOS =
+  "0x99d8E114F1a6359c6048Ae5Cce163786c0Ce97DF";
+addresses.sonic.SwapX.OsSfrxUSD.extBribeOS =
+  "0xb7A1a8AC3Cb1a40bbE73894c0b5e911d3a1ac075";
+addresses.sonic.SwapX.OsSfrxUSD.gaugeOther =
+  "0x88d6c63f1EF23bDff2bD483831074dc23d8416d4";
+addresses.sonic.SwapX.OsSfrxUSD.extBribeOther =
+  "0xD1ECb64C0C20F2500a259DF4d125d0e21Eaa24cD";
+addresses.sonic.SwapX.OsScUSD = {};
+addresses.sonic.SwapX.OsScUSD.pool =
+  "0x370428430503b3b5970ccaf530cbc71d02c3b61a";
+addresses.sonic.SwapX.OsScUSD.gaugeOS =
+  "0x23bDc38a3bA72DE7B32A1bC01DFfB99Ce4CF8b2b";
+addresses.sonic.SwapX.OsScUSD.extBribeOS =
+  "0xF22ea5dEE8FC4A12Dd4263448e2c1C2494c1E6f4";
+addresses.sonic.SwapX.OsScUSD.gaugeOther =
+  "0x1FFCD52e4E452F35a92ED58CE94629E8d9DC09CF";
+addresses.sonic.SwapX.OsScUSD.extBribeOther =
+  "0xBD365648bEbe932f8394F726D4A83FBd684E6b72";
+addresses.sonic.SwapX.OsSilo = {};
+addresses.sonic.SwapX.OsSilo.pool =
+  "0x2ab09e10F75965Ccc369C8B86071f351141Dc0a1";
+addresses.sonic.SwapX.OsSilo.gaugeOS =
+  "0x016889e5E0F026c030D28321f3190A39206120AD";
+addresses.sonic.SwapX.OsSilo.extBribeOS =
+  "0x91BF8dc9D93ed1aC1aFaD78bB9B48F04bDF01F36";
+addresses.sonic.SwapX.OsSilo.gaugeOther =
+  "0x6e4e2e895223f62Cc53bA56128a58bC58D79BEa0";
+addresses.sonic.SwapX.OsSilo.extBribeOther =
+  "0xe0fd09bae2A254e19fc75fCEC967a373E0b63909";
+addresses.sonic.SwapX.OsFiery = {};
+addresses.sonic.SwapX.OsFiery.pool =
+  "0xc3a185226d594b56d3e5cf52308d07fe972ca769";
+addresses.sonic.SwapX.OsFiery.gaugeOS =
+  "0xBb3cFc4f69ecfaeb9fd4d263bD8549C8CCFd25d7";
+addresses.sonic.SwapX.OsFiery.extBribeOS =
+  "0x5ee96bE5747867560D18F042991E045401601b01";
 addresses.sonic.SwapX.OsHedgy = {};
 addresses.sonic.SwapX.OsHedgy.pool =
   "0x1695d6bd8d8adc8b87c6204be34d34d19a3fe1d6";
@@ -422,12 +490,27 @@ addresses.sonic.Shadow.OsEco.pool =
 addresses.sonic.Shadow.OsEco.yf_treasury =
   "0x4b9919603170c77936d8ec2c08b604844e861699";
 
+// Sonic Metropolis
+addresses.sonic.Metropolis = {};
+addresses.sonic.Metropolis.Voter = "0x03A9896A464C515d13f2679df337bF95bc891fdA";
+addresses.sonic.Metropolis.RewarderFactory =
+  "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3";
+addresses.sonic.Metropolis.Pools = {};
+addresses.sonic.Metropolis.Pools.OsWOs =
+  "0x3987a13d675c66570bc28c955685a9bca2dcf26e";
+addresses.sonic.Metropolis.Pools.OsMoon =
+  "0xc0aac9bb9fb72a77e3bc8bee46d3e227c84a54c0";
+
 // Sonic Curve
+addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
 addresses.sonic.WS_OS = {};
-addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
-addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.WS_OS.pool = "0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9";
+addresses.sonic.WS_OS.gauge = "0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207";
 addresses.sonic.childLiquidityGaugeFactory =
   "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
+
+// Sonic Merkl
+addresses.sonic.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";

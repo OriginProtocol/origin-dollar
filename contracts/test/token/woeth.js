@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const { oethUnits, daiUnits, isFork } = require("../helpers");
+const { oethUnits, usdsUnits, isFork } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
 describe("WOETH", function () {
@@ -9,14 +9,14 @@ describe("WOETH", function () {
     this.timeout(0);
   }
 
-  let oeth, weth, woeth, oethVault, dai, matt, josh, governor;
+  let oeth, weth, woeth, oethVault, usds, matt, josh, governor;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
     oeth = fixture.oeth;
     woeth = fixture.woeth;
     oethVault = fixture.oethVault;
-    dai = fixture.dai;
+    usds = fixture.usds;
     matt = fixture.matt;
     josh = fixture.josh;
     weth = fixture.weth;
@@ -186,12 +186,12 @@ describe("WOETH", function () {
 
   describe("Token recovery", async () => {
     it("should allow a governor to recover tokens", async () => {
-      await dai.connect(matt).transfer(woeth.address, daiUnits("2"));
-      await expect(woeth).to.have.a.balanceOf("2", dai);
-      await expect(governor).to.have.a.balanceOf("1000", dai);
-      await woeth.connect(governor).transferToken(dai.address, daiUnits("2"));
-      await expect(woeth).to.have.a.balanceOf("0", dai);
-      await expect(governor).to.have.a.balanceOf("1002", dai);
+      await usds.connect(matt).transfer(woeth.address, usdsUnits("2"));
+      await expect(woeth).to.have.a.balanceOf("2", usds);
+      await expect(governor).to.have.a.balanceOf("1000", usds);
+      await woeth.connect(governor).transferToken(usds.address, usdsUnits("2"));
+      await expect(woeth).to.have.a.balanceOf("0", usds);
+      await expect(governor).to.have.a.balanceOf("1002", usds);
     });
     it("should not allow a governor to collect OETH", async () => {
       await expect(

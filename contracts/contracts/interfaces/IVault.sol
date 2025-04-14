@@ -105,7 +105,7 @@ interface IVault {
     function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
         external;
 
-    function supportAsset(address _asset, uint8 _supportsAsset) external;
+    function supportAsset(address _asset, uint8 _unitConversion) external;
 
     function approveStrategy(address _addr) external;
 
@@ -165,8 +165,6 @@ interface IVault {
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
     function burnForStrategy(uint256 _amount) external;
-
-    function redeemAll(uint256 _minimumUnitAmount) external;
 
     function allocate() external;
 
