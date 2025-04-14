@@ -3,6 +3,7 @@ const {
   DefenderRelaySigner,
   DefenderRelayProvider,
 } = require("@openzeppelin/defender-relay-client/lib/ethers");
+const addresses = require("../../utils/addresses");
 
 const passThroughAbi = require("../../abi/passThrough.json");
 const { logTxDetails } = require("../../utils/txLogger");
@@ -17,8 +18,8 @@ const handler = async (event) => {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
 
-  const OUSD = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
-  const OETH = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
+  const OUSD = addresses.mainnet.OUSDProxy;
+  const OETH = addresses.mainnet.OETHProxy;
 
   // Map tokens to their passThrough contracts
   const tokenPassThroughs = {
