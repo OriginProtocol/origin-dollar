@@ -41,12 +41,25 @@ When setting the rate limit, the limit should be set appropriately higher than w
 
 The maximum possible values for the per rebase cap, and the per second cap are set such that they should be over safe for lending platforms, and yet allow the flexibility for large yields in the face of triple digit inflation of the underlying token.
 
+### Drip Duration and Target Rate
 
+In `_nextYield` function of VaultCore there is a the yield dripping is enforced if `_dripDuration > 1`. This explains how it works
 
-
-
-
-
-
-
-
+Target rate is being limited by the higher yield/dripDuration rate and a lower yield/(dripDuration*2). If previous target rate is within those limits the existing targetRate is kept. If the previous target rate is outside those limits, the limits are enforced.
+```
+                                    - - - - - - -'
+                                    .            .
+                         - - - - - -'            .
+                         .                       .
+- - - - - - - - - - - - -'                       '- - - - - -'
+^ yield /                                                    .
+_dripDuration                        ------------*-----------*
+                      rebase         .           .           .
+-------------------------*-----------*           .           '----------
+^ rebasePerSecondTarget  - - - - - - '           .
+                         .                       .
+- - - - - - - - - - - - -'                       - - - - - - '
+^ yield /                                                    .
+(_dripDuration * 2)                                          .
+                                                             '- - - - -
+```
