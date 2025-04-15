@@ -44,6 +44,8 @@ const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
 const oethMetapoolAbi = require("./abi/oethMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
+const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits } = require("ethers/lib/utils");
@@ -677,6 +679,22 @@ const defaultFixture = deployments.createFixture(async () => {
         oethFixedRateDripperProxy.address
       );
 
+  const OUSDCurveAMOProxy = isFork
+    ? await ethers.getContract("OUSDCurveAMOProxy")
+    : undefined;
+  const OUSDCurveAMO = isFork
+    ? await ethers.getContractAt("CurveAMOStrategy", OUSDCurveAMOProxy.address)
+    : undefined;
+
+  const curvePoolOusdUsdc = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.mainnet.curve.OUSD_USDC.pool
+  );
+  const curveGaugeOusdUsdc = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.mainnet.curve.OUSD_USDC.gauge
+  );
+
   let usdt,
     usds,
     tusd,
@@ -1069,6 +1087,9 @@ const defaultFixture = deployments.createFixture(async () => {
     curvePoolBooster,
     simpleOETHHarvester,
     oethFixedRateDripper,
+    OUSDCurveAMO,
+    curvePoolOusdUsdc,
+    curveGaugeOusdUsdc,
 
     // OETH
     oethVaultValueChecker,

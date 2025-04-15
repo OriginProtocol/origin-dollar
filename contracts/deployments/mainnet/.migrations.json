@@ -25,5 +25,8 @@
   "125_buyback_treasury_address": 1740983782,
   "126_update_amo_mint_threshold": 1741748000,
   "127_replace_dai_with_usds": 1742311150,
-  "128_remove_ousd_morpho_aave": 1742280389
+  "128_remove_ousd_morpho_aave": 1742280389,
+  "129_oeth_vault_upgrade": 1743660383,
+  "130_update_votemarket_addresses": 1744018070,
+  "131_ousd_usdc_curve_amo": 1744236000
 }

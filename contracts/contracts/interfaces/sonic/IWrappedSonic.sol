@@ -2,6 +2,15 @@
 pragma solidity ^0.8.0;
 
 interface IWrappedSonic {
+    event Deposit(address indexed account, uint256 value);
+    event Withdrawal(address indexed account, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
     function allowance(address owner, address spender)
         external
         view

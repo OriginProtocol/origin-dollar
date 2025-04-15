@@ -11,7 +11,7 @@ legend
 blue - Origin
 ' green - new
 ' orange - changed
-yellow - phase2
+' yellow - phase2
 white - 3rd Party
 end legend
 
@@ -43,6 +43,14 @@ object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
     asset: wS
 }
 
+object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: SWPx
+}
+
+' Oracle
+object "OSonicOracleRouter" as router <<Origin>> #DeepSkyBlue {
+}
+
 object "SonicStakingStrategy" as stakeStrat <<Origin>><<Proxy>> #$originColor {
     asset: wS
 }
@@ -51,17 +59,19 @@ object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
     asset: S
 }
 
-object "AMOStrategy" as amoStrat <<Origin>><<Proxy>> #$phase2 {
+object "SwapX AMO Strategy" as swapXAmoStrat <<Origin>><<Proxy>> #$originColor {
     asset: wS
-    reward: ?
+    reward: SWPx
 }
 
-object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$phase2 {
-    rewards: ?
+object "SwapX OS/wS\nPool" as swapXPool <<SwapX>> {
+    assets: OS, wS
+    lp: OSwS
 }
 
-' Oracle
-object "OSonicOracleRouter" as router <<Origin>> #DeepSkyBlue {
+object "SwapX OS/wS\nGauge" as swapXGauge <<SwapX>> {
+    asset: OSwS
+    lp: OSwS-gauge
 }
 
 wos <. zap
@@ -75,13 +85,13 @@ os <.> vault
 vault <.> drip
 vault <...> stakeStrat
 stakeStrat ..> sfc
-vault <...> amoStrat
 vault .> router
 
 vault <.. harv 
 drip <.. harv 
 
-harv <..> amoStrat
-
+harv <..> swapXAmoStrat
+swapXAmoStrat ..> swapXPool
+swapXAmoStrat ..> swapXGauge
 
 @enduml

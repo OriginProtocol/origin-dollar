@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2599.4)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-2599.4 901.22,-2599.4 901.22,4 -4,4"/>
-<!-- 274 -->
+<!-- 290 -->
 <g id="node1" class="node">
-<title>274</title>
+<title>290</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-2594.9 897.22,-2594.9 897.22,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="448.61" y="-2578.3" font-family="Times,serif" font-size="14.00">OSonicVaultCore</text>
 <text text-anchor="middle" x="448.61" y="-2561.5" font-family="Times,serif" font-size="14.00">../contracts/vault/OSonicVaultCore.sol</text>
@@ -97,9 +97,9 @@
 <text text-anchor="start" x="8" y="-1235.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setAdminImpl(newImpl: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;VaultStorage&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1218.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize(_priceProvider: address, _oToken: address) &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;VaultInitializer&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1201.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mint(_asset: address, _amount: uint256, _minimumOusdAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1184.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mintForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1184.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mintForStrategy(amount: uint256) &lt;&lt;whenNotCapitalPaused&gt;&gt; &lt;&lt;OETHVaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1167.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeem(uint256, uint256) &lt;&lt;OSonicVaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;burnForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;burnForStrategy(amount: uint256) &lt;&lt;whenNotCapitalPaused&gt;&gt; &lt;&lt;OETHVaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1134.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeemAll(_minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allocate() &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;OETHVaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1100.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebase() &lt;&lt;nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
