@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "chainId": "146",
+  "createdAt": 1744749364,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0xAdDEA7933Db7d83855786EB43a238111C69B00b6",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          }
+        ],
+        "name": "executeBatch",
+        "payable": true
+      },
+      "contractInputsValues": {
+        "targets": "[\"0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1\",\"0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1\"]",
+        "values": "[\"0\",\"0\"]",
+        "payloads": "[\"0x3659cfe60000000000000000000000001ccb48fb244fe1f6eb0d1c5fbd839db78c6c5805\",\"0x472abf68\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x9fc79e1a15d362702ec747264a6b35a81c6feb30f6f894db295149379fceb2d1"
+      }
+    }
+  ]
+}
