@@ -130,6 +130,15 @@ chai.Assertion.addMethod(
   }
 );
 
+chai.Assertion.addMethod("totalSupply", async function (expected, message) {
+  const contract = this._obj;
+  const actual = await contract.totalSupply();
+  if (!BigNumber.isBigNumber(expected)) {
+    expected = parseUnits(expected, await decimalsFor(contract));
+  }
+  chai.expect(actual).to.equal(expected, message);
+});
+
 chai.Assertion.addMethod(
   "assetBalanceOf",
   async function (expected, asset, message) {

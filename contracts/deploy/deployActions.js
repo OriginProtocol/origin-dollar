@@ -1222,8 +1222,6 @@ const deployWOusd = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
-    "Wrapped OUSD IMPL",
-    "WOUSD IMPL",
   ]);
   await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -1235,6 +1233,26 @@ const deployWOusd = async () => {
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
   ](dWrappedOusdImpl.address, governorAddr, initData);
+};
+
+const deployWOeth = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
+    oeth.address,
+  ]);
+  await deployWithConfirmation("WOETHProxy");
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  const initData = woeth.interface.encodeFunctionData("initialize()", []);
+
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dWrappedOethImpl.address, governorAddr, initData);
 };
 
 const deployOETHSwapper = async () => {
@@ -1391,6 +1409,7 @@ module.exports = {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOeth,
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
