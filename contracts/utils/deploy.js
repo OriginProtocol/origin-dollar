@@ -249,7 +249,7 @@ const executeGovernanceProposalOnFork = async ({
   reduceQueueTime,
   executeGasLimit = null,
   existingProposal = false,
-  executionRetries,
+  executionRetries = 0,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -415,7 +415,7 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
-  // Ensure executionRetries is always a number
+  // Just making sure that there's always a valid number
   executionRetries = parseInt(executionRetries) || 0;
 
   while (executionRetries > -1) {
@@ -433,7 +433,7 @@ const executeGovernanceProposalOnFork = async ({
         });
     } catch (e) {
       console.error(e);
-      if (executionRetries === -1) {
+      if (executionRetries <= -1) {
         throw e;
       } else {
         // Wait for 3 seconds before retrying
@@ -818,6 +818,21 @@ async function buildGnosisSafeJson(
   };
 
   return json;
+}
+
+async function simulateWithTimelockImpersonation(proposal) {
+  log("Simulating the proposal directly on the timelock...");
+  const { timelockAddr } = await getNamedAccounts();
+  const timelock = await impersonateAndFund(timelockAddr);
+
+  for (const action of proposal.actions) {
+    const { contract, signature, args } = action;
+
+    log(`Sending governance action ${signature} to ${contract.address}`);
+    await contract.connect(timelock)[signature](...args, await getTxOpts());
+
+    console.log(`... ${signature} completed`);
+  }
 }
 
 async function simulateWithTimelockImpersonation(proposal) {

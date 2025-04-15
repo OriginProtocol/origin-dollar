@@ -45,6 +45,48 @@ contract OETHVaultCore is VaultCore {
     }
 
     // @inheritdoc VaultCore
+    function mintForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Mint(msg.sender, amount);
+
+        // Mint matching amount of OTokens
+        oUSD.mint(msg.sender, amount);
+    }
+
+    // @inheritdoc VaultCore
+    function burnForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Redeem(msg.sender, amount);
+
+        // Burn OTokens
+        oUSD.burn(msg.sender, amount);
+    }
+
+    // @inheritdoc VaultCore
     // slither-disable-start reentrancy-no-eth
     function _mint(
         address _asset,

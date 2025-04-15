@@ -14,6 +14,9 @@ const {
   decimalsFor,
 } = require("./../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
+const {
+  shouldHaveRewardTokensConfigured,
+} = require("./../behaviour/reward-tokens.fork");
 const { formatUnits } = require("ethers/lib/utils");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
@@ -78,7 +81,9 @@ describe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(addresses.zero);
+      expect(await vault.ousdMetaStrategy()).to.equal(
+        addresses.mainnet.CurveOUSDAMOStrategy
+      );
     });
 
     it("Should have supported assets", async () => {
@@ -363,6 +368,7 @@ describe("ForkTest: Vault", function () {
         "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
         "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
         "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
+        "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11", // Curve AMO OUSD/USDC
       ];
 
       for (const s of strategies) {
@@ -410,41 +416,9 @@ describe("ForkTest: Vault", function () {
     });
   });
 
-  // We no longer have any strategies that harvest these reward tokens
-  // shouldHaveRewardTokensConfigured(() => ({
-  //   vault: fixture.vault,
-  //   harvester: fixture.harvester,
-  //   expectedConfigs: {
-  //     [fixture.aave.address]: {
-  //       allowedSlippageBps: 300,
-  //       harvestRewardBps: 100,
-  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-  //       doSwapRewardToken: true,
-  //       swapPlatform: 1,
-  //       liquidationLimit: 0,
-  //       uniswapV3Path:
-  //         "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-  //     },
-  //     [fixture.cvx.address]: {
-  //       allowedSlippageBps: 300,
-  //       harvestRewardBps: 100,
-  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-  //       doSwapRewardToken: true,
-  //       swapPlatform: 1,
-  //       liquidationLimit: ousdUnits("2500"),
-  //       uniswapV3Path:
-  //         "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-  //     },
-  //     [fixture.crv.address]: {
-  //       allowedSlippageBps: 300,
-  //       harvestRewardBps: 200,
-  //       swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-  //       doSwapRewardToken: true,
-  //       swapPlatform: 1,
-  //       liquidationLimit: ousdUnits("4000"),
-  //       uniswapV3Path:
-  //         "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-  //     },
-  //   },
-  // }));
+  shouldHaveRewardTokensConfigured(() => ({
+    vault: fixture.vault,
+    harvester: fixture.harvester,
+    expectedConfigs: {},
+  }));
 });

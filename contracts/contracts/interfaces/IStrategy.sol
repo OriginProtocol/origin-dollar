@@ -54,4 +54,6 @@ interface IStrategy {
      * @dev The address array of the reward tokens for the Strategy.
      */
     function getRewardTokenAddresses() external view returns (address[] memory);
+
+    function harvesterAddress() external view returns (address);
 }

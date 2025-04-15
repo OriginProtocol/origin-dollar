@@ -133,7 +133,7 @@
       "label": "withdrawals",
       "offset": 0,
       "slot": "161",
-      "type": "t_mapping(t_uint256,t_struct(WithdrawRequest)45355_storage)",
+      "type": "t_mapping(t_uint256,t_struct(WithdrawRequest)3876_storage)",
       "contract": "SonicValidatorDelegator",
       "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:38"
     },
@@ -199,11 +199,11 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_uint256,t_struct(WithdrawRequest)45355_storage)": {
+    "t_mapping(t_uint256,t_struct(WithdrawRequest)3876_storage)": {
       "label": "mapping(uint256 => struct SonicValidatorDelegator.WithdrawRequest)",
       "numberOfBytes": "32"
     },
-    "t_struct(WithdrawRequest)45355_storage": {
+    "t_struct(WithdrawRequest)3876_storage": {
       "label": "struct SonicValidatorDelegator.WithdrawRequest",
       "members": [
         {

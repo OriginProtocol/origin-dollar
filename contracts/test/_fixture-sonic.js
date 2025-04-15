@@ -1,12 +1,16 @@
 const hre = require("hardhat");
 const { ethers } = hre;
+const { parseUnits } = ethers.utils;
 const mocha = require("mocha");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+
 const { isFork, isSonicFork, oethUnits } = require("./helpers");
 const { deployWithConfirmation } = require("../utils/deploy.js");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+const { resolveAsset } = require("../utils/resolvers.js");
+const merklDistributorAbi = require("./abi/merklDistributor.json");
 
 const log = require("../utils/logger")("test:fixtures-sonic");
 
@@ -92,12 +96,23 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const sfc = await ethers.getContractAt("ISFC", addresses.sonic.SFC);
 
-  let dripper,
+  let harvester,
+    dripper,
     zapper,
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
-    poolBoosterCentralRegistry;
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+    poolBoosterFactoryMetropolis;
+  let merklDistributor;
   if (isFork) {
+    // Harvester
+    const harvesterProxy = await ethers.getContract("OSonicHarvesterProxy");
+    harvester = await ethers.getContractAt(
+      "OSonicHarvester",
+      harvesterProxy.address
+    );
+
     // Dripper
     const dripperProxy = await ethers.getContract("OSonicDripperProxy");
     dripper = await ethers.getContractAt(
@@ -121,6 +136,19 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     poolBoosterSingleFactoryV1 = await deployPoolBoosterFactorySwapxSingle(
       poolBoosterCentralRegistry,
       governor
+    );
+
+    poolBoosterMerklFactory = await ethers.getContract(
+      "PoolBoosterFactoryMerkl"
+    );
+
+    merklDistributor = await ethers.getContractAt(
+      merklDistributorAbi,
+      addresses.sonic.MerklDistributor
+    );
+
+    poolBoosterFactoryMetropolis = await ethers.getContract(
+      "PoolBoosterFactoryMetropolis"
     );
   }
 
@@ -149,11 +177,11 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   for (const user of [rafael, nick, clement]) {
     // Mint some Sonic Wrapped S
-    await hhHelpers.setBalance(user.address, oethUnits("100000000"));
-    await wS.connect(user).deposit({ value: oethUnits("10000000") });
+    await hhHelpers.setBalance(user.address, oethUnits("100000100"));
+    await wS.connect(user).deposit({ value: oethUnits("100000000") });
 
     // Set allowance on the vault
-    await wS.connect(user).approve(oSonicVault.address, oethUnits("5000000"));
+    await wS.connect(user).approve(oSonicVault.address, oethUnits("100000000"));
   }
 
   return {
@@ -161,14 +189,18 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     oSonic,
     oSonicVault,
     wOSonic,
-    // harvester,
-    // dripper,
+    harvester,
     sonicStakingStrategy,
     dripper,
     zapper,
     poolBoosterDoubleFactoryV1,
     poolBoosterSingleFactoryV1,
     poolBoosterCentralRegistry,
+    poolBoosterFactoryMetropolis,
+    poolBoosterMerklFactory,
+
+    // Merkl distributor
+    merklDistributor,
 
     // Wrapped S
     wS,
@@ -190,6 +222,124 @@ const defaultSonicFixture = deployments.createFixture(async () => {
     sfc,
   };
 });
+
+/**
+ * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
+ */
+async function swapXAMOFixture(
+  config = {
+    wsMintAmount: 0,
+    depositToStrategy: false,
+    balancePool: false,
+    poolAddwSAmount: 0,
+    poolAddOSAmount: 0,
+  }
+) {
+  const fixture = await defaultSonicFixture();
+
+  const { oSonic, oSonicVault, rafael, nick, strategist, timelock, wS } =
+    fixture;
+
+  let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
+
+  if (isFork) {
+    const swapXAMOProxy = await ethers.getContract(
+      "SonicSwapXAMOStrategyProxy"
+    );
+    swapXAMOStrategy = await ethers.getContractAt(
+      "SonicSwapXAMOStrategy",
+      swapXAMOProxy.address
+    );
+
+    swapXPool = await ethers.getContractAt(
+      "IPair",
+      addresses.sonic.SwapXWSOS.pool
+    );
+
+    swapXGauge = await ethers.getContractAt(
+      "IGauge",
+      addresses.sonic.SwapXWSOS.gauge
+    );
+
+    swpx = await resolveAsset("SWPx");
+  }
+
+  await oSonicVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(wS.address, addresses.zero);
+
+  // mint some OS using wS if configured
+  if (config?.wsMintAmount > 0) {
+    const wsAmount = parseUnits(config.wsMintAmount.toString());
+    await oSonicVault.connect(nick).rebase();
+    await oSonicVault.connect(nick).allocate();
+
+    // Calculate how much to mint based on the wS in the vault,
+    // the withdrawal queue, and the wS to be sent to the strategy
+    const wsBalance = await wS.balanceOf(oSonicVault.address);
+    const queue = await oSonicVault.withdrawalQueueMetadata();
+    const available = wsBalance.add(queue.claimed).sub(queue.queued);
+    const mintAmount = wsAmount.sub(available);
+
+    if (mintAmount.gt(0)) {
+      // Approve the Vault to transfer wS
+      await wS.connect(nick).approve(oSonicVault.address, mintAmount);
+
+      // Mint OS with wS
+      // This will sit in the vault, not the strategy
+      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+    }
+
+    // Add ETH to the Metapool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the AMO strategy
+      await oSonicVault
+        .connect(strategist)
+        .depositToStrategy(swapXAMOStrategy.address, [wS.address], [wsAmount]);
+    }
+  }
+
+  if (config?.balancePool) {
+    const { _reserve0: wsReserves, _reserve1: osReserves } =
+      await swapXPool.getReserves();
+
+    const diff = parseInt(
+      wsReserves.sub(osReserves).div(oethUnits("1")).toString()
+    );
+
+    if (diff > 0) {
+      config.poolAddOSAmount = (config.poolAddOSAmount || 0) + diff;
+    } else if (diff < 0) {
+      config.poolAddwSAmount = (config.poolAddwSAmount || 0) - diff;
+    }
+  }
+
+  // Add wS to the pool
+  if (config?.poolAddwSAmount > 0) {
+    log(`Adding ${config.poolAddwSAmount} wS to the pool`);
+    // transfer wS to the pool
+    const wsAmount = parseUnits(config.poolAddwSAmount.toString(), 18);
+    await wS.connect(nick).transfer(swapXPool.address, wsAmount);
+  }
+
+  // Add OS to the pool
+  if (config?.poolAddOSAmount > 0) {
+    log(`Adding ${config.poolAddOSAmount} OS to the pool`);
+
+    const osAmount = parseUnits(config.poolAddOSAmount.toString(), 18);
+
+    // Mint OS with wS
+    await oSonicVault.connect(rafael).mint(wS.address, osAmount, 0);
+
+    // transfer OS to the pool
+    await oSonic.connect(rafael).transfer(swapXPool.address, osAmount);
+  }
+
+  // force reserves to match balances
+  await swapXPool.sync();
+
+  return { ...fixture, swapXAMOStrategy, swapXPool, swapXGauge, swpx };
+}
 
 const deployPoolBoosterFactorySwapxSingle = async (
   poolBoosterCentralRegistry,
@@ -305,6 +455,7 @@ mocha.after(async () => {
 
 module.exports = {
   defaultSonicFixture,
+  swapXAMOFixture,
   MINTER_ROLE,
   BURNER_ROLE,
 

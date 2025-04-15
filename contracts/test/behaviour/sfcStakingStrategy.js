@@ -1,7 +1,9 @@
 const { expect } = require("chai");
 const { AddressZero } = require("@ethersproject/constants");
-const { oethUnits, advanceTime } = require("../helpers");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const { BigNumber } = ethers;
+
+const { oethUnits, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:sonic:staking");
@@ -14,7 +16,7 @@ const log = require("../../utils/logger")("test:sonic:staking");
     return {
       ...fixture,
       addresses: addresses.sonic,
-      sfcAddress: await ethers.getContractAt(
+      sfc: await ethers.getContractAt(
         "ISFC",
         addresses.sonic.SFC
       ),
@@ -312,19 +314,24 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     });
 
     it("Should undelegate when unsupporting a validator with delegated funds", async () => {
-      const { sonicStakingStrategy, timelock } = await context();
+      const { sfc, sonicStakingStrategy, timelock } = await context();
 
       const amount = oethUnits("15000");
       await depositTokenAmount(amount);
       const expectedWithdrawId = await sonicStakingStrategy.nextWithdrawId();
 
+      const stakedAmount = await sfc.getStake(
+        sonicStakingStrategy.address,
+        defaultValidatorId
+      );
+
       const tx = await sonicStakingStrategy
         .connect(timelock)
         .unsupportValidator(defaultValidatorId);
 
-      expect(tx)
+      await expect(tx)
         .to.emit(sonicStakingStrategy, "Undelegated")
-        .withArgs(expectedWithdrawId, defaultValidatorId, amount);
+        .withArgs(expectedWithdrawId, defaultValidatorId, stakedAmount);
     });
 
     it("Should not undelegate with 0 amount", async () => {
@@ -361,6 +368,36 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       await advanceWeek();
       await advanceWeek();
       await withdrawFromSFC(withdrawalId, amount);
+    });
+
+    it("Withdraw after being partially slashed", async () => {
+      const withdrawAmount = oethUnits("15000");
+      const slashingRefundRatio = parseUnits("95", 16); // Slashed by 5%
+      await depositTokenAmount(withdrawAmount);
+      const withdrawalId = await undelegateTokenAmount(
+        withdrawAmount,
+        defaultValidatorId
+      );
+      await advanceWeek();
+      await advanceWeek();
+      await withdrawFromSFC(withdrawalId, withdrawAmount, {
+        slashingRefundRatio,
+      });
+    });
+
+    it("Withdraw after being fully slashed", async () => {
+      const withdrawAmount = oethUnits("15000");
+      const slashingRefundRatio = parseUnits("0", 16); // Slashed 100%
+      await depositTokenAmount(withdrawAmount);
+      const withdrawalId = await undelegateTokenAmount(
+        withdrawAmount,
+        defaultValidatorId
+      );
+      await advanceWeek();
+      await advanceWeek();
+      await withdrawFromSFC(withdrawalId, withdrawAmount, {
+        slashingRefundRatio,
+      });
     });
 
     it("Can not withdraw too soon", async () => {
@@ -530,10 +567,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         .deposit(wS.address, amount);
     }
 
-    expect(tx)
+    await expect(tx)
       .to.emit(sonicStakingStrategy, "Deposit")
       .withArgs(wS.address, AddressZero, amount);
-    expect(tx)
+    await expect(tx)
       .to.emit(sonicStakingStrategy, "Delegated")
       .withArgs(defaultValidatorId, amount);
 
@@ -565,10 +602,11 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
     // Transfer some WS to strategy
     await wS.connect(clement).transfer(sonicStakingStrategy.address, amount);
 
-    // Call deposit by impersonating the Vault
     if (useWithdrawAll) {
+      // Call withdrawAll by impersonating the Vault
       await sonicStakingStrategy.connect(oSonicVaultSigner).withdrawAll();
     } else {
+      // Call withdraw by impersonating the Vault
       await sonicStakingStrategy
         .connect(oSonicVaultSigner)
         .withdraw(oSonicVault.address, wS.address, amount);
@@ -599,7 +637,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       .connect(validatorRegistrator)
       .undelegate(validatorId, amount);
 
-    expect(tx)
+    await expect(tx)
       .to.emit(sonicStakingStrategy, "Undelegated")
       .withArgs(expectedWithdrawId, validatorId, amount);
     const withdrawal = await sonicStakingStrategy.withdrawals(
@@ -624,16 +662,24 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
   // Withdraw the matured undelegated funds from the Sonic Special Fee Contract
   const withdrawFromSFC = async (
     withdrawalId,
-    expectedAmountToWithdraw,
+    amountToWithdraw,
     {
       advanceSufficientEpochs = true,
       skipEpochAdvancement = false,
       expectedError = false,
       expectedRevert = false,
+      slashingRefundRatio = parseUnits("1", 18),
     } = {}
   ) => {
     const { sonicStakingStrategy, validatorRegistrator, wS, oSonicVault } =
       await context();
+
+    if (slashingRefundRatio.lt(parseUnits("1", 18))) {
+      await slashValidator(slashingRefundRatio);
+    }
+    const slashedWithdrawAmount = slashingRefundRatio.eq(0)
+      ? slashingRefundRatio
+      : amountToWithdraw.mul(slashingRefundRatio).div(parseUnits("1", 18));
 
     const contractBalanceBefore = await sonicStakingStrategy.checkBalance(
       wS.address
@@ -641,11 +687,10 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
 
     const vaultBalanceBefore = await wS.balanceOf(oSonicVault.address);
     const withdrawal = await sonicStakingStrategy.withdrawals(withdrawalId);
-    const amountToWithdraw = withdrawal.undelegatedAmount;
     const pendingWithdrawalsBefore =
       await sonicStakingStrategy.pendingWithdrawals();
     if (!expectedError && !expectedRevert) {
-      expect(expectedAmountToWithdraw).to.equal(amountToWithdraw);
+      expect(withdrawal.undelegatedAmount).to.equal(amountToWithdraw);
     }
 
     if (!skipEpochAdvancement) {
@@ -681,22 +726,36 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       withdrawalId
     );
 
-    expect(tx)
-      .to.emit(sonicStakingStrategy, "Withdrawal")
-      .withArgs(wS.address, AddressZero, amountToWithdraw);
+    if (slashedWithdrawAmount.gt(0)) {
+      await expect(tx).to.emittedEvent("Withdrawal", [
+        wS.address,
+        AddressZero,
+        async (amount) => {
+          expect(amount).to.be.withinRange(
+            slashedWithdrawAmount.sub(1),
+            slashedWithdrawAmount,
+            "Withdrawal event's amount not within dust amount"
+          );
+        },
+      ]);
+    }
 
-    expect(tx)
-      .to.emit(sonicStakingStrategy, "Withdrawn")
-      .withArgs(
-        withdrawalId,
-        withdrawal.validatorId,
-        amountToWithdraw,
-        amountToWithdraw
-      );
+    await expect(tx).to.emittedEvent("Withdrawn", [
+      withdrawalId,
+      withdrawal.validatorId,
+      amountToWithdraw,
+      async (amount) => {
+        expect(amount).to.be.withinRange(
+          slashedWithdrawAmount.sub(1),
+          slashedWithdrawAmount,
+          "Withdrawn event's withdrawnAmount not within dust amount"
+        );
+      },
+    ]);
 
-    expect(await wS.balanceOf(oSonicVault.address)).to.equal(
-      vaultBalanceBefore.add(amountToWithdraw)
-    );
+    expect(await wS.balanceOf(oSonicVault.address))
+      .to.lte(vaultBalanceBefore.add(slashedWithdrawAmount))
+      .gte(vaultBalanceBefore.add(slashedWithdrawAmount.sub(1)));
     expect(withdrawalAfter.undelegatedAmount).to.equal(oethUnits("0"));
 
     expect(await sonicStakingStrategy.pendingWithdrawals()).to.equal(
@@ -743,6 +802,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         BigNumber.from("2955644249909388016706")
       );
       await advance10min();
+      log(`Sealing epoch with ${validatorsLength} validators`);
       await sfc
         .connect(nodeDriverAuthSigner)
         .sealEpoch(offlineTimes, offlineBlocks, uptimes, originatedTxsFee);
@@ -750,6 +810,39 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
         .connect(nodeDriverAuthSigner)
         .sealEpochValidators(epochValidators);
     }
+  };
+
+  // Slash the default validator
+  const slashValidator = async (slashingRefundRatio) => {
+    const { addresses, sonicStakingStrategy, sfc } = await context();
+
+    log(
+      `Slashing the default validator with a refund ratio of ${formatUnits(
+        slashingRefundRatio
+      )}`
+    );
+
+    const defaultValidatorId = await sonicStakingStrategy.defaultValidatorId();
+    const nodeDriverAuthSigner = await impersonateAndFund(
+      addresses.nodeDriveAuth
+    );
+    await sfc
+      .connect(nodeDriverAuthSigner)
+      .deactivateValidator(defaultValidatorId, "128");
+    expect(await sfc.isSlashed(defaultValidatorId)).to.equal(
+      true,
+      "Not slashed"
+    );
+
+    const sfcOwner = await sfc.owner();
+    const sfcOwnerSigner = await impersonateAndFund(sfcOwner);
+    await sfc
+      .connect(sfcOwnerSigner)
+      .updateSlashingRefundRatio(defaultValidatorId, slashingRefundRatio);
+    expect(await sfc.slashingRefundRatio(defaultValidatorId)).to.equal(
+      slashingRefundRatio,
+      "slashingRefundRatio"
+    );
   };
 };
 
