@@ -9,9 +9,9 @@ object "Dripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
 object "VaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
 }
 
-object "WOUSD" as wousd <<Origin>><<Proxy>> #DeepSkyBlue {
+object "wOUSD" as wousd <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: OUSD
-    symbol: WOUSD
+    symbol: wOUSD
     name: Wrapped OUSD
 }
 
@@ -21,11 +21,11 @@ object "OUSD" as ousd <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 object "Vault" as vault <<Origin>><<Proxy>> #DeepSkyBlue {
-    assets: DAI, USDC, USDT  
+    assets: USDS, USDC, USDT  
 }
 
 object "Harvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX
+    rewards: CRV
 }
 
 object "Buyback" as buy <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -33,40 +33,34 @@ swap OUSD for OGV
 }
 
 ' Strategies
-object "AaveStrategy" as aaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: DAI, USDC, USDT
-    Aave tokens: aDAI, aUSDC, aUSDT
-    ' rewards: AAVE
-}
-' object "CompoundStrategy" as compStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     compound tokens: cDAI, cUSDC, cUSDT
-    ' rewards: COMP
-' }
 ' object "ConvexStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 '     asset: DAI, USDC, USDT
 '     Curve pool: 3Pool (3CRV)
 '     Convex pool: DAI+USDC+USDT
 '     rewards: CRV, CVX
 ' }
-object "ConvexAMOStrategy" as amoStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: DAI, USDC, USDT
-    Curve Metapool: OUSD3CRV-f
-    Convex pool: cvxOUSD3CRV-f
-    rewards: CRV, CVX
+object "Morpho Steakhouse USDC\nStrategy" as steakUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDC
+    Morpho vault: steakUSDC
+    rewards: MORPHO
 }
-' object "MorphoCompoundStrategy" as morphCompStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     Compound tokens: cDAI, cUSDC, cUSDT
-    ' rewards: COMP
-' }
-' object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     Aave tokens: aDAI, aUSDC, aUSDT
-    ' rewards: AAVE
-' }
+object "Morpho Gauntlet Prime USDC\nStrategy" as gtUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDC
+    Morpho vault: gtUSDC
+    rewards: MORPHO
+}
+object "Morpho Gauntlet Prime USDT\nStrategy" as gtUSDT <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDT
+    Morpho vault: gtUSDT
+    rewards: MORPHO
+}
+object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDC
+    Curve pool: OUSD/USDC
+    rewards: CRV
+}
 
-object "MakerSSRStrategy" as dsrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "Sky Saving Rate (SSR)\nStrategy" as ssrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: USDS
     vault: sUSDS
 }
@@ -76,10 +70,8 @@ object "OracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
     USDT/USD
     USDC/USD
-    DAI/USD
     USDS/USD
     CRV/USD
-    CVX/USD 
 }
 
 vault <. drip
@@ -96,12 +88,20 @@ vault ..> oracle
 buy .> ousd
 
 ' Strategies
-vault <...> aaveStrat
-vault <...> amoStrat
+' vault <...> aaveStrat
+' vault <...> amoStrat
 vault <...> ssrStrat
+vault <...> steakUSDC
+vault <...> gtUSDC
+vault <...> gtUSDT
+vault <...> curveAmoStrat
 
 drip <.. harv
-harv <..> amoStrat
-
+' harv <..> amoStrat
+harv <...> ssrStrat
+harv <...> steakUSDC
+harv <...> gtUSDC
+harv <...> gtUSDT
+harv <...> curveAmoStrat
 
 @enduml
