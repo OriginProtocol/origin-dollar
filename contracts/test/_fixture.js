@@ -2257,6 +2257,30 @@ async function hackedVaultFixture() {
 }
 
 /**
+ * Instant rebase vault, for testing systems external to the vault
+ */
+async function instantRebaseVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { deploy } = deployments;
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("MockVaultCoreInstantRebase", {
+    from: governorAddr,
+  });
+  const instantRebase = await ethers.getContract("MockVaultCoreInstantRebase");
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  await cVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  await cOETHVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
+
+  return fixture;
+}
+
+/**
  * Configure a reborn hack attack
  */
 async function rebornFixture() {
@@ -2523,6 +2547,7 @@ module.exports = {
   aaveFixture,
   morphoAaveFixture,
   hackedVaultFixture,
+  instantRebaseVaultFixture,
   rebornFixture,
   balancerREthFixture,
   nativeStakingSSVStrategyFixture,

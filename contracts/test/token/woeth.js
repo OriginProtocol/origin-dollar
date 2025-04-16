@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  instantRebaseVaultFixture
+} = require("../_fixture");
 const { oethUnits, usdsUnits, isFork } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
 
@@ -8,11 +11,11 @@ describe("WOETH", function () {
   if (isFork) {
     this.timeout(0);
   }
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
 
   let oeth, weth, woeth, oethVault, usds, matt, josh, governor;
-
   beforeEach(async () => {
-    const fixture = await loadDefaultFixture();
+    const fixture = await loadFixture();
     oeth = fixture.oeth;
     woeth = fixture.woeth;
     oethVault = fixture.oethVault;
