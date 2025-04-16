@@ -72,7 +72,6 @@ contract VaultStorage is Initializable, Governable {
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
 
-
     // Since we are proxy, all state should be uninitalized.
     // Since this storage contract does not have logic directly on it
     // we should not be checking for to see if these variables can be constant.
@@ -254,8 +253,6 @@ contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[43] private __gap;
 
-
-
     // slither-disable-end constable-states
     // slither-disable-end uninitialized-state
 
@@ -275,4 +272,3 @@ contract VaultStorage is Initializable, Governable {
         }
     }
 }
-
