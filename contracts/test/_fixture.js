@@ -2274,6 +2274,9 @@ async function instantRebaseVaultFixture() {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await cVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
 
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  await cOETHVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
+
   return fixture;
 }
 
