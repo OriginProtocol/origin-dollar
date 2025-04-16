@@ -34,15 +34,23 @@ contract OmnichainL2Adapter is MintBurnOFTAdapter {
         _transferOwnership(_governor);
     }
 
-
     /// @inheritdoc MintBurnOFTAdapter
     function _debit(
         address _from,
         uint256 _amountLD,
         uint256 _minAmountLD,
         uint32 _dstEid
-    ) internal virtual override returns (uint256 amountSentLD, uint256 amountReceivedLD) {
-        (amountSentLD, amountReceivedLD) = _debitView(_amountLD, _minAmountLD, _dstEid);
+    )
+        internal
+        virtual
+        override
+        returns (uint256 amountSentLD, uint256 amountReceivedLD)
+    {
+        (amountSentLD, amountReceivedLD) = _debitView(
+            _amountLD,
+            _minAmountLD,
+            _dstEid
+        );
         // Burns tokens from the caller.
         IMintableERC20(address(minterBurner)).burn(_from, amountSentLD);
     }
@@ -63,5 +71,6 @@ contract OmnichainL2Adapter is MintBurnOFTAdapter {
 
 interface IMintableERC20 {
     function mint(address to, uint256 value) external;
+
     function burn(address to, uint256 value) external;
 }

@@ -548,6 +548,6 @@ addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.plume.LayerZeroEndpointV2 =
   "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
 addresses.plume.WOETHOmnichainAdapter =
-  "0xF66886e242e20cAb2496AF1d411eBcFb73440270";
+  "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
 
 module.exports = addresses;
