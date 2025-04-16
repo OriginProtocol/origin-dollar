@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const {
   createFixtureLoader,
-  instantRebaseVaultFixture
+  instantRebaseVaultFixture,
 } = require("../_fixture");
 const { oethUnits, usdsUnits, isFork } = require("../helpers");
 const { hardhatSetBalance } = require("../_fund");
