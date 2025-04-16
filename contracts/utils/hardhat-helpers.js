@@ -131,7 +131,6 @@ const getHardhatNetworkProperties = () => {
   } else if (isSonicFork && isFork) {
     chainId = 146;
   } else if (isPlumeFork && isFork) {
-    // TODO: Plume Network ID
     chainId = 98866;
   } else if (isFork) {
     // is mainnet fork

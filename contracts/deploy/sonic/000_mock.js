@@ -45,8 +45,6 @@ const deployCore = async () => {
   const dOSonic = await deployWithConfirmation("OSonic");
   const dWOSonic = await deployWithConfirmation("WOSonic", [
     cOSonicProxy.address, // Base token
-    "Wrapped Origin S", // Token Name
-    "wOS", // Token Symbol
   ]);
   const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
     cWS.address,
