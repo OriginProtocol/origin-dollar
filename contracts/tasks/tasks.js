@@ -111,7 +111,7 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 
-const { lzBridgeToken } = require("./layerzero");
+const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -1833,4 +1833,13 @@ task("lzBridgeToken")
   .addOptionalParam("gaslimit", "Gas limit")
   .setAction(async (taskArgs) => {
     await lzBridgeToken(taskArgs, hre);
+  });
+
+task("lzSetConfig")
+  .addParam("destnetwork", "Destination network")
+  .addParam("dvns", "Comma separated list of DVN addresses")
+  .addParam("confirmations", "Number of confirmations")
+  .addParam("dvncount", "Number of required DVNs")
+  .setAction(async (taskArgs) => {
+    await lzSetConfig(taskArgs, hre);
   });

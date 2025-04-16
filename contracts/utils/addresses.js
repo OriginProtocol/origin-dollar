@@ -543,7 +543,7 @@ addresses.holesky.validatorRegistrator =
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume = {};
-addresses.plume.WETH = "0x1738E5247c85f96c9D35FE55800557C5479b7063";
+addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
 addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.plume.LayerZeroEndpointV2 =
   "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";

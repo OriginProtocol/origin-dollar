@@ -12,16 +12,21 @@ const endpointIds = {
   plume: 30370,
 };
 
-async function lzBridgeToken(taskArguments, hre) {
+const endpointAbi = [
+  "function setConfig(address oappAddress, address receiveLibAddress, tuple(uint32 eid, uint32 configType, bytes config)[] setConfigParams) external",
+  "function getSendLibrary(address _sender, uint32 _dstEid) external view returns (address)",
+  "function getReceiveLibrary(address _receiver, uint32 _srcEid) external view returns (address)",
+];
+
+async function lzBridgeToken(taskArgs, hre) {
   const signer = await getSigner();
 
-  const amount = hre.ethers.utils.parseEther(taskArguments.amount);
-  const destNetwork = taskArguments.destnetwork.toLowerCase();
+  const amount = hre.ethers.utils.parseEther(taskArgs.amount);
+  const destNetwork = taskArgs.destnetwork.toLowerCase();
   const endpointId = endpointIds[destNetwork];
   const srcNetwork = hre.network.name;
-
   const opts = Options.newOptions()
-    .addExecutorLzReceiveOption(taskArguments.gaslimit || 400000, 0)
+    .addExecutorLzReceiveOption(taskArgs.gaslimit || 400000, 0)
     .toBytes();
 
   const sendParam = {
@@ -39,13 +44,90 @@ async function lzBridgeToken(taskArguments, hre) {
     addresses[srcNetwork].WOETHOmnichainAdapter
   );
 
-  const [nativeFee] = await oftAdapter
+  const woeth = await hre.ethers.getContractAt(
+    "WOETH",
+    srcNetwork == "mainnet"
+      ? addresses.mainnet.WOETHProxy
+      : addresses[srcNetwork].BridgedWOETH
+  );
+
+  await woeth.connect(signer).approve(oftAdapter.address, amount);
+
+  const [nativeFee, lzTokenFee] = await oftAdapter
     .connect(signer)
     .quoteSend(sendParam, false);
 
+  console.log(`Native Fee: ${nativeFee}`);
+  console.log(`LZ Token Fee: ${lzTokenFee}`);
+
   console.log(`OFT Fee: ${nativeFee}`);
+
+  await oftAdapter
+    .connect(signer)
+    .send(sendParam, [nativeFee, 0], await signer.getAddress(), {
+      value: nativeFee,
+    });
+}
+
+async function lzSetConfig(taskArgs, hre) {
+  const signer = await getSigner();
+
+  const srcNetwork = hre.network.name;
+  const dvnAddresses = taskArgs.dvns.split(",");
+  const confirmations = taskArgs.confirmations;
+  const requiredDVNCount = taskArgs.dvncount;
+  const remoteEid = endpointIds[taskArgs.destnetwork];
+
+  const ulnConfig = {
+    confirmations,
+    requiredDVNCount,
+    optionalDVNCount: 0,
+    optionalDVNThreshold: 0,
+    requiredDVNs: dvnAddresses,
+    optionalDVNs: [],
+  };
+
+  const configTypeUlnStruct =
+    "tuple(uint64 confirmations, uint8 requiredDVNCount, uint8 optionalDVNCount, uint8 optionalDVNThreshold, address[] requiredDVNs, address[] optionalDVNs)";
+  const encodedUlnConfig = hre.ethers.utils.defaultAbiCoder.encode(
+    [configTypeUlnStruct],
+    [ulnConfig]
+  );
+
+  const setConfigParamUln = {
+    eid: remoteEid,
+    configType: 2, // CONFIG_TYPE_ULN
+    config: encodedUlnConfig,
+  };
+
+  const endpointContract = await hre.ethers.getContractAt(
+    endpointAbi,
+    addresses[srcNetwork].LayerZeroEndpointV2
+  );
+
+  const oAppAddress = addresses[srcNetwork].WOETHOmnichainAdapter;
+
+  const receiveLib = await endpointContract.getReceiveLibrary(
+    oAppAddress,
+    remoteEid
+  );
+
+  const sendLib = await endpointContract.getSendLibrary(oAppAddress, remoteEid);
+
+  await endpointContract.connect(signer).setConfig(
+    oAppAddress, // OApp
+    receiveLib, // ReceiveLib
+    [setConfigParamUln]
+  );
+
+  await endpointContract.connect(signer).setConfig(
+    oAppAddress, // OApp
+    sendLib, // SendLib
+    [setConfigParamUln]
+  );
 }
 
 module.exports = {
   lzBridgeToken,
+  lzSetConfig,
 };
