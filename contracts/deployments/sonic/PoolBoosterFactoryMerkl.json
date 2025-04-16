@@ -1,0 +1,589 @@
+{
+  "address": "0xDbe1c1a3dE56bEA848B4FFd8486dD539E9d490B7",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oSonic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_governor",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_centralRegistry",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_merklDistributor",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "GovernorshipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newDistributor",
+          "type": "address"
+        }
+      ],
+      "name": "MerklDistributorUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "PendingGovernorshipTransfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_exclusionList",
+          "type": "address[]"
+        }
+      ],
+      "name": "bribeAll",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "centralRegistry",
+      "outputs": [
+        {
+          "internalType": "contract IPoolBoostCentralRegistry",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_campaignType",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "_ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_campaignDuration",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "campaignData",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_salt",
+          "type": "uint256"
+        }
+      ],
+      "name": "computePoolBoosterAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_campaignType",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "_ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_campaignDuration",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "campaignData",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_salt",
+          "type": "uint256"
+        }
+      ],
+      "name": "createPoolBoosterMerkl",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isGovernor",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "merklDistributor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oSonic",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "poolBoosterFromPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "boosterAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolBoosterLength",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "poolBoosters",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "boosterAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "ammPoolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+          "name": "boosterType",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_poolBoosterAddress",
+          "type": "address"
+        }
+      ],
+      "name": "removePoolBooster",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_merklDistributor",
+          "type": "address"
+        }
+      ],
+      "name": "setMerklDistributor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "transferGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "version",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xe595621032456fb882dd4aacbb8704849cd70a08321e64f9b3f21745fb6cdaae",
+  "receipt": {
+    "to": null,
+    "from": "0x074105fdD39e982B2ffE749A193c942db1046AB9",
+    "contractAddress": "0xDbe1c1a3dE56bEA848B4FFd8486dD539E9d490B7",
+    "transactionIndex": 1,
+    "gasUsed": "2119149",
+    "logsBloom": "0x00000000100000000000000000000000000000000000000000000000100000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000020000001000000000000800000000000000000000000000000000000204000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000800000000000000000000000000000000000000000000000000010000000000000000000000000200000000000000020000000000000000000000000000000000000000000000000000000000000800000",
+    "blockHash": "0x0b140d938255f6ac1bc75a3687228dce6cfd9849b53b54455bd428038055ab3a",
+    "transactionHash": "0xe595621032456fb882dd4aacbb8704849cd70a08321e64f9b3f21745fb6cdaae",
+    "logs": [
+      {
+        "transactionIndex": 1,
+        "blockNumber": 20149036,
+        "transactionHash": "0xe595621032456fb882dd4aacbb8704849cd70a08321e64f9b3f21745fb6cdaae",
+        "address": "0xDbe1c1a3dE56bEA848B4FFd8486dD539E9d490B7",
+        "topics": [
+          "0xc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x00000000000000000000000031a91336414d3b955e494e7d485a6b06b55fc8fb"
+        ],
+        "data": "0x",
+        "logIndex": 3,
+        "blockHash": "0x0b140d938255f6ac1bc75a3687228dce6cfd9849b53b54455bd428038055ab3a"
+      },
+      {
+        "transactionIndex": 1,
+        "blockNumber": 20149036,
+        "transactionHash": "0xe595621032456fb882dd4aacbb8704849cd70a08321e64f9b3f21745fb6cdaae",
+        "address": "0xDbe1c1a3dE56bEA848B4FFd8486dD539E9d490B7",
+        "topics": [
+          "0x1a0e4b3bfcac0fa1e13f7c8b088964c6daea7147fa49e39f54db5787518fe9c9"
+        ],
+        "data": "0x0000000000000000000000008bb4c975ff3c250e0ceea271728547f3802b36fd",
+        "logIndex": 4,
+        "blockHash": "0x0b140d938255f6ac1bc75a3687228dce6cfd9849b53b54455bd428038055ab3a"
+      }
+    ],
+    "blockNumber": 20149036,
+    "cumulativeGasUsed": "2321612",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794",
+    "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
+    "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A",
+    "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "097a34c4b26ae7ea6c9c55a20f5413b8",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_oSonic\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_governor\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_centralRegistry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_merklDistributor\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"GovernorshipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newDistributor\",\"type\":\"address\"}],\"name\":\"MerklDistributorUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"PendingGovernorshipTransfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_exclusionList\",\"type\":\"address[]\"}],\"name\":\"bribeAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"centralRegistry\",\"outputs\":[{\"internalType\":\"contract IPoolBoostCentralRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"claimGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_campaignType\",\"type\":\"uint32\"},{\"internalType\":\"address\",\"name\":\"_ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"_campaignDuration\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"campaignData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_salt\",\"type\":\"uint256\"}],\"name\":\"computePoolBoosterAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_campaignType\",\"type\":\"uint32\"},{\"internalType\":\"address\",\"name\":\"_ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"uint32\",\"name\":\"_campaignDuration\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"campaignData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_salt\",\"type\":\"uint256\"}],\"name\":\"createPoolBoosterMerkl\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"governor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isGovernor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"merklDistributor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oSonic\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"poolBoosterFromPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"boosterAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"enum IPoolBoostCentralRegistry.PoolBoosterType\",\"name\":\"boosterType\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolBoosterLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"poolBoosters\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"boosterAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"ammPoolAddress\",\"type\":\"address\"},{\"internalType\":\"enum IPoolBoostCentralRegistry.PoolBoosterType\",\"name\":\"boosterType\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_poolBoosterAddress\",\"type\":\"address\"}],\"name\":\"removePoolBooster\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_merklDistributor\",\"type\":\"address\"}],\"name\":\"setMerklDistributor\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newGovernor\",\"type\":\"address\"}],\"name\":\"transferGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"kind\":\"dev\",\"methods\":{\"bribeAll(address[])\":{\"params\":{\"_exclusionList\":\"A list of pool booster addresses to skip when        calling this function.\"}},\"computePoolBoosterAddress(uint32,address,uint32,bytes,uint256)\":{\"details\":\"Create a Pool Booster for Merkl.\",\"params\":{\"_ammPoolAddress\":\"address of the AMM pool where the yield originates from\",\"_campaignType\":\"The type of campaign to create. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.\",\"_salt\":\"A unique number that affects the address of the pool booster created. Note: this number        should match the one from `createPoolBoosterMerkl` in order for the final deployed address        and pre-computed address to match\"}},\"constructor\":{\"params\":{\"_centralRegistry\":\"address of the central registry\",\"_governor\":\"address governor\",\"_merklDistributor\":\"address of the Merkl distributor\",\"_oSonic\":\"address of the OSonic token\"}},\"createPoolBoosterMerkl(uint32,address,uint32,bytes,uint256)\":{\"details\":\"Create a Pool Booster for Merkl.\",\"params\":{\"_ammPoolAddress\":\"address of the AMM pool where the yield originates from\",\"_campaignDuration\":\"The duration of the campaign in seconds\",\"_campaignType\":\"The type of campaign to create. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.\",\"_salt\":\"A unique number that affects the address of the pool booster created. Note: this number        should match the one from `computePoolBoosterAddress` in order for the final deployed address        and pre-computed address to match\",\"campaignData\":\"The data to be used for the campaign. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.        This should be fetched from the Merkl UI.\"}},\"removePoolBooster(address)\":{\"details\":\"This action does not destroy the pool booster contract nor does it      stop the yield delegation to it.\",\"params\":{\"_poolBoosterAddress\":\"address of the pool booster\"}},\"setMerklDistributor(address)\":{\"details\":\"Set the address of the Merkl distributor\",\"params\":{\"_merklDistributor\":\"The address of the Merkl distributor\"}},\"transferGovernance(address)\":{\"params\":{\"_newGovernor\":\"Address of the new Governor\"}}},\"title\":\"Pool booster factory for creating Merkl pool boosters.\",\"version\":1},\"userdoc\":{\"events\":{\"MerklDistributorUpdated(address)\":{\"notice\":\"event emitted when the Merkl distributor is updated\"}},\"kind\":\"user\",\"methods\":{\"bribeAll(address[])\":{\"notice\":\"Goes over all the pool boosters created by this factory and         calls bribe() on them.\"},\"claimGovernance()\":{\"notice\":\"Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor.\"},\"governor()\":{\"notice\":\"Returns the address of the current Governor.\"},\"isGovernor()\":{\"notice\":\"Returns true if the caller is the current Governor.\"},\"merklDistributor()\":{\"notice\":\"address of the Merkl distributor\"},\"removePoolBooster(address)\":{\"notice\":\"Removes the pool booster from the internal list of pool boosters.\"},\"transferGovernance(address)\":{\"notice\":\"Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/poolBooster/PoolBoosterFactoryMerkl.sol\":\"PoolBoosterFactoryMerkl\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address recipient, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n}\\n\",\"keccak256\":\"0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da\",\"license\":\"MIT\"},\"contracts/governance/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Base for contracts that are managed by the Origin Protocol's Governor.\\n * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change\\n *      from owner to governor and renounce methods removed. Does not use\\n *      Context.sol like Ownable.sol does for simplification.\\n * @author Origin Protocol Inc\\n */\\nabstract contract Governable {\\n    // Storage position of the owner and pendingOwner of the contract\\n    // keccak256(\\\"OUSD.governor\\\");\\n    bytes32 private constant governorPosition =\\n        0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;\\n\\n    // keccak256(\\\"OUSD.pending.governor\\\");\\n    bytes32 private constant pendingGovernorPosition =\\n        0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;\\n\\n    // keccak256(\\\"OUSD.reentry.status\\\");\\n    bytes32 private constant reentryStatusPosition =\\n        0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;\\n\\n    // See OpenZeppelin ReentrancyGuard implementation\\n    uint256 constant _NOT_ENTERED = 1;\\n    uint256 constant _ENTERED = 2;\\n\\n    event PendingGovernorshipTransfer(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    event GovernorshipTransferred(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    /**\\n     * @notice Returns the address of the current Governor.\\n     */\\n    function governor() public view returns (address) {\\n        return _governor();\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current Governor.\\n     */\\n    function _governor() internal view returns (address governorOut) {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            governorOut := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address of the pending Governor.\\n     */\\n    function _pendingGovernor()\\n        internal\\n        view\\n        returns (address pendingGovernor)\\n    {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            pendingGovernor := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the Governor.\\n     */\\n    modifier onlyGovernor() {\\n        require(isGovernor(), \\\"Caller is not the Governor\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @notice Returns true if the caller is the current Governor.\\n     */\\n    function isGovernor() public view returns (bool) {\\n        return msg.sender == _governor();\\n    }\\n\\n    function _setGovernor(address newGovernor) internal {\\n        emit GovernorshipTransferred(_governor(), newGovernor);\\n\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\n     * function is not supported. It is possible to prevent this from happening\\n     * by making the `nonReentrant` function external, and make it call a\\n     * `private` function that does the actual work.\\n     */\\n    modifier nonReentrant() {\\n        bytes32 position = reentryStatusPosition;\\n        uint256 _reentry_status;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _reentry_status := sload(position)\\n        }\\n\\n        // On the first call to nonReentrant, _notEntered will be true\\n        require(_reentry_status != _ENTERED, \\\"Reentrant call\\\");\\n\\n        // Any calls to nonReentrant after this point will fail\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _ENTERED)\\n        }\\n\\n        _;\\n\\n        // By storing the original value once again, a refund is triggered (see\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _NOT_ENTERED)\\n        }\\n    }\\n\\n    function _setPendingGovernor(address newGovernor) internal {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @notice Transfers Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the current Governor. Must be claimed for this to complete\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function transferGovernance(address _newGovernor) external onlyGovernor {\\n        _setPendingGovernor(_newGovernor);\\n        emit PendingGovernorshipTransfer(_governor(), _newGovernor);\\n    }\\n\\n    /**\\n     * @notice Claim Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the new Governor.\\n     */\\n    function claimGovernance() external {\\n        require(\\n            msg.sender == _pendingGovernor(),\\n            \\\"Only the pending Governor can complete the claim\\\"\\n        );\\n        _changeGovernor(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Change Governance of the contract to a new account (`newGovernor`).\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function _changeGovernor(address _newGovernor) internal {\\n        require(_newGovernor != address(0), \\\"New Governor is address(0)\\\");\\n        _setGovernor(_newGovernor);\\n    }\\n}\\n\",\"keccak256\":\"0xec8e86e43da98835736de1151b86ca13cd8a1a256adc1382ce7030d825521003\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/IMerklDistributor.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IMerklDistributor {\\n    struct CampaignParameters {\\n        // POPULATED ONCE CREATED\\n\\n        // ID of the campaign. This can be left as a null bytes32 when creating campaigns\\n        // on Merkl.\\n        bytes32 campaignId;\\n        // CHOSEN BY CAMPAIGN CREATOR\\n\\n        // Address of the campaign creator, if marked as address(0), it will be overriden with the\\n        // address of the `msg.sender` creating the campaign\\n        address creator;\\n        // Address of the token used as a reward\\n        address rewardToken;\\n        // Amount of `rewardToken` to distribute across all the epochs\\n        // Amount distributed per epoch is `amount/numEpoch`\\n        uint256 amount;\\n        // Type of campaign\\n        uint32 campaignType;\\n        // Timestamp at which the campaign should start\\n        uint32 startTimestamp;\\n        // Duration of the campaign in seconds. Has to be a multiple of EPOCH = 3600\\n        uint32 duration;\\n        // Extra data to pass to specify the campaign\\n        bytes campaignData;\\n    }\\n\\n    function createCampaign(CampaignParameters memory newCampaign)\\n        external\\n        returns (bytes32);\\n\\n    function signAndCreateCampaign(\\n        CampaignParameters memory newCampaign,\\n        bytes memory _signature\\n    ) external returns (bytes32);\\n\\n    function sign(bytes memory _signature) external;\\n\\n    function rewardTokenMinAmounts(address _rewardToken)\\n        external\\n        view\\n        returns (uint256);\\n}\\n\",\"keccak256\":\"0x0bf0616d16ce9dc19f62ae2732bb22dd19ee194811f6c3e341df1e2ca94eb3ba\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IPoolBoostCentralRegistry {\\n    /**\\n     * @dev all the supported pool booster types are listed here. It is possible\\n     *      to have multiple versions of the factory that supports the same type of\\n     *      pool booster. Factories are immutable and this can happen when a factory\\n     *      or related pool booster required code update.\\n     *      e.g. \\\"PoolBoosterSwapxDouble\\\" & \\\"PoolBoosterSwapxDouble_v2\\\"\\n     */\\n    enum PoolBoosterType {\\n        // Supports bribing 2 contracts per pool. Appropriate for Ichi vault concentrated\\n        // liquidity pools where (which is expected in most/all cases) both pool gauges\\n        // require bribing.\\n        SwapXDoubleBooster,\\n        // Supports bribing a single contract per pool. Appropriate for Classic Stable &\\n        // Classic Volatile pools and Ichi vaults where only 1 side (1 of the 2 gauges)\\n        // needs bribing\\n        SwapXSingleBooster,\\n        // Supports bribing a single contract per pool. Appropriate for Metropolis pools\\n        MetropolisBooster,\\n        // Supports creating a Merkl campaign.\\n        MerklBooster\\n    }\\n\\n    struct PoolBoosterEntry {\\n        address boosterAddress;\\n        address ammPoolAddress;\\n        PoolBoosterType boosterType;\\n    }\\n\\n    event PoolBoosterCreated(\\n        address poolBoosterAddress,\\n        address ammPoolAddress,\\n        PoolBoosterType poolBoosterType,\\n        address factoryAddress\\n    );\\n    event PoolBoosterRemoved(address poolBoosterAddress);\\n\\n    function emitPoolBoosterCreated(\\n        address _poolBoosterAddress,\\n        address _ammPoolAddress,\\n        PoolBoosterType _boosterType\\n    ) external;\\n\\n    function emitPoolBoosterRemoved(address _poolBoosterAddress) external;\\n}\\n\",\"keccak256\":\"0xfb932bb4bc53e01dfb192e310fc242a8d747843fefe7986cd2970a487b8b9724\",\"license\":\"MIT\"},\"contracts/interfaces/poolBooster/IPoolBooster.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IPoolBooster {\\n    event BribeExecuted(uint256 amount);\\n\\n    /// @notice Execute the bribe action\\n    function bribe() external;\\n}\\n\",\"keccak256\":\"0x7d0ec960fef6b539a1c472826a38026fd72e687c2351c259f18ef0cc2c9b322a\",\"license\":\"MIT\"},\"contracts/poolBooster/AbstractPoolBoosterFactory.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { Governable } from \\\"../governance/Governable.sol\\\";\\nimport { IPoolBooster } from \\\"../interfaces/poolBooster/IPoolBooster.sol\\\";\\nimport { IPoolBoostCentralRegistry } from \\\"../interfaces/poolBooster/IPoolBoostCentralRegistry.sol\\\";\\n\\n/**\\n * @title Abstract Pool booster factory\\n * @author Origin Protocol Inc\\n */\\ncontract AbstractPoolBoosterFactory is Governable {\\n    struct PoolBoosterEntry {\\n        address boosterAddress;\\n        address ammPoolAddress;\\n        IPoolBoostCentralRegistry.PoolBoosterType boosterType;\\n    }\\n\\n    // @notice address of Origin Sonic\\n    address public immutable oSonic;\\n    // @notice Central registry contract\\n    IPoolBoostCentralRegistry public immutable centralRegistry;\\n\\n    // @notice list of all the pool boosters created by this factory\\n    PoolBoosterEntry[] public poolBoosters;\\n    // @notice mapping of AMM pool to pool booster\\n    mapping(address => PoolBoosterEntry) public poolBoosterFromPool;\\n\\n    // @param address _oSonic address of the OSonic token\\n    // @param address _governor address governor\\n    // @param address _centralRegistry address of the central registry\\n    constructor(\\n        address _oSonic,\\n        address _governor,\\n        address _centralRegistry\\n    ) {\\n        require(_oSonic != address(0), \\\"Invalid oSonic address\\\");\\n        require(_governor != address(0), \\\"Invalid governor address\\\");\\n        require(\\n            _centralRegistry != address(0),\\n            \\\"Invalid central registry address\\\"\\n        );\\n\\n        oSonic = _oSonic;\\n        centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);\\n        _setGovernor(_governor);\\n    }\\n\\n    /**\\n     * @notice Goes over all the pool boosters created by this factory and\\n     *         calls bribe() on them.\\n     * @param _exclusionList A list of pool booster addresses to skip when\\n     *        calling this function.\\n     */\\n    function bribeAll(address[] memory _exclusionList) external {\\n        uint256 lengthI = poolBoosters.length;\\n        for (uint256 i = 0; i < lengthI; i++) {\\n            address poolBoosterAddress = poolBoosters[i].boosterAddress;\\n            bool skipBribeCall = false;\\n            uint256 lengthJ = _exclusionList.length;\\n            for (uint256 j = 0; j < lengthJ; j++) {\\n                // pool booster in exclusion list\\n                if (_exclusionList[j] == poolBoosterAddress) {\\n                    skipBribeCall = true;\\n                    break;\\n                }\\n            }\\n\\n            if (!skipBribeCall) {\\n                IPoolBooster(poolBoosterAddress).bribe();\\n            }\\n        }\\n    }\\n\\n    /**\\n     * @notice Removes the pool booster from the internal list of pool boosters.\\n     * @dev This action does not destroy the pool booster contract nor does it\\n     *      stop the yield delegation to it.\\n     * @param _poolBoosterAddress address of the pool booster\\n     */\\n    function removePoolBooster(address _poolBoosterAddress)\\n        external\\n        onlyGovernor\\n    {\\n        uint256 boostersLen = poolBoosters.length;\\n        for (uint256 i = 0; i < boostersLen; ++i) {\\n            if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {\\n                // erase mapping\\n                delete poolBoosterFromPool[poolBoosters[i].ammPoolAddress];\\n\\n                // overwrite current pool booster with the last entry in the list\\n                poolBoosters[i] = poolBoosters[boostersLen - 1];\\n                // drop the last entry\\n                poolBoosters.pop();\\n\\n                centralRegistry.emitPoolBoosterRemoved(_poolBoosterAddress);\\n                break;\\n            }\\n        }\\n    }\\n\\n    function _storePoolBoosterEntry(\\n        address _poolBoosterAddress,\\n        address _ammPoolAddress,\\n        IPoolBoostCentralRegistry.PoolBoosterType _boosterType\\n    ) internal {\\n        PoolBoosterEntry memory entry = PoolBoosterEntry(\\n            _poolBoosterAddress,\\n            _ammPoolAddress,\\n            _boosterType\\n        );\\n\\n        poolBoosters.push(entry);\\n        poolBoosterFromPool[_ammPoolAddress] = entry;\\n\\n        // emit the events of the pool booster created\\n        centralRegistry.emitPoolBoosterCreated(\\n            _poolBoosterAddress,\\n            _ammPoolAddress,\\n            _boosterType\\n        );\\n    }\\n\\n    function _deployContract(bytes memory _bytecode, uint256 _salt)\\n        internal\\n        returns (address _address)\\n    {\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _address := create2(\\n                0,\\n                add(_bytecode, 0x20),\\n                mload(_bytecode),\\n                _salt\\n            )\\n        }\\n\\n        require(\\n            _address.code.length > 0 && _address != address(0),\\n            \\\"Failed creating a pool booster\\\"\\n        );\\n    }\\n\\n    // pre-compute the address of the deployed contract that will be\\n    // created when create2 is called\\n    function _computeAddress(bytes memory _bytecode, uint256 _salt)\\n        internal\\n        view\\n        returns (address)\\n    {\\n        bytes32 hash = keccak256(\\n            abi.encodePacked(\\n                bytes1(0xff),\\n                address(this),\\n                _salt,\\n                keccak256(_bytecode)\\n            )\\n        );\\n\\n        // cast last 20 bytes of hash to address\\n        return address(uint160(uint256(hash)));\\n    }\\n\\n    function poolBoosterLength() external view returns (uint256) {\\n        return poolBoosters.length;\\n    }\\n}\\n\",\"keccak256\":\"0xf0252e97fd2ca5a026a04ce1e2244febc1fc362b079532edf45407befc34b05b\",\"license\":\"MIT\"},\"contracts/poolBooster/PoolBoosterFactoryMerkl.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nimport { PoolBoosterMerkl } from \\\"./PoolBoosterMerkl.sol\\\";\\nimport { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from \\\"./AbstractPoolBoosterFactory.sol\\\";\\n\\n/**\\n * @title Pool booster factory for creating Merkl pool boosters.\\n * @author Origin Protocol Inc\\n */\\ncontract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {\\n    uint256 public constant version = 1;\\n\\n    /// @notice address of the Merkl distributor\\n    address public merklDistributor;\\n\\n    /// @notice event emitted when the Merkl distributor is updated\\n    event MerklDistributorUpdated(address newDistributor);\\n\\n    /**\\n     * @param _oSonic address of the OSonic token\\n     * @param _governor address governor\\n     * @param _centralRegistry address of the central registry\\n     * @param _merklDistributor address of the Merkl distributor\\n     */\\n    constructor(\\n        address _oSonic,\\n        address _governor,\\n        address _centralRegistry,\\n        address _merklDistributor\\n    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {\\n        _setMerklDistributor(_merklDistributor);\\n    }\\n\\n    /**\\n     * @dev Create a Pool Booster for Merkl.\\n     * @param _campaignType The type of campaign to create. This is used to determine the type of\\n     *        bribe contract to create. The type is defined in the MerklDistributor contract.\\n     * @param _ammPoolAddress address of the AMM pool where the yield originates from\\n     * @param _campaignDuration The duration of the campaign in seconds\\n     * @param campaignData The data to be used for the campaign. This is used to determine the type of\\n     *        bribe contract to create. The type is defined in the MerklDistributor contract.\\n     *        This should be fetched from the Merkl UI.\\n     * @param _salt A unique number that affects the address of the pool booster created. Note: this number\\n     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address\\n     *        and pre-computed address to match\\n     */\\n    function createPoolBoosterMerkl(\\n        uint32 _campaignType,\\n        address _ammPoolAddress,\\n        uint32 _campaignDuration,\\n        bytes calldata campaignData,\\n        uint256 _salt\\n    ) external onlyGovernor {\\n        require(\\n            _ammPoolAddress != address(0),\\n            \\\"Invalid ammPoolAddress address\\\"\\n        );\\n        require(_salt > 0, \\\"Invalid salt\\\");\\n        require(_campaignDuration > 1 hours, \\\"Invalid campaign duration\\\");\\n        require(campaignData.length > 0, \\\"Invalid campaign data\\\");\\n\\n        address poolBoosterAddress = _deployContract(\\n            abi.encodePacked(\\n                type(PoolBoosterMerkl).creationCode,\\n                abi.encode(\\n                    oSonic,\\n                    merklDistributor,\\n                    _campaignDuration,\\n                    _campaignType,\\n                    governor(),\\n                    campaignData\\n                )\\n            ),\\n            _salt\\n        );\\n\\n        _storePoolBoosterEntry(\\n            poolBoosterAddress,\\n            _ammPoolAddress,\\n            IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster\\n        );\\n    }\\n\\n    /**\\n     * @dev Create a Pool Booster for Merkl.\\n     * @param _campaignType The type of campaign to create. This is used to determine the type of\\n     *        bribe contract to create. The type is defined in the MerklDistributor contract.\\n     * @param _ammPoolAddress address of the AMM pool where the yield originates from\\n     * @param _salt A unique number that affects the address of the pool booster created. Note: this number\\n     *        should match the one from `createPoolBoosterMerkl` in order for the final deployed address\\n     *        and pre-computed address to match\\n     */\\n    function computePoolBoosterAddress(\\n        uint32 _campaignType,\\n        address _ammPoolAddress,\\n        uint32 _campaignDuration,\\n        bytes calldata campaignData,\\n        uint256 _salt\\n    ) external view returns (address) {\\n        require(\\n            _ammPoolAddress != address(0),\\n            \\\"Invalid ammPoolAddress address\\\"\\n        );\\n        require(_salt > 0, \\\"Invalid salt\\\");\\n        require(_campaignDuration > 1 hours, \\\"Invalid campaign duration\\\");\\n        require(campaignData.length > 0, \\\"Invalid campaign data\\\");\\n\\n        return\\n            _computeAddress(\\n                abi.encodePacked(\\n                    type(PoolBoosterMerkl).creationCode,\\n                    abi.encode(\\n                        oSonic,\\n                        merklDistributor,\\n                        _campaignDuration,\\n                        _campaignType,\\n                        governor(),\\n                        campaignData\\n                    )\\n                ),\\n                _salt\\n            );\\n    }\\n\\n    /**\\n     * @dev Set the address of the Merkl distributor\\n     * @param _merklDistributor The address of the Merkl distributor\\n     */\\n    function setMerklDistributor(address _merklDistributor)\\n        external\\n        onlyGovernor\\n    {\\n        _setMerklDistributor(_merklDistributor);\\n    }\\n\\n    function _setMerklDistributor(address _merklDistributor) internal {\\n        require(\\n            _merklDistributor != address(0),\\n            \\\"Invalid merklDistributor address\\\"\\n        );\\n        merklDistributor = _merklDistributor;\\n        emit MerklDistributorUpdated(_merklDistributor);\\n    }\\n}\\n\",\"keccak256\":\"0xce3f084960537d114b3c0505fc4ca8d9f08ba3310c4739f7086281755d18b3ca\",\"license\":\"BUSL-1.1\"},\"contracts/poolBooster/PoolBoosterMerkl.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport { IPoolBooster } from \\\"../interfaces/poolBooster/IPoolBooster.sol\\\";\\nimport { IMerklDistributor } from \\\"../interfaces/poolBooster/IMerklDistributor.sol\\\";\\n\\ninterface IERC1271 {\\n    /**\\n     * @dev Should return whether the signature provided is valid for the provided data\\n     * @param hash Hash of the data to be signed\\n     * @param signature Signature byte array associated with _data\\n     */\\n    function isValidSignature(bytes32 hash, bytes memory signature)\\n        external\\n        view\\n        returns (bytes4 magicValue);\\n}\\n\\n/**\\n * @title Pool booster for Merkl distributor\\n * @author Origin Protocol Inc\\n */\\ncontract PoolBoosterMerkl is IPoolBooster, IERC1271 {\\n    /// @notice address of merkl distributor\\n    IMerklDistributor public immutable merklDistributor;\\n    /// @notice address of the OS token\\n    IERC20 public immutable rewardToken;\\n    /// @notice if balance under this amount the bribe action is skipped\\n    uint256 public constant MIN_BRIBE_AMOUNT = 1e10;\\n    /// @notice Campaign duration in seconds\\n    uint32 public immutable duration; // -> should be immutable\\n    /// @notice Campaign type\\n    uint32 public immutable campaignType;\\n    /// @notice Owner of the campaign\\n    address public immutable creator;\\n    /// @notice Campaign data\\n    bytes public campaignData;\\n\\n    constructor(\\n        address _rewardToken,\\n        address _merklDistributor,\\n        uint32 _duration,\\n        uint32 _campaignType,\\n        address _creator,\\n        bytes memory _campaignData\\n    ) {\\n        require(_rewardToken != address(0), \\\"Invalid rewardToken address\\\");\\n        require(\\n            _merklDistributor != address(0),\\n            \\\"Invalid merklDistributor address\\\"\\n        );\\n        require(_campaignData.length > 0, \\\"Invalid campaignData\\\");\\n        require(_duration > 1 hours, \\\"Invalid duration\\\");\\n\\n        campaignType = _campaignType;\\n        duration = _duration;\\n        creator = _creator;\\n\\n        merklDistributor = IMerklDistributor(_merklDistributor);\\n        rewardToken = IERC20(_rewardToken);\\n        campaignData = _campaignData;\\n    }\\n\\n    /// @notice Create a campaign on the Merkl distributor\\n    function bribe() external override {\\n        // Ensure token is approved for the Merkl distributor\\n        uint256 minAmount = merklDistributor.rewardTokenMinAmounts(\\n            address(rewardToken)\\n        );\\n        require(minAmount > 0, \\\"Min reward amount must be > 0\\\");\\n\\n        // if balance too small or below threshold, do no bribes\\n        uint256 balance = rewardToken.balanceOf(address(this));\\n        if (\\n            balance < MIN_BRIBE_AMOUNT ||\\n            (balance * 1 hours < minAmount * duration)\\n        ) {\\n            return;\\n        }\\n\\n        // Approve the bribe contract to spend the reward token\\n        rewardToken.approve(address(merklDistributor), balance);\\n\\n        // Notify the bribe contract of the reward amount\\n        merklDistributor.signAndCreateCampaign(\\n            IMerklDistributor.CampaignParameters({\\n                campaignId: bytes32(0),\\n                creator: creator,\\n                rewardToken: address(rewardToken),\\n                amount: balance,\\n                campaignType: campaignType,\\n                startTimestamp: getNextPeriodStartTime(),\\n                duration: duration,\\n                campaignData: campaignData\\n            }),\\n            bytes(\\\"\\\")\\n        );\\n        emit BribeExecuted(balance);\\n    }\\n\\n    /// @notice Used to sign a campaign on the Merkl distributor\\n    function isValidSignature(bytes32, bytes memory)\\n        external\\n        view\\n        override\\n        returns (bytes4 magicValue)\\n    {\\n        require(msg.sender == address(merklDistributor), \\\"Invalid sender\\\");\\n        // bytes4(keccak256(\\\"isValidSignature(bytes32,bytes)\\\")) == 0x1626ba7e\\n        return bytes4(0x1626ba7e);\\n    }\\n\\n    /// @notice Returns the timestamp for the start of the next period based on the configured duration\\n    function getNextPeriodStartTime() public view returns (uint32) {\\n        // Calculate the timestamp for the next period boundary\\n        return uint32((block.timestamp / duration + 1) * duration);\\n    }\\n}\\n\",\"keccak256\":\"0x9f67a93ab950119bb532ea69e1b793be116831ab43d35b199814af91f66a6997\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x60c060405234801561001057600080fd5b506040516127bb3803806127bb83398101604081905261002f9161029d565b8383836001600160a01b03831661008d5760405162461bcd60e51b815260206004820152601660248201527f496e76616c6964206f536f6e696320616464726573730000000000000000000060448201526064015b60405180910390fd5b6001600160a01b0382166100e35760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420676f7665726e6f72206164647265737300000000000000006044820152606401610084565b6001600160a01b0381166101395760405162461bcd60e51b815260206004820181905260248201527f496e76616c69642063656e7472616c20726567697374727920616464726573736044820152606401610084565b6001600160a01b03808416608052811660a05261015582610170565b505050610167816101d760201b60201c565b505050506102f1565b6001600160a01b03811661019060008051602061279b8339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a360008051602061279b83398151915255565b6001600160a01b03811661022d5760405162461bcd60e51b815260206004820181905260248201527f496e76616c6964206d65726b6c4469737472696275746f7220616464726573736044820152606401610084565b600280546001600160a01b0319166001600160a01b0383169081179091556040519081527f1a0e4b3bfcac0fa1e13f7c8b088964c6daea7147fa49e39f54db5787518fe9c99060200160405180910390a150565b80516001600160a01b038116811461029857600080fd5b919050565b600080600080608085870312156102b357600080fd5b6102bc85610281565b93506102ca60208601610281565b92506102d860408601610281565b91506102e660608601610281565b905092959194509250565b60805160a0516124696103326000396000818161019b015281816109ab0152610eb2015260008181610279015281816105270152610b6501526124696000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c8063b6eee96211610097578063dbfba95911610066578063dbfba9591461023b578063e24abe631461024e578063e331db3f14610261578063fa89f9921461027457600080fd5b8063b6eee962146101bd578063c7af3352146101fd578063d38bfff414610215578063d51778681461022857600080fd5b806354fd4d50116100d357806354fd4d50146101715780635d36b190146101795780636720bd3f146101835780638f73dcfa1461019657600080fd5b80630c340a2414610105578063110c1a411461012a57806317c01cb31461014c5780632fa4abea1461015e575b600080fd5b61010d61029b565b6040516001600160a01b0390911681526020015b60405180910390f35b61013d610138366004611042565b6102b8565b60405161012193929190611071565b6000545b604051908152602001610121565b60025461010d906001600160a01b031681565b610150600181565b6101816102fe565b005b6101816101913660046110e5565b6103a9565b61010d7f000000000000000000000000000000000000000000000000000000000000000081565b61013d6101cb366004611194565b600160208190526000918252604090912080549101546001600160a01b0391821691811690600160a01b900460ff1683565b6102056105bc565b6040519015158152602001610121565b610181610223366004611194565b6105ed565b6101816102363660046111cc565b610691565b610181610249366004611194565b610789565b61018161025c366004611194565b6107b9565b61010d61026f3660046110e5565b610a0b565b61010d7f000000000000000000000000000000000000000000000000000000000000000081565b60006102b36000805160206124148339815191525490565b905090565b600081815481106102c857600080fd5b6000918252602090912060029091020180546001909101546001600160a01b03918216925090811690600160a01b900460ff1683565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b03161461039e5760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084015b60405180910390fd5b6103a733610c40565b565b6103b16105bc565b6103cd5760405162461bcd60e51b81526004016103959061129c565b6001600160a01b0385166104235760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610395565b600081116104625760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610395565b610e108463ffffffff16116104b55760405162461bcd60e51b815260206004820152601960248201527824b73b30b634b21031b0b6b830b4b3b710323ab930ba34b7b760391b6044820152606401610395565b816104fa5760405162461bcd60e51b8152602060048201526015602482015274496e76616c69642063616d706169676e206461746160581b6044820152606401610395565b60006105a56040518060200161050f90611035565b601f1982820381018352601f909101166040526002547f0000000000000000000000000000000000000000000000000000000000000000906001600160a01b0316888b61055a61029b565b8a8a60405160200161057297969594939291906112d3565b60408051601f1981840301815290829052610590929160200161136b565b60405160208183030381529060405283610c9f565b90506105b381876003610d21565b50505050505050565b60006105d46000805160206124148339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6105f56105bc565b6106115760405162461bcd60e51b81526004016103959061129c565b610639817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166106596000805160206124148339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b60008054905b818110156107845760008082815481106106b3576106b3611388565b6000918252602082206002909102015485516001600160a01b039091169250815b8181101561071f57836001600160a01b03168782815181106106f8576106f8611388565b60200260200101516001600160a01b031603610717576001925061071f565b6001016106d4565b508161077957826001600160a01b03166337d0208c6040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561076057600080fd5b505af1158015610774573d6000803e3d6000fd5b505050505b505050600101610697565b505050565b6107916105bc565b6107ad5760405162461bcd60e51b81526004016103959061129c565b6107b681610f24565b50565b6107c16105bc565b6107dd5760405162461bcd60e51b81526004016103959061129c565b60008054905b8181101561078457826001600160a01b03166000828154811061080857610808611388565b60009182526020909120600290910201546001600160a01b031603610a03576001600080838154811061083d5761083d611388565b6000918252602080832060016002909302018201546001600160a01b031684528301939093526040909101812080546001600160a01b0319168155820180546001600160a81b031916905590610893908461139e565b815481106108a3576108a3611388565b9060005260206000209060020201600082815481106108c4576108c4611388565b60009182526020909120825460029092020180546001600160a01b03199081166001600160a01b0393841617825560018085018054918401805493841692909516918217855554929360ff600160a01b94859004169390926001600160a81b0319169091179083600381111561093c5761093c61105b565b02179055509050506000805480610955576109556113bf565b6000828152602090206002600019929092019182020180546001600160a01b031916815560010180546001600160a81b03191690559055604051630702522960e01b81526001600160a01b0384811660048301527f00000000000000000000000000000000000000000000000000000000000000001690630702522990602401600060405180830381600087803b1580156109ef57600080fd5b505af11580156105b3573d6000803e3d6000fd5b6001016107e3565b60006001600160a01b038616610a635760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610395565b60008211610aa25760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610395565b610e108563ffffffff1611610af55760405162461bcd60e51b815260206004820152601960248201527824b73b30b634b21031b0b6b830b4b3b710323ab930ba34b7b760391b6044820152606401610395565b82610b3a5760405162461bcd60e51b8152602060048201526015602482015274496e76616c69642063616d706169676e206461746160581b6044820152606401610395565b610c3560405180602001610b4d90611035565b601f1982820381018352601f909101166040526002547f0000000000000000000000000000000000000000000000000000000000000000906001600160a01b0316888b610b9861029b565b8a8a604051602001610bb097969594939291906112d3565b60408051601f1981840301815290829052610bce929160200161136b565b60408051601f1981840301815282825280516020918201206001600160f81b0319848301526bffffffffffffffffffffffff193060601b16602185015260358401879052605580850191909152825180850390910181526075909301909152815191012090565b979650505050505050565b6001600160a01b038116610c965760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610395565b6107b681610fce565b6000818351602085016000f590506000816001600160a01b03163b118015610ccf57506001600160a01b03811615155b610d1b5760405162461bcd60e51b815260206004820152601e60248201527f4661696c6564206372656174696e67206120706f6f6c20626f6f7374657200006044820152606401610395565b92915050565b60006040518060600160405280856001600160a01b03168152602001846001600160a01b03168152602001836003811115610d5e57610d5e61105b565b905260008054600181018255908052815160029091027f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563810180546001600160a01b039384166001600160a01b031991821617825560208501517f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e5649093018054939094169083168117845560408501519495508594919391926001600160a81b03191617600160a01b836003811115610e1957610e1961105b565b021790555050506001600160a01b03808416600090815260016020818152604092839020855181549086166001600160a01b03199182161782559186015192810180549390951691831682178555928501518594909290916001600160a81b031990911617600160a01b836003811115610e9557610e9561105b565b021790555050604051630b22521d60e31b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016915063591290e890610eec90879087908790600401611071565b600060405180830381600087803b158015610f0657600080fd5b505af1158015610f1a573d6000803e3d6000fd5b5050505050505050565b6001600160a01b038116610f7a5760405162461bcd60e51b815260206004820181905260248201527f496e76616c6964206d65726b6c4469737472696275746f7220616464726573736044820152606401610395565b600280546001600160a01b0319166001600160a01b0383169081179091556040519081527f1a0e4b3bfcac0fa1e13f7c8b088964c6daea7147fa49e39f54db5787518fe9c99060200160405180910390a150565b806001600160a01b0316610fee6000805160206124148339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a360008051602061241483398151915255565b61103e806113d683390190565b60006020828403121561105457600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b6001600160a01b0384811682528316602082015260608101600483106110a757634e487b7160e01b600052602160045260246000fd5b826040830152949350505050565b803563ffffffff811681146110c957600080fd5b919050565b80356001600160a01b03811681146110c957600080fd5b60008060008060008060a087890312156110fe57600080fd5b611107876110b5565b9550611115602088016110ce565b9450611123604088016110b5565b9350606087013567ffffffffffffffff81111561113f57600080fd5b8701601f8101891361115057600080fd5b803567ffffffffffffffff81111561116757600080fd5b89602082840101111561117957600080fd5b96999598509396602090940195946080909401359392505050565b6000602082840312156111a657600080fd5b6111af826110ce565b9392505050565b634e487b7160e01b600052604160045260246000fd5b6000602082840312156111de57600080fd5b813567ffffffffffffffff8111156111f557600080fd5b8201601f8101841361120657600080fd5b803567ffffffffffffffff811115611220576112206111b6565b8060051b604051601f19603f830116810181811067ffffffffffffffff8211171561124d5761124d6111b6565b60405291825260208184018101929081018784111561126b57600080fd5b6020850194505b8385101561129157611283856110ce565b815260209485019401611272565b509695505050505050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b6001600160a01b038881168252878116602083015263ffffffff8781166040840152861660608301528416608082015260c060a082018190528101829052818360e0830137600081830160e090810191909152601f909201601f191601019695505050505050565b6000815160005b8181101561135c5760208185018101518683015201611342565b50600093019283525090919050565b600061138061137a838661133b565b8461133b565b949350505050565b634e487b7160e01b600052603260045260246000fd5b81810381811115610d1b57634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe61012060405234801561001157600080fd5b5060405161103e38038061103e83398101604081905261003091610204565b6001600160a01b03861661008b5760405162461bcd60e51b815260206004820152601b60248201527f496e76616c696420726577617264546f6b656e2061646472657373000000000060448201526064015b60405180910390fd5b6001600160a01b0385166100e15760405162461bcd60e51b815260206004820181905260248201527f496e76616c6964206d65726b6c4469737472696275746f7220616464726573736044820152606401610082565b60008151116101325760405162461bcd60e51b815260206004820152601460248201527f496e76616c69642063616d706169676e446174610000000000000000000000006044820152606401610082565b610e108463ffffffff161161017c5760405162461bcd60e51b815260206004820152601060248201526f24b73b30b634b210323ab930ba34b7b760811b6044820152606401610082565b63ffffffff80841660e052841660c0526001600160a01b0380831661010052858116608052861660a05260006101b282826103ac565b5050505050505061046a565b80516001600160a01b03811681146101d557600080fd5b919050565b805163ffffffff811681146101d557600080fd5b634e487b7160e01b600052604160045260246000fd5b60008060008060008060c0878903121561021d57600080fd5b610226876101be565b9550610234602088016101be565b9450610242604088016101da565b9350610250606088016101da565b925061025e608088016101be565b60a08801519092506001600160401b0381111561027a57600080fd5b8701601f8101891361028b57600080fd5b80516001600160401b038111156102a4576102a46101ee565b604051601f8201601f19908116603f011681016001600160401b03811182821017156102d2576102d26101ee565b6040528181528282016020018b10156102ea57600080fd5b60005b82811015610309576020818501810151838301820152016102ed565b506000602083830101528093505050509295509295509295565b600181811c9082168061033757607f821691505b60208210810361035757634e487b7160e01b600052602260045260246000fd5b50919050565b601f8211156103a757806000526020600020601f840160051c810160208510156103845750805b601f840160051c820191505b818110156103a45760008155600101610390565b50505b505050565b81516001600160401b038111156103c5576103c56101ee565b6103d9816103d38454610323565b8461035d565b6020601f82116001811461040d57600083156103f55750848201515b600019600385901b1c1916600184901b1784556103a4565b600084815260208120601f198516915b8281101561043d578785015182556020948501946001909201910161041d565b508482101561045b5786840151600019600387901b60f8161c191681555b50505050600190811b01905550565b60805160a05160c05160e05161010051610b376105076000396000818160a801526105af0152600081816101a7015261061301526000818160ec0152818161028e0152818161047801526106520152600081816101e3015281816102e9015281816103eb015281816104fb01526105de0152600081816101540152818161021201528181610314015281816104cc015261056b0152610b376000f3fe608060405234801561001057600080fd5b506004361061009e5760003560e01c806337d0208c1161006657806337d0208c1461017e5780633978033f14610188578063759dadce146101a2578063edd5271e146101c9578063f7c618c1146101de57600080fd5b806302d05d3f146100a35780630fb5a6b4146100e75780631626ba7e146101235780632fa4abea1461014f57806334bb9c1714610176575b600080fd5b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b61010e7f000000000000000000000000000000000000000000000000000000000000000081565b60405163ffffffff90911681526020016100de565b610136610131366004610856565b610205565b6040516001600160e01b031990911681526020016100de565b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b61010e610285565b6101866102d2565b005b6101946402540be40081565b6040519081526020016100de565b61010e7f000000000000000000000000000000000000000000000000000000000000000081565b6101d16107b2565b6040516100de919061095f565b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b6000336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146102755760405162461bcd60e51b815260206004820152600e60248201526d24b73b30b634b21039b2b73232b960911b60448201526064015b60405180910390fd5b50630b135d3f60e11b5b92915050565b600063ffffffff7f0000000000000000000000000000000000000000000000000000000000000000166102b8814261098f565b6102c39060016109b1565b6102cd91906109c4565b905090565b604051630ab35fb160e21b81526001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000811660048301526000917f000000000000000000000000000000000000000000000000000000000000000090911690632acd7ec490602401602060405180830381865afa15801561035d573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061038191906109db565b9050600081116103d35760405162461bcd60e51b815260206004820152601d60248201527f4d696e2072657761726420616d6f756e74206d757374206265203e2030000000604482015260640161026c565b6040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a0823190602401602060405180830381865afa15801561043a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061045e91906109db565b90506402540be4008110806104ac575061049e63ffffffff7f000000000000000000000000000000000000000000000000000000000000000016836109c4565b6104aa82610e106109c4565b105b156104b5575050565b60405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018390527f0000000000000000000000000000000000000000000000000000000000000000169063095ea7b3906044016020604051808303816000875af1158015610544573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061056891906109f4565b507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663e55f577b6040518061010001604052806000801b81526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031681526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031681526020018481526020017f000000000000000000000000000000000000000000000000000000000000000063ffffffff168152602001610645610285565b63ffffffff1681526020017f000000000000000000000000000000000000000000000000000000000000000063ffffffff1681526020016000805461068990610a16565b80601f01602080910402602001604051908101604052809291908181526020018280546106b590610a16565b80156107025780601f106106d757610100808354040283529160200191610702565b820191906000526020600020905b8154815290600101906020018083116106e557829003601f168201915b5050505050815250604051806020016040528060008152506040518363ffffffff1660e01b8152600401610737929190610a50565b6020604051808303816000875af1158015610756573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061077a91906109db565b506040518181527f1424c3a24f9b1f30558ab0a7b48e07ce9f7d85b293a69a90356e1478504232eb9060200160405180910390a15050565b600080546107bf90610a16565b80601f01602080910402602001604051908101604052809291908181526020018280546107eb90610a16565b80156108385780601f1061080d57610100808354040283529160200191610838565b820191906000526020600020905b81548152906001019060200180831161081b57829003601f168201915b505050505081565b634e487b7160e01b600052604160045260246000fd5b6000806040838503121561086957600080fd5b82359150602083013567ffffffffffffffff81111561088757600080fd5b8301601f8101851361089857600080fd5b803567ffffffffffffffff8111156108b2576108b2610840565b604051601f8201601f19908116603f0116810167ffffffffffffffff811182821017156108e1576108e1610840565b6040528181528282016020018710156108f957600080fd5b816020840160208301376000602083830101528093505050509250929050565b6000815180845260005b8181101561093f57602081850181015186830182015201610923565b506000602082860101526020601f19601f83011685010191505092915050565b6020815260006109726020830184610919565b9392505050565b634e487b7160e01b600052601160045260246000fd5b6000826109ac57634e487b7160e01b600052601260045260246000fd5b500490565b8082018082111561027f5761027f610979565b808202811582820484141761027f5761027f610979565b6000602082840312156109ed57600080fd5b5051919050565b600060208284031215610a0657600080fd5b8151801515811461097257600080fd5b600181811c90821680610a2a57607f821691505b602082108103610a4a57634e487b7160e01b600052602260045260246000fd5b50919050565b604081528251604082015260018060a01b03602084015116606082015260018060a01b036040840151166080820152606083015160a082015260006080840151610aa260c084018263ffffffff169052565b5060a084015163ffffffff811660e08401525060c084015163ffffffff81166101008401525060e0840151610100610120840152610ae4610140840182610919565b90508281036020840152610af88185610919565b9594505050505056fea2646970667358221220a46798afd848df3ef4fe41cbcd8196289fdf0236c01a9a77df3f409d5617fe2164736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa264697066735822122090be85cd7fae9653342b7b74e511b1083baf756456e9079b508b6dcc86fa0a5264736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101005760003560e01c8063b6eee96211610097578063dbfba95911610066578063dbfba9591461023b578063e24abe631461024e578063e331db3f14610261578063fa89f9921461027457600080fd5b8063b6eee962146101bd578063c7af3352146101fd578063d38bfff414610215578063d51778681461022857600080fd5b806354fd4d50116100d357806354fd4d50146101715780635d36b190146101795780636720bd3f146101835780638f73dcfa1461019657600080fd5b80630c340a2414610105578063110c1a411461012a57806317c01cb31461014c5780632fa4abea1461015e575b600080fd5b61010d61029b565b6040516001600160a01b0390911681526020015b60405180910390f35b61013d610138366004611042565b6102b8565b60405161012193929190611071565b6000545b604051908152602001610121565b60025461010d906001600160a01b031681565b610150600181565b6101816102fe565b005b6101816101913660046110e5565b6103a9565b61010d7f000000000000000000000000000000000000000000000000000000000000000081565b61013d6101cb366004611194565b600160208190526000918252604090912080549101546001600160a01b0391821691811690600160a01b900460ff1683565b6102056105bc565b6040519015158152602001610121565b610181610223366004611194565b6105ed565b6101816102363660046111cc565b610691565b610181610249366004611194565b610789565b61018161025c366004611194565b6107b9565b61010d61026f3660046110e5565b610a0b565b61010d7f000000000000000000000000000000000000000000000000000000000000000081565b60006102b36000805160206124148339815191525490565b905090565b600081815481106102c857600080fd5b6000918252602090912060029091020180546001909101546001600160a01b03918216925090811690600160a01b900460ff1683565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b03161461039e5760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084015b60405180910390fd5b6103a733610c40565b565b6103b16105bc565b6103cd5760405162461bcd60e51b81526004016103959061129c565b6001600160a01b0385166104235760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610395565b600081116104625760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610395565b610e108463ffffffff16116104b55760405162461bcd60e51b815260206004820152601960248201527824b73b30b634b21031b0b6b830b4b3b710323ab930ba34b7b760391b6044820152606401610395565b816104fa5760405162461bcd60e51b8152602060048201526015602482015274496e76616c69642063616d706169676e206461746160581b6044820152606401610395565b60006105a56040518060200161050f90611035565b601f1982820381018352601f909101166040526002547f0000000000000000000000000000000000000000000000000000000000000000906001600160a01b0316888b61055a61029b565b8a8a60405160200161057297969594939291906112d3565b60408051601f1981840301815290829052610590929160200161136b565b60405160208183030381529060405283610c9f565b90506105b381876003610d21565b50505050505050565b60006105d46000805160206124148339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6105f56105bc565b6106115760405162461bcd60e51b81526004016103959061129c565b610639817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166106596000805160206124148339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b60008054905b818110156107845760008082815481106106b3576106b3611388565b6000918252602082206002909102015485516001600160a01b039091169250815b8181101561071f57836001600160a01b03168782815181106106f8576106f8611388565b60200260200101516001600160a01b031603610717576001925061071f565b6001016106d4565b508161077957826001600160a01b03166337d0208c6040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561076057600080fd5b505af1158015610774573d6000803e3d6000fd5b505050505b505050600101610697565b505050565b6107916105bc565b6107ad5760405162461bcd60e51b81526004016103959061129c565b6107b681610f24565b50565b6107c16105bc565b6107dd5760405162461bcd60e51b81526004016103959061129c565b60008054905b8181101561078457826001600160a01b03166000828154811061080857610808611388565b60009182526020909120600290910201546001600160a01b031603610a03576001600080838154811061083d5761083d611388565b6000918252602080832060016002909302018201546001600160a01b031684528301939093526040909101812080546001600160a01b0319168155820180546001600160a81b031916905590610893908461139e565b815481106108a3576108a3611388565b9060005260206000209060020201600082815481106108c4576108c4611388565b60009182526020909120825460029092020180546001600160a01b03199081166001600160a01b0393841617825560018085018054918401805493841692909516918217855554929360ff600160a01b94859004169390926001600160a81b0319169091179083600381111561093c5761093c61105b565b02179055509050506000805480610955576109556113bf565b6000828152602090206002600019929092019182020180546001600160a01b031916815560010180546001600160a81b03191690559055604051630702522960e01b81526001600160a01b0384811660048301527f00000000000000000000000000000000000000000000000000000000000000001690630702522990602401600060405180830381600087803b1580156109ef57600080fd5b505af11580156105b3573d6000803e3d6000fd5b6001016107e3565b60006001600160a01b038616610a635760405162461bcd60e51b815260206004820152601e60248201527f496e76616c696420616d6d506f6f6c41646472657373206164647265737300006044820152606401610395565b60008211610aa25760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081cd85b1d60a21b6044820152606401610395565b610e108563ffffffff1611610af55760405162461bcd60e51b815260206004820152601960248201527824b73b30b634b21031b0b6b830b4b3b710323ab930ba34b7b760391b6044820152606401610395565b82610b3a5760405162461bcd60e51b8152602060048201526015602482015274496e76616c69642063616d706169676e206461746160581b6044820152606401610395565b610c3560405180602001610b4d90611035565b601f1982820381018352601f909101166040526002547f0000000000000000000000000000000000000000000000000000000000000000906001600160a01b0316888b610b9861029b565b8a8a604051602001610bb097969594939291906112d3565b60408051601f1981840301815290829052610bce929160200161136b565b60408051601f1981840301815282825280516020918201206001600160f81b0319848301526bffffffffffffffffffffffff193060601b16602185015260358401879052605580850191909152825180850390910181526075909301909152815191012090565b979650505050505050565b6001600160a01b038116610c965760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610395565b6107b681610fce565b6000818351602085016000f590506000816001600160a01b03163b118015610ccf57506001600160a01b03811615155b610d1b5760405162461bcd60e51b815260206004820152601e60248201527f4661696c6564206372656174696e67206120706f6f6c20626f6f7374657200006044820152606401610395565b92915050565b60006040518060600160405280856001600160a01b03168152602001846001600160a01b03168152602001836003811115610d5e57610d5e61105b565b905260008054600181018255908052815160029091027f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563810180546001600160a01b039384166001600160a01b031991821617825560208501517f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e5649093018054939094169083168117845560408501519495508594919391926001600160a81b03191617600160a01b836003811115610e1957610e1961105b565b021790555050506001600160a01b03808416600090815260016020818152604092839020855181549086166001600160a01b03199182161782559186015192810180549390951691831682178555928501518594909290916001600160a81b031990911617600160a01b836003811115610e9557610e9561105b565b021790555050604051630b22521d60e31b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016915063591290e890610eec90879087908790600401611071565b600060405180830381600087803b158015610f0657600080fd5b505af1158015610f1a573d6000803e3d6000fd5b5050505050505050565b6001600160a01b038116610f7a5760405162461bcd60e51b815260206004820181905260248201527f496e76616c6964206d65726b6c4469737472696275746f7220616464726573736044820152606401610395565b600280546001600160a01b0319166001600160a01b0383169081179091556040519081527f1a0e4b3bfcac0fa1e13f7c8b088964c6daea7147fa49e39f54db5787518fe9c99060200160405180910390a150565b806001600160a01b0316610fee6000805160206124148339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a360008051602061241483398151915255565b61103e806113d683390190565b60006020828403121561105457600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b6001600160a01b0384811682528316602082015260608101600483106110a757634e487b7160e01b600052602160045260246000fd5b826040830152949350505050565b803563ffffffff811681146110c957600080fd5b919050565b80356001600160a01b03811681146110c957600080fd5b60008060008060008060a087890312156110fe57600080fd5b611107876110b5565b9550611115602088016110ce565b9450611123604088016110b5565b9350606087013567ffffffffffffffff81111561113f57600080fd5b8701601f8101891361115057600080fd5b803567ffffffffffffffff81111561116757600080fd5b89602082840101111561117957600080fd5b96999598509396602090940195946080909401359392505050565b6000602082840312156111a657600080fd5b6111af826110ce565b9392505050565b634e487b7160e01b600052604160045260246000fd5b6000602082840312156111de57600080fd5b813567ffffffffffffffff8111156111f557600080fd5b8201601f8101841361120657600080fd5b803567ffffffffffffffff811115611220576112206111b6565b8060051b604051601f19603f830116810181811067ffffffffffffffff8211171561124d5761124d6111b6565b60405291825260208184018101929081018784111561126b57600080fd5b6020850194505b8385101561129157611283856110ce565b815260209485019401611272565b509695505050505050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b6001600160a01b038881168252878116602083015263ffffffff8781166040840152861660608301528416608082015260c060a082018190528101829052818360e0830137600081830160e090810191909152601f909201601f191601019695505050505050565b6000815160005b8181101561135c5760208185018101518683015201611342565b50600093019283525090919050565b600061138061137a838661133b565b8461133b565b949350505050565b634e487b7160e01b600052603260045260246000fd5b81810381811115610d1b57634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe61012060405234801561001157600080fd5b5060405161103e38038061103e83398101604081905261003091610204565b6001600160a01b03861661008b5760405162461bcd60e51b815260206004820152601b60248201527f496e76616c696420726577617264546f6b656e2061646472657373000000000060448201526064015b60405180910390fd5b6001600160a01b0385166100e15760405162461bcd60e51b815260206004820181905260248201527f496e76616c6964206d65726b6c4469737472696275746f7220616464726573736044820152606401610082565b60008151116101325760405162461bcd60e51b815260206004820152601460248201527f496e76616c69642063616d706169676e446174610000000000000000000000006044820152606401610082565b610e108463ffffffff161161017c5760405162461bcd60e51b815260206004820152601060248201526f24b73b30b634b210323ab930ba34b7b760811b6044820152606401610082565b63ffffffff80841660e052841660c0526001600160a01b0380831661010052858116608052861660a05260006101b282826103ac565b5050505050505061046a565b80516001600160a01b03811681146101d557600080fd5b919050565b805163ffffffff811681146101d557600080fd5b634e487b7160e01b600052604160045260246000fd5b60008060008060008060c0878903121561021d57600080fd5b610226876101be565b9550610234602088016101be565b9450610242604088016101da565b9350610250606088016101da565b925061025e608088016101be565b60a08801519092506001600160401b0381111561027a57600080fd5b8701601f8101891361028b57600080fd5b80516001600160401b038111156102a4576102a46101ee565b604051601f8201601f19908116603f011681016001600160401b03811182821017156102d2576102d26101ee565b6040528181528282016020018b10156102ea57600080fd5b60005b82811015610309576020818501810151838301820152016102ed565b506000602083830101528093505050509295509295509295565b600181811c9082168061033757607f821691505b60208210810361035757634e487b7160e01b600052602260045260246000fd5b50919050565b601f8211156103a757806000526020600020601f840160051c810160208510156103845750805b601f840160051c820191505b818110156103a45760008155600101610390565b50505b505050565b81516001600160401b038111156103c5576103c56101ee565b6103d9816103d38454610323565b8461035d565b6020601f82116001811461040d57600083156103f55750848201515b600019600385901b1c1916600184901b1784556103a4565b600084815260208120601f198516915b8281101561043d578785015182556020948501946001909201910161041d565b508482101561045b5786840151600019600387901b60f8161c191681555b50505050600190811b01905550565b60805160a05160c05160e05161010051610b376105076000396000818160a801526105af0152600081816101a7015261061301526000818160ec0152818161028e0152818161047801526106520152600081816101e3015281816102e9015281816103eb015281816104fb01526105de0152600081816101540152818161021201528181610314015281816104cc015261056b0152610b376000f3fe608060405234801561001057600080fd5b506004361061009e5760003560e01c806337d0208c1161006657806337d0208c1461017e5780633978033f14610188578063759dadce146101a2578063edd5271e146101c9578063f7c618c1146101de57600080fd5b806302d05d3f146100a35780630fb5a6b4146100e75780631626ba7e146101235780632fa4abea1461014f57806334bb9c1714610176575b600080fd5b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b61010e7f000000000000000000000000000000000000000000000000000000000000000081565b60405163ffffffff90911681526020016100de565b610136610131366004610856565b610205565b6040516001600160e01b031990911681526020016100de565b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b61010e610285565b6101866102d2565b005b6101946402540be40081565b6040519081526020016100de565b61010e7f000000000000000000000000000000000000000000000000000000000000000081565b6101d16107b2565b6040516100de919061095f565b6100ca7f000000000000000000000000000000000000000000000000000000000000000081565b6000336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146102755760405162461bcd60e51b815260206004820152600e60248201526d24b73b30b634b21039b2b73232b960911b60448201526064015b60405180910390fd5b50630b135d3f60e11b5b92915050565b600063ffffffff7f0000000000000000000000000000000000000000000000000000000000000000166102b8814261098f565b6102c39060016109b1565b6102cd91906109c4565b905090565b604051630ab35fb160e21b81526001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000811660048301526000917f000000000000000000000000000000000000000000000000000000000000000090911690632acd7ec490602401602060405180830381865afa15801561035d573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061038191906109db565b9050600081116103d35760405162461bcd60e51b815260206004820152601d60248201527f4d696e2072657761726420616d6f756e74206d757374206265203e2030000000604482015260640161026c565b6040516370a0823160e01b81523060048201526000907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906370a0823190602401602060405180830381865afa15801561043a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061045e91906109db565b90506402540be4008110806104ac575061049e63ffffffff7f000000000000000000000000000000000000000000000000000000000000000016836109c4565b6104aa82610e106109c4565b105b156104b5575050565b60405163095ea7b360e01b81526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166004830152602482018390527f0000000000000000000000000000000000000000000000000000000000000000169063095ea7b3906044016020604051808303816000875af1158015610544573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061056891906109f4565b507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663e55f577b6040518061010001604052806000801b81526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031681526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031681526020018481526020017f000000000000000000000000000000000000000000000000000000000000000063ffffffff168152602001610645610285565b63ffffffff1681526020017f000000000000000000000000000000000000000000000000000000000000000063ffffffff1681526020016000805461068990610a16565b80601f01602080910402602001604051908101604052809291908181526020018280546106b590610a16565b80156107025780601f106106d757610100808354040283529160200191610702565b820191906000526020600020905b8154815290600101906020018083116106e557829003601f168201915b5050505050815250604051806020016040528060008152506040518363ffffffff1660e01b8152600401610737929190610a50565b6020604051808303816000875af1158015610756573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061077a91906109db565b506040518181527f1424c3a24f9b1f30558ab0a7b48e07ce9f7d85b293a69a90356e1478504232eb9060200160405180910390a15050565b600080546107bf90610a16565b80601f01602080910402602001604051908101604052809291908181526020018280546107eb90610a16565b80156108385780601f1061080d57610100808354040283529160200191610838565b820191906000526020600020905b81548152906001019060200180831161081b57829003601f168201915b505050505081565b634e487b7160e01b600052604160045260246000fd5b6000806040838503121561086957600080fd5b82359150602083013567ffffffffffffffff81111561088757600080fd5b8301601f8101851361089857600080fd5b803567ffffffffffffffff8111156108b2576108b2610840565b604051601f8201601f19908116603f0116810167ffffffffffffffff811182821017156108e1576108e1610840565b6040528181528282016020018710156108f957600080fd5b816020840160208301376000602083830101528093505050509250929050565b6000815180845260005b8181101561093f57602081850181015186830182015201610923565b506000602082860101526020601f19601f83011685010191505092915050565b6020815260006109726020830184610919565b9392505050565b634e487b7160e01b600052601160045260246000fd5b6000826109ac57634e487b7160e01b600052601260045260246000fd5b500490565b8082018082111561027f5761027f610979565b808202811582820484141761027f5761027f610979565b6000602082840312156109ed57600080fd5b5051919050565b600060208284031215610a0657600080fd5b8151801515811461097257600080fd5b600181811c90821680610a2a57607f821691505b602082108103610a4a57634e487b7160e01b600052602260045260246000fd5b50919050565b604081528251604082015260018060a01b03602084015116606082015260018060a01b036040840151166080820152606083015160a082015260006080840151610aa260c084018263ffffffff169052565b5060a084015163ffffffff811660e08401525060c084015163ffffffff81166101008401525060e0840151610100610120840152610ae4610140840182610919565b90508281036020840152610af88185610919565b9594505050505056fea2646970667358221220a46798afd848df3ef4fe41cbcd8196289fdf0236c01a9a77df3f409d5617fe2164736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa264697066735822122090be85cd7fae9653342b7b74e511b1083baf756456e9079b508b6dcc86fa0a5264736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "kind": "dev",
+    "methods": {
+      "bribeAll(address[])": {
+        "params": {
+          "_exclusionList": "A list of pool booster addresses to skip when        calling this function."
+        }
+      },
+      "computePoolBoosterAddress(uint32,address,uint32,bytes,uint256)": {
+        "details": "Create a Pool Booster for Merkl.",
+        "params": {
+          "_ammPoolAddress": "address of the AMM pool where the yield originates from",
+          "_campaignType": "The type of campaign to create. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.",
+          "_salt": "A unique number that affects the address of the pool booster created. Note: this number        should match the one from `createPoolBoosterMerkl` in order for the final deployed address        and pre-computed address to match"
+        }
+      },
+      "constructor": {
+        "params": {
+          "_centralRegistry": "address of the central registry",
+          "_governor": "address governor",
+          "_merklDistributor": "address of the Merkl distributor",
+          "_oSonic": "address of the OSonic token"
+        }
+      },
+      "createPoolBoosterMerkl(uint32,address,uint32,bytes,uint256)": {
+        "details": "Create a Pool Booster for Merkl.",
+        "params": {
+          "_ammPoolAddress": "address of the AMM pool where the yield originates from",
+          "_campaignDuration": "The duration of the campaign in seconds",
+          "_campaignType": "The type of campaign to create. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.",
+          "_salt": "A unique number that affects the address of the pool booster created. Note: this number        should match the one from `computePoolBoosterAddress` in order for the final deployed address        and pre-computed address to match",
+          "campaignData": "The data to be used for the campaign. This is used to determine the type of        bribe contract to create. The type is defined in the MerklDistributor contract.        This should be fetched from the Merkl UI."
+        }
+      },
+      "removePoolBooster(address)": {
+        "details": "This action does not destroy the pool booster contract nor does it      stop the yield delegation to it.",
+        "params": {
+          "_poolBoosterAddress": "address of the pool booster"
+        }
+      },
+      "setMerklDistributor(address)": {
+        "details": "Set the address of the Merkl distributor",
+        "params": {
+          "_merklDistributor": "The address of the Merkl distributor"
+        }
+      },
+      "transferGovernance(address)": {
+        "params": {
+          "_newGovernor": "Address of the new Governor"
+        }
+      }
+    },
+    "title": "Pool booster factory for creating Merkl pool boosters.",
+    "version": 1
+  },
+  "userdoc": {
+    "events": {
+      "MerklDistributorUpdated(address)": {
+        "notice": "event emitted when the Merkl distributor is updated"
+      }
+    },
+    "kind": "user",
+    "methods": {
+      "bribeAll(address[])": {
+        "notice": "Goes over all the pool boosters created by this factory and         calls bribe() on them."
+      },
+      "claimGovernance()": {
+        "notice": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+      },
+      "governor()": {
+        "notice": "Returns the address of the current Governor."
+      },
+      "isGovernor()": {
+        "notice": "Returns true if the caller is the current Governor."
+      },
+      "merklDistributor()": {
+        "notice": "address of the Merkl distributor"
+      },
+      "removePoolBooster(address)": {
+        "notice": "Removes the pool booster from the internal list of pool boosters."
+      },
+      "transferGovernance(address)": {
+        "notice": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 734,
+        "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+        "label": "poolBoosters",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_array(t_struct(PoolBoosterEntry)725_storage)dyn_storage"
+      },
+      {
+        "astId": 739,
+        "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+        "label": "poolBoosterFromPool",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_address,t_struct(PoolBoosterEntry)725_storage)"
+      },
+      {
+        "astId": 1312,
+        "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+        "label": "merklDistributor",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_struct(PoolBoosterEntry)725_storage)dyn_storage": {
+        "base": "t_struct(PoolBoosterEntry)725_storage",
+        "encoding": "dynamic_array",
+        "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry[]",
+        "numberOfBytes": "32"
+      },
+      "t_enum(PoolBoosterType)645": {
+        "encoding": "inplace",
+        "label": "enum IPoolBoostCentralRegistry.PoolBoosterType",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_struct(PoolBoosterEntry)725_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct AbstractPoolBoosterFactory.PoolBoosterEntry)",
+        "numberOfBytes": "32",
+        "value": "t_struct(PoolBoosterEntry)725_storage"
+      },
+      "t_struct(PoolBoosterEntry)725_storage": {
+        "encoding": "inplace",
+        "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry",
+        "members": [
+          {
+            "astId": 719,
+            "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            "label": "boosterAddress",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 721,
+            "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            "label": "ammPoolAddress",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address"
+          },
+          {
+            "astId": 724,
+            "contract": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            "label": "boosterType",
+            "offset": 20,
+            "slot": "1",
+            "type": "t_enum(PoolBoosterType)645"
+          }
+        ],
+        "numberOfBytes": "64"
+      }
+    }
+  }
+}
