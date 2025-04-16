@@ -122,7 +122,7 @@ describe("Origin S Vault", function () {
 
         await expect(
           wOSonic.connect(governor).transferToken(oSonic.address, amount)
-        ).to.be.revertedWith("Cannot collect OS");
+        ).to.be.revertedWith("Cannot collect core asset");
       });
     });
   });

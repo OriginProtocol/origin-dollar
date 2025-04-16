@@ -1,12 +1,17 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  instantRebaseVaultFixture,
+} = require("../_fixture");
 
 const { usdtUnits, advanceTime } = require("../helpers");
 
 describe("Dripper", async () => {
   let dripper, usdt, vault, ousd, governor, josh;
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
+
   beforeEach(async () => {
-    const fixture = await loadDefaultFixture();
+    const fixture = await loadFixture();
     dripper = fixture.dripper;
     usdt = fixture.usdt;
     vault = fixture.vault;

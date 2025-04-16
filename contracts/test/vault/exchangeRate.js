@@ -4,6 +4,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
   usdsUnits,
+  advanceTime,
   setOracleTokenPriceUsd,
   isFork,
 } = require("../helpers");
@@ -62,28 +63,32 @@ describe("Vault Redeem", function () {
 
   it("Should rebase at a positive exchange rate", async () => {
     const { ousd, vault, reth, anna } = fixture;
+    await vault.rebase();
 
     const beforeGift = await ousd.totalSupply();
 
-    await reth.connect(anna).mint(usdsUnits("1000.0"));
-    await reth.connect(anna).transfer(vault.address, usdsUnits("1000.0"));
+    await reth.connect(anna).mint(usdsUnits("3.0"));
+    await reth.connect(anna).transfer(vault.address, usdsUnits("3.0"));
 
+    await advanceTime(7 * 24 * 60 * 60);
     await vault.rebase();
+
     const afterGift = await ousd.totalSupply();
     expect(afterGift.sub(beforeGift)).to.approxEqualTolerance(
-      ousdUnits("1200"),
-      1,
+      ousdUnits("3.6"),
+      0.1,
       "afterGift"
     );
 
     await setOracleTokenPriceUsd("RETHETH", "1.4");
     await reth.setExchangeRate(usdsUnits("1.4"));
+    await advanceTime(7 * 24 * 60 * 60);
     await vault.rebase();
     const afterExchangeUp = await ousd.totalSupply();
 
     expect(afterExchangeUp.sub(afterGift)).to.approxEqualTolerance(
-      ousdUnits("200"),
-      1,
+      ousdUnits("0.6"),
+      0.1,
       "afterExchangeUp"
     );
   });
