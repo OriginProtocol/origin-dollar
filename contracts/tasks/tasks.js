@@ -111,6 +111,8 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 
+const { lzBridgeToken } = require("./layerzero");
+
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
   const hre = require("hardhat");
@@ -1824,3 +1826,11 @@ subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
 task("sonicStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+task("lzBridgeToken")
+  .addParam("amount", "Amount to bridge")
+  .addParam("destnetwork", "Destination network")
+  .addOptionalParam("gaslimit", "Gas limit")
+  .setAction(async (taskArgs) => {
+    await lzBridgeToken(taskArgs, hre);
+  });

@@ -908,7 +908,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const proposal = await fn(tools);
 
-    if (!proposal.actions?.length) {
+    if (!proposal?.actions?.length) {
       log("No Proposal.");
       return;
     }

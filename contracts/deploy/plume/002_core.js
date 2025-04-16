@@ -7,7 +7,8 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnPlume(
   {
-    deployName: "001_core",
+    deployName: "002_core",
+    forceSkip: true,
   },
   async () => {
     const { deployerAddr } = await getNamedAccounts();
