@@ -1110,12 +1110,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   });
 
   describe("Deposit and rebalance with mocked Vault", async () => {
-    let fixture,
-      oethbVault,
-      oethb,
-      weth,
-      aerodromeAmoStrategy,
-      rafael;
+    let fixture, oethbVault, oethb, weth, aerodromeAmoStrategy, rafael;
 
     beforeEach(async () => {
       fixture = await baseFixtureWithMockedVault();
