@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "132_omnichain_adapter",
+    deployName: "133_omnichain_adapter",
   },
   async ({ ethers }) => {
     const { deployerAddr } = await getNamedAccounts();
