@@ -51,7 +51,11 @@ async function lzBridgeToken(taskArgs, hre) {
       : addresses[srcNetwork].BridgedWOETH
   );
 
-  await woeth.connect(signer).approve(oftAdapter.address, amount);
+  const tx = await woeth.connect(signer).approve(oftAdapter.address, amount);
+  await hre.ethers.provider.waitForTransaction(
+    tx.receipt ? tx.receipt.transactionHash : tx.hash,
+    3 // Wait for 3 block confirmation
+  );
 
   const [nativeFee, lzTokenFee] = await oftAdapter
     .connect(signer)
