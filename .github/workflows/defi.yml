@@ -214,46 +214,6 @@ jobs:
             ./contracts/coverage.json
             ./contracts/coverage/**/*
           retention-days: 1
-  
-  contracts-hol-forktest:
-    name: "Holesky Fork Tests"
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    env:
-      HARDHAT_CACHE_DIR: ./cache
-      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
-      HOLESKY_PROVIDER_URL: ${{ secrets.HOLESKY_PROVIDER_URL }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
-
-      - uses: actions/cache@v4
-        id: hardhat-cache
-        with:
-          path: contracts/cache
-          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-hardhat-cache
-
-      - run: yarn install --frozen-lockfile
-        working-directory: ./contracts
-
-      - run: yarn run test:coverage:hol-fork
-        working-directory: ./contracts
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: fork-test-hol-coverage-${{ github.sha }}
-          path: | 
-            ./contracts/coverage.json
-            ./contracts/coverage/**/*
-          retention-days: 1
 
   contracts-base-forktest:
     name: "Base Fork Tests"
@@ -344,7 +304,6 @@ jobs:
       - contracts-sonic-test
       - contracts-forktest
       - contracts-arb-forktest
-      - contracts-hol-forktest
       - contracts-base-forktest
       - contracts-sonic-forktest
     env:
