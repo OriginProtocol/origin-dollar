@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import { VaultStorage } from "../vault/VaultStorage.sol";
 
 interface IVault {
+    // slither-disable-start constable-states
+
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
