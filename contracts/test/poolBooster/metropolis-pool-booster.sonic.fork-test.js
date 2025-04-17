@@ -31,7 +31,7 @@ describe("ForkTest: Metropolis Pool Booster", function () {
 
   it("Should deploy a Pool Booster for a Metropolis pool", async () => {
     await createPB(addresses.sonic.Metropolis.Pools.OsMoon, "1");
-    expect(await poolBoosterFactoryMetropolis.poolBoosterLength()).to.equal(1);
+    expect(await poolBoosterFactoryMetropolis.poolBoosterLength()).to.equal(2);
   });
 
   it("Should bribe 2 times in a row", async () => {

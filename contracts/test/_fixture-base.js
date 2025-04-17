@@ -24,7 +24,30 @@ const BURNER_ROLE =
   "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
 let snapshotId;
-const defaultBaseFixture = deployments.createFixture(async () => {
+
+const baseFixtureWithMockedVaultAdminConfig = async () => {
+  const fixture = await defaultFixture();
+
+  const cOETHVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+  const cOETHVaultAdmin = await ethers.getContractAt(
+    "IVault",
+    cOETHVaultProxy.address
+  );
+  await deployWithConfirmation("MockOETHVaultAdmin", [fixture.weth.address]);
+
+  const mockVaultAdmin = await ethers.getContract("MockOETHVaultAdmin");
+  await cOETHVaultAdmin
+    .connect(fixture.governor)
+    .setAdminImpl(mockVaultAdmin.address);
+
+  fixture.oethbVault = await ethers.getContractAt(
+    "IMockVault",
+    fixture.oethbVault.address
+  );
+  return fixture;
+};
+
+const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -272,7 +295,12 @@ const defaultBaseFixture = deployments.createFixture(async () => {
     quoter,
     sugar,
   };
-});
+};
+
+const defaultBaseFixture = deployments.createFixture(defaultFixture);
+const baseFixtureWithMockedVaultAdmin = deployments.createFixture(
+  baseFixtureWithMockedVaultAdminConfig
+);
 
 mocha.after(async () => {
   if (snapshotId) {
@@ -282,6 +310,7 @@ mocha.after(async () => {
 
 module.exports = {
   defaultBaseFixture,
+  baseFixtureWithMockedVaultAdmin,
   MINTER_ROLE,
   BURNER_ROLE,
 };
