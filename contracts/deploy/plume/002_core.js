@@ -33,6 +33,14 @@ module.exports = deployOnPlume(
     const cwOETHpProxy = await ethers.getContract("WOETHPlumeProxy");
     const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
 
+    /// NOTE: We don't need Dripper. But the Vault will break if we don't
+    ///       have one configured right now. So, this is just a placeholder.
+    const dTempDripper = await deployWithConfirmation("FixedRateDripper", [
+      cOETHpVaultProxy.address,
+      addresses.plume.WETH,
+    ]);
+    console.log("FixedRateDripper deployed at", dTempDripper.address);
+
     // Core contracts
     const dOETHp = await deployWithConfirmation("OETHPlume");
     console.log("OETHPlume deployed at", dOETHp.address);
@@ -188,21 +196,27 @@ module.exports = deployOnPlume(
           // Set max supply diff
           contract: cOETHpVault,
           signature: "setMaxSupplyDiff(uint256)",
-          args: [parseUnits("1", 18)], // 1 OETHp
+          args: [parseUnits("0.1", 18)], // 0.1 OETHp
+        },
+        {
+          // Set dripper
+          contract: cOETHpVault,
+          signature: "setDripper(address)",
+          args: [dTempDripper.address],
         },
         // NOTE: Following two can be set by 2/8
-        // {
-        //   // Set drip duration
-        //   contract: cOETHpVault,
-        //   signature: "setDripDuration(uint256)",
-        //   args: [7 * 24 * 60 * 60], // 1 week
-        // },
-        // {
-        //   // Set max rebase rate
-        //   contract: cOETHpVault,
-        //   signature: "setRebaseRateMax(uint256)",
-        //   args: [parseUnits("10", 18)], // 10%
-        // },
+        {
+          // Set drip duration
+          contract: cOETHpVault,
+          signature: "setDripDuration(uint256)",
+          args: [7 * 24 * 60 * 60], // 1 week
+        },
+        {
+          // Set max rebase rate
+          contract: cOETHpVault,
+          signature: "setRebaseRateMax(uint256)",
+          args: [parseUnits("10", 18)], // 10%
+        },
       ],
     };
   }
