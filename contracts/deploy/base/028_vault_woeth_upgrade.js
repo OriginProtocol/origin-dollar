@@ -66,7 +66,7 @@ module.exports = deployOnBase(
           args: [parseUnits("20", 18)],
         },
         {
-        // 5. Upgrade wOETHb proxy
+          // 5. Upgrade wOETHb proxy
           contract: cwOETHbProxy,
           signature: "upgradeTo(address)",
           args: [dwOETHb.address],
