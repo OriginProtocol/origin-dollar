@@ -196,7 +196,7 @@ module.exports = deployOnPlume(
           // Set max supply diff
           contract: cOETHpVault,
           signature: "setMaxSupplyDiff(uint256)",
-          args: [parseUnits("0.1", 18)], // 0.1 OETHp
+          args: [parseUnits("1", 18)], // 1 OETHp
         },
         {
           // Set dripper
