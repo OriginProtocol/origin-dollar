@@ -15,8 +15,8 @@ describe("ForkTest: OETHp Vault", function () {
   });
 
   async function _mint(signer) {
-    const { weth, oethpVault } = fixture;
-    await weth.connect(signer).deposit({ value: oethUnits("1") });
+    const { weth, oethpVault, _mintWETH } = fixture;
+    await _mintWETH(signer, oethUnits("1"));
     await weth.connect(signer).approve(oethpVault.address, oethUnits("1"));
     await oethpVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
   }

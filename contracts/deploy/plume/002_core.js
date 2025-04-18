@@ -149,8 +149,8 @@ module.exports = deployOnPlume(
         },
         {
           // Set VaultAdmin implementation
-          contract: cOETHpVaultProxy,
-          signature: "upgradeTo(address)",
+          contract: cOETHpVault,
+          signature: "setAdminImpl(address)",
           args: [dOETHpVaultAdmin.address],
         },
         {
@@ -175,7 +175,8 @@ module.exports = deployOnPlume(
           // Set rebase threshold
           contract: cOETHpVault,
           signature: "setRebaseThreshold(uint256)",
-          args: [parseUnits("1", 18)], // 1 OETHp
+          // TODO: Change this after Vault is fixed
+          args: [parseUnits("10000", 18)], // 10000 OETHp
         },
         {
           // Set strategist
