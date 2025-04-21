@@ -490,7 +490,7 @@ function deployOnPlume(opts, fn) {
         !(
           isPlumeFork ||
           hre.network.name == "plume" ||
-          hre.network.config.chainId == 98867
+          hre.network.config.chainId == 98866
         ),
     },
     fn,

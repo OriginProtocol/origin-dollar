@@ -236,7 +236,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      chainId: 98864,
+      chainId: 98866,
       tags: ["plume"],
       live: true,
       saveDeployments: true,
@@ -475,6 +475,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.sonicscan.org/api",
           browserURL: "https://sonicscan.org",
+        },
+      },
+      {
+        network: "plume",
+        chainId: 98866,
+        urls: {
+          apiURL: "https://explorer-plume-mainnet-1.t.conduit.xyz/api",
+          browserURL: "https://phoenix-explorer.plumenetwork.xyz",
         },
       },
     ],

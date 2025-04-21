@@ -6,6 +6,7 @@ const addresses = require("../../utils/addresses");
 module.exports = deployOnPlume(
   {
     deployName: "000_mock",
+    forceSkip: true,
   },
   async () => {
     // Just a workaround to get WETH on testnet
