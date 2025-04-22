@@ -4,14 +4,15 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 module.exports = deployOnPlume(
   {
     deployName: "002_core",
-    onlyOnFork: true,
   },
   async () => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, strategistAddr, timelockAddr } =
+      await getNamedAccounts();
 
     const sDeployer = await ethers.getSigner(deployerAddr);
 
@@ -32,6 +33,14 @@ module.exports = deployOnPlume(
     const cwOETHpProxy = await ethers.getContract("WOETHPlumeProxy");
     const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
 
+    /// NOTE: We don't need Dripper. But the Vault will break if we don't
+    ///       have one configured right now. So, this is just a placeholder.
+    const dTempDripper = await deployWithConfirmation("FixedRateDripper", [
+      cOETHpVaultProxy.address,
+      addresses.plume.WETH,
+    ]);
+    console.log("FixedRateDripper deployed at", dTempDripper.address);
+
     // Core contracts
     const dOETHp = await deployWithConfirmation("OETHPlume");
     console.log("OETHPlume deployed at", dOETHp.address);
@@ -44,16 +53,19 @@ module.exports = deployOnPlume(
     const dOETHpVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
       addresses.plume.WETH,
     ]);
-    const dOETHpVaultAdmin = await deployWithConfirmation("OETHBaseVaultAdmin");
+    const dOETHpVaultAdmin = await deployWithConfirmation(
+      "OETHBaseVaultAdmin",
+      [addresses.plume.WETH]
+    );
     console.log("OETHBaseVaultAdmin deployed at", dOETHpVaultAdmin.address);
     // Get contract instances
     const cOETHp = await ethers.getContractAt("OETHPlume", cOETHpProxy.address);
-    // const cwOETHp = await ethers.getContractAt(
-    //   "WOETHPlume",
-    //   cwOETHpProxy.address
-    // );
+    const cwOETHp = await ethers.getContractAt(
+      "WOETHPlume",
+      cwOETHpProxy.address
+    );
     const cOETHpVault = await ethers.getContractAt(
-      "OETHVault",
+      "IVault",
       cOETHpVaultProxy.address
     );
 
@@ -68,13 +80,13 @@ module.exports = deployOnPlume(
     );
     // prettier-ignore
     await withConfirmation(
-    cOETHpProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dOETHp.address,
-        deployerAddr,
-        initDataOETHp
-      )
-  );
+      cOETHpProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dOETHp.address,
+          deployerAddr,
+          initDataOETHp
+        )
+    );
     console.log("Initialized OETHPlumeProxy and OETHPlume implementation");
 
     // Init OETHpVault
@@ -87,74 +99,125 @@ module.exports = deployOnPlume(
     );
     // prettier-ignore
     await withConfirmation(
-    cOETHpVaultProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dOETHpVault.address,
-        deployerAddr,
-        initDataOETHpVault
-      )
-  );
+      cOETHpVaultProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dOETHpVault.address,
+          deployerAddr,
+          initDataOETHpVault
+        )
+    );
     console.log(
       "Initialized OETHPlumeVaultProxy and OETHPlumeVault implementation"
     );
 
-    // TODO: Fix this
-    // // Init wOETHp
-    // const initDatawOETHp = cwOETHp.interface.encodeFunctionData(
-    //   "initialize()",
-    //   []
-    // );
+    // Init wOETHp
+    const initDatawOETHp = cwOETHp.interface.encodeFunctionData(
+      "initialize()",
+      []
+    );
     // prettier-ignore
     await withConfirmation(
-    cwOETHpProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dwOETHp.address,
-        // No need for additional governance transfer,
-        // since deployer doesn't have to configure anything
-        deployerAddr,
-        "0x"
-      )
-  );
+      cwOETHpProxy
+        .connect(sDeployer)["initialize(address,address,bytes)"](
+          dwOETHp.address,
+          timelockAddr,
+          initDatawOETHp
+        )
+    );
     console.log("Initialized WOETHPlumeProxy and WOETHPlume implementation");
 
-    // Set Core Impl
+    // Transfer governance to Timelock
     await withConfirmation(
-      cOETHpVaultProxy.connect(sDeployer).upgradeTo(dOETHpVaultCore.address)
+      cOETHpProxy.connect(sDeployer).transferGovernance(timelockAddr)
     );
-    console.log("Set OETHPlumeVaultCore implementation");
-
-    // Set Admin Impl
     await withConfirmation(
-      cOETHpVault.connect(sDeployer).setAdminImpl(dOETHpVaultAdmin.address)
+      cOETHpVaultProxy.connect(sDeployer).transferGovernance(timelockAddr)
     );
-    console.log("Set OETHPlumeVaultAdmin implementation");
-
-    // TODO: Move to governance actions later
-    // 1. Allow minting with WETH
-    await withConfirmation(
-      cOETHpVault.connect(sDeployer).supportAsset(addresses.plume.WETH, 0)
-    );
-    console.log("Allowed minting with WETH");
-    // 2. Unpause Capital
-    await withConfirmation(cOETHpVault.connect(sDeployer).unpauseCapital());
-    console.log("Unpaused Capital");
-
-    // 3. Set async claim delay to 1 day
-    await withConfirmation(
-      cOETHpVault.connect(sDeployer).setWithdrawalClaimDelay(24 * 60 * 60)
-    );
-    console.log("Set async claim delay to 1 day");
-
-    // TODO: Call this after minting some OETHp
-
-    // await withConfirmation(
-    //   cwOETHp.connect(sDeployer)["initialize()"]()
-    // );
-    // console.log("Initialized WOETHPlume");
+    console.log("Transferred governance to Timelock");
 
     return {
-      // No Governance actions for now
-      actions: [],
+      actions: [
+        {
+          // Claim governance on OETHp
+          contract: cOETHpProxy,
+          signature: "claimGovernance()",
+          args: [],
+        },
+        {
+          // Claim governance on Vault
+          contract: cOETHpVaultProxy,
+          signature: "claimGovernance()",
+          args: [],
+        },
+        {
+          // Set VaultCore implementation
+          contract: cOETHpVaultProxy,
+          signature: "upgradeTo(address)",
+          args: [dOETHpVaultCore.address],
+        },
+        {
+          // Set VaultAdmin implementation
+          contract: cOETHpVault,
+          signature: "setAdminImpl(address)",
+          args: [dOETHpVaultAdmin.address],
+        },
+        {
+          // Allow minting with WETH
+          contract: cOETHpVault,
+          signature: "supportAsset(address,uint8)",
+          args: [addresses.plume.WETH, 0],
+        },
+        {
+          // Unpause Capital
+          contract: cOETHpVault,
+          signature: "unpauseCapital()",
+          args: [],
+        },
+        {
+          // Set async claim delay
+          contract: cOETHpVault,
+          signature: "setWithdrawalClaimDelay(uint256)",
+          args: [24 * 60 * 60],
+        },
+        {
+          // Set rebase threshold
+          contract: cOETHpVault,
+          signature: "setRebaseThreshold(uint256)",
+          // TODO: Change this after Vault is fixed
+          args: [parseUnits("10000", 18)], // 10000 OETHp
+        },
+        {
+          // Set strategist
+          contract: cOETHpVault,
+          signature: "setStrategistAddr(address)",
+          args: [strategistAddr],
+        },
+        {
+          // Set max supply diff
+          contract: cOETHpVault,
+          signature: "setMaxSupplyDiff(uint256)",
+          args: [parseUnits("1", 18)], // 1 OETHp
+        },
+        {
+          // Set dripper
+          contract: cOETHpVault,
+          signature: "setDripper(address)",
+          args: [dTempDripper.address],
+        },
+        // NOTE: Following two can be set by 2/8
+        {
+          // Set drip duration
+          contract: cOETHpVault,
+          signature: "setDripDuration(uint256)",
+          args: [7 * 24 * 60 * 60], // 1 week
+        },
+        {
+          // Set max rebase rate
+          contract: cOETHpVault,
+          signature: "setRebaseRateMax(uint256)",
+          args: [parseUnits("10", 18)], // 10%
+        },
+      ],
     };
   }
 );

@@ -593,4 +593,6 @@ addresses.plume.LayerZeroEndpointV2 =
 addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
 
+addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
+
 module.exports = addresses;

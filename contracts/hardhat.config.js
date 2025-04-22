@@ -73,8 +73,10 @@ const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
 const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
 const PLUME_DEPLOYER = MAINNET_DEPLOYER;
-const PLUME_GOVERNOR = MAINNET_DEPLOYER;
-const PLUME_STRATEGIST = MAINNET_DEPLOYER;
+// Plume 5/8 multisig
+const PLUME_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// Plume 2/8 multisig
+const PLUME_STRATEGIST = MULTICHAIN_STRATEGIST;
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -115,6 +117,74 @@ if (process.env.HARDHAT_CACHE_DIR) {
 }
 const { provider, chainId } = getHardhatNetworkProperties();
 
+const defaultAccounts = [
+  process.env.DEPLOYER_PK || privateKeys[0],
+  process.env.GOVERNOR_PK || privateKeys[0],
+];
+
+const getDeployTags = () => {
+  if (isArbitrumFork) {
+    return ["arbitrumOne"];
+  } else if (isBaseFork) {
+    return ["base"];
+  } else if (isSonicFork) {
+    return ["sonic"];
+  } else if (isPlumeFork) {
+    return ["plume"];
+  }
+
+  return undefined;
+};
+
+/// Config for Fork and unit test environments
+const localEnvDeployer =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isBaseFork
+      ? BASE_DEPLOYER
+      : isSonicFork
+      ? SONIC_DEPLOYER
+      : isPlumeFork
+      ? PLUME_DEPLOYER
+      : MAINNET_DEPLOYER
+    : 0; // 0th signer fallback
+
+const localEnvGovernor =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isBaseFork
+      ? BASE_GOVERNOR
+      : isSonicFork
+      ? SONIC_ADMIN
+      : isPlumeFork
+      ? PLUME_ADMIN
+      : MAINNET_GOVERNOR
+    : 1; // signer at index 1
+
+const localEnvTimelock =
+  process.env.FORK_NETWORK_NAME == "base"
+    ? addresses.base.timelock
+    : process.env.FORK_NETWORK_NAME == "sonic"
+    ? addresses.sonic.timelock
+    : process.env.FORK_NETWORK_NAME == "plume"
+    ? addresses.plume.timelock
+    : process.env.FORK_NETWORK_NAME == "mainnet" ||
+      (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
+    ? MAINNET_TIMELOCK
+    : ethers.constants.AddressZero;
+
+const localEnvStrategist =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isSonicFork
+      ? SONIC_STRATEGIST
+      : // Base, Plume and Eth use Multichain Strategist
+        MULTICHAIN_STRATEGIST
+    : 0;
+
 module.exports = {
   solidity: {
     version: "0.8.28",
@@ -138,15 +208,7 @@ module.exports = {
       blockGasLimit: 1000000000,
       allowUnlimitedContractSize: true,
       chainId,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : isSonicFork
-        ? { tags: ["sonic"] }
-        : isPlumeFork
-        ? { tags: ["plume"] }
-        : {}),
+      tags: getDeployTags(),
       ...(isForkTest
         ? {
             timeout: 0,
@@ -168,38 +230,21 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : isSonicFork
-        ? { tags: ["sonic"] }
-        : isPlumeFork
-        ? { tags: ["plume"] }
-        : {}),
+      tags: getDeployTags(),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
     },
     holesky: {
       url: holeskyProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 17000,
       live: true,
     },
     arbitrumOne: {
       url: arbitrumProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 42161,
       tags: ["arbitrumOne"],
       live: true,
@@ -210,10 +255,7 @@ module.exports = {
     },
     base: {
       url: baseProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 8453,
       tags: ["base"],
       live: true,
@@ -221,10 +263,7 @@ module.exports = {
     },
     sonic: {
       url: sonicProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 146,
       tags: ["sonic"],
       live: true,
@@ -232,10 +271,7 @@ module.exports = {
     },
     plume: {
       url: plumeProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 98866,
       tags: ["plume"],
       live: true,
@@ -250,66 +286,25 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_DEPLOYER
-            : isSonicFork
-            ? SONIC_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_DEPLOYER
-            : isSonicFork
-            ? SONIC_DEPLOYER
-            : isPlumeFork
-            ? PLUME_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
+      localhost: localEnvDeployer,
+      hardhat: localEnvDeployer,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
       base: BASE_DEPLOYER,
       sonic: SONIC_DEPLOYER,
+      plume: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : isSonicFork
-            ? SONIC_ADMIN
-            : isPlumeFork
-            ? PLUME_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : isSonicFork
-            ? SONIC_ADMIN
-            : isPlumeFork
-            ? PLUME_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
+      localhost: localEnvGovernor,
+      hardhat: localEnvGovernor,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
-      plume: PLUME_GOVERNOR,
+      plume: PLUME_ADMIN,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -349,51 +344,18 @@ module.exports = {
     timelockAddr: {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        process.env.FORK_NETWORK_NAME == "base"
-          ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "sonic"
-          ? addresses.sonic.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet" ||
-            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
-      hardhat:
-        process.env.FORK_NETWORK_NAME == "base"
-          ? addresses.base.timelock
-          : process.env.FORK_NETWORK_NAME == "sonic"
-          ? addresses.sonic.timelock
-          : process.env.FORK_NETWORK_NAME == "mainnet" ||
-            (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+      localhost: localEnvTimelock,
+      hardhat: localEnvTimelock,
       mainnet: MAINNET_TIMELOCK,
       base: addresses.base.timelock,
       sonic: addresses.sonic.timelock,
+      plume: addresses.plume.timelock,
     },
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
-      localhost:
-        process.env.FORK_NETWORK_NAME === "base"
-          ? BASE_GOVERNOR
-          : process.env.FORK_NETWORK_NAME === "sonic"
-          ? SONIC_ADMIN
-          : process.env.FORK_NETWORK_NAME === "plume"
-          ? PLUME_STRATEGIST
-          : process.env.FORK == "true"
-          ? MAINNET_MULTISIG
-          : 1,
-      hardhat:
-        process.env.FORK_NETWORK_NAME === "base"
-          ? BASE_GOVERNOR
-          : process.env.FORK_NETWORK_NAME === "sonic"
-          ? SONIC_ADMIN
-          : process.env.FORK_NETWORK_NAME === "plume"
-          ? PLUME_STRATEGIST
-          : process.env.FORK == "true"
-          ? MAINNET_MULTISIG
-          : 1,
+      localhost: localEnvGovernor,
+      hardhat: localEnvGovernor,
       mainnet: MAINNET_MULTISIG,
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
@@ -407,28 +369,8 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isSonicFork
-            ? SONIC_STRATEGIST
-            : isPlumeFork
-            ? PLUME_STRATEGIST
-            : // Base and Eth use Multichain Strategist
-              MULTICHAIN_STRATEGIST
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isSonicFork
-            ? SONIC_STRATEGIST
-            : isPlumeFork
-            ? PLUME_STRATEGIST
-            : // Base and Eth use Multichain Strategist
-              MULTICHAIN_STRATEGIST
-          : 0,
+      localhost: localEnvStrategist,
+      hardhat: localEnvStrategist,
       mainnet: MULTICHAIN_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
       base: MULTICHAIN_STRATEGIST,

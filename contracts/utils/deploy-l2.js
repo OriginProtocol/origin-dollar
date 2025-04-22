@@ -483,8 +483,6 @@ function deployOnPlume(opts, fn) {
   return deployOnL2WithGuardianOrTimelock(
     {
       ...opts,
-      // TODO: No timelock on Plume yet
-      useTimelock: false,
       forceSkip:
         opts.forceSkip ||
         !(
