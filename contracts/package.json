@@ -10,6 +10,7 @@
     "deploy:holesky": "NETWORK_NAME=holesky npx hardhat deploy --network holesky --verbose",
     "deploy:base": "NETWORK_NAME=base npx hardhat deploy --network base --verbose",
     "deploy:sonic": "NETWORK_NAME=sonic npx hardhat deploy --network sonic --verbose",
+    "deploy:plume": "NETWORK_NAME=plume npx hardhat deploy --network plume --verbose",
     "abi:generate": "(rm -rf deployments/hardhat && mkdir -p dist/abi && npx hardhat deploy --export '../dist/network.json')",
     "abi:dist": "find ./artifacts/contracts -name \"*.json\" -type f -exec cp {} ./dist/abi \\; && rm -rf dist/abi/*.dbg.json dist/abi/Mock*.json && cp ./abi.package.json dist/package.json && cp ./.npmrc.abi dist/.npmrc",
     "node": "yarn run node:fork",
@@ -18,6 +19,7 @@
     "node:hol": "FORK_NETWORK_NAME=holesky yarn run node:fork",
     "node:base": "FORK_NETWORK_NAME=base yarn run node:fork",
     "node:sonic": "FORK_NETWORK_NAME=sonic yarn run node:fork",
+    "node:plume": "FORK_NETWORK_NAME=plume yarn run node:fork",
     "node:anvil": "anvil --fork-url $PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:base": "anvil --fork-url $BASE_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:sonic": "anvil --fork-url $SONIC_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
@@ -36,6 +38,7 @@
     "test:base-fork": "FORK_NETWORK_NAME=base ./fork-test.sh",
     "test:sonic-fork": "FORK_NETWORK_NAME=sonic ./fork-test.sh",
     "test:hol-fork": "FORK_NETWORK_NAME=holesky ./fork-test.sh",
+    "test:plume-fork": "FORK_NETWORK_NAME=plume ./fork-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "echidna": "yarn run clean && rm -rf echidna-corpus && echidna . --contract Echidna --config echidna-config.yaml",
@@ -52,16 +55,18 @@
     "test:coverage:arb-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=arbitrumOne ./fork-test.sh",
     "test:coverage:base-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=base ./fork-test.sh",
     "test:coverage:sonic-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=sonic ./fork-test.sh",
-    "test:coverage:hol-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=holesky ./fork-test.sh"
+    "test:coverage:hol-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=holesky ./fork-test.sh",
+    "test:coverage:plume-fork": "REPORT_COVERAGE=true FORK_NETWORK_NAME=plume ./fork-test.sh"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
     "@aws-sdk/client-kms": "^3.598.0",
     "@aws-sdk/client-s3": "^3.600.0",
+    "@layerzerolabs/oft-evm": "^3.1.4",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomicfoundation/hardhat-verify": "^2.0.12",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-solhint": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@openzeppelin/contracts": "4.4.2",
@@ -115,6 +120,13 @@
   },
   "dependencies": {
     "@chainlink/contracts-ccip": "^1.2.1",
+    "@layerzerolabs/devtools": "^0.4.10",
+    "@layerzerolabs/lz-evm-protocol-v2": "^3.0.87",
+    "@layerzerolabs/lz-v2-utilities": "^3.0.88",
+    "@layerzerolabs/oapp-evm": "^0.3.2",
     "ganache": "^7.9.2"
+  },
+  "resolutions": {
+    "@openzeppelin/contracts": "4.4.2"
   }
 }

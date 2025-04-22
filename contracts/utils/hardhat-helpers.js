@@ -11,6 +11,9 @@ const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
 const isSonic = process.env.NETWORK_NAME === "sonic";
 const isSonicFork = process.env.FORK_NETWORK_NAME === "sonic";
 
+const isPlume = process.env.NETWORK_NAME === "plume";
+const isPlumeFork = process.env.FORK_NETWORK_NAME === "plume";
+
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
 const isHoleskyForkTest = isForkTest && isHoleskyFork;
@@ -18,6 +21,8 @@ const isBaseForkTest = isForkTest && isBaseFork;
 const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
 const isSonicForkTest = isForkTest && isSonicFork;
 const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
+const isPlumeForkTest = isForkTest && isPlumeFork;
+const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
 
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
@@ -26,6 +31,7 @@ const arbitrumProviderUrl = `${process.env.ARBITRUM_PROVIDER_URL}`;
 const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
+const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
@@ -53,6 +59,10 @@ const adjustTheForkBlockNumber = () => {
     } else if (isSonicForkTest) {
       forkBlockNumber = process.env.SONIC_BLOCK_NUMBER
         ? process.env.SONIC_BLOCK_NUMBER
+        : undefined;
+    } else if (isPlumeForkTest) {
+      forkBlockNumber = process.env.PLUME_BLOCK_NUMBER
+        ? process.env.PLUME_BLOCK_NUMBER
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
@@ -120,6 +130,8 @@ const getHardhatNetworkProperties = () => {
     chainId = 8453;
   } else if (isSonicFork && isFork) {
     chainId = 146;
+  } else if (isPlumeFork && isFork) {
+    chainId = 98866;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -135,6 +147,8 @@ const getHardhatNetworkProperties = () => {
       provider = baseProviderUrl;
     } else if (isSonicForkTest) {
       provider = sonicProviderUrl;
+    } else if (isPlumeForkTest) {
+      provider = plumeProviderUrl;
     }
   }
 
@@ -148,6 +162,7 @@ const networkMap = {
   1337: "hardhat",
   8453: "base",
   146: "sonic",
+  98866: "plume",
 };
 
 module.exports = {
@@ -167,12 +182,19 @@ module.exports = {
   isForkTest,
   isArbForkTest,
   isHoleskyForkTest,
+  isPlume,
+  isPlumeFork,
+  isPlumeForkTest,
+  isPlumeUnitTest,
+
   providerUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
+  baseProviderUrl,
+  sonicProviderUrl,
+  plumeProviderUrl,
+
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
   networkMap,
-  baseProviderUrl,
-  sonicProviderUrl,
 };

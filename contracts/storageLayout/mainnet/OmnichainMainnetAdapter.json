@@ -1,0 +1,79 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "_owner",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address",
+      "contract": "Ownable",
+      "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+    },
+    {
+      "label": "peers",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_uint32,t_bytes32)",
+      "contract": "OAppCore",
+      "src": "@layerzerolabs/oapp-evm/contracts/oapp/OAppCore.sol:17"
+    },
+    {
+      "label": "preCrime",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_address",
+      "contract": "OAppPreCrimeSimulator",
+      "src": "@layerzerolabs/oapp-evm/contracts/precrime/OAppPreCrimeSimulator.sol:15"
+    },
+    {
+      "label": "enforcedOptions",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_uint32,t_mapping(t_uint16,t_bytes_storage))",
+      "contract": "OAppOptionsType3",
+      "src": "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol:16"
+    },
+    {
+      "label": "msgInspector",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_address",
+      "contract": "OFTCore",
+      "src": "@layerzerolabs/oft-evm/contracts/OFTCore.sol:47"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bytes32": {
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_bytes_storage": {
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint16,t_bytes_storage)": {
+      "label": "mapping(uint16 => bytes)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint32,t_bytes32)": {
+      "label": "mapping(uint32 => bytes32)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint32,t_mapping(t_uint16,t_bytes_storage))": {
+      "label": "mapping(uint32 => mapping(uint16 => bytes))",
+      "numberOfBytes": "32"
+    },
+    "t_uint16": {
+      "label": "uint16",
+      "numberOfBytes": "2"
+    },
+    "t_uint32": {
+      "label": "uint32",
+      "numberOfBytes": "4"
+    }
+  }
+}

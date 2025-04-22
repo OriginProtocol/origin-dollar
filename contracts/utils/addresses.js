@@ -311,6 +311,12 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
+// LayerZero
+addresses.mainnet.LayerZeroEndpointV2 =
+  "0x1a44076050125825900e736c501f859c50fE728c";
+addresses.mainnet.WOETHOmnichainAdapter =
+  "0x7d1bea5807e6af125826d56ff477745bb89972b8";
+
 addresses.mainnet.passthrough = {};
 addresses.mainnet.passthrough.curve = {};
 addresses.mainnet.passthrough.curve.OUSD_3POOL =
@@ -578,5 +584,15 @@ addresses.holesky.validatorRegistrator =
   "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 // Address of the Holesky defender relayer
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
+
+addresses.plume = {};
+addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
+addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+addresses.plume.LayerZeroEndpointV2 =
+  "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
+addresses.plume.WOETHOmnichainAdapter =
+  "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
+
+addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 
 module.exports = addresses;

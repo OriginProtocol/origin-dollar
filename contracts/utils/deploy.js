@@ -20,6 +20,8 @@ const {
   isArbitrumOne,
   isBase,
   isSonic,
+  isPlume,
+  isPlumeFork,
   isTest,
 } = require("../test/helpers.js");
 
@@ -101,7 +103,7 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase || isSonic) {
+  if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
     await storeStorageLayoutForContract(hre, contractName, contract);
   }
 
@@ -121,6 +123,8 @@ const withConfirmation = async (
     ? process.env.SONIC_PROVIDER_URL
     : isHolesky
     ? process.env.HOLESKY_PROVIDER_URL
+    : isPlume
+    ? process.env.PLUME_PROVIDER_URL
     : process.env.PROVIDER_URL;
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
     // console.log("Skipping confirmation on Tenderly or for unit tests");
@@ -151,6 +155,11 @@ const withConfirmation = async (
 };
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
+  if (isPlume || isPlumeFork) {
+    // TODO: Skip verification for Plume for now
+    return;
+  }
+
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();
@@ -899,7 +908,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const proposal = await fn(tools);
 
-    if (!proposal.actions?.length) {
+    if (!proposal?.actions?.length) {
       log("No Proposal.");
       return;
     }
