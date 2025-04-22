@@ -1,0 +1,41 @@
+const { deployOnSonic } = require("../../utils/deploy-l2");
+const addresses = require("../../utils/addresses");
+
+module.exports = deployOnSonic(
+  {
+    deployName: "020_treasury_boostjs",
+  },
+  async ({ ethers }) => {
+    const cOSonic = await ethers.getContractAt(
+      "OSonic",
+      addresses.sonic.OSonicProxy
+    );
+
+    return {
+      actions: [
+        {
+          // Plateform: SwapX
+          // Protocol: Petroleum game
+          // From: OIL/OS --> To: EOA
+          contract: cOSonic,
+          signature: "delegateYield(address,address)",
+          args: [
+            "0x8ce6788f3a56fbcd6bc4d48b01d31ad579cdb94f",
+            "0x6Cde3E2A3F66C916d26d3f3A2eE2E389E903b2b1",
+          ],
+        },
+        {
+          // Plateform: Shadow
+          // Protocol: Muttski
+          // From: WOOF/OS --> To: EOA
+          contract: cOSonic,
+          signature: "delegateYield(address,address)",
+          args: [
+            "0xb47a2388e440135383a895f8c36e0d69c267a14f",
+            "0x9c7F715E651793F00F13b55D58665B58382862D9",
+          ],
+        }
+      ],
+    };
+  }
+);
