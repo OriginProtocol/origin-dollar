@@ -8,6 +8,8 @@ const addresses = require("../../utils/addresses");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "134_vault_woeth_upgrade",
+    proposalId:
+      "49172722703369984622112561793798089212723378488321724356488307408039828925801",
   },
   async ({ ethers }) => {
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
