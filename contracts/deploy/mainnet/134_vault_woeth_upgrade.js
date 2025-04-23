@@ -25,19 +25,15 @@ module.exports = deploymentWithGovernanceProposal(
     const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
       addresses.mainnet.WETH,
     ]);
-    const dOETHVaultAdmin = await deployWithConfirmation(
-      "OETHVaultAdmin",
-      [addresses.mainnet.WETH]
-    );
+    const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+      addresses.mainnet.WETH,
+    ]);
 
     const dwOETH = await deployWithConfirmation("WOETH", [
       cOETHProxy.address, // OETH token
     ]);
 
-    const cwOETH = await ethers.getContractAt(
-      "WOETH",
-      cwOETHProxy.address
-    );
+    const cwOETH = await ethers.getContractAt("WOETH", cwOETHProxy.address);
 
     // ----------------
     // Governance Actions
