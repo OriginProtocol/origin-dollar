@@ -67,9 +67,6 @@ contracts/scripts/defender-actions/dist/
 
 contracts/lib/defender-actions/dist/
 
-# Rooster repo is not public yet, we can not commit this files to Github
-contracts/lib/rooster/
-
 todo.txt
 brownie/env-brownie/
 

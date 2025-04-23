@@ -17,6 +17,8 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { IMaverickV2Pool } from "../../interfaces/plume/IMaverickV2Pool.sol";
 import { IMaverickV2LiquidityManager } from "../../interfaces/plume/IMaverickV2LiquidityManager.sol";
 import { IMaverickV2PoolLens } from "../../interfaces/plume/IMaverickV2PoolLens.sol";
+// importing custom version of rooster TickMath because of dependency collision. Maverick uses
+// a newer OpenZepplin Math library with functionality that is not present in 4.4.2 (the one we use)
 import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
 
 import "hardhat/console.sol";
