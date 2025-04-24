@@ -594,5 +594,10 @@ addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
+addresses.plume.strategist = addresses.multichainStrategist;
+addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+
+addresses.plume.WOETH_OETH_ORACLE_FEED =
+  "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
 
 module.exports = addresses;
