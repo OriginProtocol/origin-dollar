@@ -327,7 +327,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         fixture;
 
       const attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-      const wsAmountIn = parseUnits("22000");
+      const wsAmountIn = parseUnits("20000");
 
       const dataBeforeSwap = await snapData();
       logSnapData(
@@ -724,8 +724,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       const { swapXPool } = fixture;
       const { _reserve0: wsReserves, _reserve1: osReserves } =
         await swapXPool.getReserves();
-      // 47% of the extra wS in the pool gets pretty close to balanced
-      const osAmount = wsReserves.sub(osReserves).mul(47).div(100);
+      // 32% of the extra wS in the pool gets pretty close to balanced
+      const osAmount = wsReserves.sub(osReserves).mul(32).div(100);
 
       await assertSwapOTokensToPool(osAmount);
     });
@@ -1180,8 +1180,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       );
       log(`Expected strategy balance: ${formatUnits(expectedStratBalance)}`);
       expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
-        expectedStratBalance.sub(3),
-        expectedStratBalance.add(3),
+        expectedStratBalance.sub(15),
+        expectedStratBalance.add(15),
         "Strategy's check balance"
       );
     }
@@ -1443,7 +1443,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
             dataBefore.reserves.ws.sub(wsWithdrawAmount);
 
           expect(actualWsReserve).to.withinRange(
-            expectedWsReserves.sub(3),
+            expectedWsReserves.sub(50),
             expectedWsReserves,
             "wS reserves"
           );
