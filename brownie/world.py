@@ -64,6 +64,7 @@ lido_withdrawal_strat = load_contract('lido_withdrawal_strat', OETH_LIDO_WITHDRA
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
 threepool = load_contract("threepool_swap", THREEPOOL)
+ousd_curve_pool = load_contract("ousd_curve_pool", OUSD_CURVE_POOL)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
