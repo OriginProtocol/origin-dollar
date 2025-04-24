@@ -21,7 +21,7 @@ def main():
     print("Pool OUSD   ", "{:.6f}".format(ousdPoolBalance / 10**18), ousdPoolBalance * 100 / totalPool)
     print("Pool Total  ", "{:.6f}".format(totalPool / 10**18))
 
-    # Remove 1k USDC from Morpho Steakhouse Strategy
+    # Remove 100k USDC from Morpho Steakhouse Strategy
     txs.append(
       vault_admin.withdrawFromStrategy(
         MORPHO_META_USDC_STRAT, 
@@ -31,7 +31,7 @@ def main():
       )
     )
 
-    # Remove 1k USDT from Morpho Gauntlet Strategy
+    # Deposit 100k USDC to Curve AMO
     txs.append(
       vault_admin.depositToStrategy(
         OUSD_CURVE_AMO_STRAT, 
