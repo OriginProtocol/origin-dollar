@@ -7,7 +7,8 @@ const { parseUnits } = require("ethers/lib/utils.js");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "135_vault_wousd_upgrade",
-    proposalId: "62736766423374672768580940310861921323283907575465980811344596309308068769219",
+    proposalId:
+      "62736766423374672768580940310861921323283907575465980811344596309308068769219",
   },
   async ({ ethers }) => {
     const cVaultProxy = await ethers.getContract("VaultProxy");
