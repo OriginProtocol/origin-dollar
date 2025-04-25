@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  */
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-//import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -20,13 +20,15 @@ import { IMaverickV2PoolLens } from "../../interfaces/plume/IMaverickV2PoolLens.
 // importing custom version of rooster TickMath because of dependency collision. Maverick uses
 // a newer OpenZepplin Math library with functionality that is not present in 4.4.2 (the one we use)
 import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
+import { ONE } from "../../../lib/rooster/v2-common/libraries/Constants.sol";
+import { Math as Math_v2 } from "../../../lib/rooster/v2-common/libraries/Math.sol";
 
 import "hardhat/console.sol";
 
 contract RoosterAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
-    //using SafeCast for uint256;
+    using SafeCast for uint256;
 
     /************************************************
             Important (!) setup configuration
@@ -103,6 +105,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 allowedWethShareStart,
         uint256 allowedWethShareEnd
     );
+
+    error OutsideExpectedTickRange(int32 currentTick); // 0xacdf6376
+    error PoolRebalanceOutOfBounds(
+        uint256 currentPoolWethShare,
+        uint256 allowedWethShareStart,
+        uint256 allowedWethShareEnd
+    ); // 0x3681e8e0
+    error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
 
     // /**
     //  * @dev Verifies that the caller is the Governor, or Strategist.
@@ -281,7 +291,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         // if the pool price is not within the expected interval leave the WETH on the contract
         // as to not break the mints
-        // (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
+        (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
         // if (_isExpectedRange) {
         //     // deposit funds into the underlying pool
         //     _rebalance(0, false, 0);
@@ -330,6 +340,56 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     {
         IERC20(WETH).approve(address(liquidityManager), type(uint256).max);
         IERC20(OETHp).approve(address(liquidityManager), type(uint256).max);
+    }
+
+    /**
+     * @dev Perform a swap so that after the swap the tick has the desired WETH to OETHp token share.
+     */
+    function _swapToDesiredPosition(
+        uint256 _amountToSwap,
+        bool _swapWeth,
+        uint256 _minTokenReceived
+    ) internal {
+        IERC20 _tokenToSwap = IERC20(_swapWeth ? WETH : OETHp);
+        uint256 _balance = _tokenToSwap.balanceOf(address(this));
+
+        if (_balance < _amountToSwap) {
+            // This should never trigger since _ensureWETHBalance will already
+            // throw an error if there is not enough WETH
+            if (_swapWeth) {
+                revert NotEnoughWethForSwap(_balance, _amountToSwap);
+            }
+            // if swapping OETHb
+            uint256 mintForSwap = _amountToSwap - _balance;
+            IVault(vaultAddress).mintForStrategy(mintForSwap);
+        }
+
+        if (_swapWeth) {
+            IERC20(WETH).transfer(address(mPool), _amountToSwap);
+        } else {
+            IERC20(OETHp).transfer(address(mPool), _amountToSwap);
+        }
+
+        IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool.SwapParams({
+            amount: _amountToSwap,
+            tokenAIn: _swapWeth,
+            exactOutput: false,
+            tickLimit: tickNumber
+        });
+
+        // swaps without a callback as the assets are already sent to the pool
+        (, uint256 amountOut) = mPool.swap(address(this), swapParams, bytes(""));
+
+        // todo: custom error with exact amount
+        require(amountOut < _minTokenReceived, "Not enough token received");
+
+        /**
+         * In the interest of each function in _rebalance to leave the contract state as
+         * clean as possible the OETHb tokens here are burned. This decreases the
+         * dependence where `_swapToDesiredPosition` function relies on later functions
+         * (`addLiquidity`) to burn the OETHb. Reducing the risk of error introduction.
+         */
+        //_burnOethbOnTheContract();
     }
 
     /***************************************
@@ -439,40 +499,77 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         uint256 _currentPrice = getPoolSqrtPrice();
 
-        // /**
-        //  * First check we are in expected tick range
-        //  *
-        //  * We revert even though price being equal to the lower tick would still
-        //  * count being within lower tick for the purpose of Sugar.estimateAmount calls
-        //  */
-        // if (
-        //     _currentPrice <= sqrtRatioX96TickLower ||
-        //     _currentPrice >= sqrtRatioX96TickHigher
-        // ) {
-        //     if (throwException) {
-        //         revert OutsideExpectedTickRange(getCurrentTradingTick());
-        //     }
-        //     return (false, 0);
-        // }
+        /**
+         * First check we are in expected tick range
+         *
+         * We revert even though price being equal to the lower tick would still
+         * count being within lower tick for the purpose of Sugar.estimateAmount calls
+         */
+        if (
+            _currentPrice <= sqrtPriceTickLower ||
+            _currentPrice >= sqrtPriceTickHigher
+        ) {
+            if (throwException) {
+                revert OutsideExpectedTickRange(getCurrentTradingTick());
+            }
+            return (false, 0);
+        }
 
-        // // 18 decimal number expressed WETH tick share
-        // _wethSharePct = _getWethShare(_currentPrice);
+        // 18 decimal number expressed WETH tick share
+        _wethSharePct = _getWethShare(_currentPrice);
 
-        // if (
-        //     _wethSharePct < allowedWethShareStart ||
-        //     _wethSharePct > allowedWethShareEnd
-        // ) {
-        //     if (throwException) {
-        //         revert PoolRebalanceOutOfBounds(
-        //             _wethSharePct,
-        //             allowedWethShareStart,
-        //             allowedWethShareEnd
-        //         );
-        //     }
-        //     return (false, _wethSharePct);
-        // }
+        if (
+            _wethSharePct < allowedWethShareStart ||
+            _wethSharePct > allowedWethShareEnd
+        ) {
+            if (throwException) {
+                revert PoolRebalanceOutOfBounds(
+                    _wethSharePct,
+                    allowedWethShareStart,
+                    allowedWethShareEnd
+                );
+            }
+            return (false, _wethSharePct);
+        }
 
-        // return (true, _wethSharePct);
+        return (true, _wethSharePct);
+    }
+
+    function _getWethShare(uint256 _currentPrice)
+        internal
+        view
+        returns (uint256)
+    {
+        (
+            IMaverickV2Pool.TickState memory tickState,
+            bool tickLtActive,
+            bool tickGtActive
+        ) = reservesInTickForGivenPrice(mPool, tickNumber, _currentPrice);
+
+        console.log("Tick info");
+        console.log(tickLtActive);
+        console.log(tickGtActive);
+
+        uint256 wethReserve = tickState.reserveA;
+        uint256 oethpReserve = tickState.reserveB;
+
+        console.log("Tick reserves");
+        console.log(wethReserve);
+        console.log(oethpReserve);
+
+        // TODO: how to handle when weth is 0 or a low number?
+        // approach 1: work off of square root prices as the distribution
+        //             of liquidity between them is linear?
+        // approach 2: the _currentPrice shouldn't be 1-2% close to 
+        //             sqrtPriceTickLower or sqrtPriceTickHigher
+        uint256 normalizationFactor = wethReserve / 1e18;
+        // 18 decimal number expressed weth tick share
+        return
+            wethReserve
+            .mulTruncate(normalizationFactor)
+            .divPrecisely(
+                wethReserve + oethpReserve
+            );
     }
 
     /**
@@ -481,6 +578,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function getPoolSqrtPrice() public view returns (uint256) {
         return poolLens.getPoolSqrtPrice(mPool);
+    }
+
+    /**
+     * @notice Returns the current active trading tick of the underlying pool
+     * @return _currentTick Current pool trading tick
+     */
+    function getCurrentTradingTick() public view returns (int32 _currentTick) {
+        _currentTick = mPool.getState().activeTick;
     }
 
     /**
@@ -538,5 +643,41 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     function _abstractSetPToken(address, address) internal override {
         // the deployer shall call safeApproveAllTokens() to set necessary approvals
         revert("Unsupported method");
+    }
+
+    /***************************************
+          Maverick liquidity utilities
+    ****************************************/
+
+    /**
+     * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
+     *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
+     *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
+     */
+    function reservesInTickForGivenPrice(
+        IMaverickV2Pool pool,
+        int32 tick,
+        uint256 newSqrtPrice
+    ) internal view returns (IMaverickV2Pool.TickState memory tickState, bool tickLtActive, bool tickGtActive) {
+        tickState = pool.getTick(tick);
+        (uint256 lowerSqrtPrice, uint256 upperSqrtPrice) = TickMath.tickSqrtPrices(pool.tickSpacing(), tick);
+
+        tickGtActive = newSqrtPrice < lowerSqrtPrice;
+        tickLtActive = newSqrtPrice >= upperSqrtPrice;
+
+        uint256 liquidity = TickMath.getTickL(tickState.reserveA, tickState.reserveB, lowerSqrtPrice, upperSqrtPrice);
+
+        if (liquidity == 0) {
+            (tickState.reserveA, tickState.reserveB) = (0, 0);
+        } else {
+            uint256 lowerEdge = Math_v2.max(lowerSqrtPrice, newSqrtPrice);
+
+            tickState.reserveA = Math_v2
+                .mulCeil(liquidity, Math_v2.clip(Math_v2.min(upperSqrtPrice, newSqrtPrice), lowerSqrtPrice))
+                .toUint128();
+            tickState.reserveB = Math_v2
+                .mulDivCeil(liquidity, ONE * Math_v2.clip(upperSqrtPrice, lowerEdge), upperSqrtPrice * lowerEdge)
+                .toUint128();
+        }
     }
 }
