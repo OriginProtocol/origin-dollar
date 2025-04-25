@@ -42,7 +42,9 @@ module.exports = deployOnPlume(
       cAMOStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           cAMOStrategyImpl.address,
-          addresses.plume.governor,
+          // TODO: change governor when needed
+          //addresses.plume.governor,
+          deployerAddr,
           "0x"
         )
     );
@@ -90,12 +92,12 @@ module.exports = deployOnPlume(
           signature: "mintInitialPosition()",
           args: [],
         },
-        // {
-        //   // Safe approve tokens
-        //   contract: cAMOStrategy,
-        //   signature: "donateLiquidity()",
-        //   args: [],
-        // }
+        {
+          // Safe approve tokens
+          contract: cAMOStrategy,
+          signature: "donateLiquidity()",
+          args: [],
+        }
       ],
     };
   }

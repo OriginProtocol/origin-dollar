@@ -1343,7 +1343,6 @@ const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
 const deployOSWETHRoosterAmoPool = async () => {
   const {
     maverickV2LiquidityManager,
-    maverickV2PoolLens,
     cOETHp
   } = await getPlumeContracts();
 
@@ -1353,7 +1352,7 @@ const deployOSWETHRoosterAmoPool = async () => {
 
   const tx = await maverickV2LiquidityManager.createPool(
     1, // fee
-    30, // tickSpacing
+    1, // tickSpacing
     300, // lookback
     //OETHisAddressA ? cOETHp.address : addresses.plume.WETH, // tokenA
     //OETHisAddressA ? addresses.plume.WETH : cOETHp.address, // tokenB
@@ -1368,7 +1367,7 @@ const deployOSWETHRoosterAmoPool = async () => {
     1, // static kind
   );
   const result = await tx.wait()
-  const poolCreated = result.events.find(event => event.event === 'PoolCreated');
+  result.events.find(event => event.event === 'PoolCreated');
 
   //event PoolCreated(IMaverickV2Pool poolAddress, uint8 protocolFeeRatio, uint256 feeAIn, uint256 feeBIn, uint256 tickSpacing, uint256 lookback, int32 activeTick, IERC20 tokenA, IERC20 tokenB, uint8 kinds, address accessor);
   const dataDecoded = ethers.utils.defaultAbiCoder.decode(

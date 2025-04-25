@@ -62,9 +62,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     address public immutable WETH;
     /// @notice The address of the OETHp token contract
     address public immutable OETHp;
-    // /// @notice lower tick set to -1 representing the price of 1.0001 of WETH for 1 OETHb.
+    // /// @notice lower tick set to -1 representing the price of 1.0001 of WETH for 1 OETHp.
     // int24 public immutable lowerTick;
-    // /// @notice lower tick set to 0 representing the price of 1.0000 of WETH for 1 OETHb.
+    // /// @notice lower tick set to 0 representing the price of 1.0000 of WETH for 1 OETHp.
     // int24 public immutable upperTick;
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
@@ -79,6 +79,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     IMaverickV2LiquidityManager public immutable liquidityManager;
     /// @notice the Maverick V2 pool lens
     IMaverickV2PoolLens public immutable poolLens;
+    /// @notice sqrtPriceTickLower
+    /// @dev tick lower represents the lowest price of WETH priced in OETHp. Meaning the pool
+    /// offers less than 1 OETHp for 1 WETH. In other terms to get 1 OETHp the swap needs to offer 1.0001 WETH
+    /// this is where purchasing OETHp with WETH within the liquidity position is most expensive
+    uint256 public immutable sqrtPriceTickLower;
+    /// @notice sqrtPriceTickHigher
+    /// @dev tick higher represents 1:1 price parity of WETH to OETHp
+    uint256 public immutable sqrtPriceTickHigher;
+    /// @notice The tick where the strategy deploys the liquidity to
+    int32 public tickNumber;
 
     // /// @notice helper contract for liquidity and ticker math
     // ISugarHelper public immutable helper;
@@ -87,6 +97,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
+
+
+    event PoolWethShareIntervalUpdated(
+        uint256 allowedWethShareStart,
+        uint256 allowedWethShareEnd
+    );
 
     // /**
     //  * @dev Verifies that the caller is the Governor, or Strategist.
@@ -110,7 +126,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///      set to a zero address.
     /// @param _stratConfig the basic strategy configuration
     /// @param _wethAddress Address of the Erc20 WETH Token contract
-    /// @param _oethpAddress Address of the Erc20 OETHb Token contract
+    /// @param _oethpAddress Address of the Erc20 OETHp Token contract
     /// @param _liquidityManager Address of liquidity manager to add
     ///         the liquidity
     /// @param _mPool Address of the Aerodrome concentrated liquidity pool
@@ -128,7 +144,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
         require(
             address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress,
-            "Only OETHb supported as tokenB"
+            "Only OETHp supported as tokenB"
         );
         require(_liquidityManager != address(0),
             "LiquidityManager zero address not allowed"
@@ -138,8 +154,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
 
         uint256 _tickSpacing = IMaverickV2Pool(_mPool).tickSpacing();
-        // when we generalize AMO we might support other tick spacings
-        // require(_tickSpacing == 15, "Unsupported tickSpacing");
+        require(_tickSpacing == 1, "Unsupported tickSpacing");
+
+        // tickSpacing == 1
+        (sqrtPriceTickLower, sqrtPriceTickHigher) = TickMath.tickSqrtPrices(_tickSpacing, tickNumber);
 
         WETH = _wethAddress;
         OETHp = _oethpAddress;
@@ -151,6 +169,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
         require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
+
+        tickNumber = -1;
 
         // prevent implementation contract to be governed
         _setGovernor(address(0));
@@ -178,111 +198,48 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Donate initial liquidity to the pool that can not be withdrawn
+     * @notice Set allowed pool weth share interval. After the rebalance happens
+     * the share of WETH token in the ticker needs to be withing the specifications
+     * of the interval.
+     *
+     * @param _allowedWethShareStart Start of WETH share interval expressed as 18 decimal amount
+     * @param _allowedWethShareEnd End of WETH share interval expressed as 18 decimal amount
      */
-    function donateLiquidity() external onlyGovernor nonReentrant {
-        int32[] memory ticks = new int32[](1);
-        uint128[] memory relativeLiquidityAmounts = new uint128[](1);
-        ticks[0] = 0;
-        // all liquidity into one tick
-        relativeLiquidityAmounts[0] = 1e18;
-
-        uint256 maxAmountA = 1e18;
-        uint256 slippageFactor = 0.01e18;
-        IMaverickV2PoolLens.AddParamsSpecification memory addSpec = IMaverickV2PoolLens.AddParamsSpecification({
-            slippageFactorD18: slippageFactor,
-            numberOfPriceBreaksPerSide: 0,
-            targetAmount: maxAmountA,
-            targetIsA: true
-        });
-
-        int32 activeTick = mPool.getState().activeTick;
-        console.log("activeTick");
-        console.log(activeTick == 0); // true
-
-        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/maverickv2poollens#getaddliquidityparams
-        (,,,IMaverickV2Pool.AddLiquidityParams[] memory addParams, ) = poolLens.getAddLiquidityParams(IMaverickV2PoolLens.AddParamsViewInputs({
-            pool: mPool,
-            kind: 0, // static kind
-            ticks: ticks,
-            relativeLiquidityAmounts: relativeLiquidityAmounts,
-            addSpec: addSpec
-        }));
-
-        console.log("addParams.length");
-        console.log(addParams.length);
-        liquidityManager.donateLiquidity(mPool, addParams[0]);
-    }
-
-    /**
-     * @notice Mint the initial NFT position
-     */
-    function mintInitialPosition() external onlyGovernor nonReentrant {
-        require(tokenId == 0, "NFT already minted");
-
-        console.log("POol tick spacing");
-        console.log(mPool.tickSpacing());
-        (uint256 sqrtLowerTickPrice, uint256 sqrtUpperTickPrice) = TickMath.tickSqrtPrices(
-            mPool.tickSpacing(), // 30
-            -1 // active tick upon pool deployment
+    function setAllowedPoolWethShareInterval(
+        uint256 _allowedWethShareStart,
+        uint256 _allowedWethShareEnd
+    ) external onlyGovernor {
+        require(
+            _allowedWethShareStart < _allowedWethShareEnd,
+            "Invalid interval"
         );
-        // sqrt price is price of B in terms of A
-        (uint256 sqrtPrice, uint256 liquidity) = TickMath.getTickSqrtPriceAndL(
-            200, // reserveA - WETH
-            1000, // reserveB - OETHb
-            sqrtLowerTickPrice,
-            sqrtUpperTickPrice
+        // can not go below 1% weth share
+        require(_allowedWethShareStart > 0.01 ether, "Invalid interval start");
+        // can not go above 95% weth share
+        require(_allowedWethShareEnd < 0.95 ether, "Invalid interval end");
+
+        allowedWethShareStart = _allowedWethShareStart;
+        allowedWethShareEnd = _allowedWethShareEnd;
+        emit PoolWethShareIntervalUpdated(
+            allowedWethShareStart,
+            allowedWethShareEnd
         );
-
-        console.log("Square root prices tick 0");
-        console.log(sqrtLowerTickPrice);
-        console.log(sqrtUpperTickPrice);
-        console.log(sqrtPrice);
-        console.log(liquidity);
-        IVault(vaultAddress).mintForStrategy(1e18 * 2);
-        console.log("WETH & OETHp balances");
-        console.log(IERC20(WETH).balanceOf(address(this)));
-        console.log(IERC20(OETHp).balanceOf(address(this)));
-
-        int32[] memory ticks = new int32[](1);
-        uint128[] memory relativeLiquidityAmounts = new uint128[](1);
-        ticks[0] = -1;
-        // all liquidity into one tick
-        relativeLiquidityAmounts[0] = 1e18;
-
-        uint256 maxAmountA = 1e18;
-        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/interfaces/imaverickv2poollens#addparamsspecification
-        IMaverickV2PoolLens.AddParamsSpecification memory addSpec = IMaverickV2PoolLens.AddParamsSpecification({
-            slippageFactorD18: 0.01e18,
-            numberOfPriceBreaksPerSide: 0,
-            targetAmount: maxAmountA,
-            targetIsA: false
-        });
-
-        int32 activeTick = mPool.getState().activeTick;
-        console.log("activeTick");
-        console.log(activeTick == -1); // true
-
-        // see documentation: https://docs.mav.xyz/technical-reference/maverick-v2/v2-contracts/maverick-v2-supplemental-contracts/maverickv2poollens#getaddliquidityparams
-        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs, , , ) = poolLens.getAddLiquidityParams(IMaverickV2PoolLens.AddParamsViewInputs({
-            pool: mPool,
-            kind: 0, // static kind
-            ticks: ticks,
-            relativeLiquidityAmounts: relativeLiquidityAmounts,
-            addSpec: addSpec
-        }));
-        console.log("getAddLiquidityParams called");
-
-        (uint256 amountA, uint256 amountB, , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(mPool, packedSqrtPriceBreaks, packedArgs);
-        // Store the tokenId
-        tokenId = _tokenId;
     }
 
     /***************************************
                 Periphery utils
     ****************************************/
 
-    // todo periphery
+    // function _isLpTokenStakedInGauge() internal view returns (bool) {
+    //     require(tokenId != 0, "Missing NFT LP token");
+
+    //     address owner = positionManager.ownerOf(tokenId);
+    //     require(
+    //         owner == address(clGauge) || owner == address(this),
+    //         "Unexpected token owner"
+    //     );
+    //     return owner == address(clGauge);
+    // }
 
     /***************************************
                Strategy overrides 
@@ -320,6 +277,15 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     function _deposit(address _asset, uint256 _amount) internal {
         require(_asset == WETH, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
+        emit Deposit(_asset, address(0), _amount);
+
+        // if the pool price is not within the expected interval leave the WETH on the contract
+        // as to not break the mints
+        // (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
+        // if (_isExpectedRange) {
+        //     // deposit funds into the underlying pool
+        //     _rebalance(0, false, 0);
+        // }
     }
 
     /**
@@ -364,6 +330,171 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     {
         IERC20(WETH).approve(address(liquidityManager), type(uint256).max);
         IERC20(OETHp).approve(address(liquidityManager), type(uint256).max);
+    }
+
+    /***************************************
+              Liquidity management
+    ****************************************/
+
+    /**
+     * @notice Donate initial liquidity to the pool that can not be withdrawn
+     */
+    function donateLiquidity() external onlyGovernor nonReentrant {
+        (,,IMaverickV2Pool.AddLiquidityParams[] memory addParams) = _addLiquidity(1e18, 1e18);
+
+        IVault(vaultAddress).mintForStrategy(1e18);
+        liquidityManager.donateLiquidity(mPool, addParams[0]);
+        // Burn remaining OETHp
+        IVault(vaultAddress).burnForStrategy(IERC20(OETHp).balanceOf(address(this)));
+    }
+
+    /// @dev creates add liquidity view input params with default values. The `targetAmount` & `targetIsA` need to be
+    ///      overridden
+    function _createAddLiquidityParams() internal returns (IMaverickV2PoolLens.AddParamsViewInputs memory){
+        int32[] memory ticks = new int32[](1);
+        uint128[] memory relativeLiquidityAmounts = new uint128[](1);
+        // add all liquidity into a single tick
+        ticks[0] = tickNumber;
+        // all liquidity into one tick
+        relativeLiquidityAmounts[0] = 1e18;
+
+        IMaverickV2PoolLens.AddParamsSpecification memory addSpec = IMaverickV2PoolLens.AddParamsSpecification({
+            slippageFactorD18: 0.01e18,
+            numberOfPriceBreaksPerSide: 0,
+            targetAmount: 1e18, // is altered later
+            targetIsA: false // can be altered later
+        });
+
+        return IMaverickV2PoolLens.AddParamsViewInputs({
+            pool: mPool,
+            kind: 0, // static kind
+            ticks: ticks,
+            relativeLiquidityAmounts: relativeLiquidityAmounts,
+            addSpec: addSpec
+        });
+    }
+
+    function _addLiquidity(uint256 maxWETH, uint256 maxOETHp)
+        internal
+        returns (
+            bytes memory packedSqrtPriceBreaks,
+            bytes[] memory packedArgs,
+            IMaverickV2Pool.AddLiquidityParams[] memory addParams
+        )
+    {
+        IMaverickV2Pool.TickState memory tickState = mPool.getTick(tickNumber);
+        IMaverickV2PoolLens.AddParamsViewInputs memory params = _createAddLiquidityParams();
+
+        // tick has no WETH liquidity
+        if (tickState.reserveA == 0) {
+            params.addSpec.targetAmount = maxOETHp;
+            params.addSpec.targetIsA = false;
+            (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
+
+        // tick has no OETHp liquidity
+        } else if (tickState.reserveB == 0) {
+            // we only need to check targetIsA = true
+            params.addSpec.targetAmount = maxWETH;
+            params.addSpec.targetIsA = true;
+            (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
+        // tick has liquidity of both tokens
+        } else {
+            // we need to check both
+            params.addSpec.targetAmount = maxWETH;
+            params.addSpec.targetIsA = true;
+            IMaverickV2PoolLens.TickDeltas[] memory tickDeltas;
+            (packedSqrtPriceBreaks, packedArgs,, addParams, tickDeltas) = poolLens.getAddLiquidityParams(params);
+            if (tickDeltas[0].deltaBOut > maxOETHp) {
+                // we know the params didn't meet out max spec.  we are asking for more OETHp than we want to spend.  
+                // do the call again with OETHp as the target.  
+               params.addSpec.targetAmount = maxOETHp;
+               params.addSpec.targetIsA = false;
+               (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
+            }
+        }
+
+    }
+
+    /**
+     * @dev Check that the Rooster pool price is within the expected
+     *      parameters.
+     *      This function works whether the strategy contract has liquidity
+     *      position in the pool or not. The function returns _wethSharePct
+     *      as a gas optimization measure.
+     * @param throwException  when set to true the function throws an exception
+     *        when pool's price is not within expected range.
+     * @return _isExpectedRange  Bool expressing price is within expected range
+     * @return _wethSharePct  Share of WETH owned by this strategy contract in the
+     *         configured ticker.
+     */
+    function _checkForExpectedPoolPrice(bool throwException)
+        internal
+        view
+        returns (bool _isExpectedRange, uint256 _wethSharePct)
+    {
+        require(
+            allowedWethShareStart != 0 && allowedWethShareEnd != 0,
+            "Weth share interval not set"
+        );
+
+        uint256 _currentPrice = getPoolSqrtPrice();
+
+        // /**
+        //  * First check we are in expected tick range
+        //  *
+        //  * We revert even though price being equal to the lower tick would still
+        //  * count being within lower tick for the purpose of Sugar.estimateAmount calls
+        //  */
+        // if (
+        //     _currentPrice <= sqrtRatioX96TickLower ||
+        //     _currentPrice >= sqrtRatioX96TickHigher
+        // ) {
+        //     if (throwException) {
+        //         revert OutsideExpectedTickRange(getCurrentTradingTick());
+        //     }
+        //     return (false, 0);
+        // }
+
+        // // 18 decimal number expressed WETH tick share
+        // _wethSharePct = _getWethShare(_currentPrice);
+
+        // if (
+        //     _wethSharePct < allowedWethShareStart ||
+        //     _wethSharePct > allowedWethShareEnd
+        // ) {
+        //     if (throwException) {
+        //         revert PoolRebalanceOutOfBounds(
+        //             _wethSharePct,
+        //             allowedWethShareStart,
+        //             allowedWethShareEnd
+        //         );
+        //     }
+        //     return (false, _wethSharePct);
+        // }
+
+        // return (true, _wethSharePct);
+    }
+
+    /**
+     * @notice Returns the current pool price in square root
+     * @return _sqrtRatioX96 Pool price
+     */
+    function getPoolSqrtPrice() public view returns (uint256) {
+        return poolLens.getPoolSqrtPrice(mPool);
+    }
+
+    /**
+     * @notice Mint the initial NFT position
+     */
+    function mintInitialPosition() external onlyGovernor nonReentrant {
+        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs,) = _addLiquidity(1e18, 1e18);
+        IVault(vaultAddress).mintForStrategy(1e18);
+        (,,, uint256 _tokenId) = liquidityManager.mintPositionNftToSender(mPool, packedSqrtPriceBreaks, packedArgs);
+        // Burn remaining OETHp
+        IVault(vaultAddress).burnForStrategy(IERC20(OETHp).balanceOf(address(this)));
+
+        // Store the tokenId
+        tokenId = _tokenId;
     }
 
     /***************************************
