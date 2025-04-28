@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1744987946,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0x92A19381444A001d62cE67BaFF066fA1111d7202",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0xf817cb3092179083c48c014688D98B72fB61464f",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          }
+        ],
+        "name": "executeBatch",
+        "payable": true
+      },
+      "contractInputsValues": {
+        "targets": "[\"0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93\",\"0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93\",\"0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93\",\"0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93\",\"0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6\",\"0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6\"]",
+        "values": "[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\"]",
+        "payloads": "[\"0x3659cfe6000000000000000000000000e1b612b654891e0b311069b2aa0ac0e2a48be4a2\",\"0xfc0cfeee000000000000000000000000b08442bab7ae5b12db276e4f0cd74f7d7c227dae\",\"0x0493a0fa0000000000000000000000000000000000000000000000000000000000003840\",\"0xb4925a20000000000000000000000000000000000000000000000001158e460913d00000\",\"0x3659cfe6000000000000000000000000b1e25689d55734fd3fffc939c4c3eb52dff8a794\",\"0x472abf68\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x9974de0f235d9d5815fd07be233c45814da34f359e7cf9f58a138a3a4c0f06b6"
+      }
+    }
+  ]
+}
