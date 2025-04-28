@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -35,5 +35,7 @@ contract VaultInitializer is VaultStorage {
         rebaseThreshold = 1000e18;
         // Initialize all strategies
         allStrategies = new address[](0);
+        // Start with drip duration disabled
+        dripDuration = 1;
     }
 }

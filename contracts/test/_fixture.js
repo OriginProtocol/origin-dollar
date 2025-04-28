@@ -44,6 +44,8 @@ const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
 const oethMetapoolAbi = require("./abi/oethMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
+const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
+const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits } = require("ethers/lib/utils");
@@ -77,6 +79,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     OETHVaultProxy.address
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+
+  const cWOETHProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
 
   const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const oethHarvester = await ethers.getContractAt(
@@ -199,6 +204,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     // OETH
     oethVault,
     oeth,
+    woeth,
     nativeStakingSSVStrategy,
     oethDripper,
     oethFixedRateDripper,
@@ -228,12 +234,12 @@ const getVaultAndTokenConracts = async () => {
   );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  let woeth, woethProxy, mockNonRebasing, mockNonRebasingTwo;
+  let mockNonRebasing, mockNonRebasingTwo;
 
-  if (isFork) {
-    woethProxy = await ethers.getContract("WOETHProxy");
-    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
-  } else {
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  if (!isFork) {
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
     await mockNonRebasing.setOUSD(ousd.address);
@@ -677,6 +683,22 @@ const defaultFixture = deployments.createFixture(async () => {
         oethFixedRateDripperProxy.address
       );
 
+  const OUSDCurveAMOProxy = isFork
+    ? await ethers.getContract("OUSDCurveAMOProxy")
+    : undefined;
+  const OUSDCurveAMO = isFork
+    ? await ethers.getContractAt("CurveAMOStrategy", OUSDCurveAMOProxy.address)
+    : undefined;
+
+  const curvePoolOusdUsdc = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.mainnet.curve.OUSD_USDC.pool
+  );
+  const curveGaugeOusdUsdc = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.mainnet.curve.OUSD_USDC.gauge
+  );
+
   let usdt,
     usds,
     tusd,
@@ -973,7 +995,7 @@ const defaultFixture = deployments.createFixture(async () => {
   if (!isFork) {
     await fundAccounts();
 
-    // Matt and Josh each have $100 OUSD
+    // Matt and Josh each have $100 OUSD & 100 OETH
     for (const user of [matt, josh]) {
       await usds
         .connect(user)
@@ -981,6 +1003,13 @@ const defaultFixture = deployments.createFixture(async () => {
       await vaultAndTokenConracts.vault
         .connect(user)
         .mint(usds.address, usdsUnits("100"), 0);
+
+      // Fund WETH contract
+      await hardhatSetBalance(user.address, "500");
+      await weth.connect(user).deposit({ value: oethUnits("100") });
+      await weth
+        .connect(user)
+        .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
     }
   }
   return {
@@ -1069,6 +1098,9 @@ const defaultFixture = deployments.createFixture(async () => {
     curvePoolBooster,
     simpleOETHHarvester,
     oethFixedRateDripper,
+    OUSDCurveAMO,
+    curvePoolOusdUsdc,
+    curveGaugeOusdUsdc,
 
     // OETH
     oethVaultValueChecker,
@@ -2225,6 +2257,30 @@ async function hackedVaultFixture() {
 }
 
 /**
+ * Instant rebase vault, for testing systems external to the vault
+ */
+async function instantRebaseVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { deploy } = deployments;
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("MockVaultCoreInstantRebase", {
+    from: governorAddr,
+  });
+  const instantRebase = await ethers.getContract("MockVaultCoreInstantRebase");
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  await cVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  await cOETHVaultProxy.connect(sGovernor).upgradeTo(instantRebase.address);
+
+  return fixture;
+}
+
+/**
  * Configure a reborn hack attack
  */
 async function rebornFixture() {
@@ -2491,6 +2547,7 @@ module.exports = {
   aaveFixture,
   morphoAaveFixture,
   hackedVaultFixture,
+  instantRebaseVaultFixture,
   rebornFixture,
   balancerREthFixture,
   nativeStakingSSVStrategyFixture,

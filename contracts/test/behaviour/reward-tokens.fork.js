@@ -48,7 +48,18 @@ const shouldHaveRewardTokensConfigured = (context) => {
   describe("Reward Tokens", () => {
     it("Should have swap config for all reward tokens from strategies", async () => {
       let { vault, harvester, expectedConfigs, ignoreTokens } = context();
-      const strategies = await vault.getAllStrategies();
+      let strategies = await vault.getAllStrategies();
+      let harvesterAddresses = await Promise.all(
+        strategies.map(async (s) => {
+          const strategy = await ethers.getContractAt("IStrategy", s);
+          const harvesterAddress = await strategy.harvesterAddress();
+          return harvesterAddress;
+        })
+      );
+      strategies = strategies.filter((_, i) => {
+        // Remove strategy from tests if harvester is the multichainStrategist
+        return harvesterAddresses[i] != addresses.multichainStrategist;
+      });
 
       expectedConfigs = Object.keys(expectedConfigs).reduce(
         (o, k) => ({

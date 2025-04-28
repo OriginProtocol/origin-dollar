@@ -12,6 +12,7 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -1028,6 +1029,12 @@ const deployOUSDCore = async () => {
     cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
+
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .setRebaseRateMax(ethers.utils.parseUnits("200", 18))
+  );
 };
 
 /**
@@ -1221,8 +1228,6 @@ const deployWOusd = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
-    "Wrapped OUSD IMPL",
-    "WOUSD IMPL",
   ]);
   await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -1234,6 +1239,26 @@ const deployWOusd = async () => {
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
   ](dWrappedOusdImpl.address, governorAddr, initData);
+};
+
+const deployWOeth = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
+    oeth.address,
+  ]);
+  await deployWithConfirmation("WOETHProxy");
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  const initData = woeth.interface.encodeFunctionData("initialize()", []);
+
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dWrappedOethImpl.address, governorAddr, initData);
 };
 
 const deployOETHSwapper = async () => {
@@ -1398,6 +1423,49 @@ const getPlumeContracts = async () => {
   };
 };
 
+const deploySonicSwapXAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy = await deployWithConfirmation(
+    "SonicSwapXAMOStrategy",
+    [
+      [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
+      cOSonicProxy.address,
+      addresses.sonic.wS,
+      addresses.sonic.SwapXWSOS.gauge,
+    ]
+  );
+  const cSonicSwapXAMOStrategy = await ethers.getContractAt(
+    "SonicSwapXAMOStrategy",
+    cSonicSwapXAMOStrategyProxy.address
+  );
+  // Initialize Sonic Curve AMO Strategy implementation
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.sonic.SWPx], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cSonicSwapXAMOStrategyProxy
+          .connect(sDeployer)["initialize(address,address,bytes)"](
+            dSonicSwapXAMOStrategy.address,
+            addresses.sonic.timelock,
+            initData
+          )
+  );
+
+  return cSonicSwapXAMOStrategy;
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1423,6 +1491,7 @@ module.exports = {
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOeth,
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
@@ -1430,5 +1499,6 @@ module.exports = {
   deployBaseAerodromeAMOStrategyImplementation,
   deployPlumeRoosterAMOStrategyImplementation,
   deployOSWETHRoosterAmoPool,
-  getPlumeContracts
+  getPlumeContracts,
+  deploySonicSwapXAMOStrategyImplementation,
 };

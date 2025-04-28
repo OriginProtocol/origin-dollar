@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
@@ -39,8 +39,15 @@ contract SonicStakingStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OSonicHarvesterProxy delegates calls to a OETHHarvesterSimple implementation
+ * @notice OSonicHarvesterProxy delegates calls to a OSonicHarvester implementation
  */
 contract OSonicHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice SonicSwapXAMOStrategyProxy delegates calls to a SonicSwapXAMOStrategy implementation
+ */
+contract SonicSwapXAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

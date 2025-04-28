@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { Strategizable } from "../governance/Strategizable.sol";
@@ -48,6 +48,9 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     constructor(address _wrappedNativeToken) {
         wrappedNativeToken = _wrappedNativeToken;
+
+        // prevent implementation contract to be governed
+        _setGovernor(address(0));
     }
 
     /// @notice Initialize the contract

@@ -249,7 +249,7 @@ const executeGovernanceProposalOnFork = async ({
   reduceQueueTime,
   executeGasLimit = null,
   existingProposal = false,
-  executionRetries,
+  executionRetries = 0,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
@@ -415,7 +415,7 @@ const executeGovernanceProposalOnFork = async ({
     }
   }
 
-  // Ensure executionRetries is always a number
+  // Just making sure that there's always a valid number
   executionRetries = parseInt(executionRetries) || 0;
 
   while (executionRetries > -1) {
@@ -433,7 +433,7 @@ const executeGovernanceProposalOnFork = async ({
         });
     } catch (e) {
       console.error(e);
-      if (executionRetries === -1) {
+      if (executionRetries <= -1) {
         throw e;
       } else {
         // Wait for 3 seconds before retrying
@@ -835,6 +835,21 @@ async function simulateWithTimelockImpersonation(proposal) {
   }
 }
 
+async function simulateWithTimelockImpersonation(proposal) {
+  log("Simulating the proposal directly on the timelock...");
+  const { timelockAddr } = await getNamedAccounts();
+  const timelock = await impersonateAndFund(timelockAddr);
+
+  for (const action of proposal.actions) {
+    const { contract, signature, args } = action;
+
+    log(`Sending governance action ${signature} to ${contract.address}`);
+    await contract.connect(timelock)[signature](...args, await getTxOpts());
+
+    console.log(`... ${signature} completed`);
+  }
+}
+
 /**
  * Shortcut to create a deployment on decentralized Governance (xOGN) for hardhat to use
  * @param {Object} options for deployment
@@ -893,7 +908,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const proposal = await fn(tools);
 
-    if (!proposal.actions?.length) {
+    if (!proposal?.actions?.length) {
       log("No Proposal.");
       return;
     }
@@ -1157,9 +1172,10 @@ async function createPoolBoosterSonic({
   pools,
   salt,
   split = null,
-  type = "Single", // "Single" or "Double"
+  type = "Single", // "Single" - "Double" - "Metropolis"
   signatureSingle = "createPoolBoosterSwapxSingle(address,address,uint256)",
   signatureDouble = "createPoolBoosterSwapxDouble(address,address,address,uint256,uint256)",
+  signatureMetropolis = "createPoolBoosterMetropolis(address,uint256)",
 }) {
   const poolBoosterCreationArgs = {};
   const poolBoosterComputedAddresses = {};
@@ -1170,20 +1186,37 @@ async function createPoolBoosterSonic({
   await Promise.all(
     pools.map(async (pool) => {
       const current = getAddress(pool);
-      if (!current?.extBribeOS || !current?.pool) {
-        throw new Error(`Missing required properties for pool: ${pool}`);
+      if (type === "Single" && (!current?.extBribeOS || !current?.pool)) {
+        throw new Error(
+          `Missing required properties for Single pool: ${pool}. Need pool and extBribeOS.`
+        );
+      } else if (
+        type === "Double" &&
+        (!current?.extBribeOS || !current?.extBribeOther || !current?.pool)
+      ) {
+        throw new Error(
+          `Missing required properties for Double pool: ${pool}. Need pool, extBribeOS, and extBribeOther.`
+        );
+      } else if (type === "Metropolis" && !current?.pool) {
+        throw new Error(
+          `Missing required properties for Metropolis pool: ${pool}. Need pool.`
+        );
       }
 
-      const args =
-        type === "Single"
-          ? [current.extBribeOS, current.pool, salt]
-          : [
-              current.extBribeOS,
-              current.extBribeOther,
-              current.pool,
-              split,
-              salt,
-            ];
+      let args;
+      if (type === "Single") {
+        args = [current.extBribeOS, current.pool, salt];
+      } else if (type === "Double") {
+        args = [
+          current.extBribeOS,
+          current.extBribeOther,
+          current.pool,
+          split,
+          salt,
+        ];
+      } else if (type === "Metropolis") {
+        args = [current.pool, salt];
+      }
 
       if (args.some((arg) => arg === undefined)) {
         throw new Error(`Undefined argument found for pool: ${pool}`);
@@ -1210,7 +1243,14 @@ async function createPoolBoosterSonic({
       );
     }
 
-    const signature = type === "Single" ? signatureSingle : signatureDouble;
+    let signature;
+    if (type === "Single") {
+      signature = signatureSingle;
+    } else if (type === "Double") {
+      signature = signatureDouble;
+    } else if (type === "Metropolis") {
+      signature = signatureMetropolis;
+    }
 
     return [
       {

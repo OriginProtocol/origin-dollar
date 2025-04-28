@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -56,6 +56,8 @@ contract VaultStorage is Initializable, Governable {
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event DripperChanged(address indexed _dripper);
+    event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
+    event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -69,6 +71,12 @@ contract VaultStorage is Initializable, Governable {
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
+
+    // Since we are proxy, all state should be uninitalized.
+    // Since this storage contract does not have logic directly on it
+    // we should not be checking for to see if these variables can be constant.
+    // slither-disable-start uninitialized-state
+    // slither-disable-start constable-states
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -88,10 +96,8 @@ contract VaultStorage is Initializable, Governable {
     }
 
     /// @dev mapping of supported vault assets to their configuration
-    // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     /// @dev list of all assets supported by the vault.
-    // slither-disable-next-line uninitialized-state
     address[] internal allAssets;
 
     // Strategies approved for use by the Vault
@@ -100,19 +106,17 @@ contract VaultStorage is Initializable, Governable {
         uint256 _deprecated; // Deprecated storage slot
     }
     /// @dev mapping of strategy contracts to their configuration
-    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) public strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
 
     /// @notice Address of the Oracle price provider contract
-    // slither-disable-next-line uninitialized-state
     address public priceProvider;
     /// @notice pause rebasing if true
-    bool public rebasePaused = false;
+    bool public rebasePaused;
     /// @notice pause operations that change the OToken supply.
     /// eg mint, redeem, allocate, mint/burn for strategy
-    bool public capitalPaused = true;
+    bool public capitalPaused;
     /// @notice Redemption fee in basis points. eg 50 = 0.5%
     uint256 public redeemFeeBps;
     /// @notice Percentage of assets to keep in Vault to handle (most) withdrawals. 100% = 1e18.
@@ -123,7 +127,6 @@ contract VaultStorage is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
-    // slither-disable-next-line uninitialized-state
     OUSD public oUSD;
 
     /// @dev Storage slot for the address of the VaultAdmin contract that is delegated to
@@ -132,11 +135,9 @@ contract VaultStorage is Initializable, Governable {
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     /// @dev Address of the contract responsible for post rebase syncs with AMMs
-    // slither-disable-next-line constable-states
     address private _deprecated_rebaseHooksAddr = address(0);
 
     /// @dev Deprecated: Address of Uniswap
-    // slither-disable-next-line constable-states
     address private _deprecated_uniswapAddr = address(0);
 
     /// @notice Address of the Strategist
@@ -144,11 +145,9 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    // slither-disable-next-line uninitialized-state
     mapping(address => address) public assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
-    // slither-disable-next-line uninitialized-state
     uint256 public maxSupplyDiff;
 
     /// @notice Trustee contract that can collect a percentage of yield
@@ -164,19 +163,13 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
 
-    // slither-disable-start constable-states
-    // slither-disable-next-line uninitialized-state
     address public ousdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
-    // slither-disable-next-line uninitialized-state
     int256 public netOusdMintedForStrategy;
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
-    // slither-disable-next-line uninitialized-state
     uint256 public netOusdMintForStrategyThreshold;
-
-    // slither-disable-end constable-states
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -194,15 +187,11 @@ contract VaultStorage is Initializable, Governable {
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
-    // slither-disable-next-line uninitialized-state
     mapping(address => bool) public isMintWhitelistedStrategy;
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
-    // slither-disable-start constable-states
-    // slither-disable-next-line uninitialized-state
     address public dripper;
-    // slither-disable-end constable-states
 
     /// Withdrawal Queue Storage /////
 
@@ -222,7 +211,6 @@ contract VaultStorage is Initializable, Governable {
     /// claimable - cumulative total of all the requests that can be claimed including the ones already claimed
     /// claimed - total of all the requests that have been claimed
     /// nextWithdrawalIndex - index of the next withdrawal request starting at 0
-    // slither-disable-next-line uninitialized-state
     WithdrawalQueueMetadata public withdrawalQueueMetadata;
 
     struct WithdrawalRequest {
@@ -242,13 +230,31 @@ contract VaultStorage is Initializable, Governable {
     /// @notice Sets a minimum delay that is required to elapse between
     ///     requesting async withdrawals and claiming the request.
     ///     When set to 0 async withdrawals are disabled.
-    // slither-disable-start constable-states
-    // slither-disable-next-line uninitialized-state
     uint256 public withdrawalClaimDelay;
-    // slither-disable-end constable-states
+
+    /// @notice Time in seconds that the vault last rebased yield.
+    uint64 public lastRebase;
+
+    /// @notice Automatic rebase yield calculations. In seconds. Set to 0 or 1 to disable.
+    uint64 public dripDuration;
+
+    /// @notice max rebase percentage per second
+    ///   Can be used to set maximum yield of the protocol,
+    ///   spreading out yield over time
+    uint64 public rebasePerSecondMax;
+
+    /// @notice target rebase rate limit, based on past rates and funds available.
+    uint64 public rebasePerSecondTarget;
+
+    uint256 internal constant MAX_REBASE = 0.02 ether;
+    uint256 internal constant MAX_REBASE_PER_SECOND =
+        uint256(0.05 ether) / 1 days;
 
     // For future use
-    uint256[44] private __gap;
+    uint256[43] private __gap;
+
+    // slither-disable-end constable-states
+    // slither-disable-end uninitialized-state
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

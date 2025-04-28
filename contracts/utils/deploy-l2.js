@@ -483,14 +483,12 @@ function deployOnPlume(opts, fn) {
   return deployOnL2WithGuardianOrTimelock(
     {
       ...opts,
-      // TODO: No timelock on Plume yet
-      useTimelock: false,
       forceSkip:
         opts.forceSkip ||
         !(
           isPlumeFork ||
           hre.network.name == "plume" ||
-          hre.network.config.chainId == 98867
+          hre.network.config.chainId == 98866
         ),
     },
     fn,

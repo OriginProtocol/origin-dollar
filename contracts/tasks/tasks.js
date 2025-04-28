@@ -111,6 +111,8 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 
+const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+
 // can not import from utils/deploy since that imports hardhat globally
 const withConfirmation = async (deployOrTransactionPromise) => {
   const hre = require("hardhat");
@@ -685,7 +687,7 @@ task("curvePool").setAction(async (_, __, runSuper) => {
 });
 
 // Curve Pools
-subtask("amoStrat", "Dumps the current state of a AMO strategy")
+subtask("amoStrat", "Dumps the current state of an AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
   .addOptionalParam(
     "block",
@@ -704,6 +706,12 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     "true will output to the console. false will use debug logs.",
     true,
     types.boolean
+  )
+  .addOptionalParam(
+    "amm",
+    "Type of pool. eg curve, balancer or swapx",
+    "curve",
+    types.string
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
@@ -1818,3 +1826,20 @@ subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
 task("sonicStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+task("lzBridgeToken")
+  .addParam("amount", "Amount to bridge")
+  .addParam("destnetwork", "Destination network")
+  .addOptionalParam("gaslimit", "Gas limit")
+  .setAction(async (taskArgs) => {
+    await lzBridgeToken(taskArgs, hre);
+  });
+
+task("lzSetConfig")
+  .addParam("destnetwork", "Destination network")
+  .addParam("dvns", "Comma separated list of DVN addresses")
+  .addParam("confirmations", "Number of confirmations")
+  .addParam("dvncount", "Number of required DVNs")
+  .setAction(async (taskArgs) => {
+    await lzSetConfig(taskArgs, hre);
+  });

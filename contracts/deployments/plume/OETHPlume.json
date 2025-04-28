@@ -1,0 +1,1178 @@
+{
+  "address": "0x0C65d500275277ace321f3ee1f3fb92036Ac777c",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "AccountRebasingDisabled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "AccountRebasingEnabled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "GovernorshipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "PendingGovernorshipTransfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalSupply",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "rebasingCredits",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "rebasingCreditsPerToken",
+          "type": "uint256"
+        }
+      ],
+      "name": "TotalSupplyUpdatedHighres",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "source",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "YieldDelegated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "source",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "YieldUndelegated",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "burn",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_newTotalSupply",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeSupply",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "creditsBalanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "creditsBalanceOfHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        }
+      ],
+      "name": "delegateYield",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "governanceRebaseOptIn",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_vaultAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_initialCreditsPerToken",
+          "type": "uint256"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isGovernor",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "mint",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "nonRebasingCreditsPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nonRebasingSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebaseOptIn",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebaseOptOut",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "rebaseState",
+      "outputs": [
+        {
+          "internalType": "enum OUSD.RebaseOptions",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCredits",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsPerTokenHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "transferGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_from",
+          "type": "address"
+        }
+      ],
+      "name": "undelegateYield",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "yieldFrom",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "yieldTo",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x56e220ba15794aa15fc58a6c4acdff79c3165d93ef7df5c428a1d1df5cfdb6ad",
+  "receipt": {
+    "to": null,
+    "from": "0x58890A9cB27586E83Cb51d2d26bbE18a1a647245",
+    "contractAddress": "0x0C65d500275277ace321f3ee1f3fb92036Ac777c",
+    "transactionIndex": 1,
+    "gasUsed": "2051320",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000800000000000000000000000000000000001004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000001000000",
+    "blockHash": "0x935403813964255fb200414e88c532beda9d17b94d60ea658ffb4e03b9354629",
+    "transactionHash": "0x56e220ba15794aa15fc58a6c4acdff79c3165d93ef7df5c428a1d1df5cfdb6ad",
+    "logs": [
+      {
+        "transactionIndex": 1,
+        "blockNumber": 535182,
+        "transactionHash": "0x56e220ba15794aa15fc58a6c4acdff79c3165d93ef7df5c428a1d1df5cfdb6ad",
+        "address": "0x0C65d500275277ace321f3ee1f3fb92036Ac777c",
+        "topics": [
+          "0xc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0x935403813964255fb200414e88c532beda9d17b94d60ea658ffb4e03b9354629"
+      }
+    ],
+    "blockNumber": 535182,
+    "cumulativeGasUsed": "2051320",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "1de920a6f7745b41210ffc9b95bb7627",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"AccountRebasingDisabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"AccountRebasingEnabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"GovernorshipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"PendingGovernorshipTransfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalSupply\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"rebasingCredits\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"rebasingCreditsPerToken\",\"type\":\"uint256\"}],\"name\":\"TotalSupplyUpdatedHighres\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"source\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"YieldDelegated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"source\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"YieldUndelegated\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newTotalSupply\",\"type\":\"uint256\"}],\"name\":\"changeSupply\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"claimGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"creditsBalanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"creditsBalanceOfHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"delegateYield\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"governanceRebaseOptIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"governor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_vaultAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_initialCreditsPerToken\",\"type\":\"uint256\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isGovernor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"nonRebasingCreditsPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nonRebasingSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebaseOptIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebaseOptOut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"rebaseState\",\"outputs\":[{\"internalType\":\"enum OUSD.RebaseOptions\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCredits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsPerTokenHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newGovernor\",\"type\":\"address\"}],\"name\":\"transferGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"}],\"name\":\"undelegateYield\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"yieldFrom\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"yieldTo\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"events\":{\"AccountRebasingDisabled(address)\":{\"details\":\"Event triggered when an account opts out of rebasing\",\"params\":{\"account\":\"Address of the account\"}},\"AccountRebasingEnabled(address)\":{\"details\":\"Event triggered when an account opts in for rebasing\",\"params\":{\"account\":\"Address of the account\"}},\"Approval(address,address,uint256)\":{\"details\":\"Emitted when the allowance of a `spender` for an `owner` is set by      a call to {approve}. `value` is the new allowance.\",\"params\":{\"owner\":\"Address of the owner approving allowance\",\"spender\":\"Address of the spender allowance is granted to\",\"value\":\"Amount of tokens spender can transfer\"}},\"TotalSupplyUpdatedHighres(uint256,uint256,uint256)\":{\"details\":\"Event triggered when the supply changes\",\"params\":{\"rebasingCredits\":\"Updated token rebasing credits\",\"rebasingCreditsPerToken\":\"Updated token rebasing credits per token\",\"totalSupply\":\"Updated token total supply\"}},\"Transfer(address,address,uint256)\":{\"details\":\"Emitted when `value` tokens are moved from one account `from` to      another `to`.\",\"params\":{\"from\":\"Address of the account tokens are moved from\",\"to\":\"Address of the account tokens are moved to\",\"value\":\"Amount of tokens transferred\"}},\"YieldDelegated(address,address)\":{\"details\":\"Yield resulting from {changeSupply} that a `source` account would      receive is directed to `target` account.\",\"params\":{\"source\":\"Address of the source forwarding the yield\",\"target\":\"Address of the target receiving the yield\"}},\"YieldUndelegated(address,address)\":{\"details\":\"Yield delegation from `source` account to the `target` account is      suspended.\",\"params\":{\"source\":\"Address of the source suspending yield forwarding\",\"target\":\"Address of the target no longer receiving yield from `source`        account\"}}},\"kind\":\"dev\",\"methods\":{\"allowance(address,address)\":{\"params\":{\"_owner\":\"The address which owns the funds.\",\"_spender\":\"The address which will spend the funds.\"},\"returns\":{\"_0\":\"The number of tokens still available for the _spender.\"}},\"approve(address,uint256)\":{\"params\":{\"_spender\":\"The address which will spend the funds.\",\"_value\":\"The amount of tokens to be spent.\"},\"returns\":{\"_0\":\"true on success.\"}},\"balanceOf(address)\":{\"params\":{\"_account\":\"Address to query the balance of.\"},\"returns\":{\"_0\":\"A uint256 representing the amount of base units owned by the         specified address.\"}},\"changeSupply(uint256)\":{\"params\":{\"_newTotalSupply\":\"New total supply of OUSD.\"}},\"creditsBalanceOf(address)\":{\"details\":\"Backwards compatible with old low res credits per token.\",\"params\":{\"_account\":\"The address to query the balance of.\"},\"returns\":{\"_0\":\"(uint256, uint256) Credit balance and credits per token of the         address\"}},\"creditsBalanceOfHighres(address)\":{\"params\":{\"_account\":\"The address to query the balance of.\"},\"returns\":{\"_0\":\"(uint256, uint256, bool) Credit balance, credits per token of the         address, and isUpgraded\"}},\"decimals()\":{\"details\":\"Returns the number of decimals used to get its user representation.\"},\"governanceRebaseOptIn(address)\":{\"params\":{\"_account\":\"Address of the account.\"}},\"initialize(address,uint256)\":{\"details\":\"Initializes the contract and sets necessary variables.\",\"params\":{\"_initialCreditsPerToken\":\"The starting rebasing credits per token.\",\"_vaultAddress\":\"Address of the vault contract\"}},\"name()\":{\"details\":\"Returns the name of the token.\"},\"rebasingCredits()\":{\"returns\":{\"_0\":\"Low resolution total number of rebasing credits\"}},\"rebasingCreditsHighres()\":{\"returns\":{\"_0\":\"High resolution total number of rebasing credits\"}},\"rebasingCreditsPerToken()\":{\"returns\":{\"_0\":\"Low resolution rebasingCreditsPerToken\"}},\"rebasingCreditsPerTokenHighres()\":{\"returns\":{\"_0\":\"High resolution rebasingCreditsPerToken\"}},\"symbol()\":{\"details\":\"Returns the symbol of the token, a shorter version      of the name.\"},\"transfer(address,uint256)\":{\"params\":{\"_to\":\"the address to transfer to.\",\"_value\":\"the amount to be transferred.\"},\"returns\":{\"_0\":\"true on success.\"}},\"transferFrom(address,address,uint256)\":{\"params\":{\"_from\":\"The address you want to send tokens from.\",\"_to\":\"The address you want to transfer to.\",\"_value\":\"The amount of tokens to be transferred.\"},\"returns\":{\"_0\":\"true on success.\"}},\"transferGovernance(address)\":{\"params\":{\"_newGovernor\":\"Address of the new Governor\"}}},\"title\":\"Super OETH (Plume) Token Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"allowance(address,address)\":{\"notice\":\"Function to check the amount of tokens that _owner has allowed      to `_spender`.\"},\"approve(address,uint256)\":{\"notice\":\"Approve the passed address to spend the specified amount of      tokens on behalf of msg.sender.\"},\"balanceOf(address)\":{\"notice\":\"Gets the balance of the specified address.\"},\"burn(address,uint256)\":{\"notice\":\"Destroys `_amount` tokens from `_account`,     reducing the total supply.\"},\"changeSupply(uint256)\":{\"notice\":\"Distribute yield to users. This changes the exchange rate  between \\\"credits\\\" and OUSD tokens to change rebasing user's balances.\"},\"claimGovernance()\":{\"notice\":\"Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor.\"},\"creditsBalanceOf(address)\":{\"notice\":\"Gets the credits balance of the specified address.\"},\"creditsBalanceOfHighres(address)\":{\"notice\":\"Gets the credits balance of the specified address.\"},\"governanceRebaseOptIn(address)\":{\"notice\":\"The calling account will start receiving yield after a successful call.\"},\"governor()\":{\"notice\":\"Returns the address of the current Governor.\"},\"isGovernor()\":{\"notice\":\"Returns true if the caller is the current Governor.\"},\"mint(address,uint256)\":{\"notice\":\"Creates `_amount` tokens and assigns them to `_account`,     increasing the total supply.\"},\"rebaseOptIn()\":{\"notice\":\"The calling account will start receiving yield after a successful call.\"},\"rebaseOptOut()\":{\"notice\":\"The calling account will no longer receive yield\"},\"transfer(address,uint256)\":{\"notice\":\"Transfer tokens to a specified address.\"},\"transferFrom(address,address,uint256)\":{\"notice\":\"Transfer tokens from one address to another.\"},\"transferGovernance(address)\":{\"notice\":\"Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/token/OETHPlume.sol\":\"OETHPlume\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/math/SafeCast.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/math/SafeCast.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Wrappers over Solidity's uintXX/intXX casting operators with added overflow\\n * checks.\\n *\\n * Downcasting from uint256/int256 in Solidity does not revert on overflow. This can\\n * easily result in undesired exploitation or bugs, since developers usually\\n * assume that overflows raise errors. `SafeCast` restores this intuition by\\n * reverting the transaction when such an operation overflows.\\n *\\n * Using this library instead of the unchecked operations eliminates an entire\\n * class of bugs, so it's recommended to use it always.\\n *\\n * Can be combined with {SafeMath} and {SignedSafeMath} to extend it to smaller types, by performing\\n * all math on `uint256` and `int256` and then downcasting.\\n */\\nlibrary SafeCast {\\n    /**\\n     * @dev Returns the downcasted uint224 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint224).\\n     *\\n     * Counterpart to Solidity's `uint224` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 224 bits\\n     */\\n    function toUint224(uint256 value) internal pure returns (uint224) {\\n        require(value <= type(uint224).max, \\\"SafeCast: value doesn't fit in 224 bits\\\");\\n        return uint224(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint128 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint128).\\n     *\\n     * Counterpart to Solidity's `uint128` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 128 bits\\n     */\\n    function toUint128(uint256 value) internal pure returns (uint128) {\\n        require(value <= type(uint128).max, \\\"SafeCast: value doesn't fit in 128 bits\\\");\\n        return uint128(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint96 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint96).\\n     *\\n     * Counterpart to Solidity's `uint96` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 96 bits\\n     */\\n    function toUint96(uint256 value) internal pure returns (uint96) {\\n        require(value <= type(uint96).max, \\\"SafeCast: value doesn't fit in 96 bits\\\");\\n        return uint96(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint64 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint64).\\n     *\\n     * Counterpart to Solidity's `uint64` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 64 bits\\n     */\\n    function toUint64(uint256 value) internal pure returns (uint64) {\\n        require(value <= type(uint64).max, \\\"SafeCast: value doesn't fit in 64 bits\\\");\\n        return uint64(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint32 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint32).\\n     *\\n     * Counterpart to Solidity's `uint32` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 32 bits\\n     */\\n    function toUint32(uint256 value) internal pure returns (uint32) {\\n        require(value <= type(uint32).max, \\\"SafeCast: value doesn't fit in 32 bits\\\");\\n        return uint32(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint16 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint16).\\n     *\\n     * Counterpart to Solidity's `uint16` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 16 bits\\n     */\\n    function toUint16(uint256 value) internal pure returns (uint16) {\\n        require(value <= type(uint16).max, \\\"SafeCast: value doesn't fit in 16 bits\\\");\\n        return uint16(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted uint8 from uint256, reverting on\\n     * overflow (when the input is greater than largest uint8).\\n     *\\n     * Counterpart to Solidity's `uint8` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 8 bits.\\n     */\\n    function toUint8(uint256 value) internal pure returns (uint8) {\\n        require(value <= type(uint8).max, \\\"SafeCast: value doesn't fit in 8 bits\\\");\\n        return uint8(value);\\n    }\\n\\n    /**\\n     * @dev Converts a signed int256 into an unsigned uint256.\\n     *\\n     * Requirements:\\n     *\\n     * - input must be greater than or equal to 0.\\n     */\\n    function toUint256(int256 value) internal pure returns (uint256) {\\n        require(value >= 0, \\\"SafeCast: value must be positive\\\");\\n        return uint256(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted int128 from int256, reverting on\\n     * overflow (when the input is less than smallest int128 or\\n     * greater than largest int128).\\n     *\\n     * Counterpart to Solidity's `int128` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 128 bits\\n     *\\n     * _Available since v3.1._\\n     */\\n    function toInt128(int256 value) internal pure returns (int128) {\\n        require(value >= type(int128).min && value <= type(int128).max, \\\"SafeCast: value doesn't fit in 128 bits\\\");\\n        return int128(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted int64 from int256, reverting on\\n     * overflow (when the input is less than smallest int64 or\\n     * greater than largest int64).\\n     *\\n     * Counterpart to Solidity's `int64` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 64 bits\\n     *\\n     * _Available since v3.1._\\n     */\\n    function toInt64(int256 value) internal pure returns (int64) {\\n        require(value >= type(int64).min && value <= type(int64).max, \\\"SafeCast: value doesn't fit in 64 bits\\\");\\n        return int64(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted int32 from int256, reverting on\\n     * overflow (when the input is less than smallest int32 or\\n     * greater than largest int32).\\n     *\\n     * Counterpart to Solidity's `int32` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 32 bits\\n     *\\n     * _Available since v3.1._\\n     */\\n    function toInt32(int256 value) internal pure returns (int32) {\\n        require(value >= type(int32).min && value <= type(int32).max, \\\"SafeCast: value doesn't fit in 32 bits\\\");\\n        return int32(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted int16 from int256, reverting on\\n     * overflow (when the input is less than smallest int16 or\\n     * greater than largest int16).\\n     *\\n     * Counterpart to Solidity's `int16` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 16 bits\\n     *\\n     * _Available since v3.1._\\n     */\\n    function toInt16(int256 value) internal pure returns (int16) {\\n        require(value >= type(int16).min && value <= type(int16).max, \\\"SafeCast: value doesn't fit in 16 bits\\\");\\n        return int16(value);\\n    }\\n\\n    /**\\n     * @dev Returns the downcasted int8 from int256, reverting on\\n     * overflow (when the input is less than smallest int8 or\\n     * greater than largest int8).\\n     *\\n     * Counterpart to Solidity's `int8` operator.\\n     *\\n     * Requirements:\\n     *\\n     * - input must fit into 8 bits.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function toInt8(int256 value) internal pure returns (int8) {\\n        require(value >= type(int8).min && value <= type(int8).max, \\\"SafeCast: value doesn't fit in 8 bits\\\");\\n        return int8(value);\\n    }\\n\\n    /**\\n     * @dev Converts an unsigned uint256 into a signed int256.\\n     *\\n     * Requirements:\\n     *\\n     * - input must be less than or equal to maxInt256.\\n     */\\n    function toInt256(uint256 value) internal pure returns (int256) {\\n        // Note: Unsafe cast below is okay because `type(int256).max` is guaranteed to be positive\\n        require(value <= uint256(type(int256).max), \\\"SafeCast: value doesn't fit in an int256\\\");\\n        return int256(value);\\n    }\\n}\\n\",\"keccak256\":\"0x5c6caab697d302ad7eb59c234a4d2dbc965c1bae87709bd2850060b7695b28c7\",\"license\":\"MIT\"},\"contracts/governance/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Base for contracts that are managed by the Origin Protocol's Governor.\\n * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change\\n *      from owner to governor and renounce methods removed. Does not use\\n *      Context.sol like Ownable.sol does for simplification.\\n * @author Origin Protocol Inc\\n */\\nabstract contract Governable {\\n    // Storage position of the owner and pendingOwner of the contract\\n    // keccak256(\\\"OUSD.governor\\\");\\n    bytes32 private constant governorPosition =\\n        0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;\\n\\n    // keccak256(\\\"OUSD.pending.governor\\\");\\n    bytes32 private constant pendingGovernorPosition =\\n        0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;\\n\\n    // keccak256(\\\"OUSD.reentry.status\\\");\\n    bytes32 private constant reentryStatusPosition =\\n        0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;\\n\\n    // See OpenZeppelin ReentrancyGuard implementation\\n    uint256 constant _NOT_ENTERED = 1;\\n    uint256 constant _ENTERED = 2;\\n\\n    event PendingGovernorshipTransfer(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    event GovernorshipTransferred(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n\\n    /**\\n     * @notice Returns the address of the current Governor.\\n     */\\n    function governor() public view returns (address) {\\n        return _governor();\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current Governor.\\n     */\\n    function _governor() internal view returns (address governorOut) {\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            governorOut := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address of the pending Governor.\\n     */\\n    function _pendingGovernor()\\n        internal\\n        view\\n        returns (address pendingGovernor)\\n    {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            pendingGovernor := sload(position)\\n        }\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the Governor.\\n     */\\n    modifier onlyGovernor() {\\n        require(isGovernor(), \\\"Caller is not the Governor\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @notice Returns true if the caller is the current Governor.\\n     */\\n    function isGovernor() public view returns (bool) {\\n        return msg.sender == _governor();\\n    }\\n\\n    function _setGovernor(address newGovernor) internal {\\n        emit GovernorshipTransferred(_governor(), newGovernor);\\n\\n        bytes32 position = governorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\n     * function is not supported. It is possible to prevent this from happening\\n     * by making the `nonReentrant` function external, and make it call a\\n     * `private` function that does the actual work.\\n     */\\n    modifier nonReentrant() {\\n        bytes32 position = reentryStatusPosition;\\n        uint256 _reentry_status;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            _reentry_status := sload(position)\\n        }\\n\\n        // On the first call to nonReentrant, _notEntered will be true\\n        require(_reentry_status != _ENTERED, \\\"Reentrant call\\\");\\n\\n        // Any calls to nonReentrant after this point will fail\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _ENTERED)\\n        }\\n\\n        _;\\n\\n        // By storing the original value once again, a refund is triggered (see\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, _NOT_ENTERED)\\n        }\\n    }\\n\\n    function _setPendingGovernor(address newGovernor) internal {\\n        bytes32 position = pendingGovernorPosition;\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            sstore(position, newGovernor)\\n        }\\n    }\\n\\n    /**\\n     * @notice Transfers Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the current Governor. Must be claimed for this to complete\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function transferGovernance(address _newGovernor) external onlyGovernor {\\n        _setPendingGovernor(_newGovernor);\\n        emit PendingGovernorshipTransfer(_governor(), _newGovernor);\\n    }\\n\\n    /**\\n     * @notice Claim Governance of the contract to a new account (`newGovernor`).\\n     * Can only be called by the new Governor.\\n     */\\n    function claimGovernance() external {\\n        require(\\n            msg.sender == _pendingGovernor(),\\n            \\\"Only the pending Governor can complete the claim\\\"\\n        );\\n        _changeGovernor(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Change Governance of the contract to a new account (`newGovernor`).\\n     * @param _newGovernor Address of the new Governor\\n     */\\n    function _changeGovernor(address _newGovernor) internal {\\n        require(_newGovernor != address(0), \\\"New Governor is address(0)\\\");\\n        _setGovernor(_newGovernor);\\n    }\\n}\\n\",\"keccak256\":\"0xec8e86e43da98835736de1151b86ca13cd8a1a256adc1382ce7030d825521003\",\"license\":\"MIT\"},\"contracts/token/OETHPlume.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { OUSD } from \\\"./OUSD.sol\\\";\\n\\n/**\\n * @title Super OETH (Plume) Token Contract\\n * @author Origin Protocol Inc\\n */\\ncontract OETHPlume is OUSD {\\n    constructor() {\\n        // Nobody owns the implementation contract\\n        _setGovernor(address(0));\\n    }\\n\\n    function symbol() external pure override returns (string memory) {\\n        return \\\"superOETHp\\\";\\n    }\\n\\n    function name() external pure override returns (string memory) {\\n        return \\\"Super OETH\\\";\\n    }\\n\\n    function decimals() external pure override returns (uint8) {\\n        return 18;\\n    }\\n}\\n\",\"keccak256\":\"0xc0693e6fd3c0ebc97a4309a4ce75084e8f876e0483f9bdd91777d14f31823893\",\"license\":\"MIT\"},\"contracts/token/OUSD.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title OUSD Token Contract\\n * @dev ERC20 compatible contract for OUSD\\n * @dev Implements an elastic supply\\n * @author Origin Protocol Inc\\n */\\nimport { Governable } from \\\"../governance/Governable.sol\\\";\\nimport { SafeCast } from \\\"@openzeppelin/contracts/utils/math/SafeCast.sol\\\";\\n\\ncontract OUSD is Governable {\\n    using SafeCast for int256;\\n    using SafeCast for uint256;\\n\\n    /// @dev Event triggered when the supply changes\\n    /// @param totalSupply Updated token total supply\\n    /// @param rebasingCredits Updated token rebasing credits\\n    /// @param rebasingCreditsPerToken Updated token rebasing credits per token\\n    event TotalSupplyUpdatedHighres(\\n        uint256 totalSupply,\\n        uint256 rebasingCredits,\\n        uint256 rebasingCreditsPerToken\\n    );\\n    /// @dev Event triggered when an account opts in for rebasing\\n    /// @param account Address of the account\\n    event AccountRebasingEnabled(address account);\\n    /// @dev Event triggered when an account opts out of rebasing\\n    /// @param account Address of the account\\n    event AccountRebasingDisabled(address account);\\n    /// @dev Emitted when `value` tokens are moved from one account `from` to\\n    ///      another `to`.\\n    /// @param from Address of the account tokens are moved from\\n    /// @param to Address of the account tokens are moved to\\n    /// @param value Amount of tokens transferred\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n    /// @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n    ///      a call to {approve}. `value` is the new allowance.\\n    /// @param owner Address of the owner approving allowance\\n    /// @param spender Address of the spender allowance is granted to\\n    /// @param value Amount of tokens spender can transfer\\n    event Approval(\\n        address indexed owner,\\n        address indexed spender,\\n        uint256 value\\n    );\\n    /// @dev Yield resulting from {changeSupply} that a `source` account would\\n    ///      receive is directed to `target` account.\\n    /// @param source Address of the source forwarding the yield\\n    /// @param target Address of the target receiving the yield\\n    event YieldDelegated(address source, address target);\\n    /// @dev Yield delegation from `source` account to the `target` account is\\n    ///      suspended.\\n    /// @param source Address of the source suspending yield forwarding\\n    /// @param target Address of the target no longer receiving yield from `source`\\n    ///        account\\n    event YieldUndelegated(address source, address target);\\n\\n    enum RebaseOptions {\\n        NotSet,\\n        StdNonRebasing,\\n        StdRebasing,\\n        YieldDelegationSource,\\n        YieldDelegationTarget\\n    }\\n\\n    uint256[154] private _gap; // Slots to align with deployed contract\\n    uint256 private constant MAX_SUPPLY = type(uint128).max;\\n    /// @dev The amount of tokens in existence\\n    uint256 public totalSupply;\\n    mapping(address => mapping(address => uint256)) private allowances;\\n    /// @dev The vault with privileges to execute {mint}, {burn}\\n    ///     and {changeSupply}\\n    address public vaultAddress;\\n    mapping(address => uint256) internal creditBalances;\\n    // the 2 storage variables below need trailing underscores to not name collide with public functions\\n    uint256 private rebasingCredits_; // Sum of all rebasing credits (creditBalances for rebasing accounts)\\n    uint256 private rebasingCreditsPerToken_;\\n    /// @dev The amount of tokens that are not rebasing - receiving yield\\n    uint256 public nonRebasingSupply;\\n    mapping(address => uint256) internal alternativeCreditsPerToken;\\n    /// @dev A map of all addresses and their respective RebaseOptions\\n    mapping(address => RebaseOptions) public rebaseState;\\n    mapping(address => uint256) private __deprecated_isUpgraded;\\n    /// @dev A map of addresses that have yields forwarded to. This is an\\n    ///      inverse mapping of {yieldFrom}\\n    /// Key Account forwarding yield\\n    /// Value Account receiving yield\\n    mapping(address => address) public yieldTo;\\n    /// @dev A map of addresses that are receiving the yield. This is an\\n    ///      inverse mapping of {yieldTo}\\n    /// Key Account receiving yield\\n    /// Value Account forwarding yield\\n    mapping(address => address) public yieldFrom;\\n\\n    uint256 private constant RESOLUTION_INCREASE = 1e9;\\n    uint256[34] private __gap; // including below gap totals up to 200\\n\\n    /// @dev Initializes the contract and sets necessary variables.\\n    /// @param _vaultAddress Address of the vault contract\\n    /// @param _initialCreditsPerToken The starting rebasing credits per token.\\n    function initialize(address _vaultAddress, uint256 _initialCreditsPerToken)\\n        external\\n        onlyGovernor\\n    {\\n        require(_vaultAddress != address(0), \\\"Zero vault address\\\");\\n        require(vaultAddress == address(0), \\\"Already initialized\\\");\\n\\n        rebasingCreditsPerToken_ = _initialCreditsPerToken;\\n        vaultAddress = _vaultAddress;\\n    }\\n\\n    /// @dev Returns the symbol of the token, a shorter version\\n    ///      of the name.\\n    function symbol() external pure virtual returns (string memory) {\\n        return \\\"OUSD\\\";\\n    }\\n\\n    /// @dev Returns the name of the token.\\n    function name() external pure virtual returns (string memory) {\\n        return \\\"Origin Dollar\\\";\\n    }\\n\\n    /// @dev Returns the number of decimals used to get its user representation.\\n    function decimals() external pure virtual returns (uint8) {\\n        return 18;\\n    }\\n\\n    /**\\n     * @dev Verifies that the caller is the Vault contract\\n     */\\n    modifier onlyVault() {\\n        require(vaultAddress == msg.sender, \\\"Caller is not the Vault\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @return High resolution rebasingCreditsPerToken\\n     */\\n    function rebasingCreditsPerTokenHighres() external view returns (uint256) {\\n        return rebasingCreditsPerToken_;\\n    }\\n\\n    /**\\n     * @return Low resolution rebasingCreditsPerToken\\n     */\\n    function rebasingCreditsPerToken() external view returns (uint256) {\\n        return rebasingCreditsPerToken_ / RESOLUTION_INCREASE;\\n    }\\n\\n    /**\\n     * @return High resolution total number of rebasing credits\\n     */\\n    function rebasingCreditsHighres() external view returns (uint256) {\\n        return rebasingCredits_;\\n    }\\n\\n    /**\\n     * @return Low resolution total number of rebasing credits\\n     */\\n    function rebasingCredits() external view returns (uint256) {\\n        return rebasingCredits_ / RESOLUTION_INCREASE;\\n    }\\n\\n    /**\\n     * @notice Gets the balance of the specified address.\\n     * @param _account Address to query the balance of.\\n     * @return A uint256 representing the amount of base units owned by the\\n     *         specified address.\\n     */\\n    function balanceOf(address _account) public view returns (uint256) {\\n        RebaseOptions state = rebaseState[_account];\\n        if (state == RebaseOptions.YieldDelegationSource) {\\n            // Saves a slot read when transferring to or from a yield delegating source\\n            // since we know creditBalances equals the balance.\\n            return creditBalances[_account];\\n        }\\n        uint256 baseBalance = (creditBalances[_account] * 1e18) /\\n            _creditsPerToken(_account);\\n        if (state == RebaseOptions.YieldDelegationTarget) {\\n            // creditBalances of yieldFrom accounts equals token balances\\n            return baseBalance - creditBalances[yieldFrom[_account]];\\n        }\\n        return baseBalance;\\n    }\\n\\n    /**\\n     * @notice Gets the credits balance of the specified address.\\n     * @dev Backwards compatible with old low res credits per token.\\n     * @param _account The address to query the balance of.\\n     * @return (uint256, uint256) Credit balance and credits per token of the\\n     *         address\\n     */\\n    function creditsBalanceOf(address _account)\\n        external\\n        view\\n        returns (uint256, uint256)\\n    {\\n        uint256 cpt = _creditsPerToken(_account);\\n        if (cpt == 1e27) {\\n            // For a period before the resolution upgrade, we created all new\\n            // contract accounts at high resolution. Since they are not changing\\n            // as a result of this upgrade, we will return their true values\\n            return (creditBalances[_account], cpt);\\n        } else {\\n            return (\\n                creditBalances[_account] / RESOLUTION_INCREASE,\\n                cpt / RESOLUTION_INCREASE\\n            );\\n        }\\n    }\\n\\n    /**\\n     * @notice Gets the credits balance of the specified address.\\n     * @param _account The address to query the balance of.\\n     * @return (uint256, uint256, bool) Credit balance, credits per token of the\\n     *         address, and isUpgraded\\n     */\\n    function creditsBalanceOfHighres(address _account)\\n        external\\n        view\\n        returns (\\n            uint256,\\n            uint256,\\n            bool\\n        )\\n    {\\n        return (\\n            creditBalances[_account],\\n            _creditsPerToken(_account),\\n            true // all accounts have their resolution \\\"upgraded\\\"\\n        );\\n    }\\n\\n    // Backwards compatible view\\n    function nonRebasingCreditsPerToken(address _account)\\n        external\\n        view\\n        returns (uint256)\\n    {\\n        return alternativeCreditsPerToken[_account];\\n    }\\n\\n    /**\\n     * @notice Transfer tokens to a specified address.\\n     * @param _to the address to transfer to.\\n     * @param _value the amount to be transferred.\\n     * @return true on success.\\n     */\\n    function transfer(address _to, uint256 _value) external returns (bool) {\\n        require(_to != address(0), \\\"Transfer to zero address\\\");\\n\\n        _executeTransfer(msg.sender, _to, _value);\\n\\n        emit Transfer(msg.sender, _to, _value);\\n        return true;\\n    }\\n\\n    /**\\n     * @notice Transfer tokens from one address to another.\\n     * @param _from The address you want to send tokens from.\\n     * @param _to The address you want to transfer to.\\n     * @param _value The amount of tokens to be transferred.\\n     * @return true on success.\\n     */\\n    function transferFrom(\\n        address _from,\\n        address _to,\\n        uint256 _value\\n    ) external returns (bool) {\\n        require(_to != address(0), \\\"Transfer to zero address\\\");\\n        uint256 userAllowance = allowances[_from][msg.sender];\\n        require(_value <= userAllowance, \\\"Allowance exceeded\\\");\\n\\n        unchecked {\\n            allowances[_from][msg.sender] = userAllowance - _value;\\n        }\\n\\n        _executeTransfer(_from, _to, _value);\\n\\n        emit Transfer(_from, _to, _value);\\n        return true;\\n    }\\n\\n    function _executeTransfer(\\n        address _from,\\n        address _to,\\n        uint256 _value\\n    ) internal {\\n        (\\n            int256 fromRebasingCreditsDiff,\\n            int256 fromNonRebasingSupplyDiff\\n        ) = _adjustAccount(_from, -_value.toInt256());\\n        (\\n            int256 toRebasingCreditsDiff,\\n            int256 toNonRebasingSupplyDiff\\n        ) = _adjustAccount(_to, _value.toInt256());\\n\\n        _adjustGlobals(\\n            fromRebasingCreditsDiff + toRebasingCreditsDiff,\\n            fromNonRebasingSupplyDiff + toNonRebasingSupplyDiff\\n        );\\n    }\\n\\n    function _adjustAccount(address _account, int256 _balanceChange)\\n        internal\\n        returns (int256 rebasingCreditsDiff, int256 nonRebasingSupplyDiff)\\n    {\\n        RebaseOptions state = rebaseState[_account];\\n        int256 currentBalance = balanceOf(_account).toInt256();\\n        if (currentBalance + _balanceChange < 0) {\\n            revert(\\\"Transfer amount exceeds balance\\\");\\n        }\\n        uint256 newBalance = (currentBalance + _balanceChange).toUint256();\\n\\n        if (state == RebaseOptions.YieldDelegationSource) {\\n            address target = yieldTo[_account];\\n            uint256 targetOldBalance = balanceOf(target);\\n            uint256 targetNewCredits = _balanceToRebasingCredits(\\n                targetOldBalance + newBalance\\n            );\\n            rebasingCreditsDiff =\\n                targetNewCredits.toInt256() -\\n                creditBalances[target].toInt256();\\n\\n            creditBalances[_account] = newBalance;\\n            creditBalances[target] = targetNewCredits;\\n        } else if (state == RebaseOptions.YieldDelegationTarget) {\\n            uint256 newCredits = _balanceToRebasingCredits(\\n                newBalance + creditBalances[yieldFrom[_account]]\\n            );\\n            rebasingCreditsDiff =\\n                newCredits.toInt256() -\\n                creditBalances[_account].toInt256();\\n            creditBalances[_account] = newCredits;\\n        } else {\\n            _autoMigrate(_account);\\n            uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[\\n                _account\\n            ];\\n            if (alternativeCreditsPerTokenMem > 0) {\\n                nonRebasingSupplyDiff = _balanceChange;\\n                if (alternativeCreditsPerTokenMem != 1e18) {\\n                    alternativeCreditsPerToken[_account] = 1e18;\\n                }\\n                creditBalances[_account] = newBalance;\\n            } else {\\n                uint256 newCredits = _balanceToRebasingCredits(newBalance);\\n                rebasingCreditsDiff =\\n                    newCredits.toInt256() -\\n                    creditBalances[_account].toInt256();\\n                creditBalances[_account] = newCredits;\\n            }\\n        }\\n    }\\n\\n    function _adjustGlobals(\\n        int256 _rebasingCreditsDiff,\\n        int256 _nonRebasingSupplyDiff\\n    ) internal {\\n        if (_rebasingCreditsDiff != 0) {\\n            rebasingCredits_ = (rebasingCredits_.toInt256() +\\n                _rebasingCreditsDiff).toUint256();\\n        }\\n        if (_nonRebasingSupplyDiff != 0) {\\n            nonRebasingSupply = (nonRebasingSupply.toInt256() +\\n                _nonRebasingSupplyDiff).toUint256();\\n        }\\n    }\\n\\n    /**\\n     * @notice Function to check the amount of tokens that _owner has allowed\\n     *      to `_spender`.\\n     * @param _owner The address which owns the funds.\\n     * @param _spender The address which will spend the funds.\\n     * @return The number of tokens still available for the _spender.\\n     */\\n    function allowance(address _owner, address _spender)\\n        external\\n        view\\n        returns (uint256)\\n    {\\n        return allowances[_owner][_spender];\\n    }\\n\\n    /**\\n     * @notice Approve the passed address to spend the specified amount of\\n     *      tokens on behalf of msg.sender.\\n     * @param _spender The address which will spend the funds.\\n     * @param _value The amount of tokens to be spent.\\n     * @return true on success.\\n     */\\n    function approve(address _spender, uint256 _value) external returns (bool) {\\n        allowances[msg.sender][_spender] = _value;\\n        emit Approval(msg.sender, _spender, _value);\\n        return true;\\n    }\\n\\n    /**\\n     * @notice Creates `_amount` tokens and assigns them to `_account`,\\n     *     increasing the total supply.\\n     */\\n    function mint(address _account, uint256 _amount) external onlyVault {\\n        require(_account != address(0), \\\"Mint to the zero address\\\");\\n\\n        // Account\\n        (\\n            int256 toRebasingCreditsDiff,\\n            int256 toNonRebasingSupplyDiff\\n        ) = _adjustAccount(_account, _amount.toInt256());\\n        // Globals\\n        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);\\n        totalSupply = totalSupply + _amount;\\n\\n        require(totalSupply < MAX_SUPPLY, \\\"Max supply\\\");\\n        emit Transfer(address(0), _account, _amount);\\n    }\\n\\n    /**\\n     * @notice Destroys `_amount` tokens from `_account`,\\n     *     reducing the total supply.\\n     */\\n    function burn(address _account, uint256 _amount) external onlyVault {\\n        require(_account != address(0), \\\"Burn from the zero address\\\");\\n        if (_amount == 0) {\\n            return;\\n        }\\n\\n        // Account\\n        (\\n            int256 toRebasingCreditsDiff,\\n            int256 toNonRebasingSupplyDiff\\n        ) = _adjustAccount(_account, -_amount.toInt256());\\n        // Globals\\n        _adjustGlobals(toRebasingCreditsDiff, toNonRebasingSupplyDiff);\\n        totalSupply = totalSupply - _amount;\\n\\n        emit Transfer(_account, address(0), _amount);\\n    }\\n\\n    /**\\n     * @dev Get the credits per token for an account. Returns a fixed amount\\n     *      if the account is non-rebasing.\\n     * @param _account Address of the account.\\n     */\\n    function _creditsPerToken(address _account)\\n        internal\\n        view\\n        returns (uint256)\\n    {\\n        uint256 alternativeCreditsPerTokenMem = alternativeCreditsPerToken[\\n            _account\\n        ];\\n        if (alternativeCreditsPerTokenMem != 0) {\\n            return alternativeCreditsPerTokenMem;\\n        } else {\\n            return rebasingCreditsPerToken_;\\n        }\\n    }\\n\\n    /**\\n     * @dev Auto migrate contracts to be non rebasing,\\n     *     unless they have opted into yield.\\n     * @param _account Address of the account.\\n     */\\n    function _autoMigrate(address _account) internal {\\n        bool isContract = _account.code.length > 0;\\n        // In previous code versions, contracts would not have had their\\n        // rebaseState[_account] set to RebaseOptions.NonRebasing when migrated\\n        // therefore we check the actual accounting used on the account instead.\\n        if (\\n            isContract &&\\n            rebaseState[_account] == RebaseOptions.NotSet &&\\n            alternativeCreditsPerToken[_account] == 0\\n        ) {\\n            _rebaseOptOut(_account);\\n        }\\n    }\\n\\n    /**\\n     * @dev Calculates credits from contract's global rebasingCreditsPerToken_, and\\n     *      also balance that corresponds to those credits. The latter is important\\n     *      when adjusting the contract's global nonRebasingSupply to circumvent any\\n     *      possible rounding errors.\\n     *\\n     * @param _balance Balance of the account.\\n     */\\n    function _balanceToRebasingCredits(uint256 _balance)\\n        internal\\n        view\\n        returns (uint256 rebasingCredits)\\n    {\\n        // Rounds up, because we need to ensure that accounts always have\\n        // at least the balance that they should have.\\n        // Note this should always be used on an absolute account value,\\n        // not on a possibly negative diff, because then the rounding would be wrong.\\n        return ((_balance) * rebasingCreditsPerToken_ + 1e18 - 1) / 1e18;\\n    }\\n\\n    /**\\n     * @notice The calling account will start receiving yield after a successful call.\\n     * @param _account Address of the account.\\n     */\\n    function governanceRebaseOptIn(address _account) external onlyGovernor {\\n        require(_account != address(0), \\\"Zero address not allowed\\\");\\n        _rebaseOptIn(_account);\\n    }\\n\\n    /**\\n     * @notice The calling account will start receiving yield after a successful call.\\n     */\\n    function rebaseOptIn() external {\\n        _rebaseOptIn(msg.sender);\\n    }\\n\\n    function _rebaseOptIn(address _account) internal {\\n        uint256 balance = balanceOf(_account);\\n\\n        // prettier-ignore\\n        require(\\n            alternativeCreditsPerToken[_account] > 0 ||\\n                // Accounts may explicitly `rebaseOptIn` regardless of\\n                // accounting if they have a 0 balance.\\n                creditBalances[_account] == 0\\n            ,\\n            \\\"Account must be non-rebasing\\\"\\n        );\\n        RebaseOptions state = rebaseState[_account];\\n        // prettier-ignore\\n        require(\\n            state == RebaseOptions.StdNonRebasing ||\\n                state == RebaseOptions.NotSet,\\n            \\\"Only standard non-rebasing accounts can opt in\\\"\\n        );\\n\\n        uint256 newCredits = _balanceToRebasingCredits(balance);\\n\\n        // Account\\n        rebaseState[_account] = RebaseOptions.StdRebasing;\\n        alternativeCreditsPerToken[_account] = 0;\\n        creditBalances[_account] = newCredits;\\n        // Globals\\n        _adjustGlobals(newCredits.toInt256(), -balance.toInt256());\\n\\n        emit AccountRebasingEnabled(_account);\\n    }\\n\\n    /**\\n     * @notice The calling account will no longer receive yield\\n     */\\n    function rebaseOptOut() external {\\n        _rebaseOptOut(msg.sender);\\n    }\\n\\n    function _rebaseOptOut(address _account) internal {\\n        require(\\n            alternativeCreditsPerToken[_account] == 0,\\n            \\\"Account must be rebasing\\\"\\n        );\\n        RebaseOptions state = rebaseState[_account];\\n        require(\\n            state == RebaseOptions.StdRebasing || state == RebaseOptions.NotSet,\\n            \\\"Only standard rebasing accounts can opt out\\\"\\n        );\\n\\n        uint256 oldCredits = creditBalances[_account];\\n        uint256 balance = balanceOf(_account);\\n\\n        // Account\\n        rebaseState[_account] = RebaseOptions.StdNonRebasing;\\n        alternativeCreditsPerToken[_account] = 1e18;\\n        creditBalances[_account] = balance;\\n        // Globals\\n        _adjustGlobals(-oldCredits.toInt256(), balance.toInt256());\\n\\n        emit AccountRebasingDisabled(_account);\\n    }\\n\\n    /**\\n     * @notice Distribute yield to users. This changes the exchange rate\\n     *  between \\\"credits\\\" and OUSD tokens to change rebasing user's balances.\\n     * @param _newTotalSupply New total supply of OUSD.\\n     */\\n    function changeSupply(uint256 _newTotalSupply) external onlyVault {\\n        require(totalSupply > 0, \\\"Cannot increase 0 supply\\\");\\n\\n        if (totalSupply == _newTotalSupply) {\\n            emit TotalSupplyUpdatedHighres(\\n                totalSupply,\\n                rebasingCredits_,\\n                rebasingCreditsPerToken_\\n            );\\n            return;\\n        }\\n\\n        totalSupply = _newTotalSupply > MAX_SUPPLY\\n            ? MAX_SUPPLY\\n            : _newTotalSupply;\\n\\n        uint256 rebasingSupply = totalSupply - nonRebasingSupply;\\n        // round up in the favour of the protocol\\n        rebasingCreditsPerToken_ =\\n            (rebasingCredits_ * 1e18 + rebasingSupply - 1) /\\n            rebasingSupply;\\n\\n        require(rebasingCreditsPerToken_ > 0, \\\"Invalid change in supply\\\");\\n\\n        emit TotalSupplyUpdatedHighres(\\n            totalSupply,\\n            rebasingCredits_,\\n            rebasingCreditsPerToken_\\n        );\\n    }\\n\\n    /*\\n     * @notice Send the yield from one account to another account.\\n     *         Each account keeps its own balances.\\n     */\\n    function delegateYield(address _from, address _to) external onlyGovernor {\\n        require(_from != address(0), \\\"Zero from address not allowed\\\");\\n        require(_to != address(0), \\\"Zero to address not allowed\\\");\\n\\n        require(_from != _to, \\\"Cannot delegate to self\\\");\\n        require(\\n            yieldFrom[_to] == address(0) &&\\n                yieldTo[_to] == address(0) &&\\n                yieldFrom[_from] == address(0) &&\\n                yieldTo[_from] == address(0),\\n            \\\"Blocked by existing yield delegation\\\"\\n        );\\n        RebaseOptions stateFrom = rebaseState[_from];\\n        RebaseOptions stateTo = rebaseState[_to];\\n\\n        require(\\n            stateFrom == RebaseOptions.NotSet ||\\n                stateFrom == RebaseOptions.StdNonRebasing ||\\n                stateFrom == RebaseOptions.StdRebasing,\\n            \\\"Invalid rebaseState from\\\"\\n        );\\n\\n        require(\\n            stateTo == RebaseOptions.NotSet ||\\n                stateTo == RebaseOptions.StdNonRebasing ||\\n                stateTo == RebaseOptions.StdRebasing,\\n            \\\"Invalid rebaseState to\\\"\\n        );\\n\\n        if (alternativeCreditsPerToken[_from] == 0) {\\n            _rebaseOptOut(_from);\\n        }\\n        if (alternativeCreditsPerToken[_to] > 0) {\\n            _rebaseOptIn(_to);\\n        }\\n\\n        uint256 fromBalance = balanceOf(_from);\\n        uint256 toBalance = balanceOf(_to);\\n        uint256 oldToCredits = creditBalances[_to];\\n        uint256 newToCredits = _balanceToRebasingCredits(\\n            fromBalance + toBalance\\n        );\\n\\n        // Set up the bidirectional links\\n        yieldTo[_from] = _to;\\n        yieldFrom[_to] = _from;\\n\\n        // Local\\n        rebaseState[_from] = RebaseOptions.YieldDelegationSource;\\n        alternativeCreditsPerToken[_from] = 1e18;\\n        creditBalances[_from] = fromBalance;\\n        rebaseState[_to] = RebaseOptions.YieldDelegationTarget;\\n        creditBalances[_to] = newToCredits;\\n\\n        // Global\\n        int256 creditsChange = newToCredits.toInt256() -\\n            oldToCredits.toInt256();\\n        _adjustGlobals(creditsChange, -(fromBalance).toInt256());\\n        emit YieldDelegated(_from, _to);\\n    }\\n\\n    /*\\n     * @notice Stop sending the yield from one account to another account.\\n     */\\n    function undelegateYield(address _from) external onlyGovernor {\\n        // Require a delegation, which will also ensure a valid delegation\\n        require(yieldTo[_from] != address(0), \\\"Zero address not allowed\\\");\\n\\n        address to = yieldTo[_from];\\n        uint256 fromBalance = balanceOf(_from);\\n        uint256 toBalance = balanceOf(to);\\n        uint256 oldToCredits = creditBalances[to];\\n        uint256 newToCredits = _balanceToRebasingCredits(toBalance);\\n\\n        // Remove the bidirectional links\\n        yieldFrom[to] = address(0);\\n        yieldTo[_from] = address(0);\\n\\n        // Local\\n        rebaseState[_from] = RebaseOptions.StdNonRebasing;\\n        // alternativeCreditsPerToken[from] already 1e18 from `delegateYield()`\\n        creditBalances[_from] = fromBalance;\\n        rebaseState[to] = RebaseOptions.StdRebasing;\\n        // alternativeCreditsPerToken[to] already 0 from `delegateYield()`\\n        creditBalances[to] = newToCredits;\\n\\n        // Global\\n        int256 creditsChange = newToCredits.toInt256() -\\n            oldToCredits.toInt256();\\n        _adjustGlobals(creditsChange, fromBalance.toInt256());\\n        emit YieldUndelegated(_from, to);\\n    }\\n}\\n\",\"keccak256\":\"0x5741d16e48d6031ec92c1e189ea023c78a34956b6bc9642ea9dfc9a6dafe49ca\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b5060186000601c565b6082565b6001600160a01b038116603b6000805160206124988339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a360008051602061249883398151915255565b612407806100916000396000f3fe608060405234801561001057600080fd5b50600436106102065760003560e01c806370a082311161011a578063c2376dff116100ad578063dd62ed3e1161007c578063dd62ed3e1461049b578063e5c4fffe146104d4578063e696393a14610504578063f51b0fd41461050d578063f9854bfc1461051557600080fd5b8063c2376dff14610465578063c7af33521461046d578063cd6dc68714610475578063d38bfff41461048857600080fd5b80639d01fc72116100e95780639d01fc72146104195780639dc29fac1461042c578063a9059cbb1461043f578063baa9c9db1461045257600080fd5b806370a08231146103d05780637a46a9c5146103e35780637d0d66ff146103eb57806395d89b41146103f357600080fd5b806339a7919f1161019d5780635d36b1901161016c5780635d36b190146103455780635f5a85771461034d578063609350cd146103765780636691cb3d1461039f5780636b96be39146103a757600080fd5b806339a7919f146102dc57806340c10f19146102ef578063430bf08a14610302578063456ee2861461031557600080fd5b80630c340a24116101d95780630c340a241461029157806318160ddd146102b157806323b872dd146102ba578063313ce567146102cd57600080fd5b806306a2da3d1461020b57806306fdde0314610220578063077f22b714610258578063095ea7b31461026e575b600080fd5b61021e6102193660046120e9565b61053d565b005b60408051808201909152600a8152690a6eae0cae4409e8aa8960b31b60208201525b60405161024f9190612104565b60405180910390f35b610260610723565b60405190815260200161024f565b61028161027c366004612152565b61073c565b604051901515815260200161024f565b6102996107a9565b6040516001600160a01b03909116815260200161024f565b610260609a5481565b6102816102c836600461217c565b6107c1565b6040516012815260200161024f565b61021e6102ea3660046121b9565b6108f6565b61021e6102fd366004612152565b610ace565b609c54610299906001600160a01b031681565b6103386103233660046120e9565b60a26020526000908152604090205460ff1681565b60405161024f91906121e8565b61021e610bfc565b61029961035b3660046120e9565b60a4602052600090815260409020546001600160a01b031681565b6102606103843660046120e9565b6001600160a01b0316600090815260a1602052604090205490565b610260610ca2565b6102996103b53660046120e9565b60a5602052600090815260409020546001600160a01b031681565b6102606103de3660046120e9565b610cb6565b609f54610260565b609e54610260565b60408051808201909152600a815269073757065724f455448760b41b6020820152610242565b61021e610427366004612210565b610da4565b61021e61043a366004612152565b6112bb565b61028161044d366004612152565b6113a9565b61021e6104603660046120e9565b611432565b61021e6114b0565b6102816114b9565b61021e610483366004612152565b6114ea565b61021e6104963660046120e9565b6115cd565b6102606104a9366004612210565b6001600160a01b039182166000908152609b6020908152604080832093909416825291909152205490565b6104e76104e23660046120e9565b611671565b60408051938452602084019290925215159082015260600161024f565b61026060a05481565b61021e6116a5565b6105286105233660046120e9565b6116ae565b6040805192835260208301919091520161024f565b6105456114b9565b61056a5760405162461bcd60e51b815260040161056190612243565b60405180910390fd5b6001600160a01b03818116600090815260a46020526040902054166105cc5760405162461bcd60e51b815260206004820152601860248201527716995c9bc81859191c995cdcc81b9bdd08185b1b1bddd95960421b6044820152606401610561565b6001600160a01b03808216600090815260a46020526040812054909116906105f383610cb6565b9050600061060083610cb6565b6001600160a01b0384166000908152609d602052604081205491925061062583611731565b6001600160a01b03868116600081815260a56020908152604080832080546001600160a01b0319908116909155948c16835260a48252808320805490951690945560a2808252848320805460ff19908116600117909155609d8084528685208c905594845290825284832080549091166002179055919091529081208290559091506106b083611772565b6106b983611772565b6106c39190612290565b90506106d7816106d287611772565b6117e0565b604080516001600160a01b03808a168252881660208201527fa4fa89dd14422a509261a2d4d459f93abdc84c6e92c5e7ae5448243713967bd3910160405180910390a150505050505050565b6000633b9aca00609e5461073791906122b7565b905090565b336000818152609b602090815260408083206001600160a01b038716808552925280832085905551919290917f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925906107979086815260200190565b60405180910390a35060015b92915050565b60006107376000805160206123b28339815191525490565b60006001600160a01b0383166108145760405162461bcd60e51b81526020600482015260186024820152775472616e7366657220746f207a65726f206164647265737360401b6044820152606401610561565b6001600160a01b0384166000908152609b602090815260408083203384529091529020548083111561087d5760405162461bcd60e51b8152602060048201526012602482015271105b1b1bddd85b98d948195e18d95959195960721b6044820152606401610561565b6001600160a01b0385166000908152609b60209081526040808320338452909152902083820390556108b0858585611824565b836001600160a01b0316856001600160a01b0316600080516020612392833981519152856040516108e391815260200190565b60405180910390a3506001949350505050565b609c546001600160a01b031633146109205760405162461bcd60e51b8152600401610561906122d9565b6000609a54116109725760405162461bcd60e51b815260206004820152601860248201527f43616e6e6f7420696e637265617365203020737570706c7900000000000000006044820152606401610561565b80609a54036109c557609a54609e54609f5460408051938452602084019290925282820152517f41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e2572359181900360600190a150565b6001600160801b0381116109d957806109e2565b6001600160801b035b609a81905560a0546000916109f79190612310565b905080600182609e54670de0b6b3a7640000610a139190612323565b610a1d919061233a565b610a279190612310565b610a3191906122b7565b609f819055610a825760405162461bcd60e51b815260206004820152601860248201527f496e76616c6964206368616e676520696e20737570706c7900000000000000006044820152606401610561565b609a54609e54609f5460408051938452602084019290925282820152517f41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e2572359181900360600190a1505b50565b609c546001600160a01b03163314610af85760405162461bcd60e51b8152600401610561906122d9565b6001600160a01b038216610b4e5760405162461bcd60e51b815260206004820152601860248201527f4d696e7420746f20746865207a65726f206164647265737300000000000000006044820152606401610561565b600080610b6384610b5e85611772565b61186d565b91509150610b7182826117e0565b82609a54610b7f919061233a565b609a8190556001600160801b0311610bc65760405162461bcd60e51b815260206004820152600a6024820152694d617820737570706c7960b01b6044820152606401610561565b6040518381526001600160a01b03851690600090600080516020612392833981519152906020015b60405180910390a350505050565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b031614610c975760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b6064820152608401610561565b610ca033611b5b565b565b6000633b9aca00609f5461073791906122b7565b6001600160a01b038116600090815260a2602052604081205460ff166003816004811115610ce657610ce66121d2565b03610d085750506001600160a01b03166000908152609d602052604090205490565b6000610d1384611bba565b6001600160a01b0385166000908152609d6020526040902054610d3e90670de0b6b3a7640000612323565b610d4891906122b7565b90506004826004811115610d5e57610d5e6121d2565b03610d9d576001600160a01b03808516600090815260a560209081526040808320549093168252609d90522054610d959082612310565b949350505050565b9392505050565b610dac6114b9565b610dc85760405162461bcd60e51b815260040161056190612243565b6001600160a01b038216610e1e5760405162461bcd60e51b815260206004820152601d60248201527f5a65726f2066726f6d2061646472657373206e6f7420616c6c6f7765640000006044820152606401610561565b6001600160a01b038116610e745760405162461bcd60e51b815260206004820152601b60248201527f5a65726f20746f2061646472657373206e6f7420616c6c6f77656400000000006044820152606401610561565b806001600160a01b0316826001600160a01b031603610ed55760405162461bcd60e51b815260206004820152601760248201527f43616e6e6f742064656c656761746520746f2073656c660000000000000000006044820152606401610561565b6001600160a01b03818116600090815260a5602052604090205416158015610f1557506001600160a01b03818116600090815260a4602052604090205416155b8015610f3957506001600160a01b03828116600090815260a5602052604090205416155b8015610f5d57506001600160a01b03828116600090815260a4602052604090205416155b610fb55760405162461bcd60e51b8152602060048201526024808201527f426c6f636b6564206279206578697374696e67207969656c642064656c6567616044820152633a34b7b760e11b6064820152608401610561565b6001600160a01b03808316600090815260a2602052604080822054928416825281205460ff928316921690826004811115610ff257610ff26121d2565b148061100f5750600182600481111561100d5761100d6121d2565b145b8061102b57506002826004811115611029576110296121d2565b145b6110775760405162461bcd60e51b815260206004820152601860248201527f496e76616c69642072656261736553746174652066726f6d00000000000000006044820152606401610561565b600081600481111561108b5761108b6121d2565b14806110a8575060018160048111156110a6576110a66121d2565b145b806110c4575060028160048111156110c2576110c26121d2565b145b6111095760405162461bcd60e51b8152602060048201526016602482015275496e76616c696420726562617365537461746520746f60501b6044820152606401610561565b6001600160a01b038416600090815260a1602052604081205490036111315761113184611be9565b6001600160a01b038316600090815260a16020526040902054156111585761115883611dc4565b600061116385610cb6565b9050600061117085610cb6565b6001600160a01b0386166000908152609d602052604081205491925061119e611199848661233a565b611731565b6001600160a01b03898116600081815260a46020908152604080832080546001600160a01b0319908116968f1696871790915585845260a5835281842080549091168517905592825260a2808252838320805460ff1990811660031790915560a18352848420670de0b6b3a76400009055609d8084528585208c90559584529082528383208054909116600417905592909252812082905590915061124283611772565b61124b83611772565b6112559190612290565b905061126d8161126487611772565b6106d29061234d565b604080516001600160a01b03808c1682528a1660208201527f31e39e4bb9df9d4143551c8a3a4798fc19b0854768570ce84d966f6adffd01a3910160405180910390a1505050505050505050565b609c546001600160a01b031633146112e55760405162461bcd60e51b8152600401610561906122d9565b6001600160a01b03821661133b5760405162461bcd60e51b815260206004820152601a60248201527f4275726e2066726f6d20746865207a65726f20616464726573730000000000006044820152606401610561565b80156113a55760008061135a8461135185611772565b610b5e9061234d565b9150915061136882826117e0565b82609a546113769190612310565b609a556040518381526000906001600160a01b0386169060008051602061239283398151915290602001610bee565b5050565b60006001600160a01b0383166113fc5760405162461bcd60e51b81526020600482015260186024820152775472616e7366657220746f207a65726f206164647265737360401b6044820152606401610561565b611407338484611824565b6040518281526001600160a01b03841690339060008051602061239283398151915290602001610797565b61143a6114b9565b6114565760405162461bcd60e51b815260040161056190612243565b6001600160a01b0381166114a75760405162461bcd60e51b815260206004820152601860248201527716995c9bc81859191c995cdcc81b9bdd08185b1b1bddd95960421b6044820152606401610561565b610acb81611dc4565b610ca033611be9565b60006114d16000805160206123b28339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6114f26114b9565b61150e5760405162461bcd60e51b815260040161056190612243565b6001600160a01b0382166115595760405162461bcd60e51b81526020600482015260126024820152715a65726f207661756c74206164647265737360701b6044820152606401610561565b609c546001600160a01b0316156115a85760405162461bcd60e51b8152602060048201526013602482015272105b1c9958591e481a5b9a5d1a585b1a5e9959606a1b6044820152606401610561565b609f55609c80546001600160a01b0319166001600160a01b0392909216919091179055565b6115d56114b9565b6115f15760405162461bcd60e51b815260040161056190612243565b611619817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166116396000805160206123b28339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b6001600160a01b0381166000908152609d60205260408120548190819061169785611bba565b909590945060019350915050565b610ca033611dc4565b60008060006116bc84611bba565b9050806b033b2e3c9fd0803ce8000000036116f1576001600160a01b039093166000908152609d602052604090205493915050565b6001600160a01b0384166000908152609d602052604090205461171990633b9aca00906122b7565b611727633b9aca00836122b7565b9250925050915091565b6000670de0b6b3a76400006001609f548461174c9190612323565b61175e90670de0b6b3a764000061233a565b6117689190612310565b6107a391906122b7565b60006001600160ff1b038211156117dc5760405162461bcd60e51b815260206004820152602860248201527f53616665436173743a2076616c756520646f65736e27742066697420696e2061604482015267371034b73a191a9b60c11b6064820152608401610561565b5090565b811561180857611804826117f5609e54611772565b6117ff9190612369565b611f9f565b609e555b80156113a55761181d816117f560a054611772565b60a0555050565b6000806118348561135185611772565b9150915060008061184886610b5e87611772565b909250905061186461185a8386612369565b6106d28386612369565b50505050505050565b6001600160a01b038216600090815260a26020526040812054819060ff168161189d61189887610cb6565b611772565b905060006118ab8683612369565b12156118f95760405162461bcd60e51b815260206004820152601f60248201527f5472616e7366657220616d6f756e7420657863656564732062616c616e6365006044820152606401610561565b60006119086117ff8784612369565b9050600383600481111561191e5761191e6121d2565b036119c3576001600160a01b03808816600090815260a460205260408120549091169061194a82610cb6565b9050600061195b611199858461233a565b6001600160a01b0384166000908152609d602052604090205490915061198090611772565b61198982611772565b6119939190612290565b6001600160a01b03808c166000908152609d60205260408082208890559590911681529390932055509450611b51565b60048360048111156119d7576119d76121d2565b03611a6f576001600160a01b03808816600090815260a560209081526040808320549093168252609d905290812054611a1490611199908461233a565b6001600160a01b0389166000908152609d6020526040902054909150611a3990611772565b611a4282611772565b611a4c9190612290565b6001600160a01b0389166000908152609d60205260409020919091559450611b51565b611a7887611ff1565b6001600160a01b038716600090815260a160205260409020548015611aed5786945080670de0b6b3a764000014611acd576001600160a01b038816600090815260a160205260409020670de0b6b3a764000090555b6001600160a01b0388166000908152609d60205260409020829055611b4f565b6000611af883611731565b6001600160a01b038a166000908152609d6020526040902054909150611b1d90611772565b611b2682611772565b611b309190612290565b6001600160a01b038a166000908152609d602052604090209190915595505b505b5050509250929050565b6001600160a01b038116611bb15760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610561565b610acb81612066565b6001600160a01b038116600090815260a160205260408120548015611bdf5792915050565b5050609f54919050565b6001600160a01b038116600090815260a1602052604090205415611c4f5760405162461bcd60e51b815260206004820152601860248201527f4163636f756e74206d757374206265207265626173696e6700000000000000006044820152606401610561565b6001600160a01b038116600090815260a2602052604090205460ff166002816004811115611c7f57611c7f6121d2565b1480611c9c57506000816004811115611c9a57611c9a6121d2565b145b611cfc5760405162461bcd60e51b815260206004820152602b60248201527f4f6e6c79207374616e64617264207265626173696e67206163636f756e74732060448201526a18d85b881bdc1d081bdd5d60aa1b6064820152608401610561565b6001600160a01b0382166000908152609d602052604081205490611d1f84610cb6565b6001600160a01b038516600090815260a260209081526040808320805460ff1916600117905560a18252808320670de0b6b3a76400009055609d90915290208190559050611d81611d6f83611772565b611d789061234d565b6106d283611772565b6040516001600160a01b03851681527f201ace89ad3f5ab7428b91989f6a50d1998791c7b94a0fa812fd64a57687165e906020015b60405180910390a150505050565b6000611dcf82610cb6565b6001600160a01b038316600090815260a16020526040902054909150151580611e0e57506001600160a01b0382166000908152609d6020526040902054155b611e5a5760405162461bcd60e51b815260206004820152601c60248201527f4163636f756e74206d757374206265206e6f6e2d7265626173696e67000000006044820152606401610561565b6001600160a01b038216600090815260a2602052604090205460ff166001816004811115611e8a57611e8a6121d2565b1480611ea757506000816004811115611ea557611ea56121d2565b145b611f0a5760405162461bcd60e51b815260206004820152602e60248201527f4f6e6c79207374616e64617264206e6f6e2d7265626173696e67206163636f7560448201526d373a399031b0b71037b83a1034b760911b6064820152608401610561565b6000611f1583611731565b6001600160a01b038516600090815260a260209081526040808320805460ff1916600217905560a18252808320839055609d90915290208190559050611f66611f5d82611772565b61126485611772565b6040516001600160a01b03851681527f19a249fa2050bac8314ac10e3ad420bd9825574bf750f58810c3c7adfc7b1c6f90602001611db6565b6000808212156117dc5760405162461bcd60e51b815260206004820181905260248201527f53616665436173743a2076616c7565206d75737420626520706f7369746976656044820152606401610561565b6001600160a01b0381163b15801590819061203657506001600160a01b038216600090815260a2602052604081205460ff166004811115612034576120346121d2565b145b801561205857506001600160a01b038216600090815260a16020526040902054155b156113a5576113a582611be9565b806001600160a01b03166120866000805160206123b28339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36000805160206123b283398151915255565b80356001600160a01b03811681146120e457600080fd5b919050565b6000602082840312156120fb57600080fd5b610d9d826120cd565b602081526000825180602084015260005b818110156121325760208186018101516040868401015201612115565b506000604082850101526040601f19601f83011684010191505092915050565b6000806040838503121561216557600080fd5b61216e836120cd565b946020939093013593505050565b60008060006060848603121561219157600080fd5b61219a846120cd565b92506121a8602085016120cd565b929592945050506040919091013590565b6000602082840312156121cb57600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b602081016005831061220a57634e487b7160e01b600052602160045260246000fd5b91905290565b6000806040838503121561222357600080fd5b61222c836120cd565b915061223a602084016120cd565b90509250929050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b634e487b7160e01b600052601160045260246000fd5b81810360008312801583831316838312821617156122b0576122b061227a565b5092915050565b6000826122d457634e487b7160e01b600052601260045260246000fd5b500490565b60208082526017908201527f43616c6c6572206973206e6f7420746865205661756c74000000000000000000604082015260600190565b818103818111156107a3576107a361227a565b80820281158282048414176107a3576107a361227a565b808201808211156107a3576107a361227a565b6000600160ff1b82016123625761236261227a565b5060000390565b80820182811260008312801582168215821617156123895761238961227a565b50509291505056feddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa26469706673582212201cfffc0f90c5bf442d1d2a129624a739329012defc8969e287310c318cf5b7c464736f6c634300081c00337bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106102065760003560e01c806370a082311161011a578063c2376dff116100ad578063dd62ed3e1161007c578063dd62ed3e1461049b578063e5c4fffe146104d4578063e696393a14610504578063f51b0fd41461050d578063f9854bfc1461051557600080fd5b8063c2376dff14610465578063c7af33521461046d578063cd6dc68714610475578063d38bfff41461048857600080fd5b80639d01fc72116100e95780639d01fc72146104195780639dc29fac1461042c578063a9059cbb1461043f578063baa9c9db1461045257600080fd5b806370a08231146103d05780637a46a9c5146103e35780637d0d66ff146103eb57806395d89b41146103f357600080fd5b806339a7919f1161019d5780635d36b1901161016c5780635d36b190146103455780635f5a85771461034d578063609350cd146103765780636691cb3d1461039f5780636b96be39146103a757600080fd5b806339a7919f146102dc57806340c10f19146102ef578063430bf08a14610302578063456ee2861461031557600080fd5b80630c340a24116101d95780630c340a241461029157806318160ddd146102b157806323b872dd146102ba578063313ce567146102cd57600080fd5b806306a2da3d1461020b57806306fdde0314610220578063077f22b714610258578063095ea7b31461026e575b600080fd5b61021e6102193660046120e9565b61053d565b005b60408051808201909152600a8152690a6eae0cae4409e8aa8960b31b60208201525b60405161024f9190612104565b60405180910390f35b610260610723565b60405190815260200161024f565b61028161027c366004612152565b61073c565b604051901515815260200161024f565b6102996107a9565b6040516001600160a01b03909116815260200161024f565b610260609a5481565b6102816102c836600461217c565b6107c1565b6040516012815260200161024f565b61021e6102ea3660046121b9565b6108f6565b61021e6102fd366004612152565b610ace565b609c54610299906001600160a01b031681565b6103386103233660046120e9565b60a26020526000908152604090205460ff1681565b60405161024f91906121e8565b61021e610bfc565b61029961035b3660046120e9565b60a4602052600090815260409020546001600160a01b031681565b6102606103843660046120e9565b6001600160a01b0316600090815260a1602052604090205490565b610260610ca2565b6102996103b53660046120e9565b60a5602052600090815260409020546001600160a01b031681565b6102606103de3660046120e9565b610cb6565b609f54610260565b609e54610260565b60408051808201909152600a815269073757065724f455448760b41b6020820152610242565b61021e610427366004612210565b610da4565b61021e61043a366004612152565b6112bb565b61028161044d366004612152565b6113a9565b61021e6104603660046120e9565b611432565b61021e6114b0565b6102816114b9565b61021e610483366004612152565b6114ea565b61021e6104963660046120e9565b6115cd565b6102606104a9366004612210565b6001600160a01b039182166000908152609b6020908152604080832093909416825291909152205490565b6104e76104e23660046120e9565b611671565b60408051938452602084019290925215159082015260600161024f565b61026060a05481565b61021e6116a5565b6105286105233660046120e9565b6116ae565b6040805192835260208301919091520161024f565b6105456114b9565b61056a5760405162461bcd60e51b815260040161056190612243565b60405180910390fd5b6001600160a01b03818116600090815260a46020526040902054166105cc5760405162461bcd60e51b815260206004820152601860248201527716995c9bc81859191c995cdcc81b9bdd08185b1b1bddd95960421b6044820152606401610561565b6001600160a01b03808216600090815260a46020526040812054909116906105f383610cb6565b9050600061060083610cb6565b6001600160a01b0384166000908152609d602052604081205491925061062583611731565b6001600160a01b03868116600081815260a56020908152604080832080546001600160a01b0319908116909155948c16835260a48252808320805490951690945560a2808252848320805460ff19908116600117909155609d8084528685208c905594845290825284832080549091166002179055919091529081208290559091506106b083611772565b6106b983611772565b6106c39190612290565b90506106d7816106d287611772565b6117e0565b604080516001600160a01b03808a168252881660208201527fa4fa89dd14422a509261a2d4d459f93abdc84c6e92c5e7ae5448243713967bd3910160405180910390a150505050505050565b6000633b9aca00609e5461073791906122b7565b905090565b336000818152609b602090815260408083206001600160a01b038716808552925280832085905551919290917f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925906107979086815260200190565b60405180910390a35060015b92915050565b60006107376000805160206123b28339815191525490565b60006001600160a01b0383166108145760405162461bcd60e51b81526020600482015260186024820152775472616e7366657220746f207a65726f206164647265737360401b6044820152606401610561565b6001600160a01b0384166000908152609b602090815260408083203384529091529020548083111561087d5760405162461bcd60e51b8152602060048201526012602482015271105b1b1bddd85b98d948195e18d95959195960721b6044820152606401610561565b6001600160a01b0385166000908152609b60209081526040808320338452909152902083820390556108b0858585611824565b836001600160a01b0316856001600160a01b0316600080516020612392833981519152856040516108e391815260200190565b60405180910390a3506001949350505050565b609c546001600160a01b031633146109205760405162461bcd60e51b8152600401610561906122d9565b6000609a54116109725760405162461bcd60e51b815260206004820152601860248201527f43616e6e6f7420696e637265617365203020737570706c7900000000000000006044820152606401610561565b80609a54036109c557609a54609e54609f5460408051938452602084019290925282820152517f41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e2572359181900360600190a150565b6001600160801b0381116109d957806109e2565b6001600160801b035b609a81905560a0546000916109f79190612310565b905080600182609e54670de0b6b3a7640000610a139190612323565b610a1d919061233a565b610a279190612310565b610a3191906122b7565b609f819055610a825760405162461bcd60e51b815260206004820152601860248201527f496e76616c6964206368616e676520696e20737570706c7900000000000000006044820152606401610561565b609a54609e54609f5460408051938452602084019290925282820152517f41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e2572359181900360600190a1505b50565b609c546001600160a01b03163314610af85760405162461bcd60e51b8152600401610561906122d9565b6001600160a01b038216610b4e5760405162461bcd60e51b815260206004820152601860248201527f4d696e7420746f20746865207a65726f206164647265737300000000000000006044820152606401610561565b600080610b6384610b5e85611772565b61186d565b91509150610b7182826117e0565b82609a54610b7f919061233a565b609a8190556001600160801b0311610bc65760405162461bcd60e51b815260206004820152600a6024820152694d617820737570706c7960b01b6044820152606401610561565b6040518381526001600160a01b03851690600090600080516020612392833981519152906020015b60405180910390a350505050565b7f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db546001600160a01b0316336001600160a01b031614610c975760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b6064820152608401610561565b610ca033611b5b565b565b6000633b9aca00609f5461073791906122b7565b6001600160a01b038116600090815260a2602052604081205460ff166003816004811115610ce657610ce66121d2565b03610d085750506001600160a01b03166000908152609d602052604090205490565b6000610d1384611bba565b6001600160a01b0385166000908152609d6020526040902054610d3e90670de0b6b3a7640000612323565b610d4891906122b7565b90506004826004811115610d5e57610d5e6121d2565b03610d9d576001600160a01b03808516600090815260a560209081526040808320549093168252609d90522054610d959082612310565b949350505050565b9392505050565b610dac6114b9565b610dc85760405162461bcd60e51b815260040161056190612243565b6001600160a01b038216610e1e5760405162461bcd60e51b815260206004820152601d60248201527f5a65726f2066726f6d2061646472657373206e6f7420616c6c6f7765640000006044820152606401610561565b6001600160a01b038116610e745760405162461bcd60e51b815260206004820152601b60248201527f5a65726f20746f2061646472657373206e6f7420616c6c6f77656400000000006044820152606401610561565b806001600160a01b0316826001600160a01b031603610ed55760405162461bcd60e51b815260206004820152601760248201527f43616e6e6f742064656c656761746520746f2073656c660000000000000000006044820152606401610561565b6001600160a01b03818116600090815260a5602052604090205416158015610f1557506001600160a01b03818116600090815260a4602052604090205416155b8015610f3957506001600160a01b03828116600090815260a5602052604090205416155b8015610f5d57506001600160a01b03828116600090815260a4602052604090205416155b610fb55760405162461bcd60e51b8152602060048201526024808201527f426c6f636b6564206279206578697374696e67207969656c642064656c6567616044820152633a34b7b760e11b6064820152608401610561565b6001600160a01b03808316600090815260a2602052604080822054928416825281205460ff928316921690826004811115610ff257610ff26121d2565b148061100f5750600182600481111561100d5761100d6121d2565b145b8061102b57506002826004811115611029576110296121d2565b145b6110775760405162461bcd60e51b815260206004820152601860248201527f496e76616c69642072656261736553746174652066726f6d00000000000000006044820152606401610561565b600081600481111561108b5761108b6121d2565b14806110a8575060018160048111156110a6576110a66121d2565b145b806110c4575060028160048111156110c2576110c26121d2565b145b6111095760405162461bcd60e51b8152602060048201526016602482015275496e76616c696420726562617365537461746520746f60501b6044820152606401610561565b6001600160a01b038416600090815260a1602052604081205490036111315761113184611be9565b6001600160a01b038316600090815260a16020526040902054156111585761115883611dc4565b600061116385610cb6565b9050600061117085610cb6565b6001600160a01b0386166000908152609d602052604081205491925061119e611199848661233a565b611731565b6001600160a01b03898116600081815260a46020908152604080832080546001600160a01b0319908116968f1696871790915585845260a5835281842080549091168517905592825260a2808252838320805460ff1990811660031790915560a18352848420670de0b6b3a76400009055609d8084528585208c90559584529082528383208054909116600417905592909252812082905590915061124283611772565b61124b83611772565b6112559190612290565b905061126d8161126487611772565b6106d29061234d565b604080516001600160a01b03808c1682528a1660208201527f31e39e4bb9df9d4143551c8a3a4798fc19b0854768570ce84d966f6adffd01a3910160405180910390a1505050505050505050565b609c546001600160a01b031633146112e55760405162461bcd60e51b8152600401610561906122d9565b6001600160a01b03821661133b5760405162461bcd60e51b815260206004820152601a60248201527f4275726e2066726f6d20746865207a65726f20616464726573730000000000006044820152606401610561565b80156113a55760008061135a8461135185611772565b610b5e9061234d565b9150915061136882826117e0565b82609a546113769190612310565b609a556040518381526000906001600160a01b0386169060008051602061239283398151915290602001610bee565b5050565b60006001600160a01b0383166113fc5760405162461bcd60e51b81526020600482015260186024820152775472616e7366657220746f207a65726f206164647265737360401b6044820152606401610561565b611407338484611824565b6040518281526001600160a01b03841690339060008051602061239283398151915290602001610797565b61143a6114b9565b6114565760405162461bcd60e51b815260040161056190612243565b6001600160a01b0381166114a75760405162461bcd60e51b815260206004820152601860248201527716995c9bc81859191c995cdcc81b9bdd08185b1b1bddd95960421b6044820152606401610561565b610acb81611dc4565b610ca033611be9565b60006114d16000805160206123b28339815191525490565b6001600160a01b0316336001600160a01b031614905090565b6114f26114b9565b61150e5760405162461bcd60e51b815260040161056190612243565b6001600160a01b0382166115595760405162461bcd60e51b81526020600482015260126024820152715a65726f207661756c74206164647265737360701b6044820152606401610561565b609c546001600160a01b0316156115a85760405162461bcd60e51b8152602060048201526013602482015272105b1c9958591e481a5b9a5d1a585b1a5e9959606a1b6044820152606401610561565b609f55609c80546001600160a01b0319166001600160a01b0392909216919091179055565b6115d56114b9565b6115f15760405162461bcd60e51b815260040161056190612243565b611619817f44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db55565b806001600160a01b03166116396000805160206123b28339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b6001600160a01b0381166000908152609d60205260408120548190819061169785611bba565b909590945060019350915050565b610ca033611dc4565b60008060006116bc84611bba565b9050806b033b2e3c9fd0803ce8000000036116f1576001600160a01b039093166000908152609d602052604090205493915050565b6001600160a01b0384166000908152609d602052604090205461171990633b9aca00906122b7565b611727633b9aca00836122b7565b9250925050915091565b6000670de0b6b3a76400006001609f548461174c9190612323565b61175e90670de0b6b3a764000061233a565b6117689190612310565b6107a391906122b7565b60006001600160ff1b038211156117dc5760405162461bcd60e51b815260206004820152602860248201527f53616665436173743a2076616c756520646f65736e27742066697420696e2061604482015267371034b73a191a9b60c11b6064820152608401610561565b5090565b811561180857611804826117f5609e54611772565b6117ff9190612369565b611f9f565b609e555b80156113a55761181d816117f560a054611772565b60a0555050565b6000806118348561135185611772565b9150915060008061184886610b5e87611772565b909250905061186461185a8386612369565b6106d28386612369565b50505050505050565b6001600160a01b038216600090815260a26020526040812054819060ff168161189d61189887610cb6565b611772565b905060006118ab8683612369565b12156118f95760405162461bcd60e51b815260206004820152601f60248201527f5472616e7366657220616d6f756e7420657863656564732062616c616e6365006044820152606401610561565b60006119086117ff8784612369565b9050600383600481111561191e5761191e6121d2565b036119c3576001600160a01b03808816600090815260a460205260408120549091169061194a82610cb6565b9050600061195b611199858461233a565b6001600160a01b0384166000908152609d602052604090205490915061198090611772565b61198982611772565b6119939190612290565b6001600160a01b03808c166000908152609d60205260408082208890559590911681529390932055509450611b51565b60048360048111156119d7576119d76121d2565b03611a6f576001600160a01b03808816600090815260a560209081526040808320549093168252609d905290812054611a1490611199908461233a565b6001600160a01b0389166000908152609d6020526040902054909150611a3990611772565b611a4282611772565b611a4c9190612290565b6001600160a01b0389166000908152609d60205260409020919091559450611b51565b611a7887611ff1565b6001600160a01b038716600090815260a160205260409020548015611aed5786945080670de0b6b3a764000014611acd576001600160a01b038816600090815260a160205260409020670de0b6b3a764000090555b6001600160a01b0388166000908152609d60205260409020829055611b4f565b6000611af883611731565b6001600160a01b038a166000908152609d6020526040902054909150611b1d90611772565b611b2682611772565b611b309190612290565b6001600160a01b038a166000908152609d602052604090209190915595505b505b5050509250929050565b6001600160a01b038116611bb15760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f7220697320616464726573732830290000000000006044820152606401610561565b610acb81612066565b6001600160a01b038116600090815260a160205260408120548015611bdf5792915050565b5050609f54919050565b6001600160a01b038116600090815260a1602052604090205415611c4f5760405162461bcd60e51b815260206004820152601860248201527f4163636f756e74206d757374206265207265626173696e6700000000000000006044820152606401610561565b6001600160a01b038116600090815260a2602052604090205460ff166002816004811115611c7f57611c7f6121d2565b1480611c9c57506000816004811115611c9a57611c9a6121d2565b145b611cfc5760405162461bcd60e51b815260206004820152602b60248201527f4f6e6c79207374616e64617264207265626173696e67206163636f756e74732060448201526a18d85b881bdc1d081bdd5d60aa1b6064820152608401610561565b6001600160a01b0382166000908152609d602052604081205490611d1f84610cb6565b6001600160a01b038516600090815260a260209081526040808320805460ff1916600117905560a18252808320670de0b6b3a76400009055609d90915290208190559050611d81611d6f83611772565b611d789061234d565b6106d283611772565b6040516001600160a01b03851681527f201ace89ad3f5ab7428b91989f6a50d1998791c7b94a0fa812fd64a57687165e906020015b60405180910390a150505050565b6000611dcf82610cb6565b6001600160a01b038316600090815260a16020526040902054909150151580611e0e57506001600160a01b0382166000908152609d6020526040902054155b611e5a5760405162461bcd60e51b815260206004820152601c60248201527f4163636f756e74206d757374206265206e6f6e2d7265626173696e67000000006044820152606401610561565b6001600160a01b038216600090815260a2602052604090205460ff166001816004811115611e8a57611e8a6121d2565b1480611ea757506000816004811115611ea557611ea56121d2565b145b611f0a5760405162461bcd60e51b815260206004820152602e60248201527f4f6e6c79207374616e64617264206e6f6e2d7265626173696e67206163636f7560448201526d373a399031b0b71037b83a1034b760911b6064820152608401610561565b6000611f1583611731565b6001600160a01b038516600090815260a260209081526040808320805460ff1916600217905560a18252808320839055609d90915290208190559050611f66611f5d82611772565b61126485611772565b6040516001600160a01b03851681527f19a249fa2050bac8314ac10e3ad420bd9825574bf750f58810c3c7adfc7b1c6f90602001611db6565b6000808212156117dc5760405162461bcd60e51b815260206004820181905260248201527f53616665436173743a2076616c7565206d75737420626520706f7369746976656044820152606401610561565b6001600160a01b0381163b15801590819061203657506001600160a01b038216600090815260a2602052604081205460ff166004811115612034576120346121d2565b145b801561205857506001600160a01b038216600090815260a16020526040902054155b156113a5576113a582611be9565b806001600160a01b03166120866000805160206123b28339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36000805160206123b283398151915255565b80356001600160a01b03811681146120e457600080fd5b919050565b6000602082840312156120fb57600080fd5b610d9d826120cd565b602081526000825180602084015260005b818110156121325760208186018101516040868401015201612115565b506000604082850101526040601f19601f83011684010191505092915050565b6000806040838503121561216557600080fd5b61216e836120cd565b946020939093013593505050565b60008060006060848603121561219157600080fd5b61219a846120cd565b92506121a8602085016120cd565b929592945050506040919091013590565b6000602082840312156121cb57600080fd5b5035919050565b634e487b7160e01b600052602160045260246000fd5b602081016005831061220a57634e487b7160e01b600052602160045260246000fd5b91905290565b6000806040838503121561222357600080fd5b61222c836120cd565b915061223a602084016120cd565b90509250929050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b634e487b7160e01b600052601160045260246000fd5b81810360008312801583831316838312821617156122b0576122b061227a565b5092915050565b6000826122d457634e487b7160e01b600052601260045260246000fd5b500490565b60208082526017908201527f43616c6c6572206973206e6f7420746865205661756c74000000000000000000604082015260600190565b818103818111156107a3576107a361227a565b80820281158282048414176107a3576107a361227a565b808201808211156107a3576107a361227a565b6000600160ff1b82016123625761236261227a565b5060000390565b80820182811260008312801582168215821617156123895761238961227a565b50509291505056feddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4aa26469706673582212201cfffc0f90c5bf442d1d2a129624a739329012defc8969e287310c318cf5b7c464736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "events": {
+      "AccountRebasingDisabled(address)": {
+        "details": "Event triggered when an account opts out of rebasing",
+        "params": {
+          "account": "Address of the account"
+        }
+      },
+      "AccountRebasingEnabled(address)": {
+        "details": "Event triggered when an account opts in for rebasing",
+        "params": {
+          "account": "Address of the account"
+        }
+      },
+      "Approval(address,address,uint256)": {
+        "details": "Emitted when the allowance of a `spender` for an `owner` is set by      a call to {approve}. `value` is the new allowance.",
+        "params": {
+          "owner": "Address of the owner approving allowance",
+          "spender": "Address of the spender allowance is granted to",
+          "value": "Amount of tokens spender can transfer"
+        }
+      },
+      "TotalSupplyUpdatedHighres(uint256,uint256,uint256)": {
+        "details": "Event triggered when the supply changes",
+        "params": {
+          "rebasingCredits": "Updated token rebasing credits",
+          "rebasingCreditsPerToken": "Updated token rebasing credits per token",
+          "totalSupply": "Updated token total supply"
+        }
+      },
+      "Transfer(address,address,uint256)": {
+        "details": "Emitted when `value` tokens are moved from one account `from` to      another `to`.",
+        "params": {
+          "from": "Address of the account tokens are moved from",
+          "to": "Address of the account tokens are moved to",
+          "value": "Amount of tokens transferred"
+        }
+      },
+      "YieldDelegated(address,address)": {
+        "details": "Yield resulting from {changeSupply} that a `source` account would      receive is directed to `target` account.",
+        "params": {
+          "source": "Address of the source forwarding the yield",
+          "target": "Address of the target receiving the yield"
+        }
+      },
+      "YieldUndelegated(address,address)": {
+        "details": "Yield delegation from `source` account to the `target` account is      suspended.",
+        "params": {
+          "source": "Address of the source suspending yield forwarding",
+          "target": "Address of the target no longer receiving yield from `source`        account"
+        }
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "allowance(address,address)": {
+        "params": {
+          "_owner": "The address which owns the funds.",
+          "_spender": "The address which will spend the funds."
+        },
+        "returns": {
+          "_0": "The number of tokens still available for the _spender."
+        }
+      },
+      "approve(address,uint256)": {
+        "params": {
+          "_spender": "The address which will spend the funds.",
+          "_value": "The amount of tokens to be spent."
+        },
+        "returns": {
+          "_0": "true on success."
+        }
+      },
+      "balanceOf(address)": {
+        "params": {
+          "_account": "Address to query the balance of."
+        },
+        "returns": {
+          "_0": "A uint256 representing the amount of base units owned by the         specified address."
+        }
+      },
+      "changeSupply(uint256)": {
+        "params": {
+          "_newTotalSupply": "New total supply of OUSD."
+        }
+      },
+      "creditsBalanceOf(address)": {
+        "details": "Backwards compatible with old low res credits per token.",
+        "params": {
+          "_account": "The address to query the balance of."
+        },
+        "returns": {
+          "_0": "(uint256, uint256) Credit balance and credits per token of the         address"
+        }
+      },
+      "creditsBalanceOfHighres(address)": {
+        "params": {
+          "_account": "The address to query the balance of."
+        },
+        "returns": {
+          "_0": "(uint256, uint256, bool) Credit balance, credits per token of the         address, and isUpgraded"
+        }
+      },
+      "decimals()": {
+        "details": "Returns the number of decimals used to get its user representation."
+      },
+      "governanceRebaseOptIn(address)": {
+        "params": {
+          "_account": "Address of the account."
+        }
+      },
+      "initialize(address,uint256)": {
+        "details": "Initializes the contract and sets necessary variables.",
+        "params": {
+          "_initialCreditsPerToken": "The starting rebasing credits per token.",
+          "_vaultAddress": "Address of the vault contract"
+        }
+      },
+      "name()": {
+        "details": "Returns the name of the token."
+      },
+      "rebasingCredits()": {
+        "returns": {
+          "_0": "Low resolution total number of rebasing credits"
+        }
+      },
+      "rebasingCreditsHighres()": {
+        "returns": {
+          "_0": "High resolution total number of rebasing credits"
+        }
+      },
+      "rebasingCreditsPerToken()": {
+        "returns": {
+          "_0": "Low resolution rebasingCreditsPerToken"
+        }
+      },
+      "rebasingCreditsPerTokenHighres()": {
+        "returns": {
+          "_0": "High resolution rebasingCreditsPerToken"
+        }
+      },
+      "symbol()": {
+        "details": "Returns the symbol of the token, a shorter version      of the name."
+      },
+      "transfer(address,uint256)": {
+        "params": {
+          "_to": "the address to transfer to.",
+          "_value": "the amount to be transferred."
+        },
+        "returns": {
+          "_0": "true on success."
+        }
+      },
+      "transferFrom(address,address,uint256)": {
+        "params": {
+          "_from": "The address you want to send tokens from.",
+          "_to": "The address you want to transfer to.",
+          "_value": "The amount of tokens to be transferred."
+        },
+        "returns": {
+          "_0": "true on success."
+        }
+      },
+      "transferGovernance(address)": {
+        "params": {
+          "_newGovernor": "Address of the new Governor"
+        }
+      }
+    },
+    "title": "Super OETH (Plume) Token Contract",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "allowance(address,address)": {
+        "notice": "Function to check the amount of tokens that _owner has allowed      to `_spender`."
+      },
+      "approve(address,uint256)": {
+        "notice": "Approve the passed address to spend the specified amount of      tokens on behalf of msg.sender."
+      },
+      "balanceOf(address)": {
+        "notice": "Gets the balance of the specified address."
+      },
+      "burn(address,uint256)": {
+        "notice": "Destroys `_amount` tokens from `_account`,     reducing the total supply."
+      },
+      "changeSupply(uint256)": {
+        "notice": "Distribute yield to users. This changes the exchange rate  between \"credits\" and OUSD tokens to change rebasing user's balances."
+      },
+      "claimGovernance()": {
+        "notice": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+      },
+      "creditsBalanceOf(address)": {
+        "notice": "Gets the credits balance of the specified address."
+      },
+      "creditsBalanceOfHighres(address)": {
+        "notice": "Gets the credits balance of the specified address."
+      },
+      "governanceRebaseOptIn(address)": {
+        "notice": "The calling account will start receiving yield after a successful call."
+      },
+      "governor()": {
+        "notice": "Returns the address of the current Governor."
+      },
+      "isGovernor()": {
+        "notice": "Returns true if the caller is the current Governor."
+      },
+      "mint(address,uint256)": {
+        "notice": "Creates `_amount` tokens and assigns them to `_account`,     increasing the total supply."
+      },
+      "rebaseOptIn()": {
+        "notice": "The calling account will start receiving yield after a successful call."
+      },
+      "rebaseOptOut()": {
+        "notice": "The calling account will no longer receive yield"
+      },
+      "transfer(address,uint256)": {
+        "notice": "Transfer tokens to a specified address."
+      },
+      "transferFrom(address,address,uint256)": {
+        "notice": "Transfer tokens from one address to another."
+      },
+      "transferGovernance(address)": {
+        "notice": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 54632,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "_gap",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_array(t_uint256)154_storage"
+      },
+      {
+        "astId": 54642,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "totalSupply",
+        "offset": 0,
+        "slot": "154",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 54648,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "allowances",
+        "offset": 0,
+        "slot": "155",
+        "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))"
+      },
+      {
+        "astId": 54651,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "vaultAddress",
+        "offset": 0,
+        "slot": "156",
+        "type": "t_address"
+      },
+      {
+        "astId": 54655,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "creditBalances",
+        "offset": 0,
+        "slot": "157",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 54657,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "rebasingCredits_",
+        "offset": 0,
+        "slot": "158",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 54659,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "rebasingCreditsPerToken_",
+        "offset": 0,
+        "slot": "159",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 54662,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "nonRebasingSupply",
+        "offset": 0,
+        "slot": "160",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 54666,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "alternativeCreditsPerToken",
+        "offset": 0,
+        "slot": "161",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 54672,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "rebaseState",
+        "offset": 0,
+        "slot": "162",
+        "type": "t_mapping(t_address,t_enum(RebaseOptions)54628)"
+      },
+      {
+        "astId": 54676,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "__deprecated_isUpgraded",
+        "offset": 0,
+        "slot": "163",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 54681,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "yieldTo",
+        "offset": 0,
+        "slot": "164",
+        "type": "t_mapping(t_address,t_address)"
+      },
+      {
+        "astId": 54686,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "yieldFrom",
+        "offset": 0,
+        "slot": "165",
+        "type": "t_mapping(t_address,t_address)"
+      },
+      {
+        "astId": 54693,
+        "contract": "contracts/token/OETHPlume.sol:OETHPlume",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "166",
+        "type": "t_array(t_uint256)34_storage"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)154_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[154]",
+        "numberOfBytes": "4928"
+      },
+      "t_array(t_uint256)34_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[34]",
+        "numberOfBytes": "1088"
+      },
+      "t_enum(RebaseOptions)54628": {
+        "encoding": "inplace",
+        "label": "enum OUSD.RebaseOptions",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_address)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_mapping(t_address,t_enum(RebaseOptions)54628)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => enum OUSD.RebaseOptions)",
+        "numberOfBytes": "32",
+        "value": "t_enum(RebaseOptions)54628"
+      },
+      "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => mapping(address => uint256))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_address,t_uint256)"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

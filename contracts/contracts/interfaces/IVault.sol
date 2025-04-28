@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { VaultStorage } from "../vault/VaultStorage.sol";
 
 interface IVault {
+    // slither-disable-start constable-states
+
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
@@ -268,4 +270,20 @@ interface IVault {
     function withdrawalClaimDelay() external view returns (uint256);
 
     function setWithdrawalClaimDelay(uint256 newDelay) external;
+
+    function lastRebase() external view returns (uint64);
+
+    function dripDuration() external view returns (uint64);
+
+    function setDripDuration(uint256 _dripDuration) external;
+
+    function rebasePerSecondMax() external view returns (uint64);
+
+    function setRebaseRateMax(uint256 yearlyApr) external;
+
+    function rebasePerSecondTarget() external view returns (uint64);
+
+    function previewYield() external view returns (uint256 yield);
+
+    // slither-disable-end constable-states
 }

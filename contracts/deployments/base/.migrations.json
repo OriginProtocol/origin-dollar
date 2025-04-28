@@ -24,5 +24,7 @@
   "023_update_weth_share": 1738333646,
   "024_multisig_as_canceller": 1737993822,
   "025_base_curve_amo": 1739214342,
-  "026_harvester_v2": 1739547078
+  "026_harvester_v2": 1739547078,
+  "027_base_curve_amo_upgrade": 1743570593,
+  "028_vault_woeth_upgrade": 1744987946
 }

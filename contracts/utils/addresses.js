@@ -6,7 +6,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
-addresses.votemarket = "0x5e5C922a5Eeab508486eB906ebE7bDFFB05D81e5";
+addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
 addresses.holesky = {};
@@ -50,7 +50,7 @@ addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 // Curve
-addresses.mainnet.CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+addresses.mainnet.CRV = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 addresses.mainnet.CRVMinter = "0xd061D61a4d941c39E5453435B6345Dc261C2fcE0";
 addresses.mainnet.ThreePool = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
 addresses.mainnet.ThreePoolToken = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
@@ -160,6 +160,8 @@ addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
+addresses.mainnet.CurveOUSDAMOStrategy =
+  "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
 addresses.mainnet.ConvexVoter = "0x989AEb4d175e16225E39E87d0D97A3360524AD80";
 addresses.mainnet.CurveOUSDUSDTPool =
@@ -178,7 +180,7 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
-  "0x000000009dF57105d76B059178989E01356e4b45";
+  "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
@@ -276,6 +278,12 @@ addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";
 addresses.mainnet.CurveOUSDUSDTPool =
   "0x37715d41ee0af05e77ad3a434a11bbff473efe41";
+addresses.mainnet.curve = {};
+addresses.mainnet.curve.OUSD_USDC = {};
+addresses.mainnet.curve.OUSD_USDC.pool =
+  "0x6d18E1a7faeB1F0467A77C0d293872ab685426dc";
+addresses.mainnet.curve.OUSD_USDC.gauge =
+  "0x1eF8B6Ea6434e722C916314caF8Bf16C81cAF2f9";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -302,6 +310,24 @@ addresses.mainnet.LidoWithdrawalQueue =
 // DAI > USDS Migration Contract
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
+
+// LayerZero
+addresses.mainnet.LayerZeroEndpointV2 =
+  "0x1a44076050125825900e736c501f859c50fE728c";
+addresses.mainnet.WOETHOmnichainAdapter =
+  "0x7d1bea5807e6af125826d56ff477745bb89972b8";
+
+addresses.mainnet.passthrough = {};
+addresses.mainnet.passthrough.curve = {};
+addresses.mainnet.passthrough.curve.OUSD_3POOL =
+  "0x261Fe804ff1F7909c27106dE7030d5A33E72E1bD";
+addresses.mainnet.passthrough.uniswap = {};
+addresses.mainnet.passthrough.uniswap.OUSD_USDT =
+  "0xF29c14dD91e3755ddc1BADc92db549007293F67b";
+addresses.mainnet.passthrough.uniswap.OETH_OGN =
+  "0x2D3007d07aF522988A0Bf3C57Ee1074fA1B27CF1";
+addresses.mainnet.passthrough.uniswap.OETH_WETH =
+  "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
@@ -387,6 +413,9 @@ addresses.sonic.SonicStakingStrategy =
   "0x596B0401479f6DfE1cAF8c12838311FeE742B95c";
 
 // SwapX on Sonic
+addresses.sonic.SWPx = "0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70";
+addresses.sonic.SwapXOwner = "0xAdB5A1518713095C39dBcA08Da6656af7249Dd20";
+addresses.sonic.SwapXVoter = "0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2";
 addresses.sonic.SwapXSWPxOSPool = "0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16";
 addresses.sonic.SwapXTreasury = "0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8";
 addresses.sonic.SwapXOsUSDCe = {};
@@ -404,6 +433,10 @@ addresses.sonic.SwapXOsUSDCe.extBribeUSDC =
 addresses.sonic.SwapXOsGEMSx = {};
 addresses.sonic.SwapXOsGEMSx.pool =
   "0x9ac7F5961a452e9cD5Be5717bD2c3dF412D1c1a5";
+
+addresses.sonic.SwapXWSOS = {};
+addresses.sonic.SwapXWSOS.pool = "0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0";
+addresses.sonic.SwapXWSOS.gauge = "0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709";
 
 addresses.sonic.SwapXOsUSDCeMultisigBooster =
   "0x4636269e7CDc253F6B0B210215C3601558FE80F6";
@@ -468,6 +501,34 @@ addresses.sonic.SwapX.OsHedgy.pool =
   "0x1695d6bd8d8adc8b87c6204be34d34d19a3fe1d6";
 addresses.sonic.SwapX.OsHedgy.yf_treasury =
   "0x4c884677427a975d1b99286e99188c82d71223c8";
+addresses.sonic.SwapX.OsMYRD = {};
+addresses.sonic.SwapX.OsMYRD.pool =
+  "0x6228739b26f49ae9cd953d82366934e209175e81";
+addresses.sonic.SwapX.OsMYRD.gaugeOS =
+  "0xA9Bb2b8B92a546a53466B5E7d8D8f2F03032FB41";
+addresses.sonic.SwapX.OsMYRD.extBribeOS =
+  "0x5599bfd59a9EE0E8b65aB2d2449F4bdf28c75edc";
+addresses.sonic.SwapX.OsBes = {};
+addresses.sonic.SwapX.OsBes.pool = "0x97fe831cc56da84321f404a300e2be81b5bd668a";
+addresses.sonic.SwapX.OsBes.gaugeOS =
+  "0x77546B40445d3eca6111944DFe902de0514A4F80";
+addresses.sonic.SwapX.OsBes.extBribeOS =
+  "0x19582ff8ffD7695eE177061eb4AC3fCA520F3638";
+addresses.sonic.SwapX.OsBes.gaugeOther =
+  "0xfBA3606310f3d492031176eC85DFbeD67F5799F2";
+addresses.sonic.SwapX.OsBes.extBribeOther =
+  "0x298B8934bC89d19F89A1F8Eb620659E6678e3539";
+addresses.sonic.SwapX.OsBRNx = {};
+addresses.sonic.SwapX.OsBRNx.pool =
+  "0x12dAb9825B85B07f8DdDe746066B7Ed6Bc4c06F8";
+addresses.sonic.SwapX.OsBRNx.gaugeOS =
+  "0xBd896eB3503A2eC0f246B3C0B7D8D434F7c697Fc";
+addresses.sonic.SwapX.OsBRNx.extBribeOS =
+  "0x0B2d62B1B025751249543d47765f55a66Dd526c7";
+addresses.sonic.SwapX.OsBRNx.gaugeOther =
+  "0xaE519dE817775E394Fc854d966065a97Facfc934";
+addresses.sonic.SwapX.OsBRNx.extBribeOther =
+  "0xC9FA26E55e92e1D9c63A6FDF9b91FaC794523203";
 
 // Sonic Shadow
 addresses.sonic.Shadow = {};
@@ -477,12 +538,30 @@ addresses.sonic.Shadow.OsEco.pool =
 addresses.sonic.Shadow.OsEco.yf_treasury =
   "0x4b9919603170c77936d8ec2c08b604844e861699";
 
+// Sonic Metropolis
+addresses.sonic.Metropolis = {};
+addresses.sonic.Metropolis.Voter = "0x03A9896A464C515d13f2679df337bF95bc891fdA";
+addresses.sonic.Metropolis.RewarderFactory =
+  "0xd9db92613867FE0d290CE64Fe737E2F8B80CADc3";
+addresses.sonic.Metropolis.Pools = {};
+addresses.sonic.Metropolis.Pools.OsWOs =
+  "0x3987a13d675c66570bc28c955685a9bca2dcf26e";
+addresses.sonic.Metropolis.Pools.OsMoon =
+  "0xc0aac9bb9fb72a77e3bc8bee46d3e227c84a54c0";
+addresses.sonic.Metropolis.OsWs = {};
+addresses.sonic.Metropolis.OsWs.pool =
+  "0x3987a13d675c66570bc28c955685a9bca2dcf26e";
+
 // Sonic Curve
+addresses.sonic.CRV = "0x5Af79133999f7908953E94b7A5CF367740Ebee35";
 addresses.sonic.WS_OS = {};
-addresses.sonic.WS_OS.pool = "0x7180f41a71f13fac52d2cfb17911f5810c8b0bb9";
-addresses.sonic.WS_OS.gauge = "0x9ca6de419e9fc7bac876de07f0f6ec96331ba207";
+addresses.sonic.WS_OS.pool = "0x7180F41A71f13FaC52d2CfB17911f5810c8B0BB9";
+addresses.sonic.WS_OS.gauge = "0x9CA6dE419e9fc7bAC876DE07F0f6Ec96331Ba207";
 addresses.sonic.childLiquidityGaugeFactory =
   "0xf3A431008396df8A8b2DF492C913706BDB0874ef";
+
+// Sonic Merkl
+addresses.sonic.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
 // Holesky
 addresses.holesky.WETH = "0x94373a4919B3240D86eA41593D5eBa789FEF3848";
@@ -507,24 +586,21 @@ addresses.holesky.validatorRegistrator =
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume = {};
-// TODO: change this once we know the address
-addresses.plume.governor = "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
-// all these are testnet values
-addresses.plume.WETH = "0x1738E5247c85f96c9D35FE55800557C5479b7063";
-addresses.plume.MaverickV2Factory = "0xb3981D569633Cc6D63C800d159EDE0d0fA5723de";
+addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
+addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
+addresses.plume.LayerZeroEndpointV2 =
+  "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
+addresses.plume.WOETHOmnichainAdapter =
+  "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
+addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
+addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
+addresses.plume.MaverickV2Factory = "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
 addresses.plume.MaverickV2PoolLens = "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
 addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
-addresses.plume.MaverickV2Router = "0x1Aa9f3F98D62f65a010ad1283cC0F4c9cDAd40fF";
-addresses.plume.MaverickV2Position = "0xeaB0C344C6bf49901fb0a0D5BcA2417a0548b8a3";
-addresses.plume.MaverickV2LiquidityManager = "0x36bECaBdde2a63DCCFBe1235F55A85381ed007BC";
+addresses.plume.MaverickV2Router = "0x35e44dc4702Fd51744001E248B49CBf9fcc51f0C";
+addresses.plume.MaverickV2Position = "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
+addresses.plume.MaverickV2LiquidityManager = "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
 
-// all these are Mainnet values
-// addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
-// addresses.plume.MaverickV2Factory = "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
-// addresses.plume.MaverickV2PoolLens = "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
-// addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
-// addresses.plume.MaverickV2Router = "0x35e44dc4702Fd51744001E248B49CBf9fcc51f0C";
-// addresses.plume.MaverickV2Position = "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
-// addresses.plume.MaverickV2LiquidityManager = "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
+
 
 module.exports = addresses;

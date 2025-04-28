@@ -26,8 +26,8 @@ describe("ForkTest: OETHp", function () {
 
   it("Should have the right governor", async () => {
     const { oethp } = fixture;
-    const { deployerAddr } = await getNamedAccounts();
-    expect(await oethp.governor()).to.eq(deployerAddr);
+    const { timelockAddr } = await getNamedAccounts();
+    expect(await oethp.governor()).to.eq(timelockAddr);
   });
 
   it("Should have the right Vault address", async () => {

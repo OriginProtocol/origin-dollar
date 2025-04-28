@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
@@ -283,13 +283,6 @@ contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHBaseCurveAMOProxy delegates calls to a OETHBaseCurveAMO implementation
- */
-contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice PoolBoostCentralRegistryProxy delegates calls to the PoolBoostCentralRegistry implementation
  */
 contract PoolBoostCentralRegistryProxy is
@@ -306,8 +299,8 @@ contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice RoosterAMOStrategyProxy delegates calls to a RoosterAMOStrategy implementation
+ * @notice OUSDCurveAMOProxy delegates calls to a CurveAMOStrategy implementation
  */
-contract RoosterAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

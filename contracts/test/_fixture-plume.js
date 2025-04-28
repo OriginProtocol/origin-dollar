@@ -6,7 +6,6 @@ const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
-
 const log = require("../utils/logger")("test:fixtures-plume");
 
 let snapshotId;
@@ -44,11 +43,20 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
   const deployer = await ethers.getSigner(deployerAddr);
 
   const [rafael, daniel, nick, domen, clement] = signers.slice(4); // Skip first 4 addresses to avoid conflict
-  // // TODO: update this on fork later
-  // const strategist = signers[3];
 
-  // WETH
-  // TODO: Change this later to actual address
+  const { strategistAddr, governorAddr, timelockAddr } =
+    await getNamedAccounts();
+
+  if (isFork) {
+    await impersonateAndFund(governorAddr);
+    await impersonateAndFund(timelockAddr);
+    await impersonateAndFund(strategistAddr);
+  }
+
+  const timelock = await ethers.getSigner(timelockAddr);
+  const governor = isFork ? timelock : await ethers.getSigner(governorAddr);
+  const strategist = await ethers.getSigner(strategistAddr);
+
   const weth = await ethers.getContractAt("MockWETH", addresses.plume.WETH);
 
   // OETHp
@@ -66,12 +74,38 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     oethpVaultProxy.address
   );
 
+  const wethMintableContract = await ethers.getContractAt(
+    [
+      "function addMinter(address) external",
+      "function mint(address to, uint256 amount) external",
+      "function mintTo(address to, uint256 amount) external",
+    ],
+    addresses.plume.WETH
+  );
+
+  const _mintWETH = async (signer, amount) => {
+    if (isFork) {
+      await wethMintableContract.connect(governor).mint(signer.address, amount);
+    } else {
+      await wethMintableContract
+        .connect(governor)
+        .mintTo(signer.address, amount);
+    }
+  };
+
+  if (isFork) {
+    // Allow governor to mint WETH
+    const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
+    const ownerSigner = await impersonateAndFund(wethOwner);
+    await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
+  }
+
   for (const signer of [rafael, daniel, nick, domen, clement]) {
     // Everyone has tons of Plume for gas
     await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
 
     // And WETH
-    await weth.connect(signer).mint(oethUnits("10000000"));
+    _mintWETH(signer, oethUnits("10000000"));
 
     // Set allowance on the vault
     await weth
@@ -86,14 +120,18 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     nick,
     domen,
     clement,
-    strategist: deployer,
-    governor: deployer,
+    deployer,
+    strategist,
+    governor,
+    timelock,
 
     // Contracts
     weth,
     oethp,
     wOETHp,
     oethpVault,
+    // Helpers
+    _mintWETH,
   };
 });
 

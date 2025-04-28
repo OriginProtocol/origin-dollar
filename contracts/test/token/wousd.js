@@ -1,17 +1,20 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  instantRebaseVaultFixture,
+} = require("../_fixture");
 const { ousdUnits, usdsUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {
   if (isFork) {
     this.timeout(0);
   }
-
   let ousd, wousd, vault, usds, matt, josh, governor;
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
 
   beforeEach(async () => {
-    const fixture = await loadDefaultFixture();
+    const fixture = await loadFixture();
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     vault = fixture.vault;
@@ -20,31 +23,39 @@ describe("WOUSD", function () {
     josh = fixture.josh;
     governor = fixture.governor;
 
-    // Josh wraps 50
+    /* Matt and Josh start out with 100 OUSD
+     * Josh wraps 50 OUSD to WOETH
+     */
     await ousd.connect(josh).approve(wousd.address, ousdUnits("1000"));
     await wousd.connect(josh).deposit(ousdUnits("50"), josh.address);
     // Matt gives money to wOUSD, which counts as yield and changes the effective price of WOUSD
+
     // 1 WOUSD will be worth 2 OUSD
-    await ousd.connect(matt).transfer(wousd.address, ousdUnits("50"));
+    await increaseOUSDSupplyAndRebase(await ousd.totalSupply());
   });
+
+  const increaseOUSDSupplyAndRebase = async (usdsAmount) => {
+    await usds.connect(matt).transfer(vault.address, usdsAmount);
+    await vault.rebase();
+  };
 
   describe("Funds in, Funds out", async () => {
     it("should deposit at the correct ratio", async () => {
       await wousd.connect(josh).deposit(ousdUnits("50"), josh.address);
       await expect(josh).to.have.a.balanceOf("75", wousd);
-      await expect(josh).to.have.a.balanceOf("0", ousd);
+      await expect(josh).to.have.a.balanceOf("50", ousd);
     });
     it("should withdraw at the correct ratio", async () => {
       await wousd
         .connect(josh)
         .withdraw(ousdUnits("50"), josh.address, josh.address);
       await expect(josh).to.have.a.balanceOf("25", wousd);
-      await expect(josh).to.have.a.balanceOf("100", ousd);
+      await expect(josh).to.have.a.balanceOf("150", ousd);
     });
     it("should mint at the correct ratio", async () => {
       await wousd.connect(josh).mint(ousdUnits("25"), josh.address);
       await expect(josh).to.have.a.balanceOf("75", wousd);
-      await expect(josh).to.have.a.balanceOf("0", ousd);
+      await expect(josh).to.have.a.balanceOf("50", ousd);
     });
     it("should redeem at the correct ratio", async () => {
       await expect(josh).to.have.a.balanceOf("50", wousd);
@@ -52,14 +63,14 @@ describe("WOUSD", function () {
         .connect(josh)
         .redeem(ousdUnits("50"), josh.address, josh.address);
       await expect(josh).to.have.a.balanceOf("0", wousd);
-      await expect(josh).to.have.a.balanceOf("150", ousd);
+      await expect(josh).to.have.a.balanceOf("200", ousd);
     });
   });
 
   describe("Collects Rebase", async () => {
     it("should increase with an OUSD rebase", async () => {
       await expect(wousd).to.have.approxBalanceOf("100", ousd);
-      await usds.connect(josh).transfer(vault.address, usdsUnits("100"));
+      await usds.connect(josh).transfer(vault.address, usdsUnits("200"));
       await vault.rebase();
       await expect(wousd).to.have.approxBalanceOf("150", ousd);
     });
@@ -85,7 +96,7 @@ describe("WOUSD", function () {
     it("should not allow a governor to collect OUSD", async () => {
       await expect(
         wousd.connect(governor).transferToken(ousd.address, ousdUnits("2"))
-      ).to.be.revertedWith("Cannot collect OUSD");
+      ).to.be.revertedWith("Cannot collect core asset");
     });
     it("should not allow a non governor to recover tokens ", async () => {
       await expect(
@@ -99,11 +110,7 @@ describe("WOUSD", function () {
       // Do upgrade
       const cWrappedOUSDProxy = await ethers.getContract("WrappedOUSDProxy");
       const factory = await ethers.getContractFactory("MockLimitedWrappedOusd");
-      const dNewImpl = await factory.deploy(
-        ousd.address,
-        "WOUSD",
-        "Wrapped OUSD"
-      );
+      const dNewImpl = await factory.deploy(ousd.address);
       await cWrappedOUSDProxy.connect(governor).upgradeTo(dNewImpl.address);
 
       // Test basics

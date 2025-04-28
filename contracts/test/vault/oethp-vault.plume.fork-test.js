@@ -14,11 +14,11 @@ describe("ForkTest: OETHp Vault", function () {
     fixture = await plumeFixture();
   });
 
-  async function _mint(signer) {
-    const { weth, oethpVault } = fixture;
-    await weth.connect(signer).deposit({ value: oethUnits("1") });
-    await weth.connect(signer).approve(oethpVault.address, oethUnits("1"));
-    await oethpVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
+  async function _mint(signer, amount = oethUnits("1")) {
+    const { weth, oethpVault, _mintWETH } = fixture;
+    await _mintWETH(signer, amount);
+    await weth.connect(signer).approve(oethpVault.address, amount);
+    await oethpVault.connect(signer).mint(weth.address, amount, "0");
   }
 
   describe("Mint & Permissioned redeems", function () {
@@ -170,7 +170,7 @@ describe("ForkTest: OETHp Vault", function () {
         await oethpVault.withdrawalQueueMetadata();
 
       // Rafael mints 1 superOETHp
-      await _mint(rafael);
+      await _mint(rafael, oethUnits("2"));
 
       // Rafael places an async withdrawal request
       await oethpVault.connect(rafael).requestWithdrawal(oethUnits("1"));

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -19,6 +19,45 @@ contract OETHVaultAdmin is VaultAdmin {
 
     constructor(address _weth) {
         weth = _weth;
+    }
+
+    /**
+     * @notice Adds a strategy to the mint whitelist.
+     *          Reverts if strategy isn't approved on Vault.
+     * @param strategyAddr Strategy address
+     */
+    function addStrategyToMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(strategies[strategyAddr].isSupported, "Strategy not approved");
+
+        require(
+            !isMintWhitelistedStrategy[strategyAddr],
+            "Already whitelisted"
+        );
+
+        isMintWhitelistedStrategy[strategyAddr] = true;
+
+        emit StrategyAddedToMintWhitelist(strategyAddr);
+    }
+
+    /**
+     * @notice Removes a strategy from the mint whitelist.
+     * @param strategyAddr Strategy address
+     */
+    function removeStrategyFromMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        // Intentionally skipping `strategies.isSupported` check since
+        // we may wanna remove an address even after removing the strategy
+
+        require(isMintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+
+        isMintWhitelistedStrategy[strategyAddr] = false;
+
+        emit StrategyRemovedFromMintWhitelist(strategyAddr);
     }
 
     /// @dev Simplified version of the deposit function as WETH is the only supported asset.

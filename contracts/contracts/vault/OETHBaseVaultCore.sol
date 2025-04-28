@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { StableMath } from "../utils/StableMath.sol";
@@ -17,48 +17,6 @@ contract OETHBaseVaultCore is OETHVaultCore {
     using StableMath for uint256;
 
     constructor(address _weth) OETHVaultCore(_weth) {}
-
-    // @inheritdoc VaultCore
-    function mintForStrategy(uint256 amount)
-        external
-        override
-        whenNotCapitalPaused
-    {
-        require(
-            strategies[msg.sender].isSupported == true,
-            "Unsupported strategy"
-        );
-        require(
-            isMintWhitelistedStrategy[msg.sender] == true,
-            "Not whitelisted strategy"
-        );
-
-        emit Mint(msg.sender, amount);
-
-        // Mint matching amount of OTokens
-        oUSD.mint(msg.sender, amount);
-    }
-
-    // @inheritdoc VaultCore
-    function burnForStrategy(uint256 amount)
-        external
-        override
-        whenNotCapitalPaused
-    {
-        require(
-            strategies[msg.sender].isSupported == true,
-            "Unsupported strategy"
-        );
-        require(
-            isMintWhitelistedStrategy[msg.sender] == true,
-            "Not whitelisted strategy"
-        );
-
-        emit Redeem(msg.sender, amount);
-
-        // Burn OTokens
-        oUSD.burn(msg.sender, amount);
-    }
 
     // @inheritdoc OETHVaultCore
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount)

@@ -10,5 +10,12 @@
   "011_pool_booster_factory": 1740172411,
   "012_tb_yf_batch_1": 1741011742,
   "013_vault_config": 1741065376,
-  "015_redeem_fee": 1741364468
+  "015_redeem_fee": 1741364468,
+  "009_swapx_amo": 1743492908,
+  "007_strategist_as_executor": 1743735507,
+  "016_sonic_staking_strategy_upgrade": 1743735514,
+  "017_pool_booster_metropolis": 1744046356,
+  "018_merkl_pool_booster": 1744620502,
+  "014_wrapped_sonic": 1744749364,
+  "019_os_vault_based_dripper": 1744752764
 }
