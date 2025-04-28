@@ -170,7 +170,7 @@ describe("Plume Fork Test: Bridged WOETH Strategy", function () {
     const depositAmount = oethUnits("1");
     const oracleFeed = await ethers.getContractAt(
       "AggregatorV3Interface",
-      addresses.base.BridgedWOETHOracleFeed
+      addresses.plume.BridgedWOETHOracleFeed
     );
     const roundData = await oracleFeed.latestRoundData();
 
