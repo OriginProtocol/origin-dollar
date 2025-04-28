@@ -95,13 +95,9 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
       woethStrategyProxy.address
     );
 
-    // TODO: Temp hack until permission is fixed
-    await impersonateAndFund(addresses.plume.admin);
-    const admin = await ethers.getSigner(addresses.plume.admin);
-
     // Make sure we can print bridged WOETH for tests
-    await woeth.connect(admin).grantRole(MINTER_ROLE, governor.address);
-    await woeth.connect(admin).grantRole(BURNER_ROLE, governor.address);
+    await woeth.connect(governor).grantRole(MINTER_ROLE, governor.address);
+    await woeth.connect(governor).grantRole(BURNER_ROLE, governor.address);
 
     // Mint some bridged WOETH
     for (const user of [governor, rafael, nick, clement]) {
