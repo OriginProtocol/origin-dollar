@@ -124,7 +124,7 @@ interface IMaverickV2Position {
     ) external view returns (PositionFullInformation memory output);
 
     /**
-     * @notice Get remove paramters for removing a fractional part of the
+     * @notice Get remove parameters for removing a fractional part of the
      * liquidity owned by a given tokenId.  The fractional factor to remove is
      * given by proporationD18 in 18-decimal scale.
      */

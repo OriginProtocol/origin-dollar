@@ -1334,6 +1334,7 @@ const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
     cOETHpProxy.address, // OETHp address
     addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
     addresses.plume.MaverickV2PoolLens, // pool lens
+    addresses.plume.MaverickV2Position, // position
     poolAddress // superOETHp/WPLUME pool
   ]);
 
