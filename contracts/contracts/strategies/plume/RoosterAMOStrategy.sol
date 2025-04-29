@@ -115,8 +115,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 underlyingAssets
     );
     event PoolRebalanced(uint256 currentPoolWethShare);
+    event UnderlyingAssetsUpdated(uint256 underlyingAssets);
 
-    error OutsideExpectedTickRange(int32 currentTick); // 0xacdf6376
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
         uint256 allowedWethShareStart,
@@ -124,6 +124,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ); // 0x3681e8e0
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
+    error OutsideExpectedTickRange(); // 0xa6e1bad2
 
     // /**
     //  * @dev Verifies that the caller is the Governor, or Strategist.
@@ -137,6 +138,43 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     //     _;
     // }
 
+    /**
+     * @dev Un-stakes the token from the gauge for the execution duration of
+     * the function and after that re-stakes it back in.
+     *
+     * It is important that the token is unstaked and owned by the strategy contract
+     * during any liquidity altering operations and that it is re-staked back into the
+     * gauge after liquidity changes. If the token fails to re-stake back to the
+     * gauge it is not earning incentives.
+     */
+    // all functions using this modifier are used by functions with reentrancy check
+    // slither-disable-start reentrancy-no-eth
+    modifier gaugeUnstakeAndRestake() {
+        // TODO: we might not need this here
+        //
+        // // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
+        // // when tokenId == 0
+        // if (tokenId != 0 && _isLpTokenStakedInGauge()) {
+        //     clGauge.withdraw(tokenId);
+        // }
+        _;
+        // // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
+        // // when tokenId == 0
+        // if (tokenId != 0 && !_isLpTokenStakedInGauge()) {
+        //     /**
+        //      * It can happen that a withdrawal (or a full withdrawal) transactions would
+        //      * remove all of the liquidity from the token with a NFT token still existing.
+        //      * In that case the token can not be staked into the gauge, as some liquidity
+        //      * needs to be added to it first.
+        //      */
+        //     if (_getLiquidity() > 0) {
+        //         // if token liquidity changes the positionManager requires re-approval.
+        //         // to any contract pre-approved to handle the token.
+        //         positionManager.approve(address(clGauge), tokenId);
+        //         clGauge.deposit(tokenId);
+        //     }
+        // }
+    }
 
     /// @notice the constructor
     /// @dev This contract is intended to be used as a proxy. To prevent the
@@ -417,7 +455,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Donate initial liquidity to the pool that can not be withdrawn
      */
     function donateLiquidity() external onlyGovernor nonReentrant {
-        (,,IMaverickV2Pool.AddLiquidityParams[] memory addParams) = _addLiquidity(1e18, 1e18);
+        (,,IMaverickV2Pool.AddLiquidityParams[] memory addParams,) = _getAddLiquidityParams(1e18, 1e18);
 
         IVault(vaultAddress).mintForStrategy(1e18);
         liquidityManager.donateLiquidity(mPool, addParams[0]);
@@ -451,29 +489,138 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         });
     }
 
-    function _addLiquidity(uint256 maxWETH, uint256 maxOETHp)
+    /**
+     * @dev Add liquidity into the pool in the pre-configured WETH to OETHp share ratios
+     * defined by the allowedPoolWethShareStart|End interval. 
+     */
+    function _addLiquidity() internal gaugeUnstakeAndRestake {
+        uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
+        uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
+        // don't deposit small liquidity amounts
+        if (_wethBalance <= 1e12) {
+            return;
+        }
+
+        // TODO: check what happens when really close to upper / lower tick
+        (,,
+            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
+            IMaverickV2PoolLens.TickDeltas memory tickDelta
+        ) = _getAddLiquidityParams(_wethBalance, 0);
+
+        uint256 oethRequired = tickDelta.deltaBOut;
+
+        /**
+         * If estimateAmount1 call fails it could be due to _currentPrice being really
+         * close to a tick and amount1 is a larger number than the sugar helper is able
+         * to compute.
+         *
+         * If token addresses were reversed estimateAmount0 would be required here
+         */
+        uint256 _oethbRequired = helper.estimateAmount1(
+            _wethBalance,
+            address(0), // no need to pass pool address when current price is specified
+            _currentPrice,
+            lowerTick,
+            upperTick
+        );
+
+        if (oethRequired > _oethpBalance) {
+            IVault(vaultAddress).mintForStrategy(
+                oethRequired - _oethpBalance
+            );
+        }
+
+        // approve the specific amount of WETH required
+        IERC20(WETH).approve(address(positionManager), _wethBalance);
+
+        uint256 _wethAmountSupplied;
+        uint256 _oethbAmountSupplied;
+        if (tokenId == 0) {
+            (
+                tokenId,
+                ,
+                _wethAmountSupplied,
+                _oethbAmountSupplied
+            ) = positionManager.mint(
+                /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
+                 * _checkForExpectedPoolPrice
+                 *›
+                 * Also sqrtPriceX96 is 0 because the pool is already created
+                 * non zero amount attempts to create a new instance of the pool
+                 */
+                INonfungiblePositionManager.MintParams({
+                    token0: WETH,
+                    token1: OETHb,
+                    tickSpacing: tickSpacing,
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
+                    amount0Desired: _wethBalance,
+                    amount1Desired: oethRequired,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    sqrtPriceX96: 0
+                })
+            );
+        } else {
+            (, _wethAmountSupplied, _oethbAmountSupplied) = positionManager
+                .increaseLiquidity(
+                    /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
+                     * _checkForExpectedPoolPrice
+                     */
+                    INonfungiblePositionManager.IncreaseLiquidityParams({
+                        tokenId: tokenId,
+                        amount0Desired: _wethBalance,
+                        amount1Desired: oethRequired,
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        deadline: block.timestamp
+                    })
+                );
+        }
+
+        _updateUnderlyingAssets();
+        emit LiquidityAdded(
+            _wethBalance, // wethAmountDesired
+            oethRequired, // oethbAmountDesired
+            _wethAmountSupplied, // wethAmountSupplied
+            _oethbAmountSupplied, // oethbAmountSupplied
+            tokenId, // tokenId
+            underlyingAssets
+        );
+
+        // burn remaining OETHb
+        _burnOethbOnTheContract();
+    }
+
+    // slither-disable-end reentrancy-no-eth
+
+
+    function _getAddLiquidityParams(uint256 maxWETH, uint256 maxOETHp)
         internal
         returns (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
-            IMaverickV2Pool.AddLiquidityParams[] memory addParams
+            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
+            IMaverickV2PoolLens.TickDeltas memory tickDelta
         )
     {
         IMaverickV2Pool.TickState memory tickState = mPool.getTick(tickNumber);
         IMaverickV2PoolLens.AddParamsViewInputs memory params = _createAddLiquidityParams();
+        IMaverickV2PoolLens.TickDeltas[] memory tickDeltas;
 
         // tick has no WETH liquidity
         if (tickState.reserveA == 0) {
             params.addSpec.targetAmount = maxOETHp;
             params.addSpec.targetIsA = false;
-            (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
-
+            (packedSqrtPriceBreaks, packedArgs,, addParams, tickDeltas) = poolLens.getAddLiquidityParams(params);
         // tick has no OETHp liquidity
         } else if (tickState.reserveB == 0) {
             // we only need to check targetIsA = true
             params.addSpec.targetAmount = maxWETH;
             params.addSpec.targetIsA = true;
-            (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
+            (packedSqrtPriceBreaks, packedArgs,, addParams, tickDeltas) = poolLens.getAddLiquidityParams(params);
         // tick has liquidity of both tokens
         } else {
             // we need to check both
@@ -486,10 +633,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 // do the call again with OETHp as the target.  
                params.addSpec.targetAmount = maxOETHp;
                params.addSpec.targetIsA = false;
-               (packedSqrtPriceBreaks, packedArgs,, addParams, ) = poolLens.getAddLiquidityParams(params);
+               (packedSqrtPriceBreaks, packedArgs,, addParams, tickDeltas) = poolLens.getAddLiquidityParams(params);
             }
         }
-
+        // pick the tick delta that was called last
+        tickDelta = tickDeltas[0];
     }
 
     /**
@@ -527,7 +675,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _currentPrice >= sqrtPriceTickHigher
         ) {
             if (throwException) {
-                revert OutsideExpectedTickRange(getCurrentTradingTick());
+                revert OutsideExpectedTickRange();
             }
             return (false, 0);
         }
@@ -633,7 +781,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
 
         IMaverickV2Pool.RemoveLiquidityParams memory params = maverickPosition.getRemoveParams(tokenId, 0, _liquidityToDecrease);
-        (uint256 _amountWeth, uint256 _amountOethp) = position.removeLiquidityToSender(tokenId, pool, params);
+        (uint256 _amountWeth, uint256 _amountOethp) = maverickPosition.removeLiquidityToSender(tokenId, mPool, params);
 
         _updateUnderlyingAssets();
 
@@ -734,7 +882,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Returns the current pool price in square root
-     * @return _sqrtRatioX96 Pool price
+     * @return Square root of the pool price
      */
     function getPoolSqrtPrice() public view returns (uint256) {
         return poolLens.getPoolSqrtPrice(mPool);
@@ -752,7 +900,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Mint the initial NFT position
      */
     function mintInitialPosition() external onlyGovernor nonReentrant {
-        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs,) = _addLiquidity(1e18, 1e18);
+        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs,,) = _getAddLiquidityParams(1e18, 1e18);
         IVault(vaultAddress).mintForStrategy(1e18);
         (,,, uint256 _tokenId) = liquidityManager.mintPositionNftToSender(mPool, packedSqrtPriceBreaks, packedArgs);
         // Burn remaining OETHp
@@ -776,7 +924,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             return (0, 0);
         }
 
-        (,_amountWeth, _amountOethb,,,,) = maverickPosition.tokenIdPositionInformation(tokenId, 0);
+        IMaverickV2Position.PositionFullInformation memory positionInfo = maverickPosition.tokenIdPositionInformation(tokenId, 0);
+        _amountWeth = positionInfo.amountA;
+        _amountOethb = positionInfo.amountB;
     }
 
     /**
