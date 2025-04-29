@@ -6,8 +6,7 @@ const {
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const {
-  deployOSWETHRoosterAmoPool,
-  deployPlumeRoosterAMOStrategyImplementation
+  deployPlumeRoosterAMOStrategyImplementation,
 } = require("../deployActions");
 const { isFork, oethUnits } = require("../../test/helpers");
 const { setERC20TokenBalance } = require("../../test/_fund");
@@ -20,31 +19,40 @@ module.exports = deployOnPlume(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.getSigner(deployerAddr);
     const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+    const weth = await ethers.getContractAt("IWETH9", addresses.plume.WETH);
+    const deployerWethBalance = await weth
+      .connect(sDeployer)
+      .balanceOf(sDeployer.address);
+
+    console.log("Deployer WETH balance", deployerWethBalance.toString());
+    if (!isFork) {
+      if (deployerWethBalance.lt(oethUnits("1"))) {
+        throw new Error(
+          "Deployer needs at least 1e18 of WETH to mint the initial balance"
+        );
+      }
+    }
 
     const cOETHpVault = await ethers.getContractAt(
       "IVault",
       cOETHpVaultProxy.address
     );
 
-
-    // TODO: delete the pool creation contract once it is already live
-    const poolAddress = await deployOSWETHRoosterAmoPool();
-    console.log("OETHp / WETH pool deployed at ", poolAddress);
-
     await deployWithConfirmation("RoosterAMOStrategyProxy");
     const cAMOStrategyProxy = await ethers.getContract(
       "RoosterAMOStrategyProxy"
     );
 
-    const cAMOStrategyImpl = await deployPlumeRoosterAMOStrategyImplementation(poolAddress);
+    const cAMOStrategyImpl = await deployPlumeRoosterAMOStrategyImplementation(
+      addresses.plume.OethpWETHRoosterPool
+    );
 
+    // prettier-ignore
     await withConfirmation(
       cAMOStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           cAMOStrategyImpl.address,
-          // TODO: change governor when needed
-          //addresses.plume.governor,
-          deployerAddr,
+          addresses.plume.timelock,
           "0x"
         )
     );
@@ -55,15 +63,16 @@ module.exports = deployOnPlume(
     );
 
     if (isFork) {
-      const weth = await ethers.getContractAt(
-        "IWETH9",
-        addresses.plume.WETH
-      );
-
       // 50 WETH
       await setERC20TokenBalance(sDeployer.address, weth, "50", hre);
-      await weth.connect(sDeployer).transfer(cAMOStrategy.address, oethUnits("10"));
-      console.log("WETH balance", (await weth.connect(sDeployer).balanceOf(sDeployer.address)).toString());
+      await weth
+        .connect(sDeployer)
+        .transfer(cAMOStrategy.address, oethUnits("1"));
+    } else {
+      // transfer 1e18 of WETH to the strategy to mint the initial position
+      await weth
+        .connect(sDeployer)
+        .transfer(cAMOStrategy.address, oethUnits("1"));
     }
 
     return {
@@ -92,12 +101,6 @@ module.exports = deployOnPlume(
           signature: "mintInitialPosition()",
           args: [],
         },
-        {
-          // Safe approve tokens
-          contract: cAMOStrategy,
-          signature: "donateLiquidity()",
-          args: [],
-        }
       ],
     };
   }

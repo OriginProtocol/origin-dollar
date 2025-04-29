@@ -594,13 +594,17 @@ addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
-addresses.plume.MaverickV2Factory = "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
-addresses.plume.MaverickV2PoolLens = "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
+addresses.plume.MaverickV2Factory =
+  "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
+addresses.plume.MaverickV2PoolLens =
+  "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
 addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
 addresses.plume.MaverickV2Router = "0x35e44dc4702Fd51744001E248B49CBf9fcc51f0C";
-addresses.plume.MaverickV2Position = "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
-addresses.plume.MaverickV2LiquidityManager = "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
-
-
+addresses.plume.MaverickV2Position =
+  "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
+addresses.plume.MaverickV2LiquidityManager =
+  "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
+addresses.plume.OethpWETHRoosterPool =
+  "0xcA26a025eD16c5becD100C0165136aA1E34f7E58";
 
 module.exports = addresses;

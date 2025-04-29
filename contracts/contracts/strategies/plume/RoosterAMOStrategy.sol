@@ -481,22 +481,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
               Liquidity management
     ****************************************/
 
-    /**
-     * @notice Donate initial liquidity to the pool that can not be withdrawn
-     */
-    function donateLiquidity() external onlyGovernor nonReentrant {
-        (,,
-            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
-            IMaverickV2PoolLens.TickDeltas memory tickDelta
-        ) = _getAddLiquidityParams(1e18, 1e18);
-
-        // Mint amount of OETH required
-        IVault(vaultAddress).mintForStrategy(tickDelta.deltaBOut);
-        liquidityManager.donateLiquidity(mPool, addParams[0]);
-        // burn remaining OETHp
-        _burnOethOnTheContract();
-    }
-
     /// @dev creates add liquidity view input params with default values. The `targetAmount` & `targetIsA` need to be
     ///      overridden
     function _createAddLiquidityParams() internal view returns (IMaverickV2PoolLens.AddParamsViewInputs memory){

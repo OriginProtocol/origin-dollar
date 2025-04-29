@@ -1360,48 +1360,10 @@ const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
     addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
     addresses.plume.MaverickV2PoolLens, // pool lens
     addresses.plume.MaverickV2Position, // position
-    poolAddress // superOETHp/WPLUME pool
+    poolAddress, // superOETHp/WPLUME pool
   ]);
 
   return await ethers.getContract("RoosterAMOStrategy");
-};
-
-const deployOSWETHRoosterAmoPool = async () => {
-  const {
-    maverickV2LiquidityManager,
-    cOETHp
-  } = await getPlumeContracts();
-
-  // const oethAddressBN = ethers.BigNumber.from(cOETHp.address);
-  // const wethAddressBN = ethers.BigNumber.from(addresses.plume.WETH);
-  // const OETHisAddressA = oethAddressBN.lt(wethAddressBN);
-
-  const tx = await maverickV2LiquidityManager.createPool(
-    1, // fee
-    1, // tickSpacing
-    300, // lookback
-    //OETHisAddressA ? cOETHp.address : addresses.plume.WETH, // tokenA
-    //OETHisAddressA ? addresses.plume.WETH : cOETHp.address, // tokenB
-    addresses.plume.WETH, // tokenA
-    cOETHp.address, // tokenB
-    -1, // activeTick
-    // 1-15 number to represent the active kinds 
-    // 0b0001 = static; 
-    // 0b0010 = right; 
-    // 0b0100 = left; 
-    // 0b1000 = both. e.g. a pool with all 4 modes will have kinds = b1111 = 15
-    1, // static kind
-  );
-  const result = await tx.wait()
-  result.events.find(event => event.event === 'PoolCreated');
-
-  //event PoolCreated(IMaverickV2Pool poolAddress, uint8 protocolFeeRatio, uint256 feeAIn, uint256 feeBIn, uint256 tickSpacing, uint256 lookback, int32 activeTick, IERC20 tokenA, IERC20 tokenB, uint8 kinds, address accessor);
-  const dataDecoded = ethers.utils.defaultAbiCoder.decode(
-    ['address', 'uint8', 'uint256', 'uint256', 'uint256', 'uint256', 'int32', 'address', 'address', 'uint8', 'address'],
-    result.events[0].data
-  );
-  // return pool address
-  return dataDecoded[0]
 };
 
 const getPlumeContracts = async () => {
@@ -1419,7 +1381,7 @@ const getPlumeContracts = async () => {
   return {
     maverickV2LiquidityManager,
     maverickV2PoolLens,
-    cOETHp
+    cOETHp,
   };
 };
 
@@ -1498,7 +1460,6 @@ module.exports = {
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
   deployPlumeRoosterAMOStrategyImplementation,
-  deployOSWETHRoosterAmoPool,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
 };
