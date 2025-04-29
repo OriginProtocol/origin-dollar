@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.25;
 
-import {IMaverickV2Factory} from "./IMaverickV2Factory.sol";
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
-import {ILiquidityRegistry} from "./ILiquidityRegistry.sol";
+import { IMaverickV2Factory } from "./IMaverickV2Factory.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
+import { ILiquidityRegistry } from "./ILiquidityRegistry.sol";
 
 interface IMaverickV2Position {
     event PositionClearData(uint256 indexed tokenId);
-    event PositionSetData(uint256 indexed tokenId, uint256 index, PositionPoolBinIds newData);
+    event PositionSetData(
+        uint256 indexed tokenId,
+        uint256 index,
+        PositionPoolBinIds newData
+    );
     event SetLpReward(ILiquidityRegistry lpReward);
 
     error PositionDuplicatePool(uint256 index, IMaverickV2Pool pool);
@@ -27,7 +31,7 @@ interface IMaverickV2Position {
         uint256[] binBAmounts;
         int32[] ticks;
         uint256[] liquidities;
-    }    
+    }
 
     /**
      * @notice Factory that tracks lp rewards.
@@ -45,37 +49,60 @@ interface IMaverickV2Position {
      * add liquidity recipient is this contract and the subaccount is the
      * tokenId. LiquidityManager can be used to simplify minting Position NFTs.
      */
-    function mint(address recipient, IMaverickV2Pool pool, uint32[] memory binIds) external returns (uint256 tokenId);
+    function mint(
+        address recipient,
+        IMaverickV2Pool pool,
+        uint32[] memory binIds
+    ) external returns (uint256 tokenId);
 
     /**
      * @notice Overwrites tokenId pool/binId information for a given data index.
      */
-    function setTokenIdData(uint256 tokenId, uint256 index, IMaverickV2Pool pool, uint32[] memory binIds) external;
+    function setTokenIdData(
+        uint256 tokenId,
+        uint256 index,
+        IMaverickV2Pool pool,
+        uint32[] memory binIds
+    ) external;
 
     /**
      * @notice Overwrites entire pool/binId data set for a given tokenId.
      */
-    function setTokenIdData(uint256 tokenId, PositionPoolBinIds[] memory data) external;
+    function setTokenIdData(uint256 tokenId, PositionPoolBinIds[] memory data)
+        external;
 
     /**
      * @notice Append new pool/binIds data array to tokenId.
      */
-    function appendTokenIdData(uint256 tokenId, IMaverickV2Pool pool, uint32[] memory binIds) external;
+    function appendTokenIdData(
+        uint256 tokenId,
+        IMaverickV2Pool pool,
+        uint32[] memory binIds
+    ) external;
 
     /**
      * @notice Get array pool/binIds data for a given tokenId.
      */
-    function getTokenIdData(uint256 tokenId) external view returns (PositionPoolBinIds[] memory);
+    function getTokenIdData(uint256 tokenId)
+        external
+        view
+        returns (PositionPoolBinIds[] memory);
 
     /**
      * @notice Get value from array of pool/binIds data for a given tokenId.
      */
-    function getTokenIdData(uint256 tokenId, uint256 index) external view returns (PositionPoolBinIds memory);
+    function getTokenIdData(uint256 tokenId, uint256 index)
+        external
+        view
+        returns (PositionPoolBinIds memory);
 
     /**
      * @notice Length of array of pool/binIds data for a given tokenId.
      */
-    function tokenIdDataLength(uint256 tokenId) external view returns (uint256 length);
+    function tokenIdDataLength(uint256 tokenId)
+        external
+        view
+        returns (uint256 length);
 
     /**
      * @notice Remove liquidity from tokenId for a given pool.  User can
@@ -118,10 +145,10 @@ interface IMaverickV2Position {
      * of the tokenIdData, but it is possible that the NFT has additional
      * liquidity in pools/binIds that have not been recorded.
      */
-    function tokenIdPositionInformation(
-        uint256 tokenId,
-        uint256 index
-    ) external view returns (PositionFullInformation memory output);
+    function tokenIdPositionInformation(uint256 tokenId, uint256 index)
+        external
+        view
+        returns (PositionFullInformation memory output);
 
     /**
      * @notice Get remove parameters for removing a fractional part of the
@@ -132,10 +159,17 @@ interface IMaverickV2Position {
         uint256 tokenId,
         uint256 index,
         uint256 proportionD18
-    ) external view returns (IMaverickV2Pool.RemoveLiquidityParams memory params);
+    )
+        external
+        view
+        returns (IMaverickV2Pool.RemoveLiquidityParams memory params);
 
     /**
      * @notice Register the bin balances in the nft with the LpReward contract.
      */
-    function checkpointBinLpBalance(uint256 tokenId, IMaverickV2Pool pool, uint32[] memory binIds) external;
+    function checkpointBinLpBalance(
+        uint256 tokenId,
+        IMaverickV2Pool pool,
+        uint32[] memory binIds
+    ) external;
 }

@@ -28,4 +28,5 @@ contract WOETHPlumeProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice RoosterAMOStrategyProxy delegates calls to a RoosterAMOStrategy implementation
  */
 contract RoosterAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
 }

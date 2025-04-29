@@ -1,14 +1,26 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.25;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IMaverickV2Factory} from "./IMaverickV2Factory.sol";
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IMaverickV2Factory } from "./IMaverickV2Factory.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
 
 interface IMaverickV2PoolLens {
-    error LensTargetPriceOutOfBounds(uint256 targetSqrtPrice, uint256 sqrtLowerTickPrice, uint256 sqrtUpperTickPrice);
-    error LensTooLittleLiquidity(uint256 relativeLiquidityAmount, uint256 deltaA, uint256 deltaB);
-    error LensTargetingTokenWithNoDelta(bool targetIsA, uint256 deltaA, uint256 deltaB);
+    error LensTargetPriceOutOfBounds(
+        uint256 targetSqrtPrice,
+        uint256 sqrtLowerTickPrice,
+        uint256 sqrtUpperTickPrice
+    );
+    error LensTooLittleLiquidity(
+        uint256 relativeLiquidityAmount,
+        uint256 deltaA,
+        uint256 deltaB
+    );
+    error LensTargetingTokenWithNoDelta(
+        bool targetIsA,
+        uint256 deltaA,
+        uint256 deltaB
+    );
 
     /**
      * @notice Add liquidity slippage parameters for a distribution of liquidity.
@@ -176,9 +188,7 @@ interface IMaverickV2PoolLens {
      * parameters.  The return values are given in both raw format and as packed
      * values that can be used in the LiquidityManager contract.
      */
-    function getAddLiquidityParams(
-        AddParamsViewInputs memory params
-    )
+    function getAddLiquidityParams(AddParamsViewInputs memory params)
         external
         view
         returns (
@@ -203,10 +213,13 @@ interface IMaverickV2PoolLens {
      * a tick radius from the activeTick. Ticks with no reserves are not
      * included in part o f the return array.
      */
-    function getTicksAroundActive(
-        IMaverickV2Pool pool,
-        int32 tickRadius
-    ) external view returns (int32[] memory ticks, IMaverickV2Pool.TickState[] memory tickStates);
+    function getTicksAroundActive(IMaverickV2Pool pool, int32 tickRadius)
+        external
+        view
+        returns (
+            int32[] memory ticks,
+            IMaverickV2Pool.TickState[] memory tickStates
+        );
 
     /**
      * @notice View function that provides information about pool ticks within
@@ -217,7 +230,13 @@ interface IMaverickV2PoolLens {
         IMaverickV2Pool pool,
         int32 tickStart,
         int32 tickEnd
-    ) external view returns (int32[] memory ticks, IMaverickV2Pool.TickState[] memory tickStates);
+    )
+        external
+        view
+        returns (
+            int32[] memory ticks,
+            IMaverickV2Pool.TickState[] memory tickStates
+        );
 
     /**
      * @notice View function that provides information about pool ticks within
@@ -255,23 +274,32 @@ interface IMaverickV2PoolLens {
     /**
      * @notice View function that provides price and liquidity of a given tick.
      */
-    function getTickSqrtPriceAndL(
-        IMaverickV2Pool pool,
-        int32 tick
-    ) external view returns (uint256 sqrtPrice, uint256 liquidity);
+    function getTickSqrtPriceAndL(IMaverickV2Pool pool, int32 tick)
+        external
+        view
+        returns (uint256 sqrtPrice, uint256 liquidity);
 
     /**
      * @notice Pool sqrt price.
      */
-    function getPoolSqrtPrice(IMaverickV2Pool pool) external view returns (uint256 sqrtPrice);
+    function getPoolSqrtPrice(IMaverickV2Pool pool)
+        external
+        view
+        returns (uint256 sqrtPrice);
 
     /**
      * @notice Pool price.
      */
-    function getPoolPrice(IMaverickV2Pool pool) external view returns (uint256 price);
+    function getPoolPrice(IMaverickV2Pool pool)
+        external
+        view
+        returns (uint256 price);
 
     /**
      * @notice Token scale of two tokens in a pool.
      */
-    function tokenScales(IMaverickV2Pool pool) external view returns (uint256 tokenAScale, uint256 tokenBScale);
+    function tokenScales(IMaverickV2Pool pool)
+        external
+        view
+        returns (uint256 tokenAScale, uint256 tokenBScale);
 }

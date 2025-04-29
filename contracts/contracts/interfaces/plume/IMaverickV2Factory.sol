@@ -4,10 +4,10 @@
 // their choosing, in addition to the terms of the GPL-v2 or later.
 pragma solidity ^0.8.25;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IFeeRegistry} from "./IFeeRegistry.sol";
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
+import { IFeeRegistry } from "./IFeeRegistry.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
 
 interface IMaverickV2Factory {
     error FactorAlreadyInitialized();
@@ -185,7 +185,10 @@ interface IMaverickV2Factory {
     /**
      * @notice Lookup a pool for given parameters.
      */
-    function lookup(uint256 startIndex, uint256 endIndex) external view returns (IMaverickV2Pool[] memory pools);
+    function lookup(uint256 startIndex, uint256 endIndex)
+        external
+        view
+        returns (IMaverickV2Pool[] memory pools);
 
     /**
      * @notice Count of permissionless pools.

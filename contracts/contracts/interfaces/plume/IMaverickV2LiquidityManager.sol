@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.25;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
 
-import {IMaverickV2Position} from "./IMaverickV2Position.sol";
-import {IMaverickV2PoolLens} from "./IMaverickV2PoolLens.sol";
+import { IMaverickV2Position } from "./IMaverickV2Position.sol";
+import { IMaverickV2PoolLens } from "./IMaverickV2PoolLens.sol";
 
 interface IMaverickV2LiquidityManager {
     error LiquidityManagerNotFactoryPool();
@@ -47,7 +47,14 @@ interface IMaverickV2LiquidityManager {
         uint256 index,
         bytes memory packedSqrtPriceBreaks,
         bytes[] memory packedArgs
-    ) external payable returns (uint256 tokenAAmount, uint256 tokenBAmount, uint32[] memory binIds);
+    )
+        external
+        payable
+        returns (
+            uint256 tokenAAmount,
+            uint256 tokenBAmount,
+            uint32[] memory binIds
+        );
 
     /**
      * @notice Mint new tokenId in the Position NFt contract to msg.sender.
@@ -58,12 +65,23 @@ interface IMaverickV2LiquidityManager {
         IMaverickV2Pool pool,
         bytes calldata packedSqrtPriceBreaks,
         bytes[] calldata packedArgs
-    ) external payable returns (uint256 tokenAAmount, uint256 tokenBAmount, uint32[] memory binIds, uint256 tokenId);
+    )
+        external
+        payable
+        returns (
+            uint256 tokenAAmount,
+            uint256 tokenBAmount,
+            uint32[] memory binIds,
+            uint256 tokenId
+        );
 
     /**
      * @notice Donates liqudity to a pool that is held by the position contract
      * and will never be retrievable.  Can be used to start a pool and ensure
      * there will always be a base level of liquditiy in the pool.
      */
-    function donateLiquidity(IMaverickV2Pool pool, IMaverickV2Pool.AddLiquidityParams memory args) external payable;
+    function donateLiquidity(
+        IMaverickV2Pool pool,
+        IMaverickV2Pool.AddLiquidityParams memory args
+    ) external payable;
 }

@@ -4,8 +4,8 @@
 // their choosing, in addition to the terms of the GPL-v2 or later.
 pragma solidity ^0.8.25;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IMaverickV2Factory} from "./IMaverickV2Factory.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IMaverickV2Factory } from "./IMaverickV2Factory.sol";
 
 interface IMaverickV2Pool {
     error PoolZeroLiquidityAdded();
@@ -13,10 +13,19 @@ interface IMaverickV2Pool {
     error PoolLocked();
     error PoolInvalidFee();
     error PoolTicksNotSorted(uint256 index, int256 previousTick, int256 tick);
-    error PoolTicksAmountsLengthMismatch(uint256 ticksLength, uint256 amountsLength);
-    error PoolBinIdsAmountsLengthMismatch(uint256 binIdsLength, uint256 amountsLength);
+    error PoolTicksAmountsLengthMismatch(
+        uint256 ticksLength,
+        uint256 amountsLength
+    );
+    error PoolBinIdsAmountsLengthMismatch(
+        uint256 binIdsLength,
+        uint256 amountsLength
+    );
     error PoolKindNotSupported(uint256 kinds, uint256 kind);
-    error PoolInsufficientBalance(uint256 deltaLpAmount, uint256 accountBalance);
+    error PoolInsufficientBalance(
+        uint256 deltaLpAmount,
+        uint256 accountBalance
+    );
     error PoolReservesExceedMaximum(uint256 amount);
     error PoolValueExceedsBits(uint256 amount, uint256 bits);
     error PoolTickMaxExceeded(uint256 tick);
@@ -25,11 +34,26 @@ interface IMaverickV2Pool {
     error PoolSenderNotAccessor(address sender_, address accessor);
     error PoolSenderNotFactory(address sender_, address accessor);
     error PoolFunctionNotImplemented();
-    error PoolTokenNotSolvent(uint256 internalReserve, uint256 tokenBalance, IERC20 token);
+    error PoolTokenNotSolvent(
+        uint256 internalReserve,
+        uint256 tokenBalance,
+        IERC20 token
+    );
     error PoolNoProtocolFeeReceiverSet();
 
-    event PoolSwap(address sender, address recipient, SwapParams params, uint256 amountIn, uint256 amountOut);
-    event PoolFlashLoan(address sender, address recipient, uint256 amountA, uint256 amountB);
+    event PoolSwap(
+        address sender,
+        address recipient,
+        SwapParams params,
+        uint256 amountIn,
+        uint256 amountOut
+    );
+    event PoolFlashLoan(
+        address sender,
+        address recipient,
+        uint256 amountA,
+        uint256 amountB
+    );
     event PoolProtocolFeeCollected(IERC20 token, uint256 protocolFee);
 
     event PoolAddLiquidity(
@@ -42,7 +66,11 @@ interface IMaverickV2Pool {
         uint32[] binIds
     );
 
-    event PoolMigrateBinsUpStack(address sender, uint32 binId, uint32 maxRecursion);
+    event PoolMigrateBinsUpStack(
+        address sender,
+        uint32 binId,
+        uint32 maxRecursion
+    );
 
     event PoolRemoveLiquidity(
         address sender,
@@ -245,7 +273,10 @@ interface IMaverickV2Pool {
     /**
      * @notice ID of bin at input tick position and kind.
      */
-    function binIdByTickKind(int32 tick, uint256 kind) external view returns (uint32);
+    function binIdByTickKind(int32 tick, uint256 kind)
+        external
+        view
+        returns (uint32);
 
     /**
      * @notice Accumulated tokenA protocol fee.
@@ -280,7 +311,10 @@ interface IMaverickV2Pool {
     /**
      * @notice Return state of Tick at input tick position.
      */
-    function getTick(int32 tick) external view returns (TickState memory tickState);
+    function getTick(int32 tick)
+        external
+        view
+        returns (TickState memory tickState);
 
     /**
      * @notice Retrieves the balance of a user within a bin.
@@ -288,7 +322,11 @@ interface IMaverickV2Pool {
      * @param subaccount The subaccount for the user.
      * @param binId The ID of the bin.
      */
-    function balanceOf(address user, uint256 subaccount, uint32 binId) external view returns (uint128 lpToken);
+    function balanceOf(
+        address user,
+        uint256 subaccount,
+        uint32 binId
+    ) external view returns (uint128 lpToken);
 
     /**
      * @notice Add liquidity to a pool. This function allows users to deposit
@@ -309,7 +347,13 @@ interface IMaverickV2Pool {
         uint256 subaccount,
         AddLiquidityParams calldata params,
         bytes calldata data
-    ) external returns (uint256 tokenAAmount, uint256 tokenBAmount, uint32[] memory binIds);
+    )
+        external
+        returns (
+            uint256 tokenAAmount,
+            uint256 tokenBAmount,
+            uint32[] memory binIds
+        );
 
     /**
      * @notice Removes liquidity from the pool.
@@ -380,10 +424,17 @@ interface IMaverickV2Pool {
      * @param amountB Loan amount of tokenB sent to recipient.
      * @param data Bytes information that gets passed to the callback.
      */
-    function flashLoan(address recipient, uint256 amountA, uint256 amountB, bytes calldata data) external;
+    function flashLoan(
+        address recipient,
+        uint256 amountA,
+        uint256 amountB,
+        bytes calldata data
+    ) external;
 
     /**
      * @notice Distributes accumulated protocol fee to factory protocolFeeReceiver
      */
-    function distributeFees(bool isTokenA) external returns (uint256 protocolFee, IERC20 token);
+    function distributeFees(bool isTokenA)
+        external
+        returns (uint256 protocolFee, IERC20 token);
 }
