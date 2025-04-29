@@ -190,17 +190,6 @@ def main():
       )
     )
 
-    # After
-    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
-    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
-    profit = vault_change - supply_change
-    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
-    print("-----")
-    print("Profit", "{:.6f}".format(profit / 10**18), profit)
-    print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
-    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
-    print("-----")
-
     # AMO pool after
     wethPoolBalance = weth.balanceOf(CURVE_POOL_BASE)
     oethPoolBalance = oethb.balanceOf(CURVE_POOL_BASE)
@@ -212,4 +201,14 @@ def main():
     print("Pool SuperOETH   ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total       ", "{:.6f}".format(totalPool / 10**18))
     print("SuperOETH/WETH Curve prices before and after", "{:.6f}".format(price_before / 10**19), "{:.6f}".format(price_after / 10**19))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
