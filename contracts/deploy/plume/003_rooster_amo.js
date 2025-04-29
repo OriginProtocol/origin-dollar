@@ -14,7 +14,7 @@ const { setERC20TokenBalance } = require("../../test/_fund");
 
 module.exports = deployOnPlume(
   {
-    deployName: "002_rooster_amo",
+    deployName: "003_rooster_amo",
   },
   async () => {
     const { deployerAddr } = await getNamedAccounts();
