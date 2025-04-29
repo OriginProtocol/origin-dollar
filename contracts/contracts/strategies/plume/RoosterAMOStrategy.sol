@@ -122,6 +122,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 allowedWethShareStart,
         uint256 allowedWethShareEnd
     ); // 0x3681e8e0
+
+    event LiquidityAdded(
+        uint256 wethAmountDesired,
+        uint256 oethbAmountDesired,
+        uint256 wethAmountSupplied,
+        uint256 oethbAmountSupplied,
+        uint256 tokenId,
+        uint256 underlyingAssets
+    ); // 0x1530ec74
+
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error OutsideExpectedTickRange(); // 0xa6e1bad2
@@ -347,10 +357,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // if the pool price is not within the expected interval leave the WETH on the contract
         // as to not break the mints
         (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
-        // if (_isExpectedRange) {
-        //     // deposit funds into the underlying pool
-        //     _rebalance(0, false, 0);
-        // }
+        if (_isExpectedRange) {
+            // deposit funds into the underlying pool
+            _rebalance(0, false, 0);
+        }
     }
 
     /**
@@ -367,12 +377,32 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
         require(_recipient == vaultAddress, "Only withdraw to vault allowed");
+
+        _ensureWETHBalance(_amount);
+
+        _withdraw(_recipient, _amount);
     }
 
     /**
      * @notice Withdraw WETH and sends it to the Vault.
      */
     function withdrawAll() external override onlyVault nonReentrant {
+        if (tokenId != 0) {
+            _removeLiquidity(1e18);
+        }
+
+        uint256 _balance = IERC20(WETH).balanceOf(address(this));
+        if (_balance > 0) {
+            _withdraw(vaultAddress, _balance);
+        }
+    }
+
+    function _withdraw(address _recipient, uint256 _amount) internal {
+        require(_amount > 0, "Must withdraw something");
+        require(_recipient == vaultAddress, "Only withdraw to vault allowed");
+
+        IERC20(WETH).safeTransfer(_recipient, _amount);
+        emit Withdrawal(WETH, address(0), _amount);
     }
 
     
@@ -455,17 +485,21 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Donate initial liquidity to the pool that can not be withdrawn
      */
     function donateLiquidity() external onlyGovernor nonReentrant {
-        (,,IMaverickV2Pool.AddLiquidityParams[] memory addParams,) = _getAddLiquidityParams(1e18, 1e18);
+        (,,
+            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
+            IMaverickV2PoolLens.TickDeltas memory tickDelta
+        ) = _getAddLiquidityParams(1e18, 1e18);
 
-        IVault(vaultAddress).mintForStrategy(1e18);
+        // Mint amount of OETH required
+        IVault(vaultAddress).mintForStrategy(tickDelta.deltaBOut);
         liquidityManager.donateLiquidity(mPool, addParams[0]);
-        // Burn remaining OETHp
-        IVault(vaultAddress).burnForStrategy(IERC20(OETHp).balanceOf(address(this)));
+        // burn remaining OETHp
+        _burnOethOnTheContract();
     }
 
     /// @dev creates add liquidity view input params with default values. The `targetAmount` & `targetIsA` need to be
     ///      overridden
-    function _createAddLiquidityParams() internal returns (IMaverickV2PoolLens.AddParamsViewInputs memory){
+    function _createAddLiquidityParams() internal view returns (IMaverickV2PoolLens.AddParamsViewInputs memory){
         int32[] memory ticks = new int32[](1);
         uint128[] memory relativeLiquidityAmounts = new uint128[](1);
         // add all liquidity into a single tick
@@ -495,103 +529,50 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
+        uint256 _oethBalance = IERC20(OETHp).balanceOf(address(this));
         // don't deposit small liquidity amounts
         if (_wethBalance <= 1e12) {
             return;
         }
 
         // TODO: check what happens when really close to upper / lower tick
-        (,,
-            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
+        (
+            bytes memory packedSqrtPriceBreaks,
+            bytes[] memory packedArgs,,
             IMaverickV2PoolLens.TickDeltas memory tickDelta
         ) = _getAddLiquidityParams(_wethBalance, 0);
 
-        uint256 oethRequired = tickDelta.deltaBOut;
+        uint256 _oethRequired = tickDelta.deltaBOut;
 
-        /**
-         * If estimateAmount1 call fails it could be due to _currentPrice being really
-         * close to a tick and amount1 is a larger number than the sugar helper is able
-         * to compute.
-         *
-         * If token addresses were reversed estimateAmount0 would be required here
-         */
-        uint256 _oethbRequired = helper.estimateAmount1(
-            _wethBalance,
-            address(0), // no need to pass pool address when current price is specified
-            _currentPrice,
-            lowerTick,
-            upperTick
-        );
-
-        if (oethRequired > _oethpBalance) {
+        if (_oethRequired > _oethBalance) {
             IVault(vaultAddress).mintForStrategy(
-                oethRequired - _oethpBalance
+                _oethRequired - _oethBalance
             );
         }
 
         // approve the specific amount of WETH required
-        IERC20(WETH).approve(address(positionManager), _wethBalance);
+        IERC20(WETH).approve(address(liquidityManager), _wethBalance);
 
-        uint256 _wethAmountSupplied;
-        uint256 _oethbAmountSupplied;
-        if (tokenId == 0) {
-            (
-                tokenId,
-                ,
-                _wethAmountSupplied,
-                _oethbAmountSupplied
-            ) = positionManager.mint(
-                /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
-                 * _checkForExpectedPoolPrice
-                 *›
-                 * Also sqrtPriceX96 is 0 because the pool is already created
-                 * non zero amount attempts to create a new instance of the pool
-                 */
-                INonfungiblePositionManager.MintParams({
-                    token0: WETH,
-                    token1: OETHb,
-                    tickSpacing: tickSpacing,
-                    tickLower: lowerTick,
-                    tickUpper: upperTick,
-                    amount0Desired: _wethBalance,
-                    amount1Desired: oethRequired,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    sqrtPriceX96: 0
-                })
-            );
-        } else {
-            (, _wethAmountSupplied, _oethbAmountSupplied) = positionManager
-                .increaseLiquidity(
-                    /** amount0Min & amount1Min are left at 0 because slippage protection is ensured by the
-                     * _checkForExpectedPoolPrice
-                     */
-                    INonfungiblePositionManager.IncreaseLiquidityParams({
-                        tokenId: tokenId,
-                        amount0Desired: _wethBalance,
-                        amount1Desired: oethRequired,
-                        amount0Min: 0,
-                        amount1Min: 0,
-                        deadline: block.timestamp
-                    })
-                );
-        }
+        (uint256 _woethAmount, uint256 _oethAmount,) = liquidityManager.addPositionLiquidityToSenderByTokenIndex(
+            mPool,
+            0, // NFT token index
+            packedSqrtPriceBreaks,
+            packedArgs
+        );
 
         _updateUnderlyingAssets();
+
         emit LiquidityAdded(
             _wethBalance, // wethAmountDesired
-            oethRequired, // oethbAmountDesired
-            _wethAmountSupplied, // wethAmountSupplied
-            _oethbAmountSupplied, // oethbAmountSupplied
+            _oethRequired, // oethbAmountDesired
+            _woethAmount, // wethAmountSupplied
+            _oethAmount, // oethbAmountSupplied
             tokenId, // tokenId
             underlyingAssets
         );
 
-        // burn remaining OETHb
-        _burnOethbOnTheContract();
+        // burn remaining OETHp
+        _burnOethOnTheContract();
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -626,7 +607,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             // we need to check both
             params.addSpec.targetAmount = maxWETH;
             params.addSpec.targetIsA = true;
-            IMaverickV2PoolLens.TickDeltas[] memory tickDeltas;
             (packedSqrtPriceBreaks, packedArgs,, addParams, tickDeltas) = poolLens.getAddLiquidityParams(params);
             if (tickDeltas[0].deltaBOut > maxOETHp) {
                 // we know the params didn't meet out max spec.  we are asking for more OETHp than we want to spend.  
@@ -900,11 +880,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Mint the initial NFT position
      */
     function mintInitialPosition() external onlyGovernor nonReentrant {
-        (bytes memory packedSqrtPriceBreaks, bytes[] memory packedArgs,,) = _getAddLiquidityParams(1e18, 1e18);
-        IVault(vaultAddress).mintForStrategy(1e18);
+        (
+            bytes memory packedSqrtPriceBreaks,
+            bytes[] memory packedArgs,,
+            IMaverickV2PoolLens.TickDeltas memory tickDelta
+        ) = _getAddLiquidityParams(1e18, 1e18);
+        // Mint amount of OETH required
+        IVault(vaultAddress).mintForStrategy(tickDelta.deltaBOut);
         (,,, uint256 _tokenId) = liquidityManager.mintPositionNftToSender(mPool, packedSqrtPriceBreaks, packedArgs);
-        // Burn remaining OETHp
-        IVault(vaultAddress).burnForStrategy(IERC20(OETHp).balanceOf(address(this)));
+        // burn remaining OETHp
+        _burnOethOnTheContract();
 
         // Store the tokenId
         tokenId = _tokenId;
@@ -918,7 +903,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     function getPositionPrincipal()
         public
         view
-        returns (uint256 _amountWeth, uint256 _amountOethb)
+        returns (uint256 _amountWeth, uint256 _amountOethp)
     {
         if (tokenId == 0) {
             return (0, 0);
@@ -926,7 +911,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         IMaverickV2Position.PositionFullInformation memory positionInfo = maverickPosition.tokenIdPositionInformation(tokenId, 0);
         _amountWeth = positionInfo.amountA;
-        _amountOethb = positionInfo.amountB;
+        _amountOethp = positionInfo.amountB;
     }
 
     /**
@@ -973,13 +958,13 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             Hidden functions
     ****************************************/
     /// @inheritdoc InitializableAbstractStrategy
-    function setPTokenAddress(address, address) external override {
+    function setPTokenAddress(address, address) external override pure {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function removePToken(uint256) external override {
+    function removePToken(uint256) external override pure {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
@@ -987,7 +972,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Not supported
      */
-    function _abstractSetPToken(address, address) internal override {
+    function _abstractSetPToken(address, address) internal override pure {
         // the deployer shall call safeApproveAllTokens() to set necessary approvals
         revert("Unsupported method");
     }
