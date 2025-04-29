@@ -20,6 +20,7 @@ aero_pos_man = load_contract('aerodrome_nonfungible_position_manager', AERODROME
 aero_quoter = load_contract('aerodrome_quoter', AERODROME_QUOTER_BASE)
 aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR_HELPER_BASE)
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
+curve_pool = load_contract('curve_pool_base', CURVE_POOL_BASE)
 
 ogn_pool = load_contract('aerodrome_ogn_pool', AERODROME_OGN_OETHB_POOL_BASE)
 oethb_weth_bribe = load_contract('aero_bribes', OETHB_WETH_BRIBE_CONTRACT)
