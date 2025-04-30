@@ -93,11 +93,21 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     }
   };
 
+  let roosterAmoStrategy;
   if (isFork) {
     // Allow governor to mint WETH
     const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
     const ownerSigner = await impersonateAndFund(wethOwner);
     await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
+
+    // Aerodrome AMO Strategy
+    const roosterAmoStrategyProxy = await ethers.getContract(
+      "RoosterAMOStrategyProxy"
+    );
+    roosterAmoStrategy = await ethers.getContractAt(
+      "RoosterAMOStrategy",
+      roosterAmoStrategyProxy.address
+    );
   }
 
   for (const signer of [rafael, daniel, nick, domen, clement]) {
@@ -130,6 +140,7 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     oethp,
     wOETHp,
     oethpVault,
+    roosterAmoStrategy,
     // Helpers
     _mintWETH,
   };

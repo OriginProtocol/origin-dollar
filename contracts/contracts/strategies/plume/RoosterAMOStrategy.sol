@@ -415,14 +415,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Approve the spending of all assets
      */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
+    function _approveTokenAmounts(uint256 _wethAllowance, uint256 _oethBAllowance)
+        internal
     {
-        IERC20(WETH).approve(address(liquidityManager), type(uint256).max);
-        IERC20(OETHp).approve(address(liquidityManager), type(uint256).max);
+        IERC20(WETH).approve(address(liquidityManager), _wethAllowance);
+        IERC20(OETHp).approve(address(liquidityManager), _oethBAllowance);
     }
 
     /**
@@ -542,9 +539,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(_oethRequired - _oethBalance);
         }
 
-        // approve the specific amount of WETH required
-        IERC20(WETH).approve(address(liquidityManager), _wethBalance);
-
+        _approveTokenAmounts(_wethBalance, _oethRequired);
         (uint256 _woethAmount, uint256 _oethAmount, ) = liquidityManager
             .addPositionLiquidityToSenderByTokenIndex(
                 mPool,
@@ -905,6 +900,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         ) = _getAddLiquidityParams(1e18, 1e18);
         // Mint amount of OETH required
         IVault(vaultAddress).mintForStrategy(tickDelta.deltaBOut);
+
+        _approveTokenAmounts(1e18, 1e18);
         (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,
             packedSqrtPriceBreaks,
@@ -912,6 +909,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
         // burn remaining OETHp
         _burnOethOnTheContract();
+        _approveTokenAmounts(0, 0);
 
         // Store the tokenId
         tokenId = _tokenId;
@@ -999,7 +997,19 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @dev Not supported
      */
     function _abstractSetPToken(address, address) internal pure override {
-        // the deployer shall call safeApproveAllTokens() to set necessary approvals
+        revert("Unsupported method");
+    }
+
+    /**
+     * @dev Approve the spending of all assets
+     */
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
+        // all the amounts are approved at the time required
         revert("Unsupported method");
     }
 

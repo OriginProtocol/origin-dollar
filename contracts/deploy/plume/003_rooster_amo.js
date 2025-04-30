@@ -10,6 +10,7 @@ const {
 } = require("../deployActions");
 const { isFork, oethUnits } = require("../../test/helpers");
 const { setERC20TokenBalance } = require("../../test/_fund");
+const { utils } = require("ethers");
 
 module.exports = deployOnPlume(
   {
@@ -92,14 +93,17 @@ module.exports = deployOnPlume(
         {
           // Safe approve tokens
           contract: cAMOStrategy,
-          signature: "safeApproveAllTokens()",
+          signature: "mintInitialPosition()",
           args: [],
         },
         {
           // Safe approve tokens
           contract: cAMOStrategy,
-          signature: "mintInitialPosition()",
-          args: [],
+          signature: "setAllowedPoolWethShareInterval(uint256,uint256)",
+          args: [
+            utils.parseUnits("0.10", 18),
+            utils.parseUnits("0.20", 18),
+          ],
         },
       ],
     };
