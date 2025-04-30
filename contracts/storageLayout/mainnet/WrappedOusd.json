@@ -1,75 +1,119 @@
 {
+  "solcVersion": "0.8.28",
   "storage": [
     {
-      "contract": "ERC20",
       "label": "_balances",
+      "offset": 0,
+      "slot": "0",
       "type": "t_mapping(t_address,t_uint256)",
+      "contract": "ERC20",
       "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
     },
     {
-      "contract": "ERC20",
       "label": "_allowances",
+      "offset": 0,
+      "slot": "1",
       "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+      "contract": "ERC20",
       "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:38"
     },
     {
-      "contract": "ERC20",
       "label": "_totalSupply",
+      "offset": 0,
+      "slot": "2",
       "type": "t_uint256",
+      "contract": "ERC20",
       "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:40"
     },
     {
-      "contract": "ERC20",
       "label": "_name",
+      "offset": 0,
+      "slot": "3",
       "type": "t_string_storage",
+      "contract": "ERC20",
       "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:42"
     },
     {
-      "contract": "ERC20",
       "label": "_symbol",
+      "offset": 0,
+      "slot": "4",
       "type": "t_string_storage",
+      "contract": "ERC20",
       "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:43"
     },
     {
-      "contract": "Initializable",
       "label": "initialized",
+      "offset": 0,
+      "slot": "5",
       "type": "t_bool",
-      "src": "contracts/utils/Initializable.sol:8"
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
     },
     {
-      "contract": "Initializable",
       "label": "initializing",
+      "offset": 1,
+      "slot": "5",
       "type": "t_bool",
-      "src": "contracts/utils/Initializable.sol:13"
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
     },
     {
-      "contract": "Initializable",
       "label": "______gap",
+      "offset": 0,
+      "slot": "6",
       "type": "t_array(t_uint256)50_storage",
-      "src": "contracts/utils/Initializable.sol:37"
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "adjuster",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "WOETH",
+      "src": "contracts/token/WOETH.sol:41"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_array(t_uint256)49_storage",
+      "contract": "WOETH",
+      "src": "contracts/token/WOETH.sol:42"
     }
   ],
   "types": {
-    "t_bool": {
-      "label": "bool"
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)49_storage": {
+      "label": "uint256[49]",
+      "numberOfBytes": "1568"
     },
     "t_array(t_uint256)50_storage": {
-      "label": "uint256[50]"
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
     },
-    "t_uint256": {
-      "label": "uint256"
-    },
-    "t_mapping(t_address,t_uint256)": {
-      "label": "mapping(address => uint256)"
-    },
-    "t_address": {
-      "label": "address"
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
     },
     "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
-      "label": "mapping(address => mapping(address => uint256))"
+      "label": "mapping(address => mapping(address => uint256))",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32"
     },
     "t_string_storage": {
-      "label": "string"
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
     }
   }
 }

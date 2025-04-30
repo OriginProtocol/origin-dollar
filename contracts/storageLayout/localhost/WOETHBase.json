@@ -1,5 +1,5 @@
 {
-  "solcVersion": "0.8.7",
+  "solcVersion": "0.8.28",
   "storage": [
     {
       "label": "_balances",
@@ -64,12 +64,32 @@
       "type": "t_array(t_uint256)50_storage",
       "contract": "Initializable",
       "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "adjuster",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "WOETH",
+      "src": "contracts/token/WOETH.sol:41"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_array(t_uint256)49_storage",
+      "contract": "WOETH",
+      "src": "contracts/token/WOETH.sol:42"
     }
   ],
   "types": {
     "t_address": {
       "label": "address",
       "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)49_storage": {
+      "label": "uint256[49]",
+      "numberOfBytes": "1568"
     },
     "t_array(t_uint256)50_storage": {
       "label": "uint256[50]",
