@@ -8,6 +8,11 @@ const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
 
+const MINTER_ROLE =
+  "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+const BURNER_ROLE =
+  "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
+
 let snapshotId;
 const defaultPlumeFixture = deployments.createFixture(async () => {
   if (!snapshotId && !isFork) {
@@ -75,6 +80,33 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     oethpVaultProxy.address
   );
 
+  // Bridged wOETH
+  const woethProxy = await ethers.getContract("BridgedWOETHProxy");
+  const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
+
+  let woethStrategy;
+
+  if (isFork) {
+    const woethStrategyProxy = await ethers.getContract(
+      "BridgedWOETHStrategyProxy"
+    );
+    woethStrategy = await ethers.getContractAt(
+      "BridgedWOETHStrategy",
+      woethStrategyProxy.address
+    );
+
+    // Make sure we can print bridged WOETH for tests
+    await woeth.connect(governor).grantRole(MINTER_ROLE, governor.address);
+    await woeth.connect(governor).grantRole(BURNER_ROLE, governor.address);
+
+    // Mint some bridged WOETH
+    for (const user of [governor, rafael, nick, clement]) {
+      // Mint some bridged WOETH
+      await woeth.connect(governor).mint(user.address, oethUnits("1"));
+    }
+  }
+
+  // And we can mint WETH
   const wethMintableContract = await ethers.getContractAt(
     [
       "function addMinter(address) external",
@@ -82,6 +114,10 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
       "function mintTo(address to, uint256 amount) external",
     ],
     addresses.plume.WETH
+  );
+
+  const oracleRouter = await ethers.getContract(
+    isFork ? "OETHPlumeOracleRouter" : "MockOracleRouter"
   );
 
   const _mintWETH = async (signer, amount) => {
@@ -131,6 +167,12 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     oethp,
     wOETHp,
     oethpVault,
+
+    // Bridged wOETH
+    woeth,
+    woethProxy,
+    woethStrategy,
+    oracleRouter,
 
     // Helpers
     _mintWETH,
