@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/TempPlumeSafeModule.sol": {
+      "content": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity ^0.8.0;\n\ninterface ISafe {\n    function disableModule(address, address) external;\n\n    function execTransactionFromModule(\n        address,\n        uint256,\n        bytes memory,\n        uint8\n    ) external returns (bool);\n}\n\ncontract TempPlumeSafeModule {\n    address public constant TREASURY =\n        0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc;\n    address public constant DEFAULT_SINGLETON =\n        0xfb1bffC9d739B8D520DaF37dF666da4C687191EA;\n\n    // Slot 0\n    address public singleton;\n\n    function fixSingleton() external {\n        singleton = DEFAULT_SINGLETON;\n    }\n\n    function execFixSingleton() external {\n        ISafe(TREASURY).execTransactionFromModule(\n            address(this),\n            0, // Value\n            abi.encodeWithSelector(bytes4(keccak256(\"fixSingleton()\"))),\n            1 // Delegatecall\n        );\n\n        // Disable the module\n        ISafe(TREASURY).execTransactionFromModule(\n            TREASURY,\n            0, // Value\n            abi.encodeWithSelector(\n                bytes4(keccak256(\"disableModule(address,address)\")),\n                address(0x1),\n                address(this)\n            ),\n            1 // Delegatecall\n        );\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

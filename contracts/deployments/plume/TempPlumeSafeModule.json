@@ -1,0 +1,110 @@
+{
+  "address": "0xE58b21e51520797f5335a235e4d74B865C7c08b0",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "DEFAULT_SINGLETON",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TREASURY",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "execFixSingleton",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "fixSingleton",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "singleton",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x562523a1bf8d50c42a1de83c6d2d1ac43410efcb12f5bb2e6b733f29ce76ba01",
+  "receipt": {
+    "to": null,
+    "from": "0x58890A9cB27586E83Cb51d2d26bbE18a1a647245",
+    "contractAddress": "0xE58b21e51520797f5335a235e4d74B865C7c08b0",
+    "transactionIndex": 1,
+    "gasUsed": "230194",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x5c8c3d0aaaea148fc4e016d35b4fa67df50e65c4ee6498b546eaa1e635453c41",
+    "transactionHash": "0x562523a1bf8d50c42a1de83c6d2d1ac43410efcb12f5bb2e6b733f29ce76ba01",
+    "logs": [],
+    "blockNumber": 1328468,
+    "cumulativeGasUsed": "230194",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "f05cb8a6c79d3435a80dbeedd375d58d",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"DEFAULT_SINGLETON\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TREASURY\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"execFixSingleton\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"fixSingleton\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"singleton\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/TempPlumeSafeModule.sol\":\"TempPlumeSafeModule\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/TempPlumeSafeModule.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\ninterface ISafe {\\n    function disableModule(address, address) external;\\n\\n    function execTransactionFromModule(\\n        address,\\n        uint256,\\n        bytes memory,\\n        uint8\\n    ) external returns (bool);\\n}\\n\\ncontract TempPlumeSafeModule {\\n    address public constant TREASURY =\\n        0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc;\\n    address public constant DEFAULT_SINGLETON =\\n        0xfb1bffC9d739B8D520DaF37dF666da4C687191EA;\\n\\n    // Slot 0\\n    address public singleton;\\n\\n    function fixSingleton() external {\\n        singleton = DEFAULT_SINGLETON;\\n    }\\n\\n    function execFixSingleton() external {\\n        ISafe(TREASURY).execTransactionFromModule(\\n            address(this),\\n            0, // Value\\n            abi.encodeWithSelector(bytes4(keccak256(\\\"fixSingleton()\\\"))),\\n            1 // Delegatecall\\n        );\\n\\n        // Disable the module\\n        ISafe(TREASURY).execTransactionFromModule(\\n            TREASURY,\\n            0, // Value\\n            abi.encodeWithSelector(\\n                bytes4(keccak256(\\\"disableModule(address,address)\\\")),\\n                address(0x1),\\n                address(this)\\n            ),\\n            1 // Delegatecall\\n        );\\n    }\\n}\\n\",\"keccak256\":\"0x500516121269dafbb7042b8eecce26626a7c6cc8d2ace47020c98c754535276f\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506103338061001f6000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c80632d2c55651461005c5780636134bc1f14610093578063943485d91461009d578063b62654fb146100c8578063d953bd75146100db575b600080fd5b610077736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc81565b6040516001600160a01b03909116815260200160405180910390f35b61009b6100f6565b005b61009b600080546001600160a01b03191673fb1bffc9d739b8d520daf37df666da4c687191ea179055565b600054610077906001600160a01b031681565b61007773fb1bffc9d739b8d520daf37df666da4c687191ea81565b6040805160048082526024820183526020820180516001600160e01b031663943485d960e01b179052915163468721a760e01b8152736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc9263468721a79261015a9230926000929160019101610260565b6020604051808303816000875af1158015610179573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019d91906102d4565b50604080516001602482018190523060448084019190915283518084039091018152606490920183526020820180516001600160e01b0316637004e7ef60e11b179052915163468721a760e01b8152736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc9263468721a79261021a92859260009291600401610260565b6020604051808303816000875af1158015610239573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061025d91906102d4565b50565b60018060a01b0385168152836020820152608060408201526000835180608084015260005b818110156102a257602081870181015160a0868401015201610285565b50600060a0828501015260a0601f19601f8301168401019150506102cb606083018460ff169052565b95945050505050565b6000602082840312156102e657600080fd5b815180151581146102f657600080fd5b939250505056fea26469706673582212201803b58c45ac2388bae9a4c0de9c678db792f9208668e559555508bc6dcfa7d964736f6c634300081c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100575760003560e01c80632d2c55651461005c5780636134bc1f14610093578063943485d91461009d578063b62654fb146100c8578063d953bd75146100db575b600080fd5b610077736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc81565b6040516001600160a01b03909116815260200160405180910390f35b61009b6100f6565b005b61009b600080546001600160a01b03191673fb1bffc9d739b8d520daf37df666da4c687191ea179055565b600054610077906001600160a01b031681565b61007773fb1bffc9d739b8d520daf37df666da4c687191ea81565b6040805160048082526024820183526020820180516001600160e01b031663943485d960e01b179052915163468721a760e01b8152736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc9263468721a79261015a9230926000929160019101610260565b6020604051808303816000875af1158015610179573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019d91906102d4565b50604080516001602482018190523060448084019190915283518084039091018152606490920183526020820180516001600160e01b0316637004e7ef60e11b179052915163468721a760e01b8152736e3fddab68bf1ebaf9dacf9f7907c7bc0951d1dc9263468721a79261021a92859260009291600401610260565b6020604051808303816000875af1158015610239573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061025d91906102d4565b50565b60018060a01b0385168152836020820152608060408201526000835180608084015260005b818110156102a257602081870181015160a0868401015201610285565b50600060a0828501015260a0601f19601f8301168401019150506102cb606083018460ff169052565b95945050505050565b6000602082840312156102e657600080fd5b815180151581146102f657600080fd5b939250505056fea26469706673582212201803b58c45ac2388bae9a4c0de9c678db792f9208668e559555508bc6dcfa7d964736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 30,
+        "contract": "contracts/TempPlumeSafeModule.sol:TempPlumeSafeModule",
+        "label": "singleton",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}

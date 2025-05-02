@@ -1,0 +1,19 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "singleton",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address",
+      "contract": "TempPlumeSafeModule",
+      "src": "contracts/TempPlumeSafeModule.sol:22"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    }
+  }
+}
