@@ -13,7 +13,7 @@ def main():
       vault_admin.depositToStrategy(
         MORPHO_META_USDC_STRAT,
         [usdc],
-        [2_825_586 * 10**6],
+        [2_825_500 * 10**6],
         std
       )
     )
@@ -22,7 +22,7 @@ def main():
       vault_admin.depositToStrategy(
         MORPHO_GAUNTLET_PRIME_USDT_STRAT,
         [usdt],
-        [1_62_804 * 10**6],
+        [1_662_800 * 10**6],
         std
       )
     )
@@ -31,7 +31,7 @@ def main():
       vault_admin.depositToStrategy(
         MORPHO_GAUNTLET_PRIME_USDC_STRAT,
         [usdc],
-        [110_769 * 10**6],
+        [110_700 * 10**6],
         std
       )
     )
