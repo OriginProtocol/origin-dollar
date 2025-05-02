@@ -56,3 +56,30 @@ def main():
     print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# May 2, 2025 - Restore the default strategies
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+
+    txs.append(
+      vault_admin.setAssetDefaultStrategy(
+        usdc,
+        MORPHO_META_USDC_STRAT,
+        std
+      )
+    )
+
+
+    txs.append(
+      vault_admin.setAssetDefaultStrategy(
+        usdt,
+        MORPHO_GAUNTLET_PRIME_USDT_STRAT,
+        std
+      )
+    )
+
+
