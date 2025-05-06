@@ -14,7 +14,8 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    //proposalId: "",
+    proposalId:
+      "56250259650123444799492076755994707271232704725960146040626637955232036241797",
   },
   async ({ ethers }) => {
     const { deployerAddr, strategistAddr } = await getNamedAccounts();
