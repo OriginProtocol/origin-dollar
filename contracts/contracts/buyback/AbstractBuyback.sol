@@ -64,6 +64,8 @@ abstract contract AbstractBuyback is Initializable, Strategizable {
         onlyGovernorOrStrategist
         nonReentrant
     {
-        IERC20(token).safeTransfer(strategistAddr, amount);
+        address _recipient = strategistAddr;
+        require(_recipient != address(0), "Strategist address not set");
+        IERC20(token).safeTransfer(_recipient, amount);
     }
 }
