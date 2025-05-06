@@ -26,21 +26,26 @@ abstract contract AbstractBuyback is Initializable, Strategizable {
     address private __deprecated_weth9;
 
     // Address that receives OGN after swaps
+    // slither-disable-next-line constable-states
     address public __deprecated_rewardsSource;
 
     // Address that receives all other tokens after swaps
+    // slither-disable-next-line constable-states
     address public __deprecated_treasuryManager;
 
     // slither-disable-next-line constable-states
     uint256 private __deprecated_treasuryBps;
 
     // Amount of `oToken` balance to use for OGN buyback
+    // slither-disable-next-line constable-states
     uint256 public __deprecated_balanceForOGN;
 
     // Amount of `oToken` balance to use for CVX buyback
+    // slither-disable-next-line constable-states
     uint256 public __deprecated_balanceForCVX;
 
     // Percentage of `oToken` balance to be used for CVX
+    // slither-disable-next-line constable-states
     uint256 public __deprecated_cvxShareBps; // 10000 = 100%
 
     constructor() {

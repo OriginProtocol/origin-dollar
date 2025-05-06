@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "137_strategist_does_buyback",
+    deployName: "138_strategist_does_buyback",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
