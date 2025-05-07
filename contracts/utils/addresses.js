@@ -329,6 +329,9 @@ addresses.mainnet.passthrough.uniswap.OETH_OGN =
 addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
+// OBTC
+addresses.mainnet.WBTC = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
