@@ -1100,7 +1100,11 @@ describe("Curve AMO OUSD strategy", function () {
     const poolSupply = await curvePool.totalSupply();
     const [poolOusdBalance, poolusdcBalance] = await curvePool.get_balances();
     const reserves = { ousd: poolOusdBalance, usdc: poolusdcBalance };
-    const virtualPrice = await curvePool.get_virtual_price();
+
+    let virtualPrice;
+    if (poolSupply != 0) {
+      virtualPrice = await curvePool.get_virtual_price();
+    }
     const stratGaugeBalance = await curveGauge.balanceOf(
       curveAMOStrategy.address
     );
