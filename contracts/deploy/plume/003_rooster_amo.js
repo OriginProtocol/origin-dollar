@@ -102,7 +102,7 @@ module.exports = deployOnPlume(
           signature: "setAllowedPoolWethShareInterval(uint256,uint256)",
           args: [
             utils.parseUnits("0.10", 18),
-            utils.parseUnits("0.20", 18),
+            utils.parseUnits("0.25", 18),
           ],
         },
       ],

@@ -93,7 +93,7 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     }
   };
 
-  let roosterAmoStrategy;
+  let roosterAmoStrategy, roosterOETHpWETHpool;
   if (isFork) {
     // Allow governor to mint WETH
     const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
@@ -107,6 +107,11 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     roosterAmoStrategy = await ethers.getContractAt(
       "RoosterAMOStrategy",
       roosterAmoStrategyProxy.address
+    );
+
+    roosterOETHpWETHpool = await ethers.getContractAt(
+      "IMaverickV2Pool",
+      addresses.plume.OethpWETHRoosterPool
     );
   }
 
@@ -141,6 +146,7 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     wOETHp,
     oethpVault,
     roosterAmoStrategy,
+    roosterOETHpWETHpool,
     // Helpers
     _mintWETH,
   };
